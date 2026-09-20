@@ -33,7 +33,8 @@ Icônes : celles de l'interface viennent de Lucide (licence ISC), intégrées da
 plutôt que chargées depuis un réseau de diffusion. Les symboles d'électrotechnique, absents des
 bibliothèques généralistes, sont dessinés dans le même fichier sur la même grille de 24 par 24 et avec
 la même graisse de trait. Les illustrations de modules sont dans `assets/js/illustrations.js` : une
-forme pleine qui porte un visage, accompagnée d'un objet tracé au trait.
+forme pleine, des découpes qui reprennent la couleur de la carte, et des traits pour les liaisons qui
+sortent de la forme. Chaque illustration reprend le symbole normalisé de son domaine.
 
 ## Structure du dépôt
 
