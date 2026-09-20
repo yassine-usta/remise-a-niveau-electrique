@@ -1,0 +1,247 @@
+<article class="cours" data-slug="_demo">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">À quoi sert cette page</span>
+    <p>
+      Cette page n'est pas une séance du parcours : elle montre chaque composant du moteur pédagogique en
+      fonctionnement sur un seul exemple, le circuit RC série. Elle sert à vérifier que le moteur fonctionne
+      après chaque modification, et de modèle pour la génération des cours quotidiens.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Le circuit RC est le premier système du parcours qui possède une mémoire. Une résistance seule répond
+    instantanément ; dès qu'un condensateur entre en jeu, la tension de sortie dépend de l'histoire du signal
+    d'entrée. C'est le mécanisme commun au filtrage d'une alimentation, à l'antirebond d'une entrée d'automate,
+    à la constante de temps d'un capteur de température et à la forme du courant d'appel d'un variateur.
+  </p>
+  <p>
+    Deux lectures cohabitent, et la démonstration les met côte à côte : la lecture temporelle, qui parle de
+    charge et de constante de temps, et la lecture fréquentielle, qui parle de gain, de phase et de fréquence
+    de coupure. Ce sont deux descriptions du même circuit.
+  </p>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+  <p>
+    Un condensateur se comporte comme un petit réservoir de charges. La résistance joue le rôle d'un robinet :
+    elle fixe le débit maximal. Remplir le réservoir à travers un robinet étroit prend du temps, et ce temps ne
+    dépend ni de la pression appliquée ni du niveau visé, seulement du produit de la capacité du réservoir par
+    la résistance du robinet.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie</span>
+    <p>
+      L'analogie hydraulique décrit correctement le remplissage progressif, mais elle échoue sur trois points :
+      le condensateur peut se décharger dans les deux sens, il ne stocke pas de matière mais un champ électrique,
+      et sa tension peut devenir négative, ce qu'un niveau d'eau ne fait jamais.
+    </p>
+  </div>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+  <p>
+    Pour le circuit série alimenté par un échelon de tension $E$, la loi des mailles impose
+    $E = u_R(t) + u_C(t)$. Avec $u_R = R\,i$ et $i = C\,\dfrac{\mathrm{d}u_C}{\mathrm{d}t}$, l'équation du circuit
+    devient une équation différentielle du premier ordre :
+  </p>
+
+  <div class="formule-cle">
+    $$RC\,\frac{\mathrm{d}u_C}{\mathrm{d}t} + u_C(t) = E$$
+    <p class="formule-cle-legende">
+      $R$ en ohms, $C$ en farads, $u_C$ en volts, $t$ en secondes. Hypothèses : composants linéaires, source
+      idéale, condensateur initialement déchargé.
+    </p>
+  </div>
+
+  <p>
+    La solution, pour $u_C(0) = 0$, fait apparaître la constante de temps $\tau = RC$ :
+  </p>
+
+  <div class="formule-cle">
+    $$u_C(t) = E\left(1 - e^{-t/\tau}\right), \qquad i(t) = \frac{E}{R}\,e^{-t/\tau}, \qquad \tau = RC$$
+    <p class="formule-cle-legende">
+      Vérification dimensionnelle : $[R][C] = \Omega \cdot \mathrm{F} = \dfrac{\mathrm{V}}{\mathrm{A}} \cdot
+      \dfrac{\mathrm{C}}{\mathrm{V}} = \dfrac{\mathrm{C}}{\mathrm{A}} = \mathrm{s}$. La constante de temps est
+      bien une durée.
+    </p>
+  </div>
+
+  <p>
+    En régime sinusoïdal établi, le même circuit s'écrit avec des impédances complexes. La tension de sortie
+    prise aux bornes du condensateur donne une fonction de transfert de filtre passe-bas du premier ordre :
+  </p>
+
+  <div class="formule-cle">
+    $$\underline{H}(j\omega) = \frac{\underline{U_C}}{\underline{U}} = \frac{1}{1 + j\omega RC},
+    \qquad |\underline{H}| = \frac{1}{\sqrt{1 + (\omega RC)^2}}, \qquad f_c = \frac{1}{2\pi RC}$$
+    <p class="formule-cle-legende">
+      À $f = f_c$, le gain vaut $\frac{1}{\sqrt{2}}$, soit $-3\ \mathrm{dB}$, et la phase vaut
+      $-45$ degrés. Le lien entre les deux lectures est direct : $f_c = \dfrac{1}{2\pi\tau}$.
+    </p>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+
+  <figure>
+    <svg viewBox="0 0 620 240" role="img" aria-label="Schéma du circuit RC série avec conventions de tension et de courant">
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M110 70H250"/>
+        <path d="M310 70H470"/>
+        <path d="M470 70v40"/>
+        <path d="M470 150v40"/>
+        <path d="M470 190H110"/>
+        <path d="M110 70v30"/>
+        <path d="M110 140v50"/>
+        <circle cx="110" cy="120" r="20"/>
+        <path d="M100 120c4-9 7-9 10 0s7 9 10 0" stroke-width="1.8"/>
+        <rect x="250" y="55" width="60" height="30" rx="4"/>
+        <path d="M446 110h48M446 150h48" stroke-width="3"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="14">
+        <text x="74" y="125">E</text>
+        <text x="272" y="46">R</text>
+        <text x="504" y="135">C</text>
+        <text x="180" y="56">i(t)</text>
+        <text x="266" y="106">u_R</text>
+        <text x="504" y="96">u_C</text>
+        <text x="286" y="212">masse, potentiel de référence</text>
+      </g>
+      <g stroke="currentColor" stroke-width="1.6" fill="none">
+        <path d="M165 60h26M185 55l8 5-8 5" stroke-linecap="round"/>
+      </g>
+    </svg>
+    <figcaption>
+      Circuit RC série. La flèche donne le sens positif choisi pour le courant, la masse fixe le potentiel de
+      référence, et les tensions sont fléchées en convention récepteur pour la résistance comme pour le
+      condensateur.
+    </figcaption>
+  </figure>
+
+  <figure>
+    <pre class="ascii">   t &lt; 0 : interrupteur ouvert, C dechargé
+   t = 0 : fermeture
+
+   u_C |          ________________  E
+       |      ___/
+       |    _/
+       |   /|
+       |  / |
+       | /  |
+       |/   |
+       +----+-------------------------- t
+            tau        u_C(tau) = 0,632 E
+                       u_C(5 tau) = 0,993 E</pre>
+    <figcaption>
+      Allure de la charge en ASCII monospacé. Le repère visuel utile à retenir : 63 % de la valeur finale après
+      une constante de temps, 99 % après cinq.
+    </figcaption>
+  </figure>
+
+  <figure>
+    <pre class="mermaid">flowchart TD
+  A["Circuit du premier ordre"] --> B{"Quelle question ?"}
+  B -->|"Comportement dans le temps"| C["Identifier tau = RC"]
+  B -->|"Comportement en frequence"| D["Identifier fc = 1 / (2 pi RC)"]
+  C --> E["Ecrire u(t) = Ufinal + (Uinitial - Ufinal) exp(-t / tau)"]
+  D --> F["Tracer gain et phase, reperer -3 dB et -45 degres"]
+  E --> G["Verifier les valeurs a t = 0 et t infini"]
+  F --> G
+  G --> H["Conclure et controler l ordre de grandeur"]</pre>
+    <figcaption>
+      Organigramme de résolution. Le choix de la méthode dépend de la question posée, pas du circuit : le même
+      RC se traite dans le domaine temporel ou fréquentiel.
+    </figcaption>
+  </figure>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <ol>
+    <li>Identifier l'ordre du circuit en comptant les éléments de stockage indépendants.</li>
+    <li>Déterminer l'état initial, en utilisant la continuité de $u_C$ et de $i_L$.</li>
+    <li>Déterminer l'état final en remplaçant le condensateur par un circuit ouvert.</li>
+    <li>Calculer la constante de temps vue par l'élément de stockage, résistance de Thévenin comprise.</li>
+    <li>Écrire la solution générale, puis vérifier les deux extrémités et l'ordre de grandeur.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Données : $E = 12\ \mathrm{V}$, $R = 10\ \mathrm{k\Omega}$, $C = 100\ \mathrm{nF}$, condensateur
+    initialement déchargé. Question : valeur de $u_C$ à $t = 2\ \mathrm{ms}$, courant initial, énergie stockée
+    en régime établi.
+  </p>
+  <ol>
+    <li>Constante de temps : $\tau = RC = 10^4 \times 10^{-7} = 10^{-3}\ \mathrm{s} = 1\ \mathrm{ms}$.</li>
+    <li>Tension : $u_C(2\ \mathrm{ms}) = 12\left(1 - e^{-2}\right) = 12 \times 0{,}8647 = 10{,}38\ \mathrm{V}$.</li>
+    <li>Courant initial : $i(0^+) = E/R = 12 / 10^4 = 1{,}2\ \mathrm{mA}$.</li>
+    <li>Énergie finale : $W = \tfrac{1}{2}CE^2 = 0{,}5 \times 10^{-7} \times 144 = 7{,}2\ \mathrm{\mu J}$.</li>
+    <li>Contrôle : à $t = 2\tau$ la tension doit se situer entre 63 % et 95 % de $E$, soit entre 7,6 et 11,4 V. Le résultat est cohérent.</li>
+  </ol>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Les cinq types d'exercices du moteur sont représentés ci-dessous. Dans tous les cas, la correction reste
+    masquée jusqu'à une tentative ou un clic explicite sur le bouton dédié.
+  </p>
+  <div id="demo-exercices"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Le quiz enchaîne les questions et calcule un score. Une séance réelle en compte dix, mêlant choix multiple,
+    vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. La démonstration en présente six,
+    une par type.
+  </p>
+  <div id="demo-quiz"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="demo-cartes"></div>
+
+  <h2 id="o-simulations">O. Travail pratique : simulations</h2>
+  <p>
+    Les six simulations du moteur sont réunies ici sur le même circuit. Elles s'adaptent à la largeur de
+    l'écran et au thème, et se mettent en pause lorsqu'elles sortent du champ de vision.
+  </p>
+
+  <h3 id="o-temporel">Réponse temporelle pilotée par curseurs</h3>
+  <p>Modifiez $R$, $C$ et $E$ : la constante de temps, la fréquence de coupure et les courbes suivent.</p>
+  <div id="demo-curseurs"></div>
+  <div id="demo-traceur"></div>
+
+  <h3 id="o-oscilloscope">Oscilloscope : réponse à un signal carré</h3>
+  <p>
+    Le signal d'entrée est reconstitué par ses quinze premiers harmoniques, puis filtré terme à terme. Réglez la
+    base de temps pour comparer la période du signal à la constante de temps du circuit.
+  </p>
+  <div id="demo-oscilloscope"></div>
+
+  <h3 id="o-fresnel">Diagramme de Fresnel à la fréquence de coupure</h3>
+  <p>
+    À $f = f_c$, les deux tensions partielles ont le même module et sont en quadrature. Leur somme vectorielle
+    reste égale à la tension d'entrée, ce que la rotation rend visible.
+  </p>
+  <div id="demo-fresnel"></div>
+
+  <h3 id="o-bode">Diagramme de Bode</h3>
+  <p>La pente asymptotique est de $-20\ \mathrm{dB}$ par décade, et la phase tend vers $-90$ degrés.</p>
+  <div id="demo-bode"></div>
+
+  <h3 id="o-spectre">Spectre du signal de sortie</h3>
+  <p>
+    Le filtre atténue les harmoniques de rang élevé : c'est la même information que le diagramme de Bode, lue
+    sur un signal réel.
+  </p>
+  <div id="demo-spectre"></div>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences du programme. Les notes sont conservées dans ce navigateur, et le
+    score des exercices comme celui du quiz s'affichent à côté.
+  </p>
+  <div id="demo-autoevaluation"></div>
+
+  <h2 id="p-suite">Trois idées à retenir</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">La constante de temps $\tau = RC$ ne dépend ni de l'amplitude de l'échelon ni de l'état initial.</li>
+    <li data-rang="02">Lecture temporelle et lecture fréquentielle décrivent le même circuit, reliées par $f_c = 1/(2\pi\tau)$.</li>
+    <li data-rang="03">La tension aux bornes d'un condensateur est continue, car un saut exigerait un courant infini.</li>
+  </ul>
+
+</article>
