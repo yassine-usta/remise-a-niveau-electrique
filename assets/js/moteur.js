@@ -9,8 +9,11 @@
    quand ils sont disponibles ; sinon le moteur reste pleinement fonctionnel.
    ========================================================================== */
 
+import { icone as iconeRegistre } from "./icones.js";
+
 const PREFIXE_STOCKAGE = "rne";
 const TAU = Math.PI * 2;
+const POLICE_TRACE = "'JetBrains Mono', ui-monospace, monospace";
 
 /* --------------------------------------------------------------------------
    Utilitaires généraux
@@ -93,6 +96,12 @@ function formater(valeur, chiffres) {
     .replace(".", ",");
 }
 
+/** Accorde un nom avec son nombre : accord(2, "carte lue", "cartes lues"). */
+export function accord(nombre, singulier, pluriel) {
+  const forme = Math.abs(Number(nombre)) >= 2 ? pluriel || singulier + "s" : singulier;
+  return nombre + " " + forme;
+}
+
 function melangerTableau(tableau) {
   const copie = tableau.slice();
   for (let i = copie.length - 1; i > 0; i -= 1) {
@@ -102,23 +111,18 @@ function melangerTableau(tableau) {
   return copie;
 }
 
-function icone(nom) {
-  const traces = {
-    juste: "m5 13 4 4L19 7",
-    faux: "M6 6l12 12M18 6 6 18",
-    oeil: "M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12S18 18.5 12 18.5 2.5 12 2.5 12z",
-    fleche: "M5 12h13M13 6l6 6-6 6",
-    retour: "M4 9h11a4.5 4.5 0 0 1 0 9H9M4 9l4-4M4 9l4 4",
-    melange: "M4 7h4l8 10h4M16 7h4M4 17h4",
-  };
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("viewBox", "0 0 24 24");
-  svg.setAttribute("aria-hidden", "true");
-  svg.setAttribute("focusable", "false");
-  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  path.setAttribute("d", traces[nom] || traces.fleche);
-  svg.appendChild(path);
-  return svg;
+/* Les noms internes du moteur renvoient vers le registre d'icônes du site. */
+const ALIAS_ICONES = {
+  juste: "coche",
+  faux: "fermer",
+  oeil: "oeil",
+  fleche: "fleche",
+  retour: "recommencer",
+  melange: "melanger",
+};
+
+function icone(nom, taille) {
+  return iconeRegistre(ALIAS_ICONES[nom] || nom, { taille: taille || 16 });
 }
 
 /* --------------------------------------------------------------------------
@@ -614,7 +618,10 @@ function exoQcm(ctx, conteneur, def = {}) {
       if (justes > 0 && fautes === 0) {
         return {
           etat: "partiel",
-          message: "Réponse incomplète : " + justes + " proposition(s) exacte(s) sur " + bonnes.size + ".",
+          message:
+            "Réponse incomplète : " +
+            accord(justes, "proposition exacte", "propositions exactes") +
+            " sur " + bonnes.size + ".",
         };
       }
       return { etat: "faux", message: def.messageFaux || "Réponse inexacte. Les propositions attendues sont indiquées." };
@@ -825,12 +832,9 @@ function exoReponseCourte(ctx, conteneur, def = {}) {
           etat: "partiel",
           message:
             "Réponse partielle : " +
-            trouves +
-            " notion(s) sur " +
-            groupes.length +
-            " reconnue(s), " +
-            minimum +
-            " attendue(s).",
+            accord(trouves, "notion reconnue", "notions reconnues") +
+            " sur " + groupes.length + ", " +
+            accord(minimum, "attendue", "attendues") + ".",
         };
       }
       return { etat: "faux", message: "Aucune des notions attendues n'a été reconnue." };
@@ -998,7 +1002,7 @@ function exoSchema(ctx, conteneur, def = {}) {
       const fautes = choix.length - justes;
       if (justes === bonnes.size && fautes === 0) return { etat: "juste", message: "Zone correctement identifiée." };
       if (justes > 0 && fautes === 0) {
-        return { etat: "partiel", message: "Il manque " + (bonnes.size - justes) + " zone(s)." };
+        return { etat: "partiel", message: "Il manque " + accord(bonnes.size - justes, "zone") + "." };
       }
       return { etat: "faux", message: "Zone inexacte. Les zones attendues sont surlignées." };
     },
@@ -1082,7 +1086,7 @@ function zoneQuestionQuiz(ctx, question) {
         zone.disabled = true;
         return {
           etat: bilan.etat === "partiel" ? "faux" : bilan.etat,
-          detail: bilan.trouves + " notion(s) sur " + groupes.length + " reconnue(s).",
+          detail: accord(bilan.trouves, "notion reconnue", "notions reconnues") + " sur " + groupes.length + ".",
         };
       },
     };
@@ -1517,7 +1521,7 @@ function construireCartes(ctx, conteneur, cartes, options = {}) {
   let boutons = [];
 
   function majCompteur() {
-    compteur.textContent = vues.size + " carte(s) retournée(s) sur " + cartes.length;
+    compteur.textContent = accord(vues.size, "carte retournée", "cartes retournées") + " sur " + cartes.length;
   }
 
   function construire(liste) {
@@ -1725,13 +1729,13 @@ function construireAutoEvaluation(ctx, conteneur, criteres, options = {}) {
       .filter((valeur) => Number.isFinite(valeur));
     const moyenne = valeurs.length ? valeurs.reduce((somme, valeur) => somme + valeur, 0) / valeurs.length : 0;
     caseMoyenne.textContent = valeurs.length
-      ? formater(moyenne, 1) + " sur 4 (" + valeurs.length + " critère(s) noté(s))"
+      ? formater(moyenne, 1) + " sur 4 (" + accord(valeurs.length, "critère noté", "critères notés") + ")"
       : "non renseignée";
     jaugeMoyenne.style.width = (moyenne / 4) * 100 + "%";
 
     const etat = scores || calculerScores(ctx);
     caseExercices.textContent = etat.exercices.tentes
-      ? etat.exercices.justes + " réussi(s) sur " + etat.exercices.tentes + " tenté(s)"
+      ? accord(etat.exercices.justes, "réussi") + " sur " + accord(etat.exercices.tentes, "tenté")
       : "aucun exercice validé";
     caseQuiz.textContent = etat.quiz ? etat.quiz.score + " sur " + etat.quiz.total : "quiz non passé";
   }
@@ -1765,8 +1769,8 @@ function lireCouleurs() {
     grille: valeur("--sim-grille", "rgba(0,0,0,0.1)"),
     axe: valeur("--sim-axe", "rgba(0,0,0,0.45)"),
     texte: valeur("--sim-texte", "#4c5878"),
-    accent: valeur("--accent", "#0b53d8"),
-    accent2: valeur("--accent-2", "#9a5300"),
+    accent: valeur("--cuivre", "#9c5420"),
+    accent2: valeur("--cyan", "#0d6d8c"),
     series: [
       valeur("--serie-1", "#0b53d8"),
       valeur("--serie-2", "#c2410c"),
@@ -1776,6 +1780,23 @@ function lireCouleurs() {
       valeur("--serie-6", "#0e7490"),
     ],
   };
+}
+
+/**
+ * Résout la couleur d'une série : un nom "serie-3" renvoie vers la palette du
+ * thème et suit donc la bascule clair et sombre, une valeur libre est reprise
+ * telle quelle, et l'absence de valeur retombe sur le rang dans la palette.
+ */
+function couleurSerie(valeur, couleurs, rang) {
+  if (typeof valeur === "string" && valeur) {
+    const correspondance = valeur.match(/^(?:var\(--)?serie-(\d+)\)?$/);
+    if (correspondance) {
+      const index = (Number(correspondance[1]) - 1 + couleurs.series.length) % couleurs.series.length;
+      return couleurs.series[index];
+    }
+    return valeur;
+  }
+  return couleurs.series[(rang || 0) % couleurs.series.length];
 }
 
 function cadreSimulation(ctx, conteneur, options = {}) {
@@ -1857,7 +1878,7 @@ function cadreSimulation(ctx, conteneur, options = {}) {
       });
     } catch (erreur) {
       c.fillStyle = etat.couleurs.texte;
-      c.font = "13px system-ui, sans-serif";
+      c.font = "13px " + POLICE_TRACE;
       c.fillText("Tracé indisponible.", 12, 22);
     }
     c.restore();
@@ -1951,7 +1972,7 @@ function cadreSimulation(ctx, conteneur, options = {}) {
         legende.appendChild(
           creer("span", {
             attributs: { style: "color:" + entree.couleur },
-            enfants: [creer("i"), creer("span", { texte: entree.nom, attributs: { style: "color:var(--texte-doux)" } })],
+            enfants: [creer("i"), creer("span", { texte: entree.nom, attributs: { style: "color:var(--encre-2)" } })],
           })
         );
       }
@@ -2007,9 +2028,16 @@ function pasJoli(etendue, nombreCible) {
   return facteur * Math.pow(10, exposant);
 }
 
+function decimalesPour(pas) {
+  if (!Number.isFinite(pas) || pas <= 0) return 0;
+  if (pas >= 10) return 0;
+  if (pas >= 1) return Number.isInteger(pas) ? 0 : 1;
+  return Math.min(4, Math.ceil(-Math.log10(pas)));
+}
+
 function etiquetteGraduation(valeur, pas) {
   if (Math.abs(valeur) < pas / 1000) return "0";
-  const decimales = pas >= 1 ? 0 : Math.min(4, Math.ceil(-Math.log10(pas)));
+  const decimales = decimalesPour(pas);
   const abs = Math.abs(valeur);
   if (abs >= 1e5 || (abs > 0 && abs < 1e-3)) return valeur.toExponential(1).replace(".", ",");
   return valeur.toFixed(decimales).replace(".", ",");
@@ -2047,7 +2075,7 @@ function tracerRepere(c, largeur, hauteur, couleurs, options) {
   const versY = (valeur) => boite.y + boite.h - ((valeur - yMin) / (yMax - yMin || 1)) * boite.h;
 
   c.save();
-  c.font = "11px " + (options.police || "ui-monospace, monospace");
+  c.font = "11px " + (options.police || POLICE_TRACE);
   c.textBaseline = "middle";
   c.lineWidth = 1;
 
@@ -2121,7 +2149,7 @@ function tracerRepere(c, largeur, hauteur, couleurs, options) {
 
   /* Titres d'axes */
   c.fillStyle = couleurs.texte;
-  c.font = "11px " + (options.police || "ui-monospace, monospace");
+  c.font = "11px " + (options.police || POLICE_TRACE);
   if (options.xTitre) {
     c.textAlign = "right";
     c.fillText(options.xTitre + (options.xUnite ? " [" + options.xUnite + "]" : ""), boite.x + boite.l, hauteur - 6);
@@ -2351,7 +2379,7 @@ function simTraceur(ctx, conteneur, options = {}) {
         graduationsY: options.graduationsY,
       });
       series.forEach((serie, index) => {
-        const couleur = serie.couleur || couleurs.series[index % couleurs.series.length];
+        const couleur = couleurSerie(serie.couleur, couleurs, index);
         tracerCourbe(c, serie.points, repere.versX, repere.versY, repere.boite, couleur, serie.epaisseur);
       });
       if (typeof options.surDessin === "function") {
@@ -2370,7 +2398,7 @@ function simTraceur(ctx, conteneur, options = {}) {
     controle.definirLegende(
       series.map((serie, index) => ({
         nom: serie.nom,
-        couleur: serie.couleur || couleurs.series[index % couleurs.series.length],
+        couleur: couleurSerie(serie.couleur, couleurs, index),
       }))
     );
   }
@@ -2482,7 +2510,7 @@ function simOscilloscope(ctx, conteneur, options = {}) {
 
       /* Étiquettes */
       c.fillStyle = couleurs.texte;
-      c.font = "11px ui-monospace, monospace";
+      c.font = "11px " + POLICE_TRACE;
       c.textAlign = "right";
       c.textBaseline = "middle";
       for (let i = 0; i <= divisionsY; i += 2) {
@@ -2500,7 +2528,7 @@ function simOscilloscope(ctx, conteneur, options = {}) {
       /* Tracés */
       const echantillons = Math.max(160, Math.round(boite.l));
       voies.forEach((voie, index) => {
-        const couleur = voie.couleur || couleurs.series[index % couleurs.series.length];
+        const couleur = couleurSerie(voie.couleur, couleurs, index);
         const points = [];
         for (let i = 0; i <= echantillons; i += 1) {
           const t = tDebut + (fenetre * i) / echantillons;
@@ -2566,7 +2594,7 @@ function simOscilloscope(ctx, conteneur, options = {}) {
   controle.definirLegende(
     voies.map((voie, index) => ({
       nom: voie.nom + (voie.unite ? " [" + voie.unite + "]" : ""),
-      couleur: voie.couleur || couleurs.series[index % couleurs.series.length],
+      couleur: couleurSerie(voie.couleur, couleurs, index),
     }))
   );
 
@@ -2661,14 +2689,14 @@ function simFresnel(ctx, conteneur, options = {}) {
       c.lineTo(centre.x, centre.y + rayon + 10);
       c.stroke();
       c.fillStyle = couleurs.texte;
-      c.font = "11px ui-monospace, monospace";
+      c.font = "11px " + POLICE_TRACE;
       c.textAlign = "center";
       c.textBaseline = "middle";
       for (const marque of [
-        { texte: "0", x: centre.x + rayon + 16, y: centre.y },
-        { texte: "90", x: centre.x, y: centre.y - rayon - 16 },
-        { texte: "180", x: centre.x - rayon - 20, y: centre.y },
-        { texte: "270", x: centre.x, y: centre.y + rayon + 16 },
+        { texte: "0\u00b0", x: centre.x + rayon + 18, y: centre.y },
+        { texte: "90\u00b0", x: centre.x, y: centre.y - rayon - 16 },
+        { texte: "180\u00b0", x: centre.x - rayon - 22, y: centre.y },
+        { texte: "270\u00b0", x: centre.x, y: centre.y + rayon + 16 },
       ]) {
         c.fillText(marque.texte, marque.x, marque.y);
       }
@@ -2705,7 +2733,7 @@ function simFresnel(ctx, conteneur, options = {}) {
       let sommeRe = 0;
       let sommeIm = 0;
       vecteurs.forEach((vecteur, index) => {
-        const couleur = vecteur.couleur || couleurs.series[index % couleurs.series.length];
+        const couleur = couleurSerie(vecteur.couleur, couleurs, index);
         const theta = angle + (vecteur.phase * Math.PI) / 180;
         const dx = vecteur.amplitude * echelle * Math.cos(theta);
         const dy = -vecteur.amplitude * echelle * Math.sin(theta);
@@ -2714,7 +2742,7 @@ function simFresnel(ctx, conteneur, options = {}) {
         fleche(dx, dy, couleur, 2.4, vecteur.pointille);
         c.save();
         c.fillStyle = couleur;
-        c.font = "600 11px ui-monospace, monospace";
+        c.font = "500 11px " + POLICE_TRACE;
         c.textAlign = dx >= 0 ? "left" : "right";
         c.textBaseline = dy >= 0 ? "top" : "bottom";
         c.fillText(vecteur.nom, centre.x + dx * 1.06 + (dx >= 0 ? 4 : -4), centre.y + dy * 1.06);
@@ -2724,10 +2752,10 @@ function simFresnel(ctx, conteneur, options = {}) {
       if (options.somme) {
         const module = Math.hypot(sommeRe, sommeIm);
         const theta = Math.atan2(sommeIm, sommeRe);
-        fleche(module * echelle * Math.cos(theta), -module * echelle * Math.sin(theta), couleurs.accent2, 3, false);
+        fleche(module * echelle * Math.cos(theta), -module * echelle * Math.sin(theta), couleurs.accent, 3, false);
         c.save();
-        c.fillStyle = couleurs.accent2;
-        c.font = "600 11px ui-monospace, monospace";
+        c.fillStyle = couleurs.accent;
+        c.font = "500 11px " + POLICE_TRACE;
         c.textAlign = "left";
         c.fillText(options.nomSomme || "somme", centre.x + module * echelle * Math.cos(theta) + 5, centre.y - module * echelle * Math.sin(theta) - 8);
         c.restore();
@@ -2748,7 +2776,7 @@ function simFresnel(ctx, conteneur, options = {}) {
         c.lineTo(boite.x + boite.l, boite.y + boite.h / 2);
         c.stroke();
         c.fillStyle = couleurs.texte;
-        c.font = "10px ui-monospace, monospace";
+        c.font = "10px " + POLICE_TRACE;
         c.textAlign = "left";
         c.textBaseline = "bottom";
         c.fillText("projections instantanées", boite.x + 4, boite.y + boite.h + 14);
@@ -2756,7 +2784,7 @@ function simFresnel(ctx, conteneur, options = {}) {
 
         const tours = 1.25;
         vecteurs.forEach((vecteur, index) => {
-          const couleur = vecteur.couleur || couleurs.series[index % couleurs.series.length];
+          const couleur = couleurSerie(vecteur.couleur, couleurs, index);
           c.save();
           c.beginPath();
           c.rect(boite.x, boite.y, boite.l, boite.h);
@@ -2790,12 +2818,12 @@ function simFresnel(ctx, conteneur, options = {}) {
           " : " +
           formater(vecteur.amplitude, 2) +
           (vecteur.unite ? " " + vecteur.unite : "") +
-          " a " +
+          " à " +
           formater(vecteur.phase, 1) +
-          " degres",
-        couleur: vecteur.couleur || couleurs.series[index % couleurs.series.length],
+          " degrés",
+        couleur: couleurSerie(vecteur.couleur, couleurs, index),
       }))
-      .concat(options.somme ? [{ nom: options.nomSomme || "somme vectorielle", couleur: couleurs.accent2 }] : [])
+      .concat(options.somme ? [{ nom: options.nomSomme || "somme vectorielle", couleur: couleurs.accent }] : [])
   );
 
   if (tourne) {
@@ -2825,12 +2853,12 @@ function simFresnel(ctx, conteneur, options = {}) {
               " : " +
               formater(element.amplitude, 2) +
               (element.unite ? " " + element.unite : "") +
-              " a " +
+              " à " +
               formater(element.phase, 1) +
-              " degres",
-            couleur: element.couleur || couleursActuelles.series[index % couleursActuelles.series.length],
+              " degrés",
+            couleur: couleurSerie(element.couleur, couleursActuelles, index),
           }))
-          .concat(options.somme ? [{ nom: options.nomSomme || "somme vectorielle", couleur: couleursActuelles.accent2 }] : [])
+          .concat(options.somme ? [{ nom: options.nomSomme || "somme vectorielle", couleur: couleursActuelles.accent }] : [])
       );
       controle.demanderRendu();
     },
@@ -2922,7 +2950,7 @@ function simBode(ctx, conteneur, options = {}) {
       tracerCourbe(c, courbes.gains, repereGain.versX, repereGain.versY, repereGain.boite, couleurs.series[0], 2.2);
       if (coupure) {
         const x = repereGain.versX(coupure);
-        c.strokeStyle = couleurs.accent2;
+        c.strokeStyle = couleurs.accent;
         c.setLineDash([5, 4]);
         c.lineWidth = 1.4;
         c.beginPath();
@@ -2930,8 +2958,8 @@ function simBode(ctx, conteneur, options = {}) {
         c.lineTo(x, repereGain.boite.y + repereGain.boite.h);
         c.stroke();
         c.setLineDash([]);
-        c.fillStyle = couleurs.accent2;
-        c.font = "10px ui-monospace, monospace";
+        c.fillStyle = couleurs.accent;
+        c.font = "10px " + POLICE_TRACE;
         c.textAlign = "left";
         c.fillText(options.libelleCoupure || "fc", x + 4, repereGain.boite.y + 12);
       }
@@ -2952,10 +2980,10 @@ function simBode(ctx, conteneur, options = {}) {
         yUnite: "degrés",
         graduationsY: 4,
       });
-      tracerCourbe(c, courbes.phases, reperePhase.versX, reperePhase.versY, reperePhase.boite, couleurs.series[1], 2.2);
+      tracerCourbe(c, courbes.phases, reperePhase.versX, reperePhase.versY, reperePhase.boite, couleurs.series[3], 2.2);
       if (coupure) {
         const x = reperePhase.versX(coupure);
-        c.strokeStyle = couleurs.accent2;
+        c.strokeStyle = couleurs.accent;
         c.setLineDash([5, 4]);
         c.lineWidth = 1.4;
         c.beginPath();
@@ -2972,7 +3000,7 @@ function simBode(ctx, conteneur, options = {}) {
   const couleurs = controle.couleurs();
   controle.definirLegende([
     { nom: "Gain [dB]", couleur: couleurs.series[0] },
-    { nom: "Phase [degrés]", couleur: couleurs.series[1] },
+    { nom: "Phase [degrés]", couleur: couleurs.series[3] },
   ]);
 
   return {
@@ -3027,7 +3055,7 @@ function simSpectre(ctx, conteneur, options = {}) {
 
       /* Grille horizontale et graduations */
       c.save();
-      c.font = "11px ui-monospace, monospace";
+      c.font = "11px " + POLICE_TRACE;
       c.textBaseline = "middle";
       const pas = pasJoli(maximum, 4);
       c.strokeStyle = couleurs.grille;
@@ -3054,7 +3082,7 @@ function simSpectre(ctx, conteneur, options = {}) {
       const largeurCase = boite.l / nombre;
       const largeurBarre = Math.max(4, Math.min(38, largeurCase * 0.56));
       barres.forEach((barre, index) => {
-        const couleur = barre.couleur || couleurs.series[0];
+        const couleur = couleurSerie(barre.couleur, couleurs, 0);
         const centre = boite.x + largeurCase * (index + 0.5);
         const haut = versY(Math.abs(barre.valeur));
         c.fillStyle = couleur;
@@ -3177,6 +3205,7 @@ export function creerMoteur(contexte = {}) {
     },
 
     util: {
+      accord,
       creer,
       formater,
       lireNombre,

@@ -19,6 +19,11 @@ Les bibliothèques externes sont chargées depuis `cdn.jsdelivr.net` avec des ve
 GSAP 3.12.5 et ScrollTrigger, Lenis 1.1.14, KaTeX 0.16.11 avec son rendu automatique, Mermaid 10.9.1.
 Si l'une d'elles est inaccessible, le site reste lisible et navigable.
 
+Typographie : Instrument Serif pour les titres, Poppins pour le texte des cours et l'interface,
+JetBrains Mono pour les grandeurs, les unités et les étiquettes techniques. Les formules sont rendues
+par KaTeX avec ses propres polices mathématiques. Les icônes sont dessinées dans `assets/js/icones.js`,
+sur une grille de 24 par 24 et une graisse de trait unique.
+
 ## Structure du dépôt
 
 ```
@@ -26,6 +31,7 @@ index.html                     coquille unique du site
 assets/css/site.css            thème clair et sombre, mise en page, composants
 assets/js/app.js               navigation, routage par hash, chargement des cours, Lenis, GSAP
 assets/js/moteur.js            bibliothèque partagée : exercices, quiz, cartes, simulations
+assets/js/icones.js            registre d'icônes du site, dessinées sur une grille de 24
 cours/<slug>/contenu.html      texte d'une séance, fragment HTML
 cours/<slug>/cours.js          partie interactive de la séance
 cours/_demo/                   démonstration du moteur, non listée au sommaire
@@ -122,13 +128,16 @@ Les cours sont toujours présentés par leur titre.
 | `api.sim.spectre(conteneur, options)` | spectre en barres |
 | `api.stockage.lire / ecrire / effacer` | mémoire locale propre au cours |
 | `api.util.formater / lireNombre / normaliser` | utilitaires de calcul et de comparaison |
+| `api.util.icone(nom)` | icône du registre commun |
 
 Règle commune aux exercices : la correction reste masquée jusqu'à une tentative ou un clic explicite sur
 "Voir la correction". Elle est ensuite révélée étape par étape, et chaque exercice accepte une fonction
 `visuelCorrection(conteneur, api)` pour ajouter un tracé, un schéma annoté ou un phaseur animé.
 
 Toutes les simulations s'adaptent au redimensionnement et au thème, se mettent en pause hors de l'écran
-et exposent une méthode `detruire()`.
+et exposent une méthode `detruire()`. Une couleur de courbe peut être donnée en clair, par exemple
+`"#0d6d8c"`, ou par son rang dans la palette du thème, par exemple `"serie-4"`, auquel cas elle suit la
+bascule entre le thème clair et le thème sombre.
 
 La page `#/demo` montre l'ensemble de ces composants en fonctionnement sur un circuit RC. Elle sert de
 test du moteur et de modèle pour la rédaction d'un nouveau cours.
@@ -153,7 +162,8 @@ international, séparateur décimal français dans les textes, notation anglo-sa
 
 ## Accessibilité
 
-Thème clair et sombre avec bascule, respect de `prefers-reduced-motion` (animations réduites et défilement
-fluide désactivé), navigation complète au clavier, palette de recherche par `Ctrl+K`, mise en page sans
-défilement horizontal dès 360 pixels de large. La mémorisation locale est facultative : le site reste
-pleinement fonctionnel lorsque le stockage du navigateur est refusé.
+Thème clair et sombre avec bascule à trois états (automatique, clair, sombre), respect de
+`prefers-reduced-motion` (animations réduites et défilement fluide désactivé), navigation complète au
+clavier, palette de recherche par `Ctrl+K`, mise en page sans défilement horizontal dès 360 pixels de
+large. La mémorisation locale est facultative : le site reste pleinement fonctionnel lorsque le stockage
+du navigateur est refusé.

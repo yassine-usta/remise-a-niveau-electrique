@@ -157,7 +157,7 @@ export async function init(racine, api) {
           const y = repere.versY(cible);
           c.save();
           c.setLineDash([5, 4]);
-          c.strokeStyle = couleurs.accent2;
+          c.strokeStyle = couleurs.accent;
           c.lineWidth = 1.5;
           c.beginPath();
           c.moveTo(repere.boite.x, y);
@@ -165,13 +165,13 @@ export async function init(racine, api) {
           c.lineTo(x, repere.boite.y + repere.boite.h);
           c.stroke();
           c.setLineDash([]);
-          c.fillStyle = couleurs.accent2;
+          c.fillStyle = couleurs.accent;
           c.beginPath();
           c.arc(x, y, 4.5, 0, Math.PI * 2);
           c.fill();
-          c.font = "600 11px ui-monospace, monospace";
+          c.font = "500 11px 'JetBrains Mono', ui-monospace, monospace";
           c.textAlign = "left";
-          c.fillText("10,38 V a 2 ms", x + 8, y - 8);
+          c.fillText("10,38 V à 2 ms", x + 8, y - 8);
           c.restore();
         },
       });
@@ -349,8 +349,8 @@ export async function init(racine, api) {
   const fresnel = api.sim.fresnel("#demo-fresnel", {
     titre: "Tensions partielles en régime sinusoïdal",
     vecteurs: [
-      { id: "ur", nom: "U_R", amplitude: 0.707, phase: 45, unite: "V" },
-      { id: "uc", nom: "U_C", amplitude: 0.707, phase: -45, unite: "V" },
+      { id: "ur", nom: "U_R", amplitude: 0.707, phase: 45, unite: "V", couleur: "serie-1" },
+      { id: "uc", nom: "U_C", amplitude: 0.707, phase: -45, unite: "V", couleur: "serie-4" },
     ],
     somme: true,
     nomSomme: "somme",
@@ -421,7 +421,7 @@ export async function init(racine, api) {
       fresnel.definirVecteur("ur", { amplitude: moduleUr, phase: phaseDeg + 90 });
       fresnel.definirMesures([
         { nom: "Gain à la fréquence d'essai", valeur: api.util.formater(20 * Math.log10(reponse.gain), 2) + " dB" },
-        { nom: "Déphasage", valeur: api.util.formater(phaseDeg, 1) + " degrés" },
+        { nom: "Déphasage", valeur: api.util.formater(phaseDeg, 1) + "\u00b0" },
       ]);
 
       /* Bode */

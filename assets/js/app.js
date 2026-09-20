@@ -7,7 +7,8 @@
    Le site reste utilisable si une bibliothèque externe manque à l'appel.
    ========================================================================== */
 
-import { creerMoteur } from "./moteur.js";
+import { creerMoteur, accord } from "./moteur.js";
+import { icone } from "./icones.js";
 
 const BASE = new URL(".", document.baseURI);
 const TOTAL_JOURS = 90;
@@ -50,8 +51,9 @@ const dom = {
   annonce: document.getElementById("annonce"),
   grilleModules: document.getElementById("grille-modules"),
   dernierCours: document.getElementById("dernier-cours"),
-  anneauArc: document.getElementById("anneau-arc"),
-  anneauNombre: document.getElementById("anneau-nombre"),
+  compteurNombre: document.getElementById("compteur-nombre"),
+  compteurLegende: document.getElementById("compteur-legende"),
+  reglette: document.getElementById("reglette"),
   progressionPhrase: document.getElementById("progression-phrase"),
   statPublies: document.getElementById("stat-publies"),
   statModules: document.getElementById("stat-modules"),
@@ -343,16 +345,12 @@ function indexDe(slug) {
 
 function construireAccueil() {
   const publies = etat.sommaire.length;
-  const ratio = Math.min(1, publies / TOTAL_JOURS);
 
-  if (dom.anneauNombre) dom.anneauNombre.textContent = String(publies);
-  if (dom.anneauArc) {
-    const circonference = 2 * Math.PI * 52;
-    dom.anneauArc.style.strokeDasharray = String(circonference);
-    dom.anneauArc.style.strokeDashoffset = String(circonference * (1 - ratio));
+  if (dom.compteurNombre) dom.compteurNombre.textContent = String(publies);
+  if (dom.compteurLegende) {
+    dom.compteurLegende.textContent = (publies > 1 ? "séances publiées" : "séance publiée") + " sur " + TOTAL_JOURS;
   }
-  const anneau = document.getElementById("anneau-progression");
-  if (anneau) anneau.setAttribute("aria-label", publies + " cours publiés sur " + TOTAL_JOURS);
+  construireReglette(publies);
 
   const modulesOuverts = etat.modules.filter((module) => coursDuModule(module).length > 0).length;
   const lus = etat.sommaire.filter((entree) => etat.lus.has(entree.slug));
@@ -369,7 +367,7 @@ function construireAccueil() {
     dom.progressionPhrase.textContent = publies
       ? publies === TOTAL_JOURS
         ? "Le parcours est complet : les 90 séances sont publiées."
-        : "Le parcours avance : " + publies + " séance(s) disponible(s), la suivante arrive ce soir."
+        : "Le parcours avance : " + accord(publies, "séance disponible", "séances disponibles") + ", la suivante arrive ce soir."
       : "Le premier cours arrive ce soir.";
   }
   if (dom.navigationCompteur) {
@@ -393,15 +391,27 @@ function construireAccueil() {
   }
 }
 
+/** Réglette des 90 séances : un trait par jour, allumé une fois la séance publiée. */
+function construireReglette(publies) {
+  if (!dom.reglette) return;
+  dom.reglette.textContent = "";
+  for (let jour = 1; jour <= TOTAL_JOURS; jour += 1) {
+    const trait = document.createElement("i");
+    if (jour % 10 === 0) trait.className = "decade";
+    if (jour <= publies) trait.className = "faite";
+    else if (jour === publies + 1) trait.className = "prochaine";
+    dom.reglette.appendChild(trait);
+  }
+  dom.reglette.setAttribute(
+    "aria-label",
+    accord(publies, "séance publiée", "séances publiées") +
+      " sur " + TOTAL_JOURS +
+      ", la suivante est le jour " + Math.min(publies + 1, TOTAL_JOURS)
+  );
+}
+
 function fleche() {
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("viewBox", "0 0 24 24");
-  svg.setAttribute("aria-hidden", "true");
-  svg.setAttribute("focusable", "false");
-  const trace = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  trace.setAttribute("d", "M5 12h13M13 6l6 6-6 6");
-  svg.appendChild(trace);
-  return svg;
+  return icone("fleche", { taille: 17 });
 }
 
 function construireDernierCours() {
@@ -509,7 +519,7 @@ function construireCartesModules() {
       if (cours.length > 4) {
         const surplus = document.createElement("li");
         surplus.className = "surplus";
-        surplus.textContent = "et " + (cours.length - 4) + " autre(s) séance(s)";
+        surplus.textContent = "et " + accord(cours.length - 4, "autre séance", "autres séances");
         liste.appendChild(surplus);
       }
       carte.appendChild(liste);
@@ -544,13 +554,7 @@ function construireNavigation() {
     if (cours.length) bloc.open = true;
 
     const resume = document.createElement("summary");
-    const chevron = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    chevron.setAttribute("viewBox", "0 0 24 24");
-    chevron.setAttribute("class", "chevron");
-    chevron.setAttribute("aria-hidden", "true");
-    const trace = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    trace.setAttribute("d", "M9 6l6 6-6 6");
-    chevron.appendChild(trace);
+    const chevron = icone("chevron", { taille: 14, classe: "chevron" });
     const nom = document.createElement("span");
     nom.textContent = module.titre;
     const compte = document.createElement("span");
@@ -1030,7 +1034,7 @@ function construirePlan(article, plan, entree) {
 
   const avancement = document.createElement("p");
   avancement.className = "cours-plan-progression";
-  avancement.textContent = sections.length + " sections";
+  avancement.textContent = accord(sections.length, "section");
   plan.appendChild(avancement);
 
   const outils = document.createElement("div");
@@ -1041,14 +1045,15 @@ function construirePlan(article, plan, entree) {
   boutonLu.className = "bouton-fin";
   const lu = etat.lus.has(entree.slug);
   boutonLu.setAttribute("aria-pressed", lu ? "true" : "false");
-  boutonLu.textContent = lu ? "Cours lu" : "Marquer comme lu";
+  boutonLu.append(icone("coche_cercle", { taille: 15 }), document.createTextNode(lu ? "Cours lu" : "Marquer comme lu"));
   boutonLu.addEventListener("click", () => {
     const deja = etat.lus.has(entree.slug);
     if (deja) etat.lus.delete(entree.slug);
     else etat.lus.add(entree.slug);
     ecrireLocal("lus", Array.from(etat.lus));
     boutonLu.setAttribute("aria-pressed", deja ? "false" : "true");
-    boutonLu.textContent = deja ? "Marquer comme lu" : "Cours lu";
+    boutonLu.textContent = "";
+    boutonLu.append(icone("coche_cercle", { taille: 15 }), document.createTextNode(deja ? "Marquer comme lu" : "Cours lu"));
     annoncer(deja ? "Cours retiré des lectures faites." : "Cours marqué comme lu.");
     construireAccueil();
   });
@@ -1057,7 +1062,7 @@ function construirePlan(article, plan, entree) {
   const boutonHaut = document.createElement("button");
   boutonHaut.type = "button";
   boutonHaut.className = "bouton-fin";
-  boutonHaut.textContent = "Revenir en haut";
+  boutonHaut.append(icone("fleche_haut", { taille: 15 }), document.createTextNode("Revenir en haut"));
   boutonHaut.addEventListener("click", () => remonter());
   outils.appendChild(boutonHaut);
 
@@ -1082,7 +1087,9 @@ function construirePagination(entree) {
     if (cible) element.href = "#/cours/" + cible.slug;
     const marque = document.createElement("span");
     marque.className = "sens";
-    marque.textContent = libelle;
+    if (sens === "precedent") marque.appendChild(icone("fleche_gauche", { taille: 14 }));
+    marque.appendChild(document.createTextNode(libelle));
+    if (sens === "suivant") marque.appendChild(icone("fleche", { taille: 14 }));
     const titre = document.createElement("span");
     titre.className = "titre";
     titre.textContent = cible ? cible.titre : sens === "precedent" ? "Début du parcours" : "Prochaine séance à venir";
@@ -1318,88 +1325,121 @@ async function router() {
    Animations de la page d'accueil
    -------------------------------------------------------------------------- */
 
-function tracerSinus() {
-  const trace = document.getElementById("heros-sinus");
-  if (!trace) return;
-  const points = [];
-  const largeur = 1200;
-  const milieu = 688;
-  for (let x = 0; x <= largeur; x += 8) {
-    const y = milieu - 32 * Math.sin((x / largeur) * Math.PI * 6);
-    points.push((x === 0 ? "M" : "L") + x + " " + y.toFixed(1));
+/** Prépare les tracés de la planche pour une apparition au dessin. */
+function preparerPlanche() {
+  const traits = Array.from(document.querySelectorAll(".planche .trait-anime"));
+  const longueurs = [];
+  for (const trait of traits) {
+    let longueur = 0;
+    try {
+      longueur = trait.getTotalLength();
+    } catch (erreur) {
+      longueur = 0;
+    }
+    if (!longueur) continue;
+    trait.style.strokeDasharray = String(longueur);
+    trait.style.strokeDashoffset = String(longueur);
+    longueurs.push({ trait, longueur });
   }
-  trace.setAttribute("d", points.join(" "));
+  return longueurs;
 }
 
 function animerAccueil() {
-  tracerSinus();
   const gsap = globalThis.gsap;
   if (!gsap || mouvementReduit) return;
   const ScrollTrigger = globalThis.ScrollTrigger;
 
   const ligneTemps = gsap.timeline({ defaults: { ease: "power3.out" } });
   ligneTemps
-    .from("#heros-etiquette", { opacity: 0, y: 14, duration: 0.5 })
-    .from(".mot-anime", { opacity: 0, y: 26, duration: 0.7, stagger: 0.09 }, "-=0.2")
-    .from(".heros-texte", { opacity: 0, y: 18, duration: 0.6 }, "-=0.35")
-    .from(".heros-actions > *", { opacity: 0, y: 14, duration: 0.5, stagger: 0.08 }, "-=0.3");
+    .from(".heros-sur-titre", { opacity: 0, y: 12, duration: 0.5 })
+    .from("#titre-accueil", { opacity: 0, y: 26, duration: 0.85 }, "-=0.25")
+    .from(".heros-accroche", { opacity: 0, y: 16, duration: 0.7 }, "-=0.55")
+    .from(".heros-actions > *", { opacity: 0, y: 12, duration: 0.5, stagger: 0.07 }, "-=0.45")
+    .from(".heros-chiffres > div", { opacity: 0, y: 10, duration: 0.45, stagger: 0.06 }, "-=0.35")
+    .from(".planche", { opacity: 0, y: 24, duration: 0.9 }, 0.1);
 
-  const traits = document.querySelectorAll(".trait-flux");
-  if (traits.length) {
-    ligneTemps.to(traits, { strokeDashoffset: 0, duration: 1.5, stagger: 0.12, ease: "power2.inOut" }, 0.15);
+  /* Tracé progressif du schéma, puis impulsions le long des liaisons. */
+  const traces = preparerPlanche();
+  if (traces.length) {
+    ligneTemps.to(
+      traces.map((entree) => entree.trait),
+      { strokeDashoffset: 0, duration: 1.3, stagger: 0.1, ease: "power2.inOut" },
+      0.35
+    );
   }
+  gsap.from(".planche .organe, .planche .organe-trait, .planche .annotation, .planche .cote", {
+    opacity: 0,
+    duration: 0.7,
+    stagger: 0.03,
+    delay: 0.45,
+    ease: "power2.out",
+  });
 
-  const impulsions = document.querySelectorAll(".impulsion");
+  const impulsions = document.querySelectorAll(".planche .impulsion");
   impulsions.forEach((impulsion, index) => {
-    gsap.set(impulsion, { strokeDashoffset: 1026 });
+    let longueur = 0;
+    try {
+      longueur = impulsion.getTotalLength();
+    } catch (erreur) {
+      longueur = 0;
+    }
+    if (!longueur) return;
+    gsap.set(impulsion, { strokeDasharray: "14 " + longueur, strokeDashoffset: longueur + 14, opacity: 1 });
     gsap.to(impulsion, {
-      strokeDashoffset: -26,
-      duration: 2.6 + index * 0.35,
+      strokeDashoffset: -14,
+      duration: 1.5,
       repeat: -1,
-      delay: 1 + index * 0.5,
+      repeatDelay: 1.1,
+      delay: 1.6 + index * 0.45,
       ease: "none",
     });
   });
 
-  gsap.to("#heros-sinus", { attr: { "stroke-dashoffset": 0 }, duration: 2, ease: "none" });
-
-  const halos = document.querySelectorAll(".halo");
-  if (halos.length) {
-    gsap.to(halos, { scale: 1.12, opacity: 0.4, duration: 3.4, repeat: -1, yoyo: true, ease: "sine.inOut", transformOrigin: "center" });
-  }
-
   if (!ScrollTrigger) return;
 
-  gsap.utils.toArray(".bloc .titre-section").forEach((titre) => {
-    gsap.from(titre, {
+  gsap.utils.toArray(".bloc .section-tete").forEach((tete) => {
+    gsap.from(tete, {
       opacity: 0,
-      x: -16,
+      y: 14,
       duration: 0.6,
       ease: "power2.out",
-      scrollTrigger: { trigger: titre, start: "top 88%", once: true },
+      scrollTrigger: { trigger: tete, start: "top 90%", once: true },
     });
   });
+
+  const reglette = document.getElementById("reglette");
+  if (reglette && reglette.children.length) {
+    gsap.from(reglette.children, {
+      scaleY: 0.2,
+      opacity: 0,
+      transformOrigin: "bottom",
+      duration: 0.5,
+      stagger: 0.008,
+      ease: "power2.out",
+      scrollTrigger: { trigger: reglette, start: "top 92%", once: true },
+    });
+  }
+
+  const cadre = document.querySelector(".tableau-bord");
+  if (cadre) {
+    gsap.from(cadre, {
+      opacity: 0,
+      y: 18,
+      duration: 0.7,
+      ease: "power2.out",
+      scrollTrigger: { trigger: cadre, start: "top 90%", once: true },
+    });
+  }
 
   const cartes = gsap.utils.toArray(".carte-module, .carte-methode");
   if (cartes.length) {
     gsap.from(cartes, {
       opacity: 0,
-      y: 22,
+      y: 18,
       duration: 0.55,
-      stagger: 0.05,
+      stagger: 0.04,
       ease: "power2.out",
-      scrollTrigger: { trigger: dom.grilleModules || cartes[0], start: "top 86%", once: true },
-    });
-  }
-
-  const cadre = document.querySelector(".progression-cadre");
-  if (cadre) {
-    gsap.from(cadre, {
-      opacity: 0,
-      y: 20,
-      duration: 0.6,
-      ease: "power2.out",
-      scrollTrigger: { trigger: cadre, start: "top 88%", once: true },
+      scrollTrigger: { trigger: dom.grilleModules || cartes[0], start: "top 88%", once: true },
     });
   }
 }

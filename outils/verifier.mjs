@@ -189,7 +189,16 @@ for (const nom of dossiers) {
    5. Syntaxe des modules JavaScript
    -------------------------------------------------------------------------- */
 
-const fichiersJs = [chemin("assets/js/app.js"), chemin("assets/js/moteur.js")];
+const dossierScripts = chemin("assets/js");
+const scriptsInterface = existsSync(dossierScripts)
+  ? readdirSync(dossierScripts)
+      .filter((nom) => nom.endsWith(".js"))
+      .sort()
+      .map((nom) => join(dossierScripts, nom))
+  : [];
+verifier(scriptsInterface.length >= 3, "assets/js doit contenir app.js, moteur.js et icones.js.");
+
+const fichiersJs = scriptsInterface.slice();
 for (const nom of dossiers) {
   const fichier = join(dossierCours, nom, "cours.js");
   if (verifier(existsSync(fichier), "Fichier manquant : cours/" + nom + "/cours.js")) fichiersJs.push(fichier);
@@ -219,7 +228,7 @@ for (const fichier of fichiersJs) {
    -------------------------------------------------------------------------- */
 
 function fichiersARelire() {
-  const liste = [chemin("index.html"), chemin("assets/css/site.css"), chemin("assets/js/app.js"), chemin("assets/js/moteur.js")];
+  const liste = [chemin("index.html"), chemin("assets/css/site.css")].concat(scriptsInterface);
   for (const nom of dossiers) {
     for (const fichier of ["contenu.html", "cours.js"]) {
       const absolu = join(dossierCours, nom, fichier);
@@ -263,6 +272,7 @@ for (const attendu of [
   "assets/css/site.css",
   "assets/js/app.js",
   "assets/js/moteur.js",
+  "assets/js/icones.js",
   "cours/_demo/contenu.html",
   "cours/_demo/cours.js",
   ".nojekyll",
