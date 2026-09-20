@@ -9,6 +9,7 @@
 
 import { creerMoteur, accord } from "./moteur.js";
 import { icone } from "./icones.js";
+import { illustration } from "./illustrations.js";
 
 const BASE = new URL(".", document.baseURI);
 const TOTAL_JOURS = 90;
@@ -50,15 +51,15 @@ const dom = {
   paletteResultats: document.getElementById("palette-resultats"),
   annonce: document.getElementById("annonce"),
   grilleModules: document.getElementById("grille-modules"),
+  grilleMethode: document.getElementById("grille-methode"),
+  rail: document.getElementById("rail-modules"),
+  bandeauMesures: document.getElementById("bandeau-mesures"),
+  navigationPied: document.getElementById("navigation-pied"),
   dernierCours: document.getElementById("dernier-cours"),
   compteurNombre: document.getElementById("compteur-nombre"),
   compteurLegende: document.getElementById("compteur-legende"),
   reglette: document.getElementById("reglette"),
   progressionPhrase: document.getElementById("progression-phrase"),
-  statPublies: document.getElementById("stat-publies"),
-  statModules: document.getElementById("stat-modules"),
-  statLus: document.getElementById("stat-lus"),
-  statDuree: document.getElementById("stat-duree"),
   boutonReprendre: document.getElementById("bouton-reprendre"),
 };
 
@@ -91,11 +92,23 @@ function annoncer(message) {
    Thème clair, sombre ou automatique
    -------------------------------------------------------------------------- */
 
-const themes = ["auto", "light", "dark"];
+const themes = ["dark", "light", "auto"];
 const libellesThemes = { auto: "automatique", light: "clair", dark: "sombre" };
 
+/* Quatre teintes, attribuées par rang de module et jamais au hasard. */
+const TEINTES = ["teinte-lavande", "teinte-jaune", "teinte-menthe", "teinte-corail"];
+
+function teinteDe(index) {
+  return TEINTES[((index % TEINTES.length) + TEINTES.length) % TEINTES.length];
+}
+
+function teinteModule(module) {
+  const rang = etat.modules.indexOf(module);
+  return teinteDe(rang >= 0 ? rang : 0);
+}
+
 function themeEffectif() {
-  const choisi = document.documentElement.dataset.theme || "auto";
+  const choisi = document.documentElement.dataset.theme || "dark";
   if (choisi !== "auto") return choisi;
   return typeof matchMedia === "function" && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
@@ -112,11 +125,11 @@ function appliquerTheme(theme) {
 }
 
 function initialiserTheme() {
-  const memorise = lireLocal("theme", "auto");
-  appliquerTheme(themes.includes(memorise) ? memorise : "auto");
+  const memorise = lireLocal("theme", "dark");
+  appliquerTheme(themes.includes(memorise) ? memorise : "dark");
   if (dom.boutonTheme) {
     dom.boutonTheme.addEventListener("click", () => {
-      const courant = document.documentElement.dataset.theme || "auto";
+      const courant = document.documentElement.dataset.theme || "dark";
       appliquerTheme(themes[(themes.indexOf(courant) + 1) % themes.length]);
     });
   }
@@ -124,7 +137,7 @@ function initialiserTheme() {
     const requete = matchMedia("(prefers-color-scheme: dark)");
     if (typeof requete.addEventListener === "function") {
       requete.addEventListener("change", () => {
-        if ((document.documentElement.dataset.theme || "auto") === "auto") {
+        if ((document.documentElement.dataset.theme || "dark") === "auto") {
           document.dispatchEvent(new CustomEvent("rne:theme", { detail: { theme: themeEffectif() } }));
           redessinerMermaid();
         }
@@ -343,25 +356,24 @@ function indexDe(slug) {
    Page d'accueil
    -------------------------------------------------------------------------- */
 
+/** Supprime les ScrollTriggers attachés à des éléments sur le point d'être remplacés. */
+function nettoyerDeclencheurs(conteneur) {
+  const ScrollTrigger = globalThis.ScrollTrigger;
+  if (!ScrollTrigger || typeof ScrollTrigger.getAll !== "function" || !conteneur) return;
+  for (const declencheur of ScrollTrigger.getAll()) {
+    if (declencheur.trigger && conteneur.contains(declencheur.trigger)) declencheur.kill();
+  }
+}
+
 function construireAccueil() {
   const publies = etat.sommaire.length;
-
-  if (dom.compteurNombre) dom.compteurNombre.textContent = String(publies);
-  if (dom.compteurLegende) {
-    dom.compteurLegende.textContent = (publies > 1 ? "séances publiées" : "séance publiée") + " sur " + TOTAL_JOURS;
-  }
-  construireReglette(publies);
-
   const modulesOuverts = etat.modules.filter((module) => coursDuModule(module).length > 0).length;
   const lus = etat.sommaire.filter((entree) => etat.lus.has(entree.slug));
   const minutes = lus.reduce((somme, entree) => somme + (entree.duree_min || 0), 0);
 
-  if (dom.statPublies) dom.statPublies.textContent = publies + " sur " + TOTAL_JOURS;
-  if (dom.statModules) dom.statModules.textContent = modulesOuverts + " sur " + etat.modules.length;
-  if (dom.statLus) dom.statLus.textContent = String(lus.length);
-  if (dom.statDuree) {
-    dom.statDuree.textContent =
-      minutes >= 60 ? Math.floor(minutes / 60) + " h " + (minutes % 60 ? (minutes % 60) + " min" : "") : minutes + " min";
+  if (dom.compteurNombre) dom.compteurNombre.textContent = String(publies);
+  if (dom.compteurLegende) {
+    dom.compteurLegende.textContent = (publies > 1 ? "séances publiées" : "séance publiée") + " sur " + TOTAL_JOURS;
   }
   if (dom.progressionPhrase) {
     dom.progressionPhrase.textContent = publies
@@ -372,13 +384,18 @@ function construireAccueil() {
   }
   if (dom.navigationCompteur) {
     dom.navigationCompteur.textContent = publies
-      ? publies + " cours publié" + (publies > 1 ? "s" : "")
+      ? accord(publies, "cours publié", "cours publiés")
       : "Aucun cours publié";
   }
 
+  construireReglette(publies);
+  construireMesures({ publies, modulesOuverts, lus: lus.length, minutes });
+  construireRail();
   construireDernierCours();
   construireCartesModules();
+  construireMethode();
   construireNavigation();
+  construirePiedNavigation();
 
   if (dom.boutonReprendre) {
     const dernier = etat.sommaire[etat.sommaire.length - 1];
@@ -414,20 +431,159 @@ function fleche() {
   return icone("fleche", { taille: 17 });
 }
 
+/** Quatre cartes de mesures, une teinte chacune. */
+function construireMesures(donnees) {
+  if (!dom.bandeauMesures) return;
+  const heures = Math.floor(donnees.minutes / 60);
+  const reste = donnees.minutes % 60;
+  const cartes = [
+    {
+      teinte: "teinte-jaune",
+      icone: "eclair",
+      libelle: "Cours publiés",
+      valeur: String(donnees.publies),
+      appoint: "sur " + TOTAL_JOURS + " séances",
+    },
+    {
+      teinte: "teinte-lavande",
+      icone: "grille",
+      libelle: "Modules ouverts",
+      valeur: String(donnees.modulesOuverts),
+      appoint: "sur " + etat.modules.length + " modules",
+    },
+    {
+      teinte: "teinte-menthe",
+      icone: "coche_cercle",
+      libelle: "Cours lus",
+      valeur: String(donnees.lus),
+      appoint: donnees.publies ? "sur " + donnees.publies + " disponibles" : "aucun cours encore publié",
+    },
+    {
+      teinte: "teinte-corail",
+      icone: "horloge",
+      libelle: "Temps cumulé",
+      valeur: donnees.minutes >= 60 ? heures + " h" + (reste ? " " + reste : "") : String(donnees.minutes),
+      appoint: donnees.minutes >= 60 ? "de travail" : "minutes de travail",
+    },
+  ];
+
+  dom.bandeauMesures.textContent = "";
+  for (const carte of cartes) {
+    const bloc = document.createElement("div");
+    bloc.className = "mesure-carte " + carte.teinte;
+
+    const sceau = document.createElement("span");
+    sceau.className = "sceau";
+    sceau.setAttribute("aria-hidden", "true");
+    sceau.appendChild(icone(carte.icone, { taille: 16 }));
+
+    const titre = document.createElement("dt");
+    titre.textContent = carte.libelle;
+
+    const valeur = document.createElement("dd");
+    valeur.textContent = carte.valeur;
+    const appoint = document.createElement("span");
+    appoint.className = "appoint";
+    appoint.textContent = " " + carte.appoint;
+    valeur.appendChild(appoint);
+
+    bloc.append(sceau, titre, valeur);
+    dom.bandeauMesures.appendChild(bloc);
+  }
+}
+
+/** Trois cartes du héros : les prochains modules à ouvrir, ou les premiers. */
+function construireRail() {
+  if (!dom.rail) return;
+  dom.rail.textContent = "";
+
+  const candidats = etat.modules
+    .map((module, index) => ({ module, index, cours: coursDuModule(module) }))
+    .filter((entree) => entree.cours.length > 0);
+  const choisis = (candidats.length ? candidats.slice(-3) : etat.modules.slice(0, 3).map((module, index) => ({ module, index, cours: [] })));
+
+  for (const entree of choisis) {
+    const module = entree.module;
+    const cours = entree.cours;
+    const lien = document.createElement("a");
+    lien.className = "carte-pastel " + teinteDe(entree.index);
+    lien.href = cours.length ? "#/cours/" + cours[cours.length - 1].slug : "#modules";
+
+    const tete = document.createElement("div");
+    tete.className = "carte-pastel-tete";
+    const jeton = document.createElement("span");
+    jeton.className = "jeton";
+    jeton.textContent = "Jours " + module.jour_debut + " à " + module.jour_fin;
+    const coin = document.createElement("span");
+    coin.className = "fleche-coin";
+    coin.setAttribute("aria-hidden", "true");
+    coin.appendChild(icone("fleche", { taille: 15 }));
+    tete.append(jeton, coin);
+
+    const titre = document.createElement("h3");
+    titre.textContent = module.titre;
+
+    const texte = document.createElement("p");
+    texte.textContent = cours.length
+      ? accord(cours.length, "séance publiée", "séances publiées") + " dans ce module."
+      : accord(module.jour_fin - module.jour_debut + 1, "séance prévue", "séances prévues") + ", encore à venir.";
+
+    const visuel = document.createElement("div");
+    visuel.className = "carte-pastel-visuel";
+    visuel.appendChild(illustration(module.id));
+
+    lien.append(tete, titre, texte, visuel);
+    dom.rail.appendChild(lien);
+  }
+}
+
 function construireDernierCours() {
   if (!dom.dernierCours) return;
+  dom.dernierCours.textContent = "";
   const dernier = etat.sommaire[etat.sommaire.length - 1];
-  if (!dernier) return;
+
+  if (!dernier) {
+    const vide = document.createElement("div");
+    vide.className = "etat-vide";
+
+    const colonne = document.createElement("div");
+    const etiquette = document.createElement("p");
+    etiquette.className = "etiquette-mono";
+    etiquette.style.color = "var(--sur-pastel-doux)";
+    etiquette.textContent = "Bibliothèque vide";
+    const titre = document.createElement("p");
+    titre.className = "etat-vide-titre";
+    titre.textContent = "Le premier cours arrive ce soir.";
+    const texte = document.createElement("p");
+    texte.className = "etat-vide-texte";
+    texte.textContent =
+      "Le moteur pédagogique, lui, est déjà prêt : exercices corrigés, quiz, cartes de mémorisation et simulations se parcourent dès maintenant sur la page de démonstration.";
+    const lien = document.createElement("a");
+    lien.className = "bouton-primaire";
+    lien.href = "#/demo";
+    lien.textContent = "Ouvrir la démonstration";
+    lien.appendChild(fleche());
+    colonne.append(etiquette, titre, texte, lien);
+
+    const visuel = document.createElement("div");
+    visuel.className = "etat-vide-illus";
+    visuel.appendChild(illustration("fondements-circuits-continus"));
+
+    vide.append(colonne, visuel);
+    dom.dernierCours.appendChild(vide);
+    return;
+  }
 
   const module = moduleDe(dernier);
   const carte = document.createElement("article");
-  carte.className = "carte-mise-en-avant";
+  carte.className = "carte-mise-en-avant " + (module ? teinteModule(module) : "teinte-menthe");
 
+  const colonne = document.createElement("div");
   const meta = document.createElement("div");
   meta.className = "meta";
   if (module) {
     const pastilleModule = document.createElement("span");
-    pastilleModule.className = "pastille pastille-accent";
+    pastilleModule.className = "pastille";
     pastilleModule.textContent = module.titre;
     meta.appendChild(pastilleModule);
   }
@@ -445,35 +601,27 @@ function construireDernierCours() {
   }
   if (etat.lus.has(dernier.slug)) {
     const pastilleLu = document.createElement("span");
-    pastilleLu.className = "pastille pastille-succes";
+    pastilleLu.className = "pastille";
     pastilleLu.textContent = "déjà lu";
     meta.appendChild(pastilleLu);
   }
 
   const titre = document.createElement("h3");
   titre.textContent = dernier.titre;
-
   const resume = document.createElement("p");
   resume.textContent = dernier.resume || "Ouvrez la séance pour en découvrir le contenu.";
-
   const lien = document.createElement("a");
   lien.className = "bouton-primaire";
   lien.href = "#/cours/" + dernier.slug;
   lien.textContent = "Ouvrir le cours";
   lien.appendChild(fleche());
+  colonne.append(meta, titre, resume, lien);
 
-  carte.append(meta, titre, resume, lien);
-  dom.dernierCours.textContent = "";
+  const visuel = document.createElement("div");
+  visuel.appendChild(illustration(module ? module.id : ""));
+
+  carte.append(colonne, visuel);
   dom.dernierCours.appendChild(carte);
-}
-
-/** Supprime les ScrollTriggers attachés à des éléments sur le point d'être remplacés. */
-function nettoyerDeclencheurs(conteneur) {
-  const ScrollTrigger = globalThis.ScrollTrigger;
-  if (!ScrollTrigger || typeof ScrollTrigger.getAll !== "function" || !conteneur) return;
-  for (const declencheur of ScrollTrigger.getAll()) {
-    if (declencheur.trigger && conteneur.contains(declencheur.trigger)) declencheur.kill();
-  }
 }
 
 function construireCartesModules() {
@@ -487,28 +635,28 @@ function construireCartesModules() {
     const avancement = Math.min(1, cours.length / attendus);
 
     const carte = document.createElement("article");
-    carte.className = "carte-module";
-    carte.style.setProperty("--avancement", String(avancement));
+    carte.className = "carte-module " + teinteDe(index);
 
-    const rang = document.createElement("span");
+    const haut = document.createElement("div");
+    haut.className = "carte-module-haut";
+
+    const rang = document.createElement("p");
     rang.className = "carte-module-rang";
-    rang.textContent = "Module " + String(index + 1).padStart(2, "0");
+    const numero = document.createElement("span");
+    numero.textContent = "Module " + String(index + 1).padStart(2, "0");
+    const jours = document.createElement("span");
+    jours.textContent = module.jour_debut + " à " + module.jour_fin;
+    rang.append(numero, jours);
 
     const titre = document.createElement("h3");
     titre.textContent = module.titre;
 
-    const infoEtat = document.createElement("p");
-    infoEtat.className = "carte-module-etat";
-    infoEtat.textContent = cours.length
-      ? cours.length + " cours sur " + attendus + " publié" + (cours.length > 1 ? "s" : "")
-      : "à venir, " + attendus + " séances prévues";
-
-    carte.append(rang, titre, infoEtat);
+    haut.append(rang, titre);
 
     if (cours.length) {
       const liste = document.createElement("ul");
       liste.className = "carte-module-liste";
-      for (const entree of cours.slice(0, 4)) {
+      for (const entree of cours.slice(0, 3)) {
         const ligne = document.createElement("li");
         const lien = document.createElement("a");
         lien.href = "#/cours/" + entree.slug;
@@ -516,17 +664,81 @@ function construireCartesModules() {
         ligne.appendChild(lien);
         liste.appendChild(ligne);
       }
-      if (cours.length > 4) {
+      if (cours.length > 3) {
         const surplus = document.createElement("li");
         surplus.className = "surplus";
-        surplus.textContent = "et " + accord(cours.length - 4, "autre séance", "autres séances");
+        surplus.textContent = "et " + accord(cours.length - 3, "autre séance", "autres séances");
         liste.appendChild(surplus);
       }
-      carte.appendChild(liste);
+      haut.appendChild(liste);
     }
 
+    const infoEtat = document.createElement("p");
+    infoEtat.className = "carte-module-etat";
+    infoEtat.textContent = cours.length
+      ? cours.length + " sur " + attendus + " publiées"
+      : "à venir, " + attendus + " séances prévues";
+    haut.appendChild(infoEtat);
+
+    const visuel = document.createElement("div");
+    visuel.className = "carte-module-visuel";
+    visuel.appendChild(illustration(module.id));
+
+    const jauge = document.createElement("div");
+    jauge.className = "carte-module-jauge";
+    const remplissage = document.createElement("span");
+    remplissage.style.width = avancement * 100 + "%";
+    jauge.appendChild(remplissage);
+
+    carte.append(haut, visuel, jauge);
     dom.grilleModules.appendChild(carte);
   });
+}
+
+const METHODE = [
+  { icone: "ampoule", teinte: "teinte-jaune", titre: "Intuition physique", texte: "Comprendre le mécanisme et ses analogies, puis leurs limites, avant toute équation." },
+  { icone: "livre", teinte: "teinte-lavande", titre: "Théorie et dérivations", texte: "Définitions, lois, hypothèses, unités SI, cas limites et vérification dimensionnelle." },
+  { icone: "onde", teinte: "teinte-menthe", titre: "Schémas et simulations", texte: "Circuits annotés, diagrammes, chronogrammes, phaseurs et tracés interactifs." },
+  { icone: "cible", teinte: "teinte-corail", titre: "Exercices et diagnostic", texte: "Application directe, choix de méthode, dimensionnement sous contraintes, puis diagnostic." },
+  { icone: "liste", teinte: "teinte-lavande", titre: "Quiz et mémorisation", texte: "Dix questions mêlées, cartes question-réponse et formules essentielles." },
+  { icone: "diplome", teinte: "teinte-jaune", titre: "Auto-évaluation", texte: "Grille de 0 à 4 sur cinq compétences, conservée d'une séance à l'autre." },
+];
+
+function construireMethode() {
+  if (!dom.grilleMethode) return;
+  nettoyerDeclencheurs(dom.grilleMethode);
+  dom.grilleMethode.textContent = "";
+  for (const etape of METHODE) {
+    const bloc = document.createElement("li");
+    bloc.className = "carte-methode " + etape.teinte;
+    const sceau = document.createElement("span");
+    sceau.className = "carte-methode-sceau";
+    sceau.setAttribute("aria-hidden", "true");
+    sceau.appendChild(icone(etape.icone, { taille: 19 }));
+    const titre = document.createElement("h3");
+    titre.textContent = etape.titre;
+    const texte = document.createElement("p");
+    texte.textContent = etape.texte;
+    bloc.append(sceau, titre, texte);
+    dom.grilleMethode.appendChild(bloc);
+  }
+}
+
+function construirePiedNavigation() {
+  if (!dom.navigationPied) return;
+  dom.navigationPied.textContent = "";
+  const liens = [
+    { href: "#/demo", icone: "onde", texte: "Démonstration du moteur" },
+    { href: "programme/programme-90-jours.md", icone: "livre", texte: "Programme des 90 jours" },
+  ];
+  for (const entree of liens) {
+    const lien = document.createElement("a");
+    lien.className = "lien-discret";
+    lien.href = entree.href;
+    lien.appendChild(icone(entree.icone, { taille: 16 }));
+    lien.appendChild(document.createTextNode(entree.texte));
+    dom.navigationPied.appendChild(lien);
+  }
 }
 
 /* --------------------------------------------------------------------------
@@ -545,22 +757,25 @@ function construireNavigation() {
     return;
   }
 
-  for (const module of etat.modules) {
+  etat.modules.forEach((module, index) => {
     const cours = coursDuModule(module);
     const bloc = document.createElement("details");
-    bloc.className = "navigation-module";
+    bloc.className = "navigation-module " + teinteDe(index);
     bloc.dataset.module = module.id;
     bloc.dataset.vide = cours.length ? "non" : "oui";
     if (cours.length) bloc.open = true;
 
     const resume = document.createElement("summary");
-    const chevron = icone("chevron", { taille: 14, classe: "chevron" });
+    const chevron = icone("chevron", { taille: 13, classe: "chevron" });
+    const puce = document.createElement("span");
+    puce.className = "puce-teinte";
+    puce.setAttribute("aria-hidden", "true");
     const nom = document.createElement("span");
     nom.textContent = module.titre;
     const compte = document.createElement("span");
     compte.className = "compte";
     compte.textContent = String(cours.length);
-    resume.append(chevron, nom, compte);
+    resume.append(chevron, puce, nom, compte);
     bloc.appendChild(resume);
 
     if (cours.length) {
@@ -591,7 +806,7 @@ function construireNavigation() {
     }
 
     dom.navigationListe.appendChild(bloc);
-  }
+  });
   marquerNavigation(etat.coursCourant);
 }
 
@@ -936,31 +1151,33 @@ function construireCadreCours(entree, module) {
   const tete = document.createElement("header");
   tete.className = "cours-tete";
 
+  const banniere = document.createElement("div");
+  banniere.className = "cours-banniere " + (module ? teinteModule(module) : "teinte-lavande");
+
+  const colonne = document.createElement("div");
+
   const fil = document.createElement("p");
   fil.className = "cours-fil";
   const lienAccueil = document.createElement("a");
   lienAccueil.href = "#/";
   lienAccueil.textContent = "Parcours";
-  fil.appendChild(lienAccueil);
   const separateur = document.createElement("span");
   separateur.textContent = "/";
   separateur.setAttribute("aria-hidden", "true");
-  fil.appendChild(separateur);
   const nomModule = document.createElement("span");
   nomModule.textContent = module ? module.titre : entree.demo ? "Démonstration" : "Séance";
-  fil.appendChild(nomModule);
+  fil.append(lienAccueil, separateur, nomModule);
 
   const titre = document.createElement("h1");
   titre.id = "titre-cours-courant";
   titre.textContent = entree.titre;
-
-  tete.append(fil, titre);
+  colonne.append(fil, titre);
 
   if (entree.resume) {
     const resume = document.createElement("p");
     resume.className = "cours-resume";
     resume.textContent = entree.resume;
-    tete.appendChild(resume);
+    colonne.appendChild(resume);
   }
 
   const meta = document.createElement("div");
@@ -979,14 +1196,20 @@ function construireCadreCours(entree, module) {
   }
   if (etat.lus.has(entree.slug)) {
     const pastille = document.createElement("span");
-    pastille.className = "pastille pastille-succes";
+    pastille.className = "pastille";
     pastille.textContent = "marqué comme lu";
     meta.appendChild(pastille);
   }
-  if (meta.childElementCount) tete.appendChild(meta);
+  if (meta.childElementCount) colonne.appendChild(meta);
+
+  const visuel = document.createElement("div");
+  visuel.appendChild(illustration(module ? module.id : "regime-sinusoidal-monophase"));
+
+  banniere.append(colonne, visuel);
+  tete.appendChild(banniere);
 
   const cadre = document.createElement("div");
-  cadre.className = "cours-cadre";
+  cadre.className = "cours-cadre " + (module ? teinteModule(module) : "teinte-lavande");
 
   const corps = document.createElement("div");
   corps.className = "cours-corps";
@@ -1325,25 +1548,6 @@ async function router() {
    Animations de la page d'accueil
    -------------------------------------------------------------------------- */
 
-/** Prépare les tracés de la planche pour une apparition au dessin. */
-function preparerPlanche() {
-  const traits = Array.from(document.querySelectorAll(".planche .trait-anime"));
-  const longueurs = [];
-  for (const trait of traits) {
-    let longueur = 0;
-    try {
-      longueur = trait.getTotalLength();
-    } catch (erreur) {
-      longueur = 0;
-    }
-    if (!longueur) continue;
-    trait.style.strokeDasharray = String(longueur);
-    trait.style.strokeDashoffset = String(longueur);
-    longueurs.push({ trait, longueur });
-  }
-  return longueurs;
-}
-
 function animerAccueil() {
   const gsap = globalThis.gsap;
   if (!gsap || mouvementReduit) return;
@@ -1352,48 +1556,19 @@ function animerAccueil() {
   const ligneTemps = gsap.timeline({ defaults: { ease: "power3.out" } });
   ligneTemps
     .from(".heros-sur-titre", { opacity: 0, y: 12, duration: 0.5 })
-    .from("#titre-accueil", { opacity: 0, y: 26, duration: 0.85 }, "-=0.25")
-    .from(".heros-accroche", { opacity: 0, y: 16, duration: 0.7 }, "-=0.55")
-    .from(".heros-actions > *", { opacity: 0, y: 12, duration: 0.5, stagger: 0.07 }, "-=0.45")
-    .from(".heros-chiffres > div", { opacity: 0, y: 10, duration: 0.45, stagger: 0.06 }, "-=0.35")
-    .from(".planche", { opacity: 0, y: 24, duration: 0.9 }, 0.1);
+    .from("#titre-accueil .ligne", { opacity: 0, y: 30, duration: 0.7, stagger: 0.08 }, "-=0.25")
+    .from(".heros-accroche", { opacity: 0, y: 14, duration: 0.6 }, "-=0.45")
+    .from(".heros-actions > *", { opacity: 0, y: 12, duration: 0.5, stagger: 0.07 }, "-=0.4")
+    .from(".heros-chiffres > div", { opacity: 0, y: 10, duration: 0.45, stagger: 0.05 }, "-=0.35");
 
-  /* Tracé progressif du schéma, puis impulsions le long des liaisons. */
-  const traces = preparerPlanche();
-  if (traces.length) {
-    ligneTemps.to(
-      traces.map((entree) => entree.trait),
-      { strokeDashoffset: 0, duration: 1.3, stagger: 0.1, ease: "power2.inOut" },
-      0.35
-    );
-  }
-  gsap.from(".planche .organe, .planche .organe-trait, .planche .annotation, .planche .cote", {
-    opacity: 0,
-    duration: 0.7,
-    stagger: 0.03,
-    delay: 0.45,
-    ease: "power2.out",
-  });
-
-  const impulsions = document.querySelectorAll(".planche .impulsion");
-  impulsions.forEach((impulsion, index) => {
-    let longueur = 0;
-    try {
-      longueur = impulsion.getTotalLength();
-    } catch (erreur) {
-      longueur = 0;
+  const cartes = document.querySelectorAll(".rail .carte-pastel");
+  if (cartes.length) {
+    ligneTemps.from(cartes, { opacity: 0, y: 40, duration: 0.8, stagger: 0.1 }, 0.15);
+    for (const carte of cartes) {
+      const dessin = carte.querySelector(".illus");
+      if (dessin) gsap.from(dessin, { scale: 0.86, opacity: 0, duration: 0.7, delay: 0.5, ease: "back.out(1.6)" });
     }
-    if (!longueur) return;
-    gsap.set(impulsion, { strokeDasharray: "14 " + longueur, strokeDashoffset: longueur + 14, opacity: 1 });
-    gsap.to(impulsion, {
-      strokeDashoffset: -14,
-      duration: 1.5,
-      repeat: -1,
-      repeatDelay: 1.1,
-      delay: 1.6 + index * 0.45,
-      ease: "none",
-    });
-  });
+  }
 
   if (!ScrollTrigger) return;
 
@@ -1407,40 +1582,42 @@ function animerAccueil() {
     });
   });
 
+  const mesures = document.querySelectorAll(".mesure-carte");
+  if (mesures.length) {
+    gsap.from(mesures, {
+      opacity: 0,
+      y: 20,
+      duration: 0.55,
+      stagger: 0.06,
+      ease: "power2.out",
+      scrollTrigger: { trigger: mesures[0], start: "top 92%", once: true },
+    });
+  }
+
   const reglette = document.getElementById("reglette");
   if (reglette && reglette.children.length) {
     gsap.from(reglette.children, {
-      scaleY: 0.2,
+      scaleY: 0.15,
       opacity: 0,
       transformOrigin: "bottom",
       duration: 0.5,
-      stagger: 0.008,
+      stagger: 0.007,
       ease: "power2.out",
-      scrollTrigger: { trigger: reglette, start: "top 92%", once: true },
+      scrollTrigger: { trigger: reglette, start: "top 94%", once: true },
     });
   }
 
-  const cadre = document.querySelector(".tableau-bord");
-  if (cadre) {
-    gsap.from(cadre, {
-      opacity: 0,
-      y: 18,
-      duration: 0.7,
-      ease: "power2.out",
-      scrollTrigger: { trigger: cadre, start: "top 90%", once: true },
-    });
-  }
-
-  const cartes = gsap.utils.toArray(".carte-module, .carte-methode");
-  if (cartes.length) {
-    gsap.from(cartes, {
-      opacity: 0,
-      y: 18,
-      duration: 0.55,
-      stagger: 0.04,
-      ease: "power2.out",
-      scrollTrigger: { trigger: dom.grilleModules || cartes[0], start: "top 88%", once: true },
-    });
+  const blocs = gsap.utils.toArray(".carte-module, .carte-methode, .carte-mise-en-avant, .etat-vide");
+  if (blocs.length) {
+    for (const bloc of blocs) {
+      gsap.from(bloc, {
+        opacity: 0,
+        y: 22,
+        duration: 0.6,
+        ease: "power2.out",
+        scrollTrigger: { trigger: bloc, start: "top 92%", once: true },
+      });
+    }
   }
 }
 

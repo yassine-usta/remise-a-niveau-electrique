@@ -19,10 +19,21 @@ Les bibliothèques externes sont chargées depuis `cdn.jsdelivr.net` avec des ve
 GSAP 3.12.5 et ScrollTrigger, Lenis 1.1.14, KaTeX 0.16.11 avec son rendu automatique, Mermaid 10.9.1.
 Si l'une d'elles est inaccessible, le site reste lisible et navigable.
 
-Typographie : Instrument Serif pour les titres, Poppins pour le texte des cours et l'interface,
-JetBrains Mono pour les grandeurs, les unités et les étiquettes techniques. Les formules sont rendues
-par KaTeX avec ses propres polices mathématiques. Les icônes sont dessinées dans `assets/js/icones.js`,
-sur une grille de 24 par 24 et une graisse de trait unique.
+Typographie : Inter Tight pour les titres, Poppins pour le texte des cours et l'interface, JetBrains
+Mono pour les grandeurs, les unités et les étiquettes techniques. Les formules sont rendues par KaTeX
+avec ses propres polices mathématiques.
+
+Couleurs : des surfaces neutres, encre profonde par défaut et papier en thème clair, avec quatre aplats
+pastel (lavande, jaune, menthe, corail) qui portent toujours un texte sombre. La couleur est une
+surface, jamais une teinte de texte, et chaque teinte est attribuée par rôle : le rang du module, la
+nature d'un bloc, l'état d'une réponse. Le thème sombre est affiché par défaut ; la bascule propose
+sombre, clair et automatique.
+
+Icônes : celles de l'interface viennent de Lucide (licence ISC), intégrées dans `assets/js/icones.js`
+plutôt que chargées depuis un réseau de diffusion. Les symboles d'électrotechnique, absents des
+bibliothèques généralistes, sont dessinés dans le même fichier sur la même grille de 24 par 24 et avec
+la même graisse de trait. Les illustrations de modules sont dans `assets/js/illustrations.js` : une
+forme pleine qui porte un visage, accompagnée d'un objet tracé au trait.
 
 ## Structure du dépôt
 
@@ -31,7 +42,8 @@ index.html                     coquille unique du site
 assets/css/site.css            thème clair et sombre, mise en page, composants
 assets/js/app.js               navigation, routage par hash, chargement des cours, Lenis, GSAP
 assets/js/moteur.js            bibliothèque partagée : exercices, quiz, cartes, simulations
-assets/js/icones.js            registre d'icônes du site, dessinées sur une grille de 24
+assets/js/icones.js            registre d'icônes : Lucide plus les symboles d'électrotechnique
+assets/js/illustrations.js     une illustration plate par module
 cours/<slug>/contenu.html      texte d'une séance, fragment HTML
 cours/<slug>/cours.js          partie interactive de la séance
 cours/_demo/                   démonstration du moteur, non listée au sommaire
@@ -129,6 +141,7 @@ Les cours sont toujours présentés par leur titre.
 | `api.stockage.lire / ecrire / effacer` | mémoire locale propre au cours |
 | `api.util.formater / lireNombre / normaliser` | utilitaires de calcul et de comparaison |
 | `api.util.icone(nom)` | icône du registre commun |
+| `api.util.accord(n, singulier, pluriel)` | accord d'un nom avec son nombre |
 
 Règle commune aux exercices : la correction reste masquée jusqu'à une tentative ou un clic explicite sur
 "Voir la correction". Elle est ensuite révélée étape par étape, et chaque exercice accepte une fonction
@@ -162,7 +175,7 @@ international, séparateur décimal français dans les textes, notation anglo-sa
 
 ## Accessibilité
 
-Thème clair et sombre avec bascule à trois états (automatique, clair, sombre), respect de
+Thème sombre par défaut, bascule à trois états (sombre, clair, automatique), respect de
 `prefers-reduced-motion` (animations réduites et défilement fluide désactivé), navigation complète au
 clavier, palette de recherche par `Ctrl+K`, mise en page sans défilement horizontal dès 360 pixels de
 large. La mémorisation locale est facultative : le site reste pleinement fonctionnel lorsque le stockage

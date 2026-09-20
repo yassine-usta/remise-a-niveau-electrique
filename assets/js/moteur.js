@@ -121,8 +121,37 @@ const ALIAS_ICONES = {
   melange: "melanger",
 };
 
-function icone(nom, taille) {
-  return iconeRegistre(ALIAS_ICONES[nom] || nom, { taille: taille || 16 });
+/* Icône associée à chaque genre de bloc, reprise dans son en-tête. */
+const ICONE_GENRE = {
+  "Question à choix": "liste",
+  "Vrai ou faux": "coche_cercle",
+  Calcul: "cible",
+  "Réponse courte": "livre",
+  "Lecture de schéma": "resistance",
+  Quiz: "etincelle",
+  Mémorisation: "ampoule",
+  "Auto-évaluation": "diplome",
+  Simulation: "onde",
+  Oscilloscope: "onde",
+  Phaseurs: "phaseur",
+  "Réponse fréquentielle": "onde",
+  "Analyse spectrale": "grille",
+  Tracé: "onde",
+  "Correction visuelle": "oeil",
+};
+
+function genreAvecIcone(genre) {
+  const element = creer("span", { classe: "m-bloc-genre" });
+  const nom = ICONE_GENRE[genre];
+  if (nom) element.appendChild(icone(nom, { taille: 14 }));
+  element.appendChild(creer("span", { texte: genre }));
+  return element;
+}
+
+function icone(nom, options) {
+  const reglages = typeof options === "object" && options !== null ? options : { taille: options || 16 };
+  if (!reglages.taille) reglages.taille = 16;
+  return iconeRegistre(ALIAS_ICONES[nom] || nom, reglages);
 }
 
 /* --------------------------------------------------------------------------
@@ -424,7 +453,7 @@ function cadreExercice(ctx, conteneur, def, genreParDefaut) {
   const tete = creer("header", {
     classe: "m-bloc-tete",
     enfants: [
-      creer("span", { classe: "m-bloc-genre", texte: genre }),
+      genreAvecIcone(genre),
       def.titre ? creer("span", { classe: "m-bloc-titre", texte: def.titre }) : null,
       def.niveau ? creer("span", { classe: "pastille", texte: def.niveau }) : null,
     ],
@@ -1281,7 +1310,7 @@ function construireQuiz(ctx, conteneur, questions, options = {}) {
       creer("header", {
         classe: "m-bloc-tete",
         enfants: [
-          creer("span", { classe: "m-bloc-genre", texte: "Quiz" }),
+          genreAvecIcone("Quiz"),
           creer("span", { classe: "m-bloc-titre", texte: options.titre || "Quiz de fin de séance" }),
           creer("span", { classe: "pastille", texte: total + " questions" }),
         ],
@@ -1507,7 +1536,7 @@ function construireCartes(ctx, conteneur, cartes, options = {}) {
       creer("header", {
         classe: "m-bloc-tete",
         enfants: [
-          creer("span", { classe: "m-bloc-genre", texte: "Mémorisation" }),
+          genreAvecIcone("Mémorisation"),
           creer("span", { classe: "m-bloc-titre", texte: options.titre || "Cartes question-réponse" }),
           creer("span", { classe: "pastille", texte: cartes.length + " cartes" }),
         ],
@@ -1700,7 +1729,7 @@ function construireAutoEvaluation(ctx, conteneur, criteres, options = {}) {
       creer("header", {
         classe: "m-bloc-tete",
         enfants: [
-          creer("span", { classe: "m-bloc-genre", texte: "Auto-évaluation" }),
+          genreAvecIcone("Auto-évaluation"),
           creer("span", { classe: "m-bloc-titre", texte: options.titre || "Où en suis-je après cette séance ?" }),
           creer("span", { classe: "pastille", texte: "échelle 0 à 4" }),
         ],
@@ -1769,15 +1798,15 @@ function lireCouleurs() {
     grille: valeur("--sim-grille", "rgba(0,0,0,0.1)"),
     axe: valeur("--sim-axe", "rgba(0,0,0,0.45)"),
     texte: valeur("--sim-texte", "#4c5878"),
-    accent: valeur("--cuivre", "#9c5420"),
-    accent2: valeur("--cyan", "#0d6d8c"),
+    accent: valeur("--jaune", "#f3d375"),
+    accent2: valeur("--lavande", "#c6c0f7"),
     series: [
-      valeur("--serie-1", "#0b53d8"),
-      valeur("--serie-2", "#c2410c"),
-      valeur("--serie-3", "#0f7a45"),
-      valeur("--serie-4", "#6b3fd4"),
-      valeur("--serie-5", "#b8860b"),
-      valeur("--serie-6", "#0e7490"),
+      valeur("--serie-1", "#8fd2f5"),
+      valeur("--serie-2", "#f3d375"),
+      valeur("--serie-3", "#a6ddbe"),
+      valeur("--serie-4", "#c6c0f7"),
+      valeur("--serie-5", "#f5a58f"),
+      valeur("--serie-6", "#9fb0bf"),
     ],
   };
 }
@@ -1817,7 +1846,7 @@ function cadreSimulation(ctx, conteneur, options = {}) {
         ? creer("header", {
             classe: "m-bloc-tete",
             enfants: [
-              creer("span", { classe: "m-bloc-genre", texte: options.genre || "Simulation" }),
+              genreAvecIcone(options.genre || "Simulation"),
               options.titre ? creer("span", { classe: "m-bloc-titre", texte: options.titre }) : null,
             ],
           })
