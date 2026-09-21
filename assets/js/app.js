@@ -213,6 +213,384 @@ function remonter() {
 }
 
 /* --------------------------------------------------------------------------
+   Schémas larges : lecture confortable et loupe plein écran
+
+   Un diagramme plus large que la colonne de lecture est réduit par le
+   navigateur, et ses libellés deviennent minuscules. Le site mesure donc
+   l'échelle effective de chaque schéma. Sous le seuil de lisibilité, le
+   diagramme reprend une taille lisible dans un conteneur qui défile
+   horizontalement, propre au schéma et jamais à la page. Une loupe plein
+   écran, avec zoom et déplacement, reste offerte pour tout schéma trop large.
+   -------------------------------------------------------------------------- */
+
+/* Taille des libellés demandée à Mermaid et seuil de lisibilité, en pixels. */
+const TAILLE_LIBELLE_MERMAID = 15;
+const LISIBILITE_MINIMALE = 12;
+
+function largeurNaturelle(svg) {
+  if (svg.viewBox && svg.viewBox.baseVal && svg.viewBox.baseVal.width) return svg.viewBox.baseVal.width;
+  const maximum = parseFloat(svg.style.maxWidth);
+  if (Number.isFinite(maximum) && maximum > 0) return maximum;
+  const attribut = parseFloat(svg.getAttribute("width"));
+  if (Number.isFinite(attribut) && attribut > 0) return attribut;
+  return svg.getBoundingClientRect().width || 0;
+}
+
+/** Un schéma piloté par l'apprenant garde sa place et ses coordonnées. */
+function schemaManipulable(svg) {
+  return Boolean(svg.querySelector(".m-poignee") || svg.closest(".m-sim"));
+}
+
+function boutonAgrandir(svg, titre) {
+  const bouton = document.createElement("button");
+  bouton.type = "button";
+  bouton.className = "schema-agrandir";
+  bouton.append(icone("recherche", { taille: 15 }), document.createTextNode("Agrandir"));
+  bouton.addEventListener("click", () => ouvrirLoupe(svg, titre));
+  return bouton;
+}
+
+/**
+ * Diagramme Mermaid : conteneur défilant quand les libellés passeraient sous
+ * le seuil de lisibilité, bouton d'agrandissement dès que le schéma déborde.
+ */
+function equiperDiagramme(bloc) {
+  const dansPiste = bloc.querySelector(":scope > .schema-large > .schema-large-piste > svg");
+  const svg = dansPiste || bloc.querySelector(":scope > svg");
+  if (!svg) return;
+
+  const naturelle = largeurNaturelle(svg);
+  const disponible = bloc.clientWidth || document.documentElement.clientWidth;
+  if (!naturelle || !disponible) return;
+
+  /* Mesure de contrôle : à quelle taille les libellés tomberaient si le
+     schéma était réduit pour entrer dans la colonne. */
+  const echelle = Math.min(1, disponible / naturelle);
+  const libelleEffectif = Math.round(TAILLE_LIBELLE_MERMAID * echelle * 10) / 10;
+  bloc.dataset.libelleReduit = String(libelleEffectif);
+
+  /* Le schéma s'affiche tel quel s'il tient dans la colonne et que ses
+     libellés y restent au-dessus du seuil de lisibilité. */
+  if (naturelle <= disponible * 1.02 && libelleEffectif >= LISIBILITE_MINIMALE) {
+    demonterDiagramme(bloc);
+    return;
+  }
+
+  let cadre = bloc.querySelector(":scope > .schema-large");
+  if (!cadre) {
+    cadre = document.createElement("div");
+    cadre.className = "schema-large";
+    const piste = document.createElement("div");
+    piste.className = "schema-large-piste";
+    bloc.insertBefore(cadre, svg);
+    cadre.appendChild(piste);
+    piste.appendChild(svg);
+
+    const outils = document.createElement("div");
+    outils.className = "schema-large-outils";
+    const indice = document.createElement("p");
+    indice.className = "schema-large-indice";
+    indice.textContent = "Faites glisser pour voir la suite";
+    outils.append(indice, boutonAgrandir(svg, "Diagramme agrandi"));
+    cadre.appendChild(outils);
+
+    piste.addEventListener("scroll", () => {
+      cadre.dataset.suite = piste.scrollWidth - piste.clientWidth - piste.scrollLeft > 8 ? "oui" : "non";
+    });
+    bloc.classList.add("schema-equipe");
+  }
+
+  /* Le schéma garde sa taille naturelle : réduire un SVG d'un facteur
+     fractionnaire fait arrondir les avances de glyphes et ouvre des trous à
+     l'intérieur des mots. Le conteneur défile plutôt que le schéma ne rétrécit,
+     ce qui garde les libellés à leur taille de rendu, bien au-dessus du seuil
+     de lisibilité. */
+  const piste = cadre.querySelector(".schema-large-piste");
+  svg.style.width = Math.round(naturelle) + "px";
+  svg.style.maxWidth = "none";
+  cadre.dataset.defilant = "oui";
+  cadre.dataset.suite = piste && piste.scrollWidth - piste.clientWidth > 8 ? "oui" : "non";
+}
+
+/** Rend le diagramme à son bloc d'origine quand il tient dans la colonne. */
+function demonterDiagramme(bloc) {
+  const cadre = bloc.querySelector(":scope > .schema-large");
+  if (!cadre) return;
+  const svg = cadre.querySelector("svg");
+  if (svg) {
+    svg.style.width = "";
+    svg.style.maxWidth = "100%";
+    bloc.insertBefore(svg, cadre);
+  }
+  cadre.remove();
+  bloc.classList.remove("schema-equipe");
+}
+
+/**
+ * Figure ordinaire : le schéma garde sa place, seul un bouton d'agrandissement
+ * apparaît quand son dessin naturel dépasse la colonne de lecture.
+ */
+function equiperFigure(figure) {
+  const svg = figure.querySelector("svg");
+  const ancien = figure.querySelector(":scope > .schema-outils");
+  /* Un diagramme Mermaid porte déjà ses propres outils. */
+  if (!svg || svg.closest("pre.mermaid") || schemaManipulable(svg)) {
+    if (ancien) ancien.remove();
+    return;
+  }
+  const naturelle = largeurNaturelle(svg);
+  const disponible = figure.clientWidth || document.documentElement.clientWidth;
+  if (!naturelle || !disponible) return;
+
+  if (naturelle <= disponible * 1.02) {
+    if (ancien) ancien.remove();
+    return;
+  }
+  if (ancien) return;
+  const outils = document.createElement("div");
+  outils.className = "schema-outils";
+  const legende = figure.querySelector("figcaption");
+  const titre = legende ? legende.textContent.trim().split(".")[0] : "Schéma agrandi";
+  outils.appendChild(boutonAgrandir(svg, titre || "Schéma agrandi"));
+  if (legende) figure.insertBefore(outils, legende);
+  else figure.appendChild(outils);
+}
+
+/** Passe en revue les diagrammes et les figures d'un conteneur. */
+function ajusterSchemas(conteneur) {
+  const racine = conteneur || document;
+  for (const bloc of racine.querySelectorAll("pre.mermaid")) equiperDiagramme(bloc);
+  for (const figure of racine.querySelectorAll("figure")) equiperFigure(figure);
+}
+
+/* --------------------------------------------------------------------------
+   Loupe plein écran : zoom à la molette, au pincement et aux boutons
+   -------------------------------------------------------------------------- */
+
+const ZOOM_MINIMAL = 0.2;
+const ZOOM_MAXIMAL = 8;
+let loupe = null;
+
+function fermerLoupe() {
+  if (!loupe) return;
+  document.removeEventListener("keydown", loupe.surTouche, true);
+  loupe.couche.remove();
+  document.body.style.overflow = loupe.debordementInitial;
+  const rendreFocus = loupe.rendreFocus;
+  loupe = null;
+  if (rendreFocus && document.body.contains(rendreFocus)) rendreFocus.focus({ preventScroll: true });
+}
+
+function ouvrirLoupe(svgOrigine, titre) {
+  fermerLoupe();
+  const naturelle = largeurNaturelle(svgOrigine) || 800;
+  const proportions = svgOrigine.getBoundingClientRect();
+  const hauteurNaturelle =
+    svgOrigine.viewBox && svgOrigine.viewBox.baseVal && svgOrigine.viewBox.baseVal.height
+      ? svgOrigine.viewBox.baseVal.height
+      : (proportions.height / (proportions.width || 1)) * naturelle;
+
+  /* Mermaid porte ses styles dans une feuille interne dont les sélecteurs
+     citent l'identifiant du SVG. La copie reçoit donc un identifiant propre,
+     et sa feuille est réécrite, faute de quoi elle perdrait ses cadres, sa
+     police et ses libellés seraient tronqués. */
+  const copie = svgOrigine.cloneNode(true);
+  const identifiantOrigine = svgOrigine.getAttribute("id");
+  const identifiantCopie = "loupe-" + Math.random().toString(36).slice(2, 9);
+  copie.setAttribute("id", identifiantCopie);
+  if (identifiantOrigine) {
+    for (const feuille of copie.querySelectorAll("style")) {
+      feuille.textContent = feuille.textContent.split("#" + identifiantOrigine).join("#" + identifiantCopie);
+    }
+  }
+  copie.removeAttribute("height");
+  copie.style.maxWidth = "none";
+  copie.style.width = naturelle + "px";
+  copie.style.height = "auto";
+
+  const couche = document.createElement("div");
+  couche.className = "loupe";
+  couche.setAttribute("role", "dialog");
+  couche.setAttribute("aria-modal", "true");
+  couche.setAttribute("aria-label", titre || "Schéma agrandi");
+  if (mouvementReduit) couche.dataset.mouvement = "reduit";
+
+  const scene = document.createElement("div");
+  scene.className = "loupe-scene";
+  const monture = document.createElement("div");
+  monture.className = "loupe-monture";
+  monture.appendChild(copie);
+  scene.appendChild(monture);
+
+  function bouton(texte, etiquette, nomIcone) {
+    const element = document.createElement("button");
+    element.type = "button";
+    element.className = "loupe-bouton";
+    element.setAttribute("aria-label", etiquette);
+    element.title = etiquette;
+    if (nomIcone) element.appendChild(icone(nomIcone, { taille: 16 }));
+    if (texte) element.appendChild(document.createTextNode(texte));
+    return element;
+  }
+
+  const barre = document.createElement("div");
+  barre.className = "loupe-barre";
+  const nom = document.createElement("p");
+  nom.className = "loupe-titre";
+  nom.textContent = titre || "Schéma agrandi";
+  const moins = bouton("-", "Réduire");
+  const plus = bouton("+", "Agrandir");
+  const ajuster = bouton("Ajuster", "Ajuster à l'écran");
+  const fermer = bouton("", "Fermer la vue agrandie", "fermer");
+  barre.append(nom, moins, plus, ajuster, fermer);
+
+  const aide = document.createElement("p");
+  aide.className = "loupe-aide";
+  aide.textContent = "Molette ou pincement pour zoomer, glisser pour déplacer, Échap pour fermer.";
+
+  couche.append(barre, scene, aide);
+  document.body.appendChild(couche);
+
+  const etat = { zoom: 1, x: 0, y: 0 };
+  const doigts = new Map();
+  let depart = null;
+  let ecartInitial = 0;
+  let zoomInitial = 1;
+
+  function appliquer() {
+    monture.style.transform =
+      "translate(-50%, -50%) translate(" + Math.round(etat.x) + "px, " + Math.round(etat.y) + "px) scale(" + etat.zoom + ")";
+  }
+
+  function zoomAjuste() {
+    const large = Math.max(120, scene.clientWidth - 56);
+    const haut = Math.max(120, scene.clientHeight - 56);
+    return Math.max(ZOOM_MINIMAL, Math.min(ZOOM_MAXIMAL, Math.min(large / naturelle, haut / (hauteurNaturelle || naturelle))));
+  }
+
+  function ajusterAEcran() {
+    etat.zoom = zoomAjuste();
+    etat.x = 0;
+    etat.y = 0;
+    appliquer();
+  }
+
+  /* À l'ouverture, la lisibilité prime sur la vue d'ensemble : un schéma trop
+     large est cadré sur son début, le bouton Ajuster montre le reste. */
+  function cadrerOuverture() {
+    /* Jamais sous l'échelle 1 : une réduction abîmerait le texte du schéma. */
+    etat.zoom = Math.max(zoomAjuste(), 1);
+    const largeurAffichee = naturelle * etat.zoom;
+    const hauteurAffichee = (hauteurNaturelle || naturelle) * etat.zoom;
+    etat.x = largeurAffichee > scene.clientWidth ? largeurAffichee / 2 - scene.clientWidth / 2 + 24 : 0;
+    etat.y = hauteurAffichee > scene.clientHeight ? hauteurAffichee / 2 - scene.clientHeight / 2 + 24 : 0;
+    appliquer();
+  }
+
+  function zoomer(facteur, centreX, centreY) {
+    const avant = etat.zoom;
+    const apres = Math.max(ZOOM_MINIMAL, Math.min(ZOOM_MAXIMAL, avant * facteur));
+    if (apres === avant) return;
+    if (centreX != null && centreY != null) {
+      const rect = scene.getBoundingClientRect();
+      const relX = centreX - rect.left - rect.width / 2 - etat.x;
+      const relY = centreY - rect.top - rect.height / 2 - etat.y;
+      etat.x -= relX * (apres / avant - 1);
+      etat.y -= relY * (apres / avant - 1);
+    }
+    etat.zoom = apres;
+    appliquer();
+  }
+
+  scene.addEventListener(
+    "wheel",
+    (evenement) => {
+      evenement.preventDefault();
+      zoomer(evenement.deltaY < 0 ? 1.12 : 1 / 1.12, evenement.clientX, evenement.clientY);
+    },
+    { passive: false }
+  );
+
+  scene.addEventListener("pointerdown", (evenement) => {
+    try {
+      scene.setPointerCapture(evenement.pointerId);
+    } catch (erreur) {
+      /* la capture n'est pas indispensable au déplacement */
+    }
+    doigts.set(evenement.pointerId, { x: evenement.clientX, y: evenement.clientY });
+    if (doigts.size === 2) {
+      const [un, deux] = Array.from(doigts.values());
+      ecartInitial = Math.hypot(un.x - deux.x, un.y - deux.y) || 1;
+      zoomInitial = etat.zoom;
+      depart = null;
+    } else {
+      depart = { x: evenement.clientX - etat.x, y: evenement.clientY - etat.y };
+      scene.dataset.saisie = "oui";
+    }
+  });
+
+  scene.addEventListener("pointermove", (evenement) => {
+    if (!doigts.has(evenement.pointerId)) return;
+    doigts.set(evenement.pointerId, { x: evenement.clientX, y: evenement.clientY });
+    if (doigts.size === 2 && ecartInitial) {
+      const [un, deux] = Array.from(doigts.values());
+      const ecart = Math.hypot(un.x - deux.x, un.y - deux.y);
+      etat.zoom = Math.max(ZOOM_MINIMAL, Math.min(ZOOM_MAXIMAL, (zoomInitial * ecart) / ecartInitial));
+      appliquer();
+      return;
+    }
+    if (!depart) return;
+    etat.x = evenement.clientX - depart.x;
+    etat.y = evenement.clientY - depart.y;
+    appliquer();
+  });
+
+  function relacher(evenement) {
+    doigts.delete(evenement.pointerId);
+    if (doigts.size < 2) ecartInitial = 0;
+    if (!doigts.size) {
+      depart = null;
+      delete scene.dataset.saisie;
+    }
+  }
+  scene.addEventListener("pointerup", relacher);
+  scene.addEventListener("pointercancel", relacher);
+
+  moins.addEventListener("click", () => zoomer(1 / 1.3));
+  plus.addEventListener("click", () => zoomer(1.3));
+  ajuster.addEventListener("click", ajusterAEcran);
+  fermer.addEventListener("click", fermerLoupe);
+  couche.addEventListener("click", (evenement) => {
+    if (evenement.target === couche) fermerLoupe();
+  });
+
+  function surTouche(evenement) {
+    if (evenement.key === "Escape") {
+      evenement.preventDefault();
+      fermerLoupe();
+      return;
+    }
+    if (evenement.key === "+" || evenement.key === "=") zoomer(1.3);
+    else if (evenement.key === "-") zoomer(1 / 1.3);
+    else if (evenement.key === "0") ajusterAEcran();
+  }
+  document.addEventListener("keydown", surTouche, true);
+
+  loupe = {
+    couche,
+    surTouche,
+    rendreFocus: document.activeElement instanceof HTMLElement ? document.activeElement : null,
+    debordementInitial: document.body.style.overflow,
+  };
+  document.body.style.overflow = "hidden";
+
+  requestAnimationFrame(() => {
+    cadrerOuverture();
+    fermer.focus({ preventScroll: true });
+  });
+}
+
+/* --------------------------------------------------------------------------
    KaTeX et Mermaid
    -------------------------------------------------------------------------- */
 
@@ -239,17 +617,46 @@ function rendreMaths(element) {
 
 let mermaidPret = false;
 
+/** Couleurs du thème courant, pour que Mermaid suive la bascule clair et sombre. */
+function couleursMermaid() {
+  const style = getComputedStyle(document.documentElement);
+  const lire = (nom, secours) => (style.getPropertyValue(nom).trim() || secours);
+  return {
+    fontFamily: lire("--texte", "Poppins, system-ui, sans-serif"),
+    fontSize: TAILLE_LIBELLE_MERMAID + "px",
+    background: lire("--fond-2", "#15171c"),
+    mainBkg: lire("--fond-3", "#1d2026"),
+    primaryColor: lire("--fond-3", "#1d2026"),
+    primaryTextColor: lire("--encre", "#f4f5f7"),
+    primaryBorderColor: lire("--serie-1", "#8fd2f5"),
+    secondaryColor: lire("--fond-2", "#15171c"),
+    tertiaryColor: lire("--fond", "#0d0e11"),
+    lineColor: lire("--encre-2", "#a4aab5"),
+    textColor: lire("--encre", "#f4f5f7"),
+    nodeBorder: lire("--serie-1", "#8fd2f5"),
+    clusterBkg: lire("--fond-2", "#15171c"),
+    clusterBorder: lire("--trait-2", "rgba(255,255,255,0.16)"),
+    edgeLabelBackground: lire("--fond-2", "#15171c"),
+    titleColor: lire("--encre", "#f4f5f7"),
+  };
+}
+
 function preparerMermaid() {
   const mermaid = globalThis.mermaid;
   if (!mermaid || mermaidPret) return;
   try {
+    /* Libellés en texte SVG plutôt qu'en HTML dans un foreignObject : le
+       texte HTML est mis en page à l'échelle 1 puis réduit avec le schéma,
+       et les arrondis de position des glyphes ouvrent des trous à l'intérieur
+       des mots. Le texte SVG, lui, se met à l'échelle comme un tracé. */
     mermaid.initialize({
       startOnLoad: false,
       securityLevel: "strict",
-      theme: themeEffectif() === "dark" ? "dark" : "default",
-      fontFamily: "Inter, system-ui, sans-serif",
-      themeVariables: { fontSize: "15px" },
-      flowchart: { curve: "basis", useMaxWidth: true },
+      theme: "base",
+      htmlLabels: false,
+      fontFamily: couleursMermaid().fontFamily,
+      themeVariables: couleursMermaid(),
+      flowchart: { curve: "basis", useMaxWidth: false, htmlLabels: false, padding: 12, nodeSpacing: 36, rankSpacing: 46 },
     });
     mermaidPret = true;
   } catch (erreur) {
@@ -275,6 +682,7 @@ async function rendreMermaid(element) {
       noeud.classList.add("ascii");
     }
   }
+  ajusterSchemas(element);
 }
 
 function redessinerMermaid() {
@@ -289,7 +697,11 @@ function redessinerMermaid() {
   }
   preparerMermaid();
   try {
-    if (typeof mermaid.run === "function") mermaid.run({ nodes: noeuds, suppressErrors: true });
+    if (typeof mermaid.run === "function") {
+      const rendu = mermaid.run({ nodes: noeuds, suppressErrors: true });
+      if (rendu && typeof rendu.then === "function") rendu.then(() => ajusterSchemas(document)).catch(() => {});
+      else ajusterSchemas(document);
+    }
   } catch (erreur) {
     /* le diagramme reste affiché sous forme de texte */
   }
@@ -1112,6 +1524,7 @@ function messageAvarie(titre, explication, detail, slug) {
 }
 
 async function deposerCours() {
+  fermerLoupe();
   if (etat.moduleCours && typeof etat.moduleCours.detruire === "function") {
     try {
       etat.moduleCours.detruire();
@@ -1493,6 +1906,7 @@ async function ouvrirCours(slug, forcer) {
 
   revelerBlocsCours(article, api);
   rendreMaths(article);
+  ajusterSchemas(article);
   etat.detacherScroll = suivreLecture(article, infosPlan);
 
   const ScrollTrigger = globalThis.ScrollTrigger;
@@ -1640,6 +2054,12 @@ async function demarrer() {
     router().catch(() => {
       /* une route invalide ne doit pas figer le site */
     });
+  });
+
+  let minuteurSchemas = 0;
+  window.addEventListener("resize", () => {
+    clearTimeout(minuteurSchemas);
+    minuteurSchemas = setTimeout(() => ajusterSchemas(document), 180);
   });
 
   await router();

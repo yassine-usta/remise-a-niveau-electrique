@@ -563,7 +563,7 @@ function construireSimSomme(racine, api) {
 
 function construireExercices(racine, api) {
   ressources.push(
-    api.exercice.numerique("#k-exercices", {
+    api.exercice.numerique("#k-exercices-blocs", {
       id: "k-fond-1",
       titre: "Conversion d'unité avec préfixe SI",
       niveau: "fondamental",
@@ -585,7 +585,7 @@ function construireExercices(racine, api) {
   );
 
   ressources.push(
-    api.exercice.numerique("#k-exercices", {
+    api.exercice.numerique("#k-exercices-blocs", {
       id: "k-fond-2",
       titre: "Module d'un nombre complexe",
       niveau: "fondamental",
@@ -603,7 +603,7 @@ function construireExercices(racine, api) {
   );
 
   ressources.push(
-    api.exercice.numerique("#k-exercices", {
+    api.exercice.numerique("#k-exercices-blocs", {
       id: "k-inter-1",
       titre: "Projection trigonométrique d'un phaseur",
       niveau: "intermédiaire",
@@ -622,7 +622,7 @@ function construireExercices(racine, api) {
   );
 
   ressources.push(
-    api.exercice.qcm("#k-exercices", {
+    api.exercice.qcm("#k-exercices-blocs", {
       id: "k-inter-2",
       titre: "Multiplication de deux nombres complexes en forme polaire",
       niveau: "intermédiaire",
@@ -644,7 +644,7 @@ function construireExercices(racine, api) {
   );
 
   ressources.push(
-    api.exercice.numerique("#k-exercices", {
+    api.exercice.numerique("#k-exercices-blocs", {
       id: "k-avance",
       titre: "Somme de deux phaseurs déphasés",
       niveau: "avancé",
@@ -667,12 +667,12 @@ function construireExercices(racine, api) {
   );
 
   ressources.push(
-    api.exercice.reponseCourte("#k-exercices", {
+    api.exercice.reponseCourte("#k-exercices-blocs", {
       id: "k-diagnostic",
       titre: "Lecture d'un code de condensateur",
       niveau: "diagnostic industriel",
       enonce:
-        "<p>Un condensateur céramique porte le marquage « 473 ». Un technicien le range avec ses condensateurs de « 473 picofarads ». Expliquez, en une ou deux phrases, l'erreur probable et donnez la valeur réelle en nanofarads.</p>",
+        "<p>Un condensateur céramique porte le marquage \"473\". Un technicien le range avec ses condensateurs de \"473 picofarads\". Expliquez, en une ou deux phrases, l'erreur probable et donnez la valeur réelle en nanofarads.</p>",
       motsCles: [
         ["47000 pf", "47000pf", "47 nf", "47nf", "47 000 pf"],
         ["multiplicateur", "exposant", "troisieme chiffre", "puissance de dix", "facteur"],
@@ -692,7 +692,7 @@ function construireExercices(racine, api) {
   );
 
   ressources.push(
-    api.exercice.reponseCourte("#k-exercices", {
+    api.exercice.reponseCourte("#k-exercices-blocs", {
       id: "k-conceptuel",
       titre: "Pourquoi le phaseur simplifie l'addition",
       niveau: "conceptuel",
@@ -723,11 +723,11 @@ function construireExercices(racine, api) {
 
 function construireQuiz(racine, api) {
   const quiz = api.quiz(
-    "#l-quiz",
+    "#l-quiz-bloc",
     [
       {
         type: "qcm",
-        enonce: "<p>Quel exposant correspond au préfixe « nano » ?</p>",
+        enonce: "<p>Quel exposant correspond au préfixe \"nano\" ?</p>",
         options: ["$10^{-3}$", "$10^{-6}$", "$10^{-9}$", "$10^{-12}$"],
         bonnes: [2],
         explication: "Le préfixe nano vaut $10^{-9}$, entre micro ($10^{-6}$) et pico ($10^{-12}$).",
@@ -859,7 +859,7 @@ function construireCartesMemo(racine, api) {
 
 function construireRevision(racine, api) {
   const quiz = api.quiz(
-    "#n-revision",
+    "#n-revision-bloc",
     [
       {
         type: "vraiFaux",
@@ -895,7 +895,7 @@ function construireRevision(racine, api) {
    -------------------------------------------------------------------------- */
 
 function construireAutoEval(racine, api) {
-  const auto = api.autoEvaluation("#p-autoevaluation", null, {
+  const auto = api.autoEvaluation("#p-autoevaluation-grille", null, {
     titre: "Où en suis-je sur les fondamentaux mathématiques ?",
   });
   if (auto) ressources.push(auto);

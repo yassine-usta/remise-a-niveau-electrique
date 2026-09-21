@@ -152,6 +152,17 @@ Règle commune aux exercices : la correction reste masquée jusqu'à une tentati
 "Voir la correction". Elle est ensuite révélée étape par étape, et chaque exercice accepte une fonction
 `visuelCorrection(conteneur, api)` pour ajouter un tracé, un schéma annoté ou un phaseur animé.
 
+Les diagrammes ne sont jamais réduits pour entrer dans la colonne de lecture. Réduire un SVG d'un facteur
+fractionnaire fait arrondir les avances de glyphes et ouvre des trous à l'intérieur des mots, un défaut
+d'autant plus visible que les libellés sont petits. Mermaid produit donc ses schémas à leur taille naturelle,
+avec des libellés en texte SVG et non en HTML, et `app.js` mesure après rendu l'échelle effective de chaque
+diagramme : dès qu'un schéma déborde, ou que sa réduction ferait passer ses libellés sous 12 pixels, il
+défile horizontalement dans un conteneur qui lui est propre, jamais dans la page, avec un dégradé de bord et
+la mention "faites glisser pour voir la suite". Tout schéma trop large porte en plus un bouton "Agrandir" qui
+l'ouvre en plein écran, avec zoom à la molette, au pincement et aux boutons, déplacement au glisser, et
+fermeture par Échap. La loupe ne s'ouvre jamais sous l'échelle 1, pour la même raison. Les schémas
+manipulables gardent leurs coordonnées et ne sont pas déplacés.
+
 Un schéma tracé par `api.dessiner` est toujours terminé avant d'atteindre le centre de l'écran : le tracé se
 déclenche une fois, quand le haut du schéma atteint 80 % de la hauteur de l'écran, et l'option `scrub` qui
 suit le défilement se termine obligatoirement quand le centre du schéma atteint 55 % de cette hauteur. Une
@@ -178,14 +189,21 @@ cours, l'absence de balise `script` dans les contenus, la concordance des `data-
 les modules JavaScript, la cohérence de `prochain_jour` avec l'historique, l'absence de tiret cadratin,
 de demi-cadratin et d'emoji, et la présence du programme.
 
-Trois contrôles supplémentaires ne visent que les cours publiés, la démonstration restant un banc d'essai
+Quatre contrôles supplémentaires ne visent que les cours publiés, la démonstration restant un banc d'essai
 libre : aucun numéro de jour ni mention d'un rang sur 90 dans le texte affiché, aucun mot courant écrit sans
-accent dans un diagramme Mermaid, et un avertissement si un `ScrollTrigger` court jusqu'à `end: "bottom top"`,
-c'est-à-dire jusqu'à la sortie du schéma hors de l'écran.
+accent dans un diagramme Mermaid, aucun identifiant en double dans `contenu.html`, et un avertissement si un
+`ScrollTrigger` court jusqu'à `end: "bottom top"`, c'est-à-dire jusqu'à la sortie du schéma hors de l'écran.
+
+L'unicité des identifiants n'est pas un détail : un point de montage qui tombe sur le titre de section au
+lieu du conteneur vide qui le suit ferait hériter au bloc la police de titres et son interlettre négatif,
+et les mots du texte se colleraient. Le moteur refuse désormais de poser un bloc dans un titre, et tout
+texte de lecture porte sa propre police, sa taille minimale de 15 pixels et son interligne large.
 
 ## Conventions de rédaction
 
-Français avec tous les accents, y compris sur les capitales. Guillemets droits uniquement. Aucun tiret
+Français avec tous les accents, y compris sur les capitales. Guillemets droits uniquement, jamais de
+guillemets français ni de guillemets typographiques anglais : le vérificateur refuse la publication s'il en
+trouve un. Aucun tiret
 cadratin ni demi-cadratin, aucun double tiret en guise de ponctuation. Aucun emoji. Unités du système
 international, séparateur décimal français dans les textes, notation anglo-saxonne tolérée dans le code.
 

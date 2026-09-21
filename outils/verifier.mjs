@@ -291,6 +291,24 @@ for (const nom of coursPublies) {
     }
   }
 
+  if (existsSync(fichierContenu)) {
+    const contenu = lire(fichierContenu);
+    controles += 1;
+    const identifiants = Array.from(contenu.matchAll(/\bid\s*=\s*["']([^"']+)["']/g)).map((trouve) => trouve[1]);
+    const vus = new Set();
+    const doubles = new Set();
+    for (const identifiant of identifiants) {
+      if (vus.has(identifiant)) doubles.add(identifiant);
+      vus.add(identifiant);
+    }
+    if (doubles.size) {
+      erreurs.push(
+        "cours/" + nom + "/contenu.html porte des identifiants en double : " + Array.from(doubles).join(", ") +
+          " (un bloc du moteur se poserait dans le titre de section au lieu de son conteneur)"
+      );
+    }
+  }
+
   const fichierScript = join(dossierCours, nom, "cours.js");
   if (existsSync(fichierScript)) {
     const source = lire(fichierScript);
@@ -380,7 +398,55 @@ for (const fichier of fichiersARelire()) {
 }
 
 /* --------------------------------------------------------------------------
-   8. Fichiers structurants du site
+   8. Guillemets droits
+
+   Le site n'utilise que le guillemet droit. Les guillemets français et les
+   guillemets typographiques anglais sont refusés partout où du texte est
+   affiché : cours publiés, démonstration, coquille, feuilles et scripts du
+   site, et documentation.
+   -------------------------------------------------------------------------- */
+
+const GUILLEMETS_INTERDITS = [
+  { signe: "\u00ab", nom: "guillemet ouvrant français" },
+  { signe: "\u00bb", nom: "guillemet fermant français" },
+  { signe: "\u201c", nom: "guillemet ouvrant anglais" },
+  { signe: "\u201d", nom: "guillemet fermant anglais" },
+];
+
+function fichiersAGuillemets() {
+  const liste = [chemin("index.html"), chemin("README.md")];
+  const dossierStyles = chemin("assets/css");
+  if (existsSync(dossierStyles)) {
+    for (const nom of readdirSync(dossierStyles)) liste.push(join(dossierStyles, nom));
+  }
+  for (const fichier of scriptsInterface) liste.push(fichier);
+  for (const nom of dossiers) {
+    for (const fichier of ["contenu.html", "cours.js"]) {
+      liste.push(join(dossierCours, nom, fichier));
+    }
+  }
+  return liste.filter((absolu) => existsSync(absolu) && statSync(absolu).isFile());
+}
+
+for (const fichier of fichiersAGuillemets()) {
+  controles += 1;
+  const lignes = lire(fichier).split("\n");
+  lignes.forEach((ligne, index) => {
+    for (const guillemet of GUILLEMETS_INTERDITS) {
+      const position = ligne.indexOf(guillemet.signe);
+      if (position === -1) continue;
+      const debut = Math.max(0, position - 30);
+      erreurs.push(
+        relatif(fichier) + ", ligne " + (index + 1) + " : " + guillemet.nom + " interdit, utilisez le guillemet droit. " +
+          "Extrait : ..." + ligne.slice(debut, position + 40).trim() + "..."
+      );
+      break;
+    }
+  });
+}
+
+/* --------------------------------------------------------------------------
+   9. Fichiers structurants du site
    -------------------------------------------------------------------------- */
 
 for (const attendu of [

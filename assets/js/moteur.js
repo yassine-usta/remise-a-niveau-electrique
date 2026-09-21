@@ -51,6 +51,45 @@ function resoudre(cible, racine) {
   return cible;
 }
 
+/** Vrai pour h1 à h6 : un titre n'est jamais un point de montage. */
+function estTitre(element) {
+  return element instanceof Element && /^h[1-6]$/i.test(element.tagName);
+}
+
+/**
+ * Résout le conteneur dans lequel un bloc du moteur va se poser.
+ *
+ * Deux pièges fréquents dans un contenu de cours : un identifiant porté à la
+ * fois par le titre de section et par le conteneur vide qui le suit, et un
+ * point de montage qui désigne directement un titre. Dans les deux cas, poser
+ * le bloc dans le titre lui ferait hériter de la police de titres, de son
+ * interlettre négatif et de son interligne serré : les mots se collent. Le
+ * moteur choisit donc un conteneur qui n'est pas un titre, et pose au besoin
+ * le bloc juste après le titre plutôt que dedans.
+ */
+function resoudrePointDeMontage(cible, racine) {
+  const contexte = racine || document;
+  let element = null;
+  if (typeof cible === "string") {
+    let candidats = [];
+    try {
+      candidats = Array.from(contexte.querySelectorAll(cible));
+    } catch (erreur) {
+      candidats = [];
+    }
+    element = candidats.find((noeud) => !estTitre(noeud)) || candidats[0] || null;
+  } else {
+    element = resoudre(cible, contexte);
+  }
+  if (!element || !estTitre(element)) return element;
+
+  const suivant = element.nextElementSibling;
+  if (suivant && suivant.classList.contains("m-montage")) return suivant;
+  const accueil = creer("div", { classe: "m-montage" });
+  element.after(accueil);
+  return accueil;
+}
+
 function resoudreListe(cibles, racine) {
   if (!cibles) return [];
   if (typeof cibles === "string") return Array.from((racine || document).querySelectorAll(cibles));
@@ -706,7 +745,7 @@ function construireEtapes(etapes) {
 }
 
 function cadreExercice(ctx, conteneur, def, genreParDefaut) {
-  const cible = resoudre(conteneur, ctx.racine instanceof Element ? ctx.racine : document);
+  const cible = resoudrePointDeMontage(conteneur, ctx.racine instanceof Element ? ctx.racine : document);
   if (!cible) return null;
 
   const id = def.id || identifiant("exo");
@@ -1579,7 +1618,7 @@ function zoneQuestionQuiz(ctx, question) {
 }
 
 function construireQuiz(ctx, conteneur, questions, options = {}) {
-  const cible = resoudre(conteneur, ctx.racine instanceof Element ? ctx.racine : document);
+  const cible = resoudrePointDeMontage(conteneur, ctx.racine instanceof Element ? ctx.racine : document);
   if (!cible || !Array.isArray(questions) || !questions.length) return null;
 
   const total = questions.length;
@@ -1810,7 +1849,7 @@ function construireQuiz(ctx, conteneur, questions, options = {}) {
    -------------------------------------------------------------------------- */
 
 function construireCartes(ctx, conteneur, cartes, options = {}) {
-  const cible = resoudre(conteneur, ctx.racine instanceof Element ? ctx.racine : document);
+  const cible = resoudrePointDeMontage(conteneur, ctx.racine instanceof Element ? ctx.racine : document);
   if (!cible || !Array.isArray(cartes) || !cartes.length) return null;
 
   const grille = creer("div", { classe: "m-cartes-grille" });
@@ -1930,7 +1969,7 @@ const CRITERES_PAR_DEFAUT = [
 ];
 
 function construireAutoEvaluation(ctx, conteneur, criteres, options = {}) {
-  const cible = resoudre(conteneur, ctx.racine instanceof Element ? ctx.racine : document);
+  const cible = resoudrePointDeMontage(conteneur, ctx.racine instanceof Element ? ctx.racine : document);
   if (!cible) return null;
 
   const liste = (Array.isArray(criteres) && criteres.length ? criteres : CRITERES_PAR_DEFAUT).map((critere, index) =>
@@ -2127,7 +2166,7 @@ function couleurSerie(valeur, couleurs, rang) {
 }
 
 function cadreSimulation(ctx, conteneur, options = {}) {
-  const cible = resoudre(conteneur, ctx.racine instanceof Element ? ctx.racine : document);
+  const cible = resoudrePointDeMontage(conteneur, ctx.racine instanceof Element ? ctx.racine : document);
   if (!cible) return null;
 
   const reglages = creer("div", { classe: "m-sim-reglages" });
@@ -2531,7 +2570,7 @@ function tracerCourbe(c, points, versX, versY, boite, couleur, epaisseur) {
    -------------------------------------------------------------------------- */
 
 function simCurseurs(ctx, conteneur, parametres, rappel) {
-  const cible = resoudre(conteneur, ctx.racine instanceof Element ? ctx.racine : document);
+  const cible = resoudrePointDeMontage(conteneur, ctx.racine instanceof Element ? ctx.racine : document);
   if (!cible || !Array.isArray(parametres)) return null;
 
   const valeurs = {};
@@ -3068,7 +3107,7 @@ const VITESSES = [
  */
 function simLecteur(ctx, conteneur, options = {}) {
   const racine = ctx.racine instanceof Element ? ctx.racine : document;
-  const cible = resoudre(conteneur, racine);
+  const cible = resoudrePointDeMontage(conteneur, racine);
   if (!cible) return null;
 
   const de = Number(options.de != null ? options.de : 0);
@@ -3252,7 +3291,7 @@ function formaterDecimal(valeur, decimales) {
  */
 function simValeurs(ctx, conteneur, champs) {
   const racine = ctx.racine instanceof Element ? ctx.racine : document;
-  const cible = resoudre(conteneur, racine);
+  const cible = resoudrePointDeMontage(conteneur, racine);
   if (!cible || !Array.isArray(champs)) return null;
 
   const liste = creer("dl", { classe: "m-valeurs" });

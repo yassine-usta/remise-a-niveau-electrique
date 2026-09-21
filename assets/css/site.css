@@ -1349,13 +1349,25 @@ img, svg, canvas { max-width: 100%; }
    8. Composants du moteur
    -------------------------------------------------------------------------- */
 
+/* Un bloc du moteur porte sa propre typographie : quel que soit l'endroit où
+   il est posé, il n'hérite ni d'une police de titres, ni d'un interlettre
+   négatif, ni d'un interligne serré. */
 .m-bloc {
   margin: 2rem 0;
   border-radius: var(--r-l);
   background: var(--fond-2);
   border: 1px solid var(--trait);
   overflow: hidden;
+  font-family: var(--texte);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: normal;
+  word-spacing: normal;
+  text-transform: none;
+  color: var(--encre);
 }
+.m-montage { display: block; }
 .m-bloc-tete {
   display: flex;
   flex-wrap: wrap;
@@ -1390,12 +1402,39 @@ img, svg, canvas { max-width: 100%; }
 .m-sim .m-bloc-tete { color: var(--encre); }
 .m-sim .m-bloc-genre { color: var(--encre-3); }
 
-.m-enonce { font-size: 0.95rem; }
-.m-exercice .m-enonce > :first-child { margin-top: 0; }
+/* Textes de lecture : police de texte, au moins 15 px, interligne large,
+   jamais d'interlettre ou d'espace de mot négatif. */
+.m-enonce,
+.m-enonce p,
+.m-enonce li,
+.m-consigne,
+.m-schema-consigne,
+.m-option,
+.m-etape-corps,
+.m-etape-note,
+.m-correction-intro,
+.m-verdict,
+.m-carte-texte,
+.m-critere-nom,
+.m-critere-aide,
+.m-sim-note,
+.m-resultat-detail li,
+.m-options legend,
+.m-saisie label,
+.m-quiz-question .m-enonce {
+  font-family: var(--texte);
+  font-size: max(15px, 0.95rem);
+  line-height: 1.55;
+  letter-spacing: normal;
+  word-spacing: normal;
+}
+.m-enonce > :first-child { margin-top: 0; }
 .m-exercice .m-enonce > :last-child { margin-bottom: 1rem; }
+.m-etape-note { color: var(--encre-3); }
+.m-critere-aide { color: var(--encre-3); }
 
 .m-options { display: grid; gap: 0.45rem; margin: 0 0 1.1rem; padding: 0; border: 0; }
-.m-options legend { padding: 0 0 0.55rem; font-size: 0.8rem; color: var(--encre-3); }
+.m-options legend { padding: 0 0 0.55rem; color: var(--encre-3); }
 .m-option {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -1406,7 +1445,6 @@ img, svg, canvas { max-width: 100%; }
   border: 1px solid var(--trait);
   background: var(--fond);
   cursor: pointer;
-  font-size: 0.92rem;
   transition: border-color 0.18s, background 0.18s;
 }
 .m-option:hover { border-color: var(--trait-2); }
@@ -1418,7 +1456,7 @@ img, svg, canvas { max-width: 100%; }
 .m-option-marque { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.06em; margin-left: 0.45rem; opacity: 0.75; }
 
 .m-saisie { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin-bottom: 1.1rem; }
-.m-saisie label { font-size: 0.86rem; color: var(--encre-2); }
+.m-saisie label { color: var(--encre-2); }
 .m-champ {
   display: inline-flex;
   align-items: center;
@@ -1434,7 +1472,7 @@ img, svg, canvas { max-width: 100%; }
   background: transparent;
   color: var(--encre);
   font-family: var(--mono);
-  font-size: 0.93rem;
+  font-size: max(15px, 0.95rem);
   padding: 0.55rem;
   min-width: 8ch;
   width: 12ch;
@@ -1443,7 +1481,7 @@ img, svg, canvas { max-width: 100%; }
 .m-champ:focus-within { border-color: var(--encre); box-shadow: 0 0 0 3px var(--trait); }
 .m-champ .m-unite { font-family: var(--mono); font-size: 0.82rem; color: var(--encre-3); }
 .m-champ-large { width: 100%; padding: 0.2rem; }
-.m-champ-large textarea { width: 100%; min-height: 5rem; resize: vertical; font-family: var(--texte); font-size: 0.92rem; }
+.m-champ-large textarea { width: 100%; min-height: 5rem; resize: vertical; font-family: var(--texte); font-size: max(15px, 0.95rem); line-height: 1.55; }
 
 .m-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
 .m-bouton {
@@ -1476,9 +1514,7 @@ img, svg, canvas { max-width: 100%; }
   margin: 1.1rem 0 0;
   padding: 0.8rem 1rem;
   border-radius: var(--r-m);
-  font-size: 0.89rem;
   font-weight: 500;
-  line-height: 1.55;
   color: var(--sur-pastel);
 }
 .m-verdict[data-etat="juste"] { background: var(--menthe); }
@@ -1502,7 +1538,7 @@ img, svg, canvas { max-width: 100%; }
   text-transform: uppercase;
   color: var(--encre-3);
 }
-.m-correction-intro { font-size: 0.92rem; margin-bottom: 0.9rem; }
+.m-correction-intro { margin-bottom: 0.9rem; }
 .m-etapes { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; counter-reset: etape; }
 .m-etape {
   display: grid;
@@ -1531,7 +1567,7 @@ img, svg, canvas { max-width: 100%; }
 }
 .m-etape-corps > :first-child { margin-top: 0; }
 .m-etape-corps > :last-child { margin-bottom: 0; }
-.m-etape-note { display: block; margin-top: 0.4rem; font-size: 0.83rem; line-height: 1.6; color: var(--encre-3); }
+.m-etape-note { display: block; margin-top: 0.4rem; }
 .m-visuel { margin-top: 1rem; }
 .m-visuel:empty { display: none; }
 .m-visuel .m-bloc { margin: 0; }
@@ -1545,7 +1581,7 @@ img, svg, canvas { max-width: 100%; }
   color: var(--encre);
 }
 .m-schema svg { width: 100%; height: auto; display: block; }
-.m-schema-consigne { margin: 0 0 0.8rem; font-size: 0.83rem; color: var(--encre-3); }
+.m-schema-consigne { margin: 0 0 0.8rem; color: var(--encre-3); }
 .m-zone { cursor: pointer; }
 .m-zone-fond {
   fill: color-mix(in srgb, var(--lavande) 24%, transparent);
@@ -1611,7 +1647,6 @@ img, svg, canvas { max-width: 100%; }
   border-radius: var(--r-m);
   background: var(--fond);
   border: 1px solid var(--trait);
-  font-size: 0.88rem;
 }
 .m-resultat-detail .rang { font-family: var(--mono); font-size: 0.66rem; color: var(--encre-3); padding-top: 0.2rem; }
 .m-resultat-detail .marque {
@@ -1668,7 +1703,7 @@ img, svg, canvas { max-width: 100%; }
   color: var(--encre-3);
 }
 .m-carte-face.verso .m-carte-genre { color: var(--sur-pastel-doux); }
-.m-carte-texte { font-size: 0.9rem; line-height: 1.55; }
+.m-carte-texte { hyphens: auto; }
 .m-carte-pied { align-self: end; font-size: 0.7rem; color: var(--encre-3); }
 .m-carte-face.verso .m-carte-pied { color: var(--sur-pastel-doux); }
 .m-cartes-outils { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin-top: 1.1rem; }
@@ -1684,8 +1719,8 @@ img, svg, canvas { max-width: 100%; }
   background: var(--fond);
   border: 1px solid var(--trait);
 }
-.m-critere-nom { font-size: 0.92rem; font-weight: 500; }
-.m-critere-aide { grid-column: 1 / 2; margin: 0; font-size: 0.8rem; color: var(--encre-3); }
+.m-critere-nom { font-weight: 500; }
+.m-critere-aide { grid-column: 1 / 2; margin: 0; }
 .m-echelle { display: flex; gap: 0.3rem; grid-row: span 2; }
 .m-echelle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .m-echelle label {
@@ -1723,7 +1758,7 @@ img, svg, canvas { max-width: 100%; }
 .m-sim-legende { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; margin-top: 0.9rem; font-size: 0.79rem; color: var(--encre-2); }
 .m-sim-legende span { display: inline-flex; align-items: center; gap: 0.45rem; }
 .m-sim-legende i { width: 16px; height: 3px; border-radius: 2px; background: currentColor; }
-.m-sim-note { margin: 0.9rem 0 0; font-size: 0.83rem; line-height: 1.6; color: var(--encre-3); }
+.m-sim-note { margin: 0.9rem 0 0; color: var(--encre-3); }
 .m-sim-mesures { display: grid; grid-template-columns: repeat(auto-fit, minmax(136px, 1fr)); gap: 0.5rem; margin-top: 0.9rem; }
 .m-mesure { padding: 0.65rem 0.85rem; border-radius: var(--r-s); background: var(--fond); border: 1px solid var(--trait); }
 .m-mesure dt {
@@ -1797,6 +1832,154 @@ img, svg, canvas { max-width: 100%; }
 .schema-vivant { margin: 0; }
 .schema-vivant svg { width: 100%; height: auto; display: block; color: var(--encre); }
 .schema-vivant .m-curseurs { margin-top: 1rem; }
+
+/* --------------------------------------------------------------------------
+   8 bis. Schémas larges et loupe plein écran
+   -------------------------------------------------------------------------- */
+
+.cours pre.mermaid.schema-equipe { padding: 0; text-align: left; }
+
+.schema-large { position: relative; margin: 0; }
+.schema-large-piste {
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  border-radius: var(--r-m);
+}
+.schema-large[data-defilant="oui"] .schema-large-piste {
+  padding: 0.6rem 0.2rem 0.8rem;
+  background: var(--fond-2);
+  border: 1px solid var(--trait);
+}
+.schema-large-piste svg { display: block; height: auto; }
+.schema-large[data-defilant="oui"] .schema-large-piste svg { margin: 0 auto; }
+
+/* Dégradé de bord : il signale qu'il reste du schéma à droite. */
+.schema-large[data-suite="oui"]::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 72px;
+  height: calc(100% - 2.6rem);
+  pointer-events: none;
+  border-radius: 0 var(--r-m) var(--r-m) 0;
+  background: linear-gradient(to right, transparent, var(--fond-2) 62%, var(--fond-2));
+}
+
+.schema-large-outils {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.55rem;
+  min-height: 1.8rem;
+}
+.schema-large-indice {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--encre-3);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+.schema-large[data-suite="oui"] .schema-large-indice { opacity: 1; }
+
+.schema-outils { display: flex; justify-content: flex-end; margin-top: 0.55rem; }
+
+.schema-agrandir {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.42rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--trait-2);
+  background: var(--fond-2);
+  color: var(--encre-2);
+  font-family: var(--texte);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: color 0.18s, border-color 0.18s, background 0.18s;
+}
+.schema-agrandir:hover { color: var(--encre); border-color: var(--encre-3); background: var(--fond-3); }
+.schema-agrandir svg { width: 15px; height: 15px; }
+
+.loupe {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  background: color-mix(in srgb, var(--fond) 92%, black);
+}
+.loupe-barre {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid var(--trait);
+  background: var(--fond-2);
+}
+.loupe-titre {
+  flex: 1 1 12rem;
+  margin: 0;
+  font-family: var(--texte);
+  font-size: max(15px, 0.95rem);
+  color: var(--encre);
+}
+.loupe-bouton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-width: 44px;
+  min-height: 40px;
+  padding: 0 0.8rem;
+  border-radius: 10px;
+  border: 1px solid var(--trait-2);
+  background: var(--fond);
+  color: var(--encre);
+  font-family: var(--mono);
+  font-size: 0.86rem;
+  cursor: pointer;
+}
+.loupe-bouton:hover { background: var(--fond-3); }
+.loupe-bouton:focus-visible { outline: 2px solid var(--lavande); outline-offset: 2px; }
+
+.loupe-scene {
+  position: relative;
+  overflow: hidden;
+  touch-action: none;
+  cursor: grab;
+}
+.loupe-scene[data-saisie="oui"] { cursor: grabbing; }
+/* La monture est centrée par sa position, pas par la mise en page : un schéma
+   plus large que l'écran resterait sinon décalé une fois réduit. */
+.loupe-monture {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform-origin: center center;
+  transition: transform 0.12s linear;
+  will-change: transform;
+}
+.loupe[data-mouvement="reduit"] .loupe-monture { transition: none; }
+.loupe-monture svg { display: block; max-width: none; }
+.loupe-aide {
+  margin: 0;
+  padding: 0.7rem 1rem 0.9rem;
+  border-top: 1px solid var(--trait);
+  background: var(--fond-2);
+  font-family: var(--texte);
+  font-size: 0.82rem;
+  color: var(--encre-3);
+  text-align: center;
+}
 
 /* --------------------------------------------------------------------------
    9. Palette de recherche
