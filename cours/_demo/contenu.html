@@ -83,7 +83,7 @@
   <h2 id="f-schemas">F. Schémas et diagrammes</h2>
 
   <figure>
-    <svg viewBox="0 0 620 240" role="img" aria-label="Schéma du circuit RC série avec conventions de tension et de courant">
+    <svg id="demo-schema-circuit" viewBox="0 0 620 240" role="img" aria-label="Schéma du circuit RC série avec conventions de tension et de courant">
       <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
         <path d="M110 70H250"/>
         <path d="M310 70H470"/>
@@ -118,7 +118,7 @@
   </figure>
 
   <figure>
-    <pre class="ascii">   t &lt; 0 : interrupteur ouvert, C dechargé
+    <pre class="ascii">   t &lt; 0 : interrupteur ouvert, C déchargé
    t = 0 : fermeture
 
    u_C |          ________________  E
@@ -141,12 +141,12 @@
     <pre class="mermaid">flowchart TD
   A["Circuit du premier ordre"] --> B{"Quelle question ?"}
   B -->|"Comportement dans le temps"| C["Identifier tau = RC"]
-  B -->|"Comportement en frequence"| D["Identifier fc = 1 / (2 pi RC)"]
-  C --> E["Ecrire u(t) = Ufinal + (Uinitial - Ufinal) exp(-t / tau)"]
-  D --> F["Tracer gain et phase, reperer -3 dB et -45 degres"]
-  E --> G["Verifier les valeurs a t = 0 et t infini"]
+  B -->|"Comportement en fréquence"| D["Identifier fc = 1 / (2 pi RC)"]
+  C --> E["Écrire u(t) = Ufinal + (Uinitial - Ufinal) exp(-t / tau)"]
+  D --> F["Tracer gain et phase, repérer -3 dB et -45 degrés"]
+  E --> G["Vérifier les valeurs à t = 0 et t infini"]
   F --> G
-  G --> H["Conclure et controler l ordre de grandeur"]</pre>
+  G --> H["Conclure et contrôler l'ordre de grandeur"]</pre>
     <figcaption>
       Organigramme de résolution. Le choix de la méthode dépend de la question posée, pas du circuit : le même
       RC se traite dans le domaine temporel ou fréquentiel.
@@ -229,6 +229,112 @@
     sur un signal réel.
   </p>
   <div id="demo-spectre"></div>
+
+  <h2 id="manipulables">Schémas tracés et grandeurs manipulables</h2>
+  <p>
+    Quatre composants complètent les simulations sur toile : le tracé progressif d'un schéma, la poignée
+    déplaçable, le lecteur et le panneau de valeurs en direct. Ils servent à confier la commande d'un schéma
+    à l'apprenant plutôt qu'au défilement de la page.
+  </p>
+
+  <h3 id="manip-dessin">Tracé progressif d'un schéma</h3>
+  <p>
+    <code>api.dessiner</code> masque les traits d'un schéma déjà présent dans la page, puis les redessine.
+    Par défaut le tracé se déclenche une seule fois, quand le haut du schéma atteint 80 % de la hauteur de
+    l'écran, et dure environ 1,2 seconde. Le schéma du circuit de la section F est tracé de cette façon.
+    En mouvement réduit, aucun trait n'est masqué : le schéma s'affiche complet.
+  </p>
+  <figure>
+    <div class="schema-vivant" id="demo-dessin">
+      <svg viewBox="0 0 560 260" role="img" aria-label="Repère de la charge d'un condensateur, tracé progressivement">
+        <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity="0.55">
+          <path d="M70 210H520"/>
+          <path d="M70 230V40"/>
+        </g>
+        <g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round">
+          <path d="M70 210C100 120 240 66 500 66"/>
+        </g>
+        <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.75">
+          <path d="M70 66H500"/>
+          <path d="M70 119H150"/>
+          <path d="M150 119V210"/>
+        </g>
+        <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13">
+          <text x="526" y="215">t</text>
+          <text x="52" y="34">u_C</text>
+          <text x="46" y="70">E</text>
+          <text x="10" y="123">0,63 E</text>
+          <text x="138" y="232">tau</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      Tracé au déclenchement, sans lien avec la position de défilement. Les traits pleins puis les traits
+      pointillés se dessinent l'un après l'autre, les étiquettes apparaissent ensuite.
+    </figcaption>
+  </figure>
+
+  <h3 id="manip-scrub">Tracé suivi au défilement</h3>
+  <p>
+    L'option <code>scrub</code> lie l'avancement du tracé à la position de défilement. La zone de
+    déclenchement se termine toujours quand le centre du schéma atteint 55 % de la hauteur de l'écran :
+    un schéma amené au centre de l'écran est donc entièrement dessiné, jamais laissé à moitié tracé.
+  </p>
+  <figure>
+    <div class="schema-vivant" id="demo-dessin-scrub">
+      <svg viewBox="0 0 560 200" role="img" aria-label="Les deux lectures d'un circuit du premier ordre">
+        <g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="34" y="70" width="156" height="60" rx="12"/>
+          <rect x="366" y="18" width="160" height="58" rx="12"/>
+          <rect x="366" y="124" width="160" height="58" rx="12"/>
+          <path d="M190 100H278V47H362"/>
+          <path d="M190 100H278V153H362"/>
+          <path d="M350 41 362 47 350 53"/>
+          <path d="M350 147 362 153 350 159"/>
+        </g>
+        <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13">
+          <text x="60" y="105">circuit RC série</text>
+          <text x="388" y="52">lecture temporelle</text>
+          <text x="392" y="158">lecture fréquentielle</text>
+          <text x="214" y="40">tau</text>
+          <text x="216" y="186">fc</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      Le même circuit, deux lectures. Le tracé suit ici le défilement, mais il est terminé avant que le
+      schéma n'atteigne le centre de l'écran.
+    </figcaption>
+  </figure>
+
+  <h3 id="manip-cercle">Cercle trigonométrique manipulable</h3>
+  <p>
+    L'exemple complet réunit les trois autres composants sur un seul schéma. L'angle se règle en faisant
+    glisser la poignée sur le cercle, à la souris ou au doigt, en la sélectionnant au clavier puis en
+    utilisant les flèches, avec le curseur, ou en lançant la lecture. Les quatre commandes restent
+    synchronisées et aucune grandeur ne dépend du défilement.
+  </p>
+  <figure>
+    <div class="schema-vivant" id="demo-cercle"></div>
+    <div id="demo-cercle-curseur"></div>
+    <div id="demo-cercle-lecteur"></div>
+    <div id="demo-cercle-valeurs"></div>
+    <figcaption>
+      Cercle trigonométrique de rayon 1. Le rayon est le trait plein épais terminé par la poignée ronde ;
+      sa projection horizontale, en trait plein clair, donne $\cos\theta$, sa projection verticale, en trait
+      plein également, donne $\sin\theta$. Les traits pointillés ne sont que des repères de lecture.
+    </figcaption>
+  </figure>
+
+  <h3 id="manip-contraintes">Poignée sur un segment, une courbe et une zone</h3>
+  <p>
+    La même poignée accepte quatre contraintes. Les trois autres sont réunies ici : un segment gradué, une
+    courbe échantillonnée sur laquelle le point reste collé, et une zone rectangulaire où les deux
+    coordonnées sont libres. Les flèches du clavier déplacent la poignée sélectionnée, la touche Majuscule
+    donne un pas fin, les touches Origine et Fin vont aux extrémités.
+  </p>
+  <div class="schema-vivant" id="demo-contraintes"></div>
+  <div id="demo-contraintes-valeurs"></div>
 
   <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
   <p>

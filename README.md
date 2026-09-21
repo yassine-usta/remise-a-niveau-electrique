@@ -125,6 +125,7 @@ Les cours sont toujours présentés par leur titre.
 | `api.gsap`, `api.ScrollTrigger`, `api.lenis` | bibliothèques déjà initialisées, ou `null` |
 | `api.mouvementReduit` | vrai si l'utilisateur demande des animations réduites |
 | `api.reveler(elements, options)` | apparition au défilement |
+| `api.dessiner(elements, options)` | tracé progressif des traits d'un schéma SVG, puis apparition des textes |
 | `api.exercice.qcm(conteneur, def)` | choix unique ou multiple |
 | `api.exercice.vraiFaux(conteneur, def)` | affirmation à trancher |
 | `api.exercice.numerique(conteneur, def)` | résultat chiffré, unité et tolérance relative |
@@ -139,6 +140,9 @@ Les cours sont toujours présentés par leur titre.
 | `api.sim.fresnel(conteneur, options)` | phaseurs animés et projections |
 | `api.sim.bode(conteneur, options)` | gain et phase en échelle logarithmique |
 | `api.sim.spectre(conteneur, options)` | spectre en barres |
+| `api.sim.poignee(svg, options)` | point déplaçable, contraint à un cercle, un segment, une courbe ou une zone |
+| `api.sim.lecteur(conteneur, options)` | lecture, pause, remise à zéro et vitesse d'une grandeur animée |
+| `api.sim.valeurs(conteneur, champs)` | panneau de valeurs en direct |
 | `api.stockage.lire / ecrire / effacer` | mémoire locale propre au cours |
 | `api.util.formater / lireNombre / normaliser` | utilitaires de calcul et de comparaison |
 | `api.util.icone(nom)` | icône du registre commun |
@@ -147,6 +151,12 @@ Les cours sont toujours présentés par leur titre.
 Règle commune aux exercices : la correction reste masquée jusqu'à une tentative ou un clic explicite sur
 "Voir la correction". Elle est ensuite révélée étape par étape, et chaque exercice accepte une fonction
 `visuelCorrection(conteneur, api)` pour ajouter un tracé, un schéma annoté ou un phaseur animé.
+
+Un schéma tracé par `api.dessiner` est toujours terminé avant d'atteindre le centre de l'écran : le tracé se
+déclenche une fois, quand le haut du schéma atteint 80 % de la hauteur de l'écran, et l'option `scrub` qui
+suit le défilement se termine obligatoirement quand le centre du schéma atteint 55 % de cette hauteur. Une
+grandeur pilotée par l'apprenant ne dépend jamais du défilement : elle se règle à la poignée, au curseur, au
+clavier ou au lecteur.
 
 Toutes les simulations s'adaptent au redimensionnement et au thème, se mettent en pause hors de l'écran
 et exposent une méthode `detruire()`. Une couleur de courbe peut être donnée en clair, par exemple
@@ -167,6 +177,11 @@ Le script contrôle la validité des fichiers JSON, l'unicité des slugs, la pr�
 cours, l'absence de balise `script` dans les contenus, la concordance des `data-slug`, la syntaxe de tous
 les modules JavaScript, la cohérence de `prochain_jour` avec l'historique, l'absence de tiret cadratin,
 de demi-cadratin et d'emoji, et la présence du programme.
+
+Trois contrôles supplémentaires ne visent que les cours publiés, la démonstration restant un banc d'essai
+libre : aucun numéro de jour ni mention d'un rang sur 90 dans le texte affiché, aucun mot courant écrit sans
+accent dans un diagramme Mermaid, et un avertissement si un `ScrollTrigger` court jusqu'à `end: "bottom top"`,
+c'est-à-dire jusqu'à la sortie du schéma hors de l'écran.
 
 ## Conventions de rédaction
 

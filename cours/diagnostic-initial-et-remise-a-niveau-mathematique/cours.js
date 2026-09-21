@@ -1,6 +1,6 @@
 /* ==========================================================================
    cours/diagnostic-initial-et-remise-a-niveau-mathematique/cours.js
-   Jour 1 : diagnostic initial et remise à niveau mathématique.
+   Diagnostic initial et remise à niveau mathématique.
    ========================================================================== */
 
 let ressources = [];
@@ -32,8 +32,10 @@ export async function init(racine, api) {
   ressources = [];
   nettoyeursAnimation = [];
 
+  brancherRenvois(racine, api);
   construireMinitest(racine, api);
   construireTriangle(racine, api);
+  construirePlanComplexe(racine, api);
   construireCercle(racine, api);
   construireSimDecomposition(racine, api);
   construireSimSomme(racine, api);
@@ -130,7 +132,34 @@ function construireMinitest(racine, api) {
 }
 
 /* --------------------------------------------------------------------------
-   F. Triangle des prérequis, tracé au défilement
+   Renvois vers les schémas placés au fil du texte
+   -------------------------------------------------------------------------- */
+
+function brancherRenvois(racine, api) {
+  const liens = Array.from(racine.querySelectorAll("a[data-renvoi]"));
+  if (!liens.length) return;
+
+  function surClic(evenement) {
+    const cible = racine.querySelector("#" + evenement.currentTarget.dataset.renvoi);
+    if (!cible) return;
+    evenement.preventDefault();
+    /* Position absolue calculée depuis la page, jamais depuis l'état interne
+       du défilement fluide : le renvoi tombe juste même après un saut. */
+    const haut = Math.max(0, cible.getBoundingClientRect().top + window.scrollY - 90);
+    if (api.lenis && typeof api.lenis.scrollTo === "function") api.lenis.scrollTo(haut);
+    else window.scrollTo({ top: haut, behavior: api.mouvementReduit ? "auto" : "smooth" });
+    cible.setAttribute("tabindex", "-1");
+    cible.focus({ preventScroll: true });
+  }
+
+  for (const lien of liens) lien.addEventListener("click", surClic);
+  nettoyeursAnimation.push(() => {
+    for (const lien of liens) lien.removeEventListener("click", surClic);
+  });
+}
+
+/* --------------------------------------------------------------------------
+   F. Triangle des prérequis, tracé à l'apparition du schéma
    -------------------------------------------------------------------------- */
 
 function construireTriangle(racine, api) {
@@ -157,12 +186,10 @@ function construireTriangle(racine, api) {
     fill: "none",
     "stroke-linecap": "round",
   });
-  const traces = [];
   function ligne(p1, p2, pointille) {
     const chemin = svgEl("path", { d: "M" + p1.x + " " + p1.y + " L" + p2.x + " " + p2.y });
     if (pointille) chemin.setAttribute("stroke-dasharray", "6 5");
     groupeTraits.appendChild(chemin);
-    traces.push(chemin);
   }
   ligne(sommets.haut, sommets.gauche);
   ligne(sommets.gauche, sommets.droite);
@@ -197,154 +224,233 @@ function construireTriangle(racine, api) {
 
   conteneur.appendChild(svg);
 
-  const longueurs = traces.map((trace) => trace.getTotalLength());
-  traces.forEach((trace, index) => {
-    trace.style.strokeDasharray = String(longueurs[index]);
-    trace.style.strokeDashoffset = String(longueurs[index]);
-  });
-
-  function majTrace(progression) {
-    traces.forEach((trace, index) => {
-      const local = Math.max(0, Math.min(1, progression * traces.length - index));
-      trace.style.strokeDashoffset = String(longueurs[index] * (1 - local));
-    });
-  }
-
-  if (api.mouvementReduit || !api.gsap) {
-    majTrace(1);
-    return;
-  }
-
-  majTrace(0);
-  let declencheur = null;
-  if (api.ScrollTrigger) {
-    declencheur = api.ScrollTrigger.create({
-      trigger: conteneur,
-      start: "top 85%",
-      end: "bottom 40%",
-      scrub: 0.4,
-      onUpdate(self) {
-        majTrace(self.progress);
-      },
-    });
-  } else {
-    majTrace(1);
-  }
-  nettoyeursAnimation.push(() => {
-    if (declencheur) declencheur.kill();
-  });
+  /* Le tracé se joue une fois, à l'entrée du schéma dans l'écran : il est
+     terminé avant que le schéma n'atteigne le centre. */
+  ressources.push(api.dessiner(svg, { duree: 1.4 }));
 }
 
 /* --------------------------------------------------------------------------
-   F. Cercle trigonométrique, vecteur tournant piloté par le défilement
+   E. Plan complexe, tracé à l'apparition du schéma
+   -------------------------------------------------------------------------- */
+
+function construirePlanComplexe(racine, api) {
+  const svg = racine.querySelector("#e-plan-complexe svg");
+  if (!svg) return;
+  ressources.push(api.dessiner(svg, { duree: 1.3 }));
+}
+
+/* --------------------------------------------------------------------------
+   E. Cercle trigonométrique manipulable
+
+   L'angle est piloté par l'apprenant : poignée sur le cercle, curseur, clavier
+   et lecteur. Aucune grandeur ne dépend de la position de défilement.
    -------------------------------------------------------------------------- */
 
 function construireCercle(racine, api) {
-  const conteneur = racine.querySelector("#f-cercle");
+  const conteneur = racine.querySelector("#e-cercle");
   if (!conteneur) return;
 
-  const centre = { x: 190, y: 190 };
-  const rayon = 120;
+  const centre = { x: 214, y: 186 };
+  const rayon = 132;
+  const angleDepart = 40;
 
   const svg = svgEl("svg", {
-    viewBox: "0 0 400 340",
-    role: "img",
-    "aria-label": "Cercle trigonométrique de rayon 1 avec vecteur tournant et projections",
+    viewBox: "0 0 450 344",
+    "aria-label": "Cercle trigonométrique manipulable : angle, cosinus et sinus",
     style: "width:100%;height:auto;display:block",
   });
 
-  const fond = svgEl("g", { stroke: "currentColor", "stroke-width": "1.6", fill: "none", opacity: "0.55" });
+  const fond = svgEl("g", { fill: "none", stroke: "currentColor", "stroke-width": "1.5", opacity: "0.5" });
   fond.appendChild(svgEl("circle", { cx: centre.x, cy: centre.y, r: rayon }));
-  fond.appendChild(svgEl("path", { d: "M" + (centre.x - rayon - 16) + " " + centre.y + " H" + (centre.x + rayon + 16) }));
-  fond.appendChild(svgEl("path", { d: "M" + centre.x + " " + (centre.y - rayon - 16) + " V" + (centre.y + rayon + 16) }));
+  fond.appendChild(svgEl("path", { d: "M" + (centre.x - rayon - 28) + " " + centre.y + "H" + (centre.x + rayon + 28) }));
+  fond.appendChild(svgEl("path", { d: "M" + centre.x + " " + (centre.y - rayon - 28) + "V" + (centre.y + rayon + 28) }));
+  fond.appendChild(svgEl("path", { d: "M" + (centre.x + rayon) + " " + (centre.y - 5) + "v10" }));
+  fond.appendChild(svgEl("path", { d: "M" + (centre.x - rayon) + " " + (centre.y - 5) + "v10" }));
+  fond.appendChild(svgEl("path", { d: "M" + (centre.x - 5) + " " + (centre.y - rayon) + "h10" }));
+  fond.appendChild(svgEl("path", { d: "M" + (centre.x - 5) + " " + (centre.y + rayon) + "h10" }));
   svg.appendChild(fond);
 
-  const projCos = svgEl("path", {
-    stroke: "currentColor",
-    "stroke-width": "1.6",
-    "stroke-dasharray": "5 4",
-    fill: "none",
-    opacity: "0.8",
-  });
-  const projSin = svgEl("path", {
-    stroke: "currentColor",
-    "stroke-width": "1.6",
-    "stroke-dasharray": "5 4",
-    fill: "none",
-    opacity: "0.8",
-  });
-  svg.appendChild(projCos);
-  svg.appendChild(projSin);
-
-  const vecteur = svgEl("path", { stroke: "currentColor", "stroke-width": "2.6", "stroke-linecap": "round", fill: "none" });
-  svg.appendChild(vecteur);
-  const pointe = svgEl("circle", { r: "4.5", fill: "currentColor", stroke: "none" });
-  svg.appendChild(pointe);
-
-  const etiquette = svgEl("text", {
+  const reperes = svgEl("g", {
     fill: "currentColor",
     stroke: "none",
     "font-family": "ui-monospace, monospace",
     "font-size": "12",
-    x: "16",
-    y: "24",
+    opacity: "0.72",
   });
-  svg.appendChild(etiquette);
+  function marque(x, y, texte, ancrage) {
+    const element = svgEl("text", { x, y, "text-anchor": ancrage || "middle" });
+    element.textContent = texte;
+    return element;
+  }
+  reperes.appendChild(marque(centre.x + rayon, centre.y + 20, "1"));
+  reperes.appendChild(marque(centre.x - rayon, centre.y + 20, "-1"));
+  reperes.appendChild(marque(centre.x - 14, centre.y - rayon + 4, "1", "end"));
+  reperes.appendChild(marque(centre.x - 14, centre.y + rayon + 4, "-1", "end"));
+  reperes.appendChild(marque(centre.x + rayon + 38, centre.y + 4, "cos"));
+  reperes.appendChild(marque(centre.x, centre.y - rayon - 36, "sin"));
+  svg.appendChild(reperes);
+
+  const arc = svgEl("path", { fill: "none", "stroke-width": "2", style: "stroke: var(--serie-2)" });
+  const guide = svgEl("path", {
+    fill: "none",
+    stroke: "currentColor",
+    "stroke-width": "1.4",
+    "stroke-dasharray": "5 4",
+    opacity: "0.65",
+  });
+  const projCos = svgEl("path", {
+    fill: "none",
+    "stroke-width": "3.4",
+    "stroke-linecap": "round",
+    style: "stroke: var(--serie-1)",
+  });
+  const projSin = svgEl("path", {
+    fill: "none",
+    "stroke-width": "3.4",
+    "stroke-linecap": "round",
+    style: "stroke: var(--serie-3)",
+  });
+  const rayonTrace = svgEl("path", {
+    fill: "none",
+    stroke: "currentColor",
+    "stroke-width": "2.8",
+    "stroke-linecap": "round",
+  });
+  svg.append(arc, guide, projCos, projSin, rayonTrace);
+
+  const etiquettes = svgEl("g", {
+    stroke: "none",
+    "font-family": "ui-monospace, monospace",
+    "font-size": "12.5",
+    "font-weight": "500",
+  });
+  const texteCos = svgEl("text", { "text-anchor": "middle", style: "fill: var(--serie-1)" });
+  const texteSin = svgEl("text", { "text-anchor": "start", style: "fill: var(--serie-3)" });
+  const texteAngle = svgEl("text", { "text-anchor": "middle", style: "fill: var(--serie-2)" });
+  texteAngle.textContent = "θ";
+  etiquettes.append(texteCos, texteSin, texteAngle);
+  svg.appendChild(etiquettes);
 
   conteneur.appendChild(svg);
 
-  function majAngle(degres) {
-    const rad = (degres * Math.PI) / 180;
-    const cosv = Math.cos(rad);
-    const sinv = Math.sin(rad);
+  const valeurs = api.sim.valeurs("#e-cercle-valeurs", [
+    { id: "degres", libelle: "Angle", unite: "°", decimales: 1 },
+    { id: "radians", libelle: "Angle en radians", unite: "rad", decimales: 3 },
+    { id: "cos", libelle: "cos θ", decimales: 3 },
+    { id: "sin", libelle: "sin θ", decimales: 3 },
+    { id: "tan", libelle: "tan θ", decimales: 3 },
+  ]);
+  if (valeurs) ressources.push(valeurs);
+
+  let synchronisation = false;
+  let poignee = null;
+  let curseurs = null;
+  let lecteur = null;
+
+  function tracer(degres) {
+    const radians = (degres * Math.PI) / 180;
+    const cosv = Math.cos(radians);
+    const sinv = Math.sin(radians);
     const x = centre.x + rayon * cosv;
     const y = centre.y - rayon * sinv;
-    vecteur.setAttribute("d", "M" + centre.x + " " + centre.y + " L" + x + " " + y);
-    pointe.setAttribute("cx", String(x));
-    pointe.setAttribute("cy", String(y));
-    projCos.setAttribute("d", "M" + centre.x + " " + centre.y + " L" + x + " " + centre.y + " L" + x + " " + y);
-    projSin.setAttribute("d", "M" + centre.x + " " + centre.y + " L" + centre.x + " " + y + " L" + x + " " + y);
-    etiquette.textContent =
-      "θ = " + degres.toFixed(0) + "°   cos θ = " + cosv.toFixed(2) + "   sin θ = " + sinv.toFixed(2);
+
+    rayonTrace.setAttribute("d", "M" + centre.x + " " + centre.y + "L" + x + " " + y);
+    projCos.setAttribute("d", "M" + centre.x + " " + centre.y + "H" + x);
+    projSin.setAttribute("d", "M" + x + " " + centre.y + "V" + y);
+    guide.setAttribute("d", "M" + x + " " + y + "H" + centre.x + "M" + x + " " + y + "V" + centre.y);
+
+    const rayonArc = 36;
+    const grandArc = degres > 180 ? 1 : 0;
+    arc.setAttribute(
+      "d",
+      "M" + (centre.x + rayonArc) + " " + centre.y +
+        "A" + rayonArc + " " + rayonArc + " 0 " + grandArc + " 0 " +
+        (centre.x + rayonArc * cosv) + " " + (centre.y - rayonArc * sinv)
+    );
+
+    const milieu = ((degres / 2) * Math.PI) / 180;
+    texteAngle.setAttribute("x", String(centre.x + (rayonArc + 16) * Math.cos(milieu)));
+    texteAngle.setAttribute("y", String(centre.y - (rayonArc + 16) * Math.sin(milieu) + 4));
+
+    texteCos.textContent = "cos θ";
+    texteCos.setAttribute("x", String((centre.x + x) / 2));
+    texteCos.setAttribute("y", String(centre.y + (sinv >= 0 ? 20 : -10)));
+    texteCos.setAttribute("opacity", Math.abs(cosv) > 0.16 ? "1" : "0");
+
+    texteSin.textContent = "sin θ";
+    texteSin.setAttribute("x", String(x + (cosv >= 0 ? 9 : -9)));
+    texteSin.setAttribute("text-anchor", cosv >= 0 ? "start" : "end");
+    texteSin.setAttribute("y", String((centre.y + y) / 2 + 4));
+    texteSin.setAttribute("opacity", Math.abs(sinv) > 0.16 ? "1" : "0");
+
+    if (valeurs) {
+      valeurs.maj({
+        degres,
+        radians,
+        cos: cosv,
+        sin: sinv,
+        /* La tangente n'existe pas là où le cosinus s'annule. */
+        tan: Math.abs(cosv) < 1e-3 ? NaN : sinv / cosv,
+      });
+    }
   }
 
-  majAngle(0);
-
-  if (api.mouvementReduit || !api.gsap) {
-    majAngle(40);
-    return;
+  /* Une seule source de vérité : les trois commandes se recopient l'une l'autre. */
+  function appliquer(degres, source) {
+    if (synchronisation) return;
+    synchronisation = true;
+    const angle = ((Number(degres) % 360) + 360) % 360;
+    tracer(angle);
+    if (source !== "poignee" && poignee) poignee.set(angle, false);
+    if (source !== "curseur" && curseurs) curseurs.definir("angle", Math.round(angle));
+    if (source !== "lecteur" && lecteur) lecteur.suivre(angle);
+    synchronisation = false;
   }
 
-  let declencheur = null;
-  if (api.ScrollTrigger) {
-    declencheur = api.ScrollTrigger.create({
-      trigger: conteneur,
-      start: "top 85%",
-      end: "bottom 35%",
-      scrub: 0.4,
-      onUpdate(self) {
-        majAngle(self.progress * 130);
-      },
-    });
-  } else {
-    majAngle(40);
-  }
-  nettoyeursAnimation.push(() => {
-    if (declencheur) declencheur.kill();
+  poignee = api.sim.poignee(conteneur, {
+    type: "cercle",
+    centre,
+    rayon,
+    valeur: angleDepart,
+    pas: 5,
+    libelle: "Angle sur le cercle trigonométrique",
+    diffuserAuDepart: false,
+    rappel: (mesure) => appliquer(mesure.angle, "poignee"),
   });
+  if (poignee) ressources.push(poignee);
+
+  curseurs = api.sim.curseurs(
+    "#e-cercle-curseur",
+    [{ id: "angle", libelle: "Angle θ", min: 0, max: 360, pas: 1, valeur: angleDepart, unite: "°" }],
+    (lues) => appliquer(lues.angle, "curseur")
+  );
+  if (curseurs) ressources.push(curseurs);
+
+  lecteur = api.sim.lecteur("#e-cercle-lecteur", {
+    de: 0,
+    a: 360,
+    duree: 9,
+    boucle: true,
+    auto: false,
+    libelle: "Rotation du rayon",
+    rappel: (valeur) => appliquer(valeur, "lecteur"),
+  });
+  if (lecteur) ressources.push(lecteur);
+
+  appliquer(angleDepart, null);
 }
 
 /* --------------------------------------------------------------------------
-   Simulation interactive 1 : décomposition d'un phaseur
+   E. Simulation interactive : décomposition d'un phaseur
    -------------------------------------------------------------------------- */
 
 function construireSimDecomposition(racine, api) {
-  if (!racine.querySelector("#f-sim-decomposition-curseurs") || !racine.querySelector("#f-sim-decomposition-fresnel")) return;
+  if (!racine.querySelector("#e-sim-decomposition-curseurs") || !racine.querySelector("#e-sim-decomposition-fresnel")) return;
 
   const depart = { amplitude: 10, angle: 30 };
   const radDepart = (depart.angle * Math.PI) / 180;
 
-  const fresnel = api.sim.fresnel("#f-sim-decomposition-fresnel", {
+  const fresnel = api.sim.fresnel("#e-sim-decomposition-fresnel", {
     titre: "Décomposition d'un phaseur en projections",
     vecteurs: [
       {
@@ -371,7 +477,7 @@ function construireSimDecomposition(racine, api) {
   ressources.push(fresnel);
 
   const curseurs = api.sim.curseurs(
-    "#f-sim-decomposition-curseurs",
+    "#e-sim-decomposition-curseurs",
     [
       { id: "amplitude", libelle: "Amplitude de Z", min: 1, max: 20, pas: 0.5, valeur: depart.amplitude, unite: "" },
       { id: "angle", libelle: "Angle θ", min: 0, max: 360, pas: 5, valeur: depart.angle, unite: "°" },
@@ -394,15 +500,15 @@ function construireSimDecomposition(racine, api) {
 }
 
 /* --------------------------------------------------------------------------
-   Simulation interactive 2 : somme de deux phaseurs
+   H. Simulation interactive : somme de deux phaseurs
    -------------------------------------------------------------------------- */
 
 function construireSimSomme(racine, api) {
-  if (!racine.querySelector("#f-sim-somme-curseurs") || !racine.querySelector("#f-sim-somme-fresnel")) return;
+  if (!racine.querySelector("#h-sim-somme-curseurs") || !racine.querySelector("#h-sim-somme-fresnel")) return;
 
   const depart = { amplitude1: 8, phase1: 50, amplitude2: 5, phase2: -20 };
 
-  const fresnel = api.sim.fresnel("#f-sim-somme-fresnel", {
+  const fresnel = api.sim.fresnel("#h-sim-somme-fresnel", {
     titre: "Somme de deux phaseurs",
     vecteurs: [
       { id: "a", nom: "U1", amplitude: depart.amplitude1, phase: depart.phase1, unite: "V", couleur: "serie-1" },
@@ -417,7 +523,7 @@ function construireSimSomme(racine, api) {
   ressources.push(fresnel);
 
   const curseurs = api.sim.curseurs(
-    "#f-sim-somme-curseurs",
+    "#h-sim-somme-curseurs",
     [
       { id: "amplitude1", libelle: "Amplitude U1", min: 1, max: 15, pas: 0.5, valeur: depart.amplitude1, unite: "V" },
       { id: "phase1", libelle: "Phase de U1", min: -180, max: 180, pas: 5, valeur: depart.phase1, unite: "°" },
@@ -713,7 +819,7 @@ function construireQuiz(racine, api) {
         resume: "Produit de deux notations scientifiques",
       },
     ],
-    { titre: "Dix questions sur les fondamentaux du jour 1" }
+    { titre: "Dix questions sur les fondamentaux mathématiques" }
   );
   if (quiz) ressources.push(quiz);
 }
@@ -742,7 +848,7 @@ function construireCartesMemo(racine, api) {
       { categorie: "Méthode", question: "Quelle forme d'un nombre complexe facilite l'addition ?", reponse: "La forme cartésienne, $a+jb$." },
       { categorie: "Méthode", question: "Quelle forme facilite la multiplication et la rotation ?", reponse: "La forme polaire, module et argument." },
     ],
-    { titre: "Dix cartes sur les fondamentaux du jour 1" }
+    { titre: "Dix cartes sur les fondamentaux mathématiques" }
   );
   if (cartes) ressources.push(cartes);
 }

@@ -186,7 +186,124 @@ for (const nom of dossiers) {
 }
 
 /* --------------------------------------------------------------------------
-   5. Syntaxe des modules JavaScript
+   5. Rédaction des cours publiés
+
+   Ces contrôles ne s'appliquent qu'aux cours du sommaire : la démonstration
+   cours/_demo/ sert de banc d'essai du moteur et reste libre.
+   -------------------------------------------------------------------------- */
+
+/* Mots courants du parcours dont la version sans accent trahit un diagramme
+   Mermaid écrit en ASCII. Liste volontairement ouverte : une ligne suffit
+   pour la compléter. */
+const MOTS_SANS_ACCENT = [
+  "probleme",
+  "unites",
+  "unite",
+  "donnees",
+  "resultat",
+  "enonce",
+  "methode",
+  "ecart",
+  "electrique",
+  "frequence",
+  "energie",
+  "systeme",
+  "verifier",
+  "reponse",
+  "etape",
+  "periode",
+  "tension electrique",
+  "precision",
+  "parametre",
+];
+
+/* Un numéro de jour ne doit jamais paraître : les cours sont désignés par leur titre. */
+const MOTIF_JOUR = /\bjours?\s*(?:n\s*[°o]\s*)?\d/i;
+const MOTIF_SUR_90 = /\bsur\s+90\b/i;
+
+/** Texte réellement lu à l'écran : balises retirées, donc attributs et id exclus. */
+function texteVisible(html) {
+  return html
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, " ")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;|&#160;/gi, " ")
+    .replace(/&[a-zA-Z]+;|&#\d+;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function extrait(texte, position) {
+  const debut = Math.max(0, position - 30);
+  return "..." + texte.slice(debut, position + 50).trim() + "...";
+}
+
+function blocsMermaid(html) {
+  const blocs = [];
+  const motif = /<pre\b[^>]*class\s*=\s*["'][^"']*\bmermaid\b[^"']*["'][^>]*>([\s\S]*?)<\/pre>/gi;
+  let trouve = motif.exec(html);
+  while (trouve) {
+    blocs.push(trouve[1]);
+    trouve = motif.exec(html);
+  }
+  return blocs;
+}
+
+const coursPublies = dossiers.filter((nom) => nom !== "_demo");
+
+for (const nom of coursPublies) {
+  const fichierContenu = join(dossierCours, nom, "contenu.html");
+  if (existsSync(fichierContenu)) {
+    const contenu = lire(fichierContenu);
+    const visible = texteVisible(contenu);
+
+    controles += 1;
+    const jour = visible.match(MOTIF_JOUR);
+    if (jour) {
+      erreurs.push(
+        "cours/" + nom + "/contenu.html affiche un numéro de jour : " + extrait(visible, jour.index) +
+          " (les cours sont désignés par leur titre)"
+      );
+    }
+
+    controles += 1;
+    const surQuatreVingtDix = visible.match(MOTIF_SUR_90);
+    if (surQuatreVingtDix) {
+      erreurs.push(
+        "cours/" + nom + "/contenu.html affiche un rang sur 90 : " + extrait(visible, surQuatreVingtDix.index)
+      );
+    }
+
+    const blocs = blocsMermaid(contenu);
+    for (const bloc of blocs) {
+      controles += 1;
+      const manquants = [];
+      for (const mot of MOTS_SANS_ACCENT) {
+        const motif = new RegExp("\\b" + mot.split(" ").join("\\s+") + "s?\\b", "i");
+        if (motif.test(bloc)) manquants.push(mot);
+      }
+      if (manquants.length) {
+        erreurs.push(
+          "cours/" + nom + "/contenu.html contient un diagramme Mermaid sans accent : " +
+            manquants.join(", ")
+        );
+      }
+    }
+  }
+
+  const fichierScript = join(dossierCours, nom, "cours.js");
+  if (existsSync(fichierScript)) {
+    const source = lire(fichierScript);
+    avertir(
+      !(/ScrollTrigger/.test(source) && /\bend\s*:\s*["']bottom\s+top["']/.test(source)),
+      "cours/" + nom + "/cours.js utilise un ScrollTrigger qui court jusqu'à end \"bottom top\" : " +
+        "le schéma n'est complet qu'en quittant l'écran."
+    );
+  }
+}
+
+/* --------------------------------------------------------------------------
+   6. Syntaxe des modules JavaScript
    -------------------------------------------------------------------------- */
 
 const dossierScripts = chemin("assets/js");
@@ -224,7 +341,7 @@ for (const fichier of fichiersJs) {
 }
 
 /* --------------------------------------------------------------------------
-   6. Typographie : pas de tiret cadratin, de demi-cadratin ni d'emoji
+   7. Typographie : pas de tiret cadratin, de demi-cadratin ni d'emoji
    -------------------------------------------------------------------------- */
 
 function fichiersARelire() {
@@ -263,7 +380,7 @@ for (const fichier of fichiersARelire()) {
 }
 
 /* --------------------------------------------------------------------------
-   7. Fichiers structurants du site
+   8. Fichiers structurants du site
    -------------------------------------------------------------------------- */
 
 for (const attendu of [

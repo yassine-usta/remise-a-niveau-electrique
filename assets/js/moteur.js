@@ -2,8 +2,9 @@
    moteur.js
    Bibliothèque partagée par tous les cours du parcours.
    Fournit l'objet api passé à la fonction init(racine, api) de chaque cours :
-   exercices corrigés, quiz, cartes de mémorisation, grille d'auto-évaluation
-   et simulations (curseurs, traceur, oscilloscope, Fresnel, Bode, spectre).
+   exercices corrigés, quiz, cartes de mémorisation, grille d'auto-évaluation,
+   tracé progressif des schémas et simulations (curseurs, traceur, oscilloscope,
+   Fresnel, Bode, spectre, poignée déplaçable, lecteur, valeurs en direct).
 
    Aucune dépendance obligatoire. GSAP, ScrollTrigger et Lenis sont utilisés
    quand ils sont disponibles ; sinon le moteur reste pleinement fonctionnel.
@@ -373,6 +374,303 @@ function revelerEtapes(ctx, liste) {
       },
     }
   );
+}
+
+/* --------------------------------------------------------------------------
+   Tracé progressif d'un schéma
+
+   Le schéma existe déjà dans la page, complet : api.dessiner ne fait que
+   masquer ses traits puis les redessiner à l'entrée dans l'écran. La zone de
+   déclenchement se termine toujours avant le centre de l'écran, de sorte
+   qu'un schéma placé au centre est forcément terminé, quel que soit le mode.
+   -------------------------------------------------------------------------- */
+
+const FORMES_TRACABLES = "path, line, polyline, polygon, circle, rect, ellipse";
+const APPARITIONS = "text, image, foreignObject, use";
+
+/* Repères communs aux deux modes : départ bas dans l'écran, fin avant le centre. */
+const DEPART_DESSIN = "top 80%";
+const FIN_DESSIN = "center 55%";
+const PART_CENTRE = 0.55;
+
+function estFormeTracable(element) {
+  return element instanceof Element && /^(path|line|polyline|polygon|circle|rect|ellipse)$/i.test(element.tagName);
+}
+
+/** Une forme rangée dans defs ou dans un marqueur est une définition, pas un tracé. */
+function estDefinition(element) {
+  return typeof element.closest === "function" && Boolean(element.closest("defs, clipPath, mask, marker, pattern, symbol"));
+}
+
+/** Longueur du contour d'une forme, avec un secours sur sa boîte englobante. */
+function longueurForme(forme) {
+  try {
+    if (typeof forme.getTotalLength === "function") {
+      const longueur = forme.getTotalLength();
+      if (Number.isFinite(longueur) && longueur > 0) return longueur;
+    }
+  } catch (erreur) {
+    /* une forme dégénérée ne sait pas toujours se mesurer */
+  }
+  try {
+    const boite = forme.getBBox();
+    return Math.max(1, 2 * (boite.width + boite.height));
+  } catch (erreur) {
+    return 1;
+  }
+}
+
+function memoriserStyles(element, proprietes) {
+  const sauvegarde = {};
+  for (const propriete of proprietes) sauvegarde[propriete] = element.style.getPropertyValue(propriete);
+  return sauvegarde;
+}
+
+function restaurerStyles(element, sauvegarde) {
+  for (const [propriete, valeur] of Object.entries(sauvegarde)) {
+    if (valeur) element.style.setProperty(propriete, valeur);
+    else element.style.removeProperty(propriete);
+  }
+}
+
+function nombreStyle(valeur, defaut) {
+  const nombre = Number.parseFloat(valeur);
+  return Number.isFinite(nombre) ? nombre : defaut;
+}
+
+/**
+ * Trace les éléments SVG d'un schéma, puis fait apparaître textes et remplissages.
+ *
+ * elements : sélecteur, élément, liste d'éléments. Un conteneur est exploré,
+ *            une forme est prise telle quelle.
+ * options  : { declencheur, depart, duree, decalage, scrub, surFin }
+ *            scrub: true suit le défilement, mais la zone se termine
+ *            obligatoirement à FIN_DESSIN, jamais à la sortie du schéma.
+ */
+function dessiner(ctx, elements, options = {}) {
+  const racine = ctx.racine instanceof Element ? ctx.racine : document;
+  const racines = resoudreListe(elements, racine);
+  if (!racines.length) return { detruire() {} };
+
+  const formes = [];
+  const textes = [];
+  for (const element of racines) {
+    if (estFormeTracable(element)) {
+      formes.push(element);
+      continue;
+    }
+    for (const forme of element.querySelectorAll(FORMES_TRACABLES)) {
+      if (!estDefinition(forme)) formes.push(forme);
+    }
+    for (const texte of element.querySelectorAll(APPARITIONS)) {
+      if (!estDefinition(texte)) textes.push(texte);
+    }
+  }
+  if (!formes.length && !textes.length) return { detruire() {} };
+
+  const conteneur =
+    resoudre(options.declencheur, racine) ||
+    (racines.length === 1 && !estFormeTracable(racines[0]) ? racines[0] : null) ||
+    (formes[0] ? formes[0].ownerSVGElement || formes[0].parentElement : null) ||
+    racines[0];
+
+  /* Un trait se dessine, un aplat et un texte apparaissent. */
+  const traces = [];
+  const fondus = [];
+  for (const forme of formes) {
+    const style = getComputedStyle(forme);
+    const aTrait =
+      style.stroke && style.stroke !== "none" && nombreStyle(style.strokeOpacity, 1) > 0 && nombreStyle(style.strokeWidth, 1) > 0;
+    const aFond = style.fill && style.fill !== "none" && nombreStyle(style.fillOpacity, 1) > 0;
+    if (aTrait) traces.push({ element: forme, longueur: longueurForme(forme) });
+    if (aFond) fondus.push({ element: forme, propriete: "fill-opacity", valeur: nombreStyle(style.fillOpacity, 1) });
+  }
+  for (const texte of textes) {
+    const style = getComputedStyle(texte);
+    fondus.push({ element: texte, propriete: "opacity", valeur: nombreStyle(style.opacity, 1) });
+  }
+
+  /* Mouvement réduit : le schéma reste tel quel, donc déjà complet. */
+  if (ctx.mouvementReduit || !ctx.gsap) return { detruire() {} };
+
+  const sauvegardes = new Map();
+  function memoriser(element, proprietes) {
+    if (!sauvegardes.has(element)) sauvegardes.set(element, memoriserStyles(element, proprietes));
+  }
+
+  for (const trace of traces) {
+    memoriser(trace.element, ["stroke-dasharray", "stroke-dashoffset", "fill-opacity", "opacity"]);
+    const longueur = trace.longueur + 1;
+    trace.element.style.strokeDasharray = longueur + " " + longueur;
+    trace.element.style.strokeDashoffset = String(longueur);
+  }
+  for (const fondu of fondus) {
+    memoriser(fondu.element, ["stroke-dasharray", "stroke-dashoffset", "fill-opacity", "opacity"]);
+    fondu.element.style.setProperty(fondu.propriete, "0");
+  }
+
+  /* Le tracé emprunte stroke-dasharray : une fois fini, il faut rendre à
+     chaque trait le pointillé qu'il portait, sinon il reste plein. */
+  let traitsRendus = false;
+  function rendreTraits() {
+    if (traitsRendus) return;
+    traitsRendus = true;
+    for (const trace of traces) {
+      const sauvegarde = sauvegardes.get(trace.element) || {};
+      trace.element.style.removeProperty("stroke-dasharray");
+      trace.element.style.removeProperty("stroke-dashoffset");
+      if (sauvegarde["stroke-dasharray"]) trace.element.style.setProperty("stroke-dasharray", sauvegarde["stroke-dasharray"]);
+      if (sauvegarde["stroke-dashoffset"]) trace.element.style.setProperty("stroke-dashoffset", sauvegarde["stroke-dashoffset"]);
+    }
+  }
+  function reprendreTraits() {
+    if (!traitsRendus) return;
+    traitsRendus = false;
+    for (const trace of traces) {
+      const longueur = trace.longueur + 1;
+      trace.element.style.strokeDasharray = longueur + " " + longueur;
+    }
+  }
+
+  const gsap = ctx.gsap;
+  const duree = Math.max(0.2, options.duree != null ? Number(options.duree) : 1.2);
+  const nombre = traces.length;
+  const dureeTrait = duree * 0.62;
+  const pas = options.decalage != null ? Number(options.decalage) : nombre > 1 ? (duree * 0.38) / (nombre - 1) : 0;
+  const ligne = gsap.timeline({
+    paused: true,
+    onUpdate() {
+      if (ligne.progress() >= 1) rendreTraits();
+      else reprendreTraits();
+    },
+    onComplete() {
+      rendreTraits();
+      if (typeof options.surFin === "function") options.surFin();
+    },
+  });
+
+  if (nombre) {
+    ligne.to(
+      traces.map((trace) => trace.element),
+      { strokeDashoffset: 0, duration: dureeTrait, ease: options.scrub ? "none" : "power1.inOut", stagger: pas },
+      0
+    );
+  }
+  if (fondus.length) {
+    const groupes = new Map();
+    for (const fondu of fondus) {
+      if (!groupes.has(fondu.propriete)) groupes.set(fondu.propriete, []);
+      groupes.get(fondu.propriete).push(fondu);
+    }
+    for (const [propriete, liste] of groupes) {
+      const cible = propriete === "opacity" ? { opacity: 1 } : { fillOpacity: 1 };
+      ligne.to(
+        liste.map((fondu) => fondu.element),
+        { ...cible, duration: Math.max(0.24, duree * 0.34), ease: "power1.out", stagger: Math.min(0.09, duree * 0.06) },
+        duree * 0.62
+      );
+    }
+  }
+
+  let vivant = true;
+  let declencheur = null;
+  let garde = null;
+  let observateur = null;
+  let gardeVue = null;
+
+  function terminer() {
+    if (!vivant) return;
+    ligne.progress(1);
+    ligne.pause();
+    rendreTraits();
+  }
+
+  function centreAtteint() {
+    const hauteurEcran = window.innerHeight || document.documentElement.clientHeight || 0;
+    if (!hauteurEcran || !conteneur || typeof conteneur.getBoundingClientRect !== "function") return false;
+    const rect = conteneur.getBoundingClientRect();
+    /* Schéma pas encore mis en page : rien à conclure. */
+    if (!rect.height && !rect.width) return false;
+    return rect.top + rect.height / 2 <= hauteurEcran * PART_CENTRE;
+  }
+
+  const ScrollTrigger = ctx.ScrollTrigger;
+  if (ScrollTrigger && conteneur) {
+    if (options.scrub) {
+      declencheur = ScrollTrigger.create({
+        trigger: conteneur,
+        start: options.depart || "top 85%",
+        end: FIN_DESSIN,
+        scrub: typeof options.scrub === "number" ? options.scrub : 0.45,
+        animation: ligne,
+      });
+    } else {
+      declencheur = ScrollTrigger.create({
+        trigger: conteneur,
+        start: options.depart || DEPART_DESSIN,
+        once: true,
+        onEnter() {
+          ligne.play();
+        },
+      });
+      /* Garde-fou : au centre de l'écran, le schéma est complet quoi qu'il arrive. */
+      garde = ScrollTrigger.create({ trigger: conteneur, start: FIN_DESSIN, once: true, onEnter: terminer });
+    }
+  } else if (typeof IntersectionObserver === "function" && conteneur) {
+    observateur = new IntersectionObserver(
+      (entrees) => {
+        for (const entree of entrees) {
+          if (!entree.isIntersecting) continue;
+          ligne.play();
+          if (observateur) observateur.disconnect();
+          observateur = null;
+        }
+      },
+      { threshold: 0.12 }
+    );
+    observateur.observe(conteneur);
+    gardeVue = new IntersectionObserver(
+      (entrees) => {
+        for (const entree of entrees) {
+          if (entree.isIntersecting) terminer();
+        }
+      },
+      { rootMargin: "-45% 0px -45% 0px" }
+    );
+    gardeVue.observe(conteneur);
+  } else {
+    ligne.play();
+  }
+
+  /* Cas d'un schéma déjà dépassé au chargement : rien à animer, tout à montrer. */
+  const verification = requestAnimationFrame(() => {
+    if (vivant && !options.scrub && centreAtteint()) terminer();
+  });
+
+  const controle = {
+    conteneur,
+    ligne,
+    terminer,
+    detruire() {
+      if (!vivant) return;
+      vivant = false;
+      cancelAnimationFrame(verification);
+      if (declencheur) declencheur.kill();
+      if (garde) garde.kill();
+      if (observateur) observateur.disconnect();
+      if (gardeVue) gardeVue.disconnect();
+      declencheur = null;
+      garde = null;
+      observateur = null;
+      gardeVue = null;
+      ligne.kill();
+      for (const [element, sauvegarde] of sauvegardes) restaurerStyles(element, sauvegarde);
+      sauvegardes.clear();
+    },
+  };
+
+  enregistrerNettoyeur(ctx, controle.detruire);
+  return controle;
 }
 
 /* --------------------------------------------------------------------------
@@ -2328,6 +2626,682 @@ function simCurseurs(ctx, conteneur, parametres, rappel) {
 }
 
 /* --------------------------------------------------------------------------
+   Poignée déplaçable dans un schéma SVG
+
+   Un point que l'apprenant saisit à la souris, au doigt ou au clavier. Le
+   déplacement est contraint à un cercle, un segment, une courbe ou une zone,
+   et chaque déplacement rappelle le cours avec la valeur correspondante.
+   -------------------------------------------------------------------------- */
+
+/* Taille minimale de la zone de saisie tactile, en pixels CSS. */
+const CIBLE_TACTILE = 44;
+
+function bornerNombre(valeur, minimum, maximum) {
+  return Math.min(maximum, Math.max(minimum, valeur));
+}
+
+function degresNormalises(valeur) {
+  return ((Number(valeur) % 360) + 360) % 360;
+}
+
+/** Coordonnées utilisateur du SVG correspondant à un point de l'écran. */
+function pointDansSvg(svg, clientX, clientY) {
+  try {
+    if (typeof svg.getScreenCTM === "function" && typeof svg.createSVGPoint === "function") {
+      const matrice = svg.getScreenCTM();
+      if (matrice) {
+        const point = svg.createSVGPoint();
+        point.x = clientX;
+        point.y = clientY;
+        const converti = point.matrixTransform(matrice.inverse());
+        return { x: converti.x, y: converti.y };
+      }
+    }
+  } catch (erreur) {
+    /* secours ci-dessous */
+  }
+  const rect = svg.getBoundingClientRect();
+  const vue = svg.viewBox && svg.viewBox.baseVal && svg.viewBox.baseVal.width
+    ? svg.viewBox.baseVal
+    : { x: 0, y: 0, width: rect.width || 1, height: rect.height || 1 };
+  return {
+    x: vue.x + ((clientX - rect.left) / (rect.width || 1)) * vue.width,
+    y: vue.y + ((clientY - rect.top) / (rect.height || 1)) * vue.height,
+  };
+}
+
+/**
+ * Point déplaçable contraint à une géométrie.
+ *
+ * options : { type, centre, rayon, de, a, points, courbe, boite, valeur,
+ *             min, max, pas, boucle, libelle, unite, couleur, rayonPoignee,
+ *             format, rappel }
+ * Renvoie { set(valeur), get(), detruire(), element }.
+ */
+function simPoignee(ctx, cible, options = {}) {
+  const racine = ctx.racine instanceof Element ? ctx.racine : document;
+  const resolu = resoudre(cible, racine);
+  if (!resolu) return null;
+  const svg =
+    resolu.tagName && resolu.tagName.toLowerCase() === "svg" ? resolu : resolu.querySelector ? resolu.querySelector("svg") : null;
+  if (!svg) return null;
+
+  const type =
+    options.type ||
+    (options.centre && options.rayon != null
+      ? "cercle"
+      : options.de && options.a
+        ? "segment"
+        : options.points || options.courbe || options.chemin
+          ? "courbe"
+          : "zone");
+
+  /* Géométrie : convertir un point en valeur, et une valeur en point. */
+  let contrainte = null;
+
+  if (type === "cercle") {
+    const centre = options.centre || { x: 0, y: 0 };
+    const rayon = Number(options.rayon != null ? options.rayon : 100);
+    contrainte = {
+      min: options.min != null ? Number(options.min) : 0,
+      max: options.max != null ? Number(options.max) : 360,
+      pas: options.pas != null ? Number(options.pas) : 5,
+      boucle: options.boucle !== false,
+      depuisPoint(point) {
+        return (Math.atan2(centre.y - point.y, point.x - centre.x) * 180) / Math.PI;
+      },
+      versPoint(valeur) {
+        const radians = (valeur * Math.PI) / 180;
+        return { x: centre.x + rayon * Math.cos(radians), y: centre.y - rayon * Math.sin(radians) };
+      },
+      ranger(valeur) {
+        return contrainte.boucle ? degresNormalises(valeur) : bornerNombre(valeur, contrainte.min, contrainte.max);
+      },
+      mesurer(valeur) {
+        const radians = (valeur * Math.PI) / 180;
+        const point = contrainte.versPoint(valeur);
+        return { type, valeur, angle: valeur, radians, x: point.x, y: point.y };
+      },
+    };
+  } else if (type === "segment") {
+    const de = options.de || { x: 0, y: 0 };
+    const a = options.a || { x: 100, y: 0 };
+    const dx = a.x - de.x;
+    const dy = a.y - de.y;
+    const carre = dx * dx + dy * dy || 1;
+    const min = options.min != null ? Number(options.min) : 0;
+    const max = options.max != null ? Number(options.max) : 1;
+    contrainte = {
+      min,
+      max,
+      pas: options.pas != null ? Number(options.pas) : (max - min) / 100,
+      boucle: false,
+      depuisPoint(point) {
+        const t = bornerNombre(((point.x - de.x) * dx + (point.y - de.y) * dy) / carre, 0, 1);
+        return min + t * (max - min);
+      },
+      versPoint(valeur) {
+        const t = (max - min) === 0 ? 0 : (valeur - min) / (max - min);
+        return { x: de.x + t * dx, y: de.y + t * dy };
+      },
+      ranger(valeur) {
+        return bornerNombre(valeur, min, max);
+      },
+      mesurer(valeur) {
+        const point = contrainte.versPoint(valeur);
+        const t = (max - min) === 0 ? 0 : (valeur - min) / (max - min);
+        return { type, valeur, t, x: point.x, y: point.y };
+      },
+    };
+  } else if (type === "courbe") {
+    const min = options.min != null ? Number(options.min) : 0;
+    const max = options.max != null ? Number(options.max) : 1;
+    const nombre = Math.max(24, Number(options.echantillons || 240));
+    const chemin = options.chemin ? resoudre(options.chemin, racine) : null;
+    let echantillons = [];
+    if (Array.isArray(options.points) && options.points.length > 1) {
+      echantillons = options.points.map((point, index) => ({
+        t: index / (options.points.length - 1),
+        x: Number(point.x),
+        y: Number(point.y),
+      }));
+    } else if (typeof options.courbe === "function") {
+      for (let i = 0; i <= nombre; i += 1) {
+        const t = i / nombre;
+        const point = options.courbe(t) || { x: 0, y: 0 };
+        echantillons.push({ t, x: Number(point.x), y: Number(point.y) });
+      }
+    } else if (chemin && typeof chemin.getPointAtLength === "function") {
+      const longueur = longueurForme(chemin);
+      for (let i = 0; i <= nombre; i += 1) {
+        const t = i / nombre;
+        const point = chemin.getPointAtLength(t * longueur);
+        echantillons.push({ t, x: point.x, y: point.y });
+      }
+    }
+    if (echantillons.length < 2) echantillons = [{ t: 0, x: 0, y: 0 }, { t: 1, x: 1, y: 0 }];
+    contrainte = {
+      min,
+      max,
+      pas: options.pas != null ? Number(options.pas) : (max - min) / 100,
+      boucle: false,
+      depuisPoint(point) {
+        let meilleur = echantillons[0];
+        let distance = Infinity;
+        for (const candidat of echantillons) {
+          const d = (candidat.x - point.x) ** 2 + (candidat.y - point.y) ** 2;
+          if (d < distance) {
+            distance = d;
+            meilleur = candidat;
+          }
+        }
+        return min + meilleur.t * (max - min);
+      },
+      versPoint(valeur) {
+        const t = bornerNombre((max - min) === 0 ? 0 : (valeur - min) / (max - min), 0, 1);
+        const position = t * (echantillons.length - 1);
+        const rang = Math.min(echantillons.length - 2, Math.floor(position));
+        const reste = position - rang;
+        const un = echantillons[rang];
+        const deux = echantillons[rang + 1];
+        return { x: un.x + (deux.x - un.x) * reste, y: un.y + (deux.y - un.y) * reste };
+      },
+      ranger(valeur) {
+        return bornerNombre(valeur, min, max);
+      },
+      mesurer(valeur) {
+        const point = contrainte.versPoint(valeur);
+        const t = (max - min) === 0 ? 0 : (valeur - min) / (max - min);
+        return { type, valeur, t, x: point.x, y: point.y };
+      },
+    };
+  } else {
+    const boite = options.boite || { x: 0, y: 0, largeur: 100, hauteur: 100 };
+    const xMin = Number(boite.x);
+    const yMin = Number(boite.y);
+    const xMax = xMin + Number(boite.largeur);
+    const yMax = yMin + Number(boite.hauteur);
+    contrainte = {
+      min: xMin,
+      max: xMax,
+      pas: options.pas != null ? Number(options.pas) : (xMax - xMin) / 100,
+      boucle: false,
+      depuisPoint(point) {
+        return { x: bornerNombre(point.x, xMin, xMax), y: bornerNombre(point.y, yMin, yMax) };
+      },
+      versPoint(valeur) {
+        return { x: bornerNombre(valeur.x, xMin, xMax), y: bornerNombre(valeur.y, yMin, yMax) };
+      },
+      ranger(valeur) {
+        const point = valeur && typeof valeur === "object" ? valeur : { x: valeur, y: yMin };
+        return { x: bornerNombre(Number(point.x), xMin, xMax), y: bornerNombre(Number(point.y), yMin, yMax) };
+      },
+      mesurer(valeur) {
+        const point = contrainte.ranger(valeur);
+        return {
+          type,
+          valeur: point,
+          x: point.x,
+          y: point.y,
+          u: (xMax - xMin) === 0 ? 0 : (point.x - xMin) / (xMax - xMin),
+          v: (yMax - yMin) === 0 ? 0 : (point.y - yMin) / (yMax - yMin),
+        };
+      },
+    };
+  }
+
+  function formaterAria(valeur) {
+    if (valeur && typeof valeur === "object") return Math.round(Number(valeur.x) * 100) / 100;
+    return Math.round(Number(valeur) * 100) / 100;
+  }
+
+  const rayonPoignee = Number(options.rayonPoignee || 7);
+  const groupe = document.createElementNS(SVG_NS, "g");
+  groupe.setAttribute("class", "m-poignee");
+  groupe.setAttribute("tabindex", "0");
+  groupe.setAttribute("role", "slider");
+  groupe.setAttribute("aria-label", options.libelle || "Point déplaçable");
+  groupe.setAttribute("aria-valuemin", String(formaterAria(contrainte.min)));
+  groupe.setAttribute("aria-valuemax", String(formaterAria(contrainte.max)));
+  if (options.couleur) groupe.setAttribute("style", "color:" + options.couleur);
+
+  const zoneSaisie = document.createElementNS(SVG_NS, "circle");
+  zoneSaisie.setAttribute("class", "m-poignee-cible");
+  zoneSaisie.setAttribute("r", String(CIBLE_TACTILE / 2));
+  const halo = document.createElementNS(SVG_NS, "circle");
+  halo.setAttribute("class", "m-poignee-halo");
+  halo.setAttribute("r", String(rayonPoignee + 5));
+  const point = document.createElementNS(SVG_NS, "circle");
+  point.setAttribute("class", "m-poignee-point");
+  point.setAttribute("r", String(rayonPoignee));
+  groupe.append(zoneSaisie, halo, point);
+  const hote = (options.parent && resoudre(options.parent, racine)) || svg;
+  hote.appendChild(groupe);
+
+  /* La zone tactile est dessinée en unités utilisateur : elle suit l'échelle du SVG. */
+  function ajusterCible() {
+    const rect = svg.getBoundingClientRect();
+    const vue = svg.viewBox && svg.viewBox.baseVal && svg.viewBox.baseVal.width ? svg.viewBox.baseVal.width : rect.width;
+    const echelle = rect.width && vue ? rect.width / vue : 1;
+    /* Deux pixels de marge : la cible reste au-dessus du minimum malgré les arrondis. */
+    const rayonCible = Math.max(rayonPoignee + 4, (CIBLE_TACTILE + 2) / 2 / (echelle || 1));
+    zoneSaisie.setAttribute("r", String(rayonCible));
+  }
+
+  let valeurCourante = contrainte.ranger(
+    options.valeur != null ? options.valeur : type === "zone" ? { x: contrainte.min, y: 0 } : contrainte.min
+  );
+  let vivant = true;
+
+  function texteValeur(mesure) {
+    if (typeof options.format === "function") return options.format(mesure);
+    if (type === "cercle") return formater(mesure.angle, 1) + " degrés";
+    if (type === "zone") return "x " + formater(mesure.x, 2) + ", y " + formater(mesure.y, 2);
+    return formater(mesure.valeur, 2) + (options.unite ? " " + options.unite : "");
+  }
+
+  function appliquer(diffuser) {
+    const mesure = contrainte.mesurer(valeurCourante);
+    const position = { x: mesure.x, y: mesure.y };
+    for (const cercle of [zoneSaisie, halo, point]) {
+      cercle.setAttribute("cx", String(position.x));
+      cercle.setAttribute("cy", String(position.y));
+    }
+    groupe.setAttribute("aria-valuenow", String(formaterAria(mesure.valeur)));
+    groupe.setAttribute("aria-valuetext", texteValeur(mesure));
+    if (diffuser !== false && typeof options.rappel === "function") {
+      try {
+        options.rappel(mesure, controle);
+      } catch (erreur) {
+        /* le rappel du cours ne doit pas interrompre la manipulation */
+      }
+    }
+    return mesure;
+  }
+
+  function depuisEvenement(evenement) {
+    if (!vivant) return;
+    const coordonnees = pointDansSvg(svg, evenement.clientX, evenement.clientY);
+    valeurCourante = contrainte.ranger(contrainte.depuisPoint(coordonnees));
+    appliquer(true);
+  }
+
+  function surPointerDown(evenement) {
+    if (!vivant) return;
+    evenement.preventDefault();
+    groupe.dataset.actif = "true";
+    if (typeof groupe.setPointerCapture === "function" && evenement.pointerId != null) {
+      try {
+        groupe.setPointerCapture(evenement.pointerId);
+      } catch (erreur) {
+        /* certains navigateurs refusent la capture sur un nœud SVG */
+      }
+    }
+    groupe.focus({ preventScroll: true });
+    depuisEvenement(evenement);
+  }
+
+  function surPointerMove(evenement) {
+    if (groupe.dataset.actif !== "true") return;
+    evenement.preventDefault();
+    depuisEvenement(evenement);
+  }
+
+  function surPointerUp(evenement) {
+    if (groupe.dataset.actif !== "true") return;
+    delete groupe.dataset.actif;
+    if (typeof groupe.releasePointerCapture === "function" && evenement.pointerId != null) {
+      try {
+        groupe.releasePointerCapture(evenement.pointerId);
+      } catch (erreur) {
+        /* rien à libérer */
+      }
+    }
+  }
+
+  function deplacer(multiple, evenement, axe) {
+    const pas = contrainte.pas * (evenement && evenement.shiftKey ? 0.2 : 1) * multiple;
+    if (type === "zone") {
+      valeurCourante = contrainte.ranger(
+        axe === "y"
+          ? { x: valeurCourante.x, y: valeurCourante.y - pas }
+          : { x: valeurCourante.x + pas, y: valeurCourante.y }
+      );
+    } else {
+      valeurCourante = contrainte.ranger(valeurCourante + pas);
+    }
+    appliquer(true);
+  }
+
+  function surClavier(evenement) {
+    if (!vivant) return;
+    const touche = evenement.key;
+    if (touche === "ArrowRight") {
+      evenement.preventDefault();
+      deplacer(1, evenement, "x");
+    } else if (touche === "ArrowLeft") {
+      evenement.preventDefault();
+      deplacer(-1, evenement, "x");
+    } else if (touche === "ArrowUp") {
+      evenement.preventDefault();
+      deplacer(1, evenement, "y");
+    } else if (touche === "ArrowDown") {
+      evenement.preventDefault();
+      deplacer(-1, evenement, "y");
+    } else if (touche === "PageUp") {
+      evenement.preventDefault();
+      deplacer(5, evenement, "x");
+    } else if (touche === "PageDown") {
+      evenement.preventDefault();
+      deplacer(-5, evenement, "x");
+    } else if (touche === "Home") {
+      evenement.preventDefault();
+      valeurCourante = contrainte.ranger(type === "zone" ? { x: contrainte.min, y: valeurCourante.y } : contrainte.min);
+      appliquer(true);
+    } else if (touche === "End") {
+      evenement.preventDefault();
+      valeurCourante = contrainte.ranger(type === "zone" ? { x: contrainte.max, y: valeurCourante.y } : contrainte.max);
+      appliquer(true);
+    }
+  }
+
+  groupe.addEventListener("pointerdown", surPointerDown);
+  groupe.addEventListener("pointermove", surPointerMove);
+  groupe.addEventListener("pointerup", surPointerUp);
+  groupe.addEventListener("pointercancel", surPointerUp);
+  groupe.addEventListener("keydown", surClavier);
+
+  const observateurTaille =
+    typeof ResizeObserver === "function"
+      ? new ResizeObserver(() => {
+          ajusterCible();
+        })
+      : null;
+  if (observateurTaille) observateurTaille.observe(svg);
+
+  const controle = {
+    element: groupe,
+    type,
+    set(valeur, diffuser) {
+      if (!vivant) return null;
+      valeurCourante = contrainte.ranger(valeur);
+      return appliquer(diffuser !== false);
+    },
+    get() {
+      return contrainte.mesurer(valeurCourante);
+    },
+    detruire() {
+      if (!vivant) return;
+      vivant = false;
+      groupe.removeEventListener("pointerdown", surPointerDown);
+      groupe.removeEventListener("pointermove", surPointerMove);
+      groupe.removeEventListener("pointerup", surPointerUp);
+      groupe.removeEventListener("pointercancel", surPointerUp);
+      groupe.removeEventListener("keydown", surClavier);
+      if (observateurTaille) observateurTaille.disconnect();
+      groupe.remove();
+    },
+  };
+
+  ajusterCible();
+  appliquer(options.diffuserAuDepart !== false);
+  enregistrerNettoyeur(ctx, controle.detruire);
+  return controle;
+}
+
+/* --------------------------------------------------------------------------
+   Lecteur : animation d'une grandeur dans le temps, pilotée par l'apprenant
+   -------------------------------------------------------------------------- */
+
+const VITESSES = [
+  { valeur: 0.25, libelle: "x 0,25" },
+  { valeur: 0.5, libelle: "x 0,5" },
+  { valeur: 1, libelle: "x 1" },
+  { valeur: 2, libelle: "x 2" },
+];
+
+/**
+ * Lecture, pause, remise à zéro et réglage de vitesse.
+ *
+ * options : { de, a, duree, boucle, vitesse, auto, libelle, rappel }
+ * Renvoie { detruire(), lire(), pause(), zero(), valeur(), definir(valeur) }.
+ */
+function simLecteur(ctx, conteneur, options = {}) {
+  const racine = ctx.racine instanceof Element ? ctx.racine : document;
+  const cible = resoudre(conteneur, racine);
+  if (!cible) return null;
+
+  const de = Number(options.de != null ? options.de : 0);
+  const a = Number(options.a != null ? options.a : 1);
+  const duree = Math.max(0.1, Number(options.duree != null ? options.duree : 6));
+  const boucle = options.boucle !== false;
+  /* Mouvement réduit : rien ne démarre seul, mais la lecture reste offerte. */
+  const auto = options.auto != null ? Boolean(options.auto) && !ctx.mouvementReduit : !ctx.mouvementReduit;
+
+  let vitesse = Number(options.vitesse != null ? options.vitesse : 1);
+  let progression = 0;
+  let enMarche = false;
+  let souhaiteMarche = false;
+  let visible = true;
+  let image = 0;
+  let dernier = 0;
+  let vivant = true;
+
+  const boutonLecture = creer("button", { classe: "m-bouton", attributs: { type: "button" }, texte: "Lecture" });
+  boutonLecture.prepend(icone("lecture", { taille: 15 }));
+  const boutonPause = creer("button", { classe: "m-bouton secondaire", attributs: { type: "button" }, texte: "Pause" });
+  boutonPause.prepend(icone("pause", { taille: 15 }));
+  const boutonZero = creer("button", { classe: "m-bouton secondaire", attributs: { type: "button" }, texte: "Remise à zéro" });
+  boutonZero.prepend(icone("recommencer", { taille: 15 }));
+
+  const choixVitesse = creer("select", { attributs: { "aria-label": "Vitesse de lecture" } });
+  for (const reglage of VITESSES) {
+    const option = creer("option", { texte: reglage.libelle, attributs: { value: String(reglage.valeur) } });
+    if (reglage.valeur === vitesse) option.setAttribute("selected", "");
+    choixVitesse.appendChild(option);
+  }
+  const etiquetteVitesse = creer("label", {
+    classe: "m-selecteur",
+    enfants: [creer("span", { texte: "Vitesse" }), choixVitesse],
+  });
+
+  const barre = creer("div", {
+    classe: "m-lecteur",
+    attributs: { role: "group", "aria-label": options.libelle || "Lecture de l'animation" },
+    enfants: [boutonLecture, boutonPause, boutonZero, etiquetteVitesse],
+  });
+  cible.appendChild(barre);
+
+  function valeurCourante() {
+    return de + (a - de) * progression;
+  }
+
+  function diffuser() {
+    if (typeof options.rappel !== "function") return;
+    try {
+      options.rappel(valeurCourante(), { progression, enMarche, controle });
+    } catch (erreur) {
+      /* le rappel du cours ne doit pas interrompre la lecture */
+    }
+  }
+
+  function majBoutons() {
+    boutonLecture.disabled = enMarche;
+    boutonPause.disabled = !enMarche;
+  }
+
+  function boucleAnimation(horodatage) {
+    if (!vivant) return;
+    image = requestAnimationFrame(boucleAnimation);
+    if (!enMarche) {
+      dernier = horodatage;
+      return;
+    }
+    const dt = dernier ? Math.min(0.05, (horodatage - dernier) / 1000) : 0;
+    dernier = horodatage;
+    progression += (dt * vitesse) / duree;
+    if (progression >= 1) {
+      if (boucle) progression -= Math.floor(progression);
+      else {
+        progression = 1;
+        arreter();
+      }
+    }
+    diffuser();
+  }
+
+  function demarrer() {
+    if (!vivant || enMarche) return;
+    enMarche = true;
+    souhaiteMarche = true;
+    dernier = 0;
+    majBoutons();
+    if (!image) image = requestAnimationFrame(boucleAnimation);
+  }
+
+  function arreter(garderSouhait) {
+    if (!vivant) return;
+    enMarche = false;
+    if (!garderSouhait) souhaiteMarche = false;
+    majBoutons();
+  }
+
+  boutonLecture.addEventListener("click", () => demarrer());
+  boutonPause.addEventListener("click", () => arreter());
+  boutonZero.addEventListener("click", () => {
+    progression = 0;
+    arreter();
+    diffuser();
+  });
+  choixVitesse.addEventListener("change", () => {
+    vitesse = Number(choixVitesse.value) || 1;
+  });
+
+  const observateurVue =
+    typeof IntersectionObserver === "function"
+      ? new IntersectionObserver(
+          (entrees) => {
+            for (const entree of entrees) visible = entree.isIntersecting;
+            /* Hors de l'écran, la lecture se met en pause et reprend au retour. */
+            if (!visible && enMarche) arreter(true);
+            else if (visible && souhaiteMarche && !enMarche) demarrer();
+          },
+          { rootMargin: "80px" }
+        )
+      : null;
+  if (observateurVue) observateurVue.observe(barre);
+
+  const controle = {
+    element: barre,
+    lire: demarrer,
+    pause: () => arreter(),
+    zero() {
+      progression = 0;
+      arreter();
+      diffuser();
+    },
+    valeur: valeurCourante,
+    enMarche: () => enMarche,
+    definir(valeur) {
+      const etendue = a - de;
+      progression = etendue === 0 ? 0 : bornerNombre((Number(valeur) - de) / etendue, 0, 1);
+      diffuser();
+    },
+    /* Positionne la lecture sans rappeler le cours, pour suivre une poignée. */
+    suivre(valeur) {
+      const etendue = a - de;
+      progression = etendue === 0 ? 0 : bornerNombre((Number(valeur) - de) / etendue, 0, 1);
+    },
+    detruire() {
+      if (!vivant) return;
+      vivant = false;
+      enMarche = false;
+      souhaiteMarche = false;
+      if (image) cancelAnimationFrame(image);
+      image = 0;
+      if (observateurVue) observateurVue.disconnect();
+      barre.remove();
+    },
+  };
+
+  majBoutons();
+  diffuser();
+  if (auto) demarrer();
+  enregistrerNettoyeur(ctx, controle.detruire);
+  return controle;
+}
+
+/* --------------------------------------------------------------------------
+   Panneau de valeurs en direct
+   -------------------------------------------------------------------------- */
+
+/** Notation décimale française : virgule, nombre de décimales imposé. */
+function formaterDecimal(valeur, decimales) {
+  const nombre = Number(valeur);
+  if (!Number.isFinite(nombre)) return "indéfini";
+  const chiffres = Number.isFinite(decimales) ? Math.max(0, Math.min(8, decimales)) : 2;
+  const texte = (Object.is(nombre, -0) ? 0 : nombre).toFixed(chiffres);
+  return texte.replace(".", ",");
+}
+
+/**
+ * Panneau de grandeurs mises à jour en continu.
+ *
+ * champs : [{ id, libelle, unite, decimales, valeur, format }]
+ * Renvoie { maj(objet), detruire() }.
+ */
+function simValeurs(ctx, conteneur, champs) {
+  const racine = ctx.racine instanceof Element ? ctx.racine : document;
+  const cible = resoudre(conteneur, racine);
+  if (!cible || !Array.isArray(champs)) return null;
+
+  const liste = creer("dl", { classe: "m-valeurs" });
+  const cellules = new Map();
+
+  for (const champ of champs) {
+    const id = champ.id || normaliser(champ.libelle || "valeur").replace(/\s+/g, "-");
+    const nombre = creer("span", { classe: "m-valeur-nombre", texte: formaterDecimal(champ.valeur, champ.decimales) });
+    const valeur = creer("dd", { enfants: [nombre] });
+    if (champ.unite) valeur.appendChild(creer("span", { classe: "m-valeur-unite", texte: champ.unite }));
+    liste.appendChild(
+      creer("div", {
+        classe: "m-valeur",
+        enfants: [creer("dt", { texte: champ.libelle || id }), valeur],
+      })
+    );
+    cellules.set(id, { nombre, champ });
+  }
+
+  cible.appendChild(liste);
+  let vivant = true;
+
+  const controle = {
+    element: liste,
+    maj(objet) {
+      if (!vivant || !objet || typeof objet !== "object") return controle;
+      for (const [id, valeur] of Object.entries(objet)) {
+        const cellule = cellules.get(id);
+        if (!cellule) continue;
+        cellule.nombre.textContent =
+          typeof cellule.champ.format === "function"
+            ? String(cellule.champ.format(valeur))
+            : formaterDecimal(valeur, cellule.champ.decimales);
+      }
+      return controle;
+    },
+    detruire() {
+      if (!vivant) return;
+      vivant = false;
+      cellules.clear();
+      liste.remove();
+    },
+  };
+
+  enregistrerNettoyeur(ctx, controle.detruire);
+  return controle;
+}
+
+/* --------------------------------------------------------------------------
    Traceur de courbes
    -------------------------------------------------------------------------- */
 
@@ -3196,6 +4170,7 @@ export function creerMoteur(contexte = {}) {
     racine: ctx.racine,
 
     reveler: (cibles, options) => reveler(ctx, cibles, options),
+    dessiner: (elements, options) => dessiner(ctx, elements, options),
     rendreMaths: (element) => rendreMaths(ctx, element),
 
     exercice: {
@@ -3217,6 +4192,9 @@ export function creerMoteur(contexte = {}) {
       fresnel: (conteneur, options) => simFresnel(ctx, conteneur, options),
       bode: (conteneur, options) => simBode(ctx, conteneur, options),
       spectre: (conteneur, options) => simSpectre(ctx, conteneur, options),
+      poignee: (svg, options) => simPoignee(ctx, svg, options),
+      lecteur: (conteneur, options) => simLecteur(ctx, conteneur, options),
+      valeurs: (conteneur, champs) => simValeurs(ctx, conteneur, champs),
     },
 
     stockage: {
@@ -3240,6 +4218,7 @@ export function creerMoteur(contexte = {}) {
       lireNombre,
       normaliser,
       melanger: melangerTableau,
+      formaterDecimal,
       pasJoli,
       couleurs: lireCouleurs,
       identifiant,

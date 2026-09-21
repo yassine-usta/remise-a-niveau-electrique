@@ -460,8 +460,365 @@ export async function init(racine, api) {
   });
   ressources.push(autoEvaluation);
 
+  /* ----------------------------------------------------------------------
+     Schémas tracés et grandeurs manipulables
+     ---------------------------------------------------------------------- */
+
+  construireDessins(racine, api);
+  construireCercleTrigo(racine, api);
+  construireContraintes(racine, api);
+
   /* Révélation au défilement des encadrés et formules de la page. */
   api.reveler(racine.querySelectorAll(".formule-cle, figure, .encadre"), { decalage: 0.04 });
+}
+
+/* --------------------------------------------------------------------------
+   Schémas tracés et grandeurs manipulables
+   -------------------------------------------------------------------------- */
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+function svgEl(balise, attributs = {}) {
+  const element = document.createElementNS(SVG_NS, balise);
+  for (const [cle, valeur] of Object.entries(attributs)) element.setAttribute(cle, String(valeur));
+  return element;
+}
+
+/** Tracé progressif : une fois au déclenchement, ou suivi au défilement. */
+function construireDessins(racine, api) {
+  const circuit = racine.querySelector("#demo-schema-circuit");
+  if (circuit) ressources.push(api.dessiner(circuit));
+
+  const simple = racine.querySelector("#demo-dessin svg");
+  if (simple) ressources.push(api.dessiner(simple, { duree: 1.4 }));
+
+  const suivi = racine.querySelector("#demo-dessin-scrub svg");
+  if (suivi) ressources.push(api.dessiner(suivi, { scrub: true }));
+}
+
+/** Cercle trigonométrique complet : poignée, curseur, lecteur et valeurs. */
+function construireCercleTrigo(racine, api) {
+  const conteneur = racine.querySelector("#demo-cercle");
+  if (!conteneur) return;
+
+  const centre = { x: 214, y: 186 };
+  const rayon = 132;
+  const angleDepart = 40;
+
+  const svg = svgEl("svg", {
+    viewBox: "0 0 450 344",
+    "aria-label": "Cercle trigonométrique manipulable : angle, cosinus et sinus",
+  });
+
+  const fond = svgEl("g", { fill: "none", stroke: "currentColor", "stroke-width": "1.5", opacity: "0.5" });
+  fond.appendChild(svgEl("circle", { cx: centre.x, cy: centre.y, r: rayon }));
+  fond.appendChild(
+    svgEl("path", { d: "M" + (centre.x - rayon - 28) + " " + centre.y + "H" + (centre.x + rayon + 28) })
+  );
+  fond.appendChild(
+    svgEl("path", { d: "M" + centre.x + " " + (centre.y - rayon - 28) + "V" + (centre.y + rayon + 28) })
+  );
+  for (const marque of [
+    { x: centre.x + rayon, y: centre.y },
+    { x: centre.x - rayon, y: centre.y },
+  ]) {
+    fond.appendChild(svgEl("path", { d: "M" + marque.x + " " + (marque.y - 5) + "v10" }));
+  }
+  for (const marque of [
+    { x: centre.x, y: centre.y - rayon },
+    { x: centre.x, y: centre.y + rayon },
+  ]) {
+    fond.appendChild(svgEl("path", { d: "M" + (marque.x - 5) + " " + marque.y + "h10" }));
+  }
+  svg.appendChild(fond);
+
+  const reperes = svgEl("g", {
+    fill: "currentColor",
+    stroke: "none",
+    "font-family": "ui-monospace, monospace",
+    "font-size": "12",
+    opacity: "0.72",
+  });
+  const etiquetteMarque = (x, y, texte, ancrage) => {
+    const element = svgEl("text", { x, y, "text-anchor": ancrage || "middle" });
+    element.textContent = texte;
+    return element;
+  };
+  reperes.appendChild(etiquetteMarque(centre.x + rayon, centre.y + 20, "1"));
+  reperes.appendChild(etiquetteMarque(centre.x - rayon, centre.y + 20, "-1"));
+  reperes.appendChild(etiquetteMarque(centre.x - 14, centre.y - rayon + 4, "1", "end"));
+  reperes.appendChild(etiquetteMarque(centre.x - 14, centre.y + rayon + 4, "-1", "end"));
+  reperes.appendChild(etiquetteMarque(centre.x + rayon + 38, centre.y + 4, "cos", "middle"));
+  reperes.appendChild(etiquetteMarque(centre.x, centre.y - rayon - 36, "sin"));
+  svg.appendChild(reperes);
+
+  const arc = svgEl("path", {
+    fill: "none",
+    "stroke-width": "2",
+    style: "stroke: var(--serie-2)",
+  });
+  svg.appendChild(arc);
+
+  const guide = svgEl("path", {
+    fill: "none",
+    stroke: "currentColor",
+    "stroke-width": "1.4",
+    "stroke-dasharray": "5 4",
+    opacity: "0.65",
+  });
+  svg.appendChild(guide);
+
+  const projCos = svgEl("path", {
+    fill: "none",
+    "stroke-width": "3.4",
+    "stroke-linecap": "round",
+    style: "stroke: var(--serie-1)",
+  });
+  const projSin = svgEl("path", {
+    fill: "none",
+    "stroke-width": "3.4",
+    "stroke-linecap": "round",
+    style: "stroke: var(--serie-3)",
+  });
+  svg.append(projCos, projSin);
+
+  const rayonTrace = svgEl("path", {
+    fill: "none",
+    stroke: "currentColor",
+    "stroke-width": "2.8",
+    "stroke-linecap": "round",
+  });
+  svg.appendChild(rayonTrace);
+
+  const etiquettes = svgEl("g", {
+    stroke: "none",
+    "font-family": "ui-monospace, monospace",
+    "font-size": "12.5",
+    "font-weight": "500",
+  });
+  const texteCos = svgEl("text", { "text-anchor": "middle", style: "fill: var(--serie-1)" });
+  const texteSin = svgEl("text", { "text-anchor": "start", style: "fill: var(--serie-3)" });
+  const texteAngle = svgEl("text", { "text-anchor": "middle", style: "fill: var(--serie-2)" });
+  texteAngle.textContent = "θ";
+  etiquettes.append(texteCos, texteSin, texteAngle);
+  svg.appendChild(etiquettes);
+
+  conteneur.appendChild(svg);
+
+  const valeurs = api.sim.valeurs("#demo-cercle-valeurs", [
+    { id: "degres", libelle: "Angle", unite: "°", decimales: 1 },
+    { id: "radians", libelle: "Angle en radians", unite: "rad", decimales: 3 },
+    { id: "cos", libelle: "cos θ", decimales: 3 },
+    { id: "sin", libelle: "sin θ", decimales: 3 },
+    { id: "tan", libelle: "tan θ", decimales: 3 },
+  ]);
+  if (valeurs) ressources.push(valeurs);
+
+  let angle = angleDepart;
+  let synchronisation = false;
+  let poignee = null;
+  let curseurs = null;
+  let lecteur = null;
+
+  function tracer(degres) {
+    const radians = (degres * Math.PI) / 180;
+    const cosv = Math.cos(radians);
+    const sinv = Math.sin(radians);
+    const x = centre.x + rayon * cosv;
+    const y = centre.y - rayon * sinv;
+
+    rayonTrace.setAttribute("d", "M" + centre.x + " " + centre.y + "L" + x + " " + y);
+    projCos.setAttribute("d", "M" + centre.x + " " + centre.y + "H" + x);
+    projSin.setAttribute("d", "M" + x + " " + centre.y + "V" + y);
+    guide.setAttribute("d", "M" + x + " " + y + "H" + centre.x + "M" + x + " " + y + "V" + centre.y);
+
+    const rayonArc = 36;
+    const finArc = { x: centre.x + rayonArc * cosv, y: centre.y - rayonArc * sinv };
+    const grandArc = ((degres % 360) + 360) % 360 > 180 ? 1 : 0;
+    arc.setAttribute(
+      "d",
+      "M" + (centre.x + rayonArc) + " " + centre.y + "A" + rayonArc + " " + rayonArc + " 0 " + grandArc + " 0 " + finArc.x + " " + finArc.y
+    );
+
+    const milieuArc = (((degres % 360) + 360) % 360 / 2) * (Math.PI / 180);
+    texteAngle.setAttribute("x", String(centre.x + (rayonArc + 16) * Math.cos(milieuArc)));
+    texteAngle.setAttribute("y", String(centre.y - (rayonArc + 16) * Math.sin(milieuArc) + 4));
+
+    texteCos.textContent = "cos θ";
+    texteCos.setAttribute("x", String((centre.x + x) / 2));
+    texteCos.setAttribute("y", String(centre.y + (sinv >= 0 ? 20 : -10)));
+    texteCos.setAttribute("opacity", Math.abs(cosv) > 0.16 ? "1" : "0");
+
+    texteSin.textContent = "sin θ";
+    texteSin.setAttribute("x", String(x + (cosv >= 0 ? 9 : -9)));
+    texteSin.setAttribute("text-anchor", cosv >= 0 ? "start" : "end");
+    texteSin.setAttribute("y", String((centre.y + y) / 2 + 4));
+    texteSin.setAttribute("opacity", Math.abs(sinv) > 0.16 ? "1" : "0");
+
+    if (valeurs) {
+      valeurs.maj({
+        degres,
+        radians,
+        cos: cosv,
+        sin: sinv,
+        tan: Math.abs(cosv) < 1e-3 ? NaN : sinv / cosv,
+      });
+    }
+  }
+
+  function appliquer(degres, source) {
+    if (synchronisation) return;
+    synchronisation = true;
+    angle = ((Number(degres) % 360) + 360) % 360;
+    tracer(angle);
+    if (source !== "poignee" && poignee) poignee.set(angle, false);
+    if (source !== "curseur" && curseurs) curseurs.definir("angle", Math.round(angle));
+    if (source !== "lecteur" && lecteur) lecteur.suivre(angle);
+    synchronisation = false;
+  }
+
+  poignee = api.sim.poignee(conteneur, {
+    type: "cercle",
+    centre,
+    rayon,
+    valeur: angleDepart,
+    pas: 5,
+    libelle: "Angle sur le cercle trigonométrique",
+    diffuserAuDepart: false,
+    rappel(mesure) {
+      appliquer(mesure.angle, "poignee");
+    },
+  });
+  if (poignee) ressources.push(poignee);
+
+  curseurs = api.sim.curseurs(
+    "#demo-cercle-curseur",
+    [{ id: "angle", libelle: "Angle θ", min: 0, max: 360, pas: 1, valeur: angleDepart, unite: "°" }],
+    (lues) => appliquer(lues.angle, "curseur")
+  );
+  if (curseurs) ressources.push(curseurs);
+
+  lecteur = api.sim.lecteur("#demo-cercle-lecteur", {
+    de: 0,
+    a: 360,
+    duree: 9,
+    boucle: true,
+    auto: false,
+    libelle: "Rotation du rayon",
+    rappel: (valeur) => appliquer(valeur, "lecteur"),
+  });
+  if (lecteur) ressources.push(lecteur);
+
+  appliquer(angleDepart, null);
+}
+
+/** Poignée contrainte à un segment, à une courbe et à une zone. */
+function construireContraintes(racine, api) {
+  const conteneur = racine.querySelector("#demo-contraintes");
+  if (!conteneur) return;
+
+  const segment = { de: { x: 54, y: 62 }, a: { x: 330, y: 62 } };
+  const boite = { x: 392, y: 46, largeur: 198, hauteur: 206 };
+  const courbe = (t) => ({ x: 54 + t * 276, y: 252 - 128 * (1 - Math.exp(-5 * t)) });
+
+  const svg = svgEl("svg", {
+    viewBox: "0 0 620 300",
+    "aria-label": "Trois contraintes de poignée : segment gradué, courbe et zone rectangulaire",
+  });
+
+  const traits = svgEl("g", { fill: "none", stroke: "currentColor", "stroke-width": "1.6", opacity: "0.55" });
+  traits.appendChild(svgEl("path", { d: "M54 62H330" }));
+  for (let rang = 0; rang <= 10; rang += 1) {
+    const x = segment.de.x + (rang / 10) * (segment.a.x - segment.de.x);
+    traits.appendChild(svgEl("path", { d: "M" + x + " " + (62 - (rang % 5 === 0 ? 8 : 4)) + "V62" }));
+  }
+  traits.appendChild(svgEl("path", { d: "M54 118V252H330" }));
+  traits.appendChild(
+    svgEl("rect", { x: boite.x, y: boite.y, width: boite.largeur, height: boite.hauteur, rx: "10" })
+  );
+  svg.appendChild(traits);
+
+  const points = [];
+  for (let i = 0; i <= 60; i += 1) {
+    const point = courbe(i / 60);
+    points.push(point.x.toFixed(1) + "," + point.y.toFixed(1));
+  }
+  svg.appendChild(
+    svgEl("polyline", {
+      points: points.join(" "),
+      fill: "none",
+      "stroke-width": "2.4",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      style: "stroke: var(--serie-1)",
+    })
+  );
+
+  const noms = svgEl("g", {
+    fill: "currentColor",
+    stroke: "none",
+    "font-family": "ui-monospace, monospace",
+    "font-size": "12",
+    opacity: "0.75",
+  });
+  const nommer = (x, y, texte) => {
+    const element = svgEl("text", { x, y });
+    element.textContent = texte;
+    return element;
+  };
+  noms.appendChild(nommer(54, 32, "segment gradué, 0 à 10 cm"));
+  noms.appendChild(nommer(54, 108, "courbe de charge, 0 à 5 ms"));
+  noms.appendChild(nommer(392, 32, "zone libre, deux coordonnées"));
+  svg.appendChild(noms);
+
+  conteneur.appendChild(svg);
+
+  const valeurs = api.sim.valeurs("#demo-contraintes-valeurs", [
+    { id: "position", libelle: "Segment", unite: "cm", decimales: 2 },
+    { id: "instant", libelle: "Courbe", unite: "ms", decimales: 2 },
+    { id: "tension", libelle: "u_C lue", unite: "V", decimales: 2 },
+    { id: "zoneX", libelle: "Zone, x", decimales: 2 },
+    { id: "zoneY", libelle: "Zone, y", decimales: 2 },
+  ]);
+  if (valeurs) ressources.push(valeurs);
+
+  const surSegment = api.sim.poignee(conteneur, {
+    type: "segment",
+    de: segment.de,
+    a: segment.a,
+    min: 0,
+    max: 10,
+    pas: 0.1,
+    valeur: 3,
+    unite: "cm",
+    libelle: "Position sur le segment gradué",
+    rappel: (mesure) => valeurs && valeurs.maj({ position: mesure.valeur }),
+  });
+  if (surSegment) ressources.push(surSegment);
+
+  const surCourbe = api.sim.poignee(conteneur, {
+    type: "courbe",
+    courbe,
+    min: 0,
+    max: 5,
+    pas: 0.05,
+    valeur: 1,
+    unite: "ms",
+    libelle: "Instant sur la courbe de charge",
+    rappel: (mesure) =>
+      valeurs && valeurs.maj({ instant: mesure.valeur, tension: 12 * (1 - Math.exp(-mesure.valeur)) }),
+  });
+  if (surCourbe) ressources.push(surCourbe);
+
+  const dansZone = api.sim.poignee(conteneur, {
+    type: "zone",
+    boite,
+    valeur: { x: boite.x + boite.largeur * 0.5, y: boite.y + boite.hauteur * 0.4 },
+    pas: 4,
+    libelle: "Point libre dans la zone",
+    rappel: (mesure) => valeurs && valeurs.maj({ zoneX: mesure.u, zoneY: 1 - mesure.v }),
+  });
+  if (dansZone) ressources.push(dansZone);
 }
 
 export function detruire() {
