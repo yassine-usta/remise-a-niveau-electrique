@@ -1,0 +1,1026 @@
+<article class="cours" data-slug="loi-d-ohm-et-resistivite">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/tension-courant-charge-et-puissance">Tension, courant, charge et puissance</a> a posé
+      les définitions $i = \mathrm{d}q/\mathrm{d}t$ et $p = ui$, les conventions récepteur et générateur, et le modèle
+      $U = E - rI$ d'une source réelle, dans lequel la résistance interne $r$ était encore admise sans justification.
+      Le cours <a href="#/cours/diagnostic-initial-et-remise-a-niveau-mathematique">Diagnostic initial et remise à
+      niveau mathématique</a> a remis en service les préfixes SI et la notation scientifique, qui servent ici à
+      chaque ligne : une section en $\mathrm{mm^2}$ et une résistivité en $10^{-8}\ \Omega\cdot\mathrm{m}$ se
+      manipulent sans faute seulement si les conversions sont devenues automatiques. Cette séance explique enfin
+      d'où vient une résistance, de quoi elle dépend, et jusqu'où la relation $u = Ri$ reste valable.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    La loi d'Ohm est la relation la plus utilisée de l'ingénierie électrique, et aussi l'une des plus mal
+    comprises. Elle sert à chaque calcul de chute de tension dans un câble, de pertes dans un jeu de barres, de
+    courant dans un élément chauffant, de valeur d'un shunt de mesure ou de résistance d'une sonde de température.
+    Derrière cette relation se cache une propriété d'un matériau, la résistivité, et une propriété d'un objet, la
+    résistance, qui dépend de sa géométrie et de sa température. Confondre les deux, ou oublier l'une de ces
+    dépendances, conduit à des erreurs d'un facteur deux ou plus.
+  </p>
+  <p>
+    Les conséquences industrielles sont directes. Un câble trop fin chauffe, vieillit prématurément et fait
+    chuter la tension au point qu'un moteur démarre mal ou qu'un automate se réinitialise. Une connexion desserrée
+    ajoute quelques milliohms, qui suffisent à dissiper des dizaines de watts dans une borne de quelques
+    centimètres : c'est une cause classique d'incendie d'armoire. À l'inverse, la variation de résistance avec la
+    température est exploitée volontairement dans les sondes Pt100, dans la mesure de l'échauffement des
+    bobinages de moteur, et combattue dans les shunts de mesure en alliage spécial. Enfin, savoir reconnaître
+    qu'un composant ne suit pas la loi d'Ohm (lampe, diode, varistance) est indispensable pour ne pas appliquer
+    une formule linéaire là où elle est fausse. Toute la suite du module, à commencer par le cours Lois de
+    Kirchhoff, repose sur la relation $u = Ri$ établie ici.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Calculer la résistance d'un conducteur à partir de sa résistivité, de sa longueur et de sa section, en unités SI.</li>
+    <li data-rang="02">Expliquer l'origine microscopique de la résistance et dériver $R = \rho L/S$ à partir de la loi d'Ohm locale $\vec{j} = \sigma \vec{E}$.</li>
+    <li data-rang="03">Calculer la variation d'une résistance avec la température à l'aide du coefficient $\alpha$, et interpréter son signe selon le matériau.</li>
+    <li data-rang="04">Dimensionner la section d'un conducteur sous une contrainte de chute de tension, puis estimer ses pertes Joule.</li>
+    <li data-rang="05">Distinguer résistance statique et résistance dynamique, et interpréter la caractéristique courant-tension d'un composant non linéaire.</li>
+    <li data-rang="06">Diagnostiquer un échauffement anormal, par exemple une connexion desserrée, à partir de mesures de chute de tension.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois automatismes sont indispensables. Le premier : convertir une section, car
+    $1\ \mathrm{mm^2} = (10^{-3}\ \mathrm{m})^2 = 10^{-6}\ \mathrm{m^2}$ et non $10^{-3}\ \mathrm{m^2}$. Le deuxième :
+    calculer l'aire d'un disque à partir de son diamètre $d$, soit $S = \pi d^2/4$, en prenant garde à ne pas
+    confondre rayon et diamètre. Le troisième : la puissance reçue par un dipôle en convention récepteur,
+    $p = ui$, vue dans le cours <a href="#/cours/tension-courant-charge-et-puissance">Tension, courant, charge et
+    puissance</a>. Le mini-test ci-dessous n'est pas noté ; la correction de chaque question reste masquée jusqu'à
+    une tentative ou un clic explicite sur "Voir la correction".
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+  <p>
+    Un métal contient un très grand nombre d'électrons libres, environ $8{,}5 \times 10^{28}$ par mètre cube dans le
+    cuivre. Sans tension appliquée, ils s'agitent en tous sens à grande vitesse, mais leur déplacement moyen est
+    nul : aucun courant ne circule. Dès qu'une tension est appliquée, un champ électrique s'installe dans le
+    conducteur et pousse chaque électron dans le sens opposé au champ, puisque sa charge est négative. L'électron
+    accélère, puis heurte une imperfection du réseau cristallin (un ion qui vibre, un défaut, une impureté), perd
+    l'essentiel de la vitesse qu'il avait gagnée, et recommence.
+  </p>
+  <p>
+    Il en résulte un mouvement d'ensemble lent, la vitesse de dérive, qui se superpose à l'agitation. Plus le champ
+    est fort, plus la dérive est rapide : c'est l'origine de la proportionnalité entre courant et tension. Plus les
+    chocs sont fréquents, plus la dérive est lente pour un même champ : c'est l'origine de la résistance. Et
+    l'énergie gagnée entre deux chocs est cédée au réseau à chaque choc, sous forme de vibrations, c'est-à-dire de
+    chaleur : c'est l'effet Joule.
+  </p>
+  <p>
+    Une analogie contrôlée aide à fixer les idées : une planche inclinée hérissée de clous, sur laquelle roulent des
+    billes. La pente joue le rôle du champ électrique, les clous celui des obstacles du réseau. Chaque bille
+    accélère, heurte un clou, repart presque de zéro : sa vitesse moyenne de descente est constante et
+    proportionnelle à la pente. Une planche deux fois plus longue oppose deux fois plus de clous (la résistance est
+    proportionnelle à la longueur) ; une planche deux fois plus large laisse passer deux fois plus de billes par
+    seconde sous la même pente (la résistance est inversement proportionnelle à la section) ; des clous qui
+    vibrent davantage multiplient les chocs (la résistance d'un métal augmente avec la température).
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie de la planche à clous</span>
+    <p>
+      L'analogie est fausse sur quatre points qu'il faut connaître. D'abord, un électron n'est pas une bille : dans
+      un cristal parfait et immobile, il ne serait pas diffusé du tout ; ce sont uniquement les écarts à la
+      perfection (vibrations, défauts, impuretés) qui créent la résistance, ce que seule la physique quantique
+      explique. Ensuite, la vitesse d'agitation des électrons d'un métal ne dépend presque pas de la
+      température, contrairement à celle des billes secouées : c'est la fréquence des chocs qui change. Troisième
+      point, l'énergie n'est pas transportée par les électrons à leur vitesse de dérive, de l'ordre du millimètre
+      par seconde, mais par le champ électromagnétique, qui s'établit à une vitesse proche de celle de la lumière
+      : c'est pourquoi une lampe s'allume immédiatement. Enfin, l'analogie ne prévoit ni la supraconductivité, ni
+      les semi-conducteurs, dont la résistance diminue quand ils chauffent.
+    </p>
+  </div>
+
+  <h3 id="d-sim-derive-section">Simulation interactive : dérive des électrons et collisions</h3>
+  <p>
+    Avant de lancer la lecture, prédisez qualitativement : si la température du réseau augmente à champ constant,
+    la dérive vers la gauche des électrons va-t-elle s'accélérer ou ralentir ? Et si le champ double à température
+    constante, que devient la vitesse de dérive ? Notez votre prédiction, puis lancez la lecture, déplacez les
+    curseurs et comparez.
+  </p>
+  <figure id="d-derive-figure">
+    <div class="m-toile-cadre schema-vivant" id="d-derive"></div>
+    <figcaption>
+      Modèle simplifié d'un tronçon de conducteur métallique. Les cercles marqués $+$ sont les ions du réseau
+      cristallin, qui vibrent d'autant plus que la température est élevée. Les petits disques pleins sont les
+      électrons libres ; l'un d'eux, plus gros, est suivi et laisse une traînée qui montre ses segments de vol
+      entre deux collisions. La flèche du bas indique le sens du champ électrique $\vec{E}$ et le sens
+      conventionnel du courant $I$ ; la flèche du haut indique le sens réel de dérive des électrons, opposé, car
+      leur charge est négative. Les grandeurs sont en unités du modèle : seules les tendances comptent.
+    </figcaption>
+  </figure>
+  <div id="d-derive-curseurs"></div>
+  <div id="d-derive-lecteur"></div>
+  <div id="d-derive-valeurs"></div>
+  <p>
+    Interprétation : l'électron suivi décrit une ligne brisée, chaque changement de direction étant une collision.
+    Entre deux collisions, le champ incurve légèrement sa trajectoire vers la gauche ; c'est ce petit biais,
+    répété, qui produit la dérive. Doubler le champ double la vitesse de dérive : le courant est proportionnel au
+    champ, donc à la tension, c'est la loi d'Ohm. Augmenter la température raccourcit le temps moyen entre deux
+    collisions, donc réduit le biais accumulé à chaque vol : la vitesse de dérive et la conductivité diminuent,
+    la résistance augmente. Dans ce modèle, la résistance est proportionnelle à la température absolue, ce qui
+    donne un coefficient de $1/293 \approx 3{,}4 \times 10^{-3}\ \mathrm{K^{-1}}$ autour de 20 °C, du même ordre
+    que celui du cuivre réel, $3{,}93 \times 10^{-3}\ \mathrm{K^{-1}}$. Le modèle cesse d'être représentatif aux
+    très basses températures, où les défauts et impuretés, et non plus les vibrations, limitent la conduction.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-locale">Densité de courant et loi d'Ohm locale</h3>
+  <p>
+    Pour relier le courant, grandeur globale mesurée par un ampèremètre, au mouvement des charges, il faut une
+    grandeur locale : la densité de courant $\vec{j}$, courant par unité de surface. Dans un conducteur de section
+    $S$ parcouru uniformément par un courant $I$, son module vaut $j = I/S$. Si $n$ porteurs de charge $q$ par
+    unité de volume dérivent à la vitesse $\vec{v}_d$, ils traversent en une durée $\mathrm{d}t$ un cylindre de
+    volume $S\,v_d\,\mathrm{d}t$, d'où $I = n\,|q|\,v_d\,S$ et $\vec{j} = n\,q\,\vec{v}_d$.
+  </p>
+  <p>
+    Ordre de grandeur : pour $I = 10\ \mathrm{A}$ dans un fil de cuivre de $1{,}5\ \mathrm{mm^2}$,
+    $v_d = I/(n\,e\,S) = 10 / (8{,}5 \times 10^{28} \times 1{,}602 \times 10^{-19} \times 1{,}5 \times 10^{-6})
+    \approx 4{,}9 \times 10^{-4}\ \mathrm{m/s}$, soit moins d'un demi-millimètre par seconde.
+  </p>
+  <p>
+    Le modèle de Drude, qui formalise l'intuition de la section D, suppose qu'entre deux collisions un électron de
+    masse $m$ subit l'accélération $e E/m$, et que les collisions surviennent en moyenne toutes les $\tau$
+    secondes en effaçant la vitesse acquise. La vitesse moyenne de dérive vaut alors $v_d = eE\tau/m$, et la
+    densité de courant devient proportionnelle au champ :
+  </p>
+  <div class="formule-cle">
+    $$\vec{j} = \sigma\,\vec{E}, \qquad \sigma = \frac{n\,e^{2}\,\tau}{m}, \qquad \rho = \frac{1}{\sigma}$$
+    <p class="formule-cle-legende">
+      $\vec{j}$ densité de courant ($\mathrm{A/m^2}$), $\vec{E}$ champ électrique ($\mathrm{V/m}$), $\sigma$
+      conductivité ($\mathrm{S/m}$), $\rho$ résistivité ($\Omega\cdot\mathrm{m}$), $n$ densité d'électrons libres
+      ($\mathrm{m^{-3}}$), $e = 1{,}602 \times 10^{-19}\ \mathrm{C}$, $\tau$ temps moyen entre collisions
+      ($\mathrm{s}$), $m = 9{,}109 \times 10^{-31}\ \mathrm{kg}$. Hypothèses : matériau homogène et isotrope, champ
+      modéré, régime continu ou lentement variable, température uniforme. Dérivation : $\vec{j} = -n e \vec{v}_d$
+      avec $\vec{v}_d = -e\vec{E}\tau/m$, donc $\vec{j} = (n e^2 \tau/m)\vec{E}$. Interprétation physique : la
+      conductivité est d'autant plus grande qu'il y a de porteurs et qu'ils voyagent longtemps sans collision.
+      Cas limite : $\tau \to \infty$ donne une conductivité infinie, ce que le modèle classique ne sait pas
+      décrire correctement (la supraconductivité relève d'un autre mécanisme). Vérification dimensionnelle :
+      $[n e^2 \tau / m] = \mathrm{m^{-3}\,C^2\,s\,kg^{-1}}$, et $\mathrm{S/m} = \mathrm{A/(V\,m)} =
+      \mathrm{C^2\,s\,kg^{-1}\,m^{-3}}$ puisque $\mathrm{V} = \mathrm{kg\,m^2\,s^{-2}\,C^{-1}}$. Pour le cuivre,
+      $\sigma = 5{,}81 \times 10^{7}\ \mathrm{S/m}$ donne $\tau = m\sigma/(n e^2) \approx 2{,}4 \times
+      10^{-14}\ \mathrm{s}$.
+    </p>
+  </div>
+  <p>
+    Statut de cette relation : ce n'est pas une loi fondamentale comme la conservation de la charge, mais une loi
+    phénoménologique, c'est-à-dire un modèle de comportement, très bien vérifié pour les métaux dans les conditions
+    usuelles. Elle cesse d'être valable dans les semi-conducteurs sous forte polarisation, dans les gaz ionisés, et
+    pour des champs extrêmes.
+  </p>
+
+  <h3 id="e-resistance-conducteur">Résistance d'un conducteur : $R = \rho L / S$</h3>
+  <p>
+    Considérons un conducteur cylindrique homogène de longueur $L$ et de section $S$ constante, entre deux bornes
+    $A$ et $B$. En régime continu, le champ y est uniforme et dirigé de $A$ vers $B$ si $V_A > V_B$ ; son module
+    vaut $E = u_{AB}/L$. La densité de courant, uniforme elle aussi, vaut $j = \sigma E$, et le courant qui
+    traverse la section est $I = jS$. Le schéma ci-dessous fixe ces notations et leurs sens.
+  </p>
+  <figure id="e-conducteur-figure">
+    <svg viewBox="0 0 680 300" role="img" aria-label="Conducteur cylindrique de longueur L et de section S entre les bornes A et B, avec le champ E dirigé de A vers B, le courant I entrant par A, les électrons dérivant de B vers A et la tension u orientée vers la borne A">
+      <defs>
+        <marker id="fl-e1-a" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-e1-b" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto-start-reverse">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-e1-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M150 90H520"/>
+        <path d="M150 190H520"/>
+        <path d="M520 90A22 50 0 0 1 520 190"/>
+        <path d="M520 90A22 50 0 0 0 520 190" stroke-dasharray="4 4" opacity="0.5"/>
+        <path d="M128 140H62"/>
+        <path d="M542 140H618"/>
+      </g>
+      <ellipse cx="150" cy="140" rx="22" ry="50" fill="var(--serie-1)" fill-opacity="0.35" stroke="currentColor" stroke-width="2.2"/>
+      <g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round">
+        <path d="M66 140H112" marker-end="url(#fl-e1-a)"/>
+        <path d="M230 140H430" marker-end="url(#fl-e1-a)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round">
+        <path d="M150 238H520" marker-start="url(#fl-e1-b)" marker-end="url(#fl-e1-b)"/>
+        <path d="M150 196V246"/>
+        <path d="M520 196V246"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" opacity="0.8">
+        <path d="M380 112H330" marker-end="url(#fl-e1-a)"/>
+        <path d="M470 168H420" marker-end="url(#fl-e1-a)"/>
+        <path d="M290 168H240" marker-end="url(#fl-e1-a)"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="390" cy="112" r="5"/>
+        <circle cx="480" cy="168" r="5"/>
+        <circle cx="300" cy="168" r="5"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M600 40H80" marker-end="url(#fl-e1-u)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="1.6" fill="none" stroke-dasharray="4 4" opacity="0.75">
+        <path d="M70 128V40"/>
+        <path d="M610 128V40"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13">
+        <text x="40" y="145" text-anchor="middle" font-weight="600">A</text>
+        <text x="640" y="145" text-anchor="middle" font-weight="600">B</text>
+        <text x="58" y="165" text-anchor="middle" font-weight="600">+</text>
+        <text x="624" y="165" text-anchor="middle" font-weight="600">-</text>
+        <text x="89" y="130" text-anchor="middle">I</text>
+        <text x="330" y="132" text-anchor="middle">champ E, densité j</text>
+        <text x="150" y="80" text-anchor="middle">section S</text>
+        <text x="335" y="262" text-anchor="middle">longueur L</text>
+        <text x="360" y="210" text-anchor="middle" font-size="12">électrons : dérive de B vers A</text>
+        <text x="340" y="30" text-anchor="middle" fill="var(--serie-2)">u = V_A - V_B</text>
+        <text x="340" y="290" text-anchor="middle" font-size="12">matériau homogène de résistivité ρ, température uniforme θ</text>
+      </g>
+    </svg>
+    <figcaption>
+      Le conducteur étudié. La borne $A$, au potentiel le plus élevé, est repérée $+$ ; la tension $u = V_A - V_B$
+      est représentée par la flèche fine, dont la pointe est du côté de la borne $+$, comme dans le cours précédent.
+      Le courant $I$ entre par la borne $+$ : le conducteur est décrit en convention récepteur. À l'intérieur, le
+      champ $\vec{E}$ et la densité $\vec{j}$ sont dirigés de $A$ vers $B$ (grande flèche centrale), tandis que les
+      électrons, représentés par les disques pleins munis de courtes flèches, dérivent en sens inverse. L'ellipse
+      remplie d'un aplat, à gauche, matérialise la section $S$ traversée par le courant ; la cote du bas donne la longueur $L$.
+    </figcaption>
+  </figure>
+  <p>
+    En combinant $E = u/L$, $j = \sigma E$ et $I = jS$, on obtient $I = \sigma S u / L$, c'est-à-dire une relation
+    de proportionnalité entre $u$ et $I$ dont le coefficient ne dépend que du matériau et de la géométrie :
+  </p>
+  <div class="formule-cle">
+    $$R = \frac{u}{I} = \frac{\rho\,L}{S}$$
+    <p class="formule-cle-legende">
+      $R$ résistance ($\Omega$), $\rho$ résistivité du matériau ($\Omega\cdot\mathrm{m}$), $L$ longueur parcourue
+      par le courant ($\mathrm{m}$), $S$ section droite ($\mathrm{m^2}$). Hypothèses : matériau homogène, section
+      constante, température uniforme, courant uniformément réparti dans la section, ce qui suppose le régime
+      continu ou une fréquence assez basse pour négliger l'effet de peau. Dérivation : $I = jS = \sigma E S =
+      \sigma S u/L$, donc $u = (L/(\sigma S))\,I = (\rho L/S)\,I$. Interprétation physique : la résistivité
+      caractérise le matériau, la résistance caractérise l'objet ; doubler la longueur double les obstacles
+      rencontrés, doubler la section double le nombre de chemins parallèles. Cas limites : $L \to 0$ donne
+      $R \to 0$, une liaison infiniment courte ne chute aucune tension ; $S \to \infty$ donne aussi $R \to 0$ ;
+      pour un fil rond, $S = \pi d^2/4$, donc diviser le diamètre par deux multiplie $R$ par quatre. Vérification
+      dimensionnelle : $\Omega\cdot\mathrm{m} \times \mathrm{m} / \mathrm{m^2} = \Omega$.
+    </p>
+  </div>
+  <p>
+    Deux conséquences pratiques s'en déduisent immédiatement. D'abord, un circuit comporte un aller et un retour :
+    la longueur à prendre pour une liaison bifilaire de longueur $\ell$ est $L = 2\ell$. Ensuite, la section se
+    donne presque toujours en $\mathrm{mm^2}$ et doit être convertie : $2{,}5\ \mathrm{mm^2} = 2{,}5 \times
+    10^{-6}\ \mathrm{m^2}$. Pour le cuivre à 20 °C, retenir $\rho \approx 1{,}72 \times 10^{-8}\ \Omega\cdot\mathrm{m}$,
+    soit environ $17{,}2\ \mathrm{m\Omega}$ pour un mètre de conducteur de $1\ \mathrm{mm^2}$.
+  </p>
+
+  <h3 id="e-ohm">Loi d'Ohm pour un dipôle et conventions</h3>
+  <p>
+    Un dipôle dont la tension est proportionnelle au courant est dit ohmique ou linéaire. La relation s'écrit
+    différemment selon la convention choisie pour le repérer, et c'est une source d'erreurs fréquente. En
+    convention récepteur, flèches de $u$ et de $i$ opposées sur le schéma, le courant entre par la borne $+$ et
+    $u = Ri$. En convention générateur, le courant de référence sort par la borne $+$, et pour le même composant
+    physique, la même tension correspond à un courant de référence de signe opposé : $u = -Ri$. Le schéma
+    ci-dessous met les deux situations côte à côte.
+  </p>
+  <figure id="e-ohm-figure">
+    <svg viewBox="0 0 660 230" role="img" aria-label="Une même résistance représentée en convention récepteur, où u égale R i, et en convention générateur, où u égale moins R i">
+      <defs>
+        <marker id="fl-e2-i" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-e2-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M40 110H120"/>
+        <rect x="120" y="94" width="90" height="32" rx="3"/>
+        <path d="M210 110H290"/>
+        <path d="M370 110H450"/>
+        <rect x="450" y="94" width="90" height="32" rx="3"/>
+        <path d="M540 110H620"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round">
+        <path d="M50 110H100" marker-end="url(#fl-e2-i)"/>
+        <path d="M430 110H380" marker-end="url(#fl-e2-i)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M205 62H128" marker-end="url(#fl-e2-u)"/>
+        <path d="M535 62H458" marker-end="url(#fl-e2-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13">
+        <text x="165" y="115" text-anchor="middle">R</text>
+        <text x="495" y="115" text-anchor="middle">R</text>
+        <text x="75" y="100" text-anchor="middle">i</text>
+        <text x="405" y="100" text-anchor="middle">i</text>
+        <text x="165" y="50" text-anchor="middle" fill="var(--serie-2)">u</text>
+        <text x="495" y="50" text-anchor="middle" fill="var(--serie-2)">u</text>
+        <text x="114" y="88" text-anchor="middle" font-weight="600">+</text>
+        <text x="216" y="88" text-anchor="middle" font-weight="600">-</text>
+        <text x="444" y="88" text-anchor="middle" font-weight="600">+</text>
+        <text x="546" y="88" text-anchor="middle" font-weight="600">-</text>
+        <text x="165" y="165" text-anchor="middle" font-weight="600">Convention récepteur</text>
+        <text x="165" y="185" text-anchor="middle">u = R i</text>
+        <text x="165" y="205" text-anchor="middle">p = u i = R i² ≥ 0 : reçue</text>
+        <text x="495" y="165" text-anchor="middle" font-weight="600">Convention générateur</text>
+        <text x="495" y="185" text-anchor="middle">u = - R i</text>
+        <text x="495" y="205" text-anchor="middle">p = u i = - R i² ≤ 0 : fournie</text>
+      </g>
+    </svg>
+    <figcaption>
+      La même résistance $R$ repérée de deux façons. La flèche fine de tension pointe dans les deux cas vers la
+      borne $+$. À gauche, la flèche épaisse du courant entre par la borne $+$ : convention récepteur, $u = Ri$,
+      et la puissance $p = ui$ est positive, la résistance reçoit de l'énergie. À droite, la flèche du courant
+      sort par la borne $+$ : convention générateur, $u = -Ri$, et la puissance "fournie" $p = ui$ est négative,
+      ce qui dit la même chose : une résistance ne fournit jamais d'énergie. Le phénomène physique est identique,
+      seule l'écriture change.
+    </figcaption>
+  </figure>
+  <div class="formule-cle">
+    $$u = R\,i \ \ (\text{convention récepteur}), \qquad G = \frac{1}{R}, \qquad i = G\,u$$
+    <p class="formule-cle-legende">
+      $u$ tension aux bornes ($\mathrm{V}$), $i$ courant ($\mathrm{A}$), $R$ résistance ($\Omega$), $G$
+      conductance (siemens, $\mathrm{S}$). Hypothèses : dipôle linéaire, $R$ indépendante de $u$, de $i$ et du
+      temps, ce qui suppose en particulier une température stable. Dérivation : intégration de la loi locale sur
+      le volume du conducteur, faite au paragraphe précédent. Interprétation physique : $R$ mesure la difficulté
+      à faire passer un courant, $G$ la facilité ; la conductance est plus commode pour des branches en parallèle,
+      comme le montrera le cours Associations de résistances et diviseurs. Cas limites : $R = 0$ (court-circuit
+      idéal), la tension est nulle quel que soit le courant ; $G = 0$ (circuit ouvert), le courant est nul quelle
+      que soit la tension. Vérification dimensionnelle : $1\ \Omega = 1\ \mathrm{V/A}$ et $1\ \mathrm{S} =
+      1\ \mathrm{A/V}$.
+    </p>
+  </div>
+  <p>
+    Un point de statut mérite d'être souligné : "loi d'Ohm" est un nom historique trompeur. La relation $u = Ri$
+    n'est pas une loi universelle de la nature mais la description d'une classe de dipôles, les dipôles ohmiques,
+    dans un domaine limité de fonctionnement. Un composant qui ne la respecte pas n'est pas "en défaut" : il est
+    simplement non linéaire.
+  </p>
+
+  <h3 id="e-joule">Effet Joule : puissance dissipée dans une résistance</h3>
+  <p>
+    En convention récepteur, la puissance reçue par un dipôle vaut $p = ui$. Pour un dipôle ohmique, on remplace
+    $u$ par $Ri$ ou $i$ par $u/R$ et l'on obtient deux écritures équivalentes, qui ne s'emploient pas dans les
+    mêmes situations.
+  </p>
+  <div class="formule-cle">
+    $$p = R\,i^{2} = \frac{u^{2}}{R} \geq 0$$
+    <p class="formule-cle-legende">
+      $p$ puissance reçue et entièrement convertie en chaleur ($\mathrm{W}$), $R$ ($\Omega$), $i$ ($\mathrm{A}$),
+      $u$ tension aux bornes de cette même résistance ($\mathrm{V}$). Hypothèses : dipôle ohmique, convention
+      récepteur, valeurs instantanées ou continues. Dérivation : $p = ui = (Ri)\,i = Ri^2$, ou $p = u\,(u/R) =
+      u^2/R$. Interprétation physique : l'énergie gagnée par les électrons entre deux collisions est cédée au
+      réseau, et une résistance reçoit toujours de l'énergie, quel que soit le sens du courant, d'où le carré.
+      Cas limites : $i = 0$ donne $p = 0$ ; un court-circuit franc ($R \to 0$) sous courant imposé ne dissipe rien,
+      alors que le même court-circuit sous tension imposée ferait tendre $u^2/R$ vers l'infini, ce que seule la
+      résistance interne de la source limite. Vérification dimensionnelle : $\Omega\cdot\mathrm{A^2} =
+      (\mathrm{V/A})\,\mathrm{A^2} = \mathrm{V\,A} = \mathrm{W}$ et $\mathrm{V^2}/\Omega = \mathrm{V\,A} =
+      \mathrm{W}$.
+    </p>
+  </div>
+  <p>
+    Le choix de l'écriture n'est pas neutre, et c'est une comparaison de méthodes à maîtriser. Dans un câble, c'est
+    la charge qui impose le courant, et la tension aux bornes du câble est une petite chute inconnue a priori : on
+    utilise $p = R i^2$ avec la résistance du câble. Pour un élément chauffant branché sur une tension fixe, c'est
+    la tension qui est imposée : on utilise $p = u^2/R$. Les deux écritures conduisent à des conclusions opposées
+    sur l'effet de $R$ : à courant imposé, augmenter $R$ augmente les pertes ; à tension imposée, augmenter $R$
+    diminue la puissance. Il n'y a là aucune contradiction : ce n'est pas la même grandeur qui est tenue
+    constante.
+  </p>
+
+  <h3 id="e-temperature">Influence de la température</h3>
+  <p>
+    La résistivité d'un métal augmente avec la température, parce que les vibrations du réseau multiplient les
+    collisions. Sur un intervalle de quelques centaines de degrés, cette variation est presque linéaire, et on la
+    représente par un développement au premier ordre autour d'une température de référence $\theta_0$, en général
+    20 °C :
+  </p>
+  <div class="formule-cle">
+    $$\rho(\theta) = \rho_0\,\left[1 + \alpha_0\,(\theta - \theta_0)\right], \qquad R(\theta) = R_0\,\left[1 + \alpha_0\,(\theta - \theta_0)\right]$$
+    <p class="formule-cle-legende">
+      $\theta$ température du conducteur (°C), $\theta_0$ température de référence (°C), $\rho_0$ et $R_0$ valeurs à
+      $\theta_0$, $\alpha_0$ coefficient de température de la résistance défini à $\theta_0$ ($\mathrm{K^{-1}}$).
+      Hypothèses : intervalle de température modéré, dilatation thermique négligée (son effet sur $L/S$ est environ
+      deux cents fois plus faible), température uniforme dans le conducteur. Dérivation : développement de Taylor
+      $\rho(\theta) \approx \rho(\theta_0) + \rho'(\theta_0)(\theta - \theta_0)$ en posant $\alpha_0 =
+      \rho'(\theta_0)/\rho(\theta_0)$ ; la géométrie étant fixe, $R$ suit la même loi que $\rho$. Interprétation
+      physique : $\alpha_0 > 0$ pour les métaux purs (cuivre $3{,}93 \times 10^{-3}\ \mathrm{K^{-1}}$, soit
+      environ $+0{,}4\ \%$ par degré), $\alpha_0 \approx 0$ pour les alliages de mesure, $\alpha_0 < 0$ pour les
+      semi-conducteurs et les thermistances CTN, dont le nombre de porteurs augmente avec la température. Cas
+      limite : $\theta = \theta_0$ redonne $R_0$ ; pour le cuivre, $+50$ °C donne $R = 1{,}197\,R_0$, près de
+      $20\ \%$ de plus. Vérification dimensionnelle : $\alpha_0(\theta - \theta_0)$ est sans dimension, puisque
+      $\alpha_0$ est en $\mathrm{K^{-1}}$ et qu'un écart de température a la même valeur en kelvins et en degrés
+      Celsius.
+    </p>
+  </div>
+  <p>
+    Piège : $\alpha$ dépend de la température de référence. Si l'on prend 70 °C comme référence pour le cuivre, le
+    coefficient devient $\alpha_{70} = \alpha_{20}/(1 + 50\,\alpha_{20}) \approx 3{,}28 \times
+    10^{-3}\ \mathrm{K^{-1}}$. Une valeur de $\alpha$ n'a de sens qu'accompagnée de sa température de référence.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Résistivité à 20 °C et coefficient de température de quelques matériaux (ordres de grandeur)</caption>
+      <thead><tr><th>Matériau</th><th>$\rho_{20}$ ($\Omega\cdot\mathrm{m}$)</th><th>$\alpha_{20}$ ($\mathrm{K^{-1}}$)</th><th>Usage typique</th></tr></thead>
+      <tbody>
+        <tr><td>Cuivre recuit</td><td>$1{,}72 \times 10^{-8}$</td><td>$3{,}93 \times 10^{-3}$</td><td>câbles, bobinages, jeux de barres</td></tr>
+        <tr><td>Aluminium</td><td>$2{,}82 \times 10^{-8}$</td><td>$4{,}03 \times 10^{-3}$</td><td>lignes aériennes, câbles de forte section</td></tr>
+        <tr><td>Tungstène</td><td>$5{,}6 \times 10^{-8}$</td><td>$4{,}5 \times 10^{-3}$</td><td>filaments de lampes</td></tr>
+        <tr><td>Platine</td><td>$1{,}06 \times 10^{-7}$</td><td>$3{,}85 \times 10^{-3}$ (valeur des sondes Pt100)</td><td>capteurs de température</td></tr>
+        <tr><td>Constantan (cuivre-nickel)</td><td>$4{,}9 \times 10^{-7}$</td><td>de l'ordre de $10^{-5}$</td><td>shunts, résistances de précision</td></tr>
+        <tr><td>Nickel-chrome</td><td>$1{,}10 \times 10^{-6}$</td><td>de l'ordre de $10^{-4}$</td><td>éléments chauffants</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Ces valeurs sont des ordres de grandeur : la résistivité exacte d'un alliage dépend de sa composition et de son
+    traitement, et relève de la fiche du constructeur. Pour le cuivre des câbles, les valeurs normalisées de
+    résistance linéique des conducteurs sont tabulées ; elles sont très proches du calcul avec
+    $1{,}72 \times 10^{-8}\ \Omega\cdot\mathrm{m}$.
+  </p>
+
+  <h3 id="e-sim-geometrie-section">Simulation interactive : géométrie, matériau et température</h3>
+  <p>
+    Avant de manipuler, prédisez : pour un conducteur de cuivre, que devient la résistance si l'on double à la fois
+    la longueur et la section ? À section égale, un conducteur d'aluminium a-t-il une résistance plus faible ou
+    plus forte que le cuivre, et dans quel rapport environ ? Enfin, de combien la résistance du cuivre
+    augmente-t-elle entre 20 °C et 70 °C ? Faites glisser le point situé à l'extrémité droite du conducteur pour
+    régler sa longueur, puis utilisez les curseurs.
+  </p>
+  <figure id="e-geometrie-figure">
+    <div class="m-toile-cadre schema-vivant" id="e-geometrie"></div>
+    <figcaption>
+      Le conducteur est représenté en vue de côté : sa longueur à l'écran suit la longueur $L$ réglée au point
+      déplaçable, son épaisseur suit la racine carrée de la section $S$ (donc son diamètre). Le courant $I$ entre
+      par la borne de gauche, repérée $+$, en convention récepteur. Les valeurs affichées sous le schéma sont
+      recalculées à chaque déplacement : résistivité à la température choisie, résistance, chute de tension
+      $RI$, pertes $RI^2$ et densité de courant $I/S$.
+    </figcaption>
+  </figure>
+  <div id="e-geometrie-curseurs"></div>
+  <div id="e-geometrie-valeurs"></div>
+  <p>
+    Interprétation : doubler $L$ et $S$ ensemble laisse $R$ inchangée, puisque seul le rapport $L/S$ intervient ;
+    c'est pourquoi une liaison deux fois plus longue exige une section deux fois plus grande pour garder la même
+    chute de tension. À section égale, l'aluminium présente une résistance $2{,}82/1{,}72 \approx 1{,}64$ fois
+    plus grande que le cuivre. Entre 20 °C et 70 °C, la résistance du cuivre augmente de près de $20\ \%$, et les
+    pertes à courant constant augmentent dans la même proportion. Les alliages de précision, comme le
+    constantan, gardent une résistance presque constante : c'est leur raison d'être.
+  </p>
+
+  <h3 id="e-limites">Limites du modèle linéaire</h3>
+  <p>
+    Beaucoup de dipôles ne suivent pas $u = Ri$. Une lampe à incandescence en est l'exemple le plus instructif :
+    son filament de tungstène est un conducteur parfaitement ohmique à température donnée, mais sa température
+    dépend de la puissance qu'il reçoit, et donc de la tension appliquée. À froid, sa résistance est environ douze
+    fois plus faible qu'en fonctionnement nominal. Sa caractéristique courant-tension est donc courbée : c'est un
+    dipôle non linéaire par auto-échauffement. D'autres composants sont non linéaires par nature : une diode
+    conduit presque uniquement dans un sens, une varistance devient brutalement conductrice au-delà d'un seuil de
+    tension, une thermistance CTN voit sa résistance chuter quand elle chauffe.
+  </p>
+  <p>
+    Pour un dipôle non linéaire, le rapport $U/I$ en un point de fonctionnement ne suffit plus à le décrire. On
+    distingue deux grandeurs :
+  </p>
+  <div class="formule-cle">
+    $$R_s = \frac{U}{I}, \qquad r_d = \left.\frac{\mathrm{d}u}{\mathrm{d}i}\right|_{(U,\,I)}$$
+    <p class="formule-cle-legende">
+      $R_s$ résistance statique ($\Omega$), pente de la droite qui joint l'origine au point de fonctionnement
+      $(U, I)$ dans le plan $(i, u)$ ; $r_d$ résistance dynamique ou différentielle ($\Omega$), pente de la
+      tangente à la caractéristique en ce point. Hypothèses : caractéristique continue et dérivable au point
+      considéré, variations lentes devant les constantes de temps thermiques si l'on veut décrire le régime
+      établi. Dérivation : $r_d$ est la limite de $\Delta u/\Delta i$ pour de petites variations autour du point
+      de fonctionnement ; c'est le coefficient qui relie les petites variations, $\Delta u \approx r_d\,\Delta i$.
+      Interprétation physique : $R_s$ donne le courant moyen pour une tension donnée, $r_d$ dit comment le
+      courant réagit à une petite variation de tension. Cas limite : pour un dipôle ohmique, la caractéristique
+      est une droite passant par l'origine et $R_s = r_d = R$. Vérification dimensionnelle : les deux sont des
+      rapports de volts à ampères, donc des ohms.
+    </p>
+  </div>
+  <p>
+    Avant de manipuler la simulation suivante, prédisez : pour la lampe, la résistance dynamique au point nominal
+    est-elle plus grande ou plus petite que la résistance statique ? Et que vaut, selon vous, le courant à l'instant
+    de la mise sous tension, filament encore froid, comparé au courant nominal ?
+  </p>
+  <figure id="e-caracteristique-figure">
+    <div class="m-toile-cadre schema-vivant" id="e-caracteristique"></div>
+    <figcaption>
+      Caractéristique courant-tension, tension $U$ en abscisse et courant $I$ en ordonnée, en convention récepteur.
+      Le trait plein épais est la caractéristique d'une lampe 12 V, 21 W, calculée par un modèle d'auto-échauffement
+      du filament. Le trait en tirets longs est la droite d'une résistance ohmique de $6{,}86\ \Omega$, qui passe par
+      le même point nominal (12 V ; 1,75 A). Le trait en pointillé court, presque vertical, est la droite de la
+      résistance à froid du filament, $0{,}58\ \Omega$. Autour du point déplaçable, le trait fin pointillé joint
+      l'origine au point : sa pente donne la résistance statique ; le segment fin continu est la tangente : sa
+      pente donne la résistance dynamique.
+    </figcaption>
+  </figure>
+  <div id="e-caracteristique-curseur"></div>
+  <div id="e-caracteristique-valeurs"></div>
+  <p>
+    Interprétation : en déplaçant le point, on constate que la caractéristique de la lampe s'incurve vers l'axe des
+    tensions. La pente de la corde issue de l'origine et celle de la tangente diffèrent, et la tangente est
+    toujours moins raide que la corde : $r_d > R_s$, car une hausse de tension chauffe le filament et augmente sa
+    résistance, ce qui freine la hausse du courant. Près de l'origine, la courbe épouse la droite de résistance à
+    froid : un filament froid appelle, sous 12 V, un courant d'environ $12/0{,}58 \approx 20{,}7\ \mathrm{A}$,
+    près de douze fois le courant nominal, pendant quelques dizaines de millisecondes. C'est le courant d'appel,
+    qui explique pourquoi les lampes grillent presque toujours à l'allumage et pourquoi un disjoncteur doit
+    tolérer ces pointes. Le modèle utilisé est une approximation : il suppose un coefficient $\alpha$ constant
+    jusqu'à 2 400 °C et un rayonnement de corps gris idéal ; il reproduit la forme de la courbe, pas chacune de
+    ses valeurs au pour cent près.
+  </p>
+  <p>
+    Deux autres limites du modèle $R = \rho L/S$ sont à connaître dès maintenant. En régime alternatif, le courant
+    se concentre près de la surface du conducteur (effet de peau) ; pour le cuivre à 50 Hz, l'épaisseur
+    caractéristique vaut $\delta = \sqrt{\rho/(\pi f \mu_0)} \approx 9{,}3\ \mathrm{mm}$, donc l'effet reste
+    négligeable pour les sections courantes mais devient sensible pour les gros jeux de barres et aux fréquences
+    de découpage des convertisseurs. Par ailleurs, toute liaison réelle comporte des résistances de contact aux
+    bornes et aux raccords, qui ne figurent pas dans $\rho L/S$ et peuvent dominer quand un serrage se dégrade.
+  </p>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Ce qui relève de la loi, de la convention, du modèle, de la règle de conception ou du constructeur</caption>
+      <thead><tr><th>Élément</th><th>Statut</th></tr></thead>
+      <tbody>
+        <tr><td>Conservation de la charge, $p = ui$</td><td>loi physique</td></tr>
+        <tr><td>$\vec{j} = \sigma\vec{E}$ et $u = Ri$</td><td>loi phénoménologique, c'est-à-dire modèle de comportement valable pour les dipôles ohmiques dans un domaine limité</td></tr>
+        <tr><td>$u = Ri$ ou $u = -Ri$ selon le repérage</td><td>convention, choisie par l'analyste</td></tr>
+        <tr><td>$R(\theta) = R_0[1 + \alpha_0(\theta - \theta_0)]$</td><td>approximation au premier ordre, valable sur un intervalle modéré</td></tr>
+        <tr><td>$R = \rho L/S$ en alternatif</td><td>approximation, tant que l'effet de peau est négligeable</td></tr>
+        <tr><td>Chute de tension maximale admise sur une liaison, par exemple 3 %</td><td>règle de conception, fixée par le cahier des charges ou par la norme applicable à l'installation</td></tr>
+        <tr><td>Courant admissible d'un câble selon son mode de pose</td><td>dépend de la norme et du constructeur ; traité dans le cours Dimensionnement des câbles</td></tr>
+        <tr><td>Résistivité exacte d'un alliage résistif</td><td>donnée du constructeur</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, une liaison réelle entre une source et une charge dont
+    les conducteurs sont résistifs, l'organigramme de dimensionnement d'un conducteur et un tableau comparatif des
+    dipôles linéaires et non linéaires. Les schémas qui éclairent un point précis de la théorie ont été placés au
+    fil du texte ; ils sont rappelés en fin de section par une liste de renvois.
+  </p>
+
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 700 340" role="img" aria-label="Source de tension reliée à une charge par un conducteur aller et un conducteur retour, chacun modélisé par une résistance, avec le courant I, les chutes de tension dans les conducteurs, la tension de la charge et la référence de potentiel">
+      <defs>
+        <marker id="fl-f1-i" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-f1-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M110 80V142"/>
+        <circle cx="110" cy="170" r="28"/>
+        <path d="M110 198V270"/>
+        <path d="M110 80H270"/>
+        <rect x="270" y="66" width="90" height="28" rx="3"/>
+        <path d="M360 80H580V130"/>
+        <rect x="562" y="130" width="36" height="90" rx="3"/>
+        <path d="M580 220V270H360"/>
+        <rect x="270" y="256" width="90" height="28" rx="3"/>
+        <path d="M270 270H110"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round">
+        <path d="M150 80H240" marker-end="url(#fl-f1-i)"/>
+        <path d="M530 270H410" marker-end="url(#fl-f1-i)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M355 40H276" marker-end="url(#fl-f1-u)"/>
+        <path d="M276 310H355" marker-end="url(#fl-f1-u)"/>
+        <path d="M630 215V137" marker-end="url(#fl-f1-u)"/>
+        <path d="M58 225V118" marker-end="url(#fl-f1-u)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.85">
+        <path d="M200 270V288"/>
+        <path d="M184 288H216"/>
+        <path d="M190 295H210"/>
+        <path d="M196 302H204"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13">
+        <text x="110" y="175" text-anchor="middle">U_s</text>
+        <text x="315" y="85" text-anchor="middle">R_a</text>
+        <text x="315" y="275" text-anchor="middle">R_r</text>
+        <text x="580" y="180" text-anchor="middle">R_ch</text>
+        <text x="195" y="70" text-anchor="middle">I</text>
+        <text x="470" y="260" text-anchor="middle">I</text>
+        <text x="96" y="100" text-anchor="middle" font-weight="600">+</text>
+        <text x="96" y="252" text-anchor="middle" font-weight="600">-</text>
+        <text x="262" y="62" text-anchor="middle" font-weight="600">+</text>
+        <text x="368" y="62" text-anchor="middle" font-weight="600">-</text>
+        <text x="368" y="252" text-anchor="middle" font-weight="600">+</text>
+        <text x="262" y="252" text-anchor="middle" font-weight="600">-</text>
+        <text x="552" y="146" text-anchor="middle" font-weight="600">+</text>
+        <text x="552" y="214" text-anchor="middle" font-weight="600">-</text>
+        <text x="315" y="28" text-anchor="middle" fill="var(--serie-2)">ΔU_a = R_a I</text>
+        <text x="315" y="330" text-anchor="middle" fill="var(--serie-2)">ΔU_r = R_r I</text>
+        <text x="655" y="180" text-anchor="middle" fill="var(--serie-2)">U_ch</text>
+        <text x="36" y="175" text-anchor="middle" fill="var(--serie-2)">U_s</text>
+        <text x="315" y="112" text-anchor="middle" font-size="11.5">conducteur aller</text>
+        <text x="315" y="240" text-anchor="middle" font-size="11.5">conducteur retour</text>
+        <text x="225" y="325" text-anchor="middle" font-size="11.5">0 V</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal : une source de tension $U_s$, supposée idéale ici, alimente une charge $R_{ch}$ par un
+      conducteur aller et un conducteur retour de même longueur $\ell$ et de même section. Chaque conducteur est
+      modélisé par sa résistance, $R_a = R_r = \rho\,\ell/S$. Le courant $I$, flèches épaisses, est le même dans
+      tout le circuit : il sort de la source par sa borne $+$ (convention générateur pour la source) et entre par la
+      borne $+$ de chaque résistance (convention récepteur pour les deux conducteurs et pour la charge). Les flèches
+      fines de tension pointent vers la borne $+$ de chaque dipôle. La référence de potentiel (0 V) est prise sur la
+      borne $-$ de la source. Le fonctionnement se lit ainsi : la tension de la source se partage entre les deux
+      chutes de ligne et la charge, $U_{ch} = U_s - (R_a + R_r)\,I$, et la ligne dissipe $(R_a + R_r)\,I^2$. La
+      justification rigoureuse de ce partage est l'objet du cours Lois de Kirchhoff.
+    </figcaption>
+  </figure>
+
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Relever I, la tension de service U et la longueur ℓ"] --> B["Fixer la chute de tension admissible ΔU max"]
+  B --> C["Choisir le matériau et une température majorante θ"]
+  C --> D["Calculer ρ(θ) = ρ20 × (1 + α20 × (θ - 20))"]
+  D --> E["Section minimale : S ≥ ρ(θ) × 2ℓ × I / ΔU max"]
+  E --> F["Retenir la section normalisée immédiatement supérieure"]
+  F --> G{"Échauffement acceptable ?"}
+  G -->|"non"| H["Augmenter la section"]
+  H --> G
+  G -->|"oui"| I["Calculer R, ΔU réelle et pertes R I²"]
+  I --> J["Contrôler unités, ordres de grandeur et bilan"]</pre>
+    <figcaption>
+      Organigramme de dimensionnement d'un conducteur. Le chemin principal applique la contrainte de chute de
+      tension, qui fixe une section minimale ; la boucle sur l'échauffement rappelle qu'une seconde contrainte,
+      thermique, peut imposer une section plus grande. Sur une liaison longue sous basse tension, c'est en général
+      la chute de tension qui dimensionne ; sur une liaison courte à fort courant, c'est l'échauffement. Le facteur
+      $2\ell$ suppose une liaison bifilaire (aller et retour). La vérification thermique complète, avec modes de
+      pose et facteurs de correction, relève du cours Dimensionnement des câbles.
+    </figcaption>
+  </figure>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Comparaison de dipôles linéaires et non linéaires</caption>
+      <thead><tr><th>Dipôle</th><th>Allure de $I(U)$</th><th>Résistance statique et dynamique</th><th>Conséquence pratique</th></tr></thead>
+      <tbody>
+        <tr><td>Résistance ohmique</td><td>droite passant par l'origine</td><td>$R_s = r_d = R$, constantes</td><td>calcul direct par $u = Ri$</td></tr>
+        <tr><td>Lampe à filament</td><td>courbe qui s'infléchit vers l'axe des tensions</td><td>$R_s$ croît avec $U$, $r_d > R_s$</td><td>fort courant d'appel à froid</td></tr>
+        <tr><td>Diode</td><td>courant quasi nul puis croissance exponentielle au-delà d'un seuil</td><td>$R_s$ et $r_d$ très variables, $r_d$ faible en conduction</td><td>redressement, étudié dans le cours Diodes de puissance</td></tr>
+        <tr><td>Thermistance CTN</td><td>courbe qui s'infléchit vers l'axe des courants en auto-échauffement</td><td>$R_s$ décroît quand elle chauffe</td><td>limitation du courant d'appel, mesure de température</td></tr>
+        <tr><td>Varistance</td><td>courant quasi nul puis montée brutale au-delà d'une tension de seuil, dans les deux sens</td><td>$r_d$ très faible au-delà du seuil</td><td>protection contre les surtensions</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-derive-figure" data-renvoi="d-derive-figure">la simulation de dérive des électrons et des collisions</a>, section D, après l'analogie de la planche à clous ;</li>
+    <li><a href="#e-conducteur-figure" data-renvoi="e-conducteur-figure">le conducteur cylindrique avec son champ, son courant et ses dimensions</a>, section E, dans la dérivation de $R = \rho L/S$ ;</li>
+    <li><a href="#e-ohm-figure" data-renvoi="e-ohm-figure">la même résistance en convention récepteur et en convention générateur</a>, section E, avec la loi d'Ohm ;</li>
+    <li><a href="#e-geometrie-figure" data-renvoi="e-geometrie-figure">la simulation géométrie, matériau et température</a>, section E, après l'influence de la température ;</li>
+    <li><a href="#e-caracteristique-figure" data-renvoi="e-caracteristique-figure">la caractéristique courant-tension d'une lampe comparée à une résistance</a>, section E, avec les limites du modèle linéaire ;</li>
+    <li><a href="#h-schema-figure" data-renvoi="h-schema-figure">le schéma annoté de l'exemple numérique</a>, section H.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <ol>
+    <li>Faire un schéma, repérer chaque dipôle, fixer les sens de $i$ et de $u$ et la convention de chacun ; noter si le courant ou la tension est imposé.</li>
+    <li>Convertir toutes les données en unités SI de base : sections en $\mathrm{m^2}$, longueurs en $\mathrm{m}$, résistivités en $\Omega\cdot\mathrm{m}$.</li>
+    <li>Déterminer la longueur réellement parcourue par le courant : $2\ell$ pour une liaison aller-retour, $\ell$ par conducteur si chaque conducteur est étudié séparément.</li>
+    <li>Corriger la résistivité à la température de service par $\rho(\theta) = \rho_{20}[1 + \alpha_{20}(\theta - 20)]$, en retenant une température majorante pour un dimensionnement.</li>
+    <li>Calculer $R = \rho L/S$, ou, pour un dimensionnement, isoler l'inconnue : $S = \rho L/R_{max}$ ou $L = RS/\rho$.</li>
+    <li>Appliquer $u = Ri$ dans la convention choisie, puis la puissance sous la forme adaptée : $Ri^2$ à courant imposé, $u^2/R$ à tension imposée.</li>
+    <li>Si le dipôle n'est pas ohmique, travailler sur sa caractéristique : point de fonctionnement, résistance statique, résistance dynamique.</li>
+    <li>Contrôler : homogénéité, ordre de grandeur (environ $17\ \mathrm{m\Omega}$ par mètre et par $\mathrm{mm^2}$ de cuivre), densité de courant plausible, bilan de puissance entre source, liaison et charge.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Données : une batterie de contrôle-commande de $U_s = 110\ \mathrm{V}$ continus, considérée ici comme une source
+    idéale, alimente un coffret de relayage situé à $\ell = 45\ \mathrm{m}$, qui absorbe $I = 16\ \mathrm{A}$. La
+    liaison est bifilaire, en cuivre ($\rho_{20} = 1{,}72 \times 10^{-8}\ \Omega\cdot\mathrm{m}$,
+    $\alpha_{20} = 3{,}93 \times 10^{-3}\ \mathrm{K^{-1}}$). Le cahier des charges impose une chute de tension
+    inférieure à $3\ \%$ de $U_s$, à la température maximale de service de l'isolant, prise égale à 70 °C.
+    Sections normalisées disponibles : 4, 6, 10, 16 et $25\ \mathrm{mm^2}$. Inconnues : la section minimale, la
+    section retenue, la chute de tension réelle, la tension au coffret, les pertes Joule dans la liaison et
+    l'énergie perdue sur une année de fonctionnement continu. Stratégie : traduire la contrainte de chute de
+    tension en résistance maximale de boucle, en déduire la section, puis recalculer les grandeurs réelles avec la
+    section normalisée retenue.
+  </p>
+  <ol>
+    <li>Chute de tension admissible : $\Delta U_{max} = 0{,}03 \times 110 = 3{,}3\ \mathrm{V}$.</li>
+    <li>Résistance maximale de la boucle : $R_{max} = \Delta U_{max}/I = 3{,}3/16 = 0{,}206\ \Omega$.</li>
+    <li>Résistivité à 70 °C : $\rho_{70} = 1{,}72 \times 10^{-8} \times (1 + 3{,}93 \times 10^{-3} \times 50) = 1{,}72 \times 10^{-8} \times 1{,}1965 = 2{,}058 \times 10^{-8}\ \Omega\cdot\mathrm{m}$.</li>
+    <li>Longueur parcourue : $L = 2\ell = 90\ \mathrm{m}$.</li>
+    <li>Section minimale : $S_{min} = \rho_{70}\,L/R_{max} = 2{,}058 \times 10^{-8} \times 90 / 0{,}206 = 8{,}98 \times 10^{-6}\ \mathrm{m^2} = 8{,}98\ \mathrm{mm^2}$. On retient $S = 10\ \mathrm{mm^2}$.</li>
+    <li>Résistance réelle de la boucle à 70 °C : $R = 2{,}058 \times 10^{-8} \times 90 / (10 \times 10^{-6}) = 0{,}185\ \Omega$, soit $0{,}0926\ \Omega$ par conducteur.</li>
+    <li>Chute de tension réelle : $\Delta U = RI = 0{,}185 \times 16 = 2{,}96\ \mathrm{V}$, soit $2{,}96/110 = 2{,}69\ \%$, conforme à la contrainte.</li>
+    <li>Tension au coffret : $U_{ch} = 110 - 2{,}96 = 107{,}04\ \mathrm{V}$.</li>
+    <li>Pertes Joule dans la liaison, à courant imposé par la charge : $P_J = RI^2 = 0{,}185 \times 16^2 = 47{,}4\ \mathrm{W}$.</li>
+    <li>Énergie perdue sur une année continue ($8760\ \mathrm{h}$) : $W = 47{,}4 \times 8760 = 415\,000\ \mathrm{Wh} \approx 415\ \mathrm{kWh}$.</li>
+    <li>Contrôle par le bilan de puissance : la source fournit $U_s I = 110 \times 16 = 1760\ \mathrm{W}$ ; le coffret reçoit $U_{ch} I = 107{,}04 \times 16 = 1712{,}6\ \mathrm{W}$ ; la différence, $47{,}4\ \mathrm{W}$, est bien égale aux pertes de la liaison.</li>
+    <li>Contrôle d'ordre de grandeur : la densité de courant vaut $16/10 = 1{,}6\ \mathrm{A/mm^2}$, valeur modeste pour du cuivre : c'est bien la chute de tension, et non l'échauffement, qui dimensionne cette liaison longue sous tension modérée. À 20 °C, la résistance serait $0{,}155\ \Omega$ et la chute $2{,}48\ \mathrm{V}$ : dimensionner à 20 °C aurait sous-estimé la chute de $16\ \%$.</li>
+  </ol>
+  <p>
+    Résultat final : section retenue $10\ \mathrm{mm^2}$, chute de tension $2{,}96\ \mathrm{V}$ ($2{,}69\ \%$),
+    tension au coffret $107{,}0\ \mathrm{V}$, pertes $47{,}4\ \mathrm{W}$ à 70 °C, environ $415\ \mathrm{kWh}$ par an.
+  </p>
+  <figure id="h-schema-figure">
+    <svg viewBox="0 0 700 330" role="img" aria-label="Schéma annoté de l'exemple : batterie de 110 volts, conducteurs aller et retour de 0,0926 ohm chacun, courant de 16 ampères, chutes de 1,48 volt par conducteur, 107,04 volts au coffret">
+      <defs>
+        <marker id="fl-h-i" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-h-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M110 80V142"/>
+        <circle cx="110" cy="170" r="28"/>
+        <path d="M110 198V270"/>
+        <path d="M110 80H260"/>
+        <rect x="260" y="66" width="110" height="28" rx="3"/>
+        <path d="M370 80H570V130"/>
+        <rect x="536" y="130" width="68" height="90" rx="3"/>
+        <path d="M570 220V270H370"/>
+        <rect x="260" y="256" width="110" height="28" rx="3"/>
+        <path d="M260 270H110"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round">
+        <path d="M150 80H235" marker-end="url(#fl-h-i)"/>
+        <path d="M520 270H410" marker-end="url(#fl-h-i)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M365 40H266" marker-end="url(#fl-h-u)"/>
+        <path d="M266 306H365" marker-end="url(#fl-h-u)"/>
+        <path d="M622 215V137" marker-end="url(#fl-h-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="110" y="166" text-anchor="middle">110 V</text>
+        <text x="110" y="182" text-anchor="middle" font-size="11">batterie</text>
+        <text x="315" y="85" text-anchor="middle">0,0926 Ω</text>
+        <text x="315" y="275" text-anchor="middle">0,0926 Ω</text>
+        <text x="570" y="172" text-anchor="middle" font-size="11">coffret</text>
+        <text x="570" y="188" text-anchor="middle" font-size="11">1712,6 W</text>
+        <text x="192" y="70" text-anchor="middle">I = 16 A</text>
+        <text x="465" y="260" text-anchor="middle">I = 16 A</text>
+        <text x="96" y="100" text-anchor="middle" font-weight="600">+</text>
+        <text x="96" y="252" text-anchor="middle" font-weight="600">-</text>
+        <text x="315" y="28" text-anchor="middle" fill="var(--serie-2)">1,48 V</text>
+        <text x="315" y="324" text-anchor="middle" fill="var(--serie-2)">1,48 V</text>
+        <text x="630" y="232" text-anchor="middle" fill="var(--serie-2)">107,04 V</text>
+        <text x="315" y="114" text-anchor="middle" font-size="11">aller : 45 m, 10 mm², 70 °C</text>
+        <text x="315" y="244" text-anchor="middle" font-size="11">retour : 45 m, 10 mm², 70 °C</text>
+        <text x="440" y="162" text-anchor="middle" font-size="11.5">pertes de ligne :</text>
+        <text x="440" y="180" text-anchor="middle" font-size="11.5">2 × 1,48 V × 16 A = 47,4 W</text>
+      </g>
+    </svg>
+    <figcaption>
+      Le circuit de l'exemple avec ses valeurs. Les conventions sont celles du schéma principal de la section F :
+      courant sortant par la borne $+$ de la batterie, entrant par la borne $+$ de chaque conducteur et du coffret.
+      Chaque conducteur chute $1{,}48\ \mathrm{V}$ ; la somme $110 - 2 \times 1{,}48 = 107{,}04\ \mathrm{V}$ se
+      retrouve aux bornes du coffret. Les pertes de ligne sont inscrites au centre du schéma.
+    </figcaption>
+  </figure>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <p>
+    Premier cas, la connexion desserrée dans une armoire. Sur un départ de $100\ \mathrm{A}$, une borne bien serrée
+    présente une résistance de contact de l'ordre de $0{,}15\ \mathrm{m\Omega}$ et dissipe $RI^2 =
+    1{,}5\ \mathrm{W}$, sans conséquence. Qu'un serrage se relâche avec les cycles thermiques, ou qu'une surface
+    s'oxyde, et la résistance peut passer à $1{,}8\ \mathrm{m\Omega}$ : la borne dissipe alors $18\ \mathrm{W}$
+    concentrés dans quelques centimètres cubes. L'échauffement accélère l'oxydation, qui augmente encore la
+    résistance : c'est un emballement thermique, cause classique de départs de feu. Les contraintes
+    d'exploitation interdisent souvent d'arrêter l'installation pour contrôler chaque borne ; deux méthodes de
+    diagnostic sous tension se complètent alors. La thermographie infrarouge repère les points chauds sans
+    contact, mais dépend de l'émissivité des surfaces et de l'accès visuel. La mesure de chute de tension au
+    millivoltmètre, borne par borne, est plus directe et quantitative : à courant connu, elle donne la résistance
+    de contact par $R = \Delta U/I$. Le choix d'ingénierie consiste à prévoir des couples de serrage
+    constructeur, des rondelles adaptées aux cycles thermiques, et une campagne périodique de thermographie.
+  </p>
+  <p>
+    Deuxième cas, le choix entre cuivre et aluminium pour une liaison de forte section. À résistance égale,
+    l'aluminium exige une section $1{,}64$ fois plus grande, mais sa masse volumique ($2{,}70\ \mathrm{t/m^3}$
+    contre $8{,}96\ \mathrm{t/m^3}$) conduit à une masse environ deux fois plus faible ($1{,}64 \times 2{,}70/8{,}96
+    \approx 0{,}49$). Le compromis porte sur le coût, la masse, l'encombrement et surtout les raccordements :
+    l'aluminium s'oxyde en surface et flue sous le serrage, ce qui impose des cosses et des procédures de
+    connexion spécifiques. C'est pourquoi l'aluminium domine les lignes aériennes et les gros câbles de
+    distribution, et le cuivre les armoires et les bobinages.
+  </p>
+  <p>
+    Troisième cas, l'exploitation volontaire de $\alpha$. Une sonde Pt100 vaut $100\ \Omega$ à 0 °C et
+    $138{,}5\ \Omega$ à 100 °C : sa résistance mesure la température. La même idée sert à mesurer l'échauffement
+    moyen du bobinage d'un moteur, par comparaison de sa résistance à froid et à chaud, méthode reprise à
+    l'exercice K3. À l'inverse, un shunt de mesure de courant est fabriqué en alliage à $\alpha$ presque nul, pour
+    que son échauffement ne fausse pas la mesure.
+  </p>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : le câble du départ pompe</span>
+    <p>
+      Le projet fil rouge du parcours consiste à concevoir progressivement l'alimentation et l'automatisation d'un
+      petit site industriel. Première brique posée aujourd'hui : le départ qui alimente la pompe principale du
+      site, situé à $85\ \mathrm{m}$ du tableau général. Hypothèses de travail : trois conducteurs de phase en
+      cuivre, courant de $50\ \mathrm{A}$ par conducteur, température de service majorée à 70 °C. Chaque conducteur
+      de phase parcouru par un courant $I$ dissipe $RI^2$ ; en triphasé équilibré, les trois conducteurs portent
+      le même courant, et le neutre, s'il existe, n'en porte pas. Ces notions, ainsi que la valeur efficace qui
+      donne son sens à "courant de $50\ \mathrm{A}$" en alternatif, seront justifiées dans les cours Signaux
+      périodiques et sinusoïdes puis Systèmes triphasés équilibrés.
+    </p>
+    <p>
+      En $16\ \mathrm{mm^2}$ : $R = 2{,}058 \times 10^{-8} \times 85/(16 \times 10^{-6}) = 0{,}109\ \Omega$ par
+      conducteur, et $P_J = 3 \times 0{,}109 \times 50^2 = 820\ \mathrm{W}$. En $25\ \mathrm{mm^2}$ : $R =
+      0{,}070\ \Omega$ et $P_J = 525\ \mathrm{W}$. Sur $6000\ \mathrm{h}$ de fonctionnement annuel, l'écart
+      représente $295\ \mathrm{W} \times 6000\ \mathrm{h} \approx 1770\ \mathrm{kWh}$ par an, soit environ
+      $265$ euros par an avec l'hypothèse d'un prix de $0{,}15$ euro par kWh, pour environ $21\ \mathrm{kg}$ de
+      cuivre supplémentaire. Cette comparaison entre coût d'investissement et coût des pertes sera reprise lors du
+      bilan de puissance du site ; le choix final devra aussi respecter le courant admissible et la chute de
+      tension, qui seront vérifiés dans le cours Dimensionnement des câbles.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li>
+      <strong>Oublier de convertir les $\mathrm{mm^2}$ en $\mathrm{m^2}$, ou les convertir avec $10^{-3}$.</strong>
+      Un millimètre carré est un carré de $10^{-3}\ \mathrm{m}$ de côté, donc $10^{-6}\ \mathrm{m^2}$. L'erreur
+      produit une résistance fausse d'un facteur mille ou un million ; le contrôle d'ordre de grandeur
+      ($17\ \mathrm{m\Omega}$ par mètre pour $1\ \mathrm{mm^2}$ de cuivre) la détecte immédiatement.
+    </li>
+    <li>
+      <strong>Prendre $L = \ell$ au lieu de $2\ell$ pour une liaison bifilaire.</strong> Le courant parcourt
+      l'aller et le retour ; oublier le retour divise la chute de tension et les pertes par deux, et conduit à
+      sous-dimensionner la section.
+    </li>
+    <li>
+      <strong>Utiliser la résistivité à 20 °C pour un conducteur chaud.</strong> Pour le cuivre, 50 °C d'écart
+      représentent près de $20\ \%$ de résistance en plus ; un dimensionnement doit se faire à la température
+      maximale de service, qui est une hypothèse majorante.
+    </li>
+    <li>
+      <strong>Calculer les pertes d'un câble par $U^2/R$ avec la tension du réseau.</strong> La formule $u^2/R$
+      exige la tension aux bornes de la résistance considérée, ici la petite chute de tension du câble, et non la
+      tension de service. Avec $110\ \mathrm{V}$ et $0{,}185\ \Omega$, on obtiendrait $65\ \mathrm{kW}$ au lieu de
+      $47\ \mathrm{W}$ : un résultat absurde qui doit alerter.
+    </li>
+    <li>
+      <strong>Confondre résistance et résistivité.</strong> La résistivité, en $\Omega\cdot\mathrm{m}$, est une
+      propriété du matériau ; la résistance, en $\Omega$, est une propriété de l'objet. "Le cuivre a une
+      résistance de $1{,}72 \times 10^{-8}$" n'a pas de sens sans géométrie.
+    </li>
+    <li>
+      <strong>Appliquer $u = Ri$ avec une valeur unique de $R$ à un composant non linéaire.</strong> Mesurer la
+      résistance d'une lampe à froid à l'ohmmètre, puis en déduire son courant nominal, donne une erreur d'un
+      facteur douze. Il faut travailler sur la caractéristique et distinguer résistance statique et dynamique.
+    </li>
+    <li>
+      <strong>Confondre rayon et diamètre dans $S = \pi d^2/4$.</strong> Utiliser $\pi d^2$ multiplie la section par
+      quatre et divise d'autant la résistance calculée.
+    </li>
+    <li>
+      <strong>Croire que les électrons traversent le câble à grande vitesse.</strong> Leur dérive est de l'ordre du
+      millimètre par seconde ; ce qui se propage presque instantanément, c'est le champ, donc l'énergie. Cette
+      confusion n'a pas de conséquence de calcul directe, mais elle empêche de comprendre pourquoi une lampe
+      s'allume immédiatement et pourquoi l'effet Joule est réparti dans tout le volume du conducteur.
+    </li>
+  </ol>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de
+    diagnostic industriel et une question conceptuelle. La correction de chacun reste masquée jusqu'à une
+    tentative ou un clic explicite sur "Voir la correction", puis se déroule étape par étape, accompagnée d'un
+    tracé ou d'un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma.</p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$R = \frac{\rho\,L}{S}$$
+    $$u = R\,i \ \ (\text{convention récepteur})$$
+    $$p = R\,i^{2} = \frac{u^{2}}{R}$$
+    $$R(\theta) = R_0\left[1 + \alpha_0(\theta - \theta_0)\right]$$
+    $$R_s = \frac{U}{I}, \qquad r_d = \frac{\mathrm{d}u}{\mathrm{d}i}$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>$1\ \mathrm{mm^2} = 10^{-6}\ \mathrm{m^2}$, et une liaison bifilaire a une longueur parcourue de $2\ell$.</li>
+      <li>Dimensionner à la température maximale de service : $+20\ \%$ environ pour le cuivre entre 20 °C et 70 °C.</li>
+      <li>$Ri^2$ à courant imposé, $u^2/R$ à tension imposée, et toujours avec la tension aux bornes de la résistance considérée.</li>
+      <li>$u = Ri$ en convention récepteur seulement ; en convention générateur, $u = -Ri$.</li>
+      <li>Un composant non linéaire n'a pas une résistance mais une caractéristique : préciser statique ou dynamique.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Dans un métal, les électrons libres dérivent lentement sous l'effet du champ,
+    freinés par des collisions avec le réseau : la densité de courant est proportionnelle au champ,
+    $\vec{j} = \sigma\vec{E}$. Intégrée sur un conducteur homogène, cette loi locale donne $u = Ri$ avec
+    $R = \rho L/S$ : la résistivité dépend du matériau, la résistance de l'objet. L'énergie cédée au réseau
+    produit l'effet Joule, $p = Ri^2 = u^2/R$, à utiliser selon que le courant ou la tension est imposé. La
+    résistivité des métaux croît avec la température, de $0{,}4\ \%$ par degré environ pour le cuivre. La loi
+    d'Ohm n'est pas universelle : lampes, diodes et varistances sont non linéaires et se décrivent par leur
+    caractéristique, avec une résistance statique et une résistance dynamique.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Six questions : trois sur cette séance, deux sur le cours précédent,
+    <a href="#/cours/tension-courant-charge-et-puissance">Tension, courant, charge et puissance</a>, et une sur le
+    cours le plus ancien du parcours, <a href="#/cours/diagnostic-initial-et-remise-a-niveau-mathematique">Diagnostic
+    initial et remise à niveau mathématique</a>, qui tient lieu de question sur un cours vieux d'une semaine tant
+    que le parcours n'en compte pas. La question sur un cours vieux d'un mois n'est pas encore applicable.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : retrouver par le calcul l'exemple de la section H, tracer l'influence de la section et de la
+    température, puis, si LTspice est disponible, observer une résistance dépendant de la température et comparer
+    la caractéristique d'une résistance à celle d'une diode. Prédiction à écrire avant de commencer : la chute de
+    tension est-elle inversement proportionnelle à la section ? La caractéristique de la diode passe-t-elle par
+    l'origine ?
+  </p>
+  <ol>
+    <li>
+      En Python, définir <code>rho20 = 1.72e-8</code>, <code>alpha = 3.93e-3</code>, <code>U = 110</code>,
+      <code>I = 16</code>, <code>l = 45</code>, puis une fonction
+      <code>R(S_mm2, theta) = rho20 * (1 + alpha * (theta - 20)) * 2 * l / (S_mm2 * 1e-6)</code>.
+    </li>
+    <li>
+      Pour les sections 4, 6, 10, 16 et 25 mm², calculer à 70 °C la chute de tension <code>R * I</code>, son
+      pourcentage de <code>U</code> et les pertes <code>R * I**2</code>. Vérifier que 10 mm² est la plus petite
+      section conforme à 3 %.
+    </li>
+    <li>
+      Avec matplotlib, tracer les pertes en fonction de la section pour 20 °C et 70 °C sur un même graphique.
+    </li>
+    <li>
+      Si LTspice est installé, créer une source continue de 1 V, une résistance <code>R1 n1 0 1 tc=0.00393</code>
+      et ajouter la directive <code>.options tnom=20</code>, puis <code>.step temp list 20 70</code> et
+      <code>.op</code>. Relever le courant pour chaque température.
+    </li>
+    <li>
+      Dans un second schéma, balayer une source de 0 à 1 V (<code>.dc V1 0 1 1m</code>) aux bornes d'une diode
+      <code>1N4148</code> en série avec 10 Ω, puis tracer le courant ; comparer avec une résistance seule.
+    </li>
+  </ol>
+  <p>
+    Résultats attendus : à 70 °C, chutes de $7{,}41$ ; $4{,}94$ ; $2{,}96$ ; $1{,}85$ et $1{,}19\ \mathrm{V}$
+    respectivement, soit $6{,}7$ ; $4{,}5$ ; $2{,}7$ ; $1{,}7$ et $1{,}1\ \%$ ; pertes de $47{,}4\ \mathrm{W}$ en
+    $10\ \mathrm{mm^2}$. Les pertes sont inversement proportionnelles à la section et le rapport entre les deux
+    courbes vaut $1{,}197$ partout. Sous LTspice, le courant passe de $1\ \mathrm{A}$ à $0{,}836\ \mathrm{A}$
+    entre 20 °C et 70 °C. La diode ne conduit presque pas en dessous de $0{,}5\ \mathrm{V}$ environ, puis son
+    courant croît très vite, limité par la résistance série. Anomalies à observer : sans
+    <code>.options tnom=20</code>, LTspice prend 27 °C comme température de référence et les résistances
+    obtenues sont décalées d'environ $2{,}7\ \%$ ; une résistance saisie en <code>1m</code> au lieu de
+    <code>1Meg</code> vaut un milliohm et non un mégohm, piège classique des préfixes dans les simulateurs.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est
+    calculé dans ce navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes
+    restent enregistrées localement pour suivre votre progression.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">La résistance vient des collisions des électrons avec les imperfections du réseau ; elle vaut $R = \rho L/S$ et dépend du matériau, de la géométrie et de la température.</li>
+    <li data-rang="02">L'effet Joule $p = Ri^2 = u^2/R$ s'emploie sous la forme adaptée à la grandeur imposée ; dans un câble, c'est le courant qui est imposé, et les pertes croissent avec $R$.</li>
+    <li data-rang="03">La loi d'Ohm décrit une classe de dipôles dans un domaine limité ; hors de ce domaine, il faut raisonner sur la caractéristique courant-tension.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> enchaîner sans erreur les conversions d'unités, le facteur
+    $2\ell$ et la correction de température dans un dimensionnement réel ; chacune de ces étapes est simple, mais
+    l'oubli d'une seule fausse le résultat d'un facteur significatif.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Lois de Kirchhoff, donne les deux règles qui
+    permettent d'écrire l'équation de n'importe quel circuit. Question à garder en tête d'ici là : dans l'exemple de
+    la section H, pourquoi le courant est-il exactement le même dans le conducteur aller, dans le coffret et dans le
+    conducteur retour, et pourquoi la tension de la batterie est-elle exactement égale à la somme des deux chutes
+    de ligne et de la tension du coffret ?
+  </p>
+
+</article>
