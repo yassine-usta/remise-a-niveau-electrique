@@ -1,0 +1,1141 @@
+<article class="cours" data-slug="lois-de-kirchhoff">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/loi-d-ohm-et-resistivite">Loi d'Ohm et résistivité</a> a établi la relation
+      $u = Ri$ pour un dipôle ohmique en convention récepteur, et s'est achevé sur une question : dans une liaison
+      entre une batterie et un coffret, pourquoi le courant est-il le même dans le conducteur aller, dans le coffret
+      et dans le conducteur retour, et pourquoi la tension de la batterie est-elle exactement la somme des chutes de
+      ligne et de la tension du coffret ? Le cours <a href="#/cours/tension-courant-charge-et-puissance">Tension,
+      courant, charge et puissance</a> a donné les deux ingrédients de la réponse : le courant est un débit de
+      charge, $i = \mathrm{d}q/\mathrm{d}t$, et une tension est une différence de potentiel,
+      $u_{AB} = V_A - V_B$. Cette séance transforme ces deux définitions en deux lois qui suffisent à écrire
+      l'équation de n'importe quel circuit.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    La loi d'Ohm décrit un dipôle isolé ; elle ne dit rien de la façon dont plusieurs dipôles se partagent un
+    courant ou une tension lorsqu'on les relie. Ce sont les deux lois de Kirchhoff qui fournissent ces
+    équations de liaison : la loi des nœuds, qui impose qu'un courant ne se crée ni ne se perd à une
+    jonction, et la loi des mailles, qui impose qu'en revenant à son point de départ on retrouve le même
+    potentiel. Avec les relations propres à chaque composant, elles forment un système complet : tout circuit
+    électrique à constantes localisées, du pont diviseur d'un capteur jusqu'au schéma équivalent d'un réseau de
+    distribution, se met en équations de cette façon. Les simulateurs comme LTspice ne font rien d'autre, à
+    grande échelle.
+  </p>
+  <p>
+    Les applications industrielles sont immédiates et souvent invisibles. Un disjoncteur différentiel est une
+    loi des nœuds matérialisée : il compare le courant qui entre dans une installation à celui qui en sort, et
+    déclenche lorsque la différence révèle une fuite vers la terre. Le bilan des courants d'un jeu de barres de
+    tableau général, la vérification d'une chute de tension le long d'un départ, le diagnostic d'un capteur
+    perturbé par un retour commun partagé avec une électrovanne, la répartition du courant entre un chargeur et
+    une batterie en tampon : tout cela relève de ces deux lois. Les maîtriser avec des conventions de signe
+    rigoureuses est la condition pour aborder sans erreur les cours suivants du module, à commencer par
+    Associations de résistances et diviseurs, puis Théorèmes de Thévenin, Norton et superposition.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Expliquer la loi des nœuds par la conservation de la charge et la loi des mailles par l'existence d'un potentiel, en précisant l'hypothèse des régimes quasi stationnaires.</li>
+    <li data-rang="02">Identifier les nœuds, branches et mailles d'un circuit et calculer le nombre d'équations indépendantes, $n - 1$ et $b - n + 1$.</li>
+    <li data-rang="03">Écrire sans erreur de signe la loi des nœuds et la loi des mailles à partir de sens de référence choisis, et interpréter un courant calculé négatif.</li>
+    <li data-rang="04">Résoudre un circuit à deux mailles par la méthode des mailles puis par la méthode des nœuds, et comparer les deux démarches.</li>
+    <li data-rang="05">Vérifier une solution par un bilan de puissance, un contrôle de la loi des nœuds et une maille non utilisée dans la résolution.</li>
+    <li data-rang="06">Diagnostiquer une fuite de courant ou une interaction par retour commun à partir de mesures de courant et de tension.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois automatismes sont nécessaires. Le premier : en convention récepteur, un dipôle ohmique vérifie
+    $u = Ri$, et la flèche de tension pointe vers la borne par laquelle entre le courant de référence ; en
+    parcourant une résistance dans le sens de son courant, le potentiel diminue donc de $Ri$. Le deuxième :
+    une tension est une différence de potentiels, $u_{AB} = V_A - V_B$, si bien que
+    $u_{AB} + u_{BC} = u_{AC}$. Le troisième, mathématique : résoudre un système linéaire de deux équations à
+    deux inconnues, par substitution ou par la règle de Cramer,
+    $x = (e\,d - b\,f)/(a\,d - b\,c)$ et $y = (a\,f - e\,c)/(a\,d - b\,c)$ pour le système
+    $a\,x + b\,y = e$, $c\,x + d\,y = f$. Le mini-test ci-dessous n'est pas noté ; la correction de chaque
+    question reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la correction".
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+  <h3 id="d-noeuds">Un nœud ne stocke pas de charge</h3>
+  <p>
+    Un courant est un débit de charges. Au point de jonction de plusieurs conducteurs, appelé nœud, les charges
+    qui arrivent par certaines branches repartent par les autres. Si, pendant une seconde, il entrait plus de
+    charges qu'il n'en sortait, la différence s'accumulerait au nœud. Or un morceau de métal qui accumule une
+    charge, même minuscule, voit son potentiel s'envoler : quelques nanocoulombs suffisent à porter une petite
+    pièce métallique à plusieurs kilovolts. Cette charge excédentaire repousse immédiatement les charges
+    suivantes, et l'équilibre se rétablit en un temps extrêmement court. En pratique, à chaque instant, ce qui
+    entre dans un nœud en ressort : c'est la loi des nœuds.
+  </p>
+  <p>
+    Analogie contrôlée : un raccord en T sur une canalisation remplie d'eau incompressible. Le débit qui arrive
+    par une branche se partage entre les deux autres ; la somme des débits sortants égale le débit entrant,
+    quelle que soit la façon dont il se partage. Le partage lui-même dépend des pertes de charge de chaque
+    branche, comme le partage d'un courant dépend des résistances : la loi des nœuds dit que la somme est
+    conservée, elle ne dit pas comment elle se répartit.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie hydraulique</span>
+    <p>
+      L'analogie tient pour la conservation, mais elle trompe sur trois points. D'abord, l'eau d'une canalisation
+      est poussée depuis la pompe et avance réellement le long du circuit, alors que les électrons dérivent
+      très lentement et que l'énergie est transportée par le champ, comme l'a montré le cours Loi d'Ohm et
+      résistivité. Ensuite, un réservoir peut accumuler de l'eau à un raccord, alors qu'un nœud électrique n'a
+      pratiquement aucune capacité de stockage : le stockage de charge est l'affaire des condensateurs, qui sont
+      des composants à part entière et seront étudiés dans le cours Condensateurs et champ électrique. Enfin, un
+      tuyau percé perd de l'eau de façon visible, alors qu'une fuite électrique vers la terre est invisible et ne
+      se révèle que par un bilan de courants, ce qui est précisément le principe du disjoncteur différentiel.
+    </p>
+  </div>
+
+  <h3 id="d-sim-noeud-section">Simulation interactive : conservation du courant à un nœud</h3>
+  <p>
+    Les quatre branches ci-dessous sont toutes repérées par une flèche de référence dirigée vers le nœud. Vous
+    réglez trois courants, le quatrième est imposé par la conservation de la charge. Avant de toucher aux
+    curseurs, prédisez qualitativement : avec $I_1 = 2\ \mathrm{A}$, $I_2 = -1\ \mathrm{A}$ et
+    $I_3 = 0{,}5\ \mathrm{A}$, la quatrième branche apporte-t-elle des charges au nœud ou en emporte-t-elle ?
+    Et si les trois courants réglés sont positifs, le quatrième peut-il l'être aussi ? Notez votre prédiction,
+    réglez ces valeurs, lancez la lecture et comparez.
+  </p>
+  <figure id="d-noeud-figure">
+    <div class="m-toile-cadre schema-vivant" id="d-noeud"></div>
+    <figcaption>
+      Nœud $N$ relié à quatre branches. Les flèches fixes à pointe triangulaire placées sur chaque branche sont les sens de
+      référence, tous choisis entrants : c'est une convention, libre, qui permet d'écrire la loi sous la forme
+      $I_1 + I_2 + I_3 + I_4 = 0$. Les petits disques représentent le mouvement des porteurs de charge dans le
+      sens conventionnel du courant ; leur vitesse est proportionnelle à l'intensité, et l'épaisseur du trait de
+      chaque branche aussi. Un disque qui s'éloigne du nœud signale un courant réel sortant, donc une valeur
+      algébrique négative dans ce repérage. Les valeurs affichées à côté de chaque branche sont algébriques.
+    </figcaption>
+  </figure>
+  <div id="d-noeud-curseurs"></div>
+  <div id="d-noeud-lecteur"></div>
+  <div id="d-noeud-valeurs"></div>
+  <p>
+    Interprétation : avec les valeurs proposées, $I_4 = -(2 - 1 + 0{,}5) = -1{,}5\ \mathrm{A}$ ; le signe moins
+    ne signale aucune erreur, il indique que la quatrième branche emporte $1{,}5\ \mathrm{A}$ hors du nœud, à
+    l'opposé de sa flèche de référence. Si les trois courants réglés sont positifs, le quatrième est
+    forcément négatif : avec des références toutes entrantes, au moins un courant doit être négatif, sans quoi
+    le nœud accumulerait de la charge. Le compteur de charge accumulée reste à zéro quels que soient les
+    réglages, et la densité de disques entrants et sortants s'équilibre : c'est la conservation de la charge,
+    rendue visible. Le modèle suppose un nœud idéal, sans capacité ; cette hypothèse est discutée en section E.
+  </p>
+
+  <h3 id="d-mailles">Le potentiel comme une altitude</h3>
+  <p>
+    Le potentiel électrique joue le rôle d'une altitude. Chaque point d'un circuit possède un potentiel
+    unique, mesuré par rapport à une référence choisie, la masse ou le 0 V. Une tension est une différence
+    d'altitude entre deux points. Si l'on part d'un point, que l'on fait le tour d'une boucle fermée en notant
+    chaque montée et chaque descente, on revient au même point, donc à la même altitude : la somme algébrique
+    des dénivelés est nulle. C'est la loi des mailles. Les sources jouent le rôle de remontées mécaniques, qui
+    élèvent le potentiel ; les résistances parcourues dans le sens du courant sont des descentes, où l'énergie
+    potentielle des charges est dissipée en chaleur.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie de l'altitude</span>
+    <p>
+      Deux limites comptent. D'abord, l'altitude d'un point de montagne est fixée par le relief, indépendamment
+      des randonneurs, alors que les potentiels d'un circuit dépendent de tous les courants : modifier une
+      résistance en un endroit change les potentiels partout. Ensuite, et c'est plus profond, il existe des
+      situations où le potentiel n'est plus défini de façon unique : lorsqu'un flux magnétique variable traverse
+      la boucle, le tour complet ne ramène pas à la même "altitude", comme dans l'escalier impossible des
+      illusions d'optique. La loi des mailles cesse alors d'être exacte ; la section E précise quand cette
+      situation se produit et comment les modèles de circuits la contournent.
+    </p>
+  </div>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-vocabulaire">Vocabulaire : nœuds, branches, mailles</h3>
+  <p>
+    Un circuit à constantes localisées est un ensemble de dipôles reliés par des conducteurs supposés parfaits.
+    Un <strong>nœud</strong> est un point où se rejoignent au moins trois conducteurs ; tous les points reliés
+    par des fils sans résistance appartiennent au même nœud, même s'ils sont dessinés loin les uns des autres.
+    Une <strong>branche</strong> est une portion de circuit entre deux nœuds consécutifs, parcourue par un même
+    courant. Une <strong>maille</strong> est un chemin fermé qui ne passe qu'une fois par chaque nœud. On note
+    $n$ le nombre de nœuds et $b$ le nombre de branches. Le schéma ci-dessous montre un circuit dont on va compter
+    les éléments.
+  </p>
+  <figure id="e-topologie-figure">
+    <svg viewBox="0 0 700 350" role="img" aria-label="Circuit à trois nœuds A, C et B et cinq branches, avec les trois mailles indépendantes M1, M2 et M3">
+      <defs>
+        <marker id="fl-e-topo" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M90 280V214"/>
+        <circle cx="90" cy="190" r="24"/>
+        <path d="M90 166V130"/>
+        <rect x="76" y="80" width="28" height="50" rx="3"/>
+        <path d="M90 80V60H320"/>
+        <rect x="320" y="46" width="80" height="28" rx="3"/>
+        <path d="M400 60H630V80"/>
+        <rect x="616" y="80" width="28" height="50" rx="3"/>
+        <path d="M630 130V166"/>
+        <circle cx="630" cy="190" r="24"/>
+        <path d="M630 214V280H90"/>
+        <path d="M270 60V130"/>
+        <rect x="256" y="130" width="28" height="70" rx="3"/>
+        <path d="M270 200V280"/>
+        <path d="M450 60V130"/>
+        <rect x="436" y="130" width="28" height="70" rx="3"/>
+        <path d="M450 200V280"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="270" cy="60" r="6"/>
+        <circle cx="450" cy="60" r="6"/>
+        <circle cx="270" cy="280" r="6"/>
+        <circle cx="450" cy="280" r="6"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.5" fill="none" stroke-dasharray="6 5" opacity="0.8">
+        <rect x="70" y="266" width="580" height="28" rx="14"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" opacity="0.85">
+        <path d="M180 145A30 30 0 1 1 150 175" marker-end="url(#fl-e-topo)"/>
+        <path d="M360 145A30 30 0 1 1 330 175" marker-end="url(#fl-e-topo)"/>
+        <path d="M540 145A30 30 0 1 1 510 175" marker-end="url(#fl-e-topo)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13">
+        <text x="270" y="42" text-anchor="middle" font-weight="600">A</text>
+        <text x="450" y="42" text-anchor="middle" font-weight="600">C</text>
+        <text x="360" y="320" text-anchor="middle" font-weight="600">B : un seul nœud (tout le conducteur du bas)</text>
+        <text x="90" y="195" text-anchor="middle">E1</text>
+        <text x="630" y="195" text-anchor="middle">E2</text>
+        <text x="118" y="110">R1</text>
+        <text x="360" y="92" text-anchor="middle">R2</text>
+        <text x="296" y="170">R3</text>
+        <text x="476" y="170">R4</text>
+        <text x="602" y="110" text-anchor="end">R5</text>
+        <text x="180" y="180" text-anchor="middle">M1</text>
+        <text x="360" y="180" text-anchor="middle">M2</text>
+        <text x="540" y="180" text-anchor="middle">M3</text>
+        <text x="40" y="150" text-anchor="middle" font-size="12">b1</text>
+        <text x="360" y="30" text-anchor="middle" font-size="12">b2</text>
+        <text x="236" y="170" text-anchor="middle" font-size="12">b3</text>
+        <text x="416" y="170" text-anchor="middle" font-size="12">b4</text>
+        <text x="680" y="150" text-anchor="middle" font-size="12">b5</text>
+        <text x="350" y="345" text-anchor="middle" font-size="12">n = 3 nœuds, b = 5 branches, m = b - n + 1 = 3 mailles indépendantes</text>
+      </g>
+    </svg>
+    <figcaption>
+      Trois nœuds : $A$ et $C$, marqués par des points pleins, et $B$, qui regroupe tout le conducteur du bas
+      entouré d'un cadre en tirets : les quatre points de jonction dessinés sur ce conducteur sont au même
+      potentiel et ne forment qu'un nœud. Cinq branches : $b_1$ (source $E_1$ et $R_1$, de $B$ à $A$), $b_2$
+      ($R_2$, de $A$ à $C$), $b_3$ ($R_3$, de $A$ à $B$), $b_4$ ($R_4$, de $C$ à $B$) et $b_5$ ($R_5$ et source
+      $E_2$, de $B$ à $C$). Les trois flèches circulaires $M_1$, $M_2$, $M_3$ marquent les mailles "fenêtres",
+      toutes orientées dans le sens horaire par convention. Le contour extérieur est aussi une maille, mais il
+      n'apporte aucune information nouvelle : son équation est la somme des trois autres.
+    </figcaption>
+  </figure>
+  <p>
+    Deux résultats de topologie fixent le nombre d'équations indépendantes. La loi des nœuds écrite aux $n$
+    nœuds donne $n$ équations dont une seule est redondante, car la somme de toutes est une identité : chaque
+    courant de branche y apparaît une fois entrant et une fois sortant. La loi des mailles fournit autant
+    d'équations indépendantes que de mailles indépendantes, $m = b - n + 1$ ; pour un circuit plan, ce sont les
+    fenêtres du dessin. Au total, $(n - 1) + (b - n + 1) = b$ équations pour $b$ courants de branche inconnus :
+    le système est exactement déterminé. Ici, $n = 3$, $b = 5$, donc 2 équations aux nœuds et 3 équations aux
+    mailles.
+  </p>
+  <div class="formule-cle">
+    $$m = b - n + 1, \qquad \text{équations aux nœuds indépendantes} = n - 1$$
+    <p class="formule-cle-legende">
+      $m$ nombre de mailles indépendantes, $b$ nombre de branches, $n$ nombre de nœuds, grandeurs sans
+      dimension. Hypothèse : circuit connexe, c'est-à-dire d'un seul tenant. Dérivation : un arbre reliant les
+      $n$ nœuds sans former de boucle comporte $n - 1$ branches ; chacune des $b - (n - 1)$ branches restantes
+      ferme exactement une nouvelle maille. Interprétation : chaque maille indépendante apporte une contrainte
+      nouvelle sur les tensions. Cas limites : un circuit série a $n = 0$ nœud au sens strict ; en le traitant
+      comme une seule branche refermée sur elle-même, on trouve une maille et aucune équation aux nœuds ; deux
+      dipôles en parallèle donnent $n = 2$, $b = 2$, $m = 1$. Vérification : les deux nombres sont des entiers,
+      et leur somme égale $b$, le nombre d'inconnues.
+    </p>
+  </div>
+
+  <h3 id="e-loi-noeuds">Loi des nœuds</h3>
+  <p>
+    Entourons un nœud par une petite surface fermée $\Sigma$ et notons $q_N$ la charge contenue à l'intérieur.
+    Par définition du courant, la charge contenue augmente du débit de charge entrant et diminue du débit
+    sortant. Dans le modèle à constantes localisées, un nœud est un point de jonction sans capacité : la charge
+    qu'il contient ne varie pas. Le schéma ci-dessous fixe les sens de référence utilisés.
+  </p>
+  <figure id="e-noeud-figure">
+    <svg viewBox="0 0 560 320" role="img" aria-label="Nœud N entouré d'une surface fermée, avec les courants I1 et I3 entrants et les courants I2 et I4 sortants">
+      <defs>
+        <marker id="fl-e-noeud" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M60 160H500"/>
+        <path d="M280 30V290"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M90 160H170" marker-end="url(#fl-e-noeud)"/>
+        <path d="M280 120V60" marker-end="url(#fl-e-noeud)"/>
+        <path d="M470 160H390" marker-end="url(#fl-e-noeud)"/>
+        <path d="M280 200V260" marker-end="url(#fl-e-noeud)"/>
+      </g>
+      <circle cx="280" cy="160" r="7" fill="currentColor"/>
+      <circle cx="280" cy="160" r="62" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="6 5" opacity="0.8"/>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13">
+        <text x="130" y="148" text-anchor="middle">I1 entrant</text>
+        <text x="294" y="84">I2 sortant</text>
+        <text x="430" y="148" text-anchor="middle">I3 entrant</text>
+        <text x="294" y="244">I4 sortant</text>
+        <text x="300" y="182">N</text>
+        <text x="354" y="222">surface fermée Σ</text>
+        <text x="280" y="312" text-anchor="middle" font-weight="600">I1 + I3 = I2 + I4</text>
+      </g>
+    </svg>
+    <figcaption>
+      Nœud $N$ relié à quatre branches. Chaque flèche épaisse est le sens de référence choisi pour le courant de
+      sa branche : $I_1$ et $I_3$ sont comptés entrants, $I_2$ et $I_4$ sortants. Le cercle en tirets est la
+      surface fermée $\Sigma$ qui entoure le nœud ; la loi s'obtient en faisant le bilan de la charge contenue
+      dans $\Sigma$. Si l'un des courants calculés est négatif, le courant réel circule à l'opposé de sa flèche.
+    </figcaption>
+  </figure>
+  <div class="formule-cle">
+    $$\frac{\mathrm{d}q_N}{\mathrm{d}t} = \sum i_{\text{entrants}} - \sum i_{\text{sortants}} = 0
+    \quad\Longrightarrow\quad \sum_{k} \varepsilon_k\, i_k = 0$$
+    <p class="formule-cle-legende">
+      $i_k$ courant de la branche $k$ reliée au nœud ($\mathrm{A}$), $\varepsilon_k = +1$ si sa flèche de
+      référence entre dans le nœud et $-1$ si elle en sort, $q_N$ charge contenue dans la surface fermée
+      ($\mathrm{C}$). Hypothèses : conservation de la charge, qui est une loi physique sans exception connue, et
+      nœud sans capacité, qui est une approximation du modèle à constantes localisées. Dérivation : la charge
+      dans $\Sigma$ ne peut varier que par les charges qui traversent $\Sigma$, d'où la première égalité ; le
+      nœud n'accumulant rien, $\mathrm{d}q_N/\mathrm{d}t = 0$. Interprétation : un courant n'est jamais
+      "consommé" ; il entre dans un récepteur et en ressort intégralement, seule l'énergie est convertie. Cas
+      limite : à très haute fréquence, la capacité parasite d'un nœud n'est plus négligeable et une partie du
+      courant sert à la charger ; on la modélise alors par un condensateur, c'est-à-dire par une branche de plus,
+      et la loi redevient exacte. Vérification dimensionnelle : $\mathrm{C/s} = \mathrm{A}$, chaque terme est
+      un courant. Pour la figure : $I_1 + I_3 - I_2 - I_4 = 0$.
+    </p>
+  </div>
+  <p>
+    La même démonstration vaut pour n'importe quelle surface fermée, pas seulement pour un point : si une
+    surface entoure tout un appareil, la somme algébrique des courants qui la traversent est nulle. Cette forme
+    généralisée, parfois appelée supernœud, est celle qu'exploitent le disjoncteur différentiel (section I) et
+    le bilan du courant de neutre en triphasé, qui sera étudié dans le cours Charges triphasées déséquilibrées.
+    Elle explique aussi pourquoi un condensateur ne viole pas la loi : une armature accumule bien de la charge,
+    mais l'autre en perd autant, et le composant pris en entier laisse ressortir le courant qui y entre.
+  </p>
+
+  <h3 id="e-loi-mailles">Loi des mailles</h3>
+  <p>
+    Considérons une maille formée des points $P_1, P_2, \dots, P_k$ reliés par des dipôles, et parcourons-la
+    dans un sens choisi, appelé sens de parcours. Chaque dipôle porte une tension fléchée ; conformément à la
+    convention des cours précédents, la pointe de la flèche désigne le point dont on retranche l'autre
+    potentiel : une flèche qui va de $Q$ vers $P$ représente $u = V_P - V_Q$. Le schéma suivant met en place une
+    maille à quatre dipôles.
+  </p>
+  <figure id="e-maille-figure">
+    <svg viewBox="0 0 620 340" role="img" aria-label="Maille à quatre dipôles, parcourue dans le sens horaire, avec quatre tensions fléchées dont deux dans le sens de parcours et deux en sens inverse">
+      <defs>
+        <marker id="fl-e-maille" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-e-maille-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M130 60H250"/>
+        <rect x="250" y="46" width="100" height="28" rx="3"/>
+        <path d="M350 60H480V110"/>
+        <rect x="466" y="110" width="28" height="100" rx="3"/>
+        <path d="M480 210V270H350"/>
+        <rect x="250" y="256" width="100" height="28" rx="3"/>
+        <path d="M250 270H130V190"/>
+        <circle cx="130" cy="164" r="26"/>
+        <path d="M130 138V60"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M80 210V118" marker-end="url(#fl-e-maille-u)"/>
+        <path d="M345 24H255" marker-end="url(#fl-e-maille-u)"/>
+        <path d="M530 205V115" marker-end="url(#fl-e-maille-u)"/>
+        <path d="M345 312H255" marker-end="url(#fl-e-maille-u)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round">
+        <path d="M305 125A42 42 0 1 1 263 167" marker-end="url(#fl-e-maille)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13">
+        <text x="130" y="169" text-anchor="middle">E</text>
+        <text x="112" y="130" text-anchor="end" font-weight="600">+</text>
+        <text x="112" y="204" text-anchor="end" font-weight="600">-</text>
+        <text x="300" y="65" text-anchor="middle">R1</text>
+        <text x="510" y="164">R2</text>
+        <text x="300" y="275" text-anchor="middle">D</text>
+        <text x="62" y="168" text-anchor="end" fill="var(--serie-2)">E</text>
+        <text x="300" y="16" text-anchor="middle" fill="var(--serie-2)">u1</text>
+        <text x="546" y="164" fill="var(--serie-2)">u2</text>
+        <text x="300" y="334" text-anchor="middle" fill="var(--serie-2)">u3</text>
+        <text x="130" y="50" text-anchor="middle">P1</text>
+        <text x="480" y="50" text-anchor="middle">P2</text>
+        <text x="480" y="290" text-anchor="middle">P3</text>
+        <text x="130" y="290" text-anchor="middle">P4</text>
+        <text x="305" y="172" text-anchor="middle" font-size="12">sens de</text>
+        <text x="305" y="188" text-anchor="middle" font-size="12">parcours</text>
+        <text x="305" y="226" text-anchor="middle" font-weight="600">+E - u1 - u2 + u3 = 0</text>
+      </g>
+    </svg>
+    <figcaption>
+      Maille $P_1 P_2 P_3 P_4$ parcourue dans le sens horaire, indiqué par la flèche circulaire centrale. Les
+      flèches fines de tension, placées à l'extérieur de la maille, pointent chacune vers la borne de plus haut
+      potentiel supposé. Sur le côté gauche, la flèche de $E$ monte, dans le sens de parcours : elle est comptée
+      positivement. En haut, $u_1$ pointe vers la gauche alors que le parcours va vers la droite : signe moins.
+      À droite, $u_2$ monte alors que le parcours descend : signe moins. En bas, $u_3$ pointe vers la gauche,
+      dans le sens de parcours : signe plus. Le dipôle $D$ est quelconque, ohmique ou non ; la loi des mailles ne
+      dépend pas de la nature des composants.
+    </figcaption>
+  </figure>
+  <p>
+    Si le potentiel est défini de façon unique en chaque point, chaque tension s'écrit comme une différence de
+    potentiels, et la somme sur un tour complet se simplifie terme à terme : c'est une somme télescopique, qui
+    revient au point de départ.
+  </p>
+  <div class="formule-cle">
+    $$\sum_{k} \varepsilon_k\, u_k = (V_{P_2} - V_{P_1}) + (V_{P_3} - V_{P_2}) + \dots + (V_{P_1} - V_{P_k}) = 0$$
+    <p class="formule-cle-legende">
+      $u_k$ tension du dipôle $k$ ($\mathrm{V}$), $\varepsilon_k = +1$ si sa flèche pointe dans le sens de
+      parcours, $-1$ sinon ; $V_{P}$ potentiel du point $P$ ($\mathrm{V}$). Hypothèses : le potentiel existe,
+      c'est-à-dire que le champ électrique est conservatif le long du chemin, ce qui exige qu'aucun flux
+      magnétique variable ne traverse la maille en dehors des composants ; dimensions du circuit petites devant la
+      longueur d'onde, c'est l'approximation des régimes quasi stationnaires. Dérivation : un dipôle franchi
+      dans le sens de parcours, de $P_j$ vers $P_{j+1}$, fait varier le potentiel de $V_{P_{j+1}} - V_{P_j}$, qui
+      vaut $+u_k$ si la flèche pointe vers $P_{j+1}$ et $-u_k$ sinon ; la somme de toutes les variations sur un
+      tour fermé est nulle. Interprétation : l'énergie qu'une charge unité reçoit des sources sur un tour est
+      exactement celle qu'elle cède aux récepteurs. Cas limite : si un flux magnétique $\Phi$ variable traverse
+      la maille, la loi de Faraday donne $\sum \varepsilon_k u_k = -\mathrm{d}\Phi/\mathrm{d}t$ ; dans un circuit,
+      on range ce flux à l'intérieur des inductances, qui deviennent des dipôles, et la loi redevient exacte à
+      l'extérieur. Vérification dimensionnelle : chaque terme est une tension, en volts, et $\mathrm{Wb/s} =
+      \mathrm{V}$ dans le cas limite. Pour la figure : $E - u_1 - u_2 + u_3 = 0$.
+    </p>
+  </div>
+  <p>
+    Règle pratique pour les résistances : en convention récepteur, la flèche de $u = Ri$ pointe contre le
+    courant de référence. Parcourir une résistance dans le sens de son courant fait donc baisser le potentiel de
+    $Ri$, et la parcourir à contre-courant le fait monter de $Ri$. Traverser une source de tension de sa borne
+    $-$ vers sa borne $+$ fait monter le potentiel de $E$. Ces deux règles suffisent pour écrire une maille sans
+    dessiner une flèche de tension par dipôle. L'approximation des régimes quasi stationnaires est très
+    confortable en électrotechnique : à $50\ \mathrm{Hz}$, la longueur d'onde vaut
+    $\lambda = c/f = 3 \times 10^8/50 = 6000\ \mathrm{km}$, bien plus que la taille d'une installation ; à
+    $100\ \mathrm{MHz}$, elle ne vaut plus que $3\ \mathrm{m}$, et une piste de circuit imprimé de quelques
+    centimètres commence à se comporter comme une ligne de propagation.
+  </p>
+
+  <h3 id="e-sim-parcours-section">Simulation interactive : parcourir une maille</h3>
+  <p>
+    Le circuit ci-dessous est celui de l'exemple numérique de la section H : un chargeur $E_1$ et une batterie
+    $E_2$ en parallèle sur une charge $R_3$. Vous déplacez un point le long de la maille choisie ; le profil
+    tracé sous le schéma donne le potentiel de ce point par rapport au nœud $B$, pris comme référence. Prédisez
+    d'abord : en parcourant la maille de gauche dans le sens horaire depuis $B$, à quel endroit le potentiel
+    monte-t-il, où descend-il, et quelle valeur retrouve-t-on à l'arrivée ? Pour la maille de droite, le
+    potentiel monte-t-il ou descend-il en traversant $R_2$ vers le bas, sachant que la batterie se charge ?
+  </p>
+  <figure id="e-parcours-figure">
+    <div class="m-toile-cadre schema-vivant" id="e-parcours"></div>
+    <figcaption>
+      En haut, le circuit : le point rond déplaçable parcourt la maille choisie, dont le contour est surligné en
+      trait épais ; la flèche circulaire rappelle le sens de parcours horaire. Le nœud $B$, en bas au centre, est
+      la référence de potentiel (0 V). En bas, le profil de potentiel : l'axe horizontal est la position le long
+      de la maille, en pourcentage du tour, l'axe vertical le potentiel en volts. La courbe en tirets fins montre
+      le tour complet, la courbe en trait plein la partie déjà parcourue, et le trait vertical la position
+      courante. Les noms des dipôles sont inscrits sous l'axe, à l'endroit où ils sont traversés.
+    </figcaption>
+  </figure>
+  <div id="e-parcours-curseurs"></div>
+  <div id="e-parcours-lecteur"></div>
+  <div id="e-parcours-valeurs"></div>
+  <p>
+    Interprétation : sur la maille de gauche, le potentiel monte de $27\ \mathrm{V}$ dans le chargeur, redescend
+    de $2{,}52\ \mathrm{V}$ dans $R_1$, reste constant le long du conducteur supérieur, puis chute de
+    $24{,}48\ \mathrm{V}$ dans la charge : le tour revient exactement à 0 V, et la hausse cumulée égale la baisse
+    cumulée. Sur la maille de droite, le courant réel de la batterie est négatif dans le repérage choisi : il
+    circule vers le bas dans $R_2$, dans le sens du parcours, et le potentiel y baisse de $0{,}48\ \mathrm{V}$
+    avant de chuter de $24\ \mathrm{V}$ dans la batterie, parcourue de sa borne $+$ vers sa borne $-$. La maille
+    extérieure vérifie elle aussi la loi, mais son équation est la somme des deux autres : elle ne sert que de
+    contrôle. En augmentant la résistance de charge, la tension du nœud $A$ monte vers la valeur à vide et le
+    courant de recharge de la batterie augmente ; en la réduisant sous $4\ \Omega$, la batterie se met à
+    débiter. Les fils sont supposés parfaits : sur le conducteur supérieur, le potentiel ne varie pas.
+  </p>
+
+  <h3 id="e-tellegen">Conséquence énergétique : le bilan de puissance</h3>
+  <p>
+    Les deux lois contiennent la conservation de l'énergie. Numérotons les branches et repérons chacune en
+    convention récepteur : le courant $i_k$ va du nœud $a$ au nœud $b$ à travers la branche, et
+    $u_k = V_a - V_b$. En regroupant les termes par nœud, la somme des puissances reçues devient une somme de
+    potentiels multipliés par la somme des courants qui quittent chaque nœud, nulle d'après la loi des nœuds.
+  </p>
+  <div class="formule-cle">
+    $$\sum_{k=1}^{b} u_k\, i_k = \sum_{\text{nœuds } N} V_N \left(\sum_{\text{branches quittant } N} i_k \;-\; \sum_{\text{branches arrivant en } N} i_k\right) = 0$$
+    <p class="formule-cle-legende">
+      $u_k$ et $i_k$ tension et courant de la branche $k$ en convention récepteur ($\mathrm{V}$, $\mathrm{A}$),
+      $V_N$ potentiel du nœud $N$ ($\mathrm{V}$). Hypothèses : les tensions dérivent de potentiels (loi des
+      mailles) et les courants vérifient la loi des nœuds ; aucune hypothèse sur la nature des dipôles. C'est le
+      théorème de Tellegen. Dérivation : $u_k i_k = V_a i_k - V_b i_k$ ; chaque courant apparaît une fois au nœud
+      qu'il quitte et une fois, avec le signe opposé, au nœud où il arrive. Interprétation : la somme des
+      puissances reçues par toutes les branches est nulle, donc les puissances fournies par les sources égalent
+      exactement celles reçues par les récepteurs. Cas limite : un circuit à une seule maille source et
+      résistance redonne $EI = RI^2$. Vérification dimensionnelle : $\mathrm{V} \cdot \mathrm{A} = \mathrm{W}$.
+    </p>
+  </div>
+  <p>
+    Ce résultat fournit l'outil de contrôle le plus puissant d'une résolution : après avoir calculé tous les
+    courants, on vérifie que la puissance fournie par les sources égale la puissance reçue par les autres
+    dipôles. Une erreur de signe sur un seul courant rompt presque toujours cet équilibre.
+  </p>
+
+  <h3 id="e-methodes">Trois méthodes de mise en équations</h3>
+  <p>
+    <strong>Méthode directe, ou des courants de branche.</strong> On prend les $b$ courants de branche comme
+    inconnues, on écrit $n - 1$ lois des nœuds et $b - n + 1$ lois des mailles, en remplaçant chaque tension de
+    résistance par $Ri$. La méthode est transparente mais lourde : $b$ équations. Elle convient aux petits
+    circuits et à la vérification.
+  </p>
+  <p>
+    <strong>Méthode des mailles.</strong> On associe à chaque maille indépendante un courant fictif, le courant
+    de maille $J_1, J_2, \dots$, qui circule dans le sens de parcours de sa maille. Le courant d'une branche est la
+    somme algébrique des courants des mailles qui la bordent ; la loi des nœuds est alors automatiquement
+    satisfaite, et il ne reste que $m = b - n + 1$ lois des mailles. Pour le circuit du schéma principal de la
+    section F, deux mailles orientées dans le sens horaire partagent la branche centrale $R_3$, parcourue par
+    $J_1$ vers le bas et par $J_2$ vers le haut :
+  </p>
+  <div class="formule-cle">
+    $$\begin{cases} (R_1 + R_3)\,J_1 - R_3\,J_2 = E_1 \\ -R_3\,J_1 + (R_2 + R_3)\,J_2 = -E_2 \end{cases}
+    \qquad I_1 = J_1,\quad I_2 = -J_2,\quad I_3 = J_1 - J_2$$
+    <p class="formule-cle-legende">
+      $J_1$, $J_2$ courants de maille ($\mathrm{A}$) ; $R_1$, $R_2$, $R_3$ ($\Omega$) ; $E_1$, $E_2$ forces
+      électromotrices ($\mathrm{V}$) ; $I_1$, $I_2$ courants des sources comptés de $B$ vers $A$, $I_3$ courant
+      de $R_3$ compté de $A$ vers $B$. Hypothèses : circuit plan, sources de tension, dipôles ohmiques.
+      Dérivation, maille de gauche : en partant de $B$ dans le sens horaire, $+E_1 - R_1 J_1 - R_3(J_1 - J_2) = 0$ ;
+      maille de droite : $-R_3(J_2 - J_1) - R_2 J_2 - E_2 = 0$, car $R_3$ est remontée par le courant net
+      $J_2 - J_1$ et $E_2$ est traversée de $+$ vers $-$. Interprétation : le coefficient diagonal est la
+      résistance totale de la maille, le coefficient croisé l'opposé de la résistance partagée, et le second
+      membre la somme des f.é.m. qui poussent dans le sens de la maille. Cas limite : $R_3 \to \infty$ découple
+      les mailles et donne un seul courant $(E_1 - E_2)/(R_1 + R_2)$ circulant d'une source à l'autre.
+      Vérification dimensionnelle : $\Omega \cdot \mathrm{A} = \mathrm{V}$ dans chaque ligne.
+    </p>
+  </div>
+  <p>
+    <strong>Méthode des nœuds.</strong> On choisit un nœud de référence, le 0 V, et l'on prend comme inconnues
+    les potentiels des $n - 1$ autres nœuds. Chaque courant de branche s'exprime par la loi d'Ohm à partir de
+    ces potentiels ; la loi des mailles est alors automatiquement satisfaite, et il ne reste que $n - 1$ lois
+    des nœuds. Lorsqu'il n'y a qu'un nœud inconnu $A$, relié au nœud de référence par plusieurs branches
+    formées chacune d'une source $E_k$ en série avec une résistance $R_k$, la loi des nœuds en $A$ s'écrit
+    $\sum_k (E_k - V_A)/R_k = 0$, d'où le théorème de Millman :
+  </p>
+  <div class="formule-cle">
+    $$V_A = \frac{\displaystyle\sum_k \frac{E_k}{R_k}}{\displaystyle\sum_k \frac{1}{R_k}} = \frac{\sum_k G_k\,E_k}{\sum_k G_k}$$
+    <p class="formule-cle-legende">
+      $V_A$ potentiel du nœud $A$ par rapport à la référence ($\mathrm{V}$), $E_k$ f.é.m. de la branche $k$,
+      comptée positive si sa borne $+$ est du côté de $A$ ($\mathrm{V}$), $R_k$ résistance de la branche
+      ($\Omega$), $G_k = 1/R_k$ sa conductance ($\mathrm{S}$) ; une branche purement résistive a $E_k = 0$.
+      Hypothèses : toutes les branches relient $A$ à la référence, dipôles linéaires. Dérivation : le courant qui
+      arrive en $A$ par la branche $k$ vaut $(E_k - V_A)/R_k$ ; la loi des nœuds impose que leur somme soit
+      nulle, donc $\sum G_k E_k = V_A \sum G_k$. Interprétation : $V_A$ est une moyenne des f.é.m. pondérée par les
+      conductances ; la branche la moins résistive "tire" le plus fort. Cas limites : $R_k \to 0$ impose
+      $V_A = E_k$ ; $R_k \to \infty$ fait disparaître la branche. Vérification dimensionnelle :
+      $(\mathrm{V}/\Omega)/(1/\Omega) = \mathrm{V}$.
+    </p>
+  </div>
+  <p>
+    Le choix de la méthode est une question d'économie et de nature des sources. La méthode des nœuds est
+    préférable quand le circuit a peu de nœuds et beaucoup de branches en parallèle, ou quand il comporte des
+    sources de courant, qui s'écrivent directement dans les lois des nœuds ; c'est la méthode des simulateurs
+    de type SPICE, sous une forme étendue appelée analyse nodale modifiée. La méthode des mailles est préférable
+    quand le circuit a peu de mailles et des sources de tension, mais elle ne s'applique simplement qu'aux
+    circuits plans. Une source de courant gêne la méthode des mailles, car la tension à ses bornes est une
+    inconnue supplémentaire ; une source de tension idéale entre deux nœuds gêne la méthode des nœuds pour la
+    raison symétrique. La mise en forme matricielle de ces méthodes, pour des réseaux à plusieurs nœuds, sera
+    développée dans le cours Méthodes de résolution systématique.
+  </p>
+
+  <h3 id="e-statut">Statut des énoncés</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Ce qui est loi, convention, approximation ou règle</caption>
+      <thead><tr><th>Énoncé</th><th>Statut</th></tr></thead>
+      <tbody>
+        <tr><td>Conservation de la charge</td><td>loi physique, sans exception connue</td></tr>
+        <tr><td>Nœud sans accumulation de charge, champ conservatif hors des composants</td><td>approximation des régimes quasi stationnaires et du modèle à constantes localisées</td></tr>
+        <tr><td>Sens de référence des courants, sens de parcours des mailles, choix du 0 V</td><td>conventions libres, à fixer avant tout calcul</td></tr>
+        <tr><td>Flèche de tension pointant vers le potentiel supposé le plus haut</td><td>convention d'écriture en usage dans l'enseignement français</td></tr>
+        <tr><td>Orienter toutes les mailles dans le même sens, choisir comme référence le nœud le plus connecté</td><td>règles de conception de la mise en équations, qui réduisent les erreurs</td></tr>
+        <tr><td>Tension de floating d'une batterie, résistance interne d'un chargeur</td><td>données du constructeur</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, un circuit à deux mailles avec tous ses sens de
+    référence, l'organigramme de choix d'une méthode et un tableau comparatif des trois méthodes. Les schémas qui
+    éclairent un point précis ont été placés au fil du texte ; ils sont rappelés en fin de section.
+  </p>
+
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 700 390" role="img" aria-label="Circuit à deux mailles : source E1 et résistance R1 à gauche, résistance R3 au centre, résistance R2 et source E2 à droite, nœud A en haut, nœud B de référence en bas, courants de branche I1, I2, I3 et courants de maille J1, J2">
+      <defs>
+        <marker id="fl-f-i" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-f-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M130 320V266"/>
+        <circle cx="130" cy="240" r="26"/>
+        <path d="M130 214V170"/>
+        <rect x="116" y="110" width="28" height="60" rx="3"/>
+        <path d="M130 110V70H570V110"/>
+        <rect x="556" y="110" width="28" height="60" rx="3"/>
+        <path d="M570 170V214"/>
+        <circle cx="570" cy="240" r="26"/>
+        <path d="M570 266V320H130"/>
+        <path d="M350 70V150"/>
+        <rect x="336" y="150" width="28" height="80" rx="3"/>
+        <path d="M350 230V320"/>
+        <path d="M350 320V340M334 340H366M340 347H360M346 354H354"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="350" cy="70" r="6"/>
+        <circle cx="350" cy="320" r="6"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M170 70H240" marker-end="url(#fl-f-i)"/>
+        <path d="M530 70H460" marker-end="url(#fl-f-i)"/>
+        <path d="M350 92V134" marker-end="url(#fl-f-i)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" opacity="0.85">
+        <path d="M240 158A38 38 0 1 1 202 196" marker-end="url(#fl-f-i)"/>
+        <path d="M470 162A34 34 0 1 1 436 196" marker-end="url(#fl-f-i)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M400 226V156" marker-end="url(#fl-f-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13">
+        <text x="130" y="245" text-anchor="middle">E1</text>
+        <text x="570" y="245" text-anchor="middle">E2</text>
+        <text x="104" y="224" text-anchor="end" font-weight="600">+</text>
+        <text x="104" y="270" text-anchor="end" font-weight="600">-</text>
+        <text x="600" y="224" font-weight="600">+</text>
+        <text x="600" y="270" font-weight="600">-</text>
+        <text x="152" y="145">R1</text>
+        <text x="548" y="145" text-anchor="end">R2</text>
+        <text x="328" y="195" text-anchor="end">R3</text>
+        <text x="372" y="160" font-weight="600">+</text>
+        <text x="372" y="230" font-weight="600">-</text>
+        <text x="350" y="54" text-anchor="middle" font-weight="600">A</text>
+        <text x="366" y="312" font-weight="600">B</text>
+        <text x="350" y="376" text-anchor="middle">référence 0 V</text>
+        <text x="205" y="60" text-anchor="middle">I1</text>
+        <text x="495" y="60" text-anchor="middle">I2</text>
+        <text x="336" y="120" text-anchor="end">I3</text>
+        <text x="240" y="201" text-anchor="middle">J1</text>
+        <text x="470" y="201" text-anchor="middle">J2</text>
+        <text x="400" y="248" text-anchor="middle" fill="var(--serie-2)">V_A</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal. La branche de gauche contient la source $E_1$, borne $+$ en haut, et sa résistance
+      $R_1$ ; la branche de droite contient la source $E_2$, borne $+$ en haut, et $R_2$ ; la branche centrale ne
+      contient que $R_3$. Les deux nœuds sont $A$, en haut, et $B$, en bas, choisi comme référence de potentiel
+      (symbole de masse). Les flèches épaisses droites sont les sens de référence des courants de branche :
+      $I_1$ et $I_2$ montent dans les branches des sources et arrivent en $A$, ce qui place chaque source en
+      convention générateur ; $I_3$ descend dans $R_3$, qui est en convention récepteur. Les flèches circulaires
+      $J_1$ et $J_2$ sont les courants de maille, orientés dans le sens horaire. La flèche fine à droite de $R_3$
+      représente la tension $V_A = V_A - V_B$, pointée vers la borne $+$. Loi des nœuds en $A$ :
+      $I_1 + I_2 = I_3$. Lois des mailles : voir la section E.
+    </figcaption>
+  </figure>
+
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Dessiner le circuit, nommer nœuds et dipôles"] --> B["Compter n nœuds et b branches"]
+  B --> C["Fixer les sens de référence et le nœud 0 V"]
+  C --> D{"n - 1 plus petit que b - n + 1 ?"}
+  D -->|"oui, ou sources de courant"| E["Méthode des nœuds : n - 1 potentiels inconnus"]
+  D -->|"non, circuit plan et sources de tension"| F["Méthode des mailles : b - n + 1 courants de maille"]
+  E --> G["Écrire et résoudre le système linéaire"]
+  F --> G
+  G --> H["Revenir aux courants et tensions de branche"]
+  H --> I["Contrôler : loi des nœuds, maille non utilisée, bilan de puissance"]
+  I --> J{"Tout est cohérent ?"}
+  J -->|"non"| C
+  J -->|"oui"| K["Interpréter les signes et conclure"]</pre>
+    <figcaption>
+      Organigramme de résolution d'un circuit continu. Le losange central compare le nombre d'équations des deux
+      méthodes ; à égalité, la nature des sources départage. La boucle de contrôle finale renvoie aux sens de
+      référence, car la plupart des incohérences viennent d'un signe mal posé au départ. Les flèches indiquent
+      l'enchaînement des étapes, les libellés sur les flèches les conditions.
+    </figcaption>
+  </figure>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Comparaison des trois méthodes de mise en équations</caption>
+      <thead><tr><th>Méthode</th><th>Inconnues</th><th>Nombre d'équations</th><th>Lois écrites explicitement</th><th>Préférable quand</th></tr></thead>
+      <tbody>
+        <tr><td>Directe (courants de branche)</td><td>les $b$ courants de branche</td><td>$b$</td><td>nœuds et mailles</td><td>très petit circuit, vérification pas à pas</td></tr>
+        <tr><td>Mailles</td><td>$b - n + 1$ courants de maille</td><td>$b - n + 1$</td><td>mailles seulement</td><td>circuit plan, peu de mailles, sources de tension</td></tr>
+        <tr><td>Nœuds</td><td>$n - 1$ potentiels de nœud</td><td>$n - 1$</td><td>nœuds seulement</td><td>peu de nœuds, branches en parallèle, sources de courant, calcul par logiciel</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-noeud-figure" data-renvoi="d-noeud-figure">la simulation de conservation du courant à un nœud</a>, section D, après l'analogie hydraulique ;</li>
+    <li><a href="#e-topologie-figure" data-renvoi="e-topologie-figure">le circuit à trois nœuds et cinq branches avec ses mailles indépendantes</a>, section E, avec le vocabulaire ;</li>
+    <li><a href="#e-noeud-figure" data-renvoi="e-noeud-figure">le nœud entouré d'une surface fermée</a>, section E, avec la loi des nœuds ;</li>
+    <li><a href="#e-maille-figure" data-renvoi="e-maille-figure">la maille orientée à quatre dipôles et ses signes</a>, section E, avec la loi des mailles ;</li>
+    <li><a href="#e-parcours-figure" data-renvoi="e-parcours-figure">la simulation du parcours d'une maille et de son profil de potentiel</a>, section E, après la loi des mailles ;</li>
+    <li><a href="#h-schema-figure" data-renvoi="h-schema-figure">le schéma annoté de l'exemple numérique</a> et <a href="#h-circuit-figure" data-renvoi="h-circuit-figure">la simulation du chargeur et de la batterie</a>, section H ;</li>
+    <li><a href="#i-differentiel-figure" data-renvoi="i-differentiel-figure">le principe du disjoncteur différentiel</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <ol>
+    <li>Redessiner le circuit proprement, repérer tous les nœuds (en fusionnant les points reliés par des fils parfaits), compter $n$ et $b$, en déduire $n - 1$ et $b - n + 1$.</li>
+    <li>Choisir le nœud de référence (0 V), de préférence le plus connecté ou celui qui correspond à la masse réelle.</li>
+    <li>Fixer un sens de référence pour chaque courant de branche et, si besoin, un sens de parcours pour chaque maille ; ne plus les modifier ensuite, même si l'intuition suggère que le courant réel circule en sens inverse.</li>
+    <li>Choisir la méthode : nœuds si $n - 1$ est le plus petit ou s'il y a des sources de courant, mailles si $b - n + 1$ est le plus petit et que le circuit est plan.</li>
+    <li>Écrire les équations en appliquant les règles de signe : $\varepsilon_k = \pm 1$ aux nœuds selon que la flèche entre ou sort ; aux mailles, $-Ri$ pour une résistance parcourue dans le sens de son courant, $+E$ pour une source traversée de $-$ vers $+$.</li>
+    <li>Ordonner le système sous la forme coefficients fois inconnues égale seconds membres, vérifier la symétrie des coefficients croisés, puis résoudre (substitution, Cramer, ou calcul matriciel).</li>
+    <li>Revenir aux grandeurs demandées : courants de branche, tensions, puissances. Interpréter chaque signe négatif comme un sens réel opposé à la référence.</li>
+    <li>Contrôler : loi des nœuds avec les valeurs trouvées, une maille non utilisée dans la résolution, bilan de puissance entre sources et récepteurs, ordre de grandeur et cas limite.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Situation : une armoire de contrôle-commande est alimentée en $24\ \mathrm{V}$ continu secouru. Un
+    chargeur-redresseur, modélisé par une source $E_1 = 27\ \mathrm{V}$ en série avec $R_1 = 0{,}5\ \Omega$
+    (résistance interne et câble), et une batterie, modélisée par $E_2 = 24\ \mathrm{V}$ en série avec
+    $R_2 = 0{,}5\ \Omega$, sont reliés en parallèle sur la charge de l'armoire, équivalente à
+    $R_3 = 6\ \Omega$ (automate, relais, interfaces). La topologie est celle du schéma principal de la section
+    F. Les valeurs sont volontairement arrondies pour garder des calculs lisibles : une batterie réelle a une
+    résistance interne plus faible, et sa f.é.m. dépend de son état de charge.
+  </p>
+  <p>
+    Inconnues : la tension $V_A$ de l'armoire, les courants $I_1$, $I_2$, $I_3$, l'état de la batterie (charge
+    ou décharge) et le bilan de puissance. Stratégie : $n = 2$ nœuds et $b = 3$ branches, donc une seule
+    équation aux nœuds contre deux équations aux mailles. On résout d'abord par la méthode des mailles, pour
+    s'exercer, puis par la méthode des nœuds, plus économique, et l'on compare.
+  </p>
+  <h3 id="h-mailles">Résolution par la méthode des mailles</h3>
+  <ol>
+    <li>Coefficients : $R_1 + R_3 = 6{,}5\ \Omega$, $R_2 + R_3 = 6{,}5\ \Omega$, résistance partagée $R_3 = 6\ \Omega$.</li>
+    <li>Système : $6{,}5\,J_1 - 6\,J_2 = 27$ et $-6\,J_1 + 6{,}5\,J_2 = -24$ (en ampères et volts).</li>
+    <li>Déterminant : $\Delta = 6{,}5 \times 6{,}5 - (-6) \times (-6) = 42{,}25 - 36 = 6{,}25\ \Omega^2$.</li>
+    <li>$J_1 = \dfrac{27 \times 6{,}5 - (-6) \times (-24)}{6{,}25} = \dfrac{175{,}5 - 144}{6{,}25} = \dfrac{31{,}5}{6{,}25} = 5{,}04\ \mathrm{A}$.</li>
+    <li>$J_2 = \dfrac{6{,}5 \times (-24) - 27 \times (-6)}{6{,}25} = \dfrac{-156 + 162}{6{,}25} = \dfrac{6}{6{,}25} = 0{,}96\ \mathrm{A}$.</li>
+    <li>Courants de branche : $I_1 = J_1 = 5{,}04\ \mathrm{A}$, $I_2 = -J_2 = -0{,}96\ \mathrm{A}$, $I_3 = J_1 - J_2 = 4{,}08\ \mathrm{A}$.</li>
+  </ol>
+  <h3 id="h-noeuds">Résolution par la méthode des nœuds</h3>
+  <ol>
+    <li>Une seule inconnue, $V_A$ ; théorème de Millman avec $E_3 = 0$ pour la charge.</li>
+    <li>$V_A = \dfrac{27/0{,}5 + 24/0{,}5 + 0/6}{1/0{,}5 + 1/0{,}5 + 1/6} = \dfrac{54 + 48}{2 + 2 + 0{,}1667} = \dfrac{102}{4{,}1667} = 24{,}48\ \mathrm{V}$.</li>
+    <li>$I_1 = (E_1 - V_A)/R_1 = (27 - 24{,}48)/0{,}5 = 5{,}04\ \mathrm{A}$.</li>
+    <li>$I_2 = (E_2 - V_A)/R_2 = (24 - 24{,}48)/0{,}5 = -0{,}96\ \mathrm{A}$.</li>
+    <li>$I_3 = V_A/R_3 = 24{,}48/6 = 4{,}08\ \mathrm{A}$.</li>
+  </ol>
+  <h3 id="h-controle">Interprétation et contrôles</h3>
+  <ol>
+    <li>Les deux méthodes donnent les mêmes valeurs ; la méthode des nœuds a demandé une équation au lieu de deux.</li>
+    <li>Signe de $I_2$ : négatif, donc le courant réel entre par la borne $+$ de la batterie ; elle reçoit $0{,}96\ \mathrm{A}$ : elle est en charge. Le chargeur alimente à la fois l'armoire et la batterie.</li>
+    <li>Loi des nœuds en $A$ : $I_1 + I_2 = 5{,}04 - 0{,}96 = 4{,}08\ \mathrm{A} = I_3$.</li>
+    <li>Maille extérieure, non utilisée : depuis $B$ dans le sens horaire, $+27 - 0{,}5 \times 5{,}04 + 0{,}5 \times (-0{,}96) - 24 = 27 - 2{,}52 - 0{,}48 - 24 = 0$. Le terme $+R_2 I_2$ vient de ce que $R_2$ est parcourue vers le bas, contre la référence de $I_2$.</li>
+    <li>Bilan de puissance : le chargeur fournit $E_1 I_1 = 27 \times 5{,}04 = 136{,}08\ \mathrm{W}$. Reçoivent : la batterie $E_2 \times 0{,}96 = 23{,}04\ \mathrm{W}$, $R_1$ : $0{,}5 \times 5{,}04^2 = 12{,}70\ \mathrm{W}$, $R_2$ : $0{,}5 \times 0{,}96^2 = 0{,}46\ \mathrm{W}$, la charge : $6 \times 4{,}08^2 = 99{,}88\ \mathrm{W}$. Somme : $23{,}04 + 12{,}70 + 0{,}46 + 99{,}88 = 136{,}08\ \mathrm{W}$, égale à la puissance fournie.</li>
+    <li>Ordre de grandeur et cas limite : $V_A$ est compris entre $E_2 = 24\ \mathrm{V}$ et $E_1 = 27\ \mathrm{V}$, comme l'exige une moyenne pondérée ; sans charge ($R_3 \to \infty$), on aurait $V_A = (27 + 24)/2 = 25{,}5\ \mathrm{V}$ et un courant de recharge de $3\ \mathrm{A}$.</li>
+  </ol>
+  <p>
+    Résultat final : $V_A = 24{,}48\ \mathrm{V}$, chargeur $5{,}04\ \mathrm{A}$, armoire $4{,}08\ \mathrm{A}$
+    ($99{,}9\ \mathrm{W}$), batterie en charge sous $0{,}96\ \mathrm{A}$ ; pertes dans les résistances
+    internes $13{,}2\ \mathrm{W}$.
+  </p>
+  <figure id="h-schema-figure">
+    <svg viewBox="0 0 700 390" role="img" aria-label="Schéma annoté de l'exemple : chargeur de 27 volts et 0,5 ohm, batterie de 24 volts et 0,5 ohm, charge de 6 ohms, tension de 24,48 volts au nœud A, courants de 5,04, 0,96 et 4,08 ampères">
+      <defs>
+        <marker id="fl-h-i" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-h-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M130 320V266"/>
+        <circle cx="130" cy="240" r="26"/>
+        <path d="M130 214V170"/>
+        <rect x="116" y="110" width="28" height="60" rx="3"/>
+        <path d="M130 110V70H570V110"/>
+        <rect x="556" y="110" width="28" height="60" rx="3"/>
+        <path d="M570 170V214"/>
+        <circle cx="570" cy="240" r="26"/>
+        <path d="M570 266V320H130"/>
+        <path d="M350 70V150"/>
+        <rect x="336" y="150" width="28" height="80" rx="3"/>
+        <path d="M350 230V320"/>
+        <path d="M350 320V340M334 340H366M340 347H360M346 354H354"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="350" cy="70" r="6"/>
+        <circle cx="350" cy="320" r="6"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M170 70H240" marker-end="url(#fl-h-i)"/>
+        <path d="M460 70H530" marker-end="url(#fl-h-i)"/>
+        <path d="M350 92V134" marker-end="url(#fl-h-i)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M400 226V156" marker-end="url(#fl-h-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="130" y="238" text-anchor="middle">27 V</text>
+        <text x="100" y="296" text-anchor="end" font-size="11">chargeur</text>
+        <text x="570" y="238" text-anchor="middle">24 V</text>
+        <text x="600" y="296" font-size="11">batterie</text>
+        <text x="104" y="224" text-anchor="end" font-weight="600">+</text>
+        <text x="600" y="224" font-weight="600">+</text>
+        <text x="152" y="138">0,5 Ω</text>
+        <text x="152" y="156" font-size="11">chute 2,52 V</text>
+        <text x="548" y="138" text-anchor="end">0,5 Ω</text>
+        <text x="548" y="156" text-anchor="end" font-size="11">chute 0,48 V</text>
+        <text x="328" y="186" text-anchor="end">6 Ω</text>
+        <text x="328" y="204" text-anchor="end" font-size="11">armoire</text>
+        <text x="350" y="54" text-anchor="middle" font-weight="600">A</text>
+        <text x="366" y="312" font-weight="600">B</text>
+        <text x="350" y="376" text-anchor="middle">référence 0 V</text>
+        <text x="205" y="60" text-anchor="middle">5,04 A</text>
+        <text x="495" y="60" text-anchor="middle">0,96 A réels vers la batterie</text>
+        <text x="336" y="120" text-anchor="end">4,08 A</text>
+        <text x="410" y="186" fill="var(--serie-2)">V_A = 24,48 V</text>
+        <text x="410" y="204" font-size="11">99,9 W</text>
+      </g>
+    </svg>
+    <figcaption>
+      Le circuit de l'exemple avec ses valeurs. Contrairement au schéma principal, la flèche du courant de la
+      branche de droite est ici dessinée dans le sens réel : $0{,}96\ \mathrm{A}$ circulent de $A$ vers la borne
+      $+$ de la batterie, ce qui correspond à $I_2 = -0{,}96\ \mathrm{A}$ avec la référence de la section F. Les
+      chutes de tension dans les résistances internes sont inscrites à côté de chacune ; la tension de l'armoire
+      est portée par la flèche fine. Loi des nœuds en $A$ : $5{,}04 = 0{,}96 + 4{,}08$.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-sim-circuit-section">Simulation interactive : chargeur, batterie et charge</h3>
+  <p>
+    La simulation reprend ce circuit avec des paramètres réglables. Avant de la manipuler, prédisez : si l'on
+    augmente la consommation de l'armoire, c'est-à-dire si l'on diminue $R_3$, la tension $V_A$ monte-t-elle ou
+    baisse-t-elle, et que devient le courant de la batterie ? Existe-t-il une valeur de $R_3$ pour laquelle la
+    batterie ne reçoit ni ne fournit rien ? Et si le chargeur est défaillant, avec $E_1$ inférieure à $E_2$ ?
+  </p>
+  <figure id="h-circuit-figure">
+    <div class="m-toile-cadre schema-vivant" id="h-circuit"></div>
+    <figcaption>
+      Même disposition que le schéma principal de la section F. Les flèches épaisses fixes sont les sens de
+      référence de $I_1$, $I_2$ et $I_3$ ; les valeurs affichées à côté sont algébriques. Les petits disques
+      mobiles montrent le sens réel du courant dans chaque branche, avec une vitesse proportionnelle à son
+      intensité. Le texte en bas du schéma indique l'état de la batterie. Le nœud $B$ est la référence de
+      potentiel.
+    </figcaption>
+  </figure>
+  <div id="h-circuit-curseurs"></div>
+  <div id="h-circuit-lecteur"></div>
+  <div id="h-circuit-valeurs"></div>
+  <p>
+    Interprétation : diminuer $R_3$ augmente le courant appelé, donc les chutes dans $R_1$ et $R_2$ : $V_A$
+    baisse. Quand $V_A$ passe sous $E_2$, le courant $I_2$ change de signe et la batterie se met à débiter ; la
+    frontière est atteinte pour $V_A = E_2$, soit $R_3 = 4\ \Omega$ avec les valeurs par défaut, cas traité dans
+    l'exercice avancé. Si $E_1 < E_2$, la batterie alimente l'armoire et renvoie même du courant dans le
+    chargeur : c'est la situation qu'une diode anti-retour, étudiée dans le cours Diodes de puissance, sert à
+    empêcher. Dans tous les cas, la somme $I_1 + I_2 - I_3$ reste nulle et le bilan de puissance est équilibré :
+    les réglages changent la répartition, jamais les lois. Le modèle linéaire de la batterie est une
+    approximation : sa f.é.m. varie avec l'état de charge, et un chargeur réel limite son courant.
+  </p>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <p>
+    Premier cas, le disjoncteur différentiel. Un tore magnétique entoure ensemble tous les conducteurs actifs
+    d'un départ, la phase et le neutre en monophasé. Il ne mesure pas chaque courant, mais leur somme
+    algébrique : c'est une loi des nœuds appliquée à la surface fermée qui entoure l'installation en aval.
+  </p>
+  <figure id="i-differentiel-figure">
+    <svg viewBox="0 0 660 300" role="img" aria-label="Tore différentiel entourant la phase et le neutre qui alimentent un récepteur, dont la carcasse présente une fuite vers la terre">
+      <defs>
+        <marker id="fl-i-diff" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M40 90H470"/>
+        <path d="M40 170H470"/>
+        <rect x="470" y="60" width="120" height="140" rx="6"/>
+        <path d="M530 200V250"/>
+        <path d="M512 250H548M518 257H542M524 264H536"/>
+      </g>
+      <ellipse cx="200" cy="130" rx="30" ry="72" fill="var(--serie-1)" fill-opacity="0.25" stroke="currentColor" stroke-width="2.2"/>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M300 90H380" marker-end="url(#fl-i-diff)"/>
+        <path d="M380 170H300" marker-end="url(#fl-i-diff)"/>
+        <path d="M560 206V240" marker-end="url(#fl-i-diff)"/>
+      </g>
+      <rect x="440" y="36" width="190" height="200" rx="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="6 5" opacity="0.8"/>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13">
+        <text x="50" y="80">phase L</text>
+        <text x="50" y="160">neutre N</text>
+        <text x="200" y="228" text-anchor="middle">tore</text>
+        <text x="200" y="246" text-anchor="middle" font-size="11.5">mesure I_L - I_N</text>
+        <text x="340" y="80" text-anchor="middle">I_L</text>
+        <text x="340" y="160" text-anchor="middle">I_N</text>
+        <text x="530" y="126" text-anchor="middle">récepteur</text>
+        <text x="530" y="144" text-anchor="middle" font-size="11.5">carcasse</text>
+        <text x="572" y="230">I_f</text>
+        <text x="530" y="286" text-anchor="middle" font-size="12">terre</text>
+        <text x="620" y="28" text-anchor="end" font-size="12">surface fermée</text>
+      </g>
+    </svg>
+    <figcaption>
+      Principe du disjoncteur différentiel. Le tore, ellipse remplie d'un aplat, entoure la phase et le neutre ;
+      les flèches épaisses donnent les sens de référence : $I_L$ vers le récepteur sur la phase, $I_N$ retour
+      par le neutre, $I_f$ courant de fuite de la carcasse vers la terre. Le cadre en tirets est la surface
+      fermée qui entoure le récepteur : la loi des nœuds y donne $I_L = I_N + I_f$. Le tore voit la somme
+      $I_L - I_N = I_f$ : nulle en fonctionnement sain, égale au courant de fuite en cas de défaut d'isolement.
+    </figcaption>
+  </figure>
+  <p>
+    Un appareil de sensibilité $30\ \mathrm{mA}$ déclenche pour un écart de quelques dizaines de milliampères
+    sur des courants de service qui peuvent atteindre des dizaines d'ampères : la loi des nœuds, exacte, permet
+    de détecter un défaut mille fois plus petit que le courant normal. Contrainte d'exploitation : les fuites
+    capacitives normales des filtres d'entrée des variateurs et des alimentations à découpage s'additionnent
+    sur un même départ et peuvent provoquer des déclenchements intempestifs ; le compromis porte alors sur la
+    répartition des récepteurs entre plusieurs différentiels, sans jamais relever la sensibilité là où elle
+    protège des personnes. Les valeurs de sensibilité et les obligations d'emploi relèvent de la réglementation
+    et des normes d'installation ; elles seront abordées dans le cours Sécurité électrique et schémas de liaison
+    à la terre.
+  </p>
+  <p>
+    Deuxième cas, le retour commun en 24 V continu. Dans une armoire, une électrovanne de $2{,}0\ \mathrm{A}$
+    et un capteur à sortie $0$ à $10\ \mathrm{V}$ partagent le même conducteur de retour de $30\ \mathrm{m}$ en
+    $1{,}5\ \mathrm{mm^2}$ jusqu'au 0 V de l'automate. Sa résistance vaut $R = 1{,}72 \times 10^{-8} \times
+    30/(1{,}5 \times 10^{-6}) = 0{,}344\ \Omega$. La loi des nœuds au point de raccordement du terrain impose
+    que ce conducteur porte la somme des deux courants de retour ; quand la vanne s'ouvre, il chute
+    $0{,}344 \times 2{,}0 = 0{,}69\ \mathrm{V}$. La loi des mailles, écrite de l'automate au capteur et retour,
+    montre que l'automate mesure la tension du capteur augmentée de cette chute : la mesure saute de
+    $0{,}69\ \mathrm{V}$, soit $6{,}9\ \%$ de la pleine échelle, à chaque manœuvre de la vanne. Les choix
+    d'ingénierie possibles : retours séparés ramenés en étoile au 0 V de l'automate, entrée analogique
+    différentielle, ou transmission en courant, étudiée dans le cours Boucles 4-20 mA et signaux industriels,
+    qu'une chute de tension sur le retour n'affecte pas tant que la tension disponible suffit.
+  </p>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : bilan des courants au jeu de barres du tableau général</span>
+    <p>
+      Le cours Loi d'Ohm et résistivité a posé le départ de la pompe principale, à $85\ \mathrm{m}$ du tableau
+      général, sous $50\ \mathrm{A}$ par phase. Deuxième brique : le jeu de barres du tableau général, qui est un
+      nœud au sens de Kirchhoff pour chaque phase. Hypothèses de travail pour les autres départs : compresseur
+      $32\ \mathrm{A}$, éclairage et prises $16\ \mathrm{A}$, armoire automate et supervision $6\ \mathrm{A}$ par
+      phase. La loi des nœuds, écrite sur les valeurs instantanées d'une phase, donne
+      $i_{\text{arrivée}}(t) = i_{\text{pompe}}(t) + i_{\text{compresseur}}(t) + i_{\text{éclairage}}(t) +
+      i_{\text{automate}}(t)$.
+    </p>
+    <p>
+      En alternatif, les courants annoncés sont des valeurs efficaces, et des valeurs efficaces ne s'additionnent
+      que si les courants sont en phase. La somme arithmétique, $50 + 32 + 16 + 6 = 104\ \mathrm{A}$, est donc
+      un majorant du courant efficace d'arrivée par phase, atteint seulement si tous les départs ont le même
+      déphasage ; c'est une hypothèse prudente pour un premier dimensionnement. Le calcul exact exigera les
+      phaseurs du cours Nombres complexes et phaseurs et les puissances du cours Puissances en courant alternatif ;
+      le coefficient de simultanéité, qui tient compte du fait que tous les départs ne sont pas à pleine charge en
+      même temps, relève de règles de conception qui seront discutées lors du bilan de puissance du site.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li>
+      <strong>Croire qu'un courant négatif est une erreur, puis changer la flèche en cours de calcul.</strong>
+      Un résultat négatif signifie seulement que le courant réel circule à l'opposé de la référence. Modifier la
+      flèche après avoir écrit une partie des équations mélange deux conventions et produit des résultats faux.
+      On garde les références jusqu'au bout et l'on interprète le signe à la fin.
+    </li>
+    <li>
+      <strong>Écrire la loi des nœuds à tous les nœuds et s'étonner d'un système incohérent ou singulier.</strong>
+      Les $n$ équations aux nœuds sont liées : leur somme est une identité. Une seule est redondante ; il faut la
+      remplacer par une loi des mailles, sans quoi le système n'a pas de solution unique.
+    </li>
+    <li>
+      <strong>Se tromper de signe sur le terme $Ri$ dans une maille.</strong> Parcourue dans le sens de son
+      courant de référence, une résistance fait baisser le potentiel : le terme est $-Ri$. L'erreur classique
+      consiste à écrire $+Ri$ pour toutes les résistances, ce qui revient à supposer que chaque courant circule
+      contre le sens de parcours. Le contrôle par une maille non utilisée détecte cette faute.
+    </li>
+    <li>
+      <strong>Penser qu'un récepteur "consomme" du courant.</strong> Le courant qui entre dans une lampe en
+      ressort intégralement ; c'est l'énergie qui est convertie. Cette confusion conduit à croire que le courant
+      de retour est plus faible que le courant aller, ou que le neutre d'un départ monophasé porte moins de
+      courant que la phase. Un tel écart, s'il est mesuré, révèle une fuite.
+    </li>
+    <li>
+      <strong>Additionner des valeurs efficaces en alternatif comme des courants continus.</strong> La loi des
+      nœuds porte sur les valeurs instantanées, ou sur les phaseurs. Deux courants efficaces de $10\ \mathrm{A}$
+      déphasés de $120$ degrés ont une somme efficace de $10\ \mathrm{A}$, pas de $20\ \mathrm{A}$.
+    </li>
+    <li>
+      <strong>Considérer comme deux nœuds distincts deux points reliés par un fil parfait.</strong> Ils sont au
+      même potentiel et forment un seul nœud ; compter trop de nœuds fausse $b - n + 1$ et fait écrire des
+      équations en trop, ou des mailles qui n'existent pas.
+    </li>
+    <li>
+      <strong>Placer deux sources de tension idéales en parallèle.</strong> La maille qu'elles forment impose
+      $E_1 = E_2$ ; si leurs valeurs diffèrent, le modèle n'a pas de solution, et le circuit réel n'est limité que
+      par les résistances internes. D'où l'importance de $R_1$ et $R_2$ dans l'exemple H, et des diodes ou
+      limitations de courant dans les alimentations mises en parallèle.
+    </li>
+    <li>
+      <strong>Appliquer la loi des mailles à une boucle traversée par un flux magnétique variable.</strong>
+      Une boucle de fils de mesure placée près d'un câble de forte intensité en alternatif capte une f.é.m.
+      induite : la somme des tensions mesurées ne s'annule plus. C'est une limite du modèle, pas une erreur de
+      calcul ; on la réduit en torsadant les conducteurs aller et retour pour minimiser la surface de la boucle.
+    </li>
+  </ol>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de
+    diagnostic industriel et une question conceptuelle. La correction de chacun reste masquée jusqu'à une
+    tentative ou un clic explicite sur "Voir la correction", puis se déroule étape par étape, accompagnée d'un
+    schéma annoté ou d'une courbe.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma.</p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$\sum_k \varepsilon_k\, i_k = 0 \quad (\text{loi des nœuds})$$
+    $$\sum_k \varepsilon_k\, u_k = 0 \quad (\text{loi des mailles})$$
+    $$m = b - n + 1$$
+    $$V_A = \frac{\sum_k E_k/R_k}{\sum_k 1/R_k} \quad (\text{Millman})$$
+    $$\sum_k u_k\, i_k = 0 \quad (\text{bilan de puissance, convention récepteur})$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>Fixer tous les sens de référence avant d'écrire la première équation, et ne plus les modifier.</li>
+      <li>Une résistance parcourue dans le sens de son courant donne $-Ri$ dans la maille ; une source traversée de $-$ vers $+$ donne $+E$.</li>
+      <li>Seules $n - 1$ équations aux nœuds sont indépendantes ; compléter avec $b - n + 1$ équations aux mailles.</li>
+      <li>Un courant négatif circule à l'opposé de sa flèche ; ce n'est pas une erreur.</li>
+      <li>En alternatif, la loi des nœuds porte sur les valeurs instantanées ou les phaseurs, pas sur les valeurs efficaces.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Deux lois suffisent à mettre un circuit en équations. La loi des nœuds traduit la
+    conservation de la charge : la somme algébrique des courants qui arrivent à un nœud, ou traversent une
+    surface fermée, est nulle. La loi des mailles traduit l'existence d'un potentiel : la somme algébrique des
+    tensions le long d'une boucle fermée est nulle. Toutes deux reposent sur l'approximation des régimes quasi
+    stationnaires et sur le modèle à constantes localisées. Un circuit de $n$ nœuds et $b$ branches fournit
+    $n - 1$ équations aux nœuds et $b - n + 1$ aux mailles. La méthode des nœuds et la méthode des mailles
+    réduisent le nombre d'inconnues ; le choix dépend de la topologie et des sources. Un résultat se contrôle par
+    une maille non utilisée et par le bilan de puissance.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance, deux sur le cours précédent,
+    <a href="#/cours/loi-d-ohm-et-resistivite">Loi d'Ohm et résistivité</a>, une sur le cours
+    <a href="#/cours/tension-courant-charge-et-puissance">Tension, courant, charge et puissance</a>, et une sur le
+    cours le plus ancien du parcours, <a href="#/cours/diagnostic-initial-et-remise-a-niveau-mathematique">Diagnostic
+    initial et remise à niveau mathématique</a>, qui tient lieu de question sur un cours vieux d'une semaine tant
+    que le parcours n'en compte pas. La question sur un cours vieux d'un mois n'est pas encore applicable.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : résoudre l'exemple de la section H par le calcul matriciel en Python, balayer la résistance de
+    charge, puis retrouver les mêmes valeurs dans LTspice et apprendre à y lire le signe des courants. Prédiction
+    à écrire avant de commencer : pour quelle valeur de $R_3$ le courant de la batterie s'annule-t-il ? Le courant
+    affiché par LTspice pour la source du chargeur sera-t-il positif ou négatif ?
+  </p>
+  <ol>
+    <li>
+      En Python, écrire la matrice des mailles <code>A = [[R1 + R3, -R3], [-R3, R2 + R3]]</code> et le second
+      membre <code>b = [E1, -E2]</code> avec les valeurs de la section H, puis résoudre avec
+      <code>numpy.linalg.solve(A, b)</code>. En l'absence de numpy, appliquer la règle de Cramer dans une petite
+      fonction.
+    </li>
+    <li>
+      Calculer <code>I1</code>, <code>I2</code>, <code>I3</code>, puis vérifier la loi des nœuds et le bilan
+      <code>E1*I1 == E2*(-I2) + R1*I1**2 + R2*I2**2 + R3*I3**2</code> à la précision numérique près.
+    </li>
+    <li>
+      Écrire une fonction Millman <code>VA(R3)</code> et tracer avec matplotlib <code>I2</code> en fonction de
+      <code>R3</code> entre $1$ et $50\ \Omega$ ; repérer le passage par zéro.
+    </li>
+    <li>
+      Dans LTspice, saisir le schéma, ou la netlist suivante dans un fichier texte :
+      <code>V1 n1 0 27</code>, <code>R1 n1 A 0.5</code>, <code>V2 n2 0 24</code>, <code>R2 n2 A 0.5</code>,
+      <code>R3 A 0 6</code>, <code>.op</code>, <code>.end</code>. Lancer la simulation et relever
+      <code>V(a)</code>, les courants des trois résistances et ceux des deux sources.
+    </li>
+    <li>
+      Ajouter <code>.step param Rc list 2 4 6 12</code> en remplaçant la valeur de <code>R3</code> par
+      <code>{Rc}</code> et en déclarant <code>.param Rc=6</code>, puis comparer au tracé Python.
+    </li>
+  </ol>
+  <p>
+    Résultats attendus : $V(a) = 24{,}48\ \mathrm{V}$ ; $I(R1) = 5{,}04\ \mathrm{A}$ et
+    $I(R2) = -0{,}96\ \mathrm{A}$, comptés du premier nœud écrit vers le second ; $I(R3) = 4{,}08\ \mathrm{A}$ ;
+    le courant de la batterie s'annule pour $R_3 = 4\ \Omega$, avec $V(a) = 24\ \mathrm{V}$. Anomalies à
+    observer : LTspice compte le courant d'une source de tension positivement lorsqu'il la traverse de sa borne
+    $+$ vers sa borne $-$ ; il affiche donc $I(V1) = -5{,}04\ \mathrm{A}$ pour le chargeur qui débite et
+    $I(V2) = +0{,}96\ \mathrm{A}$ pour la batterie qui se charge, ce qui déroute tant que l'on n'a pas identifié
+    la convention. Un schéma sans nœud de masse est refusé : le simulateur a besoin d'une référence de
+    potentiel, exactement comme la méthode des nœuds. Enfin, relier directement $V1$ et $V2$ sans résistance
+    crée une maille de deux sources idéales dont la solution n'existe pas ; selon ses options, le simulateur
+    signale une erreur ou ajoute une petite résistance série par défaut, et les courants obtenus n'ont alors
+    aucun sens physique.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est
+    calculé dans ce navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes
+    restent enregistrées localement pour suivre votre progression.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">La loi des nœuds est la conservation de la charge, la loi des mailles l'existence d'un potentiel ; toutes deux valent dans l'approximation des régimes quasi stationnaires, quels que soient les composants.</li>
+    <li data-rang="02">Un circuit de $n$ nœuds et $b$ branches donne $n - 1$ équations aux nœuds et $b - n + 1$ aux mailles ; la méthode des nœuds ou celle des mailles réduit le nombre d'inconnues selon la topologie.</li>
+    <li data-rang="03">Les sens de référence sont des conventions fixées une fois pour toutes ; un résultat négatif s'interprète, et toute solution se contrôle par une maille non utilisée et un bilan de puissance.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> la gestion des signes dans la loi des mailles, surtout
+    lorsqu'une résistance partagée entre deux mailles est parcourue par deux courants de maille de sens opposés,
+    ou lorsqu'un courant de branche se révèle négatif. La parade est mécanique : fixer les références, appliquer
+    la règle $-Ri$ dans le sens du courant, et vérifier par le bilan de puissance.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Associations de résistances et diviseurs,
+    applique ces deux lois à des configurations si fréquentes qu'elles méritent des formules toutes faites.
+    Question à garder en tête d'ici là : dans l'exemple de la section H, si l'on débranche la batterie, le
+    chargeur et l'armoire ne forment plus qu'une seule maille ; comment la tension de $27\ \mathrm{V}$ se
+    partage-t-elle entre $R_1$ et $R_3$, et que devient ce partage si l'on branche une seconde charge en
+    parallèle sur l'armoire ?
+  </p>
+
+</article>
