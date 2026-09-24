@@ -1,0 +1,1320 @@
+<article class="cours" data-slug="associations-de-resistances-et-diviseurs">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/lois-de-kirchhoff">Lois de Kirchhoff</a> a montré que deux lois suffisent à mettre
+      n'importe quel circuit en équations, et s'est achevé sur une question : si l'on débranche la batterie de
+      l'exemple, comment les $27\ \mathrm{V}$ du chargeur se partagent-ils entre sa résistance interne
+      $R_1 = 0{,}5\ \Omega$ et l'armoire $R_3 = 6\ \Omega$ ? Il ne reste qu'une maille, parcourue par un seul
+      courant $I = 27/6{,}5 = 4{,}154\ \mathrm{A}$ ; l'armoire reçoit $6 \times 4{,}154 = 24{,}92\ \mathrm{V}$,
+      soit la fraction $6/6{,}5$ de la tension de source. Si l'on branche une seconde charge de $6\ \Omega$ en
+      parallèle, les deux charges sont équivalentes à $3\ \Omega$ et la tension tombe à
+      $27 \times 3/3{,}5 = 23{,}14\ \mathrm{V}$. Ces deux réflexes, remplacer un groupe de résistances par une
+      seule et partager une tension au prorata des résistances, sont l'objet de cette séance. Ils reposent sur la
+      loi d'Ohm du cours <a href="#/cours/loi-d-ohm-et-resistivite">Loi d'Ohm et résistivité</a> et sur la
+      puissance $P = UI$ du cours <a href="#/cours/tension-courant-charge-et-puissance">Tension, courant, charge et
+      puissance</a>.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Les lois de Kirchhoff permettent de tout calculer, mais elles obligent à écrire un système d'équations à
+    chaque fois. Or deux configurations reviennent sans cesse : des dipôles traversés par le même courant, dits en
+    série, et des dipôles soumis à la même tension, dits en parallèle. Pour ces deux cas, les lois de Kirchhoff se
+    résolvent une fois pour toutes et donnent des formules de réduction : un groupe de résistances se remplace par
+    une résistance équivalente, et un réseau entier se ramène souvent à une seule résistance vue par la source.
+    L'ingénieur qui maîtrise ces réductions voit immédiatement l'ordre de grandeur d'un courant ou d'une tension,
+    sans poser de système.
+  </p>
+  <p>
+    Le diviseur de tension est la conséquence la plus utilisée de ces réductions. On le trouve dans les entrées de
+    mesure des automates et des variateurs, qui ramènent une tension de bus de $24\ \mathrm{V}$ ou de
+    $800\ \mathrm{V}$ à quelques volts, dans les potentiomètres de consigne, dans les ponts de polarisation, dans
+    les chaînes de capteurs résistifs. Le diviseur de courant, son dual, explique la répartition du courant entre
+    des conducteurs en parallèle, entre un shunt de mesure et son appareil, ou entre plusieurs résistances de
+    freinage. Le point délicat, source de nombreuses erreurs de mesure en exploitation, est le diviseur chargé :
+    dès qu'un appareil prélève du courant à la sortie du pont, la formule simple devient fausse. Savoir quantifier
+    cet écart, et concevoir un pont qui le rend acceptable sans gaspiller de puissance, est le travail central de
+    cette séance ; il prépare directement le cours Théorèmes de Thévenin, Norton et superposition.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Identifier sans ambiguïté des dipôles en série (même courant) ou en parallèle (mêmes deux nœuds), indépendamment de la disposition du dessin.</li>
+    <li data-rang="02">Calculer la résistance équivalente d'un réseau série-parallèle par réductions successives, puis remonter aux courants et tensions de chaque élément.</li>
+    <li data-rang="03">Établir et appliquer les formules du diviseur de tension et du diviseur de courant, en précisant leurs hypothèses.</li>
+    <li data-rang="04">Calculer l'erreur introduite par la charge d'un diviseur et la relier à la résistance vue depuis sa sortie, $R_1 /\!/ R_2$.</li>
+    <li data-rang="05">Dimensionner un pont diviseur qui respecte une tension de sortie, une erreur de charge et une puissance maximale, avec des valeurs normalisées et leurs tolérances.</li>
+    <li data-rang="06">Diagnostiquer une mesure faussée par la charge d'un pont diviseur à partir de relevés de tension.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois automatismes sont nécessaires. Le premier : la loi d'Ohm en convention récepteur, $u = Ri$, et son
+    inverse $i = Gu$ avec la conductance $G = 1/R$, en siemens. Le deuxième : la loi des nœuds (la somme des
+    courants qui arrivent à un nœud est nulle) et la loi des mailles (la somme des tensions sur une boucle fermée
+    est nulle), telles que les a posées le cours <a href="#/cours/lois-de-kirchhoff">Lois de Kirchhoff</a>. Le
+    troisième, mathématique : manipuler des inverses, $\dfrac{1}{1/a + 1/b} = \dfrac{ab}{a + b}$, et conserver
+    les préfixes SI, $1\ \mathrm{V}/1\ \mathrm{k\Omega} = 1\ \mathrm{mA}$. Le mini-test ci-dessous n'est pas
+    noté ; la correction de chaque question reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la
+    correction".
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+  <h3 id="d-serie-parallele">Un seul chemin ou plusieurs chemins</h3>
+  <p>
+    Deux résistances sont en série lorsqu'un courant ne peut traverser l'une sans traverser l'autre : aucun nœud
+    ne les sépare, il n'existe qu'un chemin. D'après la loi des nœuds, elles portent donc exactement le même
+    courant. Les obstacles se succèdent : pour faire passer ce courant, il faut vaincre l'opposition de la
+    première, puis celle de la seconde, et la tension nécessaire est la somme des deux. La résistance équivalente
+    est donc plus grande que chacune.
+  </p>
+  <p>
+    Deux résistances sont en parallèle lorsqu'elles relient les deux mêmes nœuds. Elles subissent alors la même
+    tension, puisque la tension ne dépend que des potentiels de ces deux nœuds. Chaque résistance ouvre un chemin
+    supplémentaire au courant, qui se partage : le courant total est la somme des courants des branches. Ajouter
+    une branche en parallèle, même très résistante, facilite toujours le passage : la résistance équivalente est
+    plus petite que la plus petite des résistances. Ce sont les conductances, les facilités de passage, qui
+    s'additionnent.
+  </p>
+  <p>
+    Analogie contrôlée : un péage autoroutier. Plusieurs barrières franchies successivement sur une même voie
+    ralentissent d'autant le flux, comme des résistances en série ; plusieurs guichets ouverts côte à côte
+    augmentent le débit total, comme des résistances en parallèle, et le guichet le plus rapide absorbe la plus
+    grande part du trafic, comme la plus petite résistance reçoit le plus grand courant.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie du péage</span>
+    <p>
+      Les voitures choisissent leur guichet et peuvent attendre ; les charges, elles, se répartissent
+      instantanément selon les conductances, sans choix ni file d'attente, et un nœud ne stocke rien. Surtout, un
+      péage a un débit maximal indépendant de la "pression" en amont, alors qu'une résistance ohmique laisse passer
+      un courant proportionnel à la tension, sans saturation. Enfin, l'analogie ne dit rien de l'énergie : en
+      série, c'est la plus grande résistance qui dissipe le plus ($P = RI^2$ à courant commun) ; en parallèle,
+      c'est la plus petite ($P = U^2/R$ à tension commune). Cette inversion, contre-intuitive, se vérifie dans la
+      simulation ci-dessous.
+    </p>
+  </div>
+
+  <h3 id="d-sim-association-section">Simulation interactive : série ou parallèle</h3>
+  <p>
+    Deux résistances $R_1$ et $R_2$ sont alimentées par une source de tension $U$. Un curseur choisit
+    l'association. Avant de manipuler, prédisez qualitativement, avec $R_2 = 3R_1$ : en série, laquelle des deux
+    résistances reçoit la plus grande tension et dissipe la plus grande puissance ? En parallèle, laquelle reçoit
+    le plus grand courant et dissipe le plus ? Et le courant fourni par la source est-il plus grand en série ou en
+    parallèle ? Notez vos réponses, puis réglez $R_1 = 100\ \Omega$, $R_2 = 300\ \Omega$ et comparez les deux
+    associations en lançant la lecture.
+  </p>
+  <figure id="d-association-figure">
+    <div class="m-toile-cadre schema-vivant" id="d-association"></div>
+    <figcaption>
+      La source de tension $U$, borne $+$ en haut, alimente les deux résistances ; le conducteur du bas est la
+      référence de potentiel (symbole de masse). Les flèches épaisses fixes sont les sens de référence des
+      courants, choisis dans le sens réel : $I$ sort de la borne $+$ de la source, $I_1$ et $I_2$ traversent les
+      résistances vers la référence, en convention récepteur. Les flèches fines placées à côté des résistances
+      sont leurs tensions $U_1$ et $U_2$, pointées vers la borne de plus haut potentiel. Les petits disques
+      mobiles représentent le mouvement des charges dans le sens conventionnel ; leur vitesse est proportionnelle
+      au courant de la branche, si bien que sur les conducteurs communs d'un montage en parallèle leur densité
+      additionne les deux branches.
+    </figcaption>
+  </figure>
+  <div id="d-association-curseurs"></div>
+  <div id="d-association-lecteur"></div>
+  <div id="d-association-valeurs"></div>
+  <p>
+    Interprétation : en série, avec $U = 12\ \mathrm{V}$, le courant commun vaut $12/400 = 30\ \mathrm{mA}$ ;
+    $R_2$ reçoit $9\ \mathrm{V}$ et dissipe $270\ \mathrm{mW}$, trois fois plus que $R_1$ ($3\ \mathrm{V}$,
+    $90\ \mathrm{mW}$). En parallèle, les deux résistances sont sous $12\ \mathrm{V}$ ; $R_1$ reçoit
+    $120\ \mathrm{mA}$ et dissipe $1{,}44\ \mathrm{W}$, trois fois plus que $R_2$ ($40\ \mathrm{mA}$,
+    $0{,}48\ \mathrm{W}$). La source débite $160\ \mathrm{mA}$ en parallèle, plus de cinq fois le courant du
+    montage série, car $R_{\text{éq}}$ passe de $400\ \Omega$ à $75\ \Omega$. Dans les deux cas, la puissance
+    fournie par la source égale la somme des puissances dissipées. Le modèle suppose des conducteurs parfaits et
+    une source idéale ; une source réelle verrait sa tension baisser sous le courant plus fort du montage
+    parallèle, ce qui est exactement un diviseur de tension entre sa résistance interne et la charge.
+  </p>
+
+  <h3 id="d-pente">Le diviseur de tension comme une pente régulière</h3>
+  <p>
+    Dans une chaîne de résistances en série, le courant est le même partout ; la chute de potentiel dans chaque
+    résistance, $RI$, est donc proportionnelle à sa résistance. Le potentiel descend le long de la chaîne comme le
+    long d'une pente dont l'inclinaison serait uniforme par ohm traversé : prélever la tension en un point
+    intermédiaire revient à lire l'altitude à une fraction connue de la descente. C'est le principe du diviseur de
+    tension et du potentiomètre. Le schéma ci-dessous le montre pour deux résistances égales.
+  </p>
+  <figure id="d-pente-figure">
+    <svg viewBox="0 0 660 340" role="img" aria-label="Chaîne de deux résistances égales alimentée par une source E, et profil du potentiel le long de la chaîne, qui descend de E à zéro en passant par E sur deux au point milieu">
+      <defs>
+        <marker id="fl-d-pente" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M90 300V206"/>
+        <circle cx="90" cy="180" r="26"/>
+        <path d="M90 154V40H300V60"/>
+        <rect x="286" y="60" width="28" height="90" rx="3"/>
+        <path d="M300 150V190"/>
+        <rect x="286" y="190" width="28" height="90" rx="3"/>
+        <path d="M300 280V300H90"/>
+        <path d="M300 170H380"/>
+        <path d="M195 300V316M181 316H209M187 323H203M192 330H198"/>
+      </g>
+      <circle cx="300" cy="170" r="5" fill="currentColor"/>
+      <circle cx="386" cy="170" r="6" fill="none" stroke="currentColor" stroke-width="2"/>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M150 40H220" marker-end="url(#fl-d-pente)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.4" fill="none" opacity="0.8">
+        <path d="M440 300H630"/>
+        <path d="M440 310V30"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.2" fill="none" stroke-dasharray="4 5" opacity="0.55">
+        <path d="M314 60H600"/>
+        <path d="M392 170H520"/>
+        <path d="M314 280H440"/>
+      </g>
+      <path d="M600 40V60L520 150V190L440 280V300" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13">
+        <text x="90" y="185" text-anchor="middle">E</text>
+        <text x="62" y="160" text-anchor="end" font-weight="600">+</text>
+        <text x="62" y="212" text-anchor="end" font-weight="600">-</text>
+        <text x="185" y="30" text-anchor="middle">I</text>
+        <text x="326" y="110">R1 = R</text>
+        <text x="326" y="240">R2 = R</text>
+        <text x="392" y="160">S</text>
+        <text x="195" y="290" text-anchor="middle" font-size="12">référence 0 V</text>
+        <text x="440" y="22" text-anchor="middle" font-size="12">position</text>
+        <text x="630" y="322" text-anchor="end" font-size="12">potentiel</text>
+        <text x="440" y="322" text-anchor="middle" font-size="12">0 V</text>
+        <text x="520" y="322" text-anchor="middle" font-size="12">E/2</text>
+        <text x="600" y="322" text-anchor="middle" font-size="12">E</text>
+        <text x="540" y="110" font-size="12">chute R I = E/2</text>
+        <text x="460" y="240" font-size="12">chute R I = E/2</text>
+      </g>
+    </svg>
+    <figcaption>
+      À gauche, la source $E$, borne $+$ en haut, alimente la chaîne $R_1$, $R_2$ ; le courant $I$, flèche
+      épaisse, circule dans le sens horaire et traverse les deux résistances vers le bas. Le point $S$, cercle
+      ouvert, est la sortie, à vide : aucun courant n'y est prélevé. À droite, le profil de potentiel : l'axe
+      vertical reprend la position le long de la chaîne, au même niveau que sur le schéma, et l'axe horizontal
+      porte le potentiel par rapport à la référence 0 V. Le trait épais descend linéairement dans chaque
+      résistance et reste vertical le long des fils parfaits ; les lignes en tirets relient chaque point de la
+      chaîne à son potentiel. Avec deux résistances égales, $S$ est à $E/2$.
+    </figcaption>
+  </figure>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limite de l'image de la pente</span>
+    <p>
+      L'inclinaison n'est uniforme que si le courant est le même dans toute la chaîne. Dès qu'un appareil prélève
+      un courant en $S$, la partie basse de la chaîne est traversée par un courant plus faible que la partie
+      haute : la pente change au point de prélèvement, et la tension de sortie baisse. Tout le problème du diviseur
+      chargé, traité en section E, tient dans cette rupture de pente.
+    </p>
+  </div>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-serie">Association en série</h3>
+  <p>
+    Considérons $n$ résistances $R_1, \dots, R_n$ placées bout à bout entre deux bornes $A$ et $B$, sans aucun
+    autre conducteur raccordé aux points intermédiaires. Chaque point intermédiaire ne relie que deux dipôles ; ce
+    n'est pas un nœud au sens de Kirchhoff, et la loi des nœuds y impose l'égalité des courants. Le schéma
+    suivant fixe les conventions.
+  </p>
+  <figure id="e-serie-figure">
+    <svg viewBox="0 0 660 230" role="img" aria-label="Trois résistances en série entre les bornes A et B, parcourues par le même courant I, avec les tensions u1, u2, u3 et la tension totale U">
+      <defs>
+        <marker id="fl-e-serie" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-e-serie-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M46 110H130"/>
+        <rect x="130" y="96" width="100" height="28" rx="3"/>
+        <path d="M230 110H280"/>
+        <rect x="280" y="96" width="100" height="28" rx="3"/>
+        <path d="M380 110H430"/>
+        <rect x="430" y="96" width="100" height="28" rx="3"/>
+        <path d="M530 110H614"/>
+      </g>
+      <circle cx="40" cy="110" r="6" fill="none" stroke="currentColor" stroke-width="2"/>
+      <circle cx="620" cy="110" r="6" fill="none" stroke="currentColor" stroke-width="2"/>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M62 110H112" marker-end="url(#fl-e-serie)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M225 70H140" marker-end="url(#fl-e-serie-u)"/>
+        <path d="M375 70H290" marker-end="url(#fl-e-serie-u)"/>
+        <path d="M525 70H440" marker-end="url(#fl-e-serie-u)"/>
+        <path d="M610 170H50" marker-end="url(#fl-e-serie-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13">
+        <text x="40" y="94" text-anchor="middle" font-weight="600">A</text>
+        <text x="620" y="94" text-anchor="middle" font-weight="600">B</text>
+        <text x="86" y="100" text-anchor="middle">I</text>
+        <text x="180" y="115" text-anchor="middle">R1</text>
+        <text x="330" y="115" text-anchor="middle">R2</text>
+        <text x="480" y="115" text-anchor="middle">R3</text>
+        <text x="182" y="58" text-anchor="middle" fill="var(--serie-2)">u1 = R1 I</text>
+        <text x="332" y="58" text-anchor="middle" fill="var(--serie-2)">u2 = R2 I</text>
+        <text x="482" y="58" text-anchor="middle" fill="var(--serie-2)">u3 = R3 I</text>
+        <text x="330" y="194" text-anchor="middle" fill="var(--serie-2)">U = u1 + u2 + u3</text>
+        <text x="330" y="222" text-anchor="middle" font-size="12">même courant I dans les trois résistances</text>
+      </g>
+    </svg>
+    <figcaption>
+      Trois résistances en série entre les bornes $A$ et $B$ (cercles ouverts). La flèche épaisse est le sens de
+      référence du courant $I$, commun à toutes. Les flèches fines, au-dessus de chaque résistance, sont les
+      tensions $u_k$ en convention récepteur : elles pointent contre le courant, vers la borne d'entrée du courant,
+      qui est au potentiel le plus élevé. La longue flèche fine du bas est la tension totale $U = V_A - V_B$.
+    </figcaption>
+  </figure>
+  <div class="formule-cle">
+    $$R_{\text{éq}} = \sum_{k=1}^{n} R_k \qquad\text{(série)}$$
+    <p class="formule-cle-legende">
+      $R_k$ résistances de la chaîne, $R_{\text{éq}}$ résistance équivalente vue entre $A$ et $B$ ($\Omega$).
+      Hypothèses : même courant dans tous les éléments, donc aucun courant prélevé aux points intermédiaires ;
+      dipôles linéaires. Dérivation : la loi des mailles donne $U = u_1 + u_2 + \dots + u_n$, la loi d'Ohm
+      $u_k = R_k I$, donc $U = (\sum R_k)\,I$, ce qui définit $R_{\text{éq}} = U/I$. Interprétation : les
+      oppositions au passage du courant s'ajoutent ; $R_{\text{éq}}$ dépasse la plus grande des $R_k$. Cas
+      limites : une résistance nulle (court-circuit) disparaît de la somme ; une résistance infinie (circuit
+      ouvert) rend toute la chaîne infinie, et le courant s'annule partout. Vérification dimensionnelle : une
+      somme d'ohms est en ohms.
+    </p>
+  </div>
+  <p>
+    La puissance totale reçue est $P = UI = \sum u_k I = \sum R_k I^2$ : chaque résistance dissipe une puissance
+    proportionnelle à sa valeur, et la plus grande chauffe le plus. En série, une résistance défaillante en
+    circuit ouvert coupe tout le circuit ; c'est le principe d'une guirlande ancienne ou d'une chaîne d'arrêts
+    d'urgence câblés en série, où l'ouverture d'un seul contact coupe l'ensemble.
+  </p>
+
+  <h3 id="e-parallele">Association en parallèle</h3>
+  <p>
+    Considérons maintenant $n$ résistances reliées chacune entre les deux mêmes nœuds $A$ et $B$. Elles partagent
+    la même tension $U = V_A - V_B$, et le courant qui arrive en $A$ se répartit entre elles. Le schéma suivant
+    fixe les conventions.
+  </p>
+  <figure id="e-parallele-figure">
+    <svg viewBox="0 0 660 300" role="img" aria-label="Trois résistances en parallèle entre les nœuds A et B, sous la même tension U, parcourues par les courants I1, I2 et I3 dont la somme est le courant total I">
+      <defs>
+        <marker id="fl-e-par" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-e-par-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M46 60H520"/>
+        <path d="M46 250H520"/>
+        <path d="M200 60V110"/>
+        <rect x="186" y="110" width="28" height="80" rx="3"/>
+        <path d="M200 190V250"/>
+        <path d="M360 60V110"/>
+        <rect x="346" y="110" width="28" height="80" rx="3"/>
+        <path d="M360 190V250"/>
+        <path d="M520 60V110"/>
+        <rect x="506" y="110" width="28" height="80" rx="3"/>
+        <path d="M520 190V250"/>
+      </g>
+      <circle cx="40" cy="60" r="6" fill="none" stroke="currentColor" stroke-width="2"/>
+      <circle cx="40" cy="250" r="6" fill="none" stroke="currentColor" stroke-width="2"/>
+      <g fill="currentColor" stroke="none">
+        <circle cx="200" cy="60" r="5"/>
+        <circle cx="360" cy="60" r="5"/>
+        <circle cx="200" cy="250" r="5"/>
+        <circle cx="360" cy="250" r="5"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M70 60H130" marker-end="url(#fl-e-par)"/>
+        <path d="M200 70V100" marker-end="url(#fl-e-par)"/>
+        <path d="M360 70V100" marker-end="url(#fl-e-par)"/>
+        <path d="M520 70V100" marker-end="url(#fl-e-par)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M600 240V76" marker-end="url(#fl-e-par-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13">
+        <text x="40" y="44" text-anchor="middle" font-weight="600">A</text>
+        <text x="40" y="276" text-anchor="middle" font-weight="600">B</text>
+        <text x="100" y="48" text-anchor="middle">I</text>
+        <text x="222" y="90">I1</text>
+        <text x="382" y="90">I2</text>
+        <text x="542" y="90">I3</text>
+        <text x="222" y="155">R1</text>
+        <text x="382" y="155">R2</text>
+        <text x="542" y="155">R3</text>
+        <text x="612" y="162" fill="var(--serie-2)">U</text>
+        <text x="330" y="288" text-anchor="middle" font-size="12">même tension U aux bornes des trois résistances ; I = I1 + I2 + I3</text>
+      </g>
+    </svg>
+    <figcaption>
+      Trois résistances en parallèle : chacune relie le conducteur du haut, nœud $A$, au conducteur du bas, nœud
+      $B$ ; les points pleins marquent les jonctions. Les flèches épaisses sont les sens de référence : $I$
+      arrive en $A$, et $I_1$, $I_2$, $I_3$ descendent dans les branches, en convention récepteur. La flèche fine
+      à droite est la tension commune $U = V_A - V_B$. Le critère du parallèle est topologique : relier les deux
+      mêmes nœuds, quelle que soit la position des résistances sur le dessin.
+    </figcaption>
+  </figure>
+  <div class="formule-cle">
+    $$G_{\text{éq}} = \sum_{k=1}^{n} G_k \iff \frac{1}{R_{\text{éq}}} = \sum_{k=1}^{n} \frac{1}{R_k}
+    \qquad\text{et, pour deux résistances,}\qquad R_1 /\!/ R_2 = \frac{R_1 R_2}{R_1 + R_2}$$
+    <p class="formule-cle-legende">
+      $G_k = 1/R_k$ conductances ($\mathrm{S}$), $R_{\text{éq}}$ résistance équivalente ($\Omega$) ; la notation
+      $R_1 /\!/ R_2$ se lit "$R_1$ en parallèle avec $R_2$". Hypothèses : tous les éléments relient les deux mêmes
+      nœuds, dipôles linéaires. Dérivation : la loi des nœuds en $A$ donne $I = I_1 + \dots + I_n$, la loi d'Ohm
+      $I_k = U/R_k = G_k U$, donc $I = (\sum G_k)\,U$. Pour deux résistances, $1/R_{\text{éq}} = (R_1 + R_2)/(R_1
+      R_2)$. Interprétation : les facilités de passage s'ajoutent ; $R_{\text{éq}}$ est inférieure à la plus petite
+      des $R_k$. Cas limites : $R_2 \to \infty$ donne $R_{\text{éq}} = R_1$ (branche ouverte, sans effet) ;
+      $R_2 \to 0$ donne $R_{\text{éq}} = 0$ (un court-circuit en parallèle court-circuite tout) ; $n$ résistances
+      égales à $R$ donnent $R/n$. Vérification dimensionnelle : $\Omega^2/\Omega = \Omega$ pour la formule produit
+      sur somme ; une somme de siemens est en siemens.
+    </p>
+  </div>
+  <p>
+    La puissance totale est $P = \sum U^2/R_k = \sum G_k U^2$ : en parallèle, la plus petite résistance dissipe le
+    plus. La formule produit sur somme ne vaut que pour deux résistances ; pour trois, on l'applique deux fois, ou
+    l'on additionne les conductances. Un contrôle dimensionnel détecte l'erreur classique
+    $R_1R_2R_3/(R_1 + R_2 + R_3)$, qui a la dimension d'une résistance au carré.
+  </p>
+
+  <h3 id="e-reduction-titre">Réduction d'un réseau série-parallèle</h3>
+  <p>
+    Un réseau est dit série-parallèle lorsqu'on peut le ramener à une seule résistance en repérant, étape par
+    étape, un groupe en série ou en parallèle et en le remplaçant par son équivalent. On calcule ainsi le courant
+    fourni par la source, puis l'on remonte les étapes en sens inverse pour retrouver chaque courant et chaque
+    tension : c'est la méthode de réduction et de remontée. L'animation ci-dessous la déroule sur un réseau
+    alimenté sous $E = 24\ \mathrm{V}$ : $R_1 = 4\ \Omega$ en série avec l'ensemble formé de $R_2 = 12\ \Omega$
+    en parallèle sur la branche $R_3 = 2\ \Omega$, $R_4 = 4\ \Omega$. Avant de la lancer, prédisez : quelle
+    résistance équivalente la source voit-elle, et quelle branche, $R_2$ ou $R_3 + R_4$, porte le plus grand
+    courant ?
+  </p>
+  <figure id="e-reduction-figure">
+    <div class="m-toile-cadre schema-vivant" id="e-reduction"></div>
+    <figcaption>
+      Le réseau à chaque étape de la réduction puis de la remontée. La source $E$, borne $+$ en haut, a sa borne
+      $-$ reliée au conducteur du bas, référence de potentiel. Le groupe qui va être remplacé est entouré d'un
+      cadre en tirets ; la résistance équivalente qui le remplace est dessinée en trait épais. Pendant la remontée,
+      les courants et tensions calculés sont inscrits à côté des éléments, avec des sens de référence identiques
+      aux sens réels : les courants descendent dans les branches, les tensions sont positives du haut vers le bas.
+      Le curseur "Étape" permet d'avancer ou de reculer à son rythme ; la lecture enchaîne les étapes.
+    </figcaption>
+  </figure>
+  <div id="e-reduction-curseurs"></div>
+  <div id="e-reduction-lecteur"></div>
+  <div id="e-reduction-valeurs"></div>
+  <p>
+    Interprétation : $R_3 + R_4 = 6\ \Omega$, puis $12 /\!/ 6 = 4\ \Omega$, puis $R_{\text{éq}} = 4 + 4 =
+    8\ \Omega$ : la source débite $24/8 = 3\ \mathrm{A}$. La remontée donne $12\ \mathrm{V}$ aux bornes du groupe
+    parallèle, donc $1\ \mathrm{A}$ dans $R_2$ et $2\ \mathrm{A}$ dans $R_3 + R_4$ : la branche la moins
+    résistante porte le plus grand courant. Contrôles : $1 + 2 = 3\ \mathrm{A}$ en nœud, $4 \times 3 + 12 =
+    24\ \mathrm{V}$ en maille, et la puissance fournie, $24 \times 3 = 72\ \mathrm{W}$, égale la somme
+    $36 + 12 + 8 + 16 = 72\ \mathrm{W}$ dissipée dans $R_1$, $R_2$, $R_3$, $R_4$. Tous les réseaux ne se réduisent
+    pas ainsi : un pont de Wheatstone déséquilibré, ou un réseau à deux sources comme celui du cours Lois de
+    Kirchhoff, ne contient aucun groupe purement série ou parallèle ; il faut alors la méthode des nœuds, ou les
+    théorèmes du cours Théorèmes de Thévenin, Norton et superposition.
+  </p>
+
+  <h3 id="e-diviseur-tension">Diviseur de tension</h3>
+  <p>
+    Deux résistances en série $R_1$ et $R_2$ sont alimentées sous une tension $E$ ; on prélève la tension $V_S$
+    aux bornes de $R_2$, entre le point milieu $S$ et la référence. Tant que rien n'est branché en $S$, on dit que
+    le diviseur est à vide.
+  </p>
+  <figure id="e-diviseur-tension-figure">
+    <svg viewBox="0 0 620 340" role="img" aria-label="Diviseur de tension : source E, résistance R1 en haut, résistance R2 en bas, sortie S à vide, tension de sortie VS aux bornes de R2 par rapport à la référence">
+      <defs>
+        <marker id="fl-e-dt" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-e-dt-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M100 300V216"/>
+        <circle cx="100" cy="190" r="26"/>
+        <path d="M100 164V50H300V70"/>
+        <rect x="286" y="70" width="28" height="80" rx="3"/>
+        <path d="M300 150V190"/>
+        <rect x="286" y="190" width="28" height="80" rx="3"/>
+        <path d="M300 270V300H100"/>
+        <path d="M300 170H454"/>
+        <path d="M300 300H454"/>
+        <path d="M200 300V314M186 314H214M192 321H208M197 328H203"/>
+      </g>
+      <circle cx="300" cy="170" r="5" fill="currentColor"/>
+      <circle cx="300" cy="300" r="5" fill="currentColor"/>
+      <circle cx="460" cy="170" r="6" fill="none" stroke="currentColor" stroke-width="2"/>
+      <circle cx="460" cy="300" r="6" fill="none" stroke="currentColor" stroke-width="2"/>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M160 50H230" marker-end="url(#fl-e-dt)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M255 146V76" marker-end="url(#fl-e-dt-u)"/>
+        <path d="M500 292V180" marker-end="url(#fl-e-dt-u)"/>
+        <path d="M50 280V100" marker-end="url(#fl-e-dt-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13">
+        <text x="100" y="195" text-anchor="middle">E</text>
+        <text x="74" y="170" text-anchor="end" font-weight="600">+</text>
+        <text x="195" y="40" text-anchor="middle">I</text>
+        <text x="326" y="115">R1</text>
+        <text x="326" y="235">R2</text>
+        <text x="300" y="186" text-anchor="end" font-weight="600">S </text>
+        <text x="244" y="116" text-anchor="end" fill="var(--serie-2)">u1</text>
+        <text x="512" y="240" fill="var(--serie-2)">VS</text>
+        <text x="40" y="195" text-anchor="end" fill="var(--serie-2)">E</text>
+        <text x="460" y="156" text-anchor="middle" font-size="12">is = 0</text>
+        <text x="200" y="290" text-anchor="middle" font-size="12">référence 0 V</text>
+      </g>
+    </svg>
+    <figcaption>
+      La source $E$, borne $+$ en haut, fait circuler le courant $I$ (flèche épaisse) dans $R_1$ puis $R_2$. Le
+      point $S$, entre les deux résistances, est relié à la borne de sortie supérieure ; la borne inférieure est la
+      référence 0 V. Les flèches fines sont les tensions, pointées vers le potentiel le plus haut : $E$ à gauche,
+      $u_1$ aux bornes de $R_1$, et $V_S$ entre la sortie et la référence. La mention $i_s = 0$ rappelle
+      l'hypothèse de sortie à vide.
+    </figcaption>
+  </figure>
+  <div class="formule-cle">
+    $$V_S = E\,\frac{R_2}{R_1 + R_2} \qquad\text{(diviseur à vide)}$$
+    <p class="formule-cle-legende">
+      $E$ tension appliquée au pont ($\mathrm{V}$), $V_S$ tension de sortie aux bornes de $R_2$ ($\mathrm{V}$),
+      $R_1$ résistance haute et $R_2$ résistance basse ($\Omega$) ; le rapport $k = R_2/(R_1 + R_2)$ est sans
+      dimension et compris entre 0 et 1. Hypothèse essentielle : aucun courant prélevé en $S$, de sorte que $R_1$
+      et $R_2$ sont réellement en série. Dérivation : $I = E/(R_1 + R_2)$ par l'association série, puis
+      $V_S = R_2 I$. Interprétation : la tension se partage au prorata des résistances, la plus grande prend la
+      plus grande part. Cas limites : $R_2 \to 0$ donne $V_S = 0$ ; $R_1 \to 0$ donne $V_S = E$ ; $R_1 = R_2$
+      donne $E/2$. Vérification dimensionnelle : $\mathrm{V} \times \Omega/\Omega = \mathrm{V}$. La formule ne
+      dépend que du rapport des résistances : multiplier $R_1$ et $R_2$ par dix ne change pas $V_S$, mais divise
+      par dix le courant et la puissance du pont.
+    </p>
+  </div>
+  <p>
+    Le pont consomme en permanence la puissance $P = E^2/(R_1 + R_2)$, qui se répartit en $P_1 = R_1 I^2$ et
+    $P_2 = R_2 I^2$. Cette puissance est perdue : elle chauffe l'armoire et, sur une alimentation secourue, elle
+    décharge la batterie. C'est la première contrainte de conception, qui pousse vers des résistances élevées.
+  </p>
+
+  <h3 id="e-diviseur-courant">Diviseur de courant</h3>
+  <p>
+    Dual du précédent : un courant $I$ imposé arrive sur deux résistances en parallèle ; on cherche la part
+    $I_1$ qui traverse $R_1$.
+  </p>
+  <figure id="e-diviseur-courant-figure">
+    <svg viewBox="0 0 620 320" role="img" aria-label="Diviseur de courant : source de courant I alimentant deux résistances R1 et R2 en parallèle, parcourues par I1 et I2, sous la tension commune U">
+      <defs>
+        <marker id="fl-e-dc" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-e-dc-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M100 280V196"/>
+        <circle cx="100" cy="170" r="26"/>
+        <path d="M100 144V50H460V110"/>
+        <path d="M300 50V110"/>
+        <rect x="286" y="110" width="28" height="90" rx="3"/>
+        <path d="M300 200V280"/>
+        <rect x="446" y="110" width="28" height="90" rx="3"/>
+        <path d="M460 200V280H100"/>
+      </g>
+      <path d="M100 190V152" stroke="currentColor" stroke-width="2.2" fill="none" marker-end="url(#fl-e-dc)"/>
+      <g fill="currentColor" stroke="none">
+        <circle cx="300" cy="50" r="5"/>
+        <circle cx="300" cy="280" r="5"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M160 50H230" marker-end="url(#fl-e-dc)"/>
+        <path d="M300 64V96" marker-end="url(#fl-e-dc)"/>
+        <path d="M460 64V96" marker-end="url(#fl-e-dc)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M540 270V60" marker-end="url(#fl-e-dc-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13">
+        <text x="66" y="175" text-anchor="end">I</text>
+        <text x="195" y="40" text-anchor="middle">I</text>
+        <text x="314" y="88">I1</text>
+        <text x="474" y="88">I2</text>
+        <text x="324" y="160">R1</text>
+        <text x="484" y="160">R2</text>
+        <text x="552" y="170" fill="var(--serie-2)">U</text>
+        <text x="100" y="308" text-anchor="middle" font-size="12">source de courant</text>
+      </g>
+    </svg>
+    <figcaption>
+      La source de courant, cercle traversé d'une flèche orientée vers le haut, impose le courant $I$ quelle que
+      soit la tension à ses bornes. Les flèches épaisses sont les sens de référence : $I$ arrive au nœud supérieur,
+      $I_1$ et $I_2$ descendent dans $R_1$ et $R_2$. La flèche fine à droite est la tension $U$ commune aux deux
+      résistances.
+    </figcaption>
+  </figure>
+  <div class="formule-cle">
+    $$I_1 = I\,\frac{R_2}{R_1 + R_2} = I\,\frac{G_1}{G_1 + G_2}$$
+    <p class="formule-cle-legende">
+      $I$ courant total arrivant sur le groupe ($\mathrm{A}$), $I_1$ courant dans $R_1$ ($\mathrm{A}$), $R_1$,
+      $R_2$ ($\Omega$), $G_1$, $G_2$ conductances ($\mathrm{S}$). Hypothèses : $R_1$ et $R_2$ en parallèle, aucune
+      autre branche entre leurs nœuds. Dérivation : $U = (R_1 /\!/ R_2)\,I = \dfrac{R_1 R_2}{R_1 + R_2}\,I$, puis
+      $I_1 = U/R_1$. Interprétation : le numérateur contient l'autre résistance ; le courant préfère le chemin le
+      moins résistant, et la part de chaque branche est proportionnelle à sa conductance. Cas limites : $R_2 \to
+      \infty$ donne $I_1 = I$ ; $R_2 \to 0$ donne $I_1 = 0$, tout le courant passe par le court-circuit.
+      Vérification dimensionnelle : $\mathrm{A} \times \Omega/\Omega = \mathrm{A}$. L'erreur classique consiste à
+      mettre $R_1$ au numérateur, par mimétisme avec le diviseur de tension.
+    </p>
+  </div>
+
+  <h3 id="e-diviseur-charge">Diviseur chargé</h3>
+  <p>
+    Branchons maintenant une charge $R_L$ en $S$ : l'entrée d'un automate, un voltmètre, un étage électronique.
+    $R_L$ se trouve en parallèle sur $R_2$, et le pont n'est plus un simple diviseur de $R_1$ et $R_2$. La formule
+    du diviseur s'applique toujours, mais à $R_1$ et à l'équivalent $R_2 /\!/ R_L$, plus petit que $R_2$ : la
+    tension de sortie baisse. Le schéma principal de la section F compare les deux situations.
+  </p>
+  <div class="formule-cle">
+    $$V_S = E\,\frac{R_2 /\!/ R_L}{R_1 + R_2 /\!/ R_L} = V_{S0}\,\frac{R_L}{R_L + R_{th}}
+    \quad\text{avec}\quad V_{S0} = E\,\frac{R_2}{R_1 + R_2},\quad R_{th} = R_1 /\!/ R_2$$
+    <p class="formule-cle-legende">
+      $V_S$ tension de sortie chargée, $V_{S0}$ tension à vide ($\mathrm{V}$) ; $R_L$ résistance de charge,
+      $R_{th} = R_1 R_2/(R_1 + R_2)$ résistance vue depuis la sortie, source éteinte ($\Omega$). Hypothèses :
+      source idéale, dipôles linéaires. Dérivation : en développant $R_2 /\!/ R_L$,
+      $V_S = E\,\dfrac{R_2 R_L}{R_1 R_2 + R_1 R_L + R_2 R_L}$ ; en divisant numérateur et dénominateur par
+      $R_1 + R_2$, on obtient $V_S = E\,\dfrac{R_2}{R_1 + R_2}\cdot\dfrac{R_L}{R_L + R_1R_2/(R_1 + R_2)}$.
+      Interprétation : vu de sa sortie, le pont se comporte comme une source $V_{S0}$ en série avec $R_{th}$, et la
+      charge forme avec $R_{th}$ un second diviseur ; l'erreur relative de charge vaut
+      $\varepsilon = (V_{S0} - V_S)/V_{S0} = R_{th}/(R_L + R_{th})$. Cas limites : $R_L \to \infty$ redonne le
+      diviseur à vide ; $R_L = R_{th}$ divise la tension par deux ; $R_L \to 0$ annule la sortie. Vérification
+      dimensionnelle : $R_L/(R_L + R_{th})$ est un rapport d'ohms, sans dimension.
+    </p>
+  </div>
+  <p>
+    Cette forme contient la règle de conception usuelle. Pour une erreur de charge inférieure à $\varepsilon$, il
+    faut $R_L \geq R_{th}\,(1 - \varepsilon)/\varepsilon$, soit $R_L \geq 9\,R_{th}$ pour $10\ \%$ et
+    $R_L \geq 99\,R_{th}$ pour $1\ \%$. On l'énonce souvent sous la forme "le courant du pont doit valoir au moins
+    dix fois le courant prélevé" ; c'est une règle pratique, qui correspond à un ordre de grandeur de quelques
+    pour cent d'erreur, pas une loi. Elle entre en conflit direct avec la contrainte de puissance : diminuer
+    $R_{th}$ oblige à diminuer $R_1 + R_2$, donc à augmenter $E^2/(R_1 + R_2)$. La section H montre comment
+    sortir de ce conflit. La représentation "source $V_{S0}$ en série avec $R_{th}$" n'est pas propre au diviseur :
+    elle se généralise à tout réseau linéaire, c'est le théorème de Thévenin du prochain cours.
+  </p>
+  <p>
+    Cas particulier du potentiomètre de résistance totale $R$, dont le curseur est à la fraction $x$ de la course
+    depuis la référence : $R_2 = xR$, $R_1 = (1 - x)R$, donc $V_{S0} = xE$ et $R_{th} = x(1 - x)R$, maximale à
+    mi-course. En charge, $V_S = \dfrac{xE}{1 + x(1 - x)\,R/R_L}$ : la loi n'est plus linéaire, et l'écart
+    absolu $xE - V_S$ est maximal vers $x \approx 2/3$ lorsque $R_L \gg R$. La simulation suivante permet de le
+    vérifier.
+  </p>
+
+  <h3 id="e-sim-potentiometre-section">Simulation interactive : diviseur idéal et diviseur chargé</h3>
+  <p>
+    Un potentiomètre de $10\ \mathrm{k\Omega}$ est alimenté sous $10\ \mathrm{V}$. Vous déplacez son curseur à la
+    souris ou au clavier ; une charge $R_L$ réglable peut être connectée à sa sortie. Prédisez d'abord : pour
+    $R_L = 10\ \mathrm{k\Omega}$, la tension à mi-course vaut-elle $5\ \mathrm{V}$, plus, ou moins ? En quelle
+    position l'écart avec la loi linéaire est-il le plus grand ? Aux deux extrémités de la course, la charge
+    a-t-elle un effet ?
+  </p>
+  <figure id="e-potentiometre-figure">
+    <div class="m-toile-cadre schema-vivant" id="e-potentiometre"></div>
+    <figcaption>
+      Le potentiomètre est dessiné verticalement entre la borne $+$ de la source, en haut, et la référence 0 V, en
+      bas. Le point rond déplaçable est son curseur, à la fraction $x$ de la course comptée depuis le bas ; il est
+      relié à la charge $R_L$ par le conducteur horizontal. La flèche fine à droite est la tension de sortie $V_S$.
+      Lorsque la charge est déconnectée, son conducteur est dessiné en tirets. Le graphique sous le schéma trace
+      $V_S$ en fonction de $x$ pour le diviseur à vide et pour le diviseur chargé ; les noms des deux courbes sont
+      rappelés dans la légende du graphique, et le point marqué correspond à la position courante.
+    </figcaption>
+  </figure>
+  <div id="e-potentiometre-trace"></div>
+  <div id="e-potentiometre-curseurs"></div>
+  <div id="e-potentiometre-lecteur"></div>
+  <div id="e-potentiometre-valeurs"></div>
+  <p>
+    Interprétation : à mi-course, $R_{th} = 0{,}5 \times 0{,}5 \times 10 = 2{,}5\ \mathrm{k\Omega}$, et avec
+    $R_L = 10\ \mathrm{k\Omega}$ on lit $V_S = 5 \times 10/12{,}5 = 4\ \mathrm{V}$, soit $20\ \%$ de moins que la
+    valeur à vide. Aux extrémités, $R_{th} = 0$ : le curseur est relié directement à la source ou à la référence,
+    et la charge n'a aucun effet. L'écart absolu culmine vers $x \approx 0{,}69$ pour ce réglage, et vers
+    $x = 2/3$ lorsque $R_L$ devient grande devant $R$. En portant $R_L$ à $100\ \mathrm{k\Omega}$, dix fois la
+    résistance du potentiomètre, l'écart maximal tombe sous $2\ \%$ de la pleine échelle. Un potentiomètre de
+    consigne relié à une entrée de variateur se choisit donc avec une résistance nettement inférieure à
+    l'impédance d'entrée annoncée par le constructeur. Le modèle suppose une piste parfaitement linéaire ; une
+    piste réelle a une tolérance de linéarité de l'ordre du pour cent, et une résistance de contact au curseur.
+  </p>
+
+  <h3 id="e-tolerances">Tolérances et valeurs normalisées</h3>
+  <p>
+    Les résistances du commerce suivent des séries normalisées de valeurs : la série E24 (24 valeurs par décade,
+    tolérance usuelle $\pm 5\ \%$ ou $\pm 1\ \%$), la série E96 (96 valeurs par décade, $\pm 1\ \%$). Le rapport
+    d'un diviseur réel n'est donc jamais exactement celui du calcul. En dérivant $\ln k = \ln R_2 - \ln(R_1 +
+    R_2)$, on obtient la sensibilité du rapport aux écarts relatifs des résistances :
+  </p>
+  <div class="formule-cle">
+    $$\frac{\Delta k}{k} = (1 - k)\left(\frac{\Delta R_2}{R_2} - \frac{\Delta R_1}{R_1}\right),
+    \qquad \left|\frac{\Delta k}{k}\right|_{\max} = 2\,(1 - k)\,t$$
+    <p class="formule-cle-legende">
+      $k = R_2/(R_1 + R_2)$ rapport du diviseur, $\Delta R_i/R_i$ écarts relatifs des résistances, $t$ tolérance
+      commune (sans dimension). Hypothèses : petits écarts, calcul au premier ordre. Dérivation :
+      $\mathrm{d}k/k = \mathrm{d}R_2/R_2 - (\mathrm{d}R_1 + \mathrm{d}R_2)/(R_1 + R_2)$, puis regroupement avec
+      $R_1/(R_1 + R_2) = 1 - k$. Interprétation : le pire cas survient lorsque les deux résistances dérivent en
+      sens opposés ; des écarts de même sens se compensent, ce qu'exploitent les réseaux de résistances appairées.
+      Cas limite : $k \to 1$ rend le rapport insensible aux tolérances ($R_1$ négligeable). Vérification : tous
+      les termes sont sans dimension. Pour $k = 1/3$ et $t = 1\ \%$, le pire cas vaut $\pm 1{,}33\ \%$.
+    </p>
+  </div>
+
+  <h3 id="e-statut">Statut des énoncés</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Ce qui est loi, convention, approximation, règle ou donnée</caption>
+      <thead><tr><th>Énoncé</th><th>Statut</th></tr></thead>
+      <tbody>
+        <tr><td>Formules série, parallèle, diviseurs de tension et de courant</td><td>conséquences exactes des lois de Kirchhoff et de la loi d'Ohm, pour des dipôles linéaires</td></tr>
+        <tr><td>Sortie à vide, source idéale, conducteurs parfaits</td><td>approximations, à vérifier par le calcul de l'erreur de charge</td></tr>
+        <tr><td>Notation $R_1 /\!/ R_2$, choix de $R_1$ en haut et $R_2$ en bas, fraction $x$ comptée depuis la référence</td><td>conventions d'écriture</td></tr>
+        <tr><td>Courant du pont au moins dix fois le courant prélevé, puissance limitée à la moitié de la puissance nominale</td><td>règles de conception usuelles, à adapter à la précision et à la fiabilité visées</td></tr>
+        <tr><td>Séries E24 et E96, tolérances, puissance et tension maximales d'une résistance, impédance d'entrée d'un automate</td><td>données normalisées ou données du constructeur, à lire sur la documentation</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, la comparaison entre un diviseur à vide et le même
+    diviseur chargé, puis l'organigramme de conception d'un pont et le tableau de dualité entre série et parallèle.
+    Les schémas qui éclairent un point précis ont été placés au fil du texte ; ils sont rappelés en fin de section.
+  </p>
+
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 780 400" role="img" aria-label="Comparaison entre un diviseur à vide, qui donne 6 volts, et le même diviseur chargé par 10 kilohms, qui ne donne plus que 4 volts">
+      <defs>
+        <marker id="fl-f-i" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-f-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M60 320V226"/>
+        <circle cx="60" cy="200" r="26"/>
+        <path d="M60 174V60H200V80"/>
+        <rect x="186" y="80" width="28" height="80" rx="3"/>
+        <path d="M200 160V200"/>
+        <rect x="186" y="200" width="28" height="80" rx="3"/>
+        <path d="M200 280V320H60"/>
+        <path d="M200 180H300"/>
+        <path d="M200 320H300"/>
+        <path d="M130 320V334M116 334H144M122 341H138M127 348H133"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M450 320V226"/>
+        <circle cx="450" cy="200" r="26"/>
+        <path d="M450 174V60H590V80"/>
+        <rect x="576" y="80" width="28" height="80" rx="3"/>
+        <path d="M590 160V200"/>
+        <rect x="576" y="200" width="28" height="80" rx="3"/>
+        <path d="M590 280V320H450"/>
+        <path d="M590 180H700V200"/>
+        <rect x="686" y="200" width="28" height="80" rx="3"/>
+        <path d="M700 280V320H590"/>
+        <path d="M520 320V334M506 334H534M512 341H528M517 348H523"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="200" cy="180" r="5"/>
+        <circle cx="200" cy="320" r="5"/>
+        <circle cx="590" cy="180" r="5"/>
+        <circle cx="590" cy="320" r="5"/>
+      </g>
+      <circle cx="306" cy="180" r="6" fill="none" stroke="currentColor" stroke-width="2"/>
+      <circle cx="306" cy="320" r="6" fill="none" stroke="currentColor" stroke-width="2"/>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M100 60H160" marker-end="url(#fl-f-i)"/>
+        <path d="M490 60H550" marker-end="url(#fl-f-i)"/>
+        <path d="M590 186V196" marker-end="url(#fl-f-i)"/>
+        <path d="M630 180H670" marker-end="url(#fl-f-i)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M340 312V190" marker-end="url(#fl-f-u)"/>
+        <path d="M745 312V190" marker-end="url(#fl-f-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="180" y="24" text-anchor="middle" font-weight="600">diviseur à vide</text>
+        <text x="590" y="24" text-anchor="middle" font-weight="600">diviseur chargé</text>
+        <text x="60" y="205" text-anchor="middle">12 V</text>
+        <text x="34" y="180" text-anchor="end" font-weight="600">+</text>
+        <text x="450" y="205" text-anchor="middle">12 V</text>
+        <text x="424" y="180" text-anchor="end" font-weight="600">+</text>
+        <text x="222" y="118">R1</text>
+        <text x="222" y="136" font-size="11">10 kΩ</text>
+        <text x="222" y="238">R2</text>
+        <text x="222" y="256" font-size="11">10 kΩ</text>
+        <text x="612" y="118">R1</text>
+        <text x="612" y="136" font-size="11">10 kΩ</text>
+        <text x="572" y="238" text-anchor="end">R2</text>
+        <text x="572" y="256" text-anchor="end" font-size="11">10 kΩ</text>
+        <text x="678" y="238" text-anchor="end">RL</text>
+        <text x="678" y="256" text-anchor="end" font-size="11">10 kΩ</text>
+        <text x="130" y="50" text-anchor="middle">I = 0,6 mA</text>
+        <text x="520" y="50" text-anchor="middle">I1 = 0,8 mA</text>
+        <text x="572" y="196" text-anchor="end" font-size="11">I2 = 0,4 mA</text>
+        <text x="650" y="170" text-anchor="middle" font-size="11">IL = 0,4 mA</text>
+        <text x="352" y="256" fill="var(--serie-2)">VS0</text>
+        <text x="352" y="274" fill="var(--serie-2)">6 V</text>
+        <text x="757" y="256" fill="var(--serie-2)">VS</text>
+        <text x="757" y="274" fill="var(--serie-2)">4 V</text>
+        <text x="306" y="166" text-anchor="middle" font-size="11">is = 0</text>
+        <text x="180" y="376" text-anchor="middle" font-size="11.5">référence 0 V ; même courant dans R1 et R2</text>
+        <text x="590" y="376" text-anchor="middle" font-size="11.5">R2 // RL = 5 kΩ ; R1 porte I2 + IL</text>
+        <text x="390" y="396" text-anchor="middle" font-size="11.5">Rth = R1 // R2 = 5 kΩ ; VS = 6 × 10 / (10 + 5) = 4 V, soit - 33 %</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal. À gauche, le diviseur à vide : la source de $12\ \mathrm{V}$, borne $+$ en haut, alimente
+      $R_1 = R_2 = 10\ \mathrm{k\Omega}$ ; le même courant de $0{,}6\ \mathrm{mA}$ traverse les deux résistances, et
+      la sortie, bornes à cercles ouverts, délivre $V_{S0} = 6\ \mathrm{V}$. À droite, le même pont chargé par
+      $R_L = 10\ \mathrm{k\Omega}$ : les flèches épaisses donnent les sens de référence des courants, identiques
+      aux sens réels. La loi des nœuds en $S$ impose $I_1 = I_2 + I_L = 0{,}8\ \mathrm{mA}$ : $R_1$ porte davantage
+      de courant, sa chute de tension augmente, et la sortie tombe à $4\ \mathrm{V}$. Les flèches fines sont les
+      tensions de sortie, par rapport au conducteur du bas, référence 0 V (symbole de masse). Le calcul par
+      $R_{th}$ figure sous les schémas.
+    </figcaption>
+  </figure>
+
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Données : E max, VS visée, charge RL, puissance maximale"] --> B["Rapport k = VS / E"]
+  B --> C["Contrainte de puissance : R1 + R2 au moins E² / P max"]
+  C --> D["Contrainte d'erreur : Rth = k (1 - k) (R1 + R2) au plus RL ε / (1 - ε)"]
+  D --> E{"Les deux contraintes sont-elles compatibles ?"}
+  E -->|"oui"| F["Choisir R1 + R2 dans l'intervalle, puis R2 = k (R1 + R2)"]
+  E -->|"non"| G{"RL connue et stable ?"}
+  G -->|"oui"| H["Compenser : choisir R2 telle que R2 // RL = k (R1 + R2 // RL)"]
+  G -->|"non"| I["Ajouter un étage tampon à haute impédance d'entrée"]
+  F --> J["Arrondir aux valeurs normalisées E24 ou E96"]
+  H --> J
+  I --> J
+  J --> K["Vérifier : VS, erreur, puissance par résistance, tension par résistance, tolérances"]
+  K --> L{"Tout est conforme ?"}
+  L -->|"non"| C
+  L -->|"oui"| M["Documenter les hypothèses et le réglage d'étalonnage"]</pre>
+    <figcaption>
+      Organigramme de conception d'un pont diviseur de mesure. Les rectangles sont des étapes, les losanges des
+      décisions, les libellés sur les flèches les réponses. Le premier losange confronte la contrainte de
+      puissance, qui impose une résistance totale minimale, et la contrainte d'erreur de charge, qui impose une
+      résistance totale maximale. S'il n'existe aucun intervalle commun, deux issues : compenser la charge dans le
+      calcul si elle est connue, ou l'isoler par un étage tampon, étudié dans le cours Conditionnement analogique.
+      La boucle finale ramène aux contraintes lorsque l'arrondi aux valeurs normalisées dégrade le résultat.
+    </figcaption>
+  </figure>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Dualité entre association en série et association en parallèle</caption>
+      <thead><tr><th>Grandeur</th><th>Série</th><th>Parallèle</th></tr></thead>
+      <tbody>
+        <tr><td>Grandeur commune</td><td>le courant $I$</td><td>la tension $U$</td></tr>
+        <tr><td>Grandeur qui s'additionne</td><td>les tensions, $U = \sum u_k$</td><td>les courants, $I = \sum i_k$</td></tr>
+        <tr><td>Équivalent</td><td>$R_{\text{éq}} = \sum R_k$, plus grande que chaque $R_k$</td><td>$G_{\text{éq}} = \sum G_k$, $R_{\text{éq}}$ plus petite que chaque $R_k$</td></tr>
+        <tr><td>Diviseur</td><td>de tension : $u_1 = U\,R_1/\sum R_k$</td><td>de courant : $i_1 = I\,G_1/\sum G_k$</td></tr>
+        <tr><td>Élément qui dissipe le plus</td><td>la plus grande résistance</td><td>la plus petite résistance</td></tr>
+        <tr><td>Élément ouvert</td><td>coupe tout le circuit</td><td>supprime seulement sa branche</td></tr>
+        <tr><td>Élément en court-circuit</td><td>disparaît de la somme</td><td>court-circuite tout le groupe</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-association-figure" data-renvoi="d-association-figure">la simulation série ou parallèle</a> et <a href="#d-pente-figure" data-renvoi="d-pente-figure">le profil de potentiel le long d'un diviseur</a>, section D ;</li>
+    <li><a href="#e-serie-figure" data-renvoi="e-serie-figure">les résistances en série</a> et <a href="#e-parallele-figure" data-renvoi="e-parallele-figure">les résistances en parallèle</a>, section E ;</li>
+    <li><a href="#e-reduction-figure" data-renvoi="e-reduction-figure">l'animation de réduction et de remontée d'un réseau</a>, section E ;</li>
+    <li><a href="#e-diviseur-tension-figure" data-renvoi="e-diviseur-tension-figure">le diviseur de tension</a> et <a href="#e-diviseur-courant-figure" data-renvoi="e-diviseur-courant-figure">le diviseur de courant</a>, section E ;</li>
+    <li><a href="#e-potentiometre-figure" data-renvoi="e-potentiometre-figure">la simulation du potentiomètre chargé</a>, section E ;</li>
+    <li><a href="#h-schema-figure" data-renvoi="h-schema-figure">le schéma annoté du pont de surveillance</a> et <a href="#h-conception-figure" data-renvoi="h-conception-figure">la simulation de l'espace de conception</a>, section H ;</li>
+    <li><a href="#i-bus-figure" data-renvoi="i-bus-figure">le pont de mesure d'un bus continu de variateur</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour calculer un réseau de résistances alimenté par une seule source :</p>
+  <ol>
+    <li>Repérer les nœuds en fusionnant les points reliés par des fils parfaits ; nommer chaque résistance.</li>
+    <li>Identifier les groupes en série (même courant, aucun nœud intermédiaire raccordé ailleurs) et en parallèle (mêmes deux nœuds), sans se fier à la disposition du dessin.</li>
+    <li>Réduire pas à pas, en redessinant le schéma après chaque réduction et en notant la valeur de chaque équivalent.</li>
+    <li>Calculer le courant de la source avec la résistance équivalente finale.</li>
+    <li>Remonter les étapes : diviseur de tension dans les groupes série, diviseur de courant dans les groupes parallèle.</li>
+    <li>Contrôler par la loi des nœuds, une loi des mailles et le bilan de puissance.</li>
+  </ol>
+  <p>Pour concevoir un pont diviseur de mesure :</p>
+  <ol>
+    <li>Fixer les données : tension d'entrée maximale $E$, tension de sortie visée, rapport $k$, résistance de la charge $R_L$ et sa dispersion, puissance maximale admise.</li>
+    <li>Déduire la résistance totale minimale de la contrainte de puissance, $R_1 + R_2 \geq E^2/P_{\max}$.</li>
+    <li>Déduire la résistance totale maximale de la contrainte d'erreur, $k(1 - k)(R_1 + R_2) \leq R_L\,\varepsilon/(1 - \varepsilon)$.</li>
+    <li>Si l'intervalle existe, y choisir $R_1 + R_2$ ; sinon, compenser la charge ou prévoir un étage tampon.</li>
+    <li>Arrondir aux valeurs normalisées, recalculer la sortie réelle et l'erreur.</li>
+    <li>Vérifier pour chaque résistance la puissance dissipée et la tension à ses bornes par rapport aux limites du constructeur, avec une marge.</li>
+    <li>Évaluer l'effet des tolérances et décider d'un étalonnage si la précision l'exige.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Situation : l'automate de l'armoire de contrôle-commande doit surveiller la tension du bus $24\ \mathrm{V}$
+    continu secouru, celui du chargeur et de la batterie étudiés dans le cours Lois de Kirchhoff. Il dispose d'une
+    entrée analogique $0$ à $10\ \mathrm{V}$ dont la documentation annonce une résistance d'entrée de
+    $100\ \mathrm{k\Omega}$ ; cette valeur est une donnée du constructeur, que l'on supposera connue à
+    $\pm 10\ \%$. Le bus peut monter jusqu'à $30\ \mathrm{V}$ en fin de charge : on veut $10\ \mathrm{V}$ en sortie
+    pour $30\ \mathrm{V}$ en entrée.
+  </p>
+  <p>
+    Données : $E_{\max} = 30\ \mathrm{V}$, $V_S = 10\ \mathrm{V}$ visée, $R_L = 100\ \mathrm{k\Omega}$. Contraintes :
+    puissance du pont au plus $50\ \mathrm{mW}$ à $30\ \mathrm{V}$ (échauffement de l'armoire et consommation sur
+    batterie) ; erreur due à la charge au plus $1\ \%$ ; résistances de $0{,}25\ \mathrm{W}$ utilisées à la moitié
+    au plus de leur puissance nominale, règle de conception usuelle. Inconnues : $R_1$, $R_2$, la tension de
+    sortie réelle, les puissances. Stratégie : appliquer la méthode de conception de la section G, constater le
+    conflit, puis le lever.
+  </p>
+  <h3 id="h-contraintes">Confronter les deux contraintes</h3>
+  <ol>
+    <li>Rapport : $k = 10/30 = 1/3$.</li>
+    <li>Puissance : $R_1 + R_2 \geq E^2/P_{\max} = 30^2/0{,}05 = 18\,000\ \Omega = 18\ \mathrm{k\Omega}$.</li>
+    <li>Erreur : $R_{th} = k(1 - k)(R_1 + R_2) = \tfrac{2}{9}(R_1 + R_2)$ doit vérifier $R_{th} \leq R_L/99 = 1010\ \Omega$, donc $R_1 + R_2 \leq 4545\ \Omega$.</li>
+    <li>Conclusion : il faudrait à la fois $R_1 + R_2 \geq 18\ \mathrm{k\Omega}$ et $R_1 + R_2 \leq 4{,}55\ \mathrm{k\Omega}$ ; aucun pont non compensé ne respecte les deux contraintes.</li>
+  </ol>
+  <h3 id="h-naif">Solution naïve et son erreur</h3>
+  <ol>
+    <li>Choix respectant la puissance, en valeurs E24 : $R_1 = 20\ \mathrm{k\Omega}$, $R_2 = 10\ \mathrm{k\Omega}$, rapport à vide exactement $1/3$.</li>
+    <li>Puissance à $30\ \mathrm{V}$ : $30^2/30\,000 = 30\ \mathrm{mW}$.</li>
+    <li>$R_{th} = 20 \times 10/30 = 6{,}667\ \mathrm{k\Omega}$ ; erreur $\varepsilon = 6{,}667/(100 + 6{,}667) = 6{,}25\ \%$.</li>
+    <li>Sortie réelle à $30\ \mathrm{V}$ : $10 \times 100/106{,}667 = 9{,}375\ \mathrm{V}$ ; l'automate afficherait $28{,}1\ \mathrm{V}$ au lieu de $30\ \mathrm{V}$. Non conforme.</li>
+  </ol>
+  <h3 id="h-compense">Solution compensée</h3>
+  <ol>
+    <li>Principe : la charge est connue, on l'intègre au calcul. On garde $R_1 = 20\ \mathrm{k\Omega}$ et l'on cherche $R_2$ telle que l'équivalent $R_2 /\!/ R_L$ vaille $R_1/2 = 10\ \mathrm{k\Omega}$, ce qui redonne le rapport $1/3$.</li>
+    <li>$\dfrac{1}{R_2} = \dfrac{1}{10\ \mathrm{k\Omega}} - \dfrac{1}{100\ \mathrm{k\Omega}} = 0{,}09\ \mathrm{mS}$, donc $R_2 = 11{,}11\ \mathrm{k\Omega}$.</li>
+    <li>Valeur normalisée : $11{,}0\ \mathrm{k\Omega}$, présente dans les séries E24 et E96. Alors $R_2 /\!/ R_L = 11 \times 100/111 = 9{,}910\ \mathrm{k\Omega}$.</li>
+    <li>Rapport réel : $9{,}910/(20 + 9{,}910) = 0{,}3313$ ; sortie à $30\ \mathrm{V}$ : $9{,}940\ \mathrm{V}$, erreur $-0{,}60\ \%$. Conforme. À $24\ \mathrm{V}$ nominal : $7{,}95\ \mathrm{V}$.</li>
+    <li>Courant du pont à $30\ \mathrm{V}$ : $I_1 = 30/29{,}910 = 1{,}003\ \mathrm{mA}$ ; puissance totale $30 \times 1{,}003 = 30{,}1\ \mathrm{mW} \leq 50\ \mathrm{mW}$.</li>
+    <li>Puissances par élément : $P_{R_1} = 20\,000 \times (1{,}003 \times 10^{-3})^2 = 20{,}1\ \mathrm{mW}$ ; $P_{R_2} = 9{,}940^2/11\,000 = 8{,}98\ \mathrm{mW}$ ; l'entrée de l'automate reçoit $0{,}99\ \mathrm{mW}$. Les deux résistances sont très en dessous de $125\ \mathrm{mW}$, moitié de leur puissance nominale.</li>
+  </ol>
+  <h3 id="h-controle">Contrôles et limites</h3>
+  <ol>
+    <li>Loi des nœuds en $S$ : $I_1 = 1{,}003\ \mathrm{mA}$ ; $I_2 = 9{,}940/11 = 0{,}904\ \mathrm{mA}$ ; $I_L = 9{,}940/100 = 0{,}099\ \mathrm{mA}$ ; $0{,}904 + 0{,}099 = 1{,}003\ \mathrm{mA}$.</li>
+    <li>Bilan de puissance : $20{,}1 + 8{,}98 + 0{,}99 = 30{,}1\ \mathrm{mW}$, égal à la puissance fournie.</li>
+    <li>Ordre de grandeur : le courant du pont, $1\ \mathrm{mA}$, est dix fois celui de l'entrée, $0{,}1\ \mathrm{mA}$ ; la règle pratique est respectée, mais c'est la compensation qui ramène l'erreur sous $1\ \%$.</li>
+    <li>Dispersion de la charge : si l'entrée réelle vaut $90\ \mathrm{k\Omega}$, la sortie tombe à $9{,}867\ \mathrm{V}$ ($-1{,}33\ \%$) ; à $110\ \mathrm{k\Omega}$, elle vaut exactement $10{,}00\ \mathrm{V}$. La compensation rend l'erreur proportionnelle à l'incertitude sur $R_L$, divisée par environ $R_L/(R_1 /\!/ R_2 /\!/ R_L) \approx 15$.</li>
+    <li>Tolérances : avec des résistances à $\pm 1\ \%$ et $R_L$ nominale, la sortie à $30\ \mathrm{V}$ reste entre $9{,}81$ et $10{,}07\ \mathrm{V}$. Pour garantir $1\ \%$ sur l'ensemble de la chaîne, on étalonne le gain dans l'automate, en relevant la tension du bus au multimètre en un point connu, ou l'on passe à un étage tampon.</li>
+  </ol>
+  <p>
+    Résultat final : $R_1 = 20\ \mathrm{k\Omega}$, $R_2 = 11{,}0\ \mathrm{k\Omega}$, $0{,}25\ \mathrm{W}$,
+    $\pm 1\ \%$ ; sortie $9{,}94\ \mathrm{V}$ à $30\ \mathrm{V}$ et $7{,}95\ \mathrm{V}$ à $24\ \mathrm{V}$ ; pont
+    de $30\ \mathrm{mW}$ ; mise à l'échelle dans l'automate par le rapport réel $0{,}3313$, ou par étalonnage.
+  </p>
+  <figure id="h-schema-figure">
+    <svg viewBox="0 0 780 380" role="img" aria-label="Pont de surveillance du bus 24 volts : R1 de 20 kilohms, R2 de 11 kilohms, entrée analogique de l'automate de 100 kilohms, sortie de 9,94 volts pour 30 volts">
+      <defs>
+        <marker id="fl-h-i" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-h-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M90 320V226"/>
+        <circle cx="90" cy="200" r="26"/>
+        <path d="M90 174V60H300V80"/>
+        <rect x="286" y="80" width="28" height="80" rx="3"/>
+        <path d="M300 160V200"/>
+        <rect x="286" y="200" width="28" height="80" rx="3"/>
+        <path d="M300 280V320H90"/>
+        <path d="M300 180H600V200"/>
+        <rect x="586" y="200" width="28" height="80" rx="3"/>
+        <path d="M600 280V320H300"/>
+        <path d="M190 320V334M176 334H204M182 341H198M187 348H193"/>
+      </g>
+      <rect x="530" y="140" width="200" height="200" rx="10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="6 5" opacity="0.8"/>
+      <g fill="currentColor" stroke="none">
+        <circle cx="300" cy="180" r="5"/>
+        <circle cx="300" cy="320" r="5"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M150 60H220" marker-end="url(#fl-h-i)"/>
+        <path d="M300 186V196" marker-end="url(#fl-h-i)"/>
+        <path d="M420 180H480" marker-end="url(#fl-h-i)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M660 312V190" marker-end="url(#fl-h-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="90" y="205" text-anchor="middle">bus</text>
+        <text x="64" y="180" text-anchor="end" font-weight="600">+</text>
+        <text x="30" y="30">bus 24 V secouru (30 V max)</text>
+        <text x="185" y="50" text-anchor="middle">I1 = 1,003 mA</text>
+        <text x="322" y="118">R1 = 20 kΩ</text>
+        <text x="322" y="136" font-size="11">20,1 mW</text>
+        <text x="278" y="238" text-anchor="end">R2 = 11,0 kΩ</text>
+        <text x="278" y="256" text-anchor="end" font-size="11">8,98 mW</text>
+        <text x="278" y="200" text-anchor="end" font-size="11">I2 = 0,904 mA</text>
+        <text x="450" y="170" text-anchor="middle" font-size="11">IL = 0,099 mA</text>
+        <text x="578" y="238" text-anchor="end">RL</text>
+        <text x="578" y="256" text-anchor="end" font-size="11">100 kΩ</text>
+        <text x="630" y="130" text-anchor="middle" font-size="11.5">entrée analogique 0-10 V</text>
+        <text x="672" y="246" fill="var(--serie-2)">VS</text>
+        <text x="672" y="264" fill="var(--serie-2)" font-size="11">9,94 V</text>
+        <text x="190" y="366" text-anchor="middle" font-size="11.5">0 V commun, référence</text>
+        <text x="316" y="172" font-weight="600">S</text>
+        <text x="420" y="366" text-anchor="middle" font-size="11.5">valeurs à 30 V ; à 24 V : VS = 7,95 V</text>
+      </g>
+    </svg>
+    <figcaption>
+      Le pont compensé de l'exemple, valeurs calculées pour $30\ \mathrm{V}$ d'entrée. La source représente le bus
+      secouru, borne $+$ en haut ; le conducteur du bas est le 0 V commun au bus et à l'automate, pris comme
+      référence. Le cadre en tirets représente l'entrée analogique de l'automate, modélisée par sa résistance
+      d'entrée $R_L$. Les flèches épaisses sont les courants $I_1$, $I_2$, $I_L$, orientés dans le sens réel ; la
+      flèche fine est la tension $V_S$ mesurée. Les puissances dissipées sont inscrites sous chaque résistance.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-sim-conception-section">Simulation interactive : l'espace de conception</h3>
+  <p>
+    La simulation reprend le problème : rapport $1/3$, $30\ \mathrm{V}$ en entrée. Vous réglez la résistance totale
+    du pont, la puissance maximale admise, la résistance d'entrée nominale de l'automate, et vous activez ou non la
+    compensation. Prédisez d'abord : sans compensation, existe-t-il une résistance totale qui respecte à la fois
+    $50\ \mathrm{mW}$ et $1\ \%$ ? Avec compensation, l'erreur est-elle nulle quelle que soit l'entrée réelle ? Que
+    devient la zone utilisable si l'on accepte $200\ \mathrm{mW}$ ?
+  </p>
+  <figure id="h-conception-figure">
+    <div id="h-conception-trace"></div>
+    <figcaption>
+      Axe horizontal : résistance totale du pont $R_1 + R_2$, en kilohms. Axe vertical : erreur relative de la
+      tension de sortie à $30\ \mathrm{V}$, en valeur absolue et en pour cent. Les courbes, nommées dans la légende
+      du graphique, donnent l'erreur sans compensation et l'erreur d'un pont compensé pour l'entrée nominale
+      lorsque l'entrée réelle est $10\ \%$ plus faible. La bande hachurée à gauche est interdite par la contrainte
+      de puissance ; la ligne horizontale en tirets marque la limite de $1\ \%$ ; le point marqué est le réglage
+      courant.
+    </figcaption>
+  </figure>
+  <div id="h-conception-curseurs"></div>
+  <div id="h-conception-valeurs"></div>
+  <p>
+    Interprétation : sans compensation, la courbe d'erreur croît linéairement avec la résistance totale et coupe la
+    limite de $1\ \%$ vers $4{,}5\ \mathrm{k\Omega}$, bien avant la frontière de puissance à $18\ \mathrm{k\Omega}$ :
+    aucun réglage n'est conforme, c'est le conflit démontré plus haut. Il faut monter à $200\ \mathrm{mW}$ pour que
+    la frontière de puissance recule à $4{,}5\ \mathrm{k\Omega}$ et qu'un étroit intervalle apparaisse, au prix
+    d'un pont quatre fois plus gourmand. Avec compensation, l'erreur nominale est nulle, mais elle ne l'est plus si
+    l'entrée réelle s'écarte de sa valeur annoncée : la courbe correspondante reste environ huit fois plus basse
+    que la courbe sans compensation et franchit à son tour $1\ \%$ vers $41\ \mathrm{k\Omega}$ de résistance
+    totale. Augmenter la résistance d'entrée nominale abaisse toutes les courbes.
+    Le modèle ignore les tolérances des résistances et la dérive thermique, qui s'ajoutent à ces erreurs.
+  </p>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <p>
+    Cas concret : la mesure de la tension du bus continu d'un variateur de fréquence alimenté en
+    $400\ \mathrm{V}$ triphasé. Le bus vaut environ $540\ \mathrm{V}$ en fonctionnement normal et peut atteindre
+    $800\ \mathrm{V}$ pendant un freinage, avant que le hacheur de freinage n'intervienne. La carte de commande
+    mesure cette tension avec un convertisseur analogique-numérique dont la pleine échelle est de quelques volts :
+    un pont diviseur de rapport voisin de $1/270$ est nécessaire.
+  </p>
+  <figure id="i-bus-figure">
+    <svg viewBox="0 0 800 320" role="img" aria-label="Pont de mesure du bus continu : cinq résistances de 270 kilohms en série dans la branche haute, résistance de 5,11 kilohms dans la branche basse, sortie vers le convertisseur analogique-numérique">
+      <defs>
+        <marker id="fl-i-bus" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-i-bus-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M46 80H80"/>
+        <rect x="80" y="68" width="70" height="24" rx="3"/>
+        <path d="M150 80H180"/>
+        <rect x="180" y="68" width="70" height="24" rx="3"/>
+        <path d="M250 80H280"/>
+        <rect x="280" y="68" width="70" height="24" rx="3"/>
+        <path d="M350 80H380"/>
+        <rect x="380" y="68" width="70" height="24" rx="3"/>
+        <path d="M450 80H480"/>
+        <rect x="480" y="68" width="70" height="24" rx="3"/>
+        <path d="M550 80H600V120"/>
+        <rect x="586" y="120" width="28" height="80" rx="3"/>
+        <path d="M600 200V250"/>
+        <path d="M46 250H736"/>
+        <path d="M600 100H736"/>
+      </g>
+      <circle cx="40" cy="80" r="6" fill="none" stroke="currentColor" stroke-width="2"/>
+      <circle cx="40" cy="250" r="6" fill="none" stroke="currentColor" stroke-width="2"/>
+      <circle cx="600" cy="100" r="5" fill="currentColor"/>
+      <circle cx="600" cy="250" r="5" fill="currentColor"/>
+      <rect x="716" y="70" width="78" height="200" rx="8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="6 5" opacity="0.8"/>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M54 56H100" marker-end="url(#fl-i-bus)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M20 240V92" marker-end="url(#fl-i-bus-u)"/>
+        <path d="M660 242V110" marker-end="url(#fl-i-bus-u)"/>
+        <path d="M145 118H85" marker-end="url(#fl-i-bus-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="40" y="112" text-anchor="middle" font-weight="600">+</text>
+        <text x="40" y="236" text-anchor="middle" font-weight="600">-</text>
+        <text x="20" y="276" font-size="11.5">bus - (référence de la mesure)</text>
+        <text x="78" y="44" text-anchor="middle" font-size="11.5">I = 0,59 mA</text>
+        <text x="315" y="44" text-anchor="middle">5 × 270 kΩ en série</text>
+        <text x="115" y="136" text-anchor="middle" fill="var(--serie-2)" font-size="11.5">159 V</text>
+        <text x="30" y="170" fill="var(--serie-2)" font-size="11.5">800 V</text>
+        <text x="578" y="160" text-anchor="end">5,11 kΩ</text>
+        <text x="666" y="180" fill="var(--serie-2)" font-size="11">3,02 V</text>
+        <text x="755" y="160" text-anchor="middle" font-size="11.5">CAN</text>
+        <text x="755" y="178" text-anchor="middle" font-size="11">0 à 3,3 V</text>
+        <text x="320" y="300" text-anchor="middle" font-size="11.5">pont : 1,355 MΩ, 0,47 W à 800 V ; 94 mW par résistance haute</text>
+      </g>
+    </svg>
+    <figcaption>
+      Pont de mesure du bus continu. La branche haute est formée de cinq résistances identiques en série, la
+      branche basse d'une résistance de $5{,}11\ \mathrm{k\Omega}$ ; le point milieu attaque l'entrée du
+      convertisseur analogique-numérique (CAN), cadre en tirets. La borne $-$ du bus est la référence de la mesure.
+      La flèche épaisse est le courant du pont ; les flèches fines sont, de gauche à droite, la tension du bus,
+      la tension aux bornes d'une résistance haute et la tension de sortie, toutes pointées vers le potentiel le
+      plus élevé. Les valeurs correspondent à $800\ \mathrm{V}$ sur le bus.
+    </figcaption>
+  </figure>
+  <p>
+    Choix d'ingénierie. La contrainte de puissance fixe l'ordre de grandeur : pour dissiper au plus
+    $0{,}5\ \mathrm{W}$ à $800\ \mathrm{V}$, il faut $R_1 + R_2 \geq 800^2/0{,}5 = 1{,}28\ \mathrm{M\Omega}$. Une
+    seule résistance de $1{,}35\ \mathrm{M\Omega}$ supporterait mal les $797\ \mathrm{V}$ à ses bornes : la tension
+    maximale de service d'un petit composant monté en surface est typiquement de l'ordre de $150$ à $200\ \mathrm{V}$,
+    donnée du constructeur à vérifier. On répartit donc la branche haute sur cinq résistances de
+    $270\ \mathrm{k\Omega}$ ; en série, la tension se partage au prorata des résistances, soit
+    $800 \times 270/1355{,}11 = 159\ \mathrm{V}$ chacune. La branche basse vaut
+    $R_2 = 1{,}35\ \mathrm{M\Omega} \times 3/797 = 5{,}08\ \mathrm{k\Omega}$, arrondie à $5{,}11\ \mathrm{k\Omega}$
+    en série E96 ; la sortie vaut $800 \times 5{,}11/1355{,}11 = 3{,}02\ \mathrm{V}$ à $800\ \mathrm{V}$ et
+    $2{,}04\ \mathrm{V}$ à $540\ \mathrm{V}$. La puissance totale est de $0{,}47\ \mathrm{W}$, soit
+    $94\ \mathrm{mW}$ par résistance haute. La charge présentée par le CAN est très élevée en continu, mais son
+    échantillonneur appelle de brèves impulsions de courant ; avec $R_{th} \approx 5\ \mathrm{k\Omega}$, on ajoute
+    un petit condensateur en sortie, dont l'effet sera compris au cours Condensateurs et champ électrique.
+  </p>
+  <p>
+    Risques et compromis. La mise en série protège aussi contre un défaut : si une résistance haute se met en
+    court-circuit, les quatre autres limitent encore le courant, et la sortie ne monte qu'à
+    $800 \times 5{,}11/1085{,}11 = 3{,}77\ \mathrm{V}$, valeur que la commande peut détecter comme aberrante. Le
+    circuit de mesure est relié au bus, donc au réseau : il n'est pas isolé de la terre, et la carte de commande
+    accessible à l'opérateur doit en être séparée par une isolation galvanique, point traité dans les cours
+    consacrés aux variateurs et à la sécurité électrique. Les distances d'isolement sur la carte, les lignes de
+    fuite entre résistances successives et les valeurs de tension de service relèvent des normes de conception
+    des équipements et des données des fabricants ; elles ne se déduisent pas du seul calcul du diviseur.
+  </p>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : surveillance de la tension du bus 24 V de l'armoire automate</span>
+    <p>
+      Troisième brique du petit site industriel. Le cours Lois de Kirchhoff a traité le jeu de barres du tableau
+      général comme un nœud ; l'armoire automate y est alimentée par un bus $24\ \mathrm{V}$ continu secouru par
+      batterie. Cette séance ajoute la mesure de ce bus par une entrée analogique $0$ à $10\ \mathrm{V}$ de
+      l'automate : pont compensé $R_1 = 20\ \mathrm{k\Omega}$, $R_2 = 11{,}0\ \mathrm{k\Omega}$, pour une entrée de
+      $100\ \mathrm{k\Omega}$, calculé en section H. Sortie $7{,}95\ \mathrm{V}$ à $24\ \mathrm{V}$ et
+      $9{,}94\ \mathrm{V}$ à $30\ \mathrm{V}$, pont de $30\ \mathrm{mW}$ au plus. Cette mesure servira plus tard à
+      la logique de fonctionnement dégradé du site : alarme de batterie faible, délestage des charges non
+      prioritaires, mise en sécurité avant perte de l'alimentation de l'automate. Les seuils d'alarme seront fixés
+      lorsque la batterie sera étudiée dans le cours Stockage d'énergie et batteries.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li>
+      <strong>Juger série ou parallèle d'après le dessin.</strong> Deux résistances dessinées côte à côte ne sont
+      pas forcément en parallèle, et deux résistances alignées ne sont pas forcément en série. Le seul critère est
+      topologique : même courant sans nœud intermédiaire raccordé ailleurs pour la série, mêmes deux nœuds pour le
+      parallèle. Redessiner le schéma en repérant les nœuds lève l'ambiguïté.
+    </li>
+    <li>
+      <strong>Appliquer la formule du diviseur à vide à une sortie chargée.</strong> Dès qu'un courant est prélevé
+      en $S$, $R_1$ et $R_2$ ne sont plus en série. L'erreur vaut $R_{th}/(R_L + R_{th})$ : $6{,}25\ \%$ dans la
+      solution naïve de la section H, et $33\ \%$ dans le schéma principal. Il faut calculer $R_2 /\!/ R_L$ ou
+      raisonner avec $V_{S0}$ et $R_{th}$.
+    </li>
+    <li>
+      <strong>Étendre la formule produit sur somme à trois résistances.</strong> $R_1R_2R_3/(R_1 + R_2 + R_3)$ a
+      la dimension d'une résistance au carré : elle est fausse. On additionne les conductances ou l'on applique la
+      formule deux fois.
+    </li>
+    <li>
+      <strong>Inverser les résistances dans le diviseur de courant.</strong> Le courant dans $R_1$ est
+      proportionnel à $R_2$, l'autre résistance, car le courant préfère le chemin le moins résistant. Un contrôle
+      rapide : la plus petite résistance doit recevoir le plus grand courant.
+    </li>
+    <li>
+      <strong>Croire que la plus grande résistance dissipe toujours le plus.</strong> C'est vrai en série, à
+      courant commun ; c'est faux en parallèle, à tension commune, où $P = U^2/R$ favorise la plus petite. Une
+      résistance de puissance choisie sur ce faux raisonnement peut surchauffer.
+    </li>
+    <li>
+      <strong>Alimenter un circuit par un pont diviseur.</strong> Un pont est une source de résistance interne
+      $R_{th}$ : sa tension baisse dès que le courant de la charge augmente, et il dissipe en permanence. Pour
+      alimenter un module dont la consommation varie, on utilise un régulateur ou un convertisseur, jamais un
+      pont.
+    </li>
+    <li>
+      <strong>Oublier la tension maximale et les tolérances des résistances.</strong> Une résistance a une
+      puissance nominale, mais aussi une tension maximale de service ; sur un pont haute tension, c'est souvent
+      cette seconde limite qui impose le fractionnement. Les tolérances, elles, fixent la précision atteignable :
+      $\pm 1{,}33\ \%$ sur le rapport $1/3$ avec des résistances à $\pm 1\ \%$.
+    </li>
+    <li>
+      <strong>Mesurer un pont de fortes valeurs avec un voltmètre sans tenir compte de sa résistance
+      interne.</strong> Un multimètre de $10\ \mathrm{M\Omega}$ branché sur un pont de deux résistances de
+      $1\ \mathrm{M\Omega}$ sous $10\ \mathrm{V}$ affiche $4{,}76\ \mathrm{V}$ au lieu de $5\ \mathrm{V}$ : c'est
+      l'instrument qui charge le pont. La mesure perturbe le circuit mesuré, comme le montre le travail pratique.
+    </li>
+  </ol>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de
+    diagnostic industriel et une question conceptuelle. La correction de chacun reste masquée jusqu'à une
+    tentative ou un clic explicite sur "Voir la correction", puis se déroule étape par étape, accompagnée d'un
+    schéma annoté ou d'une courbe.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma.</p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$R_{\text{éq}} = \sum_k R_k \quad (\text{série})$$
+    $$\frac{1}{R_{\text{éq}}} = \sum_k \frac{1}{R_k}, \qquad R_1 /\!/ R_2 = \frac{R_1R_2}{R_1 + R_2} \quad (\text{parallèle})$$
+    $$V_S = E\,\frac{R_2}{R_1 + R_2} \quad (\text{diviseur de tension à vide})$$
+    $$I_1 = I\,\frac{R_2}{R_1 + R_2} \quad (\text{diviseur de courant})$$
+    $$V_S = V_{S0}\,\frac{R_L}{R_L + R_1 /\!/ R_2} \quad (\text{diviseur chargé})$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>Série ou parallèle se décide par les nœuds, jamais par la disposition du dessin.</li>
+      <li>La formule du diviseur de tension suppose une sortie à vide ; en charge, calculer $R_2 /\!/ R_L$ ou l'erreur $R_{th}/(R_L + R_{th})$.</li>
+      <li>Dans le diviseur de courant, c'est l'autre résistance qui figure au numérateur.</li>
+      <li>En série, la plus grande résistance dissipe le plus ; en parallèle, la plus petite.</li>
+      <li>Un pont se vérifie en puissance et en tension par résistance, avec les tolérances ; il ne sert jamais d'alimentation.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Des résistances en série portent le même courant et leurs résistances s'additionnent ;
+    en parallèle, elles subissent la même tension et leurs conductances s'additionnent. Ces deux règles, issues des
+    lois de Kirchhoff, permettent de réduire un réseau série-parallèle à une résistance équivalente, puis de
+    remonter aux grandeurs de chaque élément. Le diviseur de tension partage une tension au prorata des
+    résistances, le diviseur de courant partage un courant au prorata des conductances. Un diviseur chargé se
+    comporte comme une source $V_{S0}$ en série avec $R_1 /\!/ R_2$ : l'erreur de charge vaut
+    $R_{th}/(R_L + R_{th})$. Concevoir un pont, c'est concilier cette erreur, qui exige des résistances faibles,
+    et la puissance dissipée, qui exige des résistances élevées, en tenant compte des valeurs normalisées, des
+    tolérances et des limites des composants.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance, deux sur le cours précédent,
+    <a href="#/cours/lois-de-kirchhoff">Lois de Kirchhoff</a>, une sur le cours
+    <a href="#/cours/loi-d-ohm-et-resistivite">Loi d'Ohm et résistivité</a>, et une sur le cours le plus ancien du
+    parcours, <a href="#/cours/diagnostic-initial-et-remise-a-niveau-mathematique">Diagnostic initial et remise à
+    niveau mathématique</a>, qui tient lieu de question sur un cours vieux d'une semaine tant que le parcours n'en
+    compte pas. La question sur un cours vieux d'un mois n'est pas encore applicable.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : outiller en Python le calcul d'un pont chargé, vérifier la conception de la section H dans
+    LTspice, puis, si vous disposez de quelques résistances et d'un multimètre, observer l'effet de charge de
+    l'instrument lui-même. Prédiction à écrire avant de commencer : un multimètre de $10\ \mathrm{M\Omega}$ perturbe-t-il
+    davantage un pont de deux $10\ \mathrm{k\Omega}$ ou un pont de deux $1\ \mathrm{M\Omega}$, et de combien ?
+  </p>
+  <ol>
+    <li>
+      En Python, écrire les fonctions <code>serie(*R)</code>, <code>parallele(*R)</code> (somme des conductances)
+      et <code>diviseur(E, R1, R2, RL=float("inf"))</code>, qui renvoie la tension de sortie chargée. Tester
+      <code>parallele(12, 6)</code>, qui doit valoir 4, et <code>diviseur(12, 10e3, 10e3, 10e3)</code>, qui doit
+      valoir 4.
+    </li>
+    <li>
+      Recalculer la section H : sortie à $30\ \mathrm{V}$ pour $R_2 = 10\ \mathrm{k\Omega}$ puis
+      $11\ \mathrm{k\Omega}$, et pour $R_L = 90$, $100$ et $110\ \mathrm{k\Omega}$. Ajouter une boucle sur les
+      quatre combinaisons $R_1(1 \pm 0{,}01)$, $R_2(1 \pm 0{,}01)$ pour retrouver l'intervalle $9{,}81$ à
+      $10{,}07\ \mathrm{V}$.
+    </li>
+    <li>
+      Tracer avec matplotlib $V_S(x)$ pour un potentiomètre de $10\ \mathrm{k\Omega}$ sous $10\ \mathrm{V}$ et
+      $R_L/R = 1$, $3$, $10$, $100$, puis l'écart $xE - V_S$ ; repérer la position de l'écart maximal.
+    </li>
+    <li>
+      Dans LTspice, saisir la netlist <code>V1 bus 0 30</code>, <code>R1 bus s 20k</code>, <code>R2 s 0 11k</code>,
+      <code>RL s 0 {Rin}</code>, <code>.param Rin=100k</code>, <code>.step param Rin list 90k 100k 110k 1e12</code>,
+      <code>.op</code>, <code>.end</code>, et relever <code>V(s)</code> pour chaque valeur ; la dernière simule
+      l'entrée déconnectée.
+    </li>
+    <li>
+      Montage facultatif : alimenter sous $10\ \mathrm{V}$ un pont de deux résistances de $10\ \mathrm{k\Omega}$,
+      mesurer la sortie ; recommencer avec deux résistances de $1\ \mathrm{M\Omega}$. Mesurer aussi chaque
+      résistance à l'ohmmètre, hors circuit, pour tenir compte de leurs tolérances.
+    </li>
+  </ol>
+  <p>
+    Résultats attendus : $9{,}375\ \mathrm{V}$ pour la solution naïve, $9{,}940\ \mathrm{V}$ pour la solution
+    compensée, $9{,}867$ et $10{,}000\ \mathrm{V}$ pour $R_L = 90$ et $110\ \mathrm{k\Omega}$, $10{,}65\ \mathrm{V}$
+    entrée déconnectée ; écart maximal du potentiomètre vers $x \approx 0{,}67$ à $0{,}69$. Sur le montage, le pont
+    de $10\ \mathrm{k\Omega}$ donne $5{,}00\ \mathrm{V}$ à la tolérance des résistances près ($R_{th} =
+    5\ \mathrm{k\Omega}$, erreur de $0{,}05\ \%$), alors que le pont de $1\ \mathrm{M\Omega}$ donne environ
+    $4{,}76\ \mathrm{V}$ ($R_{th} = 500\ \mathrm{k\Omega}$, erreur de $4{,}8\ \%$). Anomalies à observer : une
+    lecture instable sur le pont de $1\ \mathrm{M\Omega}$, car sa forte résistance de sortie capte les
+    perturbations, et une mesure qui change quand on touche les fils ; l'entrée déconnectée donne
+    $10{,}65\ \mathrm{V}$, au-delà de la pleine échelle de l'entrée $0$ à $10\ \mathrm{V}$ à $30\ \mathrm{V}$, ce
+    qui rappelle qu'un pont compensé ne doit pas être utilisé sans la charge pour laquelle il a été calculé. Dans
+    LTspice, oublier la référence <code>0</code> ou écrire <code>11K</code> sans unité cohérente sont les
+    erreurs de saisie les plus fréquentes ; <code>M</code> signifie milli pour SPICE, il faut écrire
+    <code>Meg</code> pour méga.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est
+    calculé dans ce navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes
+    restent enregistrées localement pour suivre votre progression.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">En série, le courant est commun et les résistances s'additionnent ; en parallèle, la tension est commune et les conductances s'additionnent. Le critère est topologique, jamais graphique.</li>
+    <li data-rang="02">Le diviseur de tension et le diviseur de courant sont des conséquences directes de ces deux règles ; le premier suppose une sortie à vide.</li>
+    <li data-rang="03">Un diviseur chargé équivaut à une source $V_{S0}$ en série avec $R_1 /\!/ R_2$ ; sa conception est un compromis entre erreur de charge et puissance dissipée, arbitré par la compensation, le choix des valeurs normalisées ou un étage tampon.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> reconnaître qu'un diviseur est chargé et quantifier l'effet
+    de la charge. Le réflexe à acquérir est de calculer systématiquement $R_{th} = R_1 /\!/ R_2$ et de le comparer
+    à la résistance de ce qui est branché en sortie, instrument de mesure compris.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Théorèmes de Thévenin, Norton et superposition,
+    généralise le résultat obtenu pour le diviseur chargé. Question à garder en tête d'ici là : le pont de la
+    section H, vu de sa sortie, se comporte comme une source $V_{S0}$ en série avec $R_{th}$ ; est-ce vrai de
+    n'importe quel réseau de sources et de résistances, par exemple du circuit chargeur et batterie du cours Lois
+    de Kirchhoff vu depuis l'armoire, et pour quelle résistance de charge ce réseau fournirait-il la plus grande
+    puissance ?
+  </p>
+
+</article>
