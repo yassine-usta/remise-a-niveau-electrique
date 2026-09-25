@@ -1,0 +1,1321 @@
+<article class="cours" data-slug="theoremes-de-thevenin-norton-et-superposition">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/associations-de-resistances-et-diviseurs">Associations de résistances et diviseurs</a>
+      s'est achevé sur une observation : vu de sa sortie, un pont diviseur chargé se comporte exactement comme une
+      source $V_{S0}$ en série avec la résistance $R_1 /\!/ R_2$. Il posait une question : est-ce vrai de n'importe
+      quel réseau de sources et de résistances, par exemple du chargeur et de la batterie du cours
+      <a href="#/cours/lois-de-kirchhoff">Lois de Kirchhoff</a> vus depuis l'armoire ? La réponse est oui, et cette
+      séance le démontre. Pour ce circuit (chargeur $27\ \mathrm{V}$ et $0{,}5\ \Omega$, batterie $24\ \mathrm{V}$
+      et $0{,}5\ \Omega$), l'armoire voit une source de $25{,}5\ \mathrm{V}$ en série avec $0{,}25\ \Omega$ : avec
+      l'armoire de $6\ \Omega$, on retrouve en une ligne $I_3 = 25{,}5/6{,}25 = 4{,}08\ \mathrm{A}$, la valeur qui
+      avait demandé un système de deux équations. Quant à la charge qui recevrait la plus grande puissance, c'est
+      celle de $0{,}25\ \Omega$, et nous verrons pourquoi on ne l'utilise jamais dans une installation d'énergie. Ces
+      résultats s'appuient sur la notion de source réelle du cours
+      <a href="#/cours/tension-courant-charge-et-puissance">Tension, courant, charge et puissance</a> et sur la
+      linéarité de la loi d'Ohm établie dans le cours <a href="#/cours/loi-d-ohm-et-resistivite">Loi d'Ohm et
+      résistivité</a>.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Les lois de Kirchhoff résolvent tout circuit, mais elles calculent tout à la fois : pour connaître le courant
+    d'une seule branche, il faut résoudre le système entier, et le refaire chaque fois que la valeur de cette branche
+    change. Or c'est la situation ordinaire de l'ingénieur : une installation fixe alimente une charge qui varie. Le
+    moteur démarre puis tourne, l'armoire passe de la veille au plein fonctionnement, un instrument de mesure est
+    branché ou débranché, un défaut met deux conducteurs en contact. Le théorème de Thévenin répond à ce besoin :
+    tout le réseau fixe, aussi compliqué soit-il, est remplacé, vu des deux bornes de la charge, par une seule source
+    de tension en série avec une seule résistance. Le théorème de Norton en donne la forme duale, une source de
+    courant en parallèle avec la même résistance. La charge se calcule ensuite en une ligne, quelle que soit sa valeur.
+  </p>
+  <p>
+    Ces équivalents structurent la pratique bien au-delà des exercices. La tension à vide et la résistance interne
+    d'une source réelle, étudiées dans le cours Tension, courant, charge et puissance, sont un équivalent de Thévenin
+    mesuré. Le courant de court-circuit qui fixe le pouvoir de coupure d'un disjoncteur est un courant de Norton, et
+    le cours Calcul des courants de court-circuit s'appuiera entièrement sur cette idée. L'impédance de sortie d'un
+    capteur, l'impédance d'entrée d'un automate, la chute de tension d'un départ lors du démarrage d'un moteur se
+    raisonnent avec le même modèle. Le principe de superposition, enfin, permet d'isoler l'effet d'une source parmi
+    plusieurs : la part du chargeur et celle de la batterie dans le courant d'une armoire, l'effet d'une perturbation
+    sur une mesure, et plus tard la décomposition d'un courant déformé en harmoniques. Tous ces outils reposent sur
+    une seule hypothèse, la linéarité, dont il faut savoir reconnaître la fin.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Énoncer le principe de superposition, ses hypothèses, et calculer un courant ou une tension d'un réseau à plusieurs sources en éteignant correctement les sources de tension et de courant.</li>
+    <li data-rang="02">Expliquer pourquoi les puissances ne se superposent pas, et le vérifier sur un exemple numérique.</li>
+    <li data-rang="03">Calculer l'équivalent de Thévenin d'un réseau vu de deux bornes par trois méthodes : sources éteintes, rapport tension à vide sur courant de court-circuit, source d'essai.</li>
+    <li data-rang="04">Convertir un modèle de Thévenin en modèle de Norton et inversement, en respectant les polarités et le sens des courants.</li>
+    <li data-rang="05">Déterminer la puissance reçue par une charge variable, la charge qui la rend maximale, et interpréter le rendement correspondant.</li>
+    <li data-rang="06">Identifier l'équivalent de Thévenin d'un équipement réel à partir de deux mesures, et diagnostiquer une résistance de sortie anormale.</li>
+    <li data-rang="07">Comparer les méthodes de résolution (nœuds, mailles, réduction, superposition, Thévenin et Norton) et choisir la plus adaptée à la question posée.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois acquis sont mobilisés. Le premier : l'association en parallèle, $R_1 /\!/ R_2 = R_1R_2/(R_1 + R_2)$, et le
+    diviseur de tension à vide, $V_S = E\,R_2/(R_1 + R_2)$, du cours
+    <a href="#/cours/associations-de-resistances-et-diviseurs">Associations de résistances et diviseurs</a>. Le
+    deuxième : le modèle de source réelle, une force électromotrice $E$ en série avec une résistance interne $r$,
+    dont la tension aux bornes vaut $U = E - rI$ en convention générateur. Le troisième : la loi des nœuds et
+    l'écriture d'une équation aux nœuds, $\sum (V_k - V_A)/R_k = 0$, du cours
+    <a href="#/cours/lois-de-kirchhoff">Lois de Kirchhoff</a>. Le mini-test ci-dessous n'est pas noté ; la
+    correction de chaque question reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la correction".
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-boite-noire">Un réseau vu de deux bornes n'a qu'une droite à montrer</h3>
+  <p>
+    Imaginons un réseau fermé dans une boîte, dont ne sortent que deux bornes $A$ et $B$ : des sources, des
+    résistances, peu importe leur nombre et leur disposition. De l'extérieur, on ne peut faire que deux choses :
+    imposer un courant $i$ sortant par $A$, et lire la tension $u = V_A - V_B$. Parce que tous les éléments
+    intérieurs sont linéaires, chaque ampère prélevé fait baisser la tension de la même quantité, quel que soit le
+    courant déjà débité. La caractéristique $u(i)$ de la boîte est donc une droite. Une droite est entièrement
+    déterminée par deux points : son ordonnée à l'origine, la tension à vide, et son abscisse à l'origine, le
+    courant de court-circuit. Tout le contenu de la boîte, vu de l'extérieur, se réduit à ces deux nombres. C'est
+    le cœur du théorème de Thévenin.
+  </p>
+  <figure id="d-caracteristique-figure">
+    <svg viewBox="0 0 720 330" role="img" aria-label="À gauche, un réseau linéaire enfermé dans une boîte, relié par ses bornes A et B à une charge RL ; à droite, sa caractéristique tension-courant, une droite qui va de la tension à vide Eth au courant de court-circuit Icc, coupée par la droite de charge au point de fonctionnement">
+      <defs>
+        <marker id="fl-d-car" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-d-car-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <rect x="24" y="60" width="190" height="180" rx="12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="7 5"/>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M214 90H234"/>
+        <path d="M214 210H234"/>
+        <path d="M246 90H340V120"/>
+        <rect x="326" y="120" width="28" height="60" rx="3"/>
+        <path d="M340 180V210H246"/>
+        <path d="M300 210V224M288 224H312M293 231H307M297 238H303"/>
+      </g>
+      <circle cx="240" cy="90" r="6" fill="none" stroke="currentColor" stroke-width="2"/>
+      <circle cx="240" cy="210" r="6" fill="none" stroke="currentColor" stroke-width="2"/>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M262 90H300" marker-end="url(#fl-d-car)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M280 198V104" marker-end="url(#fl-d-car-u)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.4" fill="none" opacity="0.8">
+        <path d="M430 280H700"/>
+        <path d="M430 290V40"/>
+      </g>
+      <path d="M430 70L660 280" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+      <path d="M430 280L612 80" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="8 5"/>
+      <g stroke="currentColor" stroke-width="1.2" fill="none" stroke-dasharray="4 5" opacity="0.6">
+        <path d="M530 161H430"/>
+        <path d="M530 161V280"/>
+      </g>
+      <circle cx="530" cy="161" r="6" fill="currentColor"/>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13">
+        <text x="119" y="140" text-anchor="middle">réseau linéaire</text>
+        <text x="119" y="160" text-anchor="middle" font-size="12">sources et résistances</text>
+        <text x="119" y="182" text-anchor="middle" font-size="12">inaccessibles</text>
+        <text x="240" y="76" text-anchor="middle" font-weight="600">A</text>
+        <text x="240" y="232" text-anchor="middle" font-weight="600">B</text>
+        <text x="281" y="80" text-anchor="middle">i</text>
+        <text x="270" y="156" text-anchor="end" fill="var(--serie-2)">u</text>
+        <text x="362" y="156">RL</text>
+        <text x="300" y="258" text-anchor="middle" font-size="11.5">B, référence</text>
+        <text x="422" y="74" text-anchor="end">Eth</text>
+        <text x="422" y="44" text-anchor="end" font-size="12">u</text>
+        <text x="700" y="300" text-anchor="end" font-size="12">i</text>
+        <text x="660" y="300" text-anchor="middle">Icc</text>
+        <text x="542" y="152">P</text>
+        <text x="600" y="214" font-size="12">pente - Rth</text>
+        <text x="620" y="78" font-size="12">u = RL i</text>
+        <text x="560" y="30" text-anchor="middle" font-size="12">caractéristique vue des bornes A et B</text>
+      </g>
+    </svg>
+    <figcaption>
+      À gauche, le réseau enfermé dans la boîte en tirets n'est accessible que par ses bornes $A$ et $B$ (cercles
+      ouverts) ; $B$ est la référence de potentiel. La flèche épaisse est le sens de référence du courant $i$, qui
+      sort par $A$ vers la charge $R_L$ : la boîte est décrite en convention générateur. La flèche fine est la
+      tension $u = V_A - V_B$, pointée vers $A$. À droite, l'axe horizontal porte $i$, l'axe vertical porte $u$. Le
+      trait plein épais est la caractéristique de la boîte : il part de la tension à vide $E_{th}$ pour $i = 0$ et
+      atteint le courant de court-circuit $I_{cc}$ pour $u = 0$ ; sa pente vaut $-R_{th}$. Le trait en tirets est la
+      droite de charge $u = R_L\,i$ imposée par la résistance extérieure. Leur intersection $P$ est le point de
+      fonctionnement : la seule combinaison de $u$ et de $i$ qui satisfait à la fois la boîte et la charge.
+    </figcaption>
+  </figure>
+  <p>
+    Analogie contrôlée : une conduite d'eau alimentée par un château d'eau lointain, à travers un long réseau de
+    canalisations. Robinet fermé, le manomètre du robinet indique la pression statique, l'équivalent de la tension à
+    vide. Robinet grand ouvert sur l'égout, le débit est maximal et la pression au robinet tombe à zéro, l'équivalent
+    du courant de court-circuit. Entre les deux, plus on puise, plus la pression baisse : ce que voit l'utilisateur ne
+    dépend pas du détail du réseau enterré, seulement de ces deux valeurs extrêmes et de la manière dont on passe de
+    l'une à l'autre.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie hydraulique</span>
+    <p>
+      Dans une canalisation réelle, la perte de charge croît à peu près comme le carré du débit : la caractéristique
+      pression-débit est une courbe, pas une droite. L'analogie ne vaut donc que pour un réseau hydraulique à
+      écoulement lent, où la perte de charge reste proportionnelle au débit, comme la chute de tension dans une
+      résistance. Elle suggère aussi à tort que l'équivalent décrit l'intérieur du réseau : la pression mesurée au
+      robinet ne dit rien de la répartition des débits dans les conduites enterrées, et l'équivalent de Thévenin ne
+      dit rien des courants ni des pertes à l'intérieur du réseau qu'il remplace. Enfin, un réseau électrique peut
+      avoir une tension à vide négative ou recevoir un courant entrant par $A$ : la droite se prolonge alors dans les
+      autres quadrants, ce qu'aucun château d'eau ne fait.
+    </p>
+  </div>
+
+  <h3 id="d-superposition">Plusieurs sources : chacune agit comme si elle était seule</h3>
+  <p>
+    Lorsqu'un réseau contient plusieurs sources, chacune pousse des charges à travers les mêmes résistances. Si chaque
+    résistance répond proportionnellement à ce qu'on lui impose, c'est-à-dire si doubler le courant double la tension,
+    alors l'effet de deux causes simultanées est la somme de leurs effets séparés : ce que la source 1 provoque ne
+    modifie pas la manière dont le réseau répond à la source 2. On peut donc calculer le réseau avec une seule source
+    active, recommencer avec chacune des autres, et additionner. Pour "retirer" une source sans modifier le reste du
+    réseau, on la remplace par ce qu'elle serait si sa grandeur imposée était nulle : une source de tension nulle est
+    un simple fil, une source de courant nulle est une coupure.
+  </p>
+  <p>
+    Analogie contrôlée : deux personnes poussent un chariot sur un sol où le frottement est proportionnel à la vitesse.
+    La vitesse finale obtenue en poussant ensemble est la somme des vitesses que chacun obtiendrait en poussant seul.
+    L'analogie a une limite essentielle : elle ne vaut que pour un frottement proportionnel à la vitesse. Avec un
+    frottement sec, qui empêche tout mouvement tant que l'effort ne dépasse pas un seuil, une personne seule ne fait
+    rien bouger alors que deux y parviennent : la somme des effets séparés, nulle, est fausse. Une diode, qui ne
+    conduit qu'au-delà d'un seuil de tension, est l'équivalent électrique de ce frottement sec, et la superposition
+    ne s'y applique pas. Autre limite : l'énergie dépensée par les deux pousseurs n'est pas la somme des énergies
+    qu'ils dépenseraient seuls, car la puissance dépend du carré de la vitesse ; la section E montre que la même
+    restriction vaut pour les puissances électriques.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-linearite">Linéarité d'un réseau</h3>
+  <p>
+    Un réseau est dit linéaire lorsque tous ses éléments, hors sources indépendantes, ont une relation tension-courant
+    linéaire : résistances de valeur fixe, et, en régime variable, inductances et condensateurs de valeur fixe. Les
+    sources indépendantes sont les sources de tension et de courant dont la valeur est imposée de l'extérieur. Pour un
+    tel réseau, la méthode des nœuds du cours Lois de Kirchhoff conduit à un système de la forme
+    $\mathbf{G}\,\mathbf{v} = \mathbf{s}$, où $\mathbf{G}$ est la matrice des conductances, qui ne dépend que des
+    résistances, $\mathbf{v}$ le vecteur des potentiels inconnus, et $\mathbf{s}$ un vecteur dont chaque composante
+    est une combinaison linéaire des forces électromotrices et des courants de source. Si $\mathbf{G}$ est inversible,
+    $\mathbf{v} = \mathbf{G}^{-1}\mathbf{s}$ : chaque potentiel, donc chaque tension et chaque courant, est une
+    combinaison linéaire des grandeurs de source. Tout ce qui suit découle de cette seule phrase.
+  </p>
+
+  <h3 id="e-superposition-titre">Principe de superposition</h3>
+  <p>
+    Écrivons le second membre comme la somme des contributions de chaque source : $\mathbf{s} = \mathbf{s}_1 +
+    \mathbf{s}_2 + \dots + \mathbf{s}_n$, où $\mathbf{s}_k$ ne contient que la source $k$, toutes les autres étant
+    mises à zéro. Alors $\mathbf{v} = \mathbf{G}^{-1}\mathbf{s}_1 + \dots + \mathbf{G}^{-1}\mathbf{s}_n$, et chaque
+    terme $\mathbf{G}^{-1}\mathbf{s}_k$ est la solution du réseau dans lequel seule la source $k$ est active.
+  </p>
+  <div class="formule-cle">
+    $$x = \sum_{k=1}^{n} x_k \qquad \text{avec } x_k \text{ la réponse lorsque seule la source } k \text{ est active}$$
+    <p class="formule-cle-legende">
+      $x$ désigne n'importe quel courant de branche ($\mathrm{A}$) ou n'importe quelle tension ($\mathrm{V}$) du
+      réseau ; $x_k$ la même grandeur calculée avec la seule source indépendante $k$, les autres étant éteintes.
+      Hypothèses : réseau linéaire, sources indépendantes, solution unique ($\mathbf{G}$ inversible). Dérivation :
+      ci-dessus, par linéarité de $\mathbf{v} = \mathbf{G}^{-1}\mathbf{s}$. Interprétation : chaque source agit
+      indépendamment des autres, et le réseau additionne leurs effets. Cas limites : une source nulle n'apporte aucune
+      contribution ; si toutes les sources sont multipliées par un même facteur $\lambda$, toutes les réponses sont
+      multipliées par $\lambda$ (homogénéité). Vérification dimensionnelle : on n'additionne que des grandeurs de même
+      nature, des ampères avec des ampères, des volts avec des volts.
+    </p>
+  </div>
+  <p>
+    Éteindre une source, c'est annuler sa grandeur imposée sans toucher au reste. Une source de tension idéale de
+    force électromotrice nulle impose $u = 0$ quel que soit le courant qui la traverse : c'est un court-circuit. Une
+    source de courant idéale de courant nul impose $i = 0$ quelle que soit la tension à ses bornes : c'est un circuit
+    ouvert. Les résistances internes des sources réelles, elles, restent en place, car elles font partie du réseau et
+    non de la grandeur imposée.
+  </p>
+  <figure id="e-extinction-figure">
+    <svg viewBox="0 0 680 270" role="img" aria-label="Extinction des sources : une source de tension idéale éteinte devient un court-circuit, une source de courant idéale éteinte devient un circuit ouvert">
+      <defs>
+        <marker id="fl-e-ext" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M40 80H86"/>
+        <circle cx="110" cy="80" r="24"/>
+        <path d="M134 80H200"/>
+        <path d="M410 80H620"/>
+        <path d="M40 200H86"/>
+        <circle cx="110" cy="200" r="24"/>
+        <path d="M134 200H200"/>
+        <path d="M410 200H480"/>
+        <path d="M550 200H620"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="40" cy="80" r="5"/>
+        <circle cx="200" cy="80" r="5"/>
+        <circle cx="410" cy="80" r="5"/>
+        <circle cx="620" cy="80" r="5"/>
+        <circle cx="40" cy="200" r="5"/>
+        <circle cx="200" cy="200" r="5"/>
+        <circle cx="410" cy="200" r="5"/>
+        <circle cx="480" cy="200" r="5"/>
+        <circle cx="550" cy="200" r="5"/>
+        <circle cx="620" cy="200" r="5"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M96 200H120" marker-end="url(#fl-e-ext)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round">
+        <path d="M250 80H340" marker-end="url(#fl-e-ext)"/>
+        <path d="M250 200H340" marker-end="url(#fl-e-ext)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13">
+        <text x="120" y="42" text-anchor="middle">source de tension idéale E</text>
+        <text x="92" y="84" text-anchor="middle" font-weight="600">+</text>
+        <text x="128" y="84" text-anchor="middle" font-weight="600">-</text>
+        <text x="295" y="68" text-anchor="middle" font-size="12">E = 0</text>
+        <text x="515" y="68" text-anchor="middle">court-circuit</text>
+        <text x="515" y="112" text-anchor="middle" font-size="12">u = 0 quel que soit i</text>
+        <text x="120" y="162" text-anchor="middle">source de courant idéale I0</text>
+        <text x="295" y="188" text-anchor="middle" font-size="12">I0 = 0</text>
+        <text x="515" y="170" text-anchor="middle">circuit ouvert</text>
+        <text x="515" y="236" text-anchor="middle" font-size="12">i = 0 quelle que soit u</text>
+      </g>
+    </svg>
+    <figcaption>
+      Règle d'extinction. En haut, une source de tension idéale, bornes $+$ et $-$ marquées : annuler $E$ la remplace
+      par un fil, qui impose une tension nulle. En bas, une source de courant idéale, flèche intérieure donnant le sens
+      du courant imposé : annuler $I_0$ la remplace par une coupure entre deux bornes ouvertes, qui impose un courant
+      nul. Les flèches épaisses horizontales du milieu se lisent "devient". L'erreur classique consiste à inverser les
+      deux règles.
+    </figcaption>
+  </figure>
+  <p>
+    Les puissances, en revanche, ne se superposent pas. La puissance dissipée dans une résistance parcourue par
+    $i = i_1 + i_2$ vaut $R(i_1 + i_2)^2 = Ri_1^2 + Ri_2^2 + 2Ri_1i_2$ : le terme croisé $2Ri_1i_2$ n'apparaît dans
+    aucun des calculs à une source. Il est positif si les deux contributions ont le même sens, négatif sinon. On
+    superpose les courants et les tensions, puis on calcule la puissance avec la grandeur totale.
+  </p>
+  <div class="encadre attention">
+    <span class="encadre-titre">Sources commandées</span>
+    <p>
+      Certains modèles contiennent des sources dites commandées, dont la valeur est proportionnelle à une autre
+      grandeur du circuit : le courant de collecteur d'un transistor en petits signaux, la tension de sortie d'un
+      amplificateur opérationnel. Elles sont linéaires mais pas indépendantes : on ne les éteint jamais, elles restent
+      en place dans chaque calcul partiel. Elles apparaîtront dans le cours Conditionnement analogique ; ici, tous les
+      réseaux ne contiennent que des sources indépendantes.
+    </p>
+  </div>
+
+  <h3 id="e-sim-superposition-section">Simulation interactive : superposition sur le chargeur et la batterie</h3>
+  <p>
+    Le circuit est celui du cours Lois de Kirchhoff : chargeur $E_1$ de résistance interne $R_1 = 0{,}5\ \Omega$,
+    batterie $E_2$ de résistance interne $R_2 = 0{,}5\ \Omega$, armoire $R_3$. La simulation enchaîne quatre étapes :
+    circuit complet, chargeur seul (batterie éteinte), batterie seule (chargeur éteint), puis somme des contributions.
+    Avant de lancer la lecture ou de déplacer le curseur "Étape", prédisez qualitativement : lorsque le chargeur agit
+    seul, le courant dans la branche de la batterie est-il faible ou très fort, et dans quel sens ? La puissance reçue
+    par l'armoire dans le circuit complet est-elle égale à la somme des puissances reçues dans les deux calculs
+    partiels, plus grande, ou plus petite ?
+  </p>
+  <figure id="e-superposition-figure">
+    <div class="m-toile-cadre schema-vivant" id="e-superposition"></div>
+    <figcaption>
+      Le chargeur, à gauche, et la batterie, à droite, ont leur borne $+$ en haut ; le conducteur du bas est la
+      référence de potentiel (symbole de masse). Les flèches épaisses fixes sont les sens de référence : $I_1$ va du
+      chargeur vers le nœud $A$, $I_2$ va de la batterie vers $A$, $I_3$ descend dans l'armoire. Une valeur négative
+      signifie que le courant réel circule contre la flèche. Une source éteinte est remplacée par un fil, dessiné en
+      trait épais, avec la mention "court-circuit". Sous le circuit, les barres horizontales comparent le courant de
+      l'armoire dans chaque calcul, puis la puissance réelle de l'armoire à la somme des puissances partielles.
+    </figcaption>
+  </figure>
+  <div id="e-superposition-curseurs"></div>
+  <div id="e-superposition-lecteur"></div>
+  <div id="e-superposition-valeurs"></div>
+  <p>
+    Interprétation : avec les valeurs par défaut ($E_1 = 27\ \mathrm{V}$, $E_2 = 24\ \mathrm{V}$, $R_3 = 6\ \Omega$),
+    le chargeur seul porte le nœud $A$ à $12{,}96\ \mathrm{V}$ et fait circuler $25{,}92\ \mathrm{A}$ dans la branche
+    de la batterie éteinte, un courant énorme, car il n'y rencontre que $0{,}5\ \Omega$. La batterie seule porte $A$ à
+    $11{,}52\ \mathrm{V}$ et renvoie $23{,}04\ \mathrm{A}$ dans la branche du chargeur. Additionnés, ces courants
+    fictifs se compensent presque : $V_A = 24{,}48\ \mathrm{V}$, $I_3 = 2{,}16 + 1{,}92 = 4{,}08\ \mathrm{A}$ et
+    $I_2 = -25{,}92 + 24{,}96 = -0{,}96\ \mathrm{A}$, les valeurs du cours Lois de Kirchhoff. Les calculs partiels ne
+    décrivent pas des situations physiques réalisables sans danger : ce sont des étapes de calcul. Côté puissance,
+    l'armoire reçoit $99{,}88\ \mathrm{W}$ alors que la somme des puissances partielles ne vaut que
+    $27{,}99 + 22{,}12 = 50{,}11\ \mathrm{W}$ ; le terme croisé $2R_3\,I_3'\,I_3'' = 49{,}77\ \mathrm{W}$ comble
+    l'écart. Si vous portez $E_1$ à $30\ \mathrm{V}$, seule la contribution du chargeur change, et en proportion.
+  </p>
+
+  <h3 id="e-thevenin">Théorème de Thévenin</h3>
+  <p>
+    Énoncé : vu de deux bornes $A$ et $B$, tout réseau linéaire constitué de sources indépendantes et de résistances
+    est équivalent à une source de tension idéale $E_{th}$ en série avec une résistance $R_{th}$. Équivalent signifie
+    que, pour toute charge branchée entre $A$ et $B$, le réseau et son modèle imposent la même tension et le même
+    courant à cette charge. La démonstration utilise la superposition. Remplaçons la charge, quelle qu'elle soit, par
+    une source de courant idéale égale au courant $i$ qu'elle absorbe : cela ne change rien au reste du réseau. La
+    tension $u = V_A - V_B$ est alors la somme de deux contributions. Avec la source $i$ éteinte (circuit ouvert),
+    seules les sources internes agissent : $u$ vaut la tension à vide, notée $E_{th}$. Avec les sources internes
+    éteintes et la seule source $i$ active, le réseau n'est plus qu'un ensemble de résistances, qui présente entre $A$
+    et $B$ une résistance équivalente $R_{th}$ ; le courant $i$, sortant par $A$, y crée la tension $-R_{th}\,i$.
+    D'où le résultat.
+  </p>
+  <div class="formule-cle">
+    $$u = E_{th} - R_{th}\,i, \qquad E_{th} = u\big|_{i=0}, \qquad R_{th} = \frac{u}{-i}\bigg|_{\text{sources éteintes}}$$
+    <p class="formule-cle-legende">
+      $u = V_A - V_B$ tension entre les bornes ($\mathrm{V}$) ; $i$ courant sortant par $A$ vers la charge
+      ($\mathrm{A}$), soit la convention générateur pour le réseau ; $E_{th}$ tension à vide, charge retirée
+      ($\mathrm{V}$) ; $R_{th}$ résistance vue entre $A$ et $B$, sources indépendantes éteintes ($\Omega$).
+      Hypothèses : réseau linéaire, charge quelconque (même non linéaire), aucun couplage entre la charge et
+      l'intérieur du réseau autre que par les deux bornes. Dérivation : ci-dessus. Interprétation : $E_{th}$ est ce
+      que le réseau "voudrait" imposer, $R_{th}$ mesure de combien sa tension cède quand on lui prend du courant. Cas
+      limites : charge ouverte, $i = 0$ et $u = E_{th}$ ; court-circuit, $u = 0$ et $i = I_{cc} = E_{th}/R_{th}$ ;
+      $R_{th} = 0$ donne une source de tension idéale. Vérification dimensionnelle : $\Omega \times \mathrm{A} =
+      \mathrm{V}$.
+    </p>
+  </div>
+  <p>
+    Pour une charge résistive $R_L$, la loi d'Ohm $u = R_L\,i$ ferme le problème : le modèle forme avec la charge une
+    seule maille, et la charge et $R_{th}$ constituent un diviseur de tension.
+  </p>
+  <div class="formule-cle">
+    $$I_L = \frac{E_{th}}{R_{th} + R_L}, \qquad U_L = E_{th}\,\frac{R_L}{R_{th} + R_L}$$
+    <p class="formule-cle-legende">
+      $I_L$ courant dans la charge ($\mathrm{A}$), $U_L$ tension à ses bornes ($\mathrm{V}$), $R_L$ résistance de la
+      charge ($\Omega$). Hypothèses : celles du théorème, charge linéaire. Dérivation : loi des mailles sur la maille
+      unique, $E_{th} = R_{th}I_L + R_LI_L$. Interprétation : c'est exactement le diviseur chargé du cours précédent,
+      généralisé à tout réseau. Cas limites : $R_L \gg R_{th}$ donne $U_L \approx E_{th}$ ; $R_L \ll R_{th}$ donne
+      $I_L \approx I_{cc}$. Vérification dimensionnelle : $\mathrm{V}/\Omega = \mathrm{A}$.
+    </p>
+  </div>
+  <p>
+    Trois méthodes donnent $R_{th}$, et le choix dépend du réseau. Première méthode : éteindre toutes les sources
+    indépendantes et réduire le réseau de résistances obtenu, vu de $A$ et $B$, par associations série et parallèle ;
+    c'est la plus rapide quand le réseau s'y prête. Deuxième méthode : calculer, ou mesurer, la tension à vide et le
+    courant de court-circuit, puis $R_{th} = E_{th}/I_{cc}$ ; elle convient quand le court-circuit est facile à
+    calculer, et elle est la seule utilisable sur un équipement dont on ne connaît pas l'intérieur, à condition que
+    le court-circuit ne soit pas destructeur. Troisième méthode : éteindre les sources indépendantes, appliquer entre
+    $A$ et $B$ une source d'essai, tension $u_e$ ou courant $i_e$, et calculer $R_{th} = u_e/i_e$ ; c'est la méthode
+    générale, indispensable en présence de sources commandées. Une mesure en deux points, avec deux charges connues,
+    applique la même idée sans court-circuit : c'est la méthode pratique du travail pratique de la section O.
+  </p>
+  <p>
+    Point de vigilance : $E_{th}$ et $R_{th}$ dépendent de la paire de bornes choisie. Le même réseau vu de deux
+    autres bornes a un autre équivalent. Et la polarité de $E_{th}$ se lit sur la tension à vide : si
+    $V_{A0} - V_{B0}$ est négative, c'est $B$ qui porte la borne $+$ du modèle.
+  </p>
+  <figure id="e-modeles-figure">
+    <svg viewBox="0 0 740 310" role="img" aria-label="Modèle de Thévenin, source Eth en série avec Rth, et modèle de Norton, source de courant IN en parallèle avec RN égale à Rth, avec la tension u entre A et B et le courant i sortant par A">
+      <defs>
+        <marker id="fl-e-mod" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-e-mod-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M80 136V70H130"/>
+        <circle cx="80" cy="160" r="24"/>
+        <rect x="130" y="56" width="90" height="28" rx="3"/>
+        <path d="M220 70H274"/>
+        <path d="M80 184V250H274"/>
+        <path d="M460 136V70H674"/>
+        <circle cx="460" cy="160" r="24"/>
+        <path d="M570 70V120"/>
+        <rect x="556" y="120" width="28" height="80" rx="3"/>
+        <path d="M570 200V250"/>
+        <path d="M460 184V250H674"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="280" cy="70" r="6"/>
+        <circle cx="280" cy="250" r="6"/>
+        <circle cx="680" cy="70" r="6"/>
+        <circle cx="680" cy="250" r="6"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="570" cy="70" r="4.5"/>
+        <circle cx="570" cy="250" r="4.5"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M460 176V150" marker-end="url(#fl-e-mod)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M232 70H262" marker-end="url(#fl-e-mod)"/>
+        <path d="M620 70H660" marker-end="url(#fl-e-mod)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M312 240V84" marker-end="url(#fl-e-mod-u)"/>
+        <path d="M712 240V84" marker-end="url(#fl-e-mod-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13">
+        <text x="175" y="26" text-anchor="middle" font-weight="600">modèle de Thévenin</text>
+        <text x="570" y="26" text-anchor="middle" font-weight="600">modèle de Norton</text>
+        <text x="46" y="165" text-anchor="end">Eth</text>
+        <text x="80" y="150" text-anchor="middle" font-weight="600">+</text>
+        <text x="80" y="180" text-anchor="middle" font-weight="600">-</text>
+        <text x="175" y="104" text-anchor="middle">Rth</text>
+        <text x="247" y="58" text-anchor="middle">i</text>
+        <text x="280" y="52" text-anchor="middle" font-weight="600">A</text>
+        <text x="280" y="278" text-anchor="middle" font-weight="600">B</text>
+        <text x="326" y="166" fill="var(--serie-2)">u</text>
+        <text x="175" y="298" text-anchor="middle" font-size="12">u = Eth - Rth i</text>
+        <text x="426" y="165" text-anchor="end">IN</text>
+        <text x="596" y="165">RN = Rth</text>
+        <text x="640" y="58" text-anchor="middle">i</text>
+        <text x="680" y="52" text-anchor="middle" font-weight="600">A</text>
+        <text x="680" y="278" text-anchor="middle" font-weight="600">B</text>
+        <text x="724" y="166" fill="var(--serie-2)" text-anchor="end">u</text>
+        <text x="570" y="298" text-anchor="middle" font-size="12">i = IN - u / RN</text>
+      </g>
+    </svg>
+    <figcaption>
+      Les deux modèles, avec les mêmes conventions aux bornes : le courant $i$ (flèche épaisse) sort par $A$ vers la
+      charge, la tension $u = V_A - V_B$ (flèche fine) pointe vers $A$ ; $B$ sert de référence. À gauche, la source de
+      tension $E_{th}$, borne $+$ côté $A$, en série avec $R_{th}$. À droite, la source de courant $I_N$, dont la
+      flèche intérieure pointe vers le nœud relié à $A$, en parallèle avec $R_N$ ; les points pleins marquent les
+      jonctions. Les deux modèles ont la même caractéristique $u(i)$ si $R_N = R_{th}$ et $I_N = E_{th}/R_{th}$.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-norton">Théorème de Norton et conversion entre les deux modèles</h3>
+  <p>
+    Énoncé : vu de $A$ et $B$, le même réseau linéaire est aussi équivalent à une source de courant idéale $I_N$ en
+    parallèle avec une résistance $R_N$. Le théorème se déduit du précédent : en divisant $u = E_{th} - R_{th}i$ par
+    $R_{th}$, on obtient $i = E_{th}/R_{th} - u/R_{th}$, qui est exactement la loi de nœud du modèle de Norton, où le
+    courant imposé $I_N$ se partage entre la résistance $R_N$ et la charge.
+  </p>
+  <div class="formule-cle">
+    $$i = I_N - \frac{u}{R_N}, \qquad I_N = I_{cc} = \frac{E_{th}}{R_{th}}, \qquad R_N = R_{th}$$
+    <p class="formule-cle-legende">
+      $I_N$ courant de Norton, égal au courant de court-circuit entre $A$ et $B$ ($\mathrm{A}$) ; $R_N$ résistance de
+      Norton ($\Omega$) ; $u$, $i$ comme ci-dessus. Hypothèses : celles du théorème de Thévenin, et $R_{th}$ non nulle
+      et finie (une source de tension idéale n'a pas d'équivalent de Norton, une source de courant idéale n'a pas
+      d'équivalent de Thévenin). Dérivation : ci-dessus. Interprétation : $I_N$ est le courant que le réseau débiterait
+      dans un court-circuit ; $R_N$ dérive vers l'intérieur la part du courant que la charge ne prend pas. Cas limites :
+      $u = 0$ donne $i = I_N$ ; $i = 0$ donne $u = R_NI_N = E_{th}$. Vérification dimensionnelle :
+      $\mathrm{V}/\Omega = \mathrm{A}$.
+    </p>
+  </div>
+  <p>
+    La conversion s'applique aussi à une source réelle isolée à l'intérieur d'un réseau : une branche formée d'une
+    force électromotrice $E$ en série avec $R$ se remplace par une source de courant $E/R$ en parallèle avec $R$, la
+    flèche du courant pointant vers la borne $+$. Cette transformation de source permet souvent de réduire un réseau
+    à la main. Appliquée à $n$ branches $(E_k, R_k)$ montées en parallèle entre un nœud $A$ et la référence, elle
+    donne $n$ sources de courant en parallèle, dont les courants et les conductances s'additionnent : c'est le théorème
+    de Millman.
+  </p>
+  <div class="formule-cle">
+    $$V_A = \frac{\displaystyle\sum_k E_k/R_k}{\displaystyle\sum_k 1/R_k} \qquad \text{(Millman)}$$
+    <p class="formule-cle-legende">
+      $V_A$ potentiel du nœud commun par rapport à la référence ($\mathrm{V}$) ; $E_k$ force électromotrice de la
+      branche $k$ ($\mathrm{V}$, nulle pour une branche purement résistive) ; $R_k$ sa résistance ($\Omega$).
+      Hypothèses : branches toutes reliées entre $A$ et la référence, aucune autre connexion. Dérivation : chaque
+      branche devient une source de Norton $E_k/R_k$ en parallèle avec $R_k$ ; le courant total $\sum E_k/R_k$ traverse
+      la conductance totale $\sum 1/R_k$. Interprétation : $V_A$ est une moyenne des forces électromotrices pondérée par
+      les conductances. Cas limites : une branche de résistance très faible impose son $E_k$ ; une branche sans source
+      tire $V_A$ vers zéro. Vérification dimensionnelle : $(\mathrm{V}/\Omega)/(1/\Omega) = \mathrm{V}$. Pour le
+      chargeur et la batterie à vide, $V_A = (54 + 48)/(2 + 2) = 25{,}5\ \mathrm{V}$ : c'est le $E_{th}$ annoncé en
+      introduction.
+    </p>
+  </div>
+
+  <h3 id="e-anim-transformation-section">Animation : du réseau aux modèles de Thévenin et de Norton</h3>
+  <p>
+    L'animation applique la démarche à un pont de mesure qui ne se réduit pas par associations série et parallèle
+    tant que la charge est branchée : alimentation $E = 2\ \mathrm{V}$, trois résistances de $1\ \mathrm{k\Omega}$,
+    capteur résistif $R_x$, et une charge $R_L$ entre les points milieux $A$ et $B$. C'est le réseau de l'exemple
+    de la section H. Avant de la lancer, prédisez : une fois la source éteinte, quelles résistances se retrouvent en
+    parallèle ? La résistance vue entre $A$ et $B$ est-elle plus proche de $500\ \Omega$, de $1\ \mathrm{k\Omega}$
+    ou de $2\ \mathrm{k\Omega}$ ?
+  </p>
+  <figure id="e-transformation-figure">
+    <div class="m-toile-cadre schema-vivant" id="e-transformation"></div>
+    <figcaption>
+      Le pont à chaque étape. L'alimentation, borne $+$ en haut, a sa borne $-$ reliée au conducteur du bas, référence
+      de potentiel. La tension de sortie $u = V_B - V_A$ est fléchée vers $B$, qui est le point au potentiel le plus
+      élevé lorsque $R_x$ dépasse $1\ \mathrm{k\Omega}$ ; le courant $I_L$ de la charge va de $B$ vers $A$. Le groupe
+      en cours de calcul est entouré d'un cadre en tirets, et une source éteinte est remplacée par un fil en trait
+      épais. Le curseur "Étape" avance ou recule à votre rythme, la lecture enchaîne les étapes, et les deux autres
+      curseurs modifient le capteur et la charge.
+    </figcaption>
+  </figure>
+  <div id="e-transformation-curseurs"></div>
+  <div id="e-transformation-lecteur"></div>
+  <div id="e-transformation-valeurs"></div>
+  <p>
+    Interprétation : une fois l'alimentation remplacée par un fil, le haut et le bas du pont forment un seul nœud ;
+    $R_1$ et $R_2$ relient ce nœud à $A$, ils sont en parallèle, et de même $R_3$ et $R_x$ vis-à-vis de $B$. Vu de $A$
+    et $B$, on obtient deux groupes en série : $R_{th} = 500 + 523{,}8 = 1023{,}8\ \Omega$ pour $R_x =
+    1100\ \Omega$, plus proche de $1\ \mathrm{k\Omega}$ que des deux autres propositions. La tension à vide est la
+    différence de deux diviseurs, $E_{th} = 1{,}0476 - 1{,}0000 = 47{,}62\ \mathrm{mV}$. Le modèle de Thévenin et le
+    modèle de Norton donnent à la charge de $1\ \mathrm{k\Omega}$ le même courant de $23{,}53\ \mu\mathrm{A}$ que le
+    réseau complet. En revanche, les courants dans les résistances du pont ne se lisent sur aucun des deux modèles :
+    l'équivalence ne vaut que vue des bornes. Faites varier $R_x$ : $E_{th}$ change de signe quand $R_x$ passe sous
+    $1\ \mathrm{k\Omega}$, le pont est alors équilibré puis inversé.
+  </p>
+
+  <h3 id="e-puissance">Puissance reçue par une charge variable</h3>
+  <p>
+    Une fois l'équivalent connu, la puissance reçue par une charge résistive $R_L$ s'exprime en fonction de la seule
+    variable $R_L$. Elle s'annule dans les deux cas extrêmes : charge ouverte, le courant est nul ; court-circuit, la
+    tension est nulle. Elle passe donc par un maximum entre les deux.
+  </p>
+  <div class="formule-cle">
+    $$P_L = R_L\,I_L^2 = \frac{E_{th}^2\,R_L}{(R_{th} + R_L)^2}, \qquad
+    \frac{\mathrm{d}P_L}{\mathrm{d}R_L} = E_{th}^2\,\frac{R_{th} - R_L}{(R_{th} + R_L)^3}$$
+    $$P_L \text{ maximale pour } R_L = R_{th}, \qquad P_{\max} = \frac{E_{th}^2}{4R_{th}}, \qquad
+    \eta = \frac{P_L}{P_L + R_{th}I_L^2} = \frac{R_L}{R_L + R_{th}}$$
+    <p class="formule-cle-legende">
+      $P_L$ puissance reçue par la charge ($\mathrm{W}$) ; $P_{\max}$ sa valeur maximale ($\mathrm{W}$) ; $\eta$
+      rendement du modèle équivalent, part de la puissance fournie par $E_{th}$ qui parvient à la charge (sans
+      dimension). Hypothèses : $E_{th}$ et $R_{th}$ fixés, seule $R_L$ varie, charge résistive. Dérivation : la
+      dérivée de $R_L/(R_{th} + R_L)^2$ vaut $\big((R_{th} + R_L) - 2R_L\big)/(R_{th} + R_L)^3$ ; elle est positive
+      pour $R_L < R_{th}$, nulle en $R_L = R_{th}$, négative au-delà, d'où le maximum. Interprétation : au maximum,
+      la charge reçoit la moitié de la tension à vide et la moitié du courant de court-circuit ; $P_{\max}$ est le
+      quart du produit $E_{th}\,I_{cc}$, et le rendement vaut $50\ \%$ : autant de puissance est perdue dans $R_{th}$
+      que reçue par la charge. Cas limites : $R_L \to 0$ et $R_L \to \infty$ donnent $P_L \to 0$ ; $R_L \to \infty$
+      donne $\eta \to 1$. Vérification dimensionnelle : $\mathrm{V}^2/\Omega = \mathrm{W}$.
+    </p>
+  </div>
+  <p>
+    Ce résultat, dit du transfert maximal de puissance, doit être lu avec son rendement. Il sert lorsque la source
+    est faible et que chaque microwatt compte : un capteur qui fournit un signal très faible, une antenne, une ligne
+    de télécommunication, où l'on parle d'adaptation. Il ne sert jamais pour transporter de l'énergie : un réseau de
+    distribution, un chargeur, une batterie fonctionnent avec $R_L$ très grande devant $R_{th}$, pour que la tension
+    reste proche de sa valeur à vide et que les pertes restent faibles. Autre nuance : le rendement $\eta$ est celui
+    du modèle ; la puissance réellement perdue à l'intérieur du réseau d'origine n'est pas $R_{th}I_L^2$ en général,
+    car l'équivalence ne vaut que vue des bornes.
+  </p>
+
+  <h3 id="e-sim-puissance-section">Simulation interactive : point de fonctionnement et puissance reçue</h3>
+  <p>
+    Le plan tension-courant porte la caractéristique d'un équivalent de Thévenin réglable. Vous déplacez le point de
+    fonctionnement le long de cette droite, à la souris, au doigt ou au clavier, ce qui revient à choisir la charge
+    $R_L = u/i$. L'aire du rectangle sous le point vaut $u \times i$, soit la puissance reçue. Avant de manipuler,
+    prédisez : en quelle position de la droite l'aire du rectangle est-elle la plus grande ? Quel rendement
+    obtient-on alors ? Et que devient cette position si vous doublez $R_{th}$ sans toucher à $E_{th}$ ?
+  </p>
+  <figure id="e-puissance-figure">
+    <div class="m-toile-cadre schema-vivant" id="e-puissance-plan"></div>
+    <figcaption>
+      Axe horizontal : courant $i$ débité, de $0$ au courant de court-circuit $I_{cc}$. Axe vertical : tension $u$
+      aux bornes, de $0$ à la tension à vide $E_{th}$. Le trait plein épais est la caractéristique de l'équivalent ;
+      le point rond déplaçable est le point de fonctionnement ; le trait en tirets issu de l'origine est la droite de
+      charge correspondante, $u = R_L\,i$. Le rectangle hachuré a pour côtés $i$ et $u$ : son aire est la puissance
+      $P_L$. Le graphique placé dessous trace, en fonction du rapport $R_L/R_{th}$, la puissance reçue rapportée à
+      $P_{\max}$ et le rendement ; leurs noms figurent dans la légende du graphique, et le point marqué suit la
+      position courante.
+    </figcaption>
+  </figure>
+  <div id="e-puissance-trace"></div>
+  <div id="e-puissance-curseurs"></div>
+  <div id="e-puissance-lecteur"></div>
+  <div id="e-puissance-valeurs"></div>
+  <p>
+    Interprétation : l'aire est maximale au milieu de la droite, où $u = E_{th}/2$ et $i = I_{cc}/2$, donc pour
+    $R_L = R_{th}$. Avec les valeurs par défaut, $E_{th} = 24\ \mathrm{V}$ et $R_{th} = 2\ \Omega$, on lit
+    $P_{\max} = 24^2/8 = 72\ \mathrm{W}$ et un rendement de $50\ \%$. En déplaçant le point vers le haut de la droite,
+    le rendement monte rapidement : pour $R_L = 9\,R_{th}$, il atteint $90\ \%$ et la puissance ne vaut plus que
+    $36\ \%$ de $P_{\max}$. Doubler $R_{th}$ ne déplace pas le maximum sur la droite, toujours au milieu, mais divise
+    $P_{\max}$ par deux et double la charge optimale. La courbe de puissance est plate autour de son maximum : entre
+    $R_L = R_{th}/2$ et $R_L = 2R_{th}$, on reste au-dessus de $88{,}9\ \%$ de $P_{\max}$. Le modèle suppose une charge
+    résistive fixe ; une charge réelle, un moteur par exemple, a une caractéristique qui dépend de son
+    fonctionnement, et le point de fonctionnement se lit alors à l'intersection de deux courbes.
+  </p>
+
+  <h3 id="e-limites">Limites des théorèmes</h3>
+  <p>
+    Tout repose sur la linéarité du réseau remplacé ; la charge, elle, peut être quelconque. Un réseau qui contient
+    une diode, une lampe à filament dont la résistance dépend de sa température, comme dans le cours Loi d'Ohm et
+    résistivité, ou un chargeur qui passe en limitation de courant n'a pas d'équivalent de Thévenin valable dans toute
+    sa plage. On peut encore en définir un autour d'un point de fonctionnement, en remplaçant la courbe par sa
+    tangente : c'est le modèle en petits signaux, valable pour de petites variations. Par ailleurs, l'équivalent est
+    externe : il donne exactement ce que subit la charge, mais rien sur les courants, les tensions ni les puissances
+    à l'intérieur du réseau. Un modèle de Norton à vide dissipe $R_NI_N^2$ alors que le modèle de Thévenin
+    correspondant ne dissipe rien, et aucun des deux ne décrit l'échauffement réel du réseau. Enfin, les valeurs de
+    $E_{th}$ et $R_{th}$ d'un équipement réel varient avec la température, l'état de charge d'une batterie ou le
+    vieillissement : un équivalent mesuré n'est vrai qu'aux conditions de la mesure.
+  </p>
+
+  <h3 id="e-statut">Statut des énoncés</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Ce qui est loi, conséquence, convention, approximation, règle ou donnée</caption>
+      <thead><tr><th>Énoncé</th><th>Statut</th></tr></thead>
+      <tbody>
+        <tr><td>Superposition, théorèmes de Thévenin, de Norton et de Millman</td><td>conséquences mathématiques exactes des lois de Kirchhoff et de la linéarité des éléments ; aucune nouvelle loi physique</td></tr>
+        <tr><td>Linéarité des résistances, sources idéales</td><td>approximations de modélisation, valables dans une plage de courant, de tension et de température</td></tr>
+        <tr><td>Extinction : source de tension en court-circuit, source de courant en circuit ouvert</td><td>conséquence directe de la définition des sources idéales</td></tr>
+        <tr><td>Sens de $i$ sortant par $A$, convention générateur aux bornes, flèche de $I_N$ vers la borne $+$ du modèle de Thévenin</td><td>conventions d'écriture, à fixer une fois pour toutes dans un calcul</td></tr>
+        <tr><td>Maximum de puissance pour $R_L = R_{th}$</td><td>résultat mathématique ; l'adaptation est une règle de conception propre aux signaux faibles, jamais aux installations d'énergie</td></tr>
+        <tr><td>Résistance interne d'une batterie, d'un chargeur, d'un transmetteur ; courant de limitation d'un chargeur</td><td>données du constructeur ou valeurs mesurées, qui varient avec l'état de l'équipement</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, la transformation d'un réseau en ses modèles de Thévenin
+    et de Norton, puis l'organigramme de choix d'une méthode et le tableau comparatif des méthodes. Les schémas qui
+    éclairent un point précis ont été placés au fil du texte ; ils sont rappelés en fin de section.
+  </p>
+
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 900 420" role="img" aria-label="Schéma principal : un pont de mesure vu de ses bornes A et B est remplacé par un modèle de Thévenin de 47,62 millivolts et 1023,8 ohms, puis par un modèle de Norton de 46,51 microampères en parallèle avec 1023,8 ohms">
+      <defs>
+        <marker id="fl-f-i" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-f-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M50 178V60H280"/>
+        <circle cx="50" cy="200" r="22"/>
+        <path d="M50 222V330H280"/>
+        <path d="M130 60V80"/>
+        <rect x="116" y="80" width="28" height="70" rx="3"/>
+        <path d="M130 150V220"/>
+        <rect x="116" y="220" width="28" height="70" rx="3"/>
+        <path d="M130 290V330"/>
+        <path d="M280 60V80"/>
+        <rect x="266" y="80" width="28" height="70" rx="3"/>
+        <path d="M280 150V220"/>
+        <rect x="266" y="220" width="28" height="70" rx="3"/>
+        <path d="M280 290V330"/>
+        <path d="M130 185H182"/>
+        <path d="M280 185H228"/>
+        <path d="M90 330V344M76 344H104M82 351H98M87 358H93"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="130" cy="185" r="4.5"/>
+        <circle cx="280" cy="185" r="4.5"/>
+        <circle cx="130" cy="330" r="4.5"/>
+        <circle cx="130" cy="60" r="4.5"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="188" cy="185" r="6"/>
+        <circle cx="222" cy="185" r="6"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M190 212H216" marker-end="url(#fl-f-u)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round">
+        <path d="M318 200H368" marker-end="url(#fl-f-i)"/>
+        <path d="M600 200H640" marker-end="url(#fl-f-i)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M420 178V110H460"/>
+        <circle cx="420" cy="200" r="22"/>
+        <rect x="460" y="96" width="80" height="28" rx="3"/>
+        <path d="M540 110H564"/>
+        <path d="M420 222V290H564"/>
+        <path d="M700 178V110H854"/>
+        <circle cx="700" cy="200" r="22"/>
+        <path d="M790 110V160"/>
+        <rect x="776" y="160" width="28" height="80" rx="3"/>
+        <path d="M790 240V290"/>
+        <path d="M700 222V290H854"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="790" cy="110" r="4.5"/>
+        <circle cx="790" cy="290" r="4.5"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="570" cy="110" r="6"/>
+        <circle cx="570" cy="290" r="6"/>
+        <circle cx="860" cy="110" r="6"/>
+        <circle cx="860" cy="290" r="6"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M700 214V190" marker-end="url(#fl-f-i)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="165" y="26" text-anchor="middle" font-weight="600">réseau : pont de mesure</text>
+        <text x="490" y="26" text-anchor="middle" font-weight="600">Thévenin vu de B et A</text>
+        <text x="775" y="26" text-anchor="middle" font-weight="600">Norton vu de B et A</text>
+        <text x="50" y="205" text-anchor="middle">2 V</text>
+        <text x="26" y="186" text-anchor="end" font-weight="600">+</text>
+        <text x="108" y="120" text-anchor="end">R1</text>
+        <text x="108" y="136" text-anchor="end" font-size="11">1 kΩ</text>
+        <text x="108" y="260" text-anchor="end">R2</text>
+        <text x="108" y="276" text-anchor="end" font-size="11">1 kΩ</text>
+        <text x="302" y="120">R3</text>
+        <text x="302" y="136" font-size="11">1 kΩ</text>
+        <text x="302" y="260">Rx</text>
+        <text x="302" y="276" font-size="11">1,1 kΩ</text>
+        <text x="188" y="172" text-anchor="middle" font-weight="600">A</text>
+        <text x="222" y="172" text-anchor="middle" font-weight="600">B</text>
+        <text x="205" y="234" text-anchor="middle" fill="var(--serie-2)">u</text>
+        <text x="185" y="380" text-anchor="middle" font-size="11.5">u = VB - VA ; référence 0 V en bas</text>
+        <text x="343" y="188" text-anchor="middle" font-size="11">vu de</text>
+        <text x="343" y="222" text-anchor="middle" font-size="11">B et A</text>
+        <text x="448" y="205">Eth</text>
+        <text x="420" y="186" text-anchor="middle" font-weight="600">+</text>
+        <text x="500" y="146" text-anchor="middle">Rth</text>
+        <text x="570" y="96" text-anchor="middle" font-weight="600">B</text>
+        <text x="570" y="316" text-anchor="middle" font-weight="600">A</text>
+        <text x="620" y="188" text-anchor="middle" font-size="11">IN =</text>
+        <text x="620" y="222" text-anchor="middle" font-size="11">Eth / Rth</text>
+        <text x="728" y="205">IN</text>
+        <text x="816" y="205">RN</text>
+        <text x="860" y="96" text-anchor="middle" font-weight="600">B</text>
+        <text x="860" y="316" text-anchor="middle" font-weight="600">A</text>
+        <text x="490" y="352" text-anchor="middle" font-size="11.5">Eth = VB0 - VA0 = 1,0476 - 1,0000 = 47,62 mV</text>
+        <text x="490" y="372" text-anchor="middle" font-size="11.5">Rth = R1 // R2 + R3 // Rx = 500 + 523,8 = 1023,8 Ω</text>
+        <text x="775" y="352" text-anchor="middle" font-size="11.5">IN = 46,51 µA</text>
+        <text x="775" y="372" text-anchor="middle" font-size="11.5">RN = Rth = 1023,8 Ω</text>
+        <text x="450" y="408" text-anchor="middle" font-size="11.5">une charge branchée entre B et A reçoit le même courant et la même tension dans les trois cas</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal : transformation d'un réseau en ses modèles de Thévenin et de Norton. À gauche, le pont de
+      l'exemple de la section H : l'alimentation de $2\ \mathrm{V}$, borne $+$ en haut, alimente deux diviseurs ; les
+      bornes de sortie $A$ et $B$ (cercles ouverts) sont reliées aux points milieux ; le conducteur du bas est la
+      référence 0 V (symbole de masse). La flèche fine est la tension de sortie $u = V_B - V_A$, pointée vers $B$. Au
+      centre, le modèle de Thévenin : $B$ étant au potentiel le plus élevé à vide, la borne $+$ de $E_{th}$ est du côté
+      de $B$. À droite, le modèle de Norton : la flèche de $I_N$ pointe vers le nœud relié à $B$, et $R_N$ est en
+      parallèle. Les flèches épaisses horizontales se lisent "est équivalent, vu des bornes, à". Les calculs sont
+      inscrits sous chaque modèle.
+    </figcaption>
+  </figure>
+
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Réseau linéaire à étudier"] --> B{"Que cherche-t-on ?"}
+  B -->|"toutes les grandeurs"| C["Méthode des nœuds ou des mailles"]
+  B -->|"une seule branche, charge variable"| D["Équivalent vu des bornes de la charge"]
+  B -->|"part de chaque source"| E["Superposition"]
+  D --> F["Retirer la charge : tension à vide Eth"]
+  D --> G{"Réseau réductible une fois les sources éteintes ?"}
+  G -->|"oui"| H["Rth par associations série et parallèle"]
+  G -->|"non, ou sources commandées"| I["Rth = Eth / Icc, ou source d'essai"]
+  F --> J["Modèle de Thévenin, ou Norton avec IN = Eth / Rth"]
+  H --> J
+  I --> J
+  J --> K["Brancher la charge : IL = Eth / (Rth + RL), puissance, rendement"]
+  E --> L["Une source active, les autres éteintes : fil pour une tension, coupure pour un courant"]
+  L --> M["Additionner courants et tensions, jamais les puissances"]
+  C --> N["Contrôler : loi des nœuds, loi des mailles, bilan de puissance, cas limites"]
+  K --> N
+  M --> N</pre>
+    <figcaption>
+      Organigramme de choix et de résolution. Les rectangles sont des étapes, les losanges des décisions, les
+      libellés sur les flèches les réponses. Le premier losange oriente selon la question posée : un seul courant dans
+      une charge qui varie appelle l'équivalent de Thévenin ou de Norton, la part de chaque source appelle la
+      superposition, et l'ensemble des grandeurs appelle une méthode systématique. Le second losange choisit la
+      manière d'obtenir $R_{th}$. Toutes les branches aboutissent au même contrôle final.
+    </figcaption>
+  </figure>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Comparaison des méthodes de résolution d'un réseau linéaire en continu</caption>
+      <thead><tr><th>Méthode</th><th>Ce qu'elle donne</th><th>Préférable quand</th><th>Piège principal</th></tr></thead>
+      <tbody>
+        <tr><td>Nœuds ou mailles</td><td>toutes les tensions et tous les courants</td><td>on veut l'état complet d'un réseau fixe, ou le résoudre par ordinateur</td><td>un système à résoudre à nouveau si un élément change</td></tr>
+        <tr><td>Réduction série-parallèle</td><td>la résistance vue par une source unique</td><td>une seule source et un réseau réductible</td><td>juger série ou parallèle d'après le dessin</td></tr>
+        <tr><td>Superposition</td><td>la contribution de chaque source</td><td>plusieurs sources, question sur la part de l'une d'elles</td><td>superposer des puissances ; mal éteindre une source</td></tr>
+        <tr><td>Thévenin ou Norton</td><td>ce que voit une charge, pour toute valeur de la charge</td><td>charge variable, puissance reçue, courant de court-circuit, identification par mesures</td><td>croire que l'équivalent décrit l'intérieur du réseau</td></tr>
+        <tr><td>Millman</td><td>le potentiel d'un nœud unique</td><td>plusieurs branches source et résistance en parallèle sur un même nœud</td><td>oublier une branche passive, qui compte au dénominateur</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-caracteristique-figure" data-renvoi="d-caracteristique-figure">la caractéristique d'un réseau vu de deux bornes et le point de fonctionnement</a>, section D ;</li>
+    <li><a href="#e-extinction-figure" data-renvoi="e-extinction-figure">la règle d'extinction des sources</a> et <a href="#e-superposition-figure" data-renvoi="e-superposition-figure">la simulation de superposition sur le chargeur et la batterie</a>, section E ;</li>
+    <li><a href="#e-modeles-figure" data-renvoi="e-modeles-figure">les modèles de Thévenin et de Norton avec leurs conventions</a>, section E ;</li>
+    <li><a href="#e-transformation-figure" data-renvoi="e-transformation-figure">l'animation du réseau vers ses modèles équivalents</a>, section E ;</li>
+    <li><a href="#e-puissance-figure" data-renvoi="e-puissance-figure">la simulation du point de fonctionnement et de la puissance reçue</a>, section E ;</li>
+    <li><a href="#h-schema-figure" data-renvoi="h-schema-figure">le pont annoté et chargé de l'exemple</a> et <a href="#h-courbe-figure" data-renvoi="h-courbe-figure">la puissance reçue en fonction de la charge</a>, section H ;</li>
+    <li><a href="#i-armoire-figure" data-renvoi="i-armoire-figure">l'équivalent du bus 24 V secouru vu de l'armoire</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour trouver l'équivalent de Thévenin ou de Norton d'un réseau vu d'une charge :</p>
+  <ol>
+    <li>Repérer les deux bornes $A$ et $B$ de la charge, choisir la référence et fixer les conventions : $i$ sortant par $A$, $u = V_A - V_B$.</li>
+    <li>Vérifier que le réseau à remplacer est linéaire et ne contient que des sources indépendantes ; sinon, restreindre l'étude à un point de fonctionnement ou utiliser une source d'essai.</li>
+    <li>Retirer la charge et calculer la tension à vide $E_{th} = V_{A0} - V_{B0}$, en utilisant diviseurs, Millman, superposition ou méthode des nœuds ; noter son signe.</li>
+    <li>Éteindre les sources indépendantes (tension en fil, courant en coupure), redessiner le réseau vu de $A$ et $B$, et réduire pour obtenir $R_{th}$ ; si le réseau ne se réduit pas, calculer le courant de court-circuit et poser $R_{th} = E_{th}/I_{cc}$, ou appliquer une source d'essai.</li>
+    <li>Écrire le modèle voulu : Thévenin ($E_{th}$ en série avec $R_{th}$, borne $+$ du côté de la borne au potentiel le plus élevé à vide) ou Norton ($I_N = E_{th}/R_{th}$ en parallèle avec $R_N = R_{th}$).</li>
+    <li>Rebrancher la charge : $I_L = E_{th}/(R_{th} + R_L)$, $U_L = R_LI_L$, $P_L = R_LI_L^2$, rendement $R_L/(R_L + R_{th})$.</li>
+    <li>Contrôler : vérifier un cas par la méthode des nœuds, tester les cas limites $R_L \to 0$ et $R_L \to \infty$, vérifier les unités et l'ordre de grandeur.</li>
+  </ol>
+  <p>Pour appliquer la superposition :</p>
+  <ol>
+    <li>Garder une seule source indépendante active ; éteindre toutes les autres ; conserver les résistances internes et les sources commandées.</li>
+    <li>Calculer la grandeur voulue dans ce circuit partiel, avec des sens de référence identiques à ceux du circuit complet.</li>
+    <li>Recommencer pour chaque source.</li>
+    <li>Additionner algébriquement les contributions, en tenant compte des signes.</li>
+    <li>Calculer les puissances à partir des grandeurs totales, puis faire le bilan de puissance.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Situation : une étuve industrielle mesure sa température avec une sonde résistive à élément platine de
+    $1000\ \Omega$ à $0\ \mathrm{°C}$, montée dans un pont. Le pont est alimenté sous $E = 2\ \mathrm{V}$ ; les trois
+    autres résistances valent $R_1 = R_2 = R_3 = 1{,}000\ \mathrm{k\Omega}$. À la température de l'essai, la sonde vaut
+    $R_x = 1100\ \Omega$ ; avec le coefficient moyen usuel du platine industriel, voisin de
+    $3{,}85 \times 10^{-3}\ \mathrm{K^{-1}}$, donnée à vérifier sur la fiche du capteur, cela correspond à environ
+    $26\ \mathrm{°C}$. La tension de déséquilibre du pont est lue entre les points milieux $B$ (côté sonde) et $A$, par
+    un instrument dont la résistance d'entrée $R_L$ dépend du modèle : un ancien indicateur à aiguille de
+    $1\ \mathrm{k\Omega}$ sur l'installation d'origine, un module d'entrée d'automate de $100\ \mathrm{k\Omega}$, ou un
+    amplificateur d'instrumentation de $10\ \mathrm{M\Omega}$.
+  </p>
+  <p>
+    Données : $E$, $R_1$, $R_2$, $R_3$, $R_x$, et trois valeurs de $R_L$. Inconnues : l'équivalent de Thévenin et de
+    Norton vu de $B$ et $A$, la tension lue et la puissance reçue pour chaque instrument, la charge qui recevrait la
+    puissance maximale. Stratégie : le pont chargé ne contient aucun groupe série ou parallèle ; on retire la charge
+    pour obtenir deux diviseurs indépendants, on éteint la source pour obtenir $R_{th}$, puis on rebranche chaque
+    charge sur le modèle. On contrôle un cas par la méthode des nœuds.
+  </p>
+  <h3 id="h-thevenin">Équivalent de Thévenin</h3>
+  <ol>
+    <li>Tension à vide en $A$ (diviseur $R_1$, $R_2$) : $V_{A0} = 2 \times \dfrac{1000}{1000 + 1000} = 1{,}0000\ \mathrm{V}$.</li>
+    <li>Tension à vide en $B$ (diviseur $R_3$, $R_x$) : $V_{B0} = 2 \times \dfrac{1100}{1000 + 1100} = 1{,}0476\ \mathrm{V}$.</li>
+    <li>$E_{th} = V_{B0} - V_{A0} = 0{,}047\,62\ \mathrm{V} = 47{,}62\ \mathrm{mV}$, positive : $B$ est la borne $+$ du modèle.</li>
+    <li>Source éteinte (fil entre le haut et le bas du pont) : $R_1 /\!/ R_2 = 500{,}0\ \Omega$ relie $A$ au nœud commun, $R_3 /\!/ R_x = \dfrac{1000 \times 1100}{2100} = 523{,}8\ \Omega$ relie $B$ au même nœud. En série : $R_{th} = 1023{,}8\ \Omega$.</li>
+    <li>Norton : $I_N = E_{th}/R_{th} = 0{,}047\,62/1023{,}8 = 46{,}51\ \mu\mathrm{A}$, en parallèle avec $R_N = 1023{,}8\ \Omega$.</li>
+  </ol>
+  <h3 id="h-charges">Tension lue et puissance reçue</h3>
+  <ol>
+    <li>Indicateur de $1\ \mathrm{k\Omega}$ : $I_L = \dfrac{0{,}047\,62}{1023{,}8 + 1000} = 23{,}53\ \mu\mathrm{A}$ ; $U_L = 1000 \times 23{,}53 \times 10^{-6} = 23{,}53\ \mathrm{mV}$, soit $50{,}6\ \%$ de moins que la tension à vide ; $P_L = 1000 \times (23{,}53 \times 10^{-6})^2 = 0{,}5536\ \mu\mathrm{W}$.</li>
+    <li>Module d'automate de $100\ \mathrm{k\Omega}$ : $U_L = 47{,}62 \times \dfrac{100\,000}{101\,023{,}8} = 47{,}14\ \mathrm{mV}$, erreur de $1{,}01\ \%$ ; $P_L = 0{,}0222\ \mu\mathrm{W}$.</li>
+    <li>Amplificateur de $10\ \mathrm{M\Omega}$ : $U_L = 47{,}61\ \mathrm{mV}$, erreur de $0{,}010\ \%$ ; $P_L = 0{,}000\,23\ \mu\mathrm{W}$, soit $0{,}23\ \mathrm{nW}$.</li>
+    <li>Charge recevant le plus de puissance : $R_L = R_{th} = 1023{,}8\ \Omega$, $P_{\max} = \dfrac{0{,}047\,62^2}{4 \times 1023{,}8} = 0{,}5537\ \mu\mathrm{W}$. L'indicateur de $1\ \mathrm{k\Omega}$, presque adapté, en reçoit $99{,}99\ \%$.</li>
+  </ol>
+  <h3 id="h-controle">Contrôles et limites</h3>
+  <ol>
+    <li>Méthode des nœuds avec $R_L = 1\ \mathrm{k\Omega}$, courant de charge de $B$ vers $A$. Nœud $A$ : $\dfrac{2 - V_A}{1000} + \dfrac{V_B - V_A}{1000} = \dfrac{V_A}{1000}$. Nœud $B$ : $\dfrac{2 - V_B}{1000} = \dfrac{V_B}{1100} + \dfrac{V_B - V_A}{1000}$. La résolution donne $V_A = 1{,}011\,76\ \mathrm{V}$ et $V_B = 1{,}035\,29\ \mathrm{V}$, donc $U_L = 23{,}53\ \mathrm{mV}$ : identique au résultat du modèle.</li>
+    <li>Loi des nœuds en $A$ : $R_1$ apporte $0{,}988\,24\ \mathrm{mA}$, la charge $0{,}023\,53\ \mathrm{mA}$, et $R_2$ évacue $1{,}011\,76\ \mathrm{mA}$ ; $0{,}988\,24 + 0{,}023\,53 = 1{,}011\,77\ \mathrm{mA}$, égal aux arrondis près.</li>
+    <li>Bilan de puissance : l'alimentation fournit $2 \times (0{,}988\,24 + 0{,}964\,71) = 3{,}906\ \mathrm{mW}$, dont $0{,}55\ \mu\mathrm{W}$ seulement parviennent à l'indicateur. Le rendement du modèle au voisinage de l'adaptation vaut $49\ \%$, mais le rendement réel du pont est de $0{,}014\ \%$ : l'équivalent ne décrit pas les pertes internes.</li>
+    <li>Ordre de grandeur : $E_{th}$ vaut environ $E \times \Delta R/(4R) = 2 \times 100/4000 = 50\ \mathrm{mV}$, formule approchée des petits déséquilibres ; la valeur exacte, $47{,}62\ \mathrm{mV}$, est cohérente.</li>
+    <li>Limites : la sonde dissipe $1100 \times (2/2100)^2 = 1{,}0\ \mathrm{mW}$, ce qui l'échauffe légèrement au-dessus du milieu mesuré ; le pont n'est pas linéaire en fonction de $R_x$ ; les tolérances de $R_1$, $R_2$, $R_3$ décalent le zéro. Ces effets, qui relèvent de la conception de la chaîne de mesure, seront traités dans le cours Conditionnement analogique.</li>
+  </ol>
+  <p>
+    Résultat final : vu de l'instrument, le pont équivaut à $47{,}62\ \mathrm{mV}$ en série avec $1023{,}8\ \Omega$, ou à
+    $46{,}51\ \mu\mathrm{A}$ en parallèle avec $1023{,}8\ \Omega$. L'indicateur de $1\ \mathrm{k\Omega}$ lit
+    $23{,}53\ \mathrm{mV}$ et reçoit presque la puissance maximale de $0{,}554\ \mu\mathrm{W}$ ; l'amplificateur de
+    $10\ \mathrm{M\Omega}$ lit $47{,}61\ \mathrm{mV}$ en ne prélevant presque aucune puissance. Pour mesurer une
+    tension, on cherche l'inverse de l'adaptation : une résistance d'entrée très grande devant $R_{th}$.
+  </p>
+  <figure id="h-schema-figure">
+    <svg viewBox="0 0 780 400" role="img" aria-label="Pont de mesure chargé par l'indicateur de 1 kilohm : potentiels 1,0118 volt en A et 1,0353 volt en B, courant de 23,53 microampères de B vers A dans la charge, courants de branche annotés">
+      <defs>
+        <marker id="fl-h-i" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-h-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M70 178V60H560"/>
+        <circle cx="70" cy="200" r="24"/>
+        <path d="M70 224V340H560"/>
+        <path d="M200 60V90"/>
+        <rect x="186" y="90" width="28" height="70" rx="3"/>
+        <path d="M200 160V230"/>
+        <rect x="186" y="230" width="28" height="70" rx="3"/>
+        <path d="M200 300V340"/>
+        <path d="M560 60V90"/>
+        <rect x="546" y="90" width="28" height="70" rx="3"/>
+        <path d="M560 160V230"/>
+        <rect x="546" y="230" width="28" height="70" rx="3"/>
+        <path d="M560 300V340"/>
+        <path d="M200 195H330"/>
+        <rect x="330" y="181" width="100" height="28" rx="3"/>
+        <path d="M430 195H560"/>
+        <path d="M130 340V354M116 354H144M122 361H138M127 368H133"/>
+      </g>
+      <rect x="310" y="160" width="140" height="70" rx="10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="6 5" opacity="0.8"/>
+      <g fill="currentColor" stroke="none">
+        <circle cx="200" cy="195" r="5"/>
+        <circle cx="560" cy="195" r="5"/>
+        <circle cx="200" cy="60" r="4.5"/>
+        <circle cx="200" cy="340" r="4.5"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M510 195H470" marker-end="url(#fl-h-i)"/>
+        <path d="M200 70V84" marker-end="url(#fl-h-i)"/>
+        <path d="M560 70V84" marker-end="url(#fl-h-i)"/>
+        <path d="M200 205V222" marker-end="url(#fl-h-i)"/>
+        <path d="M560 205V222" marker-end="url(#fl-h-i)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M340 256H420" marker-end="url(#fl-h-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="70" y="205" text-anchor="middle">2 V</text>
+        <text x="44" y="184" text-anchor="end" font-weight="600">+</text>
+        <text x="164" y="130" text-anchor="end">R1 = 1 kΩ</text>
+        <text x="164" y="270" text-anchor="end">R2 = 1 kΩ</text>
+        <text x="596" y="130">R3 = 1 kΩ</text>
+        <text x="596" y="264">Rx = 1100 Ω</text>
+        <text x="596" y="282" font-size="11">sonde</text>
+        <text x="222" y="80" font-size="11">0,9882 mA</text>
+        <text x="222" y="222" font-size="11">1,0118 mA</text>
+        <text x="538" y="80" text-anchor="end" font-size="11">0,9647 mA</text>
+        <text x="538" y="222" text-anchor="end" font-size="11">0,9412 mA</text>
+        <text x="186" y="186" text-anchor="end" font-weight="600">A</text>
+        <text x="574" y="186" font-weight="600">B</text>
+        <text x="186" y="206" text-anchor="end" font-size="11">1,0118 V</text>
+        <text x="574" y="208" font-size="11">1,0353 V</text>
+        <text x="380" y="200" text-anchor="middle">RL = 1 kΩ</text>
+        <text x="380" y="150" text-anchor="middle" font-size="11.5">indicateur</text>
+        <text x="490" y="184" text-anchor="middle" font-size="11">IL = 23,53 µA</text>
+        <text x="380" y="276" text-anchor="middle" fill="var(--serie-2)">u = 23,53 mV</text>
+        <text x="130" y="392" text-anchor="middle" font-size="11.5">référence 0 V</text>
+        <text x="470" y="392" text-anchor="middle" font-size="11.5">alimentation : 3,906 mW ; indicateur : 0,554 µW</text>
+      </g>
+    </svg>
+    <figcaption>
+      Le pont de l'exemple chargé par l'indicateur de $1\ \mathrm{k\Omega}$ (cadre en tirets), valeurs issues de la
+      méthode des nœuds. L'alimentation, borne $+$ en haut, a sa borne $-$ sur le conducteur du bas, référence 0 V. Les
+      flèches épaisses sont les courants, orientés dans le sens réel : ils descendent dans les quatre bras, et $I_L$
+      traverse la charge de $B$ vers $A$. Les potentiels de $A$ et $B$ sont inscrits à côté des nœuds ; la flèche fine
+      est la tension lue $u = V_B - V_A$. On vérifie la loi des nœuds en $A$ : $0{,}9882 + 0{,}0235 = 1{,}0118\ \mathrm{mA}$.
+    </figcaption>
+  </figure>
+  <p>
+    La courbe suivante trace la puissance reçue par l'instrument et la tension qu'il lit, en fonction de sa résistance
+    d'entrée, sur une échelle logarithmique. Elle rend visible le compromis : l'instrument qui reçoit le plus de
+    puissance est celui qui mesure le plus mal.
+  </p>
+  <figure id="h-courbe-figure">
+    <div id="h-courbe-trace"></div>
+    <figcaption>
+      Axe horizontal : logarithme décimal de la résistance d'entrée $R_L$ exprimée en ohms, de $10\ \Omega$ à
+      $100\ \mathrm{M\Omega}$. Axe vertical : grandeurs rapportées à leur maximum, sans dimension. Une courbe donne
+      $P_L/P_{\max}$, qui culmine à $1$ pour $R_L = R_{th}$ ; l'autre donne $U_L/E_{th}$, qui tend vers $1$ pour les
+      grandes résistances d'entrée. Leurs noms figurent dans la légende du graphique ; les trois points marqués sont
+      l'indicateur, le module d'automate et l'amplificateur.
+    </figcaption>
+  </figure>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <p>
+    Cas concret : le bus $24\ \mathrm{V}$ continu secouru de l'armoire automate du site, déjà étudié dans les cours
+    Lois de Kirchhoff et Associations de résistances et diviseurs. Un chargeur-redresseur, modélisé par
+    $E_1 = 27\ \mathrm{V}$ et $R_1 = 0{,}5\ \Omega$ (résistance interne et câble), et une batterie, modélisée par
+    $E_2 = 24\ \mathrm{V}$ et $R_2 = 0{,}5\ \Omega$, alimentent l'armoire, dont la consommation varie : quelques
+    ampères en veille, une dizaine lorsque les sorties et les électrovannes sont commandées. L'exploitant se pose trois
+    questions : quelle tension reçoit l'armoire selon sa consommation, à partir de quelle consommation la batterie se
+    décharge-t-elle, et quel courant circulerait en cas de court-circuit dans l'armoire ?
+  </p>
+  <figure id="i-armoire-figure">
+    <svg viewBox="0 0 800 360" role="img" aria-label="À gauche, le chargeur de 27 volts et 0,5 ohm et la batterie de 24 volts et 0,5 ohm en parallèle sur l'armoire ; à droite, l'équivalent vu de l'armoire, 25,5 volts en série avec 0,25 ohm, et son courant de court-circuit de 102 ampères">
+      <defs>
+        <marker id="fl-i-i" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-i-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M60 178V70H100"/>
+        <circle cx="60" cy="200" r="22"/>
+        <rect x="100" y="57" width="70" height="26" rx="3"/>
+        <path d="M170 70H260"/>
+        <path d="M60 222V300H330"/>
+        <path d="M200 178V160"/>
+        <circle cx="200" cy="200" r="22"/>
+        <rect x="187" y="90" width="26" height="70" rx="3"/>
+        <path d="M200 90V70"/>
+        <path d="M200 222V300"/>
+        <path d="M260 70H330V110"/>
+        <rect x="316" y="110" width="28" height="120" rx="3"/>
+        <path d="M330 230V300"/>
+        <path d="M580 178V110H620"/>
+        <circle cx="580" cy="200" r="22"/>
+        <rect x="620" y="97" width="70" height="26" rx="3"/>
+        <path d="M690 110H740V140"/>
+        <rect x="726" y="140" width="28" height="100" rx="3"/>
+        <path d="M740 240V290H580V222"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="200" cy="70" r="4.5"/>
+        <circle cx="200" cy="300" r="4.5"/>
+      </g>
+      <rect x="296" y="96" width="68" height="148" rx="10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="6 5" opacity="0.8"/>
+      <rect x="712" y="126" width="56" height="128" rx="10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="6 5" opacity="0.8"/>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M270 70H306" marker-end="url(#fl-i-i)"/>
+        <path d="M700 110H728" marker-end="url(#fl-i-i)"/>
+        <path d="M410 200H500" marker-end="url(#fl-i-i)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M384 290V84" marker-end="url(#fl-i-u)"/>
+        <path d="M784 280V124" marker-end="url(#fl-i-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="180" y="26" text-anchor="middle" font-weight="600">bus 24 V secouru</text>
+        <text x="660" y="26" text-anchor="middle" font-weight="600">vu de l'armoire</text>
+        <text x="60" y="205" text-anchor="middle" font-size="11">27 V</text>
+        <text x="36" y="186" text-anchor="end" font-weight="600">+</text>
+        <text x="60" y="250" text-anchor="middle" font-size="11">chargeur</text>
+        <text x="135" y="100" text-anchor="middle" font-size="11">0,5 Ω</text>
+        <text x="200" y="205" text-anchor="middle" font-size="11">24 V</text>
+        <text x="176" y="186" text-anchor="end" font-weight="600">+</text>
+        <text x="200" y="250" text-anchor="middle" font-size="11">batterie</text>
+        <text x="222" y="130" font-size="11">0,5 Ω</text>
+        <text x="330" y="262" text-anchor="middle" font-size="11">armoire</text>
+        <text x="288" y="60" text-anchor="middle" font-size="11">I</text>
+        <text x="396" y="192" fill="var(--serie-2)">U</text>
+        <text x="455" y="188" text-anchor="middle" font-size="11">équivaut à</text>
+        <text x="550" y="214" text-anchor="end" font-size="11">25,5 V</text>
+        <text x="556" y="186" text-anchor="end" font-weight="600">+</text>
+        <text x="655" y="90" text-anchor="middle" font-size="11">0,25 Ω</text>
+        <text x="714" y="100" text-anchor="middle" font-size="11">I</text>
+        <text x="740" y="272" text-anchor="middle" font-size="11">armoire</text>
+        <text x="784" y="300" fill="var(--serie-2)" text-anchor="middle">U</text>
+        <text x="190" y="328" text-anchor="middle" font-size="11.5">0 V du bus, référence</text>
+        <text x="620" y="318" text-anchor="middle" font-size="11.5">U = 25,5 - 0,25 I ; Icc = 25,5 / 0,25 = 102 A</text>
+        <text x="620" y="340" text-anchor="middle" font-size="11.5">Eth : Millman ; Rth = 0,5 // 0,5</text>
+      </g>
+    </svg>
+    <figcaption>
+      À gauche, le bus secouru : le chargeur et la batterie, bornes $+$ en haut, chacun en série avec sa résistance,
+      sont en parallèle sur l'armoire (cadre en tirets) ; les points pleins marquent les nœuds, et le conducteur du bas
+      est le 0 V du bus, pris comme référence. La flèche épaisse $I$ est le courant consommé par l'armoire, la flèche
+      fine $U$ sa tension d'alimentation. À droite, l'équivalent de Thévenin vu des bornes de l'armoire, avec les mêmes
+      conventions. La flèche épaisse centrale se lit "est équivalent, vu de l'armoire, à".
+    </figcaption>
+  </figure>
+  <p>
+    Équivalent. Vu de l'armoire, le bus est un réseau linéaire tant que le chargeur ne limite pas son courant. Le
+    théorème de Millman donne $E_{th} = (27/0{,}5 + 24/0{,}5)/(1/0{,}5 + 1/0{,}5) = 25{,}5\ \mathrm{V}$, et les deux
+    sources éteintes laissent $R_{th} = 0{,}5 /\!/ 0{,}5 = 0{,}25\ \Omega$. La tension de l'armoire suit donc
+    $U = 25{,}5 - 0{,}25\,I$ : $25{,}0\ \mathrm{V}$ à $2\ \mathrm{A}$, $24{,}48\ \mathrm{V}$ à $4{,}08\ \mathrm{A}$, et
+    $23{,}0\ \mathrm{V}$ à $10\ \mathrm{A}$. Une seule droite remplace un système d'équations par valeur de charge.
+  </p>
+  <p>
+    Batterie. L'équivalent ne dit rien du courant de la batterie : il faut revenir au réseau, et c'est la limite
+    concrète du théorème. La batterie ne reçoit ni ne fournit rien lorsque $U = E_2 = 24\ \mathrm{V}$, soit pour
+    $I = (25{,}5 - 24)/0{,}25 = 6\ \mathrm{A}$. En dessous, elle se recharge ; au-delà, elle se décharge : à
+    $10\ \mathrm{A}$, le chargeur fournit $(27 - 23)/0{,}5 = 8\ \mathrm{A}$ et la batterie $(24 - 23)/0{,}5 =
+    2\ \mathrm{A}$. Choix d'ingénierie : si la consommation moyenne dépasse $6\ \mathrm{A}$, la batterie se vide lentement
+    même avec le chargeur en service ; il faut un chargeur de tension ou de courant plus élevé, ou réduire les pertes
+    de câblage qui constituent une part de $R_1$.
+  </p>
+  <p>
+    Court-circuit. Le courant de Norton, $I_N = 25{,}5/0{,}25 = 102\ \mathrm{A}$, est l'ordre de grandeur du courant
+    qu'un court-circuit franc aux bornes de l'armoire ferait circuler, partagé entre le chargeur ($54\ \mathrm{A}$) et
+    la batterie ($48\ \mathrm{A}$). C'est lui qui fixe le pouvoir de coupure et la vitesse de la protection du départ
+    armoire, ainsi que la tenue du câble pendant le défaut. Les incertitudes doivent être affichées : un chargeur réel
+    passe en limitation de courant, quelques ampères à quelques dizaines d'ampères selon le modèle, et cesse alors
+    d'être un équivalent linéaire ; une batterie au plomb réelle a une résistance interne souvent bien plus faible que
+    $0{,}5\ \Omega$, de l'ordre de la dizaine de milliohms selon sa capacité, et peut débiter des centaines d'ampères.
+    Le calcul fournit la méthode, les données du constructeur fournissent les valeurs. Enfin, la charge qui
+    recevrait la puissance maximale, $R_L = 0{,}25\ \Omega$, absorberait $650\ \mathrm{W}$ sous $12{,}75\ \mathrm{V}$ et
+    $51\ \mathrm{A}$, avec un rendement de $50\ \%$ : c'est un quasi-court-circuit. Une installation d'énergie vise
+    l'inverse, $R_L \gg R_{th}$, pour garder la tension proche de $E_{th}$.
+  </p>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : équivalent du bus 24 V secouru vu de l'armoire automate</span>
+    <p>
+      Quatrième brique du petit site industriel. Les cours précédents ont modélisé le chargeur et la batterie de
+      l'armoire automate, puis la mesure de la tension du bus par l'automate. Cette séance réduit l'ensemble à son
+      équivalent vu de l'armoire : $E_{th} = 25{,}5\ \mathrm{V}$, $R_{th} = 0{,}25\ \Omega$, soit
+      $U = 25{,}5 - 0{,}25\,I$ ; la batterie passe de la recharge à la décharge au-delà de $6\ \mathrm{A}$ de
+      consommation, et le courant de court-circuit estimé aux bornes de l'armoire vaut $102\ \mathrm{A}$ dans le
+      modèle linéaire. Ces trois résultats alimenteront le bilan de puissance du site, la logique de fonctionnement
+      dégradé (seuil de délestage lié à la décharge de la batterie) et le choix des protections du départ armoire,
+      qui sera repris avec les caractéristiques réelles du chargeur et de la batterie dans les cours Calcul des
+      courants de court-circuit et Stockage d'énergie et batteries.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li>
+      <strong>Inverser les règles d'extinction.</strong> Remplacer une source de tension par un circuit ouvert, ou une
+      source de courant par un court-circuit, change la topologie du réseau et fausse $R_{th}$ comme chaque
+      contribution de la superposition. Moyen mnémotechnique : on annule la grandeur imposée ; une tension nulle, c'est
+      un fil ; un courant nul, c'est une coupure.
+    </li>
+    <li>
+      <strong>Superposer des puissances.</strong> Dans la simulation de la section E, la somme des puissances partielles
+      de l'armoire vaut $50{,}11\ \mathrm{W}$ pour une puissance réelle de $99{,}88\ \mathrm{W}$. La puissance est
+      quadratique : on superpose les courants et les tensions, puis on calcule la puissance.
+    </li>
+    <li>
+      <strong>Calculer la tension à vide avec la charge en place.</strong> $E_{th}$ est par définition la tension
+      lorsque la charge est retirée. La calculer charge branchée donne $U_L$, plus faible, et une valeur de $R_{th}$
+      incohérente. Dans l'exemple de la section H, cela donnerait $23{,}53\ \mathrm{mV}$ au lieu de $47{,}62\ \mathrm{mV}$.
+    </li>
+    <li>
+      <strong>Oublier les résistances internes en éteignant une source réelle.</strong> Seule la source idéale
+      disparaît ; la résistance interne reste dans le réseau. Pour le bus secouru, les oublier donnerait $R_{th} = 0$
+      et un courant de court-circuit infini.
+    </li>
+    <li>
+      <strong>Se tromper de polarité ou de sens.</strong> La borne $+$ de $E_{th}$ est celle qui est au potentiel le
+      plus élevé à vide, et la flèche de $I_N$ pointe vers cette même borne. Dans le pont de la section H, c'est $B$, pas
+      $A$ ; un signe faux change le sens du courant dans la charge.
+    </li>
+    <li>
+      <strong>Croire que l'équivalent décrit l'intérieur du réseau.</strong> Il ne donne ni le courant de la batterie,
+      ni les pertes dans le pont. Le rendement de $50\ \%$ à l'adaptation est celui du modèle ; celui du pont réel est de
+      $0{,}014\ \%$. Pour une grandeur interne, on revient au réseau complet.
+    </li>
+    <li>
+      <strong>Viser le transfert maximal de puissance dans une installation d'énergie.</strong> Il impose un rendement
+      de $50\ \%$ et une tension moitié de la tension à vide. Un réseau, une batterie, un chargeur fonctionnent avec
+      $R_L \gg R_{th}$.
+    </li>
+    <li>
+      <strong>Appliquer les théorèmes hors de leur domaine.</strong> Un chargeur en limitation de courant, une diode,
+      une lampe à filament rendent le réseau non linéaire. L'équivalent calculé n'est alors valable qu'autour d'un point
+      de fonctionnement, et un courant de court-circuit calculé linéairement peut être très éloigné du courant réel.
+    </li>
+  </ol>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de
+    diagnostic industriel et une question conceptuelle. La correction de chacun reste masquée jusqu'à une tentative ou
+    un clic explicite sur "Voir la correction", puis se déroule étape par étape, accompagnée d'un schéma annoté ou d'une
+    courbe.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma.</p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$x = \sum_k x_k \quad (\text{superposition des courants et des tensions, jamais des puissances})$$
+    $$u = E_{th} - R_{th}\,i \quad (\text{Thévenin, } i \text{ sortant par la borne } +)$$
+    $$I_N = \frac{E_{th}}{R_{th}}, \qquad R_N = R_{th} \quad (\text{conversion Thévenin et Norton})$$
+    $$I_L = \frac{E_{th}}{R_{th} + R_L}, \qquad P_L = \frac{E_{th}^2\,R_L}{(R_{th} + R_L)^2}$$
+    $$P_{\max} = \frac{E_{th}^2}{4R_{th}} \text{ pour } R_L = R_{th}, \qquad \eta = \frac{R_L}{R_L + R_{th}}$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>Éteindre une source de tension, c'est la remplacer par un fil ; une source de courant, par une coupure ; les résistances internes restent.</li>
+      <li>On superpose des courants et des tensions, jamais des puissances.</li>
+      <li>$E_{th}$ se calcule charge retirée, et sa borne $+$ est celle du potentiel le plus élevé à vide.</li>
+      <li>L'équivalent ne vaut que vu des deux bornes choisies : il ne dit rien de l'intérieur du réseau.</li>
+      <li>L'adaptation $R_L = R_{th}$ maximise la puissance au prix d'un rendement de $50\ \%$ ; elle concerne les signaux faibles, pas l'énergie.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Dans un réseau linéaire, chaque courant et chaque tension est la somme des contributions
+    de chaque source agissant seule, les autres étant éteintes : une source de tension devient un fil, une source de
+    courant une coupure. Les puissances, quadratiques, ne se superposent pas. Vu de deux bornes, tout réseau linéaire
+    équivaut à une source $E_{th}$, sa tension à vide, en série avec $R_{th}$, sa résistance vue sources éteintes :
+    c'est le théorème de Thévenin. Le modèle de Norton lui est équivalent, avec $I_N = E_{th}/R_{th}$ en parallèle avec
+    la même résistance. Une charge variable se calcule alors en une ligne ; elle reçoit la puissance maximale
+    $E_{th}^2/(4R_{th})$ lorsque $R_L = R_{th}$, avec un rendement de $50\ \%$, recherché pour les signaux faibles et
+    évité pour l'énergie. L'équivalent ne décrit pas l'intérieur du réseau.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent,
+    <a href="#/cours/associations-de-resistances-et-diviseurs">Associations de résistances et diviseurs</a> ; une sur
+    le cours <a href="#/cours/tension-courant-charge-et-puissance">Tension, courant, charge et puissance</a>, dont la
+    source réelle est un premier équivalent de Thévenin ; et une sur le cours le plus ancien du parcours,
+    <a href="#/cours/diagnostic-initial-et-remise-a-niveau-mathematique">Diagnostic initial et remise à niveau
+    mathématique</a>, qui tient lieu de question sur un cours vieux d'une semaine tant que le parcours n'en compte pas.
+    La question sur un cours vieux d'un mois n'est pas encore applicable.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : calculer en Python l'équivalent de Thévenin d'un réseau quelconque par la méthode des nœuds, le vérifier
+    dans LTspice, puis identifier par la mesure l'équivalent d'une source réelle. Prédiction à écrire avant de
+    commencer : pour une pile de $9\ \mathrm{V}$ neuve, la résistance interne est-elle plutôt de l'ordre du milliohm,
+    de l'ohm ou du kilohm ? Et pour une alimentation de laboratoire réglée en tension, en dessous de sa limite de
+    courant ?
+  </p>
+  <ol>
+    <li>
+      En Python avec numpy, écrire une fonction <code>noeuds(G, s)</code> qui résout $\mathbf{G}\,\mathbf{v} =
+      \mathbf{s}$ avec <code>numpy.linalg.solve</code>. Pour le pont de la section H, construire la matrice $2 \times 2$
+      des nœuds $A$ et $B$ avec une charge $R_L$ et vérifier $V_B - V_A = 23{,}53\ \mathrm{mV}$ pour
+      $R_L = 1\ \mathrm{k\Omega}$.
+    </li>
+    <li>
+      Écrire <code>thevenin(RL_petite, RL_grande)</code> : calculer la tension de sortie pour deux charges, par
+      exemple $R_L = 10^{12}\ \Omega$ (quasi à vide) et $R_L = 10^{-6}\ \Omega$ (quasi court-circuit), en déduire
+      $E_{th}$ et $I_{cc}$, puis $R_{th}$. Retrouver $47{,}62\ \mathrm{mV}$ et $1023{,}8\ \Omega$.
+    </li>
+    <li>
+      Vérifier la superposition sur le bus secouru : résoudre le circuit avec $E_1$ seule, puis $E_2$ seule, puis les
+      deux, et comparer $I_3$ et $R_3I_3^2$ ; tracer avec matplotlib $P_L(R_L)$ pour $R_L$ de $0{,}01$ à
+      $100\ \Omega$ en échelle logarithmique.
+    </li>
+    <li>
+      Dans LTspice, saisir la netlist <code>V1 top 0 2</code>, <code>R1 top a 1k</code>, <code>R2 a 0 1k</code>,
+      <code>R3 top b 1k</code>, <code>Rx b 0 1.1k</code>, <code>RL b a {RL}</code>,
+      <code>.step param RL list 1k 100k 10Meg 1e12</code>, <code>.op</code>, <code>.end</code>, et relever
+      <code>V(b)-V(a)</code>. Ajouter ensuite une analyse <code>.step dec param RL 10 1e8 10</code> et tracer la puissance
+      <code>(V(b)-V(a))**2/RL</code>.
+    </li>
+    <li>
+      Mesure facultative : relever la tension à vide d'une pile de $9\ \mathrm{V}$ au multimètre, puis la tension sous
+      une charge de $100\ \Omega$, $0{,}25\ \mathrm{W}$ ou plus, pendant quelques secondes seulement. Calculer
+      $R_{th} = R_L\,(E_{th}/U_L - 1)$. Ne jamais court-circuiter une source pour mesurer $I_{cc}$.
+    </li>
+  </ol>
+  <p>
+    Résultats attendus : $V_B - V_A = 23{,}53\ \mathrm{mV}$ pour $1\ \mathrm{k\Omega}$, $47{,}14\ \mathrm{mV}$ pour
+    $100\ \mathrm{k\Omega}$, $47{,}61\ \mathrm{mV}$ pour $10\ \mathrm{M\Omega}$ et $47{,}62\ \mathrm{mV}$ à vide ;
+    maximum de puissance vers $1\ \mathrm{k\Omega}$ ; pour le bus secouru, $I_3 = 2{,}16 + 1{,}92 = 4{,}08\ \mathrm{A}$
+    mais $27{,}99 + 22{,}12 \neq 99{,}88\ \mathrm{W}$. Pour une pile de $9\ \mathrm{V}$ alcaline neuve, on trouve
+    typiquement une résistance interne de l'ordre de l'ohm à quelques ohms, qui augmente nettement quand la pile
+    s'use ; une alimentation de laboratoire régulée présente une résistance de sortie de l'ordre du milliohm, tant
+    qu'elle n'atteint pas sa limite de courant. Anomalies à observer : la tension sous charge d'une pile baisse
+    lentement pendant la mesure, car sa force électromotrice n'est pas constante ; une alimentation qui atteint sa
+    limite de courant se comporte en source de courant, et la formule donne une résistance absurde ; dans LTspice,
+    une valeur écrite <code>10M</code> vaut dix milliohms, il faut écrire <code>10Meg</code>, et une charge nulle
+    exactement provoque une erreur de matrice singulière.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est
+    calculé dans ce navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent
+    enregistrées localement pour suivre votre progression.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Dans un réseau linéaire, les courants et les tensions sont la somme des effets de chaque source agissant seule ; une source éteinte de tension est un fil, de courant une coupure ; les puissances ne se superposent pas.</li>
+    <li data-rang="02">Vu de deux bornes, tout réseau linéaire est une droite $u = E_{th} - R_{th}i$ : une tension à vide et une résistance vue sources éteintes, ou, de façon équivalente, un courant de court-circuit $I_N = E_{th}/R_{th}$ en parallèle avec $R_{th}$.</li>
+    <li data-rang="03">Une charge reçoit la puissance maximale $E_{th}^2/(4R_{th})$ pour $R_L = R_{th}$, avec $50\ \%$ de rendement : on adapte pour les signaux faibles, jamais pour l'énergie, et l'équivalent ne dit rien de l'intérieur du réseau.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> obtenir $R_{th}$ sans erreur, c'est-à-dire éteindre correctement
+    les sources, conserver les résistances internes, puis reconnaître les groupes série et parallèle d'un réseau
+    redessiné vu des bornes de la charge, comme dans le pont de la section H. Le contrôle par $R_{th} = E_{th}/I_{cc}$
+    ou par la méthode des nœuds sur un cas permet de détecter l'erreur.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Révision 1 et étude de cas continu, rassemble tous les
+    outils du circuit continu dans une étude complète d'alimentation résistive. Question à préparer : une alimentation
+    de $48\ \mathrm{V}$ de résistance interne $0{,}2\ \Omega$ dessert, par un câble de $0{,}3\ \Omega$ aller et retour,
+    une résistance chauffante de $12\ \Omega$ et une lampe témoin de $480\ \Omega$ en parallèle. Quelle méthode
+    choisiriez-vous pour trouver la tension reçue par la résistance chauffante, puis pour déterminer la plus grande
+    puissance de chauffe qu'on pourrait installer sans que sa tension descende sous $44\ \mathrm{V}$ ?
+  </p>
+
+</article>
