@@ -1,0 +1,1257 @@
+<article class="cours" data-slug="revision-1-et-etude-de-cas-continu">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Six cours ont construit la boîte à outils du circuit continu. Le cours
+      <a href="#/cours/diagnostic-initial-et-remise-a-niveau-mathematique">Diagnostic initial et remise à niveau
+      mathématique</a> a fixé les unités, les préfixes et la notation scientifique. Le cours
+      <a href="#/cours/tension-courant-charge-et-puissance">Tension, courant, charge et puissance</a> a défini les
+      grandeurs, les conventions récepteur et générateur et la source réelle $U = E - rI$. Le cours
+      <a href="#/cours/loi-d-ohm-et-resistivite">Loi d'Ohm et résistivité</a> a relié la résistance d'un conducteur à
+      sa géométrie, $R = \rho L/S$. Le cours <a href="#/cours/lois-de-kirchhoff">Lois de Kirchhoff</a> a donné les deux
+      lois de liaison, le cours <a href="#/cours/associations-de-resistances-et-diviseurs">Associations de résistances
+      et diviseurs</a> les réductions et les diviseurs, et le cours
+      <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes de Thévenin, Norton et
+      superposition</a> les équivalents vus d'une charge. Ce dernier s'est achevé sur une question : une alimentation
+      de $48\ \mathrm{V}$, de résistance interne $0{,}2\ \Omega$, dessert par un câble de $0{,}3\ \Omega$ aller et
+      retour une résistance chauffante de $12\ \Omega$ et une lampe témoin de $480\ \Omega$ ; quelle méthode choisir
+      pour la tension du chauffage, puis pour la plus grande puissance de chauffe compatible avec une tension d'au
+      moins $44\ \mathrm{V}$ ? Cette séance y répond complètement : $46{,}03\ \mathrm{V}$ par réduction série-parallèle,
+      puis $348\ \mathrm{W}$ au plus par l'équivalent de Thévenin vu du chauffage, ramenés à $318\ \mathrm{W}$ une fois
+      la tolérance de la résistance prise en compte.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Un problème réel n'annonce jamais la méthode qui le résout. Le cahier des charges d'une alimentation parle de
+    tension minimale au récepteur, de puissance disponible, de longueur de câble, de calibre de protection et de
+    rendement ; c'est à l'ingénieur de traduire ces exigences en un schéma équivalent, de choisir les inconnues, de
+    sélectionner l'outil le plus court, puis de prouver que le résultat est juste. Les six cours précédents ont
+    présenté chaque outil isolément. Cette séance les assemble dans une démarche unique, réutilisable sur tout
+    circuit continu, et l'applique à une étude complète : une alimentation résistive soumise à des contraintes de
+    tension et de puissance.
+  </p>
+  <p>
+    Cette démarche est celle de tous les dimensionnements de la suite du parcours. La chute de tension d'un départ
+    moteur, le choix d'une section de câble, le budget de courant d'un bus d'automate, la vérification d'un pont de
+    mesure, le courant de court-circuit à l'extrémité d'une ligne : chaque fois, il s'agit d'un réseau de sources et
+    de résistances, d'une ou deux grandeurs contraintes, et d'une vérification par bilan. Elle est aussi la base du
+    diagnostic : un écart entre la valeur calculée et la valeur mesurée ne se lit que si le calcul est sûr. Enfin,
+    la révision a une fonction propre : réactiver les notions de la semaine avant d'aborder le stockage d'énergie,
+    où les mêmes lois s'appliqueront à des grandeurs qui varient dans le temps.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Appliquer une méthode générale de résolution d'un circuit continu, de la lecture de l'énoncé au contrôle final, en justifiant chaque choix de méthode.</li>
+    <li data-rang="02">Calculer les courants, tensions, puissances et pertes d'une alimentation réelle desservant plusieurs charges par une ligne résistive.</li>
+    <li data-rang="03">Dimensionner une charge ou une section de conducteur sous contrainte de tension minimale, de courant maximal et de puissance disponible, en tenant compte des tolérances.</li>
+    <li data-rang="04">Vérifier un résultat par quatre contrôles indépendants : analyse dimensionnelle, ordre de grandeur, cas limites, bilan de puissance et lois de Kirchhoff.</li>
+    <li data-rang="05">Distinguer, dans une étude, ce qui relève d'une loi physique, d'une convention, d'une approximation, d'une règle de conception ou d'une donnée constructeur.</li>
+    <li data-rang="06">Diagnostiquer une chute de tension anormale à partir de mesures et localiser une résistance parasite.</li>
+    <li data-rang="07">Comparer les méthodes de résolution et expliquer pourquoi la puissance maximale utile sous contrainte n'est pas celle du transfert maximal de puissance.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois acquis de la semaine sont mobilisés à chaque étape. Le premier : la résistance d'un conducteur,
+    $R = \rho L/S$, en comptant les deux conducteurs d'une liaison, aller et retour, et en exprimant la section en
+    mètres carrés ($1\ \mathrm{mm^2} = 10^{-6}\ \mathrm{m^2}$). Le deuxième : les lois de Kirchhoff, la somme des
+    courants entrant dans un nœud égale la somme des courants sortants, et la somme algébrique des tensions le long
+    d'une maille est nulle. Le troisième : la source réelle, $U = E - rI$ en convention générateur, qui est déjà un
+    modèle de Thévenin. Le mini-test ci-dessous n'est pas noté ; la correction de chaque question reste masquée
+    jusqu'à une tentative ou un clic explicite sur "Voir la correction".
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-paysage">Un circuit continu est un paysage de potentiels</h3>
+  <p>
+    Choisissons un point de référence, la borne $-$ de la source, et attribuons à chaque point du circuit son
+    potentiel. En suivant le trajet du courant, on monte d'un coup dans la source, de la valeur de sa force
+    électromotrice $E$, puis on redescend par paliers : un peu dans la résistance interne, un peu dans le conducteur
+    aller, beaucoup dans la charge, encore un peu dans le conducteur retour, jusqu'au point de départ. On revient
+    exactement au potentiel de départ : c'est la loi des mailles. Tout ce qui est "perdu" en route, dans la source et
+    dans les conducteurs, n'est pas disponible pour la charge : c'est la chute de tension. Et parce que le courant est
+    le même tout au long de ce trajet en série, chaque palier de descente est proportionnel à la résistance
+    traversée : le paysage se lit comme un diviseur de tension.
+  </p>
+  <figure id="d-paysage-figure">
+    <svg viewBox="0 0 760 330" role="img" aria-label="Profil qualitatif du potentiel le long de la boucle : montée de E dans la source, puis descentes dans la résistance interne, le conducteur aller, la charge et le conducteur retour, avec retour au potentiel de référence">
+      <defs>
+        <marker id="fl-d-pay" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="1.4" fill="none" opacity="0.8">
+        <path d="M70 280H730"/>
+        <path d="M70 290V30"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.2" fill="none" stroke-dasharray="4 5" opacity="0.55">
+        <path d="M150 290V40"/>
+        <path d="M250 290V40"/>
+        <path d="M370 290V40"/>
+        <path d="M530 290V40"/>
+        <path d="M650 290V40"/>
+      </g>
+      <path d="M70 280L150 60L250 76L370 96L530 262L650 280H730" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <g stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round">
+        <path d="M690 96V262" marker-end="url(#fl-d-pay)"/>
+        <path d="M690 262V96" marker-end="url(#fl-d-pay)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="62" y="36" text-anchor="end">V</text>
+        <text x="730" y="268" text-anchor="end" font-size="12">parcours de la boucle</text>
+        <text x="110" y="306" text-anchor="middle">source E</text>
+        <text x="200" y="306" text-anchor="middle">r</text>
+        <text x="310" y="306" text-anchor="middle">aller</text>
+        <text x="450" y="306" text-anchor="middle">charge</text>
+        <text x="590" y="306" text-anchor="middle">retour</text>
+        <text x="150" y="50" text-anchor="middle">E</text>
+        <text x="200" y="56" text-anchor="middle" font-size="11.5">- r I</text>
+        <text x="310" y="74" text-anchor="middle" font-size="11.5">- Rl I / 2</text>
+        <text x="468" y="170" font-size="11.5">- Rch I</text>
+        <text x="590" y="258" text-anchor="middle" font-size="11.5">- Rl I / 2</text>
+        <text x="700" y="184">Uch</text>
+        <text x="78" y="274" font-size="11.5">0 V, référence</text>
+      </g>
+    </svg>
+    <figcaption>
+      Profil qualitatif du potentiel le long de la boucle, dans le sens du courant. Axe horizontal : la position le long
+      du circuit, découpée en tronçons par les traits verticaux en tirets ; axe vertical : le potentiel par rapport à la
+      borne $-$ de la source, référence $0\ \mathrm{V}$. Le trait plein épais monte de $E$ dans la source (convention
+      générateur : le courant y va du $-$ vers le $+$), puis descend de $rI$, de $R_lI/2$ dans chaque conducteur et de
+      $R_{ch}I$ dans la charge (convention récepteur). La double flèche mesure la tension $U_{ch}$ réellement disponible
+      pour la charge. Le profil revient à zéro : la somme des chutes égale $E$.
+    </figcaption>
+  </figure>
+  <p>
+    Analogie contrôlée : un sentier de montagne desservi par un téléski. Le téléski, la source, élève les promeneurs
+    d'une altitude $E$ ; ils redescendent à pied par des tronçons plus ou moins raides, les résistances, et reviennent
+    au point de départ. L'altitude gagnée est exactement l'altitude perdue, quel que soit le chemin. Le long
+    tronçon agréable, la charge, est celui qu'on voudrait le plus haut possible ; les tronçons d'approche, les
+    conducteurs, "consomment" de l'altitude sans service rendu.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie du sentier</span>
+    <p>
+      Un promeneur qui descend accélère et accumule de l'énergie cinétique ; les électrons d'un conducteur, eux,
+      dérivent à une vitesse constante et minuscule, de l'ordre du dixième de millimètre par seconde, et l'énergie
+      perdue en descendant est convertie en chaleur au fur et à mesure, sans inertie notable. L'analogie suggère aussi
+      qu'un promeneur "s'use" en route : or aucune charge n'est consommée, le courant est le même à l'aller et au
+      retour ; seule l'énergie potentielle est cédée. Enfin, le paysage électrique change instantanément dès qu'on
+      modifie une résistance, car le courant de toute la boucle change : ce n'est pas un relief fixe, mais un relief
+      imposé par la charge elle-même.
+    </p>
+  </div>
+
+  <h3 id="d-energie">Chaque watt fourni se retrouve quelque part</h3>
+  <p>
+    La deuxième intuition est énergétique. La source convertit une énergie (chimique, électromagnétique) en énergie
+    électrique à raison de $EI$ watts. Cette puissance se répartit intégralement entre tous les éléments de la
+    boucle, au prorata de leur chute de tension, puisqu'ils sont traversés par le même courant : $rI^2$ dans la
+    source, $R_lI^2$ dans la ligne, le reste dans les charges. Un bilan qui ne boucle pas signale une erreur de
+    calcul, jamais une "perte mystérieuse". C'est pourquoi le bilan de puissance est la vérification la plus
+    puissante d'une étude : il combine la loi des nœuds, la loi des mailles et la loi d'Ohm en un seul nombre.
+  </p>
+  <p>
+    La troisième intuition concerne les contraintes. Augmenter la puissance d'une charge résistive, c'est diminuer
+    sa résistance ; le courant augmente, donc toutes les chutes en amont augmentent, et la tension de la charge
+    baisse. Puissance demandée et tension obtenue tirent en sens contraire : une exigence de tension minimale fixe
+    donc à elle seule une puissance maximale. On retrouve la droite $u = E_{th} - R_{th}i$ du cours Théorèmes de
+    Thévenin, Norton et superposition : un point de fonctionnement admissible est un point de cette droite situé
+    au-dessus d'une limite de tension et à gauche d'une limite de courant.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-socle">Le socle : trois lois, deux conventions, un modèle</h3>
+  <p>
+    Toute la semaine repose sur trois relations. La loi des nœuds, $\sum i_{\text{entrants}} = \sum
+    i_{\text{sortants}}$, traduit la conservation de la charge en régime continu : aucun nœud n'accumule de charge.
+    La loi des mailles, $\sum \pm u_k = 0$ le long d'une boucle fermée, traduit l'existence d'un potentiel : la
+    tension entre deux points ne dépend pas du chemin. La loi d'Ohm, $u = Ri$ en convention récepteur, est une
+    relation constitutive : elle décrit un matériau dans une plage de température et de courant, avec
+    $R = \rho L/S$ et $\rho$ qui croît avec la température pour un métal. Les deux premières sont des lois physiques
+    exactes dans l'approximation des constantes localisées ; la troisième est un modèle. Les conventions récepteur
+    (flèches de courant et de tension opposées) et générateur (flèches dans le même sens) ne changent rien à la
+    physique : elles fixent seulement le signe de la puissance, $p = ui$ reçue ou fournie.
+  </p>
+  <p>
+    Toutes les méthodes de la semaine sont des manières d'organiser ces trois relations. La méthode des nœuds
+    écrit la loi des nœuds avec les potentiels pour inconnues ; la méthode des mailles écrit la loi des mailles avec
+    les courants de maille ; les associations série et parallèle, les diviseurs, Millman, la superposition et les
+    théorèmes de Thévenin et de Norton en sont des conséquences, valables pour les réseaux linéaires, qui évitent
+    d'écrire tout le système quand une seule grandeur est demandée.
+  </p>
+
+  <h3 id="e-modele">Le modèle source, ligne, charges</h3>
+  <p>
+    La plupart des alimentations continues industrielles se ramènent au même schéma : une source réelle
+    $(E, r)$, une ligne à deux conducteurs de résistance totale $R_l = \rho\,2L/S$, et une ou plusieurs charges en
+    parallèle à l'extrémité, de résistance équivalente $R_{eq}$. Le courant est commun à la source et à la ligne ; la
+    loi des mailles sur la boucle unique donne le courant et la tension au récepteur.
+  </p>
+  <figure id="e-modele-figure">
+    <svg viewBox="0 0 760 320" role="img" aria-label="Modèle source, ligne, charges : source E en série avec r, conducteur aller et conducteur retour de résistance Rl sur 2 chacun, charge équivalente Req ; courant I, tension de sortie Us et tension au récepteur Uch">
+      <defs>
+        <marker id="fl-e-mo" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-e-mo-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M70 146V70H110"/>
+        <circle cx="70" cy="170" r="24"/>
+        <rect x="110" y="56" width="70" height="28" rx="3"/>
+        <path d="M180 70H224"/>
+        <path d="M236 70H330"/>
+        <rect x="330" y="56" width="100" height="28" rx="3"/>
+        <path d="M430 70H600V110"/>
+        <rect x="586" y="110" width="28" height="120" rx="3"/>
+        <path d="M600 230V270H430"/>
+        <rect x="330" y="256" width="100" height="28" rx="3"/>
+        <path d="M330 270H236"/>
+        <path d="M224 270H70V194"/>
+        <path d="M150 270V284M136 284H164M142 291H158M147 298H153"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="230" cy="70" r="6"/>
+        <circle cx="230" cy="270" r="6"/>
+      </g>
+      <rect x="560" y="46" width="80" height="248" rx="12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="6 5" opacity="0.8"/>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M250 70H300" marker-end="url(#fl-e-mo)"/>
+        <path d="M480 270H452" marker-end="url(#fl-e-mo)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round">
+        <path d="M630 96V116" marker-end="url(#fl-e-mo)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M262 258V86" marker-end="url(#fl-e-mo-u)"/>
+        <path d="M680 258V86" marker-end="url(#fl-e-mo-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="70" y="164" text-anchor="middle" font-weight="600">+</text>
+        <text x="70" y="188" text-anchor="middle" font-weight="600">-</text>
+        <text x="40" y="175" text-anchor="end">E</text>
+        <text x="145" y="104" text-anchor="middle">r</text>
+        <text x="100" y="30" text-anchor="middle" font-size="12">source réelle</text>
+        <text x="230" y="52" text-anchor="middle" font-weight="600">S+</text>
+        <text x="230" y="300" text-anchor="middle" font-weight="600">S-</text>
+        <text x="275" y="58" text-anchor="middle">I</text>
+        <text x="380" y="104" text-anchor="middle">Rl / 2, aller</text>
+        <text x="380" y="248" text-anchor="middle">Rl / 2, retour</text>
+        <text x="380" y="30" text-anchor="middle" font-size="12">ligne à deux conducteurs</text>
+        <text x="600" y="36" text-anchor="middle" font-size="12">charges</text>
+        <text x="572" y="175" text-anchor="end">Req</text>
+        <text x="644" y="112" font-size="12">I</text>
+        <text x="274" y="175" fill="var(--serie-2)">Us</text>
+        <text x="692" y="175" fill="var(--serie-2)">Uch</text>
+        <text x="150" y="316" text-anchor="middle" font-size="11.5">référence 0 V</text>
+      </g>
+    </svg>
+    <figcaption>
+      Modèle source, ligne, charges. La source réelle, borne $+$ en haut, est décrite en convention générateur : le
+      courant $I$ (flèche épaisse du haut) sort par sa borne $+$. Les bornes de sortie $S+$ et $S-$ (cercles ouverts)
+      séparent l'alimentation de la ligne. Les deux conducteurs, aller en haut et retour en bas, ont chacun la
+      résistance $R_l/2$ ; la flèche épaisse du bas montre le courant qui revient vers la source. Le cadre en tirets
+      regroupe les charges en une résistance $R_{eq}$, en convention récepteur : le courant y descend (petite flèche),
+      la tension $U_{ch}$ (flèche fine de droite) pointe vers le haut. La flèche fine de gauche est la tension de
+      sortie $U_s$ de l'alimentation. Le conducteur du bas, côté source, est la référence de potentiel.
+    </figcaption>
+  </figure>
+  <div class="formule-cle">
+    $$I = \frac{E}{r + R_l + R_{eq}}, \qquad U_s = E - rI, \qquad U_{ch} = E - (r + R_l)\,I = R_{eq}\,I, \qquad
+    \varepsilon = \frac{U_s - U_{ch}}{U_s} = \frac{R_l\,I}{U_s}$$
+    <p class="formule-cle-legende">
+      $E$ force électromotrice ($\mathrm{V}$) ; $r$ résistance interne de la source ($\Omega$) ; $R_l = \rho\,2L/S$
+      résistance des deux conducteurs de la ligne ($\Omega$), avec $\rho$ la résistivité ($\Omega\cdot\mathrm{m}$), $L$
+      la longueur de la liaison ($\mathrm{m}$) et $S$ la section d'un conducteur ($\mathrm{m^2}$) ; $R_{eq}$ résistance
+      équivalente des charges ($\Omega$) ; $I$ courant de la boucle ($\mathrm{A}$) ; $U_s$ tension de sortie de
+      l'alimentation et $U_{ch}$ tension au récepteur ($\mathrm{V}$) ; $\varepsilon$ chute de tension relative dans la
+      ligne (sans dimension). Hypothèses : régime continu établi, éléments linéaires, charges regroupées à l'extrémité
+      de la ligne, isolement parfait entre conducteurs. Dérivation : loi des mailles, $E = rI + R_lI + R_{eq}I$ ; puis
+      loi d'Ohm sur chaque tronçon. Interprétation : la charge reçoit ce qui reste de $E$ une fois payées les chutes
+      dans la source et dans la ligne ; c'est un diviseur de tension entre $r + R_l$ et $R_{eq}$. Cas limites :
+      $R_{eq} \to \infty$ (charges débranchées) donne $I = 0$ et $U_{ch} = U_s = E$ ; $R_{eq} = 0$ (court-circuit en
+      bout de ligne) donne $I = E/(r + R_l)$, courant de défaut minimal de la liaison. Vérification dimensionnelle :
+      $\mathrm{V}/\Omega = \mathrm{A}$ ; $\Omega\cdot\mathrm{m}\cdot\mathrm{m}/\mathrm{m^2} = \Omega$.
+    </p>
+  </div>
+
+  <h3 id="e-sim-profil-section">Simulation interactive : l'étude de cas et son profil de potentiel</h3>
+  <p>
+    La simulation reprend l'alimentation de l'étude de cas : source de résistance interne $0{,}2\ \Omega$, câble en
+    cuivre à deux conducteurs, résistance chauffante $R_{ch}$ et lampe témoin de $480\ \Omega$ en parallèle au bout
+    de la ligne. La résistivité du cuivre est prise égale à $1{,}8 \times 10^{-8}\ \Omega\cdot\mathrm{m}$, valeur
+    approchée à la température de service du câble (hypothèse). Vous réglez la force électromotrice, la longueur et
+    la section du câble, la résistance chauffante et la tension minimale exigée. Avant de toucher aux curseurs,
+    prédisez qualitativement : si vous doublez la longueur du câble, la tension au chauffage baisse-t-elle de
+    quelques pour cent ou de moitié ? Si vous divisez $R_{ch}$ par deux pour doubler la puissance, la puissance
+    obtenue est-elle exactement doublée, un peu moins, ou un peu plus ?
+  </p>
+  <figure id="e-profil-figure">
+    <div class="m-toile-cadre schema-vivant" id="e-profil"></div>
+    <figcaption>
+      En haut, le circuit de l'étude, redessiné à chaque réglage. La source, borne $+$ en haut, est en convention
+      générateur ; les deux charges sont en convention récepteur. Les flèches épaisses sont les sens de référence des
+      courants, tous positifs ici ; les potentiels des points $S+$, $A$, $B$ et $S-$ sont inscrits à côté des nœuds, par
+      rapport à la borne $-$ de la source, référence $0\ \mathrm{V}$. Un bandeau indique si la tension minimale
+      exigée est respectée. En dessous, le profil du potentiel le long de la boucle, tracé en trait plein, et la limite
+      de tension minimale, en tirets ; leurs noms figurent dans la légende du graphique. Le panneau de valeurs donne le
+      bilan de puissance complet.
+    </figcaption>
+  </figure>
+  <div id="e-profil-trace"></div>
+  <div id="e-profil-curseurs"></div>
+  <div id="e-profil-valeurs"></div>
+  <p>
+    Interprétation : avec les réglages par défaut ($48\ \mathrm{V}$, $12{,}5\ \mathrm{m}$ de câble
+    $2 \times 1{,}5\ \mathrm{mm^2}$, soit $R_l = 0{,}300\ \Omega$, et $R_{ch} = 12\ \Omega$), le courant vaut
+    $3{,}932\ \mathrm{A}$ et le chauffage reçoit $46{,}03\ \mathrm{V}$ et $176{,}6\ \mathrm{W}$ ; les pertes, $3{,}09\ \mathrm{W}$
+    dans la source et $4{,}64\ \mathrm{W}$ dans la ligne, bouclent le bilan à $188{,}7\ \mathrm{W}$. Doubler la longueur
+    ne fait baisser la tension que de $1{,}1\ \mathrm{V}$ environ, à $44{,}93\ \mathrm{V}$, car la ligne reste petite devant
+    la charge : c'est la chute qui croît proportionnellement à $R_l$, pas la tension elle-même. En revanche, diviser
+    $R_{ch}$ par deux, à $6\ \Omega$, ne donne que $326{,}6\ \mathrm{W}$ au lieu des $353\ \mathrm{W}$ espérés : le courant
+    presque doublé double aussi les chutes en amont, et la tension tombe à $44{,}27\ \mathrm{V}$. Le profil rend visible cette compétition : chaque
+    palier de descente hors de la charge est une tension perdue, et ces paliers grandissent avec le courant.
+  </p>
+
+  <h3 id="e-bilan">Bilan de puissance et rendement</h3>
+  <p>
+    En multipliant la loi des mailles $E = rI + R_lI + U_{ch}$ par le courant commun $I$, on obtient directement le
+    bilan de puissance de la boucle. Avec plusieurs charges en parallèle, la loi des nœuds au point $A$ répartit $I$
+    entre elles, et $U_{ch}I = \sum_k U_{ch}I_k = \sum_k P_k$.
+  </p>
+  <div class="formule-cle">
+    $$E\,I = r\,I^2 + R_l\,I^2 + \sum_k P_k, \qquad P_k = \frac{U_{ch}^2}{R_k}, \qquad
+    \eta = \frac{\sum_k P_k}{E\,I} = \frac{U_{ch}}{E}$$
+    <p class="formule-cle-legende">
+      $EI$ puissance convertie par la source ($\mathrm{W}$) ; $rI^2$ pertes internes de la source et $R_lI^2$ pertes
+      Joule de la ligne ($\mathrm{W}$) ; $P_k$ puissance reçue par la charge $k$, de résistance $R_k$ ($\mathrm{W}$) ;
+      $\eta$ rendement global (sans dimension). Hypothèses : celles du modèle ci-dessus, charges toutes au même
+      point. Dérivation : loi des mailles multipliée par $I$, puis loi des nœuds au point de raccordement des charges.
+      Interprétation : la puissance fournie se partage au prorata des chutes de tension, et le rendement d'une
+      chaîne série est simplement le rapport des tensions. Cas limites : $I \to 0$ donne $\eta \to 1$ mais une puissance
+      utile nulle ; au court-circuit, $\eta = 0$. Vérification dimensionnelle : $\mathrm{V}\cdot\mathrm{A} =
+      \Omega\cdot\mathrm{A^2} = \mathrm{V^2}/\Omega = \mathrm{W}$. Point de vigilance : la puissance "de sortie" affichée
+      par un constructeur d'alimentation est $U_sI = EI - rI^2$, pas $EI$.
+    </p>
+  </div>
+
+  <h3 id="e-contrainte">Puissance maximale sous contrainte de tension</h3>
+  <p>
+    Question type d'un dimensionnement : quelle est la plus grande puissance qu'on puisse installer à un endroit
+    donné sans que la tension y descende sous $U_{\min}$ ? On regroupe tout le reste du réseau, source, ligne et
+    autres charges, en son équivalent de Thévenin $(E_{th}, R_{th})$ vu des bornes de la charge à dimensionner. Pour
+    une charge résistive, $U = E_{th} - R_{th}I$ et $P = UI$. Exprimons la puissance en fonction de la tension :
+    $I = (E_{th} - U)/R_{th}$, donc $P(U) = U\,(E_{th} - U)/R_{th}$. Sa dérivée, $(E_{th} - 2U)/R_{th}$, est négative
+    dès que $U > E_{th}/2$ : dans toute la zone utile d'une installation d'énergie, plus la tension exigée est
+    élevée, plus la puissance possible est faible. La contrainte $U \geq U_{\min}$ est donc saturée à l'optimum.
+  </p>
+  <div class="formule-cle">
+    $$P_{\max,U} = \frac{U_{\min}\,(E_{th} - U_{\min})}{R_{th}}, \qquad I_{\max,U} = \frac{E_{th} - U_{\min}}{R_{th}},
+    \qquad R_{\min} = R_{th}\,\frac{U_{\min}}{E_{th} - U_{\min}} \qquad (U_{\min} \geq E_{th}/2)$$
+    <p class="formule-cle-legende">
+      $U_{\min}$ tension minimale exigée aux bornes de la charge ($\mathrm{V}$) ; $E_{th}$, $R_{th}$ équivalent de
+      Thévenin du reste du réseau vu de la charge ($\mathrm{V}$, $\Omega$) ; $P_{\max,U}$ plus grande puissance
+      compatible avec la contrainte ($\mathrm{W}$) ; $I_{\max,U}$ courant correspondant ($\mathrm{A}$) ; $R_{\min}$ plus
+      petite résistance de charge admissible ($\Omega$). Hypothèses : réseau linéaire, charge résistive, contrainte
+      située au-dessus de $E_{th}/2$, ce qui est toujours le cas d'une installation d'énergie. Dérivation : ci-dessus,
+      $P(U)$ décroissante pour $U > E_{th}/2$. Interprétation : la marge de tension $E_{th} - U_{\min}$ est un "budget
+      de chute" que la charge dépense en tirant du courant ; la puissance est le produit de la tension garantie par
+      le courant que ce budget autorise. Cas limites : $U_{\min} \to E_{th}$ donne $P_{\max,U} \to 0$ ; $U_{\min} =
+      E_{th}/2$ redonne le transfert maximal $E_{th}^2/(4R_{th})$. Vérification dimensionnelle :
+      $\mathrm{V}\cdot\mathrm{V}/\Omega = \mathrm{W}$.
+    </p>
+  </div>
+  <p>
+    D'autres contraintes s'ajoutent : un courant maximal $I_{\max}$ fixé par le calibre d'une protection ou le
+    courant admissible du câble, une puissance de sortie maximale de l'alimentation. Chacune définit une zone
+    interdite du plan tension-courant ; le point de fonctionnement admissible le plus puissant est l'extrémité du
+    segment de la droite de Thévenin qui reste dans la zone autorisée. La plus contraignante des limites l'emporte.
+  </p>
+
+  <h3 id="e-sim-domaine-section">Simulation interactive : domaine admissible et contrainte active</h3>
+  <p>
+    Le plan tension-courant porte la caractéristique de l'alimentation et de sa ligne vues du chauffage, lampe témoin
+    comprise dans l'équivalent, et les trois limites du cahier des charges : tension minimale au coffret, calibre
+    du fusible et puissance de sortie de l'alimentation. Vous déplacez le point de fonctionnement le long de la
+    caractéristique, à la souris, au doigt ou au clavier, ce qui revient à choisir $R_{ch}$ ; les curseurs règlent la
+    résistance de ligne et les trois limites. Avant de manipuler, prédisez : sur la droite, où se trouve le point admissible de plus grande
+    puissance ? Si l'on remplace le câble par un câble de plus forte section, quelle contrainte risque de devenir la
+    plus sévère ?
+  </p>
+  <figure id="e-domaine-figure">
+    <div class="m-toile-cadre schema-vivant" id="e-domaine-plan"></div>
+    <figcaption>
+      Axe horizontal : courant $I_{ch}$ du chauffage, de $0$ à $25\ \mathrm{A}$. Axe vertical : tension $U_{ch}$ à
+      ses bornes, de $30$ à $50\ \mathrm{V}$ ; l'axe ne part pas de zéro, pour que la faible pente de la droite reste
+      visible. Le trait plein épais est la caractéristique $U_{ch} = E_{th} - R_{th}I_{ch}$ ; sa partie admissible est
+      doublée d'un trait large translucide. Le trait horizontal en tirets est la tension minimale. Les deux traits
+      verticaux sont les limites de courant ramenées au chauffage, courant de la lampe déduit : en pointillés, le
+      calibre du fusible ; en tirets longs, la puissance de sortie de l'alimentation. La zone interdite est hachurée. Le point rond déplaçable est le point de
+      fonctionnement ; la courbe fine en tirets courts qui le traverse est l'hyperbole de puissance constante
+      $U_{ch}I_{ch} = P$. Le losange marque le point admissible de plus grande puissance.
+    </figcaption>
+  </figure>
+  <div id="e-domaine-curseurs"></div>
+  <div id="e-domaine-lecteur"></div>
+  <div id="e-domaine-valeurs"></div>
+  <p>
+    Interprétation : les hyperboles de puissance constante sont d'autant plus hautes que la puissance est grande ;
+    le long de la droite, la puissance croît quand on se déplace vers la droite, tant que la tension reste au-dessus
+    de $E_{th}/2$, soit $24\ \mathrm{V}$ ici, bien en dessous de l'axe. Le point admissible le plus puissant est donc
+    l'extrémité droite du segment admissible. Avec les réglages par défaut ($R_l = 0{,}3\ \Omega$, $44\ \mathrm{V}$,
+    fusible de $10\ \mathrm{A}$, alimentation de $400\ \mathrm{W}$), c'est la tension qui limite : $7{,}91\ \mathrm{A}$ dans le
+    chauffage et $348\ \mathrm{W}$. Avec un câble de forte section, $R_l = 0{,}1\ \Omega$, la droite se redresse : la
+    contrainte de tension autoriserait $13{,}3\ \mathrm{A}$ de courant de ligne, le fusible $10\ \mathrm{A}$, mais
+    l'alimentation atteint $400\ \mathrm{W}$ dès $8{,}64\ \mathrm{A}$ ; c'est elle qui devient active, et la puissance de
+    chauffe plafonne à $388\ \mathrm{W}$ environ. Tripler la section n'a donc rapporté que $12\ \%$. Une contrainte
+    non active n'influe pas sur le résultat ; c'est la raison pour laquelle un dimensionnement vérifie toujours toutes
+    les contraintes, puis désigne celle qui limite.
+  </p>
+
+  <h3 id="e-section">Section minimale d'un conducteur</h3>
+  <p>
+    Le problème inverse est aussi fréquent : la charge est connue, et l'on cherche la section de câble qui garantit
+    une chute de tension maximale $\Delta U_{\max}$. En combinant la loi d'Ohm et la relation $R = \rho L/S$ pour les
+    deux conducteurs, on obtient une section minimale.
+  </p>
+  <div class="formule-cle">
+    $$\Delta U = R_l\,I = \frac{\rho\,2L\,I}{S} \leq \Delta U_{\max} \iff S \geq S_{\min} = \frac{\rho\,2L\,I}{\Delta U_{\max}}$$
+    <p class="formule-cle-legende">
+      $\Delta U$ chute de tension dans la ligne ($\mathrm{V}$) ; $\Delta U_{\max}$ chute admissible ($\mathrm{V}$) ; $I$
+      courant de la ligne ($\mathrm{A}$) ; $L$ longueur de la liaison, comptée une fois ($\mathrm{m}$) ; $\rho$ résistivité à
+      la température de service ($\Omega\cdot\mathrm{m}$) ; $S_{\min}$ section minimale d'un conducteur
+      ($\mathrm{m^2}$). Hypothèses : courant connu et fixé par la charge, deux conducteurs identiques, résistance
+      d'une liaison continue, effets de proximité négligés. Dérivation : $R_l = \rho\,2L/S$ reporté dans
+      $\Delta U = R_lI$. Interprétation : la section croît avec la distance et le courant, et diminue avec la chute
+      tolérée ; en très basse tension, une chute de $1\ \mathrm{V}$ représente $4\ \%$ de $24\ \mathrm{V}$, ce qui impose
+      des sections bien plus fortes qu'en $230\ \mathrm{V}$ pour la même puissance. Cas limites : $L \to 0$ donne
+      $S_{\min} \to 0$ ; $\Delta U_{\max} \to 0$ exigerait une section infinie. Vérification dimensionnelle :
+      $\Omega\cdot\mathrm{m}\cdot\mathrm{m}\cdot\mathrm{A}/\mathrm{V} = \mathrm{m^2}$. Règle de conception : on retient
+      ensuite la section normalisée immédiatement supérieure, puis on vérifie l'échauffement du câble, qui relève du
+      cours Dimensionnement des câbles.
+    </p>
+  </div>
+
+  <h3 id="e-verifs">Quatre vérifications systématiques</h3>
+  <p>
+    Un résultat n'est acquis qu'après contrôle, et les contrôles les plus efficaces sont indépendants du calcul qui
+    l'a produit. Le premier est dimensionnel : chaque formule littérale doit être homogène avant toute application
+    numérique ; une formule inhomogène est fausse, une formule homogène peut encore l'être. Le deuxième est l'ordre de
+    grandeur : une tension de charge supérieure à la force électromotrice, un courant de plusieurs centaines d'ampères
+    dans un circuit de chauffage de quelques centaines de watts, une section de câble de $0{,}01\ \mathrm{mm^2}$
+    signalent une erreur de préfixe ou de puissance de dix. Le troisième est celui des cas limites : faire tendre une
+    résistance vers zéro ou l'infini et vérifier que la formule redonne le court-circuit et la marche à vide. Le
+    quatrième est le bilan : loi des nœuds en chaque nœud, loi des mailles sur chaque boucle, et bilan de puissance
+    global, qui doit boucler aux arrondis près. Les arrondis, justement, se font à la fin : on garde au moins quatre
+    chiffres significatifs dans les calculs intermédiaires.
+  </p>
+
+  <h3 id="e-limites">Limites du modèle</h3>
+  <p>
+    Le modèle linéaire de l'étude repose sur des hypothèses qu'il faut garder en vue. La résistance chauffante
+    s'échauffe : pour un alliage de chauffage, le coefficient de température est faible, et la valeur à chaud reste
+    proche de la valeur nominale ; pour du cuivre ou du tungstène, elle changerait fortement, comme la lampe du
+    cours Loi d'Ohm et résistivité. La lampe témoin est modélisée par une résistance fixe ; un voyant à diode
+    électroluminescente est en réalité non linéaire, mais son courant est si faible qu'il ne modifie pas le résultat.
+    La source est supposée linéaire : une alimentation régulée maintient $U_s$ presque constante jusqu'à sa limite
+    de courant, puis passe en limitation ; sa "résistance interne" n'est qu'un modèle valable dans une plage. La
+    résistivité du câble dépend de sa température, donc du courant et du mode de pose. Enfin, les valeurs des
+    composants ont une tolérance : une résistance marquée $6{,}2\ \Omega$ à $\pm 5\ \%$ vaut entre $5{,}89$ et
+    $6{,}51\ \Omega$, et un dimensionnement sérieux vérifie la contrainte au cas le plus défavorable.
+  </p>
+
+  <h3 id="e-statut">Statut des énoncés</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Ce qui est loi, convention, approximation, règle de conception ou donnée</caption>
+      <thead><tr><th>Énoncé</th><th>Statut</th></tr></thead>
+      <tbody>
+        <tr><td>Loi des nœuds, loi des mailles</td><td>lois physiques (conservation de la charge, existence du potentiel), exactes dans l'approximation des constantes localisées</td></tr>
+        <tr><td>$u = Ri$, $R = \rho L/S$, résistance fixe d'une lampe, source $(E, r)$</td><td>modèles constitutifs, approximations valables dans une plage de courant et de température</td></tr>
+        <tr><td>Convention récepteur ou générateur, sens de référence des courants, choix du nœud de référence</td><td>conventions d'écriture, libres mais à tenir jusqu'au bout du calcul</td></tr>
+        <tr><td>Réductions, diviseurs, Millman, superposition, Thévenin et Norton, $P_{\max,U}$</td><td>conséquences mathématiques des lois et de la linéarité</td></tr>
+        <tr><td>Tension minimale exigée, chute de tension admissible, choix de la section normalisée supérieure, prise en compte de la tolérance</td><td>règles de conception ; les seuils précis dépendent de l'application, des normes applicables et des fiches constructeur</td></tr>
+        <tr><td>Résistivité à la température de service, tolérance de $\pm 5\ \%$, puissance de sortie de l'alimentation, calibre de la protection</td><td>données de matériaux ou de constructeur, à vérifier sur les documents</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de l'étude de cas, l'organigramme de la méthode générale de résolution,
+    la carte de synthèse de la semaine et le tableau comparatif des méthodes et des contrôles. Les schémas qui
+    éclairent un point précis ont été placés au fil du texte ; ils sont rappelés en fin de section.
+  </p>
+
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 900 440" role="img" aria-label="Schéma principal de l'étude de cas : alimentation de 48 volts et 0,2 ohm, câble de deux fois 0,15 ohm, résistance chauffante de 12 ohms et lampe témoin de 480 ohms en parallèle, avec courants, tensions et potentiels calculés">
+      <defs>
+        <marker id="fl-f-i" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-f-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M80 196V90H120"/>
+        <circle cx="80" cy="220" r="24"/>
+        <rect x="120" y="76" width="70" height="28" rx="3"/>
+        <path d="M190 90H244"/>
+        <path d="M256 90H340"/>
+        <rect x="340" y="76" width="100" height="28" rx="3"/>
+        <path d="M440 90H760V140"/>
+        <path d="M600 90V140"/>
+        <rect x="586" y="140" width="28" height="140" rx="3"/>
+        <path d="M600 280V350"/>
+        <rect x="746" y="140" width="28" height="140" rx="3"/>
+        <path d="M760 280V350H440"/>
+        <rect x="340" y="336" width="100" height="28" rx="3"/>
+        <path d="M340 350H256"/>
+        <path d="M244 350H80V244"/>
+        <path d="M160 350V364M146 364H174M152 371H168M157 378H163"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="600" cy="90" r="5"/>
+        <circle cx="600" cy="350" r="5"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="250" cy="90" r="6"/>
+        <circle cx="250" cy="350" r="6"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M270 90H322" marker-end="url(#fl-f-i)"/>
+        <path d="M500 350H458" marker-end="url(#fl-f-i)"/>
+        <path d="M600 104V132" marker-end="url(#fl-f-i)"/>
+        <path d="M760 104V132" marker-end="url(#fl-f-i)"/>
+        <path d="M80 206V190" marker-end="url(#fl-f-i)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M226 338V104" marker-end="url(#fl-f-u)"/>
+        <path d="M660 300V120" marker-end="url(#fl-f-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="120" y="34" text-anchor="middle" font-weight="600">alimentation</text>
+        <text x="390" y="34" text-anchor="middle" font-weight="600">câble 12,5 m, 2 × 1,5 mm²</text>
+        <text x="680" y="34" text-anchor="middle" font-weight="600">récepteurs</text>
+        <text x="54" y="202" text-anchor="end" font-weight="600">+</text>
+        <text x="112" y="250" font-size="11.5">E = 48 V</text>
+        <text x="155" y="124" text-anchor="middle">r = 0,2 Ω</text>
+        <text x="250" y="72" text-anchor="middle" font-weight="600">S+</text>
+        <text x="250" y="386" text-anchor="middle" font-weight="600">S-</text>
+        <text x="296" y="118" text-anchor="middle" font-size="12">I = 3,932 A</text>
+        <text x="390" y="124" text-anchor="middle">0,15 Ω aller</text>
+        <text x="390" y="328" text-anchor="middle">0,15 Ω retour</text>
+        <text x="600" y="76" text-anchor="middle" font-weight="600">A</text>
+        <text x="600" y="376" text-anchor="middle" font-weight="600">B</text>
+        <text x="576" y="200" text-anchor="end">Rch</text>
+        <text x="576" y="218" text-anchor="end" font-size="11.5">12 Ω</text>
+        <text x="592" y="128" text-anchor="end" font-size="11.5">3,836 A</text>
+        <text x="790" y="200">lampe</text>
+        <text x="790" y="218" font-size="11.5">480 Ω</text>
+        <text x="774" y="130" font-size="11.5">0,0959 A</text>
+        <text x="236" y="226" fill="var(--serie-2)">Us = 47,21 V</text>
+        <text x="672" y="218" fill="var(--serie-2)">Uch =</text>
+        <text x="672" y="236" fill="var(--serie-2)">46,03 V</text>
+        <text x="250" y="56" text-anchor="middle" font-size="11">47,21 V</text>
+        <text x="612" y="112" font-size="11">46,62 V</text>
+        <text x="612" y="340" font-size="11">0,590 V</text>
+        <text x="262" y="340" font-size="11">0 V</text>
+        <text x="160" y="396" text-anchor="middle" font-size="11.5">référence 0 V</text>
+        <text x="450" y="418" text-anchor="middle" font-size="11.5">chauffage : 176,6 W ; lampe : 4,41 W ; ligne : 4,64 W ; source : 3,09 W ; total E I = 188,7 W</text>
+        <text x="450" y="436" text-anchor="middle" font-size="11.5">contrainte Uch ≥ 44 V : respectée ; chute de ligne 1,18 V, soit 2,50 % de Us</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal : l'alimentation résistive de l'étude de cas, dans son état initial ($R_{ch} = 12\ \Omega$). La
+      source, borne $+$ en haut, est en convention générateur : le courant $I$ la traverse de bas en haut (petite
+      flèche épaisse dans le cercle) et sort par $S+$. Les flèches épaisses donnent le sens réel de tous les courants :
+      $I$ dans le conducteur aller, sa répartition entre le chauffage et la lampe au nœud $A$ (points pleins), et son
+      retour par le conducteur du bas. Les deux récepteurs sont en convention récepteur : courant descendant, tension
+      $U_{ch}$ (flèche fine de droite) montante. La flèche fine de gauche est la tension de sortie $U_s$ entre $S+$ et
+      $S-$. Les potentiels inscrits à côté des nœuds sont mesurés par rapport à la borne $-$ de la source, prise comme
+      référence (symbole de masse). Le bilan de puissance et la vérification de la contrainte figurent sous le schéma.
+    </figcaption>
+  </figure>
+
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Lire l'énoncé : données, inconnues, contraintes"] --> B["Schéma équivalent : sources réelles, ligne aller et retour, charges"]
+  B --> C["Conventions : référence 0 V, sens des courants, récepteur ou générateur"]
+  C --> D{"Réseau linéaire ?"}
+  D -->|"non"| E["Linéariser autour d'un point de fonctionnement"]
+  D -->|"oui"| F{"Une charge à dimensionner ?"}
+  E --> F
+  F -->|"non"| G["Méthode la plus courte : réduction, nœuds, mailles ou superposition"]
+  F -->|"oui"| H["Équivalent de Thévenin vu de cette charge"]
+  H --> K["Contraintes : tension minimale, courant maximal, puissance disponible"]
+  K --> L["Valeur normalisée vérifiée au cas le plus défavorable"]
+  G --> M["Contrôler : unités, ordre de grandeur, cas limites"]
+  L --> M
+  M --> N["Boucler : loi des nœuds, loi des mailles, bilan de puissance"]
+  N --> O["Conclure : résultat chiffré, contrainte active, hypothèses"]</pre>
+    <figcaption>
+      Organigramme d'une méthode générale de résolution de circuit continu. Les rectangles sont des étapes, les
+      losanges des décisions, les libellés portés par les flèches les réponses. Le premier losange vérifie
+      l'hypothèse de linéarité, dont dépendent tous les théorèmes ; un réseau non linéaire est d'abord linéarisé autour
+      de son point de fonctionnement. Le second distingue le calcul d'un état, pour lequel on choisit la méthode la
+      plus courte d'après le tableau comparatif ci-dessous, et le dimensionnement d'une charge, qui passe par
+      l'équivalent de Thévenin, l'application des contraintes et le choix d'une valeur normalisée. Les deux branches
+      convergent vers les mêmes contrôles, sans lesquels aucun résultat n'est considéré comme acquis.
+    </figcaption>
+  </figure>
+
+  <figure id="f-carte">
+    <pre class="mermaid">flowchart LR
+  Q["Charge et courant : i = dq/dt"] --> N["Loi des nœuds"]
+  V["Potentiel et tension : u = VA - VB"] --> M["Loi des mailles"]
+  O["Loi d'Ohm : u = R i, R = ρ L / S"] --> A["Associations série et parallèle"]
+  N --> A
+  M --> A
+  A --> D["Diviseurs de tension et de courant"]
+  N --> S["Méthode des nœuds"]
+  M --> T["Méthode des mailles"]
+  S --> L["Linéarité : superposition"]
+  L --> TH["Thévenin, Norton, Millman"]
+  D --> TH
+  P["Puissance p = u i, conventions"] --> B["Bilan de puissance"]
+  TH --> C["Étude de cas : contraintes de tension et de puissance"]
+  B --> C</pre>
+    <figcaption>
+      Carte de synthèse de la semaine. Chaque rectangle est une notion, chaque flèche se lit "sert à établir". À gauche,
+      les définitions et les lois fondamentales (conservation de la charge, existence du potentiel, loi d'Ohm) ; au
+      centre, les outils qui en découlent ; à droite, l'étude de cas qui les mobilise tous. La carte montre que les
+      théorèmes ne sont pas des lois nouvelles : ils reposent sur les lois de Kirchhoff et sur la linéarité.
+    </figcaption>
+  </figure>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Méthodes de résolution d'un circuit continu : quand les employer et comment les contrôler</caption>
+      <thead><tr><th>Méthode</th><th>Préférable quand</th><th>Nombre d'équations</th><th>Contrôle naturel</th></tr></thead>
+      <tbody>
+        <tr><td>Réduction série-parallèle, diviseurs</td><td>une seule source, réseau réductible, une ou deux grandeurs voulues</td><td>aucun système, calcul direct</td><td>somme des tensions de la maille, loi des nœuds au point de partage</td></tr>
+        <tr><td>Méthode des nœuds</td><td>plusieurs sources, peu de nœuds, résolution par ordinateur</td><td>nombre de nœuds moins un</td><td>loi des mailles sur une boucle, bilan de puissance</td></tr>
+        <tr><td>Méthode des mailles</td><td>circuit plan, peu de mailles indépendantes, sources de tension</td><td>nombre de mailles indépendantes</td><td>loi des nœuds en chaque nœud</td></tr>
+        <tr><td>Superposition</td><td>part de chaque source, sources de natures différentes</td><td>un calcul simple par source</td><td>résolution directe d'un cas, puissances non superposées</td></tr>
+        <tr><td>Thévenin ou Norton</td><td>charge variable, dimensionnement sous contrainte, courant de court-circuit</td><td>deux grandeurs : $E_{th}$ et $R_{th}$</td><td>$R_{th} = E_{th}/I_{cc}$ et un cas vérifié par les nœuds</td></tr>
+        <tr><td>Millman</td><td>plusieurs branches source et résistance sur un même nœud</td><td>une formule</td><td>courants de branche dont la somme est nulle</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-paysage-figure" data-renvoi="d-paysage-figure">le profil qualitatif du potentiel le long de la boucle</a>, section D ;</li>
+    <li><a href="#e-modele-figure" data-renvoi="e-modele-figure">le modèle source, ligne, charges avec ses conventions</a>, section E ;</li>
+    <li><a href="#e-profil-figure" data-renvoi="e-profil-figure">la simulation de l'étude de cas et de son profil de potentiel</a>, section E ;</li>
+    <li><a href="#e-domaine-figure" data-renvoi="e-domaine-figure">la simulation du domaine admissible dans le plan tension-courant</a>, section E ;</li>
+    <li><a href="#g-pas-figure" data-renvoi="g-pas-figure">l'animation de la méthode appliquée pas à pas</a>, section G ;</li>
+    <li><a href="#h-thevenin-figure" data-renvoi="h-thevenin-figure">l'équivalent vu du chauffage</a>, <a href="#h-solution-figure" data-renvoi="h-solution-figure">la solution retenue annotée</a> et <a href="#h-courbe-figure" data-renvoi="h-courbe-figure">la puissance et la tension en fonction de la charge</a>, section H ;</li>
+    <li><a href="#i-bus-figure" data-renvoi="i-bus-figure">le bus 24 V secouru avec le réchauffage de l'armoire déportée</a> et <a href="#i-courbe-figure" data-renvoi="i-courbe-figure">le courant de la batterie selon la puissance du réchauffage</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>La procédure suivante s'applique à tout circuit continu, de l'exercice au dimensionnement :</p>
+  <ol>
+    <li>Lire l'énoncé et dresser trois listes : données (avec unités SI), inconnues, contraintes. Convertir immédiatement les préfixes et les sections en $\mathrm{m^2}$.</li>
+    <li>Dessiner le schéma équivalent : chaque source réelle en $(E, r)$, chaque ligne par ses deux conducteurs aller et retour, chaque charge par sa résistance ; noter les hypothèses de modélisation.</li>
+    <li>Fixer les conventions : nœud de référence, sens de référence de chaque courant, convention récepteur ou générateur de chaque dipôle, nom de chaque nœud.</li>
+    <li>Vérifier la linéarité du réseau ; à défaut, travailler autour d'un point de fonctionnement.</li>
+    <li>Choisir la méthode d'après la question (organigramme de la section F) : réduction pour une source unique, nœuds ou mailles pour l'état complet, superposition pour la part d'une source, Thévenin pour une charge variable ou à dimensionner.</li>
+    <li>Écrire les équations sous forme littérale, vérifier leur homogénéité, puis seulement passer aux valeurs numériques en gardant quatre chiffres significatifs.</li>
+    <li>Pour un dimensionnement, traduire chaque contrainte en borne sur une grandeur (courant, résistance, section), désigner la contrainte active, puis choisir une valeur normalisée et vérifier la contrainte au cas le plus défavorable de tolérance.</li>
+    <li>Contrôler : ordre de grandeur, cas limites, loi des nœuds, loi des mailles et bilan de puissance.</li>
+    <li>Conclure par un résultat chiffré avec son unité, la contrainte active, les marges et les hypothèses dont dépend le résultat.</li>
+  </ol>
+
+  <h3 id="g-animation-section">Animation : la méthode appliquée pas à pas</h3>
+  <p>
+    L'animation déroule les neuf étapes sur l'étude de cas, du schéma brut au résultat vérifié, avec la charge de
+    $12\ \Omega$ de l'état initial. Chaque étape met en évidence la partie du circuit concernée et affiche le calcul
+    correspondant. Avant de la lancer, prédisez : pour trouver la tension du chauffage, faut-il écrire un système de
+    deux équations, ou une réduction suffit-elle ? Et de combien, à un ordre de grandeur près, la lampe témoin
+    modifie-t-elle le courant total ?
+  </p>
+  <figure id="g-pas-figure">
+    <div class="m-toile-cadre schema-vivant" id="g-pas"></div>
+    <figcaption>
+      Le circuit de l'étude, avec les mêmes conventions que le schéma principal : source en convention générateur,
+      borne $+$ en haut ; récepteurs en convention récepteur ; conducteur du bas côté source comme référence de
+      potentiel. À chaque étape, les éléments concernés sont entourés d'un cadre en tirets et le calcul de l'étape
+      s'inscrit sous le circuit. Le curseur "Étape" avance ou recule à votre rythme ; la lecture enchaîne les étapes,
+      avec pause, vitesse et remise à zéro.
+    </figcaption>
+  </figure>
+  <div id="g-pas-curseurs"></div>
+  <div id="g-pas-lecteur"></div>
+  <p>
+    Interprétation : une seule source et un réseau réductible, la réduction suffit ; aucun système n'est nécessaire.
+    La lampe, $40$ fois plus résistante que le chauffage, ne change la résistance équivalente que de $2{,}4\ \%$
+    ($11{,}71\ \Omega$ au lieu de $12\ \Omega$) et prend $0{,}096\ \mathrm{A}$ sur $3{,}93\ \mathrm{A}$ : négliger la lampe
+    aurait été une approximation acceptable, à condition de le dire. Les trois dernières étapes ne calculent rien de
+    nouveau : elles prouvent que le résultat est juste, et ce sont elles qui transforment un calcul en étude.
+  </p>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Situation : dans un atelier, une résistance chauffante maintient hors gel un coffret de vannes. Elle est
+    alimentée en $48\ \mathrm{V}$ continu par une alimentation de force électromotrice $E = 48\ \mathrm{V}$ et de
+    résistance interne $r = 0{,}2\ \Omega$ (modèle linéaire autour du point de fonctionnement), dont la puissance de
+    sortie est limitée à $400\ \mathrm{W}$. La liaison est un câble cuivre $2 \times 1{,}5\ \mathrm{mm^2}$ de
+    $12{,}5\ \mathrm{m}$ ; on prend $\rho = 1{,}8 \times 10^{-8}\ \Omega\cdot\mathrm{m}$ à la température de service.
+    Une lampe témoin de $480\ \Omega$ est en parallèle sur le chauffage. Le départ est protégé par un fusible de
+    $10\ \mathrm{A}$. Les vannes exigent que la tension du coffret reste d'au moins $44\ \mathrm{V}$, car d'autres
+    équipements y sont raccordés en parallèle et tolèrent au plus $-8\ \%$ environ par rapport à $48\ \mathrm{V}$ (donnée
+    du constructeur des vannes).
+  </p>
+  <p>
+    Données : $E$, $r$, $L$, $S$, $\rho$, $R_{lampe}$, $U_{\min} = 44\ \mathrm{V}$, $I_{\max} = 10\ \mathrm{A}$,
+    $P_{s,\max} = 400\ \mathrm{W}$. Inconnues : première partie, l'état actuel avec $R_{ch} = 12\ \Omega$ ; deuxième
+    partie, la plus grande puissance de chauffe installable, puis une résistance normalisée qui la réalise. Stratégie :
+    une seule source et un réseau réductible pour la première partie ; l'équivalent de Thévenin vu du chauffage pour
+    la seconde, car la charge y est l'inconnue ; contrôle par la loi des nœuds et le bilan de puissance.
+  </p>
+
+  <h3 id="h-etat">Première partie : état actuel</h3>
+  <ol>
+    <li>Résistance de ligne : $R_l = \rho\,\dfrac{2L}{S} = 1{,}8 \times 10^{-8} \times \dfrac{25}{1{,}5 \times 10^{-6}} = 0{,}300\ \Omega$, soit $0{,}15\ \Omega$ par conducteur.</li>
+    <li>Charges en parallèle : $R_p = \dfrac{12 \times 480}{12 + 480} = 11{,}707\ \Omega$.</li>
+    <li>Boucle unique : $R_{tot} = r + R_l + R_p = 0{,}2 + 0{,}3 + 11{,}707 = 12{,}207\ \Omega$ ; $I = \dfrac{48}{12{,}207} = 3{,}932\ \mathrm{A}$.</li>
+    <li>Tensions : $U_s = 48 - 0{,}2 \times 3{,}932 = 47{,}21\ \mathrm{V}$ ; $U_{ch} = R_pI = 46{,}03\ \mathrm{V}$ ; chute de ligne $0{,}3 \times 3{,}932 = 1{,}180\ \mathrm{V}$, soit $2{,}50\ \%$ de $U_s$.</li>
+    <li>Courants des récepteurs : $I_{ch} = 46{,}03/12 = 3{,}836\ \mathrm{A}$ ; $I_{lampe} = 46{,}03/480 = 0{,}0959\ \mathrm{A}$.</li>
+    <li>Puissances : chauffage $176{,}6\ \mathrm{W}$, lampe $4{,}41\ \mathrm{W}$, ligne $0{,}3 \times 3{,}932^2 = 4{,}64\ \mathrm{W}$, source $0{,}2 \times 3{,}932^2 = 3{,}09\ \mathrm{W}$ ; $EI = 188{,}7\ \mathrm{W}$ ; rendement $\eta = 46{,}03/48 = 95{,}9\ \%$.</li>
+    <li>Contraintes : $46{,}03\ \mathrm{V} \geq 44\ \mathrm{V}$, $3{,}93\ \mathrm{A} \leq 10\ \mathrm{A}$, $U_sI = 185{,}6\ \mathrm{W} \leq 400\ \mathrm{W}$ : toutes respectées, avec de la marge.</li>
+  </ol>
+
+  <h3 id="h-dimensionnement">Deuxième partie : puissance de chauffe maximale</h3>
+  <ol>
+    <li>Équivalent vu du chauffage, charge retirée. La lampe reste dans le réseau : $E_{th} = 48 \times \dfrac{480}{480 + 0{,}5} = 47{,}950\ \mathrm{V}$ ; source éteinte, $R_{th} = 0{,}5 /\!/ 480 = 0{,}4995\ \Omega$ ; $I_{cc} = 96{,}0\ \mathrm{A}$.</li>
+    <li>Contrôle de l'équivalent sur l'état actuel : $47{,}950 \times \dfrac{12}{12{,}4995} = 46{,}03\ \mathrm{V}$, la valeur de la première partie.</li>
+    <li>Contrainte de tension : $I_{ch} \leq \dfrac{47{,}950 - 44}{0{,}4995} = 7{,}908\ \mathrm{A}$ ; $R_{ch} \geq \dfrac{44}{7{,}908} = 5{,}564\ \Omega$ ; $P_{\max,U} = 44 \times 7{,}908 = 348{,}0\ \mathrm{W}$.</li>
+    <li>Contrôle par une autre méthode : si $U_{ch} = 44\ \mathrm{V}$, la loi des mailles sur la source et la ligne impose $I = (48 - 44)/0{,}5 = 8{,}000\ \mathrm{A}$ ; la lampe prend $44/480 = 0{,}0917\ \mathrm{A}$, le chauffage $7{,}908\ \mathrm{A}$. Identique.</li>
+    <li>Autres contraintes au point limite : $I = 8{,}00\ \mathrm{A} \leq 10\ \mathrm{A}$ ; $U_s = 48 - 0{,}2 \times 8 = 46{,}40\ \mathrm{V}$ et $U_sI = 371{,}2\ \mathrm{W} \leq 400\ \mathrm{W}$. La contrainte active est la tension.</li>
+    <li>Valeur normalisée. La valeur $5{,}6\ \Omega$ de la série E12 donnerait $44{,}02\ \mathrm{V}$ au nominal, mais à $-5\ \%$ ($5{,}32\ \Omega$) seulement $43{,}83\ \mathrm{V}$ : refusée. La valeur $6{,}2\ \Omega$ de la série E24 donne au pire ($5{,}89\ \Omega$) $44{,}20\ \mathrm{V}$ : retenue.</li>
+    <li>Point de fonctionnement nominal avec $6{,}2\ \Omega$ : $I_{ch} = \dfrac{47{,}950}{6{,}2 + 0{,}4995} = 7{,}157\ \mathrm{A}$ ; $U_{ch} = 44{,}38\ \mathrm{V}$ ; $P_{ch} = 317{,}6\ \mathrm{W}$ ; courant total $7{,}250\ \mathrm{A}$ ; $U_s = 46{,}55\ \mathrm{V}$, $U_sI = 337{,}5\ \mathrm{W}$.</li>
+  </ol>
+  <figure id="h-thevenin-figure">
+    <svg viewBox="0 0 780 290" role="img" aria-label="À gauche, la source, la ligne et la lampe vues des bornes du chauffage ; à droite, leur équivalent de Thévenin de 47,95 volts et 0,4995 ohm alimentant le chauffage">
+      <defs>
+        <marker id="fl-h-th" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-h-th-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M60 126V60H90"/>
+        <circle cx="60" cy="150" r="22"/>
+        <rect x="90" y="47" width="90" height="26" rx="3"/>
+        <path d="M180 60H310"/>
+        <path d="M240 60V100"/>
+        <rect x="227" y="100" width="26" height="100" rx="3"/>
+        <path d="M240 200V240"/>
+        <path d="M60 172V240H310"/>
+        <path d="M500 126V60H540"/>
+        <circle cx="500" cy="150" r="22"/>
+        <rect x="540" y="47" width="90" height="26" rx="3"/>
+        <path d="M630 60H690"/>
+        <path d="M500 172V240H690"/>
+        <path d="M100 240V254M86 254H114M92 261H108M97 268H103"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="240" cy="60" r="4.5"/>
+        <circle cx="240" cy="240" r="4.5"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="316" cy="60" r="6"/>
+        <circle cx="316" cy="240" r="6"/>
+        <circle cx="696" cy="60" r="6"/>
+        <circle cx="696" cy="240" r="6"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round">
+        <path d="M340 150H404" marker-end="url(#fl-h-th)"/>
+        <path d="M650 60H680" marker-end="url(#fl-h-th)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M740 230V74" marker-end="url(#fl-h-th-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="180" y="24" text-anchor="middle" font-weight="600">chauffage retiré</text>
+        <text x="600" y="24" text-anchor="middle" font-weight="600">équivalent vu du chauffage</text>
+        <text x="36" y="136" text-anchor="end" font-weight="600">+</text>
+        <text x="60" y="155" text-anchor="middle" font-size="11">48 V</text>
+        <text x="135" y="94" text-anchor="middle" font-size="11.5">r + Rl = 0,5 Ω</text>
+        <text x="266" y="155" font-size="11.5">480 Ω</text>
+        <text x="266" y="171" font-size="11">lampe</text>
+        <text x="316" y="44" text-anchor="middle" font-weight="600">A</text>
+        <text x="316" y="266" text-anchor="middle" font-weight="600">B</text>
+        <text x="372" y="138" text-anchor="middle" font-size="11">équivaut à</text>
+        <text x="476" y="136" text-anchor="end" font-weight="600">+</text>
+        <text x="472" y="170" text-anchor="end" font-size="11">47,95 V</text>
+        <text x="585" y="94" text-anchor="middle" font-size="11.5">0,4995 Ω</text>
+        <text x="665" y="48" text-anchor="middle" font-size="11.5">Ich</text>
+        <text x="696" y="44" text-anchor="middle" font-weight="600">A</text>
+        <text x="696" y="266" text-anchor="middle" font-weight="600">B</text>
+        <text x="752" y="155" fill="var(--serie-2)" font-size="12">Uch</text>
+        <text x="100" y="286" text-anchor="middle" font-size="11">référence</text>
+        <text x="600" y="286" text-anchor="middle" font-size="11.5">Eth = 48 × 480 / 480,5 ; Rth = 0,5 // 480</text>
+      </g>
+    </svg>
+    <figcaption>
+      Construction de l'équivalent vu du chauffage. À gauche, le chauffage est retiré : la source, borne $+$ en haut,
+      sa résistance interne et les deux conducteurs, regroupés en $0{,}5\ \Omega$, alimentent la seule lampe ; les
+      bornes $A$ et $B$ du chauffage (cercles ouverts) sont à vide. La lampe forme avec les $0{,}5\ \Omega$ un diviseur,
+      d'où $E_{th}$. À droite, l'équivalent de Thévenin, borne $+$ du côté de $A$ ; le courant $I_{ch}$ (flèche
+      épaisse) sort par $A$ vers le chauffage, et la tension $U_{ch}$ (flèche fine) pointe vers $A$. La flèche épaisse
+      centrale se lit "équivaut à, vu de $A$ et $B$".
+    </figcaption>
+  </figure>
+
+  <h3 id="h-controle">Contrôles et limites</h3>
+  <ol>
+    <li>Loi des nœuds en $A$ avec $6{,}2\ \Omega$ : $I_{ch} + I_{lampe} = 7{,}157 + 0{,}0925 = 7{,}250\ \mathrm{A}$, égal au courant de ligne.</li>
+    <li>Loi des mailles : $0{,}2 \times 7{,}250 + 0{,}3 \times 7{,}250 + 44{,}38 = 1{,}450 + 2{,}175 + 44{,}38 = 48{,}00\ \mathrm{V}$.</li>
+    <li>Bilan de puissance : $EI = 48 \times 7{,}250 = 348{,}0\ \mathrm{W}$ ; chauffage $317{,}6$, lampe $4{,}10$, ligne $15{,}77$, source $10{,}51$ ; somme $348{,}0\ \mathrm{W}$. Rendement $44{,}38/48 = 92{,}4\ \%$.</li>
+    <li>Dimensions et ordre de grandeur : $\mathrm{V}^2/\Omega = \mathrm{W}$ ; environ $48^2/6{,}2 \approx 370\ \mathrm{W}$ sans aucune chute, un peu plus que $318\ \mathrm{W}$ : cohérent.</li>
+    <li>Cas limites : $R_{ch} \to \infty$ redonne $U_{ch} = E_{th} = 47{,}95\ \mathrm{V}$ ; $R_{ch} \to 0$ donne $96\ \mathrm{A}$, courant qui ferait fondre le fusible : la protection assure bien le court-circuit en bout de ligne.</li>
+    <li>Transfert maximal : $E_{th}^2/(4R_{th}) = 1151\ \mathrm{W}$ sous $23{,}98\ \mathrm{V}$, avec $50\ \%$ de rendement ; hors sujet ici, car la contrainte de tension l'exclut.</li>
+    <li>Limites : alimentation supposée linéaire jusqu'à $8\ \mathrm{A}$, résistivité fixée, échauffement du chauffage négligé. La marge de puissance de l'alimentation, $62\ \mathrm{W}$ avec $6{,}2\ \Omega$, et la marge de tension au pire, $0{,}20\ \mathrm{V}$, sont faibles : la seconde doit être confirmée par une mesure de $r$.</li>
+  </ol>
+  <figure id="h-solution-figure">
+    <svg viewBox="0 0 820 340" role="img" aria-label="Solution retenue : chauffage de 6,2 ohms, courant de ligne 7,25 ampères, tension au coffret 44,38 volts, puissance de chauffe 317,6 watts, avec le bilan de puissance">
+      <defs>
+        <marker id="fl-h-so" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-h-so-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M70 146V60H110"/>
+        <circle cx="70" cy="170" r="22"/>
+        <rect x="110" y="47" width="70" height="26" rx="3"/>
+        <path d="M180 60H300"/>
+        <rect x="300" y="47" width="90" height="26" rx="3"/>
+        <path d="M390 60H680V100"/>
+        <path d="M540 60V100"/>
+        <rect x="526" y="100" width="28" height="120" rx="3"/>
+        <path d="M540 220V270"/>
+        <rect x="666" y="100" width="28" height="120" rx="3"/>
+        <path d="M680 220V270H390"/>
+        <rect x="300" y="257" width="90" height="26" rx="3"/>
+        <path d="M300 270H70V192"/>
+        <path d="M150 270V284M136 284H164M142 291H158M147 298H153"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="540" cy="60" r="4.5"/>
+        <circle cx="540" cy="270" r="4.5"/>
+      </g>
+      <rect x="506" y="86" width="68" height="148" rx="10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="6 5" opacity="0.8"/>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M210 60H262" marker-end="url(#fl-h-so)"/>
+        <path d="M540 70V94" marker-end="url(#fl-h-so)"/>
+        <path d="M680 70V94" marker-end="url(#fl-h-so)"/>
+        <path d="M460 270H420" marker-end="url(#fl-h-so)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M600 250V86" marker-end="url(#fl-h-so-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="46" y="152" text-anchor="end" font-weight="600">+</text>
+        <text x="70" y="175" text-anchor="middle" font-size="11">48 V</text>
+        <text x="145" y="92" text-anchor="middle" font-size="11.5">0,2 Ω</text>
+        <text x="345" y="92" text-anchor="middle" font-size="11.5">0,15 Ω</text>
+        <text x="345" y="250" text-anchor="middle" font-size="11.5">0,15 Ω</text>
+        <text x="236" y="48" text-anchor="middle" font-size="11.5">I = 7,250 A</text>
+        <text x="498" y="160" text-anchor="end">6,2 Ω</text>
+        <text x="498" y="178" text-anchor="end" font-size="11">E24, ± 5 %</text>
+        <text x="554" y="82" font-size="11">7,157 A</text>
+        <text x="708" y="160">480 Ω</text>
+        <text x="694" y="82" font-size="11">0,0925 A</text>
+        <text x="612" y="190" fill="var(--serie-2)" font-size="12">44,38 V</text>
+        <text x="540" y="40" text-anchor="middle" font-weight="600">A</text>
+        <text x="540" y="294" text-anchor="middle" font-weight="600">B</text>
+        <text x="170" y="294" font-size="11">référence 0 V</text>
+        <text x="410" y="320" text-anchor="middle" font-size="11.5">E I = 348,0 W = 317,6 (chauffage) + 4,10 (lampe) + 15,77 (ligne) + 10,51 (source)</text>
+        <text x="410" y="338" text-anchor="middle" font-size="11.5">au pire 5,89 Ω : 44,20 V ≥ 44 V ; fusible 10 A ; sortie alimentation 337,5 W ≤ 400 W</text>
+      </g>
+    </svg>
+    <figcaption>
+      Solution retenue, avec les mêmes conventions que le schéma principal : source en convention générateur, borne
+      $+$ en haut ; récepteurs en convention récepteur ; conducteur du bas côté source comme référence. Les flèches
+      épaisses donnent le sens réel des courants, avec leurs valeurs ; la flèche fine est la tension du coffret. Le
+      cadre en tirets désigne la résistance chauffante choisie. Les deux lignes du bas donnent le bilan de puissance,
+      qui boucle, et la vérification des trois contraintes, y compris au cas le plus défavorable de tolérance.
+    </figcaption>
+  </figure>
+  <p>
+    Résultat final : l'installation actuelle fournit $176{,}6\ \mathrm{W}$ de chauffe sous $46{,}03\ \mathrm{V}$. La
+    puissance de chauffe peut être portée au plus à $348\ \mathrm{W}$, limite imposée par la tension minimale de
+    $44\ \mathrm{V}$ et non par le fusible ni par l'alimentation. En pratique, une résistance de $6{,}2\ \Omega$ à
+    $\pm 5\ \%$ fournit $317{,}6\ \mathrm{W}$ au nominal, entre $305$ et $332\ \mathrm{W}$ selon la tolérance, et garantit
+    au moins $44{,}20\ \mathrm{V}$. La courbe suivante montre l'ensemble du compromis.
+  </p>
+  <figure id="h-courbe-figure">
+    <div id="h-courbe-trace"></div>
+    <figcaption>
+      Axe horizontal : résistance du chauffage $R_{ch}$, de $2$ à $20\ \Omega$. Axe vertical : puissance de chauffe en
+      centaines de watts et tension au coffret en dizaines de volts, pour tenir sur une même échelle. Une courbe donne
+      $P_{ch}/100$, l'autre $U_{ch}/10$ ; leurs noms figurent dans la légende du graphique. La ligne horizontale en
+      tirets est la limite $U_{\min}/10 = 4{,}4$. Les points marqués sont la limite théorique $5{,}56\ \Omega$, la valeur
+      retenue $6{,}2\ \Omega$ et l'état initial $12\ \Omega$.
+    </figcaption>
+  </figure>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <p>
+    Cas concret : le bus $24\ \mathrm{V}$ continu secouru de l'armoire automate du site, fil rouge des cours Lois de
+    Kirchhoff, Associations de résistances et diviseurs et Théorèmes de Thévenin, Norton et superposition. Vu de
+    l'armoire, il se réduit à $E_{th} = 25{,}5\ \mathrm{V}$ en série avec $R_{th} = 0{,}25\ \Omega$ (chargeur de
+    $27\ \mathrm{V}$ et batterie de $24\ \mathrm{V}$, $0{,}5\ \Omega$ chacun) ; l'armoire consomme l'équivalent de
+    $6\ \Omega$. L'exploitation veut ajouter un réchauffage anti-condensation dans une armoire déportée, située à
+    $40\ \mathrm{m}$ et raccordée par un câble cuivre $2 \times 2{,}5\ \mathrm{mm^2}$ ; le fournisseur propose un
+    modèle de $60\ \mathrm{W}$ sous $24\ \mathrm{V}$. Deux contraintes : le réchauffage doit recevoir au moins
+    $21{,}6\ \mathrm{V}$ ($24\ \mathrm{V}$ moins $10\ \%$, plage donnée par le fournisseur), et la consommation totale doit
+    rester sous $6\ \mathrm{A}$, seuil au-delà duquel la batterie se décharge alors que le chargeur est en service.
+  </p>
+  <figure id="i-bus-figure">
+    <svg viewBox="0 0 820 330" role="img" aria-label="Bus 24 volts secouru réduit à 25,5 volts et 0,25 ohm, alimentant l'armoire automate de 6 ohms et, par un câble de 0,576 ohm, un réchauffage de 9,6 ohms dans l'armoire déportée">
+      <defs>
+        <marker id="fl-i-i" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-i-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M70 146V70H110"/>
+        <circle cx="70" cy="170" r="22"/>
+        <rect x="110" y="57" width="80" height="26" rx="3"/>
+        <path d="M190 70H500"/>
+        <path d="M280 70V110"/>
+        <rect x="266" y="110" width="28" height="110" rx="3"/>
+        <path d="M280 220V270"/>
+        <rect x="500" y="57" width="100" height="26" rx="3"/>
+        <path d="M600 70H700V110"/>
+        <rect x="686" y="110" width="28" height="110" rx="3"/>
+        <path d="M700 220V270H600"/>
+        <rect x="500" y="257" width="100" height="26" rx="3"/>
+        <path d="M500 270H70V192"/>
+        <path d="M150 270V284M136 284H164M142 291H158M147 298H153"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="280" cy="70" r="4.5"/>
+        <circle cx="280" cy="270" r="4.5"/>
+      </g>
+      <rect x="30" y="36" width="190" height="180" rx="12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="7 5" opacity="0.7"/>
+      <rect x="616" y="36" width="178" height="250" rx="12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="7 5" opacity="0.7"/>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M200 70H250" marker-end="url(#fl-i-i)"/>
+        <path d="M280 80V104" marker-end="url(#fl-i-i)"/>
+        <path d="M420 70H470" marker-end="url(#fl-i-i)"/>
+        <path d="M700 80V104" marker-end="url(#fl-i-i)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M340 258V84" marker-end="url(#fl-i-u)"/>
+        <path d="M760 214V116" marker-end="url(#fl-i-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="125" y="28" text-anchor="middle" font-size="12">chargeur et batterie vus du bus</text>
+        <text x="705" y="28" text-anchor="middle" font-size="12">armoire déportée</text>
+        <text x="46" y="152" text-anchor="end" font-weight="600">+</text>
+        <text x="70" y="175" text-anchor="middle" font-size="10.5">25,5 V</text>
+        <text x="150" y="104" text-anchor="middle" font-size="11.5">0,25 Ω</text>
+        <text x="225" y="58" text-anchor="middle" font-size="11.5">I</text>
+        <text x="256" y="160" text-anchor="end" font-size="11.5">armoire</text>
+        <text x="256" y="176" text-anchor="end" font-size="11.5">6 Ω</text>
+        <text x="296" y="100" font-size="11">Ia</text>
+        <text x="352" y="175" fill="var(--serie-2)">U</text>
+        <text x="445" y="58" text-anchor="middle" font-size="11.5">Ib</text>
+        <text x="550" y="104" text-anchor="middle" font-size="11.5">0,288 Ω</text>
+        <text x="550" y="250" text-anchor="middle" font-size="11.5">0,288 Ω</text>
+        <text x="550" y="316" text-anchor="middle" font-size="11">câble 40 m, 2 × 2,5 mm²</text>
+        <text x="676" y="160" text-anchor="end" font-size="11.5">Rh</text>
+        <text x="676" y="176" text-anchor="end" font-size="11">9,6 Ω</text>
+        <text x="772" y="170" fill="var(--serie-2)">Uh</text>
+        <text x="150" y="316" text-anchor="middle" font-size="11">0 V du bus, référence</text>
+      </g>
+    </svg>
+    <figcaption>
+      Le bus secouru et son nouveau départ. À gauche, dans le cadre en tirets, l'équivalent de Thévenin du chargeur et
+      de la batterie, borne $+$ en haut, en convention générateur : le courant total $I$ (flèche épaisse) sort par la
+      borne $+$. Au nœud du bus (points pleins), $I$ se partage entre l'armoire automate, $I_a$, et le départ vers
+      l'armoire déportée, $I_b$ ; les récepteurs sont en convention récepteur. Le câble est représenté par ses deux
+      conducteurs de $0{,}288\ \Omega$. Le réchauffage $R_h$, dans le cadre de droite, reçoit la tension $U_h$ ; la
+      tension du bus est $U$ (flèches fines). Le conducteur du bas est le 0 V du bus, référence de potentiel.
+    </figcaption>
+  </figure>
+  <p>
+    Mise en équations. Le câble vaut $R_c = 1{,}8 \times 10^{-8} \times 80/(2{,}5 \times 10^{-6}) = 0{,}576\ \Omega$. Le
+    réchauffage proposé a pour résistance $R_h = 24^2/60 = 9{,}6\ \Omega$ (valeur nominale, supposée constante). Une
+    seule source et un réseau réductible, mais on veut aussi le courant de la batterie, grandeur interne à
+    l'équivalent : on calcule la tension du bus par la loi des nœuds, puis on revient au réseau d'origine.
+    $\dfrac{25{,}5 - U}{0{,}25} = \dfrac{U}{6} + \dfrac{U}{0{,}576 + 9{,}6}$, d'où $U = 23{,}92\ \mathrm{V}$ et
+    $I = 6{,}34\ \mathrm{A}$ : l'armoire prend $3{,}99\ \mathrm{A}$, le départ $2{,}35\ \mathrm{A}$. Le réchauffage reçoit
+    $U_h = 9{,}6 \times 2{,}350 = 22{,}56\ \mathrm{V}$, au-dessus de $21{,}6\ \mathrm{V}$, et dissipe $53{,}0\ \mathrm{W}$ au lieu
+    des $60\ \mathrm{W}$ annoncés. Mais le bus est tombé sous $24\ \mathrm{V}$ : la batterie fournit
+    $(24 - 23{,}92)/0{,}5 = 0{,}17\ \mathrm{A}$ en permanence, et se viderait en quelques jours de fonctionnement continu du
+    réchauffage. La contrainte de tension est respectée, la contrainte de courant ne l'est pas.
+  </p>
+  <p>
+    Limite admissible. Pour rester au seuil, $I = 6\ \mathrm{A}$ et donc $U = 25{,}5 - 0{,}25 \times 6 = 24{,}0\ \mathrm{V}$ ;
+    l'armoire prend $4{,}00\ \mathrm{A}$, il reste $2{,}00\ \mathrm{A}$ pour le départ. La résistance totale du départ doit
+    valoir au moins $24/2 = 12{,}0\ \Omega$, soit $R_h \geq 11{,}42\ \Omega$ : un réchauffage de $50\ \mathrm{W}$ nominal au
+    plus, qui dissiperait $45{,}7\ \mathrm{W}$ sous $22{,}85\ \mathrm{V}$. La courbe suivante trace le courant de la
+    batterie en fonction de la puissance nominale du réchauffage.
+  </p>
+  <figure id="i-courbe-figure">
+    <div id="i-courbe-trace"></div>
+    <figcaption>
+      Axe horizontal : puissance nominale du réchauffage sous $24\ \mathrm{V}$, de $10$ à $100\ \mathrm{W}$. Axe
+      vertical : courant de la batterie en ampères, positif lorsqu'elle se décharge (convention générateur de la
+      batterie), négatif lorsqu'elle se recharge. La courbe coupe l'axe horizontal vers $50\ \mathrm{W}$ ; la ligne
+      horizontale en tirets marque le zéro, frontière entre recharge et décharge. Le point marqué est le modèle de
+      $60\ \mathrm{W}$ proposé.
+    </figcaption>
+  </figure>
+  <p>
+    Choix d'ingénierie et compromis. Première option : un réchauffage de $40$ à $50\ \mathrm{W}$, commandé par un
+    thermostat ou un hygrostat, qui ne fonctionne que lorsque le risque de condensation existe ; le courant moyen
+    reste sous le seuil, mais une période froide prolongée peut coïncider avec un pic de consommation de l'armoire.
+    Deuxième option : alimenter le réchauffage depuis une source non secourue, en $230\ \mathrm{V}$ alternatif par
+    exemple, ce qui le délestera naturellement en cas de coupure réseau, précisément quand l'énergie de la batterie
+    doit être réservée à l'automate. Troisième option : relever la tension ou le courant du chargeur, ce qui modifie
+    l'équivalent du bus et demande l'avis du constructeur de la batterie. Le risque principal n'est pas électrique
+    au sens strict : c'est une batterie discrètement déchargée qui ne tiendra pas son autonomie le jour d'une
+    coupure. La deuxième option est la plus robuste ; elle sera reprise dans le cours Micro-réseaux, intégration et
+    projet final, lorsque les priorités de délestage du site seront définies.
+  </p>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : budget de courant du bus 24 V secouru</span>
+    <p>
+      Cinquième brique du petit site industriel, qui clôt la semaine des circuits continus. L'équivalent du bus
+      secouru établi dans le cours précédent sert ici de source pour un bilan de courant : un réchauffage
+      anti-condensation de $60\ \mathrm{W}$ nominal, alimenté par $40\ \mathrm{m}$ de câble $2 \times 2{,}5\ \mathrm{mm^2}$
+      ($0{,}576\ \Omega$), recevrait $22{,}56\ \mathrm{V}$ mais porterait la consommation à $6{,}34\ \mathrm{A}$ et ferait
+      décharger la batterie de $0{,}17\ \mathrm{A}$ malgré le chargeur. La règle retenue pour le site : toute charge
+      permanente ajoutée au bus secouru passe par un budget de courant, avec un plafond de $6\ \mathrm{A}$ au total ; le
+      réchauffage sera alimenté hors du bus secouru, ou limité à $50\ \mathrm{W}$ nominal sous thermostat. Cette règle
+      alimentera le bilan de puissance du site et la logique de fonctionnement dégradé.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li>
+      <strong>Oublier le conducteur retour.</strong> Une liaison a deux conducteurs ; calculer $R = \rho L/S$ avec la
+      seule longueur de la liaison divise la chute de tension par deux. Dans l'étude de cas, cela donnerait
+      $0{,}15\ \Omega$ au lieu de $0{,}30\ \Omega$ et une puissance maximale de $499\ \mathrm{W}$ au lieu de $348\ \mathrm{W}$,
+      surestimée de $43\ \%$.
+    </li>
+    <li>
+      <strong>Se tromper d'unité de section.</strong> $1{,}5\ \mathrm{mm^2} = 1{,}5 \times 10^{-6}\ \mathrm{m^2}$, et non
+      $1{,}5 \times 10^{-3}$ : le carré s'applique aussi au préfixe. L'erreur fait perdre un facteur mille, et le
+      contrôle d'ordre de grandeur la détecte aussitôt (un câble de $0{,}0003\ \Omega$).
+    </li>
+    <li>
+      <strong>Confondre la tension de sortie de l'alimentation et la tension au récepteur.</strong> Le réglage à
+      $48\ \mathrm{V}$ d'une alimentation ne dit rien de la tension au bout du câble. Toute contrainte de tension se
+      vérifie aux bornes du récepteur, après les chutes en ligne.
+    </li>
+    <li>
+      <strong>Calculer $E_{th}$ avec la charge en place, ou oublier une charge dans l'équivalent.</strong> Pour
+      dimensionner le chauffage, on le retire, mais la lampe reste dans le réseau. L'omettre donne ici $E_{th} = 48\ \mathrm{V}$
+      et $R_{th} = 0{,}5\ \Omega$ : l'erreur est faible ($352\ \mathrm{W}$ au lieu de $348\ \mathrm{W}$), mais avec une
+      charge voisine importante, elle devient grossière.
+    </li>
+    <li>
+      <strong>Viser le transfert maximal de puissance.</strong> Il donnerait $1151\ \mathrm{W}$ sous $24\ \mathrm{V}$ : la
+      moitié de la tension, la moitié de l'énergie perdue. Sous contrainte de tension, la puissance maximale est
+      $U_{\min}(E_{th} - U_{\min})/R_{th}$.
+    </li>
+    <li>
+      <strong>Choisir la valeur normalisée la plus proche du minimum calculé.</strong> Avec $5{,}6\ \Omega$ à
+      $\pm 5\ \%$, la tension descend à $43{,}83\ \mathrm{V}$ au cas le plus défavorable. On choisit la valeur qui respecte
+      la contrainte à la borne défavorable de la tolérance.
+    </li>
+    <li>
+      <strong>Arrondir trop tôt.</strong> Arrondir $I$ à $4\ \mathrm{A}$ dans la première partie donne une chute de ligne
+      de $1{,}2\ \mathrm{V}$ et une tension de $46\ \mathrm{V}$ : l'écart semble minime, mais la marge de $0{,}20\ \mathrm{V}$ de
+      la deuxième partie serait noyée dans ces erreurs. On garde quatre chiffres jusqu'au résultat.
+    </li>
+    <li>
+      <strong>S'arrêter au résultat sans contrôle.</strong> Un bilan de puissance qui ne boucle pas, une loi des
+      nœuds non vérifiée laissent passer une erreur de signe ou un oubli de branche. Le contrôle fait partie du
+      calcul, pas de la rédaction.
+    </li>
+  </ol>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante, qui parcourent toute la semaine : deux fondamentaux, deux
+    intermédiaires, un avancé, une question de diagnostic industriel et une question conceptuelle. La correction de
+    chacun reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la correction", puis se déroule étape
+    par étape, accompagnée d'un schéma annoté ou d'une courbe.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma, sur l'ensemble de la semaine.</p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$R_l = \rho\,\frac{2L}{S} \quad (\text{ligne à deux conducteurs, } S \text{ en } \mathrm{m^2})$$
+    $$I = \frac{E}{r + R_l + R_{eq}}, \qquad U_{ch} = E - (r + R_l)\,I$$
+    $$E\,I = r\,I^2 + R_l\,I^2 + \sum_k P_k, \qquad \eta = \frac{U_{ch}}{E}$$
+    $$P_{\max,U} = \frac{U_{\min}\,(E_{th} - U_{\min})}{R_{th}}, \qquad R_{\min} = R_{th}\,\frac{U_{\min}}{E_{th} - U_{\min}}$$
+    $$S_{\min} = \frac{\rho\,2L\,I}{\Delta U_{\max}}$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>Une liaison compte deux conducteurs, et $1\ \mathrm{mm^2} = 10^{-6}\ \mathrm{m^2}$.</li>
+      <li>Une contrainte de tension se vérifie aux bornes du récepteur, pas à la sortie de l'alimentation.</li>
+      <li>Pour dimensionner une charge, on la retire pour calculer l'équivalent, mais on garde toutes les autres.</li>
+      <li>On vérifie chaque contrainte, on désigne la contrainte active, puis on contrôle la valeur normalisée au cas le plus défavorable de tolérance.</li>
+      <li>Aucun résultat sans contrôle : unités, ordre de grandeur, cas limites, loi des nœuds et bilan de puissance.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Tout circuit continu repose sur deux lois exactes, la loi des nœuds et la loi des
+    mailles, et sur un modèle, la loi d'Ohm avec $R = \rho L/S$. Les conventions fixent les signes, les méthodes
+    organisent le calcul : réduction pour une source unique, nœuds ou mailles pour l'état complet, superposition
+    pour la part d'une source, Thévenin pour une charge à dimensionner. Une alimentation réelle se ramène à une source,
+    une ligne aller et retour et des charges ; la tension au récepteur est ce qui reste après les chutes. Sous
+    contrainte de tension minimale, la puissance maximale vaut $U_{\min}(E_{th} - U_{\min})/R_{th}$, loin du transfert
+    maximal. On choisit ensuite une valeur normalisée vérifiée au cas le plus défavorable, puis on contrôle unités,
+    ordres de grandeur, cas limites et bilan de puissance.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent,
+    <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes de Thévenin, Norton et
+    superposition</a> ; une sur le cours <a href="#/cours/lois-de-kirchhoff">Lois de Kirchhoff</a>, pour la
+    réactivation au sein de l'étude intégratrice ; et une sur le cours le plus ancien du parcours,
+    <a href="#/cours/diagnostic-initial-et-remise-a-niveau-mathematique">Diagnostic initial et remise à niveau
+    mathématique</a>, qui tient lieu de question sur un cours vieux d'une semaine. La question sur un cours vieux d'un
+    mois n'est pas encore applicable.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : automatiser en Python l'étude de cas complète, la confronter à LTspice, puis mesurer une chute de
+    tension réelle. Prédiction à écrire avant de commencer : si l'on remplace le câble $1{,}5\ \mathrm{mm^2}$ par un câble
+    $2{,}5\ \mathrm{mm^2}$, de combien la puissance maximale admissible augmente-t-elle : de quelques pour cent, d'environ
+    $50\ \%$, ou la double-t-elle ?
+  </p>
+  <ol>
+    <li>
+      En Python, écrire une fonction <code>etude(E, r, L, S, Rch, Rlampe, rho=1.8e-8)</code> qui renvoie $I$, $U_s$,
+      $U_{ch}$, les puissances de chaque élément et l'écart du bilan de puissance ; vérifier $3{,}932\ \mathrm{A}$,
+      $46{,}03\ \mathrm{V}$ et un écart de bilan nul pour $R_{ch} = 12\ \Omega$.
+    </li>
+    <li>
+      Écrire <code>puissance_max(E, r, L, S, Rlampe, Umin, Imax, Psmax)</code> : calculer $E_{th}$, $R_{th}$, la
+      limite de chaque contrainte, désigner la contrainte active et renvoyer $R_{\min}$ et $P_{\max}$ ; retrouver
+      $5{,}564\ \Omega$ et $348{,}0\ \mathrm{W}$.
+    </li>
+    <li>
+      Balayer $S$ parmi $1{,}5$, $2{,}5$, $4$ et $6\ \mathrm{mm^2}$ et tracer avec matplotlib $P_{\max}$ en fonction de la
+      section, en indiquant la contrainte active pour chaque point.
+    </li>
+    <li>
+      Choisir la valeur normalisée : parcourir la série E24 (<code>[1.0, 1.1, 1.2, 1.3, 1.5, 1.6, 1.8, 2.0, 2.2, 2.4,
+      2.7, 3.0, 3.3, 3.6, 3.9, 4.3, 4.7, 5.1, 5.6, 6.2, 6.8, 7.5, 8.2, 9.1]</code>), retenir la plus petite valeur qui
+      respecte la contrainte à $-5\ \%$, et retrouver $6{,}2\ \Omega$.
+    </li>
+    <li>
+      Dans LTspice, saisir la netlist <code>V1 n1 0 48</code>, <code>Rint n1 sp 0.2</code>, <code>Ra sp a 0.15</code>,
+      <code>Rch a b {R}</code>, <code>Rlamp a b 480</code>, <code>Rr b 0 0.15</code>,
+      <code>.step param R list 12 6.2 5.89 5.6 5.32</code>, <code>.op</code>, <code>.end</code>, puis relever
+      <code>V(a)-V(b)</code> et <code>I(V1)</code> pour chaque valeur.
+    </li>
+    <li>
+      Mesure facultative : alimenter une résistance de puissance de quelques ohms par une alimentation de laboratoire
+      à travers un câble de quelques mètres de faible section ; mesurer au multimètre la tension aux bornes de
+      l'alimentation, puis aux bornes de la résistance, sous le même courant, et en déduire la résistance de la
+      liaison. Rester sous la puissance nominale de la résistance et ne pas toucher le corps de la résistance en
+      fonctionnement.
+    </li>
+  </ol>
+  <p>
+    Résultats attendus : $I = 3{,}932\ \mathrm{A}$, $U_{ch} = 46{,}03\ \mathrm{V}$, bilan équilibré à $10^{-12}$ près ;
+    $P_{\max} = 348{,}0\ \mathrm{W}$ avec la tension pour contrainte active en $1{,}5\ \mathrm{mm^2}$. En $2{,}5\ \mathrm{mm^2}$,
+    $R_l = 0{,}18\ \Omega$ : la tension autoriserait $10{,}5\ \mathrm{A}$ de courant de ligne et le fusible $10\ \mathrm{A}$,
+    mais l'alimentation atteint $400\ \mathrm{W}$ de sortie dès $8{,}64\ \mathrm{A}$ ; c'est elle qui devient la contrainte
+    active, et la puissance de chauffe plafonne à $382\ \mathrm{W}$, soit une hausse de $10\ \%$ seulement. Dans
+    LTspice, $V(a) - V(b) = 46{,}03$, $44{,}38$, $44{,}20$, $44{,}02$ et $43{,}83\ \mathrm{V}$. Anomalies à observer : un
+    courant $I(V1)$ négatif, qui traduit la convention de LTspice (courant compté entrant par la borne $+$ de la
+    source), et non une erreur ; une valeur écrite <code>0.15m</code> vaut $0{,}15\ \mathrm{m\Omega}$ ; à la mesure, une
+    chute plus forte que prévu vient souvent des contacts des pinces et des bornes, qui peuvent valoir à eux seuls
+    plusieurs dizaines de milliohms.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est
+    calculé dans ce navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent
+    enregistrées localement pour suivre votre progression.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Vers le premier jalon du parcours</span>
+    <p>
+      À la fin du module Stockage d'énergie et régimes transitoires, il faudra résoudre méthodiquement des circuits
+      continus et transitoires simples, expliquer les phénomènes de stockage d'énergie et vérifier les résultats. Pour
+      la partie continue, ce jalon est atteint si vous savez, sans aide : dessiner le schéma équivalent d'une
+      alimentation réelle et de sa ligne ; choisir et justifier une méthode ; dimensionner une charge ou une section sous
+      contrainte ; boucler un bilan de puissance. Toute note inférieure à 3 dans la grille ci-dessus désigne la partie
+      à revoir avant le cours Condensateurs et champ électrique, en commençant par le cours de la semaine qui la traite.
+    </p>
+  </div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Tout circuit continu se résout avec deux lois exactes et un modèle ; les méthodes ne sont que des façons de les organiser, et l'on choisit la plus courte d'après la question posée.</li>
+    <li data-rang="02">Une alimentation réelle est une source, une ligne aller et retour et des charges : la tension au récepteur est ce qui reste après les chutes, et une contrainte de tension minimale fixe la puissance maximale $U_{\min}(E_{th} - U_{\min})/R_{th}$.</li>
+    <li data-rang="03">Un dimensionnement n'est terminé qu'après le choix d'une valeur normalisée vérifiée au cas le plus défavorable et un contrôle indépendant : unités, ordre de grandeur, cas limites, loi des nœuds et bilan de puissance.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> traduire un cahier des charges en schéma et en contraintes
+    chiffrées, c'est-à-dire penser au conducteur retour, placer chaque contrainte au bon endroit du circuit et
+    garder dans l'équivalent les charges qu'on ne dimensionne pas. Les calculs eux-mêmes sont simples ; ce sont les
+    choix de modélisation qui font la différence, et le bilan de puissance est le meilleur moyen de les contrôler.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Condensateurs et champ électrique, introduit le
+    premier élément qui stocke de l'énergie au lieu de la dissiper. Question à préparer : si l'on branche un
+    condensateur aux bornes du chauffage de l'étude de cas, quel courant le traverse-t-il une fois le régime continu
+    établi, et que devient la tension du coffret ? Et au contraire, que se passe-t-il pendant les premières
+    millisecondes qui suivent la mise sous tension, lorsque le condensateur est encore déchargé ?
+  </p>
+
+</article>
