@@ -1675,7 +1675,7 @@ function construireQuiz(ctx, conteneur, questions, options = {}) {
     compte.textContent = "Question " + Math.min(index + 1, total) + " sur " + total;
   }
 
-  function afficherQuestion() {
+  function afficherQuestion(sansFocus) {
     const question = questions[index];
     scene.textContent = "";
     boutonValider.hidden = false;
@@ -1695,7 +1695,8 @@ function construireQuiz(ctx, conteneur, questions, options = {}) {
     if (ctx.gsap && !ctx.mouvementReduit) {
       ctx.gsap.fromTo(scene, { opacity: 0, x: 18 }, { opacity: 1, x: 0, duration: 0.32, ease: "power2.out" });
     }
-    if (typeof zoneCourante.focus === "function") zoneCourante.focus();
+    // Au premier affichage, ne pas voler le focus : le navigateur ferait défiler la page jusqu'au quiz.
+    if (!sansFocus && typeof zoneCourante.focus === "function") zoneCourante.focus();
   }
 
   function afficherBilan() {
@@ -1835,7 +1836,7 @@ function construireQuiz(ctx, conteneur, questions, options = {}) {
     else afficherQuestion();
   });
 
-  afficherQuestion();
+  afficherQuestion(true);
   return {
     bloc,
     detruire() {
