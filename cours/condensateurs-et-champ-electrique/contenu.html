@@ -1,0 +1,1292 @@
+<article class="cours" data-slug="condensateurs-et-champ-electrique">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/revision-1-et-etude-de-cas-continu">Révision 1 et étude de cas continu</a> a clos
+      l'étude des circuits purement résistifs sur une question : que se passe-t-il si l'on branche un condensateur aux
+      bornes du chauffage du coffret de vannes ? Cette séance y répond. Une fois le régime continu établi, le
+      condensateur ne laisse passer aucun courant : la tension du coffret reste de $46{,}03\ \mathrm{V}$ et le
+      chauffage reçoit toujours $176{,}6\ \mathrm{W}$. Mais à l'instant de la mise sous tension, le condensateur encore
+      déchargé impose une tension nulle à ses bornes et se comporte comme un court-circuit : seules la résistance
+      interne de l'alimentation ($0{,}2\ \Omega$) et celle du câble ($0{,}3\ \Omega$) limitent alors le courant, qui
+      atteindrait en théorie $48/0{,}5 = 96\ \mathrm{A}$ pour un fusible de $10\ \mathrm{A}$. Tout ce qui distingue ces
+      deux situations tient en une relation, $i = C\,\mathrm{d}u/\mathrm{d}t$, que nous allons établir à partir du
+      champ électrique. Elle prolonge la définition du courant comme débit de charge vue dans le cours
+      <a href="#/cours/tension-courant-charge-et-puissance">Tension, courant, charge et puissance</a>, et le diviseur de
+      tension du cours <a href="#/cours/associations-de-resistances-et-diviseurs">Associations de résistances et
+      diviseurs</a> reviendra, de façon inattendue, dans les associations de condensateurs en série.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Jusqu'ici, chaque élément de circuit transformait immédiatement l'énergie électrique en chaleur : une résistance
+    n'a pas de mémoire, son courant ne dépend que de la tension présente. Le condensateur est le premier élément qui
+    stocke de l'énergie et la restitue. Sa tension dépend de toute l'histoire du courant qu'il a reçu, et elle ne peut
+    pas varier instantanément. Cette propriété, qui semble abstraite, est à l'œuvre dans presque tous les équipements
+    d'un site industriel : le bus continu d'un variateur de fréquence, dont les condensateurs lissent la tension
+    redressée et fournissent les pointes de courant de l'onduleur ; le filtre d'entrée d'une alimentation à découpage ;
+    la batterie de condensateurs qui corrige le facteur de puissance d'un atelier ; le filtre antirebond d'une entrée
+    d'automate ; le module de maintien qui garde une unité centrale en vie pendant une microcoupure ; le capteur de
+    niveau capacitif d'une cuve.
+  </p>
+  <p>
+    Le condensateur intervient aussi là où on ne l'a pas mis. Deux conducteurs séparés par un isolant forment toujours
+    un condensateur : un câble et son écran, l'enroulement d'un moteur et sa carcasse, deux pistes voisines d'une carte.
+    Ces capacités parasites laissent passer des courants lorsque la tension varie vite, ce qui explique les courants de
+    fuite qui font déclencher des dispositifs différentiels en aval des variateurs et une grande partie des problèmes
+    de compatibilité électromagnétique. Enfin, un condensateur chargé reste dangereux après la coupure de
+    l'alimentation : l'énergie stockée dans le bus continu d'un variateur suffit à électriser gravement un
+    intervenant plusieurs minutes après l'ouverture du sectionneur. Comprendre la charge, l'énergie et le comportement
+    en régime continu est donc à la fois une question de conception, de diagnostic et de sécurité.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Expliquer le mécanisme de la charge d'un condensateur à partir du champ électrique entre ses armatures, et justifier qu'aucune charge ne traverse le diélectrique.</li>
+    <li data-rang="02">Calculer la capacité d'un condensateur plan à partir de sa géométrie et de son diélectrique, ainsi que le champ, la charge et l'énergie stockée pour une tension donnée.</li>
+    <li data-rang="03">Utiliser la relation $i = C\,\mathrm{d}u/\mathrm{d}t$ pour calculer un courant à partir d'une variation de tension, ou une durée de charge à courant constant.</li>
+    <li data-rang="04">Calculer la capacité équivalente d'associations série, parallèle et mixtes, et la répartition des charges, des tensions et des énergies.</li>
+    <li data-rang="05">Interpréter le comportement d'un condensateur à la mise sous tension et en régime continu, et relier le courant de déplacement à la continuité du courant dans un circuit.</li>
+    <li data-rang="06">Dimensionner une batterie de condensateurs sous contraintes de tension, d'énergie utile et de tolérance, et choisir des résistances d'équilibrage et de précharge.</li>
+    <li data-rang="07">Diagnostiquer une répartition anormale des tensions dans une association série et évaluer le risque résiduel d'un bus continu hors tension.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois acquis sont mobilisés. Le premier : le courant est le débit de charge, $i = \mathrm{d}q/\mathrm{d}t$, et une
+    charge se compte donc en ampères multipliés par des secondes, $1\ \mathrm{C} = 1\ \mathrm{A \cdot s}$, comme
+    l'a établi le cours <a href="#/cours/tension-courant-charge-et-puissance">Tension, courant, charge et
+    puissance</a>. Le deuxième : la tension entre deux points est le travail reçu par unité de charge qui passe de l'un
+    à l'autre, $U = W/q$, et l'énergie est l'intégrale de la puissance, $W = \int p\,\mathrm{d}t$. Le troisième : la
+    dérivée d'une grandeur qui varie linéairement est la pente de sa droite, et l'intégrale d'une grandeur constante
+    est l'aire d'un rectangle ; ces deux lectures géométriques suffisent pour tous les calculs de cette séance, les
+    équations différentielles étant réservées au cours Régime transitoire RC. Le mini-test ci-dessous n'est pas noté ;
+    la correction de chaque question reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la
+    correction".
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-structure">Deux conducteurs, un isolant, et des charges qui se font face</h3>
+  <p>
+    Un condensateur plan est formé de deux plaques conductrices, les armatures, séparées par une mince couche
+    d'isolant, le diélectrique. Relions ses armatures à une source de tension. La source prélève des électrons sur
+    l'armature reliée à sa borne $+$ et en repousse autant sur l'armature reliée à sa borne $-$ : un courant circule
+    dans les fils, alors qu'aucun électron ne franchit l'isolant. Les charges s'accumulent de part et d'autre du
+    diélectrique, $+Q$ sur une armature, $-Q$ sur l'autre, et créent entre elles un champ électrique, dirigé de
+    l'armature positive vers l'armature négative. Ce champ repousse les électrons suivants que la source tente
+    d'apporter : plus la charge accumulée est grande, plus la tension entre les armatures est grande, et plus il est
+    difficile d'en ajouter. Le courant s'arrête lorsque la tension du condensateur égale celle de la source. Au total,
+    le condensateur n'a gagné aucune charge nette, puisque $+Q - Q = 0$ ; il a séparé des charges, et c'est le champ
+    créé par cette séparation qui contient l'énergie.
+  </p>
+  <figure id="d-structure-figure">
+    <svg viewBox="0 0 760 380" role="img" aria-label="Structure d'un condensateur plan : deux armatures de surface S séparées d'une distance d par un diélectrique de permittivité relative epsilon r, charges plus Q et moins Q, lignes de champ de l'armature positive vers l'armature négative, courant i entrant par la borne A, tension u de B vers A, et symbole normalisé équivalent">
+      <defs>
+        <marker id="fl-d-str" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-d-str-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+        <pattern id="hach-d-str" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <path d="M0 0V9" stroke="currentColor" stroke-width="1" opacity="0.22"/>
+        </pattern>
+      </defs>
+      <rect x="170" y="134" width="330" height="92" fill="url(#hach-d-str)" stroke="none"/>
+      <g stroke="currentColor" stroke-width="2.2" fill="currentColor">
+        <rect x="170" y="122" width="330" height="12" rx="2" fill-opacity="0.25"/>
+        <rect x="170" y="226" width="330" height="12" rx="2" fill-opacity="0.25"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M76 128H170"/>
+        <path d="M76 232H170"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="70" cy="128" r="6"/>
+        <circle cx="70" cy="232" r="6"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round">
+        <path d="M200 140V218" marker-end="url(#fl-d-str)"/>
+        <path d="M245 140V218" marker-end="url(#fl-d-str)"/>
+        <path d="M290 140V218" marker-end="url(#fl-d-str)"/>
+        <path d="M335 140V218" marker-end="url(#fl-d-str)"/>
+        <path d="M380 140V218" marker-end="url(#fl-d-str)"/>
+        <path d="M425 140V218" marker-end="url(#fl-d-str)"/>
+        <path d="M470 140V218" marker-end="url(#fl-d-str)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.3" fill="none" stroke-dasharray="4 4" opacity="0.7">
+        <path d="M172 136C140 160 140 200 172 224"/>
+        <path d="M498 136C530 160 530 200 498 224"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M92 128H132" marker-end="url(#fl-d-str)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M40 222V142" marker-end="url(#fl-d-str-u)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round">
+        <path d="M520 128V232"/>
+        <path d="M512 128H528M512 232H528"/>
+        <path d="M170 256H500"/>
+        <path d="M170 250V262M500 250V262"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M680 80V160"/>
+        <path d="M648 160H712" stroke-width="3.2"/>
+        <path d="M648 176H712" stroke-width="3.2"/>
+        <path d="M680 176V256"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="680" cy="74" r="6"/>
+        <circle cx="680" cy="262" r="6"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M680 96V130" marker-end="url(#fl-d-str)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M740 246V92" marker-end="url(#fl-d-str-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13">
+        <text x="335" y="30" text-anchor="middle" font-weight="600">condensateur plan</text>
+        <text x="680" y="30" text-anchor="middle" font-weight="600">symbole</text>
+        <text x="185" y="116">+ + + + + + + + + + + + + +</text>
+        <text x="185" y="252">- - - - - - - - - - - - - -</text>
+        <text x="506" y="112">armature, +Q</text>
+        <text x="506" y="258">armature, -Q</text>
+        <text x="335" y="186" text-anchor="middle" font-size="12">champ E, uniforme</text>
+        <text x="335" y="202" text-anchor="middle" font-size="12">diélectrique εr</text>
+        <text x="536" y="186">d</text>
+        <text x="335" y="280" text-anchor="middle" font-size="12">surface S en regard</text>
+        <text x="118" y="176" text-anchor="middle" font-size="11">effets</text>
+        <text x="118" y="190" text-anchor="middle" font-size="11">de bord</text>
+        <text x="112" y="118" text-anchor="middle">i</text>
+        <text x="70" y="112" text-anchor="middle" font-weight="600">A</text>
+        <text x="70" y="256" text-anchor="middle" font-weight="600">B</text>
+        <text x="30" y="186" text-anchor="end" fill="var(--serie-2)">u</text>
+        <text x="200" y="330" text-anchor="middle" font-size="12">B : référence de potentiel</text>
+        <text x="200" y="350" text-anchor="middle" font-size="12">convention récepteur : i entre par A, u = VA - VB</text>
+        <text x="696" y="116">i</text>
+        <text x="696" y="80" font-weight="600">A</text>
+        <text x="696" y="272" font-weight="600">B</text>
+        <text x="636" y="154" text-anchor="end" font-weight="600">+</text>
+        <text x="728" y="176" fill="var(--serie-2)" text-anchor="end">u</text>
+        <text x="660" y="300" text-anchor="middle" font-size="12">q = C u, i = C du/dt</text>
+      </g>
+    </svg>
+    <figcaption>
+      Structure d'un condensateur plan. Les deux armatures, rectangles pleins, ont une surface en regard $S$ et sont
+      séparées d'une distance $d$ par un diélectrique hachuré de permittivité relative $\varepsilon_r$. L'armature du
+      haut, reliée à la borne $A$, porte la charge $+Q$ ; celle du bas, reliée à $B$, porte $-Q$. Les flèches verticales
+      fines sont les lignes de champ, de l'armature positive vers l'armature négative ; les courbes en pointillés
+      rappellent que le champ déborde sur les bords, effet négligé dans le modèle idéal. La flèche épaisse est le sens
+      de référence du courant $i$, qui entre par $A$ ; la flèche fine est la tension $u = V_A - V_B$, pointée vers $A$ :
+      c'est la convention récepteur, et $B$ sert de référence de potentiel. À droite, le symbole normalisé avec les
+      mêmes conventions ; la borne $+$ marquée est celle de la tension positive de référence.
+    </figcaption>
+  </figure>
+  <p>
+    Analogie contrôlée : une conduite d'eau fermée par une membrane élastique tendue en travers. Une pompe pousse
+    l'eau : la membrane se déforme, de l'eau se déplace d'un côté comme de l'autre, et un débit circule dans toute la
+    conduite, bien qu'aucune goutte ne traverse la membrane. Plus la membrane est tendue, plus elle repousse l'eau, et
+    le débit s'annule quand sa poussée égale la pression de la pompe. Une membrane souple, qui se déforme beaucoup sous
+    une faible pression, représente une grande capacité ; la pression correspond à la tension, le volume déplacé à la
+    charge, le débit au courant.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie de la membrane</span>
+    <p>
+      L'analogie rend bien compte de trois faits : le courant circule sans franchir l'isolant, la tension croît avec la
+      charge accumulée, et le courant s'annule en régime établi. Elle en déforme d'autres. Une membrane réelle a une
+      élasticité non linéaire et une inertie, alors que la relation $q = Cu$ d'un condensateur idéal est
+      rigoureusement proportionnelle et sans masse. Elle suggère que de l'eau est "stockée", alors que le condensateur
+      ne stocke aucune charge nette : il sépare $+Q$ et $-Q$. Elle place l'énergie dans la déformation de la membrane,
+      ce qui est juste en esprit, mais l'énergie d'un condensateur est répartie dans tout le volume où règne le champ,
+      y compris dans les effets de bord. Enfin, la rupture de la membrane correspond bien au claquage du diélectrique,
+      mais un diélectrique solide claqué est en général détruit définitivement, alors que l'air se reconstitue après
+      l'arc.
+    </p>
+  </div>
+
+  <h3 id="d-charge-anim-section">Animation : la charge d'un condensateur plan, pas à pas</h3>
+  <p>
+    L'animation montre un condensateur plan relié, à travers une résistance, à une source de tension continue $E$. Les
+    petits points qui circulent dans les fils sont des électrons : leur déplacement est proportionnel à la charge
+    déjà transférée, si bien qu'ils vont vite au début et ralentissent ensuite. Le temps est piloté par vous : lecture,
+    pause, vitesse et remise à zéro. Avant de lancer la lecture, prédisez qualitativement : dans quel sens les électrons
+    circulent-ils par rapport à la flèche du courant $i$ ? À quel moment le courant est-il le plus fort ? Le nombre de
+    lignes de champ entre les armatures augmente-t-il linéairement avec le temps ?
+  </p>
+  <figure id="d-charge-figure">
+    <div class="m-toile-cadre schema-vivant" id="d-charge"></div>
+    <figcaption>
+      La source $E$, borne $+$ en haut, est reliée par une résistance $R$ à l'armature supérieure ; l'armature
+      inférieure est reliée à la borne $-$, prise comme référence de potentiel (symbole de masse). La flèche épaisse
+      donne le sens de référence du courant $i$, en convention récepteur pour le condensateur. Les points ronds sont des
+      électrons, qui circulent dans le sens opposé à la flèche. Les signes $+$ et $-$ sur les armatures sont en nombre
+      proportionnel à la charge, et les flèches verticales entre les armatures, les lignes de champ, sont d'autant plus
+      nombreuses que le champ est intense. Les deux jauges horizontales, sous le schéma, donnent $u/E$ et $i/I_0$, avec
+      $I_0 = E/R$ le courant à la fermeture.
+    </figcaption>
+  </figure>
+  <div id="d-charge-lecteur"></div>
+  <div id="d-charge-valeurs"></div>
+  <p>
+    Interprétation : les électrons quittent l'armature supérieure, traversent la source de sa borne $+$ vers sa borne
+    $-$, et rejoignent l'armature inférieure ; le courant conventionnel, orienté dans l'autre sens, entre donc par
+    l'armature qui devient positive. Le courant est maximal à la fermeture : le condensateur déchargé n'oppose encore
+    aucune tension, et toute la tension $E$ se retrouve aux bornes de $R$, d'où $I_0 = E/R$. À mesure que la charge
+    s'accumule, la tension du condensateur s'oppose à la source, la tension aux bornes de $R$ diminue, et le courant
+    avec elle. Les lignes de champ ne se multiplient donc pas linéairement : vite au début, puis de plus en plus
+    lentement, jusqu'à l'arrêt quand $u = E$. La forme exacte de cette décroissance, exponentielle, sera établie dans le
+    cours Régime transitoire RC ; cette séance en explique le mécanisme et l'état final.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-champ">Champ électrique et tension</h3>
+  <p>
+    Une charge $q$ placée en un point où règne un champ électrique $\vec{E}$ subit la force $\vec{F} = q\vec{E}$. Le
+    champ se mesure donc en newtons par coulomb, unité identique au volt par mètre. Entre deux armatures planes,
+    parallèles, proches et étendues, le champ est uniforme : même intensité, même direction, de l'armature positive
+    vers l'armature négative. Pour amener une charge $q$ de l'armature négative à l'armature positive, contre la force
+    $qE$, il faut fournir le travail $W = qEd$ ; par définition de la tension, $W = qU$. D'où la relation entre
+    tension et champ uniforme.
+  </p>
+  <div class="formule-cle">
+    $$U = E\,d \qquad \Longleftrightarrow \qquad E = \frac{U}{d}$$
+    <p class="formule-cle-legende">
+      $U$ tension entre les armatures ($\mathrm{V}$) ; $E$ intensité du champ électrique ($\mathrm{V/m}$) ; $d$
+      distance entre les armatures ($\mathrm{m}$). Hypothèses : champ uniforme, c'est-à-dire armatures planes et
+      parallèles, $d$ petite devant les dimensions des armatures, effets de bord négligés. Dérivation : ci-dessus, par
+      le travail de la force électrique. Interprétation : à tension donnée, rapprocher les armatures intensifie le
+      champ ; c'est lui, et non la tension, qui provoque le claquage de l'isolant. Cas limites : $d \to 0$ donne un champ
+      infini, donc un claquage certain ; $U = 0$ donne un champ nul. Vérification dimensionnelle :
+      $(\mathrm{V/m}) \times \mathrm{m} = \mathrm{V}$. Ne pas confondre le champ $E$ avec une force électromotrice,
+      notée aussi $E$ dans ce parcours : le contexte et l'unité les distinguent.
+    </p>
+  </div>
+  <p>
+    Quelle est l'intensité du champ créé par les charges des armatures ? Le théorème de Gauss, conséquence des lois de
+    l'électrostatique, donne pour un plan chargé avec une densité surfacique uniforme $\sigma = Q/S$ un champ
+    $\sigma/(2\varepsilon)$ de part et d'autre. Les deux armatures, de densités $+\sigma$ et $-\sigma$, ajoutent leurs
+    champs entre elles et les annulent à l'extérieur : le champ vaut $\sigma/\varepsilon$ entre les armatures et
+    s'annule ailleurs, aux effets de bord près. La permittivité $\varepsilon = \varepsilon_0\,\varepsilon_r$
+    décrit le milieu : $\varepsilon_0 = 8{,}854 \times 10^{-12}\ \mathrm{F/m}$ pour le vide, et $\varepsilon_r$,
+    sans dimension, vaut environ $1$ pour l'air, environ $2{,}2$ pour le polypropylène, et de quelques dizaines à
+    plusieurs milliers pour les céramiques. Le diélectrique réduit le champ pour une charge donnée, parce que ses
+    molécules se polarisent : leurs charges liées se décalent légèrement et créent un champ opposé.
+  </p>
+
+  <h3 id="e-capacite">Capacité d'un condensateur plan</h3>
+  <p>
+    En combinant $E = \sigma/\varepsilon = Q/(\varepsilon S)$ et $U = Ed$, on obtient $U = Qd/(\varepsilon S)$ : la
+    tension est proportionnelle à la charge. Le coefficient de proportionnalité ne dépend que de la géométrie et du
+    matériau. On définit la capacité $C$ par $Q = CU$.
+  </p>
+  <div class="formule-cle">
+    $$Q = C\,U, \qquad C = \frac{\varepsilon_0\,\varepsilon_r\,S}{d}$$
+    <p class="formule-cle-legende">
+      $Q$ charge portée par l'armature positive ($\mathrm{C}$), l'autre portant $-Q$ ; $U$ tension entre les armatures
+      ($\mathrm{V}$) ; $C$ capacité ($\mathrm{F}$, farad, $1\ \mathrm{F} = 1\ \mathrm{C/V}$) ; $S$ surface en regard
+      ($\mathrm{m^2}$) ; $d$ épaisseur du diélectrique ($\mathrm{m}$) ; $\varepsilon_0$ ($\mathrm{F/m}$) et
+      $\varepsilon_r$ comme ci-dessus. Hypothèses : diélectrique linéaire, homogène, remplissant tout l'espace entre les
+      armatures ; effets de bord négligés. Dérivation : ci-dessus. Interprétation : un condensateur a une grande
+      capacité s'il accepte beaucoup de charge pour peu de tension ; il faut pour cela de grandes surfaces, un isolant
+      mince et une permittivité élevée. Cas limites : $d \to 0$ donne $C \to \infty$, mais la tension admissible tend
+      vers zéro ; $\varepsilon_r = 1$ donne le condensateur à air. Vérification dimensionnelle :
+      $(\mathrm{F/m}) \times \mathrm{m^2}/\mathrm{m} = \mathrm{F}$.
+    </p>
+  </div>
+  <p>
+    Ordres de grandeur. Deux plaques de $100\ \mathrm{cm^2}$ séparées de $1\ \mathrm{mm}$ d'air ont une capacité de
+    $8{,}854 \times 10^{-12} \times 0{,}01/10^{-3} = 88{,}54\ \mathrm{pF}$. Même avec un mètre carré, on n'obtiendrait
+    que $8{,}85\ \mathrm{nF}$ : le farad est une unité énorme, et les capacités usuelles se comptent en picofarads,
+    nanofarads, microfarads et millifarads. Pour loger $10\ \mu\mathrm{F}$ dans un condensateur à film de
+    polypropylène de $8\ \mu\mathrm{m}$ d'épaisseur, il faut $S = Cd/(\varepsilon_0\varepsilon_r) = 4{,}1\ \mathrm{m^2}$
+    de film : d'où la construction bobinée de ces composants. Les condensateurs électrolytiques obtiennent des
+    capacités bien plus grandes grâce à une couche d'oxyde extrêmement mince et à une surface d'électrode rendue très
+    rugueuse ; les supercondensateurs vont plus loin encore en exploitant une double couche électrochimique.
+  </p>
+  <p>
+    Le compromis fondamental apparaît ici : réduire $d$ augmente $C$, mais augmente aussi le champ à tension donnée. Au
+    delà d'un champ critique, la rigidité diélectrique, l'isolant devient conducteur et le condensateur claque. Pour
+    l'air sec dans un champ uniforme, cette rigidité est de l'ordre de $3\ \mathrm{MV/m}$, soit $3\ \mathrm{kV/mm}$,
+    valeur qui dépend de la pression, de l'humidité et de la forme des électrodes ; pour les films plastiques et les
+    céramiques, elle est bien plus élevée, et c'est le fabricant qui fixe la tension de service avec une marge.
+  </p>
+
+  <h3 id="e-sim-plan-section">Simulation interactive : le condensateur plan</h3>
+  <p>
+    Vous réglez la surface, la permittivité relative et la tension, et vous déplacez l'armature supérieure à la souris,
+    au doigt ou au clavier, ce qui change la distance $d$. Un dernier réglage choisit si le condensateur reste relié à
+    la source, tension imposée, ou s'il en est isolé, charge imposée. Avant de manipuler, prédisez : condensateur
+    relié à la source, que deviennent la charge et l'énergie stockée quand on écarte les armatures ? Et condensateur
+    isolé ? Dans lequel des deux cas le champ entre les armatures reste-t-il constant ?
+  </p>
+  <figure id="e-plan-figure">
+    <div class="m-toile-cadre schema-vivant" id="e-plan"></div>
+    <figcaption>
+      Coupe du condensateur plan. L'armature inférieure est fixe et reliée à la référence de potentiel ; l'armature
+      supérieure porte une poignée ronde que l'on déplace verticalement. Les flèches verticales sont les lignes de
+      champ, orientées de l'armature positive vers l'armature négative, en nombre proportionnel à l'intensité du champ.
+      Les signes $+$ et $-$ sur les armatures sont en nombre proportionnel à la charge, et la flèche fine, à gauche,
+      est la tension $U$ entre les armatures, pointée vers l'armature positive. En mode "relié", la source et
+      son interrupteur fermé sont dessinés à gauche ; en mode "isolé", l'interrupteur est ouvert. La jauge horizontale,
+      en haut à droite, compare le champ à la rigidité diélectrique de l'air sec, $3\ \mathrm{MV/m}$, repère pertinent
+      seulement quand $\varepsilon_r = 1$.
+    </figcaption>
+  </figure>
+  <div id="e-plan-curseurs"></div>
+  <div id="e-plan-valeurs"></div>
+  <p>
+    Interprétation : avec les réglages de départ ($100\ \mathrm{cm^2}$, $1\ \mathrm{mm}$, air, $1000\ \mathrm{V}$), on
+    lit $C = 88{,}54\ \mathrm{pF}$, $Q = 88{,}54\ \mathrm{nC}$, $E = 1\ \mathrm{MV/m}$ et $W = 44{,}27\ \mu\mathrm{J}$.
+    Condensateur relié, écarter les armatures divise $C$, donc $Q = CU$ et $W = \tfrac{1}{2}CU^2$ diminuent : la source
+    récupère de la charge, et le champ $U/d$ diminue lui aussi. Condensateur isolé, $Q$ ne peut pas changer : le champ
+    $Q/(\varepsilon S)$ reste constant, c'est la tension $U = Q/C$ qui croît avec $d$, et l'énergie
+    $Q^2/(2C)$ augmente. Cette énergie supplémentaire est le travail fourni par l'opérateur pour séparer des armatures
+    qui s'attirent, avec une force $F = Q^2/(2\varepsilon S)$ indépendante de $d$, affichée dans le panneau. Introduire
+    un diélectrique ($\varepsilon_r$ plus grand) augmente la capacité dans les deux modes ; en mode isolé, la tension
+    baisse. Le modèle reste idéal : sans effets de bord, sans claquage, et avec un diélectrique parfaitement isolant.
+  </p>
+
+  <h3 id="e-courant">Relation entre courant et tension</h3>
+  <p>
+    Le courant qui entre dans l'armature positive est le débit de la charge qu'elle accumule : $i = \mathrm{d}q/\mathrm{d}t$,
+    définition du cours Tension, courant, charge et puissance. Avec $q = Cu$ et une capacité constante, on obtient la
+    relation fondamentale du condensateur.
+  </p>
+  <div class="formule-cle">
+    $$i = C\,\frac{\mathrm{d}u}{\mathrm{d}t}, \qquad u(t) = u(t_0) + \frac{1}{C}\int_{t_0}^{t} i(\theta)\,\mathrm{d}\theta$$
+    <p class="formule-cle-legende">
+      $i$ courant entrant par la borne de référence $+$ ($\mathrm{A}$) ; $u$ tension en convention récepteur
+      ($\mathrm{V}$) ; $C$ capacité ($\mathrm{F}$) ; $t$ temps ($\mathrm{s}$) ; $\theta$ variable d'intégration.
+      Hypothèses : condensateur idéal, capacité constante, convention récepteur (en convention générateur, un signe
+      moins apparaît). Dérivation : $i = \mathrm{d}(Cu)/\mathrm{d}t = C\,\mathrm{d}u/\mathrm{d}t$, puis intégration.
+      Interprétation : le courant dépend de la vitesse de variation de la tension, pas de sa valeur ; la tension est la
+      mémoire de tout le courant reçu. Cas limites : tension constante, courant nul ; courant constant $I$, tension en
+      rampe $u = u(t_0) + I(t - t_0)/C$. Vérification dimensionnelle : $\mathrm{F} \times \mathrm{V/s} =
+      (\mathrm{C/V}) \times (\mathrm{V/s}) = \mathrm{C/s} = \mathrm{A}$.
+    </p>
+  </div>
+  <p>
+    Trois conséquences gouvernent tout le comportement d'un condensateur dans un circuit. En régime continu établi,
+    toutes les tensions sont constantes : $\mathrm{d}u/\mathrm{d}t = 0$, donc $i = 0$, et le condensateur se comporte
+    comme un circuit ouvert. Sa tension est continue dans le temps : un saut de tension exigerait une dérivée infinie,
+    donc un courant infini, impossible dans un circuit dont les courants sont limités par des résistances. Enfin, un
+    condensateur déchargé à l'instant de la mise sous tension garde $u = 0$ à cet instant : il se comporte pendant ce
+    bref instant comme un court-circuit, et le courant d'appel n'est limité que par les résistances du reste du circuit.
+    C'est la réponse à la question qui ouvre cette séance : $96\ \mathrm{A}$ théoriques à la fermeture sur le coffret de
+    vannes, puis un courant nul une fois la charge terminée.
+  </p>
+
+  <h3 id="e-energie">Énergie stockée</h3>
+  <p>
+    La puissance reçue par le condensateur, en convention récepteur, vaut
+    $p = ui = Cu\,\mathrm{d}u/\mathrm{d}t = \mathrm{d}\big(\tfrac{1}{2}Cu^2\big)/\mathrm{d}t$. Elle est la dérivée
+    d'une fonction de la seule tension : l'énergie reçue entre deux instants ne dépend que des tensions initiale et
+    finale, pas de la manière dont on est passé de l'une à l'autre. En partant d'un condensateur déchargé, on obtient
+    l'énergie stockée.
+  </p>
+  <div class="formule-cle">
+    $$W = \frac{1}{2}\,C\,U^2 = \frac{1}{2}\,Q\,U = \frac{Q^2}{2C}, \qquad w = \frac{1}{2}\,\varepsilon_0\,\varepsilon_r\,E^2$$
+    <p class="formule-cle-legende">
+      $W$ énergie stockée ($\mathrm{J}$) ; $C$, $U$, $Q$ comme ci-dessus ; $w$ densité volumique d'énergie dans le
+      diélectrique ($\mathrm{J/m^3}$) ; $E$ champ ($\mathrm{V/m}$). Hypothèses : condensateur idéal initialement
+      déchargé, capacité constante. Dérivation : intégration de $p$ de $0$ à $U$ ; pour le condensateur plan,
+      $\tfrac{1}{2}CU^2 = \tfrac{1}{2}(\varepsilon S/d)(Ed)^2 = \tfrac{1}{2}\varepsilon E^2 \times Sd$, et $Sd$ est le
+      volume du diélectrique. Interprétation : l'énergie est emmagasinée dans le champ, répartie dans le volume de
+      l'isolant ; elle est restituée intégralement par un condensateur idéal. Le facteur $\tfrac{1}{2}$ vient de ce que
+      la tension croît de $0$ à $U$ pendant la charge : les premières charges sont apportées sous une tension faible.
+      Cas limites : $U = 0$ donne $W = 0$ ; doubler la tension quadruple l'énergie. Vérification dimensionnelle :
+      $\mathrm{F} \times \mathrm{V^2} = (\mathrm{C/V}) \times \mathrm{V^2} = \mathrm{C \cdot V} = \mathrm{J}$ et
+      $(\mathrm{F/m}) \times (\mathrm{V/m})^2 = \mathrm{J/m^3}$.
+    </p>
+  </div>
+  <p>
+    La densité d'énergie limite ce qu'un volume de diélectrique peut stocker : dans l'air, au champ de claquage de
+    $3\ \mathrm{MV/m}$, on obtient $\tfrac{1}{2} \times 8{,}854 \times 10^{-12} \times (3 \times 10^6)^2 =
+    39{,}8\ \mathrm{J/m^3}$, soit moins de quarante joules par mètre cube. Les diélectriques solides, qui supportent des
+    champs bien plus intenses et ont une permittivité plus élevée, font beaucoup mieux, mais un condensateur reste un
+    réservoir d'énergie de faible capacité et de grande puissance : il fournit ou absorbe très vite une énergie modeste,
+    ce qui le distingue d'une batterie.
+  </p>
+  <p>
+    Deux conséquences énergétiques sont à connaître. D'abord, lorsqu'on ne dispose que d'une plage de tension entre
+    $U_1$ et $U_2$, l'énergie utilisable vaut $\tfrac{1}{2}C(U_1^2 - U_2^2)$ : un condensateur qui se décharge de
+    $24$ à $18\ \mathrm{V}$ ne restitue que $1 - (18/24)^2 = 43{,}75\ \%$ de son énergie. Ensuite, charger un
+    condensateur déchargé à partir d'une source de tension $E$ à travers une résistance coûte toujours la même perte.
+    La source débite la charge $Q = CE$ sous la tension constante $E$ et fournit donc $QE = CE^2$ ; le condensateur en
+    stocke $\tfrac{1}{2}CE^2$ ; la différence, $\tfrac{1}{2}CE^2$, est dissipée dans la résistance, quelle que soit sa
+    valeur. Une petite résistance charge vite avec un fort courant, une grande charge lentement avec un faible courant,
+    mais la chaleur produite est la même. Ce bilan exact, qui ne demande aucune équation différentielle, suppose une
+    source idéale, un condensateur initialement déchargé et un circuit linéaire.
+  </p>
+
+  <h3 id="e-sim-charge-section">Simulation interactive : charge à courant constant ou à travers une résistance</h3>
+  <p>
+    Deux façons de charger le même condensateur. Dans le premier mode, une alimentation de laboratoire limitée en
+    courant impose un courant constant $I$ jusqu'à ce que la tension atteigne sa consigne $E$, puis maintient $E$. Dans
+    le second, une source de tension $E$ charge le condensateur à travers une résistance $R$. La courbe est calculée pas
+    à pas à partir de $i = C\,\mathrm{d}u/\mathrm{d}t$, sans formule toute faite. Avant de lancer la lecture, prédisez :
+    quelle est la forme de $u(t)$ dans chaque mode ? Dans le second mode, quelle part de l'énergie fournie par la
+    source finit dans le condensateur, et cette part change-t-elle si l'on divise $R$ par dix ?
+  </p>
+  <figure id="e-charge-figure">
+    <div id="e-charge-tension"></div>
+    <div id="e-charge-courant"></div>
+    <figcaption>
+      Premier graphique : tension $u$ aux bornes du condensateur, en volts, en fonction du temps, en secondes ; la
+      courbe s'arrête à l'instant courant, marqué par un point, et le trait horizontal en tirets repère la tension $E$.
+      Second graphique : courant de charge $i$, en milliampères, entrant par la borne $+$ du condensateur. Les noms des
+      courbes figurent dans la légende de chaque graphique. Le panneau de valeurs donne les énergies fournie, stockée et
+      dissipée.
+    </figcaption>
+  </figure>
+  <div id="e-charge-curseurs"></div>
+  <div id="e-charge-lecteur"></div>
+  <div id="e-charge-valeurs"></div>
+  <p>
+    Interprétation : à courant constant, la tension monte en rampe de pente $I/C$ ; avec $C = 100\ \mu\mathrm{F}$,
+    $I = 2\ \mathrm{mA}$ et $E = 12\ \mathrm{V}$, la consigne est atteinte en $t = CE/I = 0{,}6\ \mathrm{s}$, puis le
+    courant tombe à zéro. À travers une résistance, la pente est maximale au départ, $E/(RC)$, puis la courbe
+    s'infléchit : le courant décroît à mesure que la tension monte, conformément à l'animation de la section D. Dans ce
+    mode, en fin de charge, l'énergie dissipée dans $R$ égale l'énergie stockée, $\tfrac{1}{2}CE^2 = 7{,}2\ \mathrm{mJ}$
+    avec les valeurs de départ, et diviser $R$ par dix ne change rien au partage : la charge est seulement dix fois plus
+    rapide. En mode courant constant, la source idéale ne fournit que l'énergie stockée, car aucune résistance ne
+    dissipe ; dans une alimentation réelle, la perte se retrouve dans son propre étage de régulation. Le modèle néglige
+    la résistance série et le courant de fuite du condensateur.
+  </p>
+
+  <h3 id="e-deplacement">Courant de déplacement et continuité du courant</h3>
+  <p>
+    Le courant circule dans les fils de part et d'autre du condensateur, mais aucune charge ne traverse le diélectrique.
+    La loi des nœuds semble en défaut si l'on entoure une seule armature d'une surface fermée : du courant entre, rien
+    ne sort. Elle ne l'est pas : la charge contenue dans la surface augmente, exactement au rythme du courant qui entre,
+    et c'est la conservation de la charge sous sa forme générale. Maxwell a donné à ce bilan une forme qui rétablit la
+    continuité : un champ électrique variable équivaut, pour ses effets magnétiques, à un courant, appelé courant de
+    déplacement, de densité $\varepsilon\,\partial E/\partial t$.
+  </p>
+  <div class="formule-cle">
+    $$i_D = \varepsilon\,S\,\frac{\mathrm{d}E}{\mathrm{d}t} = \frac{\varepsilon S}{d}\,\frac{\mathrm{d}u}{\mathrm{d}t} = C\,\frac{\mathrm{d}u}{\mathrm{d}t} = i$$
+    <p class="formule-cle-legende">
+      $i_D$ courant de déplacement à travers le diélectrique ($\mathrm{A}$) ; $\varepsilon = \varepsilon_0\varepsilon_r$
+      ($\mathrm{F/m}$) ; $S$ surface ($\mathrm{m^2}$) ; $E$ champ ($\mathrm{V/m}$) ; $u$, $d$, $C$, $i$ comme ci-dessus.
+      Hypothèses : condensateur plan idéal, champ uniforme. Dérivation : $E = u/d$ et $C = \varepsilon S/d$.
+      Interprétation : le courant de conduction dans les fils se prolonge, dans l'isolant, par un courant de
+      déplacement égal ; le courant total est conservé partout, et la loi des nœuds du cours
+      <a href="#/cours/lois-de-kirchhoff">Lois de Kirchhoff</a> reste valable à condition de compter les deux. Ce
+      courant ne transporte aucune charge, mais il crée un champ magnétique comme un courant ordinaire. Cas limites :
+      tension constante, courant de déplacement nul ; variation très rapide, courant de déplacement intense même pour
+      une faible capacité. Vérification dimensionnelle : $(\mathrm{F/m}) \times \mathrm{m^2} \times \mathrm{V/(m \cdot s)}
+      = \mathrm{F \cdot V/s} = \mathrm{A}$.
+    </p>
+  </div>
+  <figure id="e-deplacement-figure">
+    <svg viewBox="0 0 700 300" role="img" aria-label="Condensateur dans un circuit : courant de conduction i dans les fils, courant de déplacement dans le diélectrique en flèches en tirets, et surface fermée autour de l'armature positive">
+      <defs>
+        <marker id="fl-e-dep" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-e-dep-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M110 126V60H350V120"/>
+        <circle cx="110" cy="150" r="24"/>
+        <path d="M110 174V250H350V190"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.2" fill="currentColor">
+        <rect x="280" y="120" width="140" height="10" rx="2" fill-opacity="0.25"/>
+        <rect x="280" y="180" width="140" height="10" rx="2" fill-opacity="0.25"/>
+      </g>
+      <rect x="262" y="104" width="176" height="36" rx="10" fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="3 4"/>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M200 60H250" marker-end="url(#fl-e-dep)"/>
+        <path d="M250 250H200" marker-end="url(#fl-e-dep)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.8" fill="none" stroke-dasharray="6 4" stroke-linecap="round">
+        <path d="M310 136V172" marker-end="url(#fl-e-dep)"/>
+        <path d="M350 136V172" marker-end="url(#fl-e-dep)"/>
+        <path d="M390 136V172" marker-end="url(#fl-e-dep)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M460 184V130" marker-end="url(#fl-e-dep-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="110" y="145" text-anchor="middle" font-weight="600">+</text>
+        <text x="110" y="166" text-anchor="middle" font-weight="600">-</text>
+        <text x="70" y="155" text-anchor="end">source</text>
+        <text x="225" y="48" text-anchor="middle">i, conduction</text>
+        <text x="225" y="274" text-anchor="middle">i, conduction</text>
+        <text x="474" y="162" fill="var(--serie-2)">u</text>
+        <text x="520" y="120">surface fermée :</text>
+        <text x="520" y="138">i entre, rien ne sort,</text>
+        <text x="520" y="156">la charge +Q croît</text>
+        <text x="520" y="174">au rythme dQ/dt = i</text>
+        <text x="520" y="214">dans l'isolant :</text>
+        <text x="520" y="232">iD = C du/dt = i</text>
+        <text x="350" y="292" text-anchor="middle" font-size="12">conducteur du bas : référence de potentiel</text>
+      </g>
+    </svg>
+    <figcaption>
+      Continuité du courant à travers un condensateur. Les flèches épaisses sont le courant de conduction $i$ dans les
+      fils, orienté de la borne $+$ de la source vers l'armature supérieure ; les flèches en tirets, entre les
+      armatures, représentent le courant de déplacement $i_D$, qui ne transporte aucune charge mais prolonge le courant
+      dans l'isolant. Le cadre en pointillés est une surface fermée autour de l'armature positive : le courant $i$ y
+      entre, aucun courant de conduction n'en sort, et la charge intérieure croît de $\mathrm{d}Q = i\,\mathrm{d}t$. La
+      flèche fine est la tension $u$ du condensateur, en convention récepteur ; le conducteur du bas sert de référence.
+    </figcaption>
+  </figure>
+  <p>
+    Cette notion a des conséquences très concrètes. Entre l'enroulement d'un moteur alimenté par variateur et sa
+    carcasse reliée à la terre, entre les conducteurs d'un câble et son écran, il existe des capacités parasites de
+    quelques nanofarades. Un variateur fait commuter sa tension de sortie en une fraction de microseconde : avec des
+    vitesses de variation de l'ordre de $5\ \mathrm{kV/\mu s}$, soit $5 \times 10^9\ \mathrm{V/s}$, une capacité de
+    $5\ \mathrm{nF}$ fait circuler $i = 5 \times 10^{-9} \times 5 \times 10^9 = 25\ \mathrm{A}$ en impulsions brèves
+    vers la terre. Ces valeurs sont des ordres de grandeur indicatifs, qui dépendent du variateur, du câble et de la
+    pose ; elles expliquent néanmoins les déclenchements intempestifs de protections différentielles et les
+    perturbations étudiés dans le cours Compatibilité électromagnétique.
+  </p>
+
+  <h3 id="e-associations">Associations de condensateurs</h3>
+  <p>
+    En parallèle, les condensateurs ont la même tension $U$ ; chacun porte $Q_k = C_kU$, et la charge totale fournie
+    par la source est la somme. En série, le raisonnement passe par la conservation de la charge. Supposons les
+    condensateurs initialement déchargés. Le nœud entre deux condensateurs en série n'est relié à rien d'autre : les
+    deux armatures qui le composent forment un conducteur isolé, de charge totale nulle au départ et qui le reste. Si
+    l'armature de droite du premier porte $-Q$, l'armature de gauche du second porte $+Q$ : tous les condensateurs d'une
+    chaîne série portent la même charge $Q$, et leurs tensions $Q/C_k$ s'additionnent.
+  </p>
+  <div class="formule-cle">
+    $$\text{parallèle : } C_{eq} = \sum_k C_k, \qquad \text{série : } \frac{1}{C_{eq}} = \sum_k \frac{1}{C_k}, \qquad U_k = \frac{Q}{C_k}$$
+    <p class="formule-cle-legende">
+      $C_{eq}$ capacité équivalente ($\mathrm{F}$) ; $C_k$ capacité du condensateur $k$ ($\mathrm{F}$) ; $Q$ charge
+      commune de la chaîne série ($\mathrm{C}$) ; $U_k$ tension aux bornes du condensateur $k$ ($\mathrm{V}$).
+      Hypothèses : condensateurs idéaux ; pour la série, condensateurs initialement déchargés et nœuds intermédiaires
+      isolés, sans fuite. Dérivation : parallèle, $Q = \sum C_kU = (\sum C_k)U$ ; série, $U = \sum Q/C_k = Q\sum
+      (1/C_k)$. Interprétation : les règles sont inversées par rapport aux résistances, car la capacité mesure une
+      facilité à accepter de la charge, là où la résistance mesure une difficulté à laisser passer le courant ; la
+      capacité série est inférieure à la plus petite, la capacité parallèle supérieure à la plus grande. Cas limites :
+      deux condensateurs égaux donnent $2C$ en parallèle et $C/2$ en série. Vérification dimensionnelle : on n'ajoute que
+      des farads, ou des inverses de farads.
+    </p>
+  </div>
+  <p>
+    Dans une chaîne série, c'est le plus petit condensateur qui reçoit la plus grande tension : pour deux condensateurs,
+    $U_1 = U\,C_2/(C_1 + C_2)$, formule de diviseur où les capacités jouent le rôle inverse des résistances. On met des
+    condensateurs en série pour tenir une tension supérieure à celle de chacun, par exemple deux condensateurs de
+    $450\ \mathrm{V}$ pour un bus de $565\ \mathrm{V}$, au prix d'une capacité divisée. Mais cette répartition ne vaut
+    qu'en régime variable ou juste après la charge. En régime continu établi, les courants de fuite, faibles mais non
+    nuls, finissent par imposer leur propre répartition : chaque condensateur réel se comporte alors comme sa
+    résistance de fuite, et la tension se partage comme dans un diviseur résistif, d'autant plus mal que les fuites
+    sont inégales. C'est la raison d'être des résistances d'équilibrage, calculées dans l'exemple de la section H.
+  </p>
+
+  <h3 id="e-sim-association-section">Simulation interactive : associations série et parallèle</h3>
+  <p>
+    Deux condensateurs $C_1$ et $C_2$ sont associés en série ou en parallèle et chargés sous une tension $U$. Le schéma
+    affiche les charges portées par chaque armature, les tensions et les énergies. Avant de manipuler, prédisez : en
+    série, avec $C_1 = 10\ \mu\mathrm{F}$ et $C_2 = 40\ \mu\mathrm{F}$ sous $100\ \mathrm{V}$, lequel reçoit la plus
+    grande tension, et dans quelle proportion ? L'énergie totale stockée est-elle plus grande en série ou en parallèle ?
+  </p>
+  <figure id="e-association-figure">
+    <div class="m-toile-cadre schema-vivant" id="e-association"></div>
+    <figcaption>
+      La source $U$, borne $+$ en haut, alimente les deux condensateurs ; son conducteur du bas est la référence de
+      potentiel. Chaque condensateur est dessiné avec son armature positive en haut ou à gauche, marquée par sa charge.
+      Les flèches fines donnent les tensions $U_1$ et $U_2$, pointées vers l'armature positive, en convention
+      récepteur, et la flèche épaisse le courant de charge fourni par la source. Les barres, sous le schéma, comparent
+      les charges puis les énergies des deux condensateurs.
+    </figcaption>
+  </figure>
+  <div id="e-association-curseurs"></div>
+  <div id="e-association-valeurs"></div>
+  <p>
+    Interprétation : en série, les deux condensateurs portent la même charge, $Q = C_{eq}U$ avec
+    $C_{eq} = 10 \times 40/50 = 8\ \mu\mathrm{F}$, soit $800\ \mu\mathrm{C}$ ; le plus petit reçoit
+    $800/10 = 80\ \mathrm{V}$, le plus grand $20\ \mathrm{V}$, dans le rapport inverse des capacités. En parallèle, les
+    tensions sont égales et les charges proportionnelles aux capacités : $1\ \mathrm{mC}$ et $4\ \mathrm{mC}$. L'énergie
+    totale vaut $\tfrac{1}{2}C_{eq}U^2$ dans les deux cas : $40\ \mathrm{mJ}$ en série, $250\ \mathrm{mJ}$ en parallèle
+    pour la même tension de source. En série, l'énergie se concentre dans le plus petit condensateur, qui porte aussi
+    la plus forte tension : c'est lui qui limite la tension admissible de la chaîne.
+  </p>
+
+  <h3 id="e-reel">Condensateurs réels</h3>
+  <p>
+    Un condensateur réel s'écarte du modèle idéal par plusieurs imperfections, qui se modélisent par des éléments
+    ajoutés : une résistance série équivalente, qui dissipe de la chaleur lorsque le courant alternatif ou impulsionnel
+    le traverse ; une résistance de fuite en parallèle, qui le décharge lentement ; une inductance série, due aux
+    connexions, qui limite son efficacité aux fréquences élevées. Sa capacité réelle s'écarte de la valeur nominale
+    selon une tolérance souvent large, varie avec la température, et, pour les céramiques de forte permittivité, chute
+    nettement quand on leur applique une tension continue. Les condensateurs électrolytiques sont polarisés : une
+    tension inverse les détruit, parfois violemment. Leur durée de vie dépend fortement de leur température de
+    fonctionnement. Toutes ces grandeurs sont des données du constructeur.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Principales technologies, ordres de grandeur indicatifs à confirmer sur les fiches techniques</caption>
+      <thead><tr><th>Technologie</th><th>Capacités usuelles</th><th>Points forts</th><th>Points faibles</th><th>Usages industriels</th></tr></thead>
+      <tbody>
+        <tr><td>Céramique multicouche</td><td>du picofarad à quelques dizaines de microfarads</td><td>petite taille, faible inductance, non polarisé</td><td>capacité qui dépend de la tension continue et de la température (céramiques de forte permittivité)</td><td>découplage des circuits électroniques, filtrage haute fréquence</td></tr>
+        <tr><td>Film (polypropylène)</td><td>du nanofarad à quelques millifarads</td><td>faibles pertes, tenue en tension, autocicatrisation</td><td>volume par microfarad</td><td>bus continu de convertisseurs, compensation, antiparasitage</td></tr>
+        <tr><td>Électrolytique aluminium</td><td>du microfarad à plusieurs dizaines de millifarads</td><td>forte capacité par volume, faible coût</td><td>polarisé, fuite, vieillissement par la chaleur, résistance série élevée</td><td>filtrage des alimentations, bus continu des variateurs</td></tr>
+        <tr><td>Supercondensateur</td><td>du farad à plusieurs milliers de farads</td><td>énergie élevée pour un condensateur, nombreux cycles</td><td>tension par élément de quelques volts, mise en série obligatoire</td><td>maintien d'alimentation, récupération d'énergie de freinage</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="e-statut">Statut des énoncés</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Ce qui est loi, conséquence, convention, approximation, règle ou donnée</caption>
+      <thead><tr><th>Énoncé</th><th>Statut</th></tr></thead>
+      <tbody>
+        <tr><td>Force $\vec{F} = q\vec{E}$, théorème de Gauss, conservation de la charge, courant de déplacement</td><td>lois physiques de l'électromagnétisme (équations de Maxwell)</td></tr>
+        <tr><td>$C = \varepsilon_0\varepsilon_rS/d$, champ uniforme</td><td>approximation du condensateur plan idéal, valable si $d$ est petite devant les dimensions des armatures</td></tr>
+        <tr><td>$q = Cu$ avec $C$ constante, $\varepsilon_r$ indépendante du champ</td><td>approximation de linéarité du diélectrique, mise en défaut par les céramiques de forte permittivité</td></tr>
+        <tr><td>$i = C\,\mathrm{d}u/\mathrm{d}t$, $W = \tfrac{1}{2}CU^2$, règles d'association</td><td>conséquences exactes des hypothèses précédentes</td></tr>
+        <tr><td>Sens de $i$ entrant par la borne $+$, convention récepteur</td><td>convention d'écriture ; en convention générateur, $i = -C\,\mathrm{d}u/\mathrm{d}t$</td></tr>
+        <tr><td>Circuit ouvert en régime continu, court-circuit à la mise sous tension</td><td>conséquences du modèle idéal ; le régime continu d'un condensateur réel est fixé par sa fuite</td></tr>
+        <tr><td>Résistances d'équilibrage, résistance de précharge, marge sur la tension nominale</td><td>règles de conception</td></tr>
+        <tr><td>Capacité, tolérance, tension nominale, rigidité diélectrique, courant de fuite, durée de vie, temps d'attente avant intervention</td><td>données du constructeur</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, qui résume les trois comportements d'un condensateur dans un
+    circuit, le chronogramme de la tension et du courant lors d'une charge, l'organigramme de résolution et deux
+    tableaux comparatifs. La structure du condensateur plan et les simulations ont été placées au fil du texte, au
+    contact des explications qu'elles illustrent ; elles sont rappelées en fin de section.
+  </p>
+
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 900 400" role="img" aria-label="Schéma principal : un même circuit source, résistance et condensateur vu à trois instants ; à la fermeture le condensateur déchargé équivaut à un court-circuit et le courant vaut E sur R ; pendant la charge i vaut C du sur dt ; en régime continu le condensateur équivaut à un circuit ouvert, le courant est nul et u vaut E">
+      <defs>
+        <marker id="fl-f-i" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-f-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M50 166V80H90"/>
+        <circle cx="50" cy="190" r="22"/>
+        <rect x="90" y="67" width="70" height="26" rx="3"/>
+        <path d="M160 80H230V176"/>
+        <path d="M230 204V290H50V212"/>
+        <path d="M350 166V80H390"/>
+        <circle cx="350" cy="190" r="22"/>
+        <rect x="390" y="67" width="70" height="26" rx="3"/>
+        <path d="M460 80H530V176"/>
+        <path d="M506 176H554" stroke-width="3.2"/>
+        <path d="M506 190H554" stroke-width="3.2"/>
+        <path d="M530 190V290H350V212"/>
+        <path d="M650 166V80H690"/>
+        <circle cx="650" cy="190" r="22"/>
+        <rect x="690" y="67" width="70" height="26" rx="3"/>
+        <path d="M760 80H830V170"/>
+        <path d="M830 210V290H650V212"/>
+        <path d="M140 290V304M126 304H154M132 311H148M137 318H143"/>
+        <path d="M440 290V304M426 304H454M432 311H448M437 318H443"/>
+        <path d="M740 290V304M726 304H754M732 311H748M737 318H743"/>
+      </g>
+      <path d="M230 176V204" stroke="currentColor" stroke-width="4.4" fill="none" stroke-linecap="round"/>
+      <g fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="830" cy="176" r="6"/>
+        <circle cx="830" cy="204" r="6"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M184 80H214" marker-end="url(#fl-f-i)"/>
+        <path d="M484 80H514" marker-end="url(#fl-f-i)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M580 206V162" marker-end="url(#fl-f-u)"/>
+        <path d="M866 206V162" marker-end="url(#fl-f-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="140" y="30" text-anchor="middle" font-weight="600">à la fermeture, t = 0+</text>
+        <text x="440" y="30" text-anchor="middle" font-weight="600">pendant la charge</text>
+        <text x="740" y="30" text-anchor="middle" font-weight="600">régime continu établi</text>
+        <text x="50" y="195" text-anchor="middle">E</text>
+        <text x="26" y="176" text-anchor="end" font-weight="600">+</text>
+        <text x="125" y="112" text-anchor="middle">R</text>
+        <text x="199" y="68" text-anchor="middle">I0</text>
+        <text x="244" y="186">C déchargé :</text>
+        <text x="244" y="202">u = 0</text>
+        <text x="244" y="218">court-circuit</text>
+        <text x="350" y="195" text-anchor="middle">E</text>
+        <text x="326" y="176" text-anchor="end" font-weight="600">+</text>
+        <text x="425" y="112" text-anchor="middle">R</text>
+        <text x="499" y="68" text-anchor="middle">i</text>
+        <text x="500" y="174" text-anchor="end" font-weight="600">+</text>
+        <text x="492" y="222" text-anchor="end">C</text>
+        <text x="592" y="190" fill="var(--serie-2)">u</text>
+        <text x="650" y="195" text-anchor="middle">E</text>
+        <text x="626" y="176" text-anchor="end" font-weight="600">+</text>
+        <text x="725" y="112" text-anchor="middle">R</text>
+        <text x="799" y="68" text-anchor="middle">i = 0</text>
+        <text x="818" y="236" text-anchor="end">circuit</text>
+        <text x="818" y="252" text-anchor="end">ouvert</text>
+        <text x="878" y="190" fill="var(--serie-2)" text-anchor="end">u</text>
+        <text x="140" y="346" text-anchor="middle">i = I0 = E / R</text>
+        <text x="140" y="366" text-anchor="middle">u = 0 (continuité)</text>
+        <text x="440" y="346" text-anchor="middle">i = C du/dt = (E - u) / R</text>
+        <text x="440" y="366" text-anchor="middle">u croît, i décroît</text>
+        <text x="740" y="346" text-anchor="middle">du/dt = 0 donc i = 0</text>
+        <text x="740" y="366" text-anchor="middle">u = E ; W = C E² / 2</text>
+        <text x="450" y="394" text-anchor="middle" font-size="11.5">conducteur du bas de chaque schéma : référence de potentiel ; convention récepteur pour le condensateur</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal : le même circuit, une source de tension $E$ (borne $+$ en haut), une résistance $R$ et un
+      condensateur $C$ initialement déchargé, vu à trois instants. À gauche, à l'instant qui suit la fermeture, la
+      tension du condensateur est encore nulle : il est remplacé par un fil épais, et le courant vaut $I_0 = E/R$. Au
+      centre, pendant la charge, le courant $i$ (flèche épaisse, entrant par la borne $+$ du condensateur) vaut à la
+      fois $C\,\mathrm{d}u/\mathrm{d}t$ et $(E - u)/R$ ; la flèche fine est la tension $u$. À droite, en régime continu
+      établi, le condensateur est remplacé par deux bornes ouvertes : aucun courant, $u = E$, et l'énergie
+      $\tfrac{1}{2}CE^2$ est stockée. Cette lecture en trois temps suffit à résoudre la plupart des questions pratiques
+      avant tout calcul de régime transitoire.
+    </figcaption>
+  </figure>
+
+  <figure id="f-chronogramme">
+    <svg viewBox="0 0 860 330" role="img" aria-label="Chronogramme qualitatif de la charge : à courant constant, la tension croît en rampe puis se stabilise à E et le courant est un créneau ; à travers une résistance, la tension croît de plus en plus lentement vers E et le courant décroît depuis E sur R">
+      <g stroke="currentColor" stroke-width="1.4" fill="none" opacity="0.8">
+        <path d="M60 140H400M60 150V30"/>
+        <path d="M60 290H400M60 300V180"/>
+        <path d="M480 140H820M480 150V30"/>
+        <path d="M480 290H820M480 300V180"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.2" fill="none" stroke-dasharray="6 5" opacity="0.7">
+        <path d="M60 50H400"/>
+        <path d="M480 50H820"/>
+        <path d="M240 140V50"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M60 140L240 50H396"/>
+        <path d="M60 290V210H240V290H396"/>
+        <path d="M480 140C520 90 560 66 620 57C680 51 740 50 816 50"/>
+        <path d="M480 290V200C530 250 580 272 640 283C700 289 760 290 816 290"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="230" y="20" text-anchor="middle" font-weight="600">à courant constant I</text>
+        <text x="650" y="20" text-anchor="middle" font-weight="600">à travers une résistance R</text>
+        <text x="52" y="54" text-anchor="end">E</text>
+        <text x="472" y="54" text-anchor="end">E</text>
+        <text x="52" y="36" text-anchor="end" font-size="11">u</text>
+        <text x="472" y="36" text-anchor="end" font-size="11">u</text>
+        <text x="52" y="186" text-anchor="end" font-size="11">i</text>
+        <text x="472" y="186" text-anchor="end" font-size="11">i</text>
+        <text x="52" y="214" text-anchor="end">I</text>
+        <text x="472" y="204" text-anchor="end">E/R</text>
+        <text x="240" y="160" text-anchor="middle" font-size="11">t = C E / I</text>
+        <text x="130" y="84" font-size="11.5">pente I / C</text>
+        <text x="540" y="120" font-size="11.5">pente initiale E / (R C)</text>
+        <text x="600" y="232" font-size="11.5">i = (E - u) / R</text>
+        <text x="404" y="144" font-size="11">t</text>
+        <text x="404" y="294" font-size="11">t</text>
+        <text x="824" y="144" font-size="11">t</text>
+        <text x="824" y="294" font-size="11">t</text>
+        <text x="230" y="322" text-anchor="middle" font-size="11.5">source idéale : W fournie = W stockée</text>
+        <text x="650" y="322" text-anchor="middle" font-size="11.5">W dissipée dans R = W stockée = C E² / 2</text>
+      </g>
+    </svg>
+    <figcaption>
+      Chronogramme qualitatif de la charge d'un condensateur initialement déchargé. Colonne de gauche, à courant
+      constant : la tension (graphique du haut) croît en rampe de pente $I/C$ jusqu'à la consigne $E$, atteinte à
+      $t = CE/I$, et le courant (graphique du bas) est un créneau. Colonne de droite, à travers une résistance : la
+      tension part avec la pente $E/(RC)$ puis s'infléchit vers $E$, et le courant décroît depuis $E/R$ en suivant
+      $(E - u)/R$. Les traits en tirets repèrent la tension $E$ et l'instant de fin de rampe. Les valeurs exactes se
+      lisent dans la simulation de la section E.
+    </figcaption>
+  </figure>
+
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Circuit avec un ou plusieurs condensateurs"] --> B{"Quelle question ?"}
+  B -->|"état final en continu"| C["Remplacer chaque condensateur par un circuit ouvert"]
+  B -->|"instant de la mise sous tension"| D["Tension de chaque condensateur conservée : déchargé = court-circuit"]
+  B -->|"courant pour une variation de tension connue"| E["i = C du/dt, pente de u"]
+  B -->|"charge, énergie, capacité équivalente"| F["Réduire : parallèle, somme ; série, somme des inverses"]
+  C --> G["Résoudre le circuit résistif : lois de Kirchhoff, diviseurs, Thévenin"]
+  D --> G
+  G --> H["En déduire u de chaque condensateur, puis Q = C u et W = C u² / 2"]
+  F --> H
+  E --> I["Vérifier le signe avec la convention récepteur"]
+  H --> J{"Série en régime continu ?"}
+  J -->|"oui"| K["Répartition fixée par les fuites : prévoir l'équilibrage"]
+  J -->|"non"| L["Contrôles : unités, ordres de grandeur, bilan d'énergie, tension nominale"]
+  K --> L
+  I --> L</pre>
+    <figcaption>
+      Organigramme de résolution. Les rectangles sont des étapes, les losanges des décisions, les libellés sur les
+      flèches les réponses. Le premier losange oriente selon la question : l'état final en continu et l'instant de la
+      mise sous tension se ramènent tous deux à un circuit résistif, en remplaçant le condensateur par un circuit ouvert
+      ou par une tension imposée ; la relation $i = C\,\mathrm{d}u/\mathrm{d}t$ sert quand la variation de tension est
+      connue ; les règles d'association servent aux calculs de charge et d'énergie. Le second losange rappelle le piège
+      des associations série en régime continu. Toutes les branches aboutissent aux mêmes contrôles.
+    </figcaption>
+  </figure>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Résistance et condensateur idéaux comparés</caption>
+      <thead><tr><th>Propriété</th><th>Résistance</th><th>Condensateur</th></tr></thead>
+      <tbody>
+        <tr><td>Relation caractéristique (convention récepteur)</td><td>$u = Ri$</td><td>$i = C\,\mathrm{d}u/\mathrm{d}t$, soit $q = Cu$</td></tr>
+        <tr><td>Énergie</td><td>dissipée en chaleur, $W = \int Ri^2\,\mathrm{d}t$</td><td>stockée puis restituée, $W = \tfrac{1}{2}CU^2$</td></tr>
+        <tr><td>Mémoire</td><td>aucune : $i$ ne dépend que de $u$ présente</td><td>$u$ dépend de tout le courant passé</td></tr>
+        <tr><td>Régime continu établi</td><td>$u = Ri$</td><td>circuit ouvert, $i = 0$</td></tr>
+        <tr><td>Grandeur continue dans le temps</td><td>aucune imposée</td><td>la tension $u$</td></tr>
+        <tr><td>Association en série</td><td>$R_{eq} = \sum R_k$</td><td>$1/C_{eq} = \sum 1/C_k$, même charge</td></tr>
+        <tr><td>Association en parallèle</td><td>$1/R_{eq} = \sum 1/R_k$</td><td>$C_{eq} = \sum C_k$, même tension</td></tr>
+        <tr><td>Grandeur qui limite l'usage</td><td>puissance dissipée, échauffement</td><td>champ dans le diélectrique, tension nominale, courant efficace</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-structure-figure" data-renvoi="d-structure-figure">la structure d'un condensateur plan, avec ses conventions</a> et <a href="#d-charge-figure" data-renvoi="d-charge-figure">l'animation de la charge pas à pas</a>, section D ;</li>
+    <li><a href="#e-plan-figure" data-renvoi="e-plan-figure">la simulation du condensateur plan</a> et <a href="#e-charge-figure" data-renvoi="e-charge-figure">la simulation de charge à courant constant ou à travers une résistance</a>, section E ;</li>
+    <li><a href="#e-deplacement-figure" data-renvoi="e-deplacement-figure">la continuité du courant et le courant de déplacement</a> et <a href="#e-association-figure" data-renvoi="e-association-figure">la simulation des associations série et parallèle</a>, section E ;</li>
+    <li><a href="#h-banc-figure" data-renvoi="h-banc-figure">la batterie de condensateurs du bus continu, annotée</a> et <a href="#h-equilibrage-figure" data-renvoi="h-equilibrage-figure">la tension de l'étage le plus chargé selon les fuites</a>, section H ;</li>
+    <li><a href="#i-precharge-figure" data-renvoi="i-precharge-figure">l'animation de la précharge du bus continu</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour un problème de condensateurs en régime continu ou lors d'une charge :</p>
+  <ol>
+    <li>Fixer les conventions : pour chaque condensateur, choisir la borne $+$ de référence, orienter $u$ vers elle et le courant $i$ entrant par elle (convention récepteur) ; choisir la référence de potentiel.</li>
+    <li>Identifier la question : état final en continu, instant de la mise sous tension, courant pour une variation de tension donnée, ou calcul de charge, d'énergie et de capacité équivalente.</li>
+    <li>État final en continu : remplacer chaque condensateur par un circuit ouvert, résoudre le circuit résistif obtenu avec les outils des cours précédents, et lire la tension de chaque condensateur.</li>
+    <li>Instant de la mise sous tension : conserver la tension de chaque condensateur (nulle s'il est déchargé, donc court-circuit), résoudre le circuit résistif, et en déduire les courants d'appel.</li>
+    <li>Variation de tension connue : appliquer $i = C\,\mathrm{d}u/\mathrm{d}t$ sur chaque intervalle où la pente est constante ; à courant constant, $\Delta t = C\,\Delta U/I$.</li>
+    <li>Associations : réduire les groupes parallèles par somme et les chaînes série par somme des inverses ; pour une chaîne série, calculer la charge commune $Q = C_{eq}U$, puis $U_k = Q/C_k$, et vérifier chaque $U_k$ contre la tension nominale.</li>
+    <li>Énergies : $W_k = \tfrac{1}{2}C_kU_k^2$, total égal à $\tfrac{1}{2}C_{eq}U^2$ ; énergie utile entre deux tensions, $\tfrac{1}{2}C(U_1^2 - U_2^2)$ ; charge par résistance depuis une source idéale, perte égale à l'énergie stockée.</li>
+    <li>Contrôler : unités, ordre de grandeur (le farad est énorme), somme des énergies, somme des tensions d'une chaîne série, tolérance sur la capacité, et, pour une chaîne série en régime continu, répartition par les résistances de fuite et d'équilibrage.</li>
+  </ol>
+  <p>
+    Choix de méthode : pour une charge ou une énergie, l'expression $\tfrac{1}{2}CU^2$ est toujours préférable à
+    l'intégration de la puissance, qu'elle résume ; l'intégration ne s'impose que si la capacité varie avec la tension.
+    Pour une chaîne série, la règle de la charge commune est plus sûre que la formule de diviseur, car elle s'étend
+    sans erreur à un nombre quelconque de condensateurs.
+  </p>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Situation : le variateur de fréquence de la pompe du site, raccordé au réseau triphasé $400\ \mathrm{V}$, redresse
+    la tension du réseau et la lisse dans un bus continu. En fonctionnement à vide, la tension du bus s'établit près de
+    la valeur crête de la tension composée, $U = 400\sqrt{2} = 565{,}7\ \mathrm{V}$, et peut monter à
+    $440\sqrt{2} = 622{,}3\ \mathrm{V}$ si le réseau est à $+10\ \%$. Le bus comporte quatre condensateurs
+    électrolytiques identiques de $2\,200\ \mu\mathrm{F}$ et de tension nominale $450\ \mathrm{V}$, montés en deux étages
+    en série, chaque étage réunissant deux condensateurs en parallèle. Une résistance d'équilibrage de
+    $47\ \mathrm{k\Omega}$ est placée aux bornes de chaque étage. Pour juger de son utilité, on envisage un cas
+    défavorable de fuites inégales : résistance de fuite équivalente de $1\ \mathrm{M\Omega}$ pour l'étage du haut et
+    de $3\ \mathrm{M\Omega}$ pour l'étage du bas. Ces valeurs de fuite sont des hypothèses d'étude, pas des données
+    d'un composant particulier.
+  </p>
+  <p>
+    Données : $C_1 = 2\,200\ \mu\mathrm{F}$ par condensateur, $U_N = 450\ \mathrm{V}$, montage deux en série de deux en
+    parallèle, $U = 565{,}7\ \mathrm{V}$ et $U_{\max} = 622{,}3\ \mathrm{V}$, $R_e = 47\ \mathrm{k\Omega}$ par étage,
+    fuites $R_{f,h} = 1\ \mathrm{M\Omega}$ et $R_{f,b} = 3\ \mathrm{M\Omega}$. Inconnues : capacité équivalente et
+    tension admissible du banc, charge et énergie stockées, tension de chaque étage en régime continu sans puis avec
+    équilibrage, puissance des résistances d'équilibrage. Stratégie : réduire les groupes parallèles puis la chaîne
+    série ; calculer $Q$ et $W$ ; puis, pour le régime continu, remplacer chaque étage par sa résistance de fuite,
+    éventuellement en parallèle avec $R_e$, et appliquer le diviseur de tension.
+  </p>
+  <h3 id="h-reduction">Capacité, charge et énergie</h3>
+  <ol>
+    <li>Chaque étage : deux condensateurs en parallèle, $C_{\acute{e}t} = 2\,200 + 2\,200 = 4\,400\ \mu\mathrm{F}$.</li>
+    <li>Deux étages égaux en série : $C_{eq} = \dfrac{4\,400 \times 4\,400}{4\,400 + 4\,400} = 2\,200\ \mu\mathrm{F} = 2{,}2\ \mathrm{mF}$. Tension nominale du banc : $2 \times 450 = 900\ \mathrm{V}$, à condition que la tension se partage également.</li>
+    <li>Charge : $Q = C_{eq}U = 2{,}2 \times 10^{-3} \times 565{,}7 = 1{,}245\ \mathrm{C}$. Chaque étage porte cette même charge, chaque condensateur la moitié, $0{,}622\ \mathrm{C}$.</li>
+    <li>Tension par étage juste après la charge, étages égaux : $Q/C_{\acute{e}t} = 1{,}245/(4{,}4 \times 10^{-3}) = 282{,}8\ \mathrm{V}$, soit $U/2$.</li>
+    <li>Énergie : $W = \tfrac{1}{2}C_{eq}U^2 = 0{,}5 \times 2{,}2 \times 10^{-3} \times 565{,}7^2 = 352{,}0\ \mathrm{J}$ ; à $622{,}3\ \mathrm{V}$, $425{,}9\ \mathrm{J}$.</li>
+    <li>Contrôle par condensateur : $\tfrac{1}{2} \times 2{,}2 \times 10^{-3} \times 282{,}8^2 = 88{,}0\ \mathrm{J}$, et $4 \times 88{,}0 = 352{,}0\ \mathrm{J}$ : la somme des énergies égale l'énergie du banc.</li>
+  </ol>
+  <h3 id="h-regime-continu">Répartition des tensions en régime continu</h3>
+  <ol>
+    <li>En régime continu, les condensateurs ne portent plus de courant capacitif ; seules restent les fuites. Sans équilibrage, la chaîne est un diviseur formé de $1\ \mathrm{M\Omega}$ et $3\ \mathrm{M\Omega}$ : l'étage du bas reçoit $565{,}7 \times \dfrac{3}{1 + 3} = 424{,}3\ \mathrm{V}$ et l'étage du haut $141{,}4\ \mathrm{V}$.</li>
+    <li>Au réseau haut, $622{,}3\ \mathrm{V}$ : l'étage du bas atteint $466{,}7\ \mathrm{V}$, au-dessus des $450\ \mathrm{V}$ nominaux. Paradoxalement, c'est l'étage qui fuit le moins, celui dont la résistance de fuite est la plus grande, qui reçoit la plus forte tension.</li>
+    <li>Avec équilibrage, chaque étage est équivalent à sa fuite en parallèle avec $47\ \mathrm{k\Omega}$ : $47 /\!/ 1000 = 44{,}89\ \mathrm{k\Omega}$ en haut, $47 /\!/ 3000 = 46{,}28\ \mathrm{k\Omega}$ en bas.</li>
+    <li>Étage du bas : $565{,}7 \times \dfrac{46{,}28}{44{,}89 + 46{,}28} = 287{,}1\ \mathrm{V}$ au nominal et $315{,}9\ \mathrm{V}$ à $622{,}3\ \mathrm{V}$ ; l'écart à l'équilibre parfait, $282{,}8\ \mathrm{V}$, n'est plus que de $1{,}5\ \%$.</li>
+    <li>Puissance de chaque résistance d'équilibrage : $282{,}8^2/47\,000 = 1{,}70\ \mathrm{W}$ ; il faut une résistance d'au moins $3\ \mathrm{W}$, ou deux résistances en série pour partager aussi la tension qu'elles supportent. Pertes permanentes du banc : $3{,}40\ \mathrm{W}$, environ $30\ \mathrm{kWh}$ par an en service continu.</li>
+    <li>Contrôle : le courant d'équilibrage, $565{,}7/94\,000 = 6{,}02\ \mathrm{mA}$, domine largement les courants de fuite, $278{,}5\ \mathrm{V}/1\ \mathrm{M\Omega} = 0{,}28\ \mathrm{mA}$ et $287{,}1\ \mathrm{V}/3\ \mathrm{M\Omega} = 0{,}10\ \mathrm{mA}$ ; c'est la condition d'un bon équilibrage.</li>
+  </ol>
+  <p>
+    Résultat final : le banc équivaut à $2{,}2\ \mathrm{mF}$ sous $900\ \mathrm{V}$ nominaux ; au nominal, il porte
+    $1{,}245\ \mathrm{C}$ et stocke $352\ \mathrm{J}$. Sans équilibrage, des fuites dans un rapport de trois suffiraient
+    à porter un étage à $466{,}7\ \mathrm{V}$ au réseau haut, au-delà de sa tension nominale ; avec deux résistances de
+    $47\ \mathrm{k\Omega}$, qui dissipent $1{,}70\ \mathrm{W}$ chacune, l'étage le plus chargé reste à
+    $315{,}9\ \mathrm{V}$. La répartition idéale selon les capacités ne vaut qu'aux premiers instants de la charge.
+  </p>
+  <figure id="h-banc-figure">
+    <svg viewBox="0 0 780 420" role="img" aria-label="Banc de condensateurs du bus continu : deux étages en série, chacun de deux condensateurs de 2200 microfarads en parallèle, résistance d'équilibrage de 47 kilohms aux bornes de chaque étage, point milieu M, tensions de 287,1 et 278,5 volts en régime continu avec les fuites supposées">
+      <defs>
+        <marker id="fl-h-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+        <marker id="fl-h-i" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M80 60H620"/>
+        <path d="M80 360H620"/>
+        <path d="M200 210H620"/>
+        <path d="M200 60V122M200 136V210"/>
+        <path d="M178 122H222M178 136H222" stroke-width="3.2"/>
+        <path d="M340 60V122M340 136V210"/>
+        <path d="M318 122H362M318 136H362" stroke-width="3.2"/>
+        <path d="M200 210V272M200 286V360"/>
+        <path d="M178 272H222M178 286H222" stroke-width="3.2"/>
+        <path d="M340 210V272M340 286V360"/>
+        <path d="M318 272H362M318 286H362" stroke-width="3.2"/>
+        <path d="M500 60V95"/>
+        <rect x="487" y="95" width="26" height="70" rx="3"/>
+        <path d="M500 165V210"/>
+        <path d="M500 210V245"/>
+        <rect x="487" y="245" width="26" height="70" rx="3"/>
+        <path d="M500 315V360"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="200" cy="60" r="4"/><circle cx="340" cy="60" r="4"/><circle cx="500" cy="60" r="4"/>
+        <circle cx="200" cy="210" r="4"/><circle cx="340" cy="210" r="4"/><circle cx="500" cy="210" r="4"/>
+        <circle cx="200" cy="360" r="4"/><circle cx="340" cy="360" r="4"/><circle cx="500" cy="360" r="4"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="74" cy="60" r="6"/>
+        <circle cx="74" cy="360" r="6"/>
+      </g>
+      <rect x="160" y="96" width="220" height="68" rx="10" fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="6 5" opacity="0.8"/>
+      <rect x="160" y="246" width="220" height="68" rx="10" fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="6 5" opacity="0.8"/>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M660 200V74" marker-end="url(#fl-h-u)"/>
+        <path d="M660 350V224" marker-end="url(#fl-h-u)"/>
+        <path d="M40 350V74" marker-end="url(#fl-h-u)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round">
+        <path d="M530 70V88" marker-end="url(#fl-h-i)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="74" y="44" text-anchor="middle" font-weight="600">+ bus</text>
+        <text x="74" y="388" text-anchor="middle" font-weight="600">- bus</text>
+        <text x="50" y="206" fill="var(--serie-2)">U</text>
+        <text x="50" y="222" fill="var(--serie-2)" font-size="11">565,7 V</text>
+        <text x="172" y="116" text-anchor="end" font-weight="600">+</text>
+        <text x="172" y="266" text-anchor="end" font-weight="600">+</text>
+        <text x="236" y="150" font-size="11">2200 µF</text>
+        <text x="376" y="150" font-size="11">2200 µF</text>
+        <text x="236" y="300" font-size="11">2200 µF</text>
+        <text x="376" y="300" font-size="11">2200 µF</text>
+        <text x="150" y="118" text-anchor="end" font-size="11.5">étage du haut</text>
+        <text x="150" y="134" text-anchor="end" font-size="11.5">4400 µF</text>
+        <text x="150" y="150" text-anchor="end" font-size="11.5">fuite 1 MΩ</text>
+        <text x="150" y="268" text-anchor="end" font-size="11.5">étage du bas</text>
+        <text x="150" y="284" text-anchor="end" font-size="11.5">4400 µF</text>
+        <text x="150" y="300" text-anchor="end" font-size="11.5">fuite 3 MΩ</text>
+        <text x="524" y="134">Re = 47 kΩ</text>
+        <text x="524" y="284">Re = 47 kΩ</text>
+        <text x="544" y="84" font-size="11">6,02 mA</text>
+        <text x="628" y="204" font-weight="600">M</text>
+        <text x="672" y="140" fill="var(--serie-2)">278,5 V</text>
+        <text x="672" y="290" fill="var(--serie-2)">287,1 V</text>
+        <text x="390" y="404" text-anchor="middle" font-size="11.5">- bus : référence de potentiel ; Ceq = 2,2 mF ; Q = 1,245 C ; W = 352 J ; sans Re : 141,4 V et 424,3 V</text>
+      </g>
+    </svg>
+    <figcaption>
+      Le banc du bus continu. Les conducteurs horizontaux du haut et du bas sont les pôles $+$ et $-$ du bus, bornes
+      ouvertes à gauche ; le pôle $-$ est la référence de potentiel, et $M$ est le point milieu reliant les deux
+      étages. Chaque étage, entouré d'un cadre en tirets, réunit deux condensateurs polarisés en parallèle, borne $+$
+      marquée côté haut. Les résistances d'équilibrage $R_e$ sont à droite, une par étage. Les flèches fines sont les
+      tensions, pointées vers la borne positive : $U$ pour le bus, et les tensions d'étage en régime continu calculées
+      avec les fuites supposées. La flèche épaisse est le courant d'équilibrage, qui descend du pôle $+$ au pôle $-$.
+    </figcaption>
+  </figure>
+  <p>
+    La courbe suivante généralise le calcul : elle donne la tension de l'étage le plus chargé, au réseau haut, en
+    fonction du rapport des résistances de fuite des deux étages, sans et avec équilibrage. Elle montre qu'un rapport
+    de fuites modeste suffit à dépasser la tension nominale sans résistances d'équilibrage.
+  </p>
+  <figure id="h-equilibrage-figure">
+    <div id="h-equilibrage-trace"></div>
+    <figcaption>
+      Axe horizontal : rapport $k$ entre la plus grande et la plus petite résistance de fuite des deux étages, sans
+      dimension, de $1$ à $10$ ; la plus petite fuite vaut $1\ \mathrm{M\Omega}$. Axe vertical : tension de l'étage le
+      plus chargé pour un bus à $622{,}3\ \mathrm{V}$, en volts. Une courbe correspond au banc sans équilibrage, l'autre
+      au banc équilibré par $47\ \mathrm{k\Omega}$ par étage ; leurs noms figurent dans la légende du graphique. Le
+      trait horizontal en tirets repère la tension nominale de $450\ \mathrm{V}$, et le point marqué le cas de
+      l'exemple, $k = 3$.
+    </figcaption>
+  </figure>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <p>
+    Cas concret : consignation et remise en service du variateur de la pompe, dont le bus continu vient d'être calculé.
+    Deux situations posent problème. À la coupure, les condensateurs restent chargés : $352\ \mathrm{J}$ sous
+    $565{,}7\ \mathrm{V}$ continus, de quoi provoquer une électrisation grave ou un arc au contact d'un outil. À la
+    remise sous tension, les condensateurs déchargés se comportent comme un court-circuit : sans précaution, le courant
+    d'appel ne serait limité que par l'impédance du réseau et des câbles, et détruirait les diodes du redresseur ou
+    ferait fondre les fusibles d'entrée. Les choix d'ingénierie portent sur deux résistances : celle d'équilibrage, qui
+    sert aussi de résistance de décharge, et celle de précharge.
+  </p>
+  <p>
+    Décharge. Une fois le variateur isolé du réseau, les résistances d'équilibrage déchargent lentement le bus. Le
+    courant initial vaut $565{,}7/94\,000 = 6{,}02\ \mathrm{mA}$ ; à ce rythme constant, il faudrait
+    $Q/I = 1{,}245/0{,}006\,02 = 207\ \mathrm{s}$ pour évacuer toute la charge. Mais le courant diminue avec la tension,
+    si bien que la décharge ralentit : le cours Régime transitoire RC montrera que cette durée de $207\ \mathrm{s}$ est
+    la constante de temps $R C$, et qu'il faut environ $502\ \mathrm{s}$, plus de huit minutes, pour descendre sous
+    $50\ \mathrm{V}$. Cela explique les délais d'attente de plusieurs minutes indiqués sur les variateurs : ce délai
+    est une donnée du constructeur, à respecter tel qu'il est marqué sur l'appareil, puis à compléter par une
+    vérification d'absence de tension aux bornes du bus avec un appareil adapté, selon la procédure de consignation de
+    l'entreprise. Une résistance d'équilibrage coupée, défaut silencieux en fonctionnement, allonge fortement cette
+    décharge.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Compromis sur la résistance d'équilibrage par étage (bus à 565,7 V, 2,2 mF)</caption>
+      <thead><tr><th>$R_e$ par étage</th><th>Puissance par résistance</th><th>Pertes permanentes du banc</th><th>Durée caractéristique $2R_eC_{eq}$</th><th>Durée pour passer sous 50 V</th></tr></thead>
+      <tbody>
+        <tr><td>$22\ \mathrm{k\Omega}$</td><td>$3{,}64\ \mathrm{W}$</td><td>$7{,}27\ \mathrm{W}$</td><td>$97\ \mathrm{s}$</td><td>environ $3{,}9\ \mathrm{min}$</td></tr>
+        <tr><td>$47\ \mathrm{k\Omega}$</td><td>$1{,}70\ \mathrm{W}$</td><td>$3{,}40\ \mathrm{W}$</td><td>$207\ \mathrm{s}$</td><td>environ $8{,}4\ \mathrm{min}$</td></tr>
+        <tr><td>$100\ \mathrm{k\Omega}$</td><td>$0{,}80\ \mathrm{W}$</td><td>$1{,}60\ \mathrm{W}$</td><td>$440\ \mathrm{s}$</td><td>environ $17{,}8\ \mathrm{min}$</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Le tableau montre le compromis : une résistance faible équilibre mieux et décharge plus vite, mais chauffe
+    davantage, dans une enveloppe où la température réduit la durée de vie des électrolytiques ; une résistance forte
+    perd peu mais équilibre moins bien si les fuites augmentent avec l'âge, et allonge l'attente avant intervention.
+    Certains variateurs ajoutent un circuit de décharge rapide commandé ; c'est un choix du constructeur.
+  </p>
+  <p>
+    Précharge. Pour limiter le courant d'appel, le variateur insère à la mise sous tension une résistance de précharge
+    $R_p$ en série avec le bus, puis la court-circuite par un contacteur ou un thyristor lorsque la tension du bus est
+    proche de sa valeur finale. Avec $R_p = 47\ \Omega$, la pointe vaut $565{,}7/47 = 12{,}0\ \mathrm{A}$ au lieu de
+    plusieurs centaines d'ampères, et la charge est pratiquement terminée après environ cinq fois
+    $R_pC_{eq} = 0{,}103\ \mathrm{s}$, soit une demi-seconde. Le bilan d'énergie de la section E donne la contrainte
+    thermique sans calcul : la résistance dissipe $\tfrac{1}{2}C_{eq}U^2 = 352\ \mathrm{J}$ quelle que soit sa valeur,
+    en une demi-seconde environ, soit $680\ \mathrm{W}$ en moyenne et $6{,}8\ \mathrm{kW}$ au premier instant. Elle doit
+    donc être choisie pour sa tenue en impulsion, donnée du constructeur, et non pour sa puissance permanente. Réduire
+    $R_p$ raccourcit la précharge mais augmente la pointe de courant ; l'augmenter protège mieux le redresseur mais
+    retarde la disponibilité du variateur. Si le contacteur de court-circuit ne se ferme pas, la résistance de
+    précharge porte tout le courant du moteur et brûle : les variateurs surveillent pour cette raison la tension du
+    bus avant d'autoriser la marche.
+  </p>
+
+  <h3 id="i-precharge-section">Animation : la précharge du bus continu</h3>
+  <p>
+    L'animation rejoue la mise sous tension du bus : la résistance de précharge est en service, puis le contacteur
+    $K$ se ferme quand le temps atteint cinq constantes de temps. Le temps est piloté par vous, et le curseur choisit
+    la valeur de $R_p$. Avant de lancer la lecture, prédisez : si vous doublez $R_p$, que deviennent la pointe de
+    courant, la durée de précharge et l'énergie dissipée dans la résistance ?
+  </p>
+  <figure id="i-precharge-figure">
+    <div class="m-toile-cadre schema-vivant" id="i-precharge"></div>
+    <figcaption>
+      Le redresseur, représenté comme une source continue de $565{,}7\ \mathrm{V}$, borne $+$ en haut, alimente le
+      bus à travers la résistance de précharge $R_p$, shuntée par le contacteur $K$ ; le pôle $-$ du bus est la
+      référence de potentiel. La flèche épaisse est le courant de charge $i$, entrant par la borne $+$ du banc
+      $C_{eq}$ ; son épaisseur est proportionnelle à sa valeur, et le chemin emprunté, par $R_p$ ou par $K$, est
+      dessiné en trait plein épais. La flèche fine est la tension du bus $u$. Le graphique placé dessous trace
+      $u/U$ et $i/i_{\max}$ jusqu'à l'instant courant ; leurs noms figurent dans sa légende.
+    </figcaption>
+  </figure>
+  <div id="i-precharge-trace"></div>
+  <div id="i-precharge-curseurs"></div>
+  <div id="i-precharge-lecteur"></div>
+  <div id="i-precharge-valeurs"></div>
+  <p>
+    Interprétation : doubler $R_p$ divise par deux la pointe de courant ($6{,}0\ \mathrm{A}$ au lieu de
+    $12{,}0\ \mathrm{A}$ pour $94\ \Omega$) et double la durée de précharge, mais l'énergie dissipée reste de
+    $352\ \mathrm{J}$ : le compteur d'énergie de la résistance atteint la même valeur, seulement plus tard. Lorsque le
+    contacteur se ferme, il reste environ $0{,}7\ \%$ de l'écart de tension à combler, soit $3{,}8\ \mathrm{V}$ : le
+    petit appel de courant correspondant, limité en réalité par les impédances du réseau, n'est pas représenté. Le
+    modèle ignore aussi l'ondulation du redresseur et la consommation de l'électronique de commande.
+  </p>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : bus continu du variateur de la pompe</span>
+    <p>
+      Sixième brique du petit site industriel, première du module consacré au stockage d'énergie. Le variateur de
+      fréquence du départ pompe reçoit un modèle de son bus continu : quatre condensateurs de $2\,200\ \mu\mathrm{F}$
+      et $450\ \mathrm{V}$ en deux étages série, soit $2{,}2\ \mathrm{mF}$ sous $900\ \mathrm{V}$ nominaux ;
+      $565{,}7\ \mathrm{V}$ au nominal, $1{,}245\ \mathrm{C}$ et $352\ \mathrm{J}$ stockés ; résistances d'équilibrage
+      de $47\ \mathrm{k\Omega}$ par étage, $1{,}70\ \mathrm{W}$ chacune ; décharge sous $50\ \mathrm{V}$ en environ
+      huit minutes ; précharge par $47\ \Omega$, pointe de $12\ \mathrm{A}$ et $352\ \mathrm{J}$ à absorber par
+      impulsion. Ces valeurs sont des hypothèses d'étude, à remplacer par la documentation du variateur retenu. Elles
+      alimenteront la procédure de consignation du site, le bilan des pertes permanentes, et les cours Convertisseurs et
+      moteurs et Protections des convertisseurs, où le bus continu sera repris avec le freinage et la régénération.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li>
+      <strong>Croire qu'un condensateur conduit le courant continu.</strong> En régime continu établi, $i = C\,\mathrm{d}u/\mathrm{d}t = 0$ : il se comporte en circuit ouvert, et seul un courant de fuite, très faible, subsiste. Le condensateur ajouté aux bornes du chauffage du coffret ne change rien à sa puissance une fois chargé.
+    </li>
+    <li>
+      <strong>Oublier le courant d'appel.</strong> L'erreur inverse consiste à croire qu'un condensateur n'a d'effet qu'en alternatif. À la mise sous tension, un condensateur déchargé impose $u = 0$ : c'est un court-circuit momentané, qui peut atteindre des dizaines ou des centaines d'ampères. D'où la précharge des variateurs et les courants d'appel des alimentations à découpage.
+    </li>
+    <li>
+      <strong>Appliquer aux condensateurs les règles d'association des résistances.</strong> Les capacités s'additionnent en parallèle et leurs inverses s'additionnent en série. Deux condensateurs de $2\,200\ \mu\mathrm{F}$ en série donnent $1\,100\ \mu\mathrm{F}$, pas $4\,400\ \mu\mathrm{F}$.
+    </li>
+    <li>
+      <strong>Se tromper sur l'énergie.</strong> Écrire $W = CU^2$, ou $W = \tfrac{1}{2}CU$, ou oublier que l'énergie croît comme le carré de la tension. Autre forme de la même erreur : croire qu'un condensateur qui se décharge de $24$ à $18\ \mathrm{V}$ restitue $25\ \%$ de son énergie ; il en restitue $43{,}75\ \%$, puisque $1 - (18/24)^2 = 0{,}4375$.
+    </li>
+    <li>
+      <strong>Supposer qu'une chaîne série se partage la tension selon les capacités en régime continu.</strong> Cette répartition ne vaut qu'à la charge. En régime établi, les fuites la fixent, et un étage peut dépasser sa tension nominale. Sans résistances d'équilibrage, l'exemple de la section H porte un étage à $466{,}7\ \mathrm{V}$ pour une tension nominale de $450\ \mathrm{V}$.
+    </li>
+    <li>
+      <strong>Rapprocher les armatures pour gagner de la capacité sans regarder le champ.</strong> $C$ croît comme $1/d$, mais le champ $U/d$ aussi : au-delà de la rigidité diélectrique, l'isolant claque. La tension nominale d'un condensateur n'est pas une indication de confort, c'est la limite de son diélectrique avec une marge.
+    </li>
+    <li>
+      <strong>Croire que des charges traversent le diélectrique.</strong> Aucune charge ne franchit l'isolant ; le courant se prolonge par le courant de déplacement. Cette confusion conduit à penser qu'un isolant parfait empêche tout courant, alors qu'une capacité parasite laisse passer des impulsions de courant dès que la tension varie vite.
+    </li>
+    <li>
+      <strong>Négliger la polarité et la tolérance.</strong> Un électrolytique monté à l'envers se détruit ; une capacité nominale de $2\,200\ \mu\mathrm{F}$ peut valoir $20\ \%$ de moins selon la tolérance, et moins encore en fin de vie. Un dimensionnement se fait sur la valeur minimale garantie.
+    </li>
+  </ol>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de
+    diagnostic industriel et une question conceptuelle. La correction de chacun reste masquée jusqu'à une tentative ou
+    un clic explicite sur "Voir la correction", puis se déroule étape par étape, accompagnée d'un schéma annoté ou d'une
+    courbe.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma.</p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$C = \frac{\varepsilon_0\,\varepsilon_r\,S}{d}, \qquad E = \frac{U}{d}$$
+    $$Q = C\,U$$
+    $$i = C\,\frac{\mathrm{d}u}{\mathrm{d}t} \quad (\text{convention récepteur})$$
+    $$W = \frac{1}{2}\,C\,U^2 = \frac{Q^2}{2C}$$
+    $$C_{eq,\parallel} = \sum_k C_k, \qquad \frac{1}{C_{eq,\text{série}}} = \sum_k \frac{1}{C_k}$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>En régime continu établi, un condensateur est un circuit ouvert ; à la mise sous tension, un condensateur déchargé est un court-circuit.</li>
+      <li>La tension d'un condensateur ne peut pas sauter ; c'est elle qu'il faut conserver d'un instant à l'autre.</li>
+      <li>Les règles d'association sont inversées par rapport aux résistances ; en série, le plus petit condensateur prend la plus grande tension.</li>
+      <li>En régime continu, une chaîne série se partage la tension selon ses fuites : il faut des résistances d'équilibrage.</li>
+      <li>Un condensateur chargé reste dangereux hors tension : respecter le délai de décharge et vérifier l'absence de tension.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Un condensateur sépare des charges $+Q$ et $-Q$ sur deux armatures isolées l'une de
+    l'autre ; le champ électrique qui en résulte, uniforme dans un condensateur plan, vaut $U/d$. La charge est
+    proportionnelle à la tension, $Q = CU$, avec $C = \varepsilon_0\varepsilon_rS/d$ pour un condensateur plan. Le
+    courant, débit de cette charge, vaut $i = C\,\mathrm{d}u/\mathrm{d}t$ : nul en régime continu, où le condensateur
+    est un circuit ouvert, il impose la continuité de la tension, d'où un comportement de court-circuit à la mise sous
+    tension d'un condensateur déchargé. Dans l'isolant, le courant se prolonge par un courant de déplacement.
+    L'énergie stockée, $\tfrac{1}{2}CU^2$, réside dans le champ. Les capacités s'additionnent en parallèle, leurs
+    inverses en série. Charger à travers une résistance dissipe autant d'énergie qu'on en stocke. Une chaîne série
+    exige un équilibrage en continu.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent,
+    <a href="#/cours/revision-1-et-etude-de-cas-continu">Révision 1 et étude de cas continu</a> ; une sur le cours
+    <a href="#/cours/diagnostic-initial-et-remise-a-niveau-mathematique">Diagnostic initial et remise à niveau
+    mathématique</a>, vieux d'une semaine exactement ; la question sur un cours vieux d'un mois n'est pas encore
+    applicable, et elle est remplacée par une question sur le cours
+    <a href="#/cours/lois-de-kirchhoff">Lois de Kirchhoff</a>, dont la loi des nœuds est étendue aujourd'hui par le
+    courant de déplacement.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : vérifier numériquement en Python la relation $i = C\,\mathrm{d}u/\mathrm{d}t$ et le bilan d'énergie de
+    la charge à travers une résistance, le confirmer dans LTspice, puis mesurer une capacité réelle. Prédiction à
+    écrire avant de commencer : pour un condensateur chargé depuis $9\ \mathrm{V}$ à travers $1\ \mathrm{k\Omega}$
+    puis à travers $10\ \mathrm{k\Omega}$, l'énergie dissipée dans la résistance sera-t-elle dix fois plus faible,
+    identique ou dix fois plus forte ?
+  </p>
+  <ol>
+    <li>
+      En Python, simuler la charge d'un condensateur $C = 470\ \mu\mathrm{F}$ depuis $E = 9\ \mathrm{V}$ à travers
+      $R = 1\ \mathrm{k\Omega}$ par la méthode d'Euler : à chaque pas $\Delta t = 10^{-4}\ \mathrm{s}$, calculer
+      $i = (E - u)/R$, puis $u \leftarrow u + i\,\Delta t/C$, et accumuler $W_R \leftarrow W_R + Ri^2\Delta t$ et
+      $W_S \leftarrow W_S + Ei\,\Delta t$ sur $5\ \mathrm{s}$. Comparer $W_R$ et $\tfrac{1}{2}Cu^2$ à la fin.
+    </li>
+    <li>
+      Recommencer avec $R = 10\ \mathrm{k\Omega}$ en prolongeant la durée à $50\ \mathrm{s}$, et tracer $u(t)$ et $i(t)$
+      avec matplotlib pour les deux valeurs. Réduire le pas de temps et vérifier que les résultats ne changent plus.
+    </li>
+    <li>
+      Dans LTspice, saisir la netlist <code>V1 in 0 PWL(0 0 1u 9)</code>, <code>R1 in out 1k</code>,
+      <code>C1 out 0 470u</code>, <code>.tran 0 5 0 1m</code>, <code>.end</code>. Tracer <code>V(out)</code> et
+      <code>I(C1)</code>, puis ajouter <code>.meas tran WR integ I(R1)*I(R1)*1k</code> et
+      <code>.meas tran WC param 0.5*470u*9*9</code>, et comparer les deux mesures.
+    </li>
+    <li>
+      Mesure facultative : relever au multimètre, en mode capacimètre, la capacité d'un condensateur électrolytique
+      déchargé, et la comparer à sa valeur nominale et à sa tolérance marquée. Puis le charger sous $9\ \mathrm{V}$ à
+      travers $1\ \mathrm{k\Omega}$, en respectant sa polarité, déconnecter la source, et relever sa tension toutes les
+      minutes pendant dix minutes, voltmètre branché en permanence.
+    </li>
+  </ol>
+  <p>
+    Résultats attendus : après $5\ \mathrm{s}$, soit plus de dix constantes de temps, $u$ atteint $9{,}00\ \mathrm{V}$,
+    $W_R$ et $\tfrac{1}{2}CE^2$ valent tous deux $19{,}0\ \mathrm{mJ}$ environ, et la source a fourni
+    $38{,}1\ \mathrm{mJ}$ ; avec $10\ \mathrm{k\Omega}$, la charge est dix fois plus lente mais les énergies sont les
+    mêmes. Dans LTspice, <code>WR</code> et <code>WC</code> concordent au pour cent près. Anomalies à observer : un pas
+    de temps trop grand fait diverger la méthode d'Euler ou surestimer la tension ; la capacité mesurée d'un
+    électrolytique s'écarte souvent de $10$ à $20\ \%$ de la valeur nominale ; la tension du condensateur isolé baisse
+    au fil des minutes, d'abord à cause de la résistance d'entrée du voltmètre, de l'ordre de $10\ \mathrm{M\Omega}$,
+    qui le décharge, puis de sa propre fuite ; une inversion de polarité provoque un échauffement anormal, à interrompre
+    immédiatement.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est
+    calculé dans ce navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent
+    enregistrées localement pour suivre votre progression.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Un condensateur sépare des charges sans en laisser traverser son isolant : $Q = CU$, avec $C = \varepsilon_0\varepsilon_rS/d$, et l'énergie $\tfrac{1}{2}CU^2$ est stockée dans le champ $U/d$, limité par la rigidité du diélectrique.</li>
+    <li data-rang="02">$i = C\,\mathrm{d}u/\mathrm{d}t$ : circuit ouvert en régime continu, tension continue dans le temps, court-circuit à la mise sous tension d'un condensateur déchargé ; le courant se prolonge dans l'isolant par le courant de déplacement.</li>
+    <li data-rang="03">Les capacités s'additionnent en parallèle, leurs inverses en série ; une chaîne série en continu se partage la tension selon ses fuites et doit être équilibrée, et charger par une résistance dissipe toujours $\tfrac{1}{2}CE^2$.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> raisonner avec une grandeur qui dépend de la vitesse de variation
+    et non de la valeur, c'est-à-dire distinguer ce que devient un condensateur à l'instant de la mise sous tension, pendant
+    la charge et en régime continu. Le schéma principal de la section F résume ces trois temps ; l'erreur typique
+    consiste à appliquer le comportement de régime continu à l'instant initial, ou l'inverse.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Inductances et champ magnétique, étudie l'élément
+    dual du condensateur, qui stocke l'énergie dans un champ magnétique. Question à préparer : si la tension d'un
+    condensateur ne peut pas sauter parce qu'un saut exigerait un courant infini, quelle grandeur d'une bobine ne peut
+    pas sauter, et que se passe-t-il, d'après vous, lorsqu'on ouvre brusquement l'interrupteur qui alimente la bobine
+    d'un contacteur parcourue par son courant de maintien ?
+  </p>
+
+</article>
