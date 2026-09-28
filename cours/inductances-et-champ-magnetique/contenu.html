@@ -1,0 +1,1125 @@
+<article class="cours" data-slug="inductances-et-champ-magnetique">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/condensateurs-et-champ-electrique">Condensateurs et champ électrique</a> s'est achevé
+      sur une question : si la tension d'un condensateur ne peut pas sauter, parce qu'un saut exigerait un courant
+      infini, quelle grandeur d'une bobine ne peut pas sauter, et que se passe-t-il quand on ouvre brusquement
+      l'interrupteur qui alimente la bobine d'un contacteur ? Cette séance y répond : c'est le courant d'une bobine qui
+      est continu dans le temps, et c'est la tension qui devient énorme si l'on tente de l'interrompre d'un coup. La
+      bobine est l'élément dual du condensateur ; presque chaque résultat de la séance précédente a ici son symétrique,
+      obtenu en échangeant tension et courant, champ électrique et champ magnétique, capacité et inductance. Nous
+      réutiliserons aussi la convention récepteur du cours
+      <a href="#/cours/tension-courant-charge-et-puissance">Tension, courant, charge et puissance</a>, la résistance
+      d'un fil de cuivre calculée dans le cours <a href="#/cours/loi-d-ohm-et-resistivite">Loi d'Ohm et
+      résistivité</a>, et le bus $24\ \mathrm{V}$ secouru de l'armoire automate modélisé dans le cours
+      <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes de Thévenin, Norton et
+      superposition</a>, qui alimente justement des bobines de contacteurs.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Tout courant crée un champ magnétique, et tout champ magnétique qui varie à travers un circuit y induit une tension.
+    Ces deux faits suffisent à expliquer la plupart des machines électriques d'un site industriel. La bobine d'un
+    contacteur ou d'un relais attire une armature parce que son courant crée un champ ; une électrovanne s'ouvre pour la
+    même raison. La self de lissage placée dans le bus continu d'un variateur, l'inductance de ligne en amont de ce même
+    variateur et l'inductance d'un hacheur stockent de l'énergie magnétique et la restituent pour lisser un courant. Un
+    transformateur, un moteur asynchrone et un alternateur fonctionnent parce qu'un flux magnétique variable induit des
+    tensions dans leurs enroulements. Un capteur inductif de proximité, un transformateur de courant et une pince
+    ampèremétrique mesurent un courant ou détectent une pièce métallique par le même mécanisme.
+  </p>
+  <p>
+    L'inductance se manifeste aussi là où personne ne l'a voulue. Un câble de quelques mètres possède une inductance de
+    quelques microhenrys : quand un transistor de puissance coupe des centaines d'ampères en une fraction de
+    microseconde, cette inductance parasite produit une surtension qui peut le détruire. À l'ouverture d'un contact qui
+    alimente une bobine, le courant refuse de s'annuler instantanément : il crée un arc qui use les contacts, des
+    perturbations qui faussent les mesures voisines, et une surtension qui détruit les sorties à transistor des automates
+    si rien ne la limite. Comprendre le flux, la loi de Faraday, la relation $u = L\,\mathrm{d}i/\mathrm{d}t$ et
+    l'énergie magnétique est donc à la fois une question de dimensionnement, de fiabilité et de sécurité.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Expliquer, à partir du champ magnétique créé par un courant et de la loi de Faraday, pourquoi une bobine s'oppose aux variations de son propre courant.</li>
+    <li data-rang="02">Calculer le champ, le flux, le flux lié et l'inductance d'un solénoïde long à partir de sa géométrie, de son nombre de spires et de son noyau.</li>
+    <li data-rang="03">Utiliser la relation $u = L\,\mathrm{d}i/\mathrm{d}t$ pour calculer la tension d'une inductance à partir d'une variation de courant, ou la variation de courant produite par une tension appliquée pendant une durée donnée.</li>
+    <li data-rang="04">Calculer l'énergie magnétique stockée, $\tfrac{1}{2}LI^2$, et interpréter son devenir lorsqu'on interrompt le courant.</li>
+    <li data-rang="05">Interpréter le comportement d'une bobine à la fermeture d'un circuit, pendant l'établissement du courant et en régime continu, en s'appuyant sur la continuité du courant.</li>
+    <li data-rang="06">Dimensionner la tension d'écrêtage d'une protection de bobine sous la contrainte de tenue en tension d'une sortie d'automate, et estimer la durée d'annulation du courant et l'énergie absorbée.</li>
+    <li data-rang="07">Diagnostiquer une surtension destructrice ou une retombée trop lente d'un contacteur à partir des symptômes et du câblage de sa bobine.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois acquis sont mobilisés. Le premier est mathématique : l'intégrale d'une grandeur constante est l'aire d'un
+    rectangle, et la dérivée d'une grandeur qui varie linéairement est la pente de sa droite ; ces deux lectures
+    géométriques suffisent pour tous les calculs de la séance, les équations différentielles étant réservées au cours
+    Régime transitoire RL. Le deuxième vient du cours
+    <a href="#/cours/tension-courant-charge-et-puissance">Tension, courant, charge et puissance</a> : en convention
+    récepteur, la puissance $p = ui$ est reçue par le dipôle si elle est positive, et fournie si elle est négative ;
+    l'énergie est l'intégrale de la puissance. Le troisième vient du cours
+    <a href="#/cours/condensateurs-et-champ-electrique">Condensateurs et champ électrique</a> : un élément qui stocke
+    de l'énergie dans un champ, $\tfrac{1}{2}CU^2$, impose la continuité de la grandeur qui mesure ce stock. Le
+    mini-test ci-dessous n'est pas noté ; la correction de chaque question reste masquée jusqu'à une tentative ou un
+    clic explicite sur "Voir la correction".
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-champ">Un courant crée un champ, un champ qui varie crée une tension</h3>
+  <p>
+    Un fil parcouru par un courant fait dévier une boussole placée à côté de lui : le courant crée autour de lui un
+    champ magnétique, dont les lignes sont des cercles centrés sur le fil. Enroulons ce fil en spires jointives autour
+    d'un cylindre : les champs de toutes les spires s'ajoutent à l'intérieur, où ils deviennent intenses et presque
+    uniformes, et se dispersent à l'extérieur. On obtient une bobine, ou solénoïde. Le sens du champ se lit par la
+    règle de la main droite : doigts repliés dans le sens du courant dans les spires, le pouce indique le sens du champ
+    à l'intérieur. La quantité de champ qui traverse la section de la bobine s'appelle le flux magnétique ; comme
+    chaque spire est traversée par ce flux, la bobine entière "voit" $N$ fois le flux d'une spire, c'est le flux lié.
+  </p>
+  <p>
+    Le second fait est la loi de Faraday : si le flux qui traverse un circuit varie, une tension apparaît à ses bornes,
+    proportionnelle à la vitesse de variation du flux. Dans une bobine, le flux est créé par son propre courant. Tenter
+    d'augmenter ce courant, c'est augmenter le flux, donc faire naître une tension induite ; la loi de Lenz précise que
+    cette tension s'oppose à la cause qui l'a créée. La bobine freine donc la montée de son courant, et, symétriquement,
+    elle s'oppose à sa baisse en produisant une tension de sens inverse. Tant que le courant est constant, le flux
+    l'est aussi, et aucune tension n'est induite.
+  </p>
+  <figure id="d-bobine-figure">
+    <svg viewBox="0 0 800 444" role="img" aria-label="Bobine en hélice de N spires et de longueur l, courant i entrant par la borne A, lignes de champ B de gauche à droite à l'intérieur et se refermant à l'extérieur, section S traversée par le flux, tension u de B vers A en convention récepteur, et symbole normalisé équivalent">
+      <defs>
+        <marker id="fl-d-bob" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-d-bob-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="1.3" fill="none" stroke-dasharray="5 5" opacity="0.7">
+        <path d="M490 200C590 200 590 62 350 62C110 62 110 200 210 200"/>
+        <path d="M490 200C590 200 590 338 350 338C110 338 110 200 210 200"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" opacity="0.8">
+        <path d="M360 62H336" marker-end="url(#fl-d-bob)"/>
+        <path d="M360 338H336" marker-end="url(#fl-d-bob)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round">
+        <path d="M222 178H476" marker-end="url(#fl-d-bob)"/>
+        <path d="M222 200H476" marker-end="url(#fl-d-bob)"/>
+        <path d="M222 222H476" marker-end="url(#fl-d-bob)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M200 150L215 250M230 150L245 250M260 150L275 250M290 150L305 250M320 150L335 250M350 150L365 250M380 150L395 250M410 150L425 250M440 150L455 250M470 150L485 250"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.4" fill="none" stroke-dasharray="4 4" opacity="0.65">
+        <path d="M215 250L230 150M245 250L260 150M275 250L290 150M305 250L320 150M335 250L350 150M365 250L380 150M395 250L410 150M425 250L440 150M455 250L470 150M485 250L500 150"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M200 150V100H100"/>
+        <path d="M500 150H610V384H100"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="94" cy="100" r="6"/>
+        <circle cx="94" cy="384" r="6"/>
+      </g>
+      <ellipse cx="514" cy="200" rx="12" ry="50" fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="3 4"/>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M118 100H160" marker-end="url(#fl-d-bob)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M54 374V112" marker-end="url(#fl-d-bob-u)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round">
+        <path d="M200 128H500M200 122V134M500 122V134"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M710 84V130"/>
+        <path d="M710 130a16 16 0 0 1 0 32a16 16 0 0 1 0 32a16 16 0 0 1 0 32a16 16 0 0 1 0 32"/>
+        <path d="M710 258V300"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="710" cy="78" r="6"/>
+        <circle cx="710" cy="306" r="6"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M694 92V122" marker-end="url(#fl-d-bob)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M766 296V92" marker-end="url(#fl-d-bob-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13">
+        <text x="350" y="30" text-anchor="middle" font-weight="600">bobine de N spires</text>
+        <text x="710" y="30" text-anchor="middle" font-weight="600">symbole</text>
+        <text x="94" y="86" text-anchor="middle" font-weight="600">A</text>
+        <text x="94" y="408" text-anchor="middle" font-weight="600">B</text>
+        <text x="76" y="94" text-anchor="end" font-weight="600">+</text>
+        <text x="139" y="90" text-anchor="middle">i</text>
+        <text x="44" y="246" text-anchor="end" fill="var(--serie-2)">u</text>
+        <text x="350" y="118" text-anchor="middle" font-size="12">longueur l</text>
+        <text x="350" y="272" text-anchor="middle" font-size="12">champ B intérieur, presque uniforme</text>
+        <text x="532" y="170" font-size="12">section S</text>
+        <text x="532" y="186" font-size="12">flux Φ = B S</text>
+        <text x="350" y="56" text-anchor="middle" font-size="11.5">lignes de champ refermées à l'extérieur</text>
+        <text x="620" y="236" font-size="11.5">flux lié</text>
+        <text x="620" y="252" font-size="11.5">ψ = N Φ</text>
+        <text x="682" y="112" text-anchor="end">i</text>
+        <text x="728" y="74" font-weight="600">A</text>
+        <text x="728" y="316" font-weight="600">B</text>
+        <text x="692" y="146" text-anchor="end" font-weight="600">+</text>
+        <text x="758" y="200" text-anchor="end" fill="var(--serie-2)">u</text>
+        <text x="710" y="340" text-anchor="middle" font-size="12">ψ = L i</text>
+        <text x="710" y="358" text-anchor="middle" font-size="12">u = L di/dt</text>
+        <text x="350" y="304" text-anchor="middle" font-size="12">main droite : doigts selon i, pouce selon B</text>
+        <text x="350" y="436" text-anchor="middle" font-size="12">B : référence de potentiel ; convention récepteur : i entre par A, u = VA - VB</text>
+      </g>
+    </svg>
+    <figcaption>
+      Bobine en hélice. Les traits pleins obliques sont la face avant des spires, les traits en pointillés courts leur
+      face arrière ; le courant $i$ entre par la borne $A$ (flèche épaisse), parcourt les spires de gauche à droite et
+      ressort par $B$ après le retour par le conducteur du bas. Les flèches horizontales à l'intérieur sont les lignes de
+      champ $B$, orientées par la règle de la main droite ; les grandes courbes en tirets les referment à l'extérieur, où
+      le champ est beaucoup plus faible car il s'étale dans tout l'espace. L'ellipse en pointillés marque la section $S$
+      traversée par le flux $\Phi = BS$. La flèche fine est la tension $u = V_A - V_B$, pointée vers $A$ : convention
+      récepteur, avec $B$ comme référence de potentiel. À droite, le symbole normalisé de l'inductance avec les mêmes
+      conventions ; la borne marquée $+$ est celle de la tension positive de référence.
+    </figcaption>
+  </figure>
+  <p>
+    Analogie contrôlée : l'inertie d'un volant d'inertie. Pour mettre un volant en rotation, il faut un couple ; plus
+    le volant est lourd, plus il faut de temps pour atteindre une vitesse donnée. Une fois lancé, il tourne à vitesse
+    constante sans couple, en l'absence de frottement, et il faut de nouveau un couple, de sens opposé, pour le
+    freiner ; un arrêt instantané exigerait un couple infini, et le volant brise alors ce qui l'arrête. Le courant joue
+    le rôle de la vitesse, la tension celui du couple, l'inductance celui du moment d'inertie, et l'énergie
+    $\tfrac{1}{2}LI^2$ celui de l'énergie cinétique $\tfrac{1}{2}J\Omega^2$.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie du volant</span>
+    <p>
+      L'analogie rend bien compte de quatre faits : le courant ne peut pas sauter, une tension constante le fait
+      croître régulièrement, un courant constant ne demande aucune tension, et l'énergie stockée croît comme le carré du
+      courant. Elle en déforme d'autres. Un volant stocke l'énergie dans sa matière en mouvement, alors qu'une bobine la
+      stocke dans le champ magnétique, qui occupe tout l'espace autour d'elle et peut agir sur les circuits voisins :
+      c'est le couplage magnétique, sans équivalent pour un volant isolé. L'inertie d'un volant est une constante,
+      tandis que l'inductance d'une bobine à noyau de fer chute quand le noyau sature, à fort courant. Enfin, le
+      "frottement" d'une bobine réelle est la résistance de son fil, qui dissipe de l'énergie même à courant constant,
+      alors qu'un volant parfaitement équilibré sur de bons paliers tourne longtemps sans apport.
+    </p>
+  </div>
+
+  <h3 id="d-etablissement-section">Animation : l'établissement du courant dans une bobine, pas à pas</h3>
+  <p>
+    L'animation montre une bobine reliée par un interrupteur à une source de tension continue $E$. La résistance $R$
+    dessinée en série représente la résistance totale du circuit, fil de la bobine compris. Les petits points qui
+    circulent dans les fils sont des porteurs de charge dessinés dans le sens conventionnel du courant, avec une vitesse
+    proportionnelle au courant ; les flèches dessinées dans la bobine sont les lignes de champ, en nombre proportionnel
+    au flux. Le temps est piloté par vous : lecture, pause, vitesse et remise à zéro. Avant de lancer la lecture,
+    prédisez qualitativement : juste après la fermeture, quelle tension se trouve aux bornes de la bobine, et quel
+    courant la traverse ? À quel moment le flux croît-il le plus vite ? Que vaut la tension de la bobine quand le
+    courant ne varie plus ?
+  </p>
+  <figure id="d-etablissement-figure">
+    <div class="m-toile-cadre schema-vivant" id="d-etablissement"></div>
+    <figcaption>
+      La source $E$, borne $+$ en haut, alimente par l'interrupteur $K$, fermé à l'instant initial, la résistance $R$
+      puis la bobine $L$ ; le conducteur du bas est la référence de potentiel (symbole de masse). La flèche épaisse
+      donne le sens de référence du courant $i$, en convention récepteur pour la bobine, et la flèche fine la tension
+      $u_L$ de la bobine. Les points ronds se déplacent dans le sens du courant, d'autant plus vite que le courant est
+      fort. Les flèches verticales à côté de la bobine sont les lignes de champ, d'autant plus nombreuses que le flux est
+      grand. Les deux jauges horizontales, sous le schéma, donnent $i/I_\infty$ et $u_L/E$, avec $I_\infty = E/R$ le
+      courant final.
+    </figcaption>
+  </figure>
+  <div id="d-etablissement-lecteur"></div>
+  <div id="d-etablissement-valeurs"></div>
+  <p>
+    Interprétation : à l'instant qui suit la fermeture, le courant est encore nul, puisqu'il ne peut pas sauter ; la
+    résistance ne porte aucune tension et toute la tension $E$ se retrouve aux bornes de la bobine, qui se comporte
+    comme un circuit ouvert. C'est à cet instant que le flux croît le plus vite, puisque $u_L = \mathrm{d}\psi/\mathrm{d}t$
+    est maximale. À mesure que le courant monte, la chute $Ri$ augmente, la tension disponible pour la bobine diminue,
+    et le courant croît de moins en moins vite. Quand il atteint $E/R$, il ne varie plus : la tension de la bobine est
+    nulle, elle se comporte comme un simple fil, et l'énergie $\tfrac{1}{2}LI_\infty^2$ est stockée dans le champ. La
+    forme exponentielle de cette montée, avec la constante de temps $L/R$, sera établie dans le cours Régime
+    transitoire RL ; cette séance en explique le mécanisme et l'état final. Le panneau montre aussi que, pendant
+    l'établissement, la source fournit plus d'énergie que la bobine n'en stocke : la différence chauffe la résistance.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-champ">Champ magnétique créé par un courant</h3>
+  <p>
+    Deux grandeurs décrivent le champ magnétique. L'induction magnétique $\vec{B}$, en teslas, est celle qui agit sur
+    les charges en mouvement et qui figure dans le flux ; on l'appelle couramment "champ magnétique". L'excitation
+    magnétique $\vec{H}$, en ampères par mètre, est celle que fixent directement les courants. Le théorème d'Ampère,
+    loi de la magnétostatique, relie $H$ aux courants : la circulation de $\vec{H}$ le long d'un contour fermé est égale
+    au courant total qui traverse une surface appuyée sur ce contour. Dans le vide et dans les matériaux linéaires,
+    $B = \mu H$ avec $\mu = \mu_0\,\mu_r$, où $\mu_0 = 4\pi \times 10^{-7}\ \mathrm{H/m}$, soit environ
+    $1{,}257 \times 10^{-6}\ \mathrm{H/m}$, est la perméabilité du vide et $\mu_r$ la perméabilité relative du milieu,
+    sans dimension : environ $1$ pour l'air, le cuivre et les isolants, de quelques centaines à plusieurs milliers pour
+    les ferrites et les tôles de fer.
+  </p>
+  <p>
+    Appliquons le théorème d'Ampère à un solénoïde long, de longueur $l$ grande devant son diamètre, comportant $N$
+    spires parcourues par le courant $i$. Choisissons un contour rectangulaire dont un côté de longueur $l$ suit l'axe
+    à l'intérieur, et dont le reste se referme à l'extérieur. Le champ extérieur, étalé dans tout l'espace, est
+    négligeable, et les côtés perpendiculaires à l'axe ne contribuent pas à la circulation. Il reste $H\,l$, et le
+    contour est traversé $N$ fois par le courant $i$.
+  </p>
+  <div class="formule-cle">
+    $$H\,l = N\,i \qquad \Longrightarrow \qquad H = \frac{N\,i}{l}, \qquad B = \mu_0\,\mu_r\,\frac{N\,i}{l}$$
+    <p class="formule-cle-legende">
+      $H$ excitation magnétique ($\mathrm{A/m}$) ; $B$ induction magnétique ($\mathrm{T}$) ; $N$ nombre de spires, sans
+      dimension ; $i$ courant ($\mathrm{A}$) ; $l$ longueur du solénoïde ($\mathrm{m}$) ; $\mu_0$ ($\mathrm{H/m}$) et
+      $\mu_r$ comme ci-dessus. Hypothèses : solénoïde long, spires jointives, champ uniforme à l'intérieur et
+      négligeable à l'extérieur, milieu linéaire et homogène remplissant tout l'intérieur. Dérivation : ci-dessus, par
+      le théorème d'Ampère. Interprétation : le produit $Ni$, en ampères-tours, est la "force magnétomotrice" ; le même
+      champ s'obtient avec $1000$ spires à $0{,}1\ \mathrm{A}$ ou $10$ spires à $10\ \mathrm{A}$. Cas limites : $i = 0$
+      donne un champ nul ; $l \to 0$ ferait diverger le champ, mais l'hypothèse du solénoïde long n'est plus valable.
+      Vérification dimensionnelle : $(\mathrm{H/m}) \times \mathrm{A/m} = \mathrm{H \cdot A/m^2} =
+      \mathrm{V \cdot s/m^2} = \mathrm{T}$, puisque $1\ \mathrm{H} = 1\ \mathrm{V \cdot s/A}$ et
+      $1\ \mathrm{T} = 1\ \mathrm{Wb/m^2} = 1\ \mathrm{V \cdot s/m^2}$.
+    </p>
+  </div>
+  <p>
+    Ordre de grandeur : $500$ spires sur $5\ \mathrm{cm}$ parcourues par $0{,}5\ \mathrm{A}$ donnent
+    $H = 500 \times 0{,}5/0{,}05 = 5000\ \mathrm{A/m}$ et, dans l'air, $B = 1{,}257 \times 10^{-6} \times 5000 =
+    6{,}28\ \mathrm{mT}$, une centaine de fois le champ terrestre. Avec un noyau de fer, le champ serait multiplié par
+    $\mu_r$, mais seulement jusqu'à la saturation, vers $1{,}5$ à $2\ \mathrm{T}$ pour les tôles usuelles : au-delà, la
+    perméabilité s'effondre et le modèle linéaire cesse d'être valable. Ce comportement, ainsi que le rôle d'un
+    entrefer, sera traité dans le cours Circuits magnétiques.
+  </p>
+
+  <h3 id="e-flux">Flux magnétique et flux lié</h3>
+  <p>
+    Le flux magnétique à travers une surface plane $S$ placée dans un champ uniforme perpendiculaire à elle vaut
+    $\Phi = BS$ ; il s'exprime en webers, $1\ \mathrm{Wb} = 1\ \mathrm{T \cdot m^2} = 1\ \mathrm{V \cdot s}$. Dans une
+    bobine de $N$ spires, chaque spire est traversée par le même flux $\Phi$ si toutes les lignes de champ traversent
+    toutes les spires. Le flux total embrassé par l'enroulement, appelé flux lié ou flux totalisé, vaut alors
+    $\psi = N\Phi$. C'est lui qui compte dans la loi de Faraday, parce que les tensions induites dans les $N$ spires en
+    série s'additionnent. Le flux lié se mesure aussi en webers, parfois appelés webers-tours pour rappeler le facteur
+    $N$.
+  </p>
+
+  <h3 id="e-inductance">Inductance</h3>
+  <p>
+    Dans un milieu linéaire, le champ est proportionnel au courant, donc le flux lié aussi. On définit l'inductance
+    propre $L$, ou coefficient d'auto-induction, comme ce coefficient de proportionnalité : $\psi = L\,i$. Pour le
+    solénoïde long, il suffit d'enchaîner les trois relations précédentes : $\psi = N\Phi = NBS = N\mu_0\mu_r N i S/l$.
+  </p>
+  <div class="formule-cle">
+    $$\psi = L\,i, \qquad L = \frac{\mu_0\,\mu_r\,N^2\,S}{l}$$
+    <p class="formule-cle-legende">
+      $\psi$ flux lié ($\mathrm{Wb}$) ; $i$ courant ($\mathrm{A}$) ; $L$ inductance ($\mathrm{H}$, henry,
+      $1\ \mathrm{H} = 1\ \mathrm{Wb/A} = 1\ \mathrm{V \cdot s/A} = 1\ \Omega \cdot \mathrm{s}$) ; $S$ section intérieure
+      ($\mathrm{m^2}$) ; $N$, $l$, $\mu_0$ et $\mu_r$ comme ci-dessus. Hypothèses : celles du solénoïde long, et milieu
+      linéaire, sans saturation. Dérivation : ci-dessus. Interprétation : l'inductance mesure la quantité de flux lié
+      qu'une bobine produit par ampère ; elle ne dépend que de la géométrie et du matériau, pas du courant, tant que le
+      milieu reste linéaire. Le facteur $N^2$ vient de ce que $N$ intervient deux fois : les $N$ spires créent le
+      champ, et les $N$ spires captent le flux. Cas limites : doubler $N$ quadruple $L$ ; $N = 1$ donne l'inductance
+      d'une seule spire, très faible ; $\mu_r \to 1$ donne la bobine à air. Vérification dimensionnelle :
+      $(\mathrm{H/m}) \times \mathrm{m^2}/\mathrm{m} = \mathrm{H}$.
+    </p>
+  </div>
+  <p>
+    Ordres de grandeur. La bobine à air de l'exemple précédent, de section $4\ \mathrm{cm^2}$, a une inductance
+    $L = 1{,}257 \times 10^{-6} \times 500^2 \times 4 \times 10^{-4}/0{,}05 = 2{,}51\ \mathrm{mH}$. Les inductances
+    usuelles vont du nanohenry, pour une connexion de quelques centimètres, au microhenry pour les inductances de
+    filtrage des cartes électroniques, au millihenry pour les selfs de lissage et les inductances de ligne, et jusqu'au
+    henry pour les bobines de contacteurs, de relais et d'électrovannes, qui comptent des milliers de spires sur un
+    circuit de fer. Contrairement au farad, le henry n'est pas une unité démesurée.
+  </p>
+
+  <h3 id="e-sim-solenoide-section">Simulation interactive : le solénoïde</h3>
+  <p>
+    Vous réglez le nombre de spires, la section, la perméabilité relative du noyau et le courant, et vous étirez ou
+    comprimez la bobine en déplaçant la poignée ronde de son extrémité droite, à la souris, au doigt ou au clavier, ce
+    qui change sa longueur $l$. Avant de manipuler, prédisez : si vous doublez le nombre de spires à longueur constante,
+    que deviennent le champ, le flux lié et l'inductance ? Si vous doublez la longueur à nombre de spires constant ?
+    Le courant change-t-il l'inductance ?
+  </p>
+  <figure id="e-solenoide-figure">
+    <div class="m-toile-cadre schema-vivant" id="e-solenoide"></div>
+    <figcaption>
+      Vue en coupe longitudinale du solénoïde. Les petits cercles en haut et en bas sont les sections des spires :
+      marqués d'un point en haut (courant sortant du plan de la figure) et d'une croix en bas (courant entrant), selon la
+      convention usuelle ; leur nombre dessiné est plafonné, la valeur de $N$ se lit dans les réglages. Les flèches
+      horizontales intérieures sont les lignes de champ, orientées de gauche à droite par la règle de la main droite et
+      d'autant plus nombreuses que l'induction $B$ est forte, selon une échelle logarithmique puisque $B$ varie sur
+      plusieurs décades. Le rectangle en tirets est le noyau, dessiné seulement si
+      $\mu_r > 1$. La cote horizontale sous la bobine donne la longueur $l$, réglée par la poignée ronde. La jauge
+      horizontale, en haut, compare $B$ à $1{,}5\ \mathrm{T}$, ordre de grandeur de la saturation d'un noyau de fer.
+    </figcaption>
+  </figure>
+  <div id="e-solenoide-curseurs"></div>
+  <div id="e-solenoide-valeurs"></div>
+  <p>
+    Interprétation : avec les réglages de départ ($N = 500$, $S = 4\ \mathrm{cm^2}$, $l = 5\ \mathrm{cm}$, air,
+    $0{,}5\ \mathrm{A}$), on lit $B = 6{,}28\ \mathrm{mT}$, $\Phi = 2{,}51\ \mu\mathrm{Wb}$,
+    $\psi = 1{,}26\ \mathrm{mWb}$, $L = 2{,}51\ \mathrm{mH}$ et $W = 0{,}314\ \mathrm{mJ}$. Doubler $N$ double le champ
+    et le flux d'une spire, mais quadruple le flux lié et l'inductance, et quadruple l'énergie à courant donné. Doubler
+    $l$ divise le champ et l'inductance par deux : les mêmes ampères-tours sont répartis sur une longueur double. Le
+    courant change le champ, le flux et l'énergie, mais pas l'inductance : c'est la marque d'un modèle linéaire. Un
+    noyau de $\mu_r = 1000$ multiplie l'inductance par mille, mais la jauge montre qu'il suffit alors d'une fraction
+    d'ampère pour atteindre la saturation : au-delà, les valeurs affichées ne sont plus physiques, ce que le panneau
+    signale. Le modèle ignore aussi le champ extérieur et les effets d'extrémité, importants pour une bobine courte.
+  </p>
+
+  <h3 id="e-faraday">Loi de Faraday et relation entre tension et courant</h3>
+  <p>
+    La loi de Faraday, loi physique de l'induction, énonce qu'un circuit traversé par un flux lié variable est le siège
+    d'une force électromotrice induite $e = -\mathrm{d}\psi/\mathrm{d}t$, orientée dans le sens choisi pour le courant.
+    Le signe moins traduit la loi de Lenz : la force électromotrice tend à faire circuler un courant dont le propre flux
+    s'oppose à la variation de flux qui l'a créée. Pour une bobine décrite en convention récepteur, la tension à ses
+    bornes est l'opposée de cette force électromotrice, orientée en sens inverse du courant :
+    $u = -e = \mathrm{d}\psi/\mathrm{d}t$. Avec $\psi = Li$ et $L$ constante, on obtient la relation caractéristique de
+    l'inductance.
+  </p>
+  <div class="formule-cle">
+    $$u = \frac{\mathrm{d}\psi}{\mathrm{d}t} = L\,\frac{\mathrm{d}i}{\mathrm{d}t}
+    \qquad \Longleftrightarrow \qquad i(t) = i(t_0) + \frac{1}{L}\int_{t_0}^{t} u\,\mathrm{d}t$$
+    <p class="formule-cle-legende">
+      $u$ tension aux bornes de l'inductance ($\mathrm{V}$), en convention récepteur ; $i$ courant ($\mathrm{A}$) ;
+      $\mathrm{d}i/\mathrm{d}t$ vitesse de variation du courant ($\mathrm{A/s}$) ; $L$ inductance ($\mathrm{H}$) ; $t$
+      temps ($\mathrm{s}$). Hypothèses : inductance constante, donc milieu linéaire et géométrie fixe ; résistance du
+      fil négligée ou représentée à part, en série. Dérivation : ci-dessus, par la loi de Faraday. Interprétation : la
+      tension d'une inductance ne dépend pas de la valeur du courant, mais de sa vitesse de variation ; réciproquement,
+      le courant intègre la tension appliquée, et une tension constante $U$ pendant $\Delta t$ fait varier le courant de
+      $U\Delta t/L$. Cas limites : un courant constant donne $u = 0$, l'inductance idéale est un court-circuit en
+      régime continu ; une variation instantanée du courant exigerait une tension infinie. Vérification
+      dimensionnelle : $\mathrm{H} \times \mathrm{A/s} = (\mathrm{V \cdot s/A}) \times \mathrm{A/s} = \mathrm{V}$. En
+      convention générateur, un signe moins apparaît : $u = -L\,\mathrm{d}i/\mathrm{d}t$.
+    </p>
+  </div>
+  <p>
+    La conséquence majeure est la continuité du courant. Une inductance qui porte le courant $I$ juste avant une
+    manœuvre porte encore $I$ juste après : $i(t_0^+) = i(t_0^-)$. C'est la propriété duale de la continuité de la
+    tension d'un condensateur, et elle se justifie de deux façons : un saut de courant exigerait une tension infinie,
+    et il ferait varier instantanément l'énergie $\tfrac{1}{2}Li^2$, donc exigerait une puissance infinie. D'où les
+    deux comportements limites d'une inductance idéale. À la fermeture d'un circuit où elle ne portait aucun courant,
+    elle impose $i = 0$ : c'est un circuit ouvert momentané, qui prend toute la tension disponible. En régime continu
+    établi, $\mathrm{d}i/\mathrm{d}t = 0$ : c'est un court-circuit, et seule la résistance du reste du circuit, fil de
+    la bobine compris, limite le courant. Le cas dangereux est l'ouverture : si l'on tente d'annuler en
+    $\Delta t$ un courant $I$, la bobine produit $u \approx -LI/\Delta t$, d'autant plus grande que la coupure est
+    brutale, jusqu'à ce qu'un arc, un claquage ou un circuit de protection offre un chemin au courant.
+  </p>
+
+  <h3 id="e-sim-tension-section">Simulation interactive : du courant imposé à la tension induite</h3>
+  <p>
+    La simulation impose à une inductance un courant en trapèze : montée linéaire jusqu'à $I_{\max}$, palier, puis
+    descente linéaire jusqu'à zéro, et elle trace la tension $u = L\,\mathrm{d}i/\mathrm{d}t$ qui en résulte. Vous
+    réglez l'inductance, le courant maximal et les trois durées, puis vous parcourez le temps avec le lecteur. Avant de
+    lancer, prédisez : quelle est la forme de la tension pendant la montée, le palier et la descente ? Que devient la
+    tension de descente si vous divisez sa durée par dix ? L'énergie maximale stockée dépend-elle de la durée de
+    montée ?
+  </p>
+  <figure id="e-tension-figure">
+    <div id="e-tension-courant"></div>
+    <div id="e-tension-tension"></div>
+    <figcaption>
+      Deux graphiques partagent le même axe des temps, en millisecondes. Le premier trace le courant imposé $i(t)$, en
+      ampères, jusqu'à l'instant courant ; le second la tension $u(t) = L\,\mathrm{d}i/\mathrm{d}t$, en volts, en
+      convention récepteur, jusqu'au même instant. Un point marque l'instant courant sur chaque courbe, et la ligne
+      horizontale en tirets du second graphique repère la tension nulle. L'échelle verticale de la tension s'adapte aux
+      réglages pour que la descente reste visible, même quand elle atteint des centaines de volts.
+    </figcaption>
+  </figure>
+  <div id="e-tension-curseurs"></div>
+  <div id="e-tension-lecteur"></div>
+  <div id="e-tension-valeurs"></div>
+  <p>
+    Interprétation : avec les réglages de départ ($L = 1{,}2\ \mathrm{H}$, $I_{\max} = 0{,}5\ \mathrm{A}$, montée en
+    $25\ \mathrm{ms}$, palier de $30\ \mathrm{ms}$, descente en $20\ \mathrm{ms}$), la tension vaut
+    $1{,}2 \times 0{,}5/0{,}025 = 24\ \mathrm{V}$ pendant la montée, zéro pendant le palier, et
+    $-1{,}2 \times 0{,}5/0{,}020 = -30\ \mathrm{V}$ pendant la descente : un courant en trapèze donne une tension en
+    créneaux, positive quand le courant croît, négative quand il décroît. Diviser la durée de descente par dix
+    multiplie la tension par dix ; à $0{,}1\ \mathrm{ms}$, elle atteint $-6000\ \mathrm{V}$. Les aires des deux
+    créneaux de tension sont égales et opposées, $0{,}6\ \mathrm{V \cdot s}$ chacune, car elles valent toutes deux
+    $L\,I_{\max}$ : c'est le flux lié établi puis détruit. L'énergie maximale, $\tfrac{1}{2}LI_{\max}^2 = 0{,}15\
+    \mathrm{J}$, ne dépend que du courant atteint, pas de la vitesse à laquelle on l'a atteint. Le panneau montre que
+    la puissance reçue par l'inductance est positive pendant la montée, où elle stocke, et négative pendant la
+    descente, où elle restitue.
+  </p>
+
+  <h3 id="e-energie">Énergie magnétique</h3>
+  <p>
+    En convention récepteur, la puissance reçue par l'inductance vaut $p = ui = L\,i\,\mathrm{d}i/\mathrm{d}t =
+    \mathrm{d}\!\left(\tfrac{1}{2}Li^2\right)/\mathrm{d}t$. L'énergie reçue entre un instant où le courant est nul et un
+    instant où il vaut $I$ est donc l'intégrale d'une dérivée, qui ne dépend que de l'état final.
+  </p>
+  <div class="formule-cle">
+    $$W = \int_0^{t} u\,i\,\mathrm{d}t = \int_0^{I} L\,i\,\mathrm{d}i = \frac{1}{2}\,L\,I^2 = \frac{\psi^2}{2L} = \frac{1}{2}\,\psi\,I$$
+    <p class="formule-cle-legende">
+      $W$ énergie stockée ($\mathrm{J}$) ; $L$ inductance ($\mathrm{H}$) ; $I$ courant ($\mathrm{A}$) ; $\psi$ flux
+      lié ($\mathrm{Wb}$). Hypothèses : inductance constante, milieu sans pertes. Dérivation : ci-dessus.
+      Interprétation : cette énergie est stockée dans le champ magnétique, avec une densité volumique
+      $B^2/(2\mu)$ en $\mathrm{J/m^3}$ ; elle est intégralement restituée quand le courant revient à zéro, et c'est
+      elle qu'il faut évacuer à l'ouverture. Cas limites : $I = 0$ donne $W = 0$ ; doubler le courant quadruple
+      l'énergie. Vérification dimensionnelle : $\mathrm{H \cdot A^2} = (\mathrm{V \cdot s/A}) \cdot \mathrm{A^2} =
+      \mathrm{V \cdot A \cdot s} = \mathrm{J}$.
+    </p>
+  </div>
+  <p>
+    Contrôle sur le solénoïde de la simulation : $B^2/(2\mu_0) = (6{,}28 \times 10^{-3})^2/(2 \times 1{,}257 \times
+    10^{-6}) = 15{,}7\ \mathrm{J/m^3}$, multiplié par le volume intérieur $4 \times 10^{-4} \times 0{,}05 =
+    2 \times 10^{-5}\ \mathrm{m^3}$, donne $0{,}314\ \mathrm{mJ}$, exactement $\tfrac{1}{2}LI^2$. Comparée au
+    condensateur, l'inductance stocke facilement des énergies utiles sous faible tension : une self de lissage de
+    $2\ \mathrm{mH}$ parcourue par $40\ \mathrm{A}$ stocke $1{,}6\ \mathrm{J}$. Mais cette énergie n'existe que tant
+    que le courant circule : une inductance ne "garde" pas son énergie circuit ouvert, contrairement à un condensateur
+    chargé.
+  </p>
+
+  <h3 id="e-echelon">Réponse à un échelon de tension</h3>
+  <p>
+    Appliquons à l'instant $t = 0$ une tension constante $E$ aux bornes d'une inductance idéale qui ne portait aucun
+    courant. La relation intégrale donne $i(t) = Et/L$ : le courant croît en rampe, de pente $E/L$, sans limite. Dans
+    la réalité, la résistance $R$ du circuit, fil de la bobine compris, prélève une tension $Ri$ croissante, si bien
+    que la tension disponible pour l'inductance, $E - Ri$, diminue ; la pente $\mathrm{d}i/\mathrm{d}t =
+    (E - Ri)/L$ diminue avec elle, jusqu'au régime continu où $i = E/R$ et $u_L = 0$. La pente initiale reste $E/L$,
+    puisque le courant est nul au départ. Pour la bobine de contacteur de la section H, $E = 24\ \mathrm{V}$ et
+    $L = 1{,}2\ \mathrm{H}$ donnent une pente initiale de $20\ \mathrm{A/s}$ : à ce rythme constant, les
+    $0{,}5\ \mathrm{A}$ finals seraient atteints en $25\ \mathrm{ms}$, durée égale à $L/R$ avec $R = 48\ \Omega$. Ce
+    rapport $L/R$, homogène à un temps ($\mathrm{H}/\Omega = \mathrm{s}$), est la constante de temps du circuit ; le
+    chronogramme de la section F en montre l'effet, et le cours Régime transitoire RL en donnera l'expression exacte.
+  </p>
+
+  <h3 id="e-associations">Associations d'inductances</h3>
+  <p>
+    Supposons que les inductances ne soient pas couplées magnétiquement, c'est-à-dire que le flux de l'une ne traverse
+    pas l'autre. En série, elles portent le même courant et leurs tensions s'additionnent :
+    $u = \sum_k L_k\,\mathrm{d}i/\mathrm{d}t$. En parallèle, elles ont la même tension et leurs courants
+    s'additionnent : $\mathrm{d}i/\mathrm{d}t = \sum_k \mathrm{d}i_k/\mathrm{d}t = u\sum_k 1/L_k$.
+  </p>
+  <div class="formule-cle">
+    $$L_{eq,\text{série}} = \sum_k L_k, \qquad \frac{1}{L_{eq,\parallel}} = \sum_k \frac{1}{L_k}, \qquad
+    i_k = \frac{L_{eq,\parallel}}{L_k}\,i \ \ \text{(courants initiaux nuls)}$$
+    <p class="formule-cle-legende">
+      Hypothèses : inductances idéales, sans couplage mutuel ; pour la répartition des courants en parallèle, courants
+      initialement nuls dans chaque branche et résistances négligées. Interprétation : les inductances s'associent
+      comme les résistances, à l'inverse des condensateurs ; en parallèle, la plus petite inductance prend le plus
+      grand courant. Cas limite : deux inductances égales en parallèle se partagent le courant par moitié et donnent
+      $L/2$. Vérification dimensionnelle : chaque terme est en henrys. Si les bobines sont couplées, une inductance
+      mutuelle s'ajoute ou se retranche selon le sens des enroulements ; c'est le principe du transformateur, étudié
+      dans le cours Transformateur idéal.
+    </p>
+  </div>
+  <p>
+    En parallèle réel, la répartition du courant continu établi n'obéit plus aux inductances mais aux résistances des
+    fils, puisque les inductances ne portent plus de tension en régime continu : c'est le dual exact de la chaîne
+    série de condensateurs, dont la répartition en continu est fixée par les fuites.
+  </p>
+
+  <h3 id="e-reel">Bobines réelles</h3>
+  <p>
+    Une bobine réelle s'écarte du modèle idéal de plusieurs façons, qui se modélisent par des éléments ajoutés. Le fil
+    de cuivre a une résistance $r = \rho\ell/s$, calculée comme dans le cours
+    <a href="#/cours/loi-d-ohm-et-resistivite">Loi d'Ohm et résistivité</a>, qui dissipe $rI^2$ en permanence et qui
+    augmente avec la température ; c'est elle qui fixe le courant en régime continu. Les spires voisines, séparées par
+    un isolant mince, forment une capacité parasite en parallèle, qui court-circuite la bobine aux fréquences
+    élevées et limite la vitesse des fronts de tension à l'ouverture. Un noyau magnétique augmente l'inductance, mais
+    il sature au-delà d'une certaine induction, ce qui fait chuter $L$ au moment où le courant est le plus fort, et il
+    est le siège de pertes fer par hystérésis et courants de Foucault en régime variable. Enfin, l'inductance d'un
+    électroaimant dépend de la position de son armature : elle est plus faible armature ouverte, quand l'entrefer est
+    grand, que armature fermée. Toutes ces grandeurs sont des données du constructeur ou des résultats de mesure.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Principales constructions, ordres de grandeur indicatifs à confirmer sur les fiches techniques</caption>
+      <thead><tr><th>Construction</th><th>Inductances usuelles</th><th>Points forts</th><th>Points faibles</th><th>Usages industriels</th></tr></thead>
+      <tbody>
+        <tr><td>Bobine à air</td><td>du nanohenry à quelques millihenrys</td><td>parfaitement linéaire, pas de saturation ni de pertes fer</td><td>volume et champ de fuite importants, faible inductance</td><td>filtres haute fréquence, inductances de mesure, limiteurs de courant de court-circuit</td></tr>
+        <tr><td>Noyau de ferrite</td><td>du microhenry à quelques dizaines de millihenrys</td><td>faibles pertes à haute fréquence</td><td>saturation vers $0{,}3$ à $0{,}5\ \mathrm{T}$, fragile</td><td>convertisseurs à découpage, filtres de mode commun</td></tr>
+        <tr><td>Poudre de fer ou alliage en poudre</td><td>du microhenry à quelques millihenrys</td><td>entrefer réparti, saturation progressive</td><td>pertes plus élevées que la ferrite</td><td>inductances de hacheurs, filtres de sortie</td></tr>
+        <tr><td>Tôles de fer feuilletées</td><td>du millihenry à plusieurs henrys</td><td>forte induction avant saturation, robustesse</td><td>pertes fer croissantes avec la fréquence, bruit</td><td>selfs de lissage et de ligne, bobines de contacteurs, transformateurs</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="e-statut">Statut des énoncés</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Ce qui est loi, conséquence, convention, approximation, règle ou donnée</caption>
+      <thead><tr><th>Énoncé</th><th>Statut</th></tr></thead>
+      <tbody>
+        <tr><td>Théorème d'Ampère, loi de Faraday, loi de Lenz, conservation du flux</td><td>lois physiques de l'électromagnétisme (équations de Maxwell)</td></tr>
+        <tr><td>$B = \mu_0\mu_rNi/l$, $L = \mu_0\mu_rN^2S/l$, champ extérieur négligeable</td><td>approximation du solénoïde long, valable si $l$ est grande devant le diamètre</td></tr>
+        <tr><td>$B = \mu H$ avec $\mu_r$ constante, $\psi = Li$ avec $L$ constante</td><td>approximation de linéarité du milieu, mise en défaut par la saturation des noyaux de fer</td></tr>
+        <tr><td>$u = L\,\mathrm{d}i/\mathrm{d}t$, $W = \tfrac{1}{2}LI^2$, continuité du courant, règles d'association</td><td>conséquences exactes des hypothèses précédentes</td></tr>
+        <tr><td>Courant entrant par la borne $+$, convention récepteur ; signe de $e = -\mathrm{d}\psi/\mathrm{d}t$ lié au sens choisi pour le courant</td><td>conventions d'écriture ; en convention générateur, $u = -L\,\mathrm{d}i/\mathrm{d}t$</td></tr>
+        <tr><td>Court-circuit en régime continu, circuit ouvert à la fermeture d'un circuit sans courant initial</td><td>conséquences du modèle idéal ; une bobine réelle garde sa résistance $r$ en régime continu</td></tr>
+        <tr><td>Protection systématique des bobines commandées par une sortie à transistor, marge sur la tension de tenue</td><td>règles de conception</td></tr>
+        <tr><td>Inductance, résistance, courant nominal, induction de saturation, tenue en tension des sorties, temps de retombée</td><td>données du constructeur</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, qui résume les quatre comportements d'une bobine dans un
+    circuit, le chronogramme de la réponse à un échelon de tension, l'organigramme de résolution et le tableau qui
+    met en regard condensateur et inductance. La bobine et son flux, ainsi que les simulations, ont été placés au fil
+    du texte, au contact des explications qu'ils illustrent ; ils sont rappelés en fin de section.
+  </p>
+
+  <figure id="f-schema-principal">
+<svg viewBox="0 0 1000 410" role="img" aria-label="Schéma principal : un même circuit source, interrupteur, résistance et bobine vu à quatre instants ; à la fermeture la bobine sans courant équivaut à un circuit ouvert ; pendant l'établissement u vaut L di sur dt ; en régime continu la bobine équivaut à un fil et le courant vaut E sur R ; à l'ouverture de l'interrupteur le courant ne peut pas sauter et la tension de la bobine devient très négative">
+        <defs>
+          <marker id="fl-f-i" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+            <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+          </marker>
+          <marker id="fl-f-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+            <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+          </marker>
+        </defs>
+        <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M40 170V80H60 M60 80H84 M84 80H94 M144 80H190V150 M190 246V290H40V210 M115 290V302M103 302H127M108 308H122M112 314H118 M190 150V166M190 230V246 M285 170V80H305 M305 80H329 M329 80H339 M389 80H435V150 M435 246V290H285V210 M360 290V302M348 302H372M353 308H367M357 314H363 M530 170V80H550 M550 80H574 M574 80H584 M634 80H680V150 M680 246V290H530V210 M605 290V302M593 302H617M598 308H612M602 314H608 M775 170V80H795 M795 80L815 64 M819 80H829 M879 80H925V150 M925 246V290H775V210 M850 290V302M838 302H862M843 308H857M847 314H853"/>
+          <path d="M435 150a12 12 0 0 1 0 24a12 12 0 0 1 0 24a12 12 0 0 1 0 24a12 12 0 0 1 0 24 M925 150a12 12 0 0 1 0 24a12 12 0 0 1 0 24a12 12 0 0 1 0 24a12 12 0 0 1 0 24"/>
+          <rect x="94" y="68" width="50" height="24" rx="3"/><rect x="339" y="68" width="50" height="24" rx="3"/><rect x="584" y="68" width="50" height="24" rx="3"/><rect x="829" y="68" width="50" height="24" rx="3"/>
+          <circle cx="40" cy="190" r="20"/><circle cx="285" cy="190" r="20"/><circle cx="530" cy="190" r="20"/><circle cx="775" cy="190" r="20"/>
+        </g>
+        <path d="M680 150V246" stroke="currentColor" stroke-width="4.4" fill="none" stroke-linecap="round"/>
+        <g fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="190" cy="172" r="6"/><circle cx="190" cy="224" r="6"/>
+        </g>
+        <path d="M809 76l5 -7h-5l5 -7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/>
+        <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+          <path d="M154 80H178" marker-end="url(#fl-f-i)"/><path d="M399 80H423" marker-end="url(#fl-f-i)"/><path d="M644 80H668" marker-end="url(#fl-f-i)"/><path d="M889 80H913" marker-end="url(#fl-f-i)"/>
+        </g>
+        <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+          <path d="M232 240V160" marker-end="url(#fl-f-u)"/><path d="M477 240V160" marker-end="url(#fl-f-u)"/><path d="M722 240V160" marker-end="url(#fl-f-u)"/><path d="M967 240V160" marker-end="url(#fl-f-u)"/>
+        </g>
+        <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+          <text x="125" y="30" text-anchor="middle" font-weight="600">à la fermeture, t = 0+</text><text x="40" y="195" text-anchor="middle">E</text><text x="16" y="176" text-anchor="end" font-weight="600">+</text><text x="72" y="54" text-anchor="middle">K</text><text x="119" y="112" text-anchor="middle">R</text><text x="166" y="68" text-anchor="middle">i</text><text x="182" y="152" text-anchor="end" font-weight="600">+</text><text x="242" y="204" fill="var(--serie-2)">u_L</text><text x="178" y="202" text-anchor="end" font-size="11">ouvert</text><text x="125" y="340" text-anchor="middle">i = 0 (continuité)</text><text x="125" y="360" text-anchor="middle">u_L = E : circuit ouvert</text><text x="370" y="30" text-anchor="middle" font-weight="600">pendant l'établissement</text><text x="285" y="195" text-anchor="middle">E</text><text x="261" y="176" text-anchor="end" font-weight="600">+</text><text x="317" y="54" text-anchor="middle">K</text><text x="364" y="112" text-anchor="middle">R</text><text x="411" y="68" text-anchor="middle">i</text><text x="427" y="152" text-anchor="end" font-weight="600">+</text><text x="487" y="204" fill="var(--serie-2)">u_L</text><text x="421" y="204" text-anchor="end">L</text><text x="370" y="340" text-anchor="middle">u_L = L di/dt = E - R i</text><text x="370" y="360" text-anchor="middle">i croît, u_L décroît</text><text x="615" y="30" text-anchor="middle" font-weight="600">régime continu établi</text><text x="530" y="195" text-anchor="middle">E</text><text x="506" y="176" text-anchor="end" font-weight="600">+</text><text x="562" y="54" text-anchor="middle">K</text><text x="609" y="112" text-anchor="middle">R</text><text x="656" y="68" text-anchor="middle">i</text><text x="672" y="152" text-anchor="end" font-weight="600">+</text><text x="732" y="204" fill="var(--serie-2)">u_L</text><text x="668" y="202" text-anchor="end" font-size="11">fil</text><text x="615" y="340" text-anchor="middle">di/dt = 0 donc u_L = 0</text><text x="615" y="360" text-anchor="middle">i = E / R ; W = L I² / 2</text><text x="860" y="30" text-anchor="middle" font-weight="600">à l'ouverture de K</text><text x="775" y="195" text-anchor="middle">E</text><text x="751" y="176" text-anchor="end" font-weight="600">+</text><text x="807" y="54" text-anchor="middle">K</text><text x="854" y="112" text-anchor="middle">R</text><text x="901" y="68" text-anchor="middle">i</text><text x="917" y="152" text-anchor="end" font-weight="600">+</text><text x="977" y="204" fill="var(--serie-2)">u_L</text><text x="911" y="204" text-anchor="end">L</text><text x="829" y="54" font-size="11">arc</text><text x="860" y="340" text-anchor="middle">i ne peut pas sauter</text><text x="860" y="360" text-anchor="middle">u_L = L di/dt très négative</text>
+          <text x="500" y="400" text-anchor="middle" font-size="11.5">conducteur du bas de chaque schéma : référence de potentiel ; convention récepteur pour la bobine</text>
+        </g>
+      </svg>
+    <figcaption>
+      Schéma principal : le même circuit, une source de tension $E$ (borne $+$ en haut), un interrupteur $K$, une
+      résistance $R$ et une bobine $L$ sans courant initial, vu à quatre instants. Premier schéma, juste après la
+      fermeture : le courant de la bobine est encore nul, elle est remplacée par deux bornes ouvertes et porte toute la
+      tension $E$. Deuxième schéma, pendant l'établissement : le courant $i$ (flèche épaisse, entrant par la borne $+$
+      de la bobine) croît, et la tension $u_L$ (flèche fine) vaut à la fois $L\,\mathrm{d}i/\mathrm{d}t$ et $E - Ri$.
+      Troisième schéma, en régime continu établi : la bobine est remplacée par un fil épais, $u_L = 0$ et $i = E/R$,
+      l'énergie $\tfrac{1}{2}LI^2$ est stockée. Quatrième schéma, à l'ouverture de $K$ : le courant ne peut pas
+      s'annuler instantanément, la bobine produit une tension très négative qui fait jaillir un arc entre les contacts,
+      représenté par le petit éclair. Cette lecture en quatre temps résout la plupart des questions pratiques avant
+      tout calcul de régime transitoire.
+    </figcaption>
+  </figure>
+
+  <figure id="f-chronogramme">
+    <svg viewBox="0 0 860 330" role="img" aria-label="Chronogramme qualitatif de la réponse à un échelon de tension : pour une inductance idéale seule, le courant croît en rampe de pente E sur L et la tension reste égale à E ; pour une bobine avec résistance, le courant tend vers E sur R avec la même pente initiale et la tension de la bobine décroît de E vers zéro">
+      <g stroke="currentColor" stroke-width="1.4" fill="none" opacity="0.8">
+        <path d="M60 140H400M60 150V30"/>
+        <path d="M60 290H400M60 300V180"/>
+        <path d="M480 140H820M480 150V30"/>
+        <path d="M480 290H820M480 300V180"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.2" fill="none" stroke-dasharray="6 5" opacity="0.7">
+        <path d="M480 50H820"/>
+        <path d="M480 140L552 50"/>
+        <path d="M552 140V50"/>
+        <path d="M60 210H400"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M60 140L380 40"/>
+        <path d="M60 290V210H396"/>
+        <path d="M480 140C520 90 560 66 620 57C680 51 740 50 816 50"/>
+        <path d="M480 290V200C530 250 580 272 640 283C700 289 760 290 816 290"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="230" y="20" text-anchor="middle" font-weight="600">inductance idéale seule</text>
+        <text x="650" y="20" text-anchor="middle" font-weight="600">bobine et résistance R en série</text>
+        <text x="52" y="36" text-anchor="end" font-size="11">i</text>
+        <text x="472" y="36" text-anchor="end" font-size="11">i</text>
+        <text x="52" y="186" text-anchor="end" font-size="11">u_L</text>
+        <text x="472" y="186" text-anchor="end" font-size="11">u_L</text>
+        <text x="52" y="214" text-anchor="end">E</text>
+        <text x="472" y="204" text-anchor="end">E</text>
+        <text x="472" y="54" text-anchor="end">E/R</text>
+        <text x="552" y="160" text-anchor="middle" font-size="11">t = L/R</text>
+        <text x="170" y="84" font-size="11.5">pente E / L, sans limite</text>
+        <text x="572" y="112" font-size="11.5">pente initiale E / L</text>
+        <text x="600" y="240" font-size="11.5">u_L = E - R i</text>
+        <text x="200" y="232" font-size="11.5">u_L = E constante</text>
+        <text x="404" y="144" font-size="11">t</text>
+        <text x="404" y="294" font-size="11">t</text>
+        <text x="824" y="144" font-size="11">t</text>
+        <text x="824" y="294" font-size="11">t</text>
+        <text x="230" y="322" text-anchor="middle" font-size="11.5">W stockée = L i² / 2, croissante</text>
+        <text x="650" y="322" text-anchor="middle" font-size="11.5">W finale = L (E/R)² / 2</text>
+      </g>
+    </svg>
+    <figcaption>
+      Chronogramme qualitatif de la réponse à un échelon de tension $E$ appliqué à $t = 0$, courant initial nul.
+      Colonne de gauche, inductance idéale seule : le courant (graphique du haut) croît en rampe de pente $E/L$ sans
+      limite, et la tension de l'inductance (graphique du bas) reste égale à $E$. Colonne de droite, bobine avec une
+      résistance $R$ en série : le courant part avec la même pente $E/L$, puis s'infléchit vers $E/R$ ; la tangente à
+      l'origine, en tirets, atteint $E/R$ à l'instant $L/R$, la constante de temps. La tension de la bobine saute à
+      $E$ à la fermeture puis décroît vers zéro en suivant $E - Ri$. Les traits en tirets repèrent $E$, $E/R$ et
+      l'instant $L/R$. Ce chronogramme est le dual de celui de la charge d'un condensateur : courant et tension y
+      échangent leurs rôles.
+    </figcaption>
+  </figure>
+
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Circuit avec une ou plusieurs bobines"] --> B{"Quelle question ?"}
+  B -->|"état final en continu"| C["Remplacer chaque inductance idéale par un fil, garder sa résistance r"]
+  B -->|"instant d'une manœuvre"| D["Courant de chaque bobine conservé : sans courant = circuit ouvert"]
+  B -->|"tension pour une variation de courant connue"| E["u = L di/dt, pente de i"]
+  B -->|"variation de courant sous une tension connue"| F["Δi = aire de u sur Δt, divisée par L"]
+  B -->|"champ, flux, inductance, énergie"| G["Solénoïde : B = μ N i / l, ψ = L i, W = L I² / 2"]
+  C --> H["Résoudre le circuit résistif : lois de Kirchhoff, diviseurs, Thévenin"]
+  D --> H
+  H --> I["En déduire i et u de chaque bobine, puis ψ = L i et W = L i² / 2"]
+  E --> J{"Ouverture d'un circuit inductif ?"}
+  F --> I
+  G --> I
+  J -->|"oui"| K["Prévoir un chemin au courant : écrêteur, diode, et vérifier la tension de tenue"]
+  J -->|"non"| L["Contrôles : unités, ordres de grandeur, bilan d'énergie, saturation"]
+  K --> L
+  I --> L</pre>
+    <figcaption>
+      Organigramme de résolution. Les rectangles sont des étapes, les losanges des décisions, les libellés sur les
+      flèches les réponses. Le premier losange oriente selon la question : l'état final en continu et l'instant d'une
+      manœuvre se ramènent tous deux à un circuit résistif, en remplaçant l'inductance par un fil ou par une source de
+      courant égale à son courant avant la manœuvre ; la relation $u = L\,\mathrm{d}i/\mathrm{d}t$ et sa forme
+      intégrale servent quand l'une des deux grandeurs est connue ; les formules du solénoïde servent aux calculs de
+      champ et d'inductance. Le second losange rappelle le piège de l'ouverture d'un circuit inductif. Toutes les
+      branches aboutissent aux mêmes contrôles.
+    </figcaption>
+  </figure>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Condensateur et inductance idéaux comparés : deux éléments duaux</caption>
+      <thead><tr><th>Propriété</th><th>Condensateur</th><th>Inductance</th></tr></thead>
+      <tbody>
+        <tr><td>Grandeur stockée</td><td>charge $q = Cu$</td><td>flux lié $\psi = Li$</td></tr>
+        <tr><td>Relation caractéristique (convention récepteur)</td><td>$i = C\,\mathrm{d}u/\mathrm{d}t$</td><td>$u = L\,\mathrm{d}i/\mathrm{d}t$</td></tr>
+        <tr><td>Énergie et champ qui la porte</td><td>$\tfrac{1}{2}CU^2$, champ électrique, densité $\tfrac{1}{2}\varepsilon E^2$</td><td>$\tfrac{1}{2}LI^2$, champ magnétique, densité $B^2/(2\mu)$</td></tr>
+        <tr><td>Grandeur continue dans le temps</td><td>la tension $u$</td><td>le courant $i$</td></tr>
+        <tr><td>Régime continu établi</td><td>circuit ouvert, $i = 0$</td><td>court-circuit, $u = 0$</td></tr>
+        <tr><td>Instant d'une manœuvre, élément au repos</td><td>déchargé : court-circuit</td><td>sans courant : circuit ouvert</td></tr>
+        <tr><td>Manœuvre dangereuse</td><td>fermeture : courant d'appel</td><td>ouverture : surtension</td></tr>
+        <tr><td>Association en série</td><td>$1/C_{eq} = \sum 1/C_k$, même charge</td><td>$L_{eq} = \sum L_k$, même courant</td></tr>
+        <tr><td>Association en parallèle</td><td>$C_{eq} = \sum C_k$, même tension</td><td>$1/L_{eq} = \sum 1/L_k$, même tension</td></tr>
+        <tr><td>Énergie gardée circuit ouvert</td><td>oui, danger après coupure</td><td>non, le courant doit trouver un chemin</td></tr>
+        <tr><td>Limite d'usage</td><td>champ dans le diélectrique, tension nominale</td><td>saturation du noyau, échauffement du fil</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-bobine-figure" data-renvoi="d-bobine-figure">la bobine, son champ et son flux, avec ses conventions</a> et <a href="#d-etablissement-figure" data-renvoi="d-etablissement-figure">l'animation de l'établissement du courant</a>, section D ;</li>
+    <li><a href="#e-solenoide-figure" data-renvoi="e-solenoide-figure">la simulation du solénoïde</a> et <a href="#e-tension-figure" data-renvoi="e-tension-figure">la simulation du courant imposé et de la tension induite</a>, section E ;</li>
+    <li><a href="#h-km-figure" data-renvoi="h-km-figure">la bobine du contacteur commandée par une sortie d'automate, en conduction et à la coupure</a> et <a href="#h-coupure-figure" data-renvoi="h-coupure-figure">la tension de coupure en fonction de la durée de décroissance</a>, section H ;</li>
+    <li><a href="#i-coupure-figure" data-renvoi="i-coupure-figure">l'animation de la coupure d'une bobine protégée par un écrêteur</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour un problème de bobines en régime continu, lors d'une manœuvre ou sous un courant imposé :</p>
+  <ol>
+    <li>Fixer les conventions : pour chaque bobine, choisir la borne $+$ de référence, orienter $u$ vers elle et le courant $i$ entrant par elle (convention récepteur) ; choisir la référence de potentiel ; séparer l'inductance idéale $L$ et la résistance du fil $r$.</li>
+    <li>Identifier la question : état final en continu, instant d'une manœuvre, tension pour une variation de courant donnée, variation de courant sous une tension donnée, ou calcul de champ, de flux, d'inductance et d'énergie.</li>
+    <li>État final en continu : remplacer chaque inductance idéale par un fil, garder les résistances, résoudre le circuit résistif avec les outils des cours précédents, et lire le courant de chaque bobine.</li>
+    <li>Instant d'une manœuvre : conserver le courant de chaque bobine (nul si elle n'en portait pas, donc circuit ouvert ; sinon, source de courant égale à ce courant), résoudre le circuit résistif, et en déduire les tensions, en particulier celle qui apparaît à l'ouverture.</li>
+    <li>Variation de courant connue : appliquer $u = L\,\mathrm{d}i/\mathrm{d}t$ sur chaque intervalle où la pente est constante. Tension connue : $\Delta i = \frac{1}{L}\int u\,\mathrm{d}t$, soit $U\Delta t/L$ pour une tension constante.</li>
+    <li>Géométrie connue : calculer $H = Ni/l$, $B = \mu H$, $\Phi = BS$, $\psi = N\Phi$ et $L = \psi/i$, puis vérifier que $B$ reste sous l'induction de saturation du noyau.</li>
+    <li>Énergies : $W = \tfrac{1}{2}LI^2$ ; à l'ouverture, cette énergie doit être absorbée par la résistance du fil et par la protection, ou par un arc à défaut ; vérifier la tension vue par l'organe de coupure contre sa tenue.</li>
+    <li>Contrôler : unités ($1\ \mathrm{H} = 1\ \mathrm{V \cdot s/A}$), ordre de grandeur, signe de la tension selon que le courant croît ou décroît, bilan d'énergie, saturation, et, pour une association en parallèle en continu, répartition par les résistances des fils.</li>
+  </ol>
+  <p>
+    Choix de méthode : pour une énergie, l'expression $\tfrac{1}{2}LI^2$ est toujours préférable à l'intégration de la
+    puissance, qu'elle résume ; l'intégration ne s'impose que si l'inductance varie avec le courant, par exemple près de
+    la saturation. Pour une tension de coupure, la lecture linéaire $LI/\Delta t$ suffit à juger de l'ordre de grandeur
+    et du danger ; le calcul exact de la décroissance, qui fait intervenir la résistance du circuit, relève du cours
+    Régime transitoire RL et n'est nécessaire que pour dimensionner finement la protection.
+  </p>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Situation : le contacteur $KM1$ du départ pompe est commandé par une sortie à transistor de l'automate, alimentée
+    par le bus $24\ \mathrm{V}$ secouru. Sa bobine, en courant continu, présente une résistance de $48\ \Omega$ et, armature
+    fermée, une inductance de $1{,}2\ \mathrm{H}$ ; ces valeurs sont des hypothèses d'étude, typiques d'une bobine de
+    contacteur de cette taille, à remplacer par celles du modèle retenu. La sortie de l'automate supporte au plus
+    $60\ \mathrm{V}$ entre ses bornes. On veut connaître le courant de maintien, le flux lié et l'énergie stockée, puis
+    la tension qui apparaîtrait à la coupure selon la vitesse à laquelle le courant s'annule, et en déduire une
+    contrainte pour la protection.
+  </p>
+  <p>
+    Données : $U = 24\ \mathrm{V}$, $r = 48\ \Omega$, $L = 1{,}2\ \mathrm{H}$, tenue de la sortie
+    $U_{Q,\max} = 60\ \mathrm{V}$. Inconnues : courant $I$, puissance de maintien $P$, flux lié $\psi$, énergie $W$,
+    pente initiale et constante de temps à l'enclenchement, tension de coupure pour des durées de décroissance de
+    $10\ \mu\mathrm{s}$, $1\ \mathrm{ms}$ et $20\ \mathrm{ms}$, tension d'écrêtage maximale. Stratégie : régime continu
+    pour le maintien (inductance idéale remplacée par un fil) ; $\psi = LI$ et $W = \tfrac{1}{2}LI^2$ ; relation
+    $u = L\,\mathrm{d}i/\mathrm{d}t$ pour l'enclenchement et la coupure, avec une décroissance supposée linéaire ; loi
+    des mailles pour la tension vue par la sortie.
+  </p>
+  <h3 id="h-maintien">Courant, flux et énergie</h3>
+  <ol>
+    <li>Régime continu : l'inductance idéale est un court-circuit, seule $r$ limite le courant. $I = U/r = 24/48 = 0{,}5\ \mathrm{A}$.</li>
+    <li>Puissance de maintien, dissipée dans le fil : $P = rI^2 = 48 \times 0{,}25 = 12\ \mathrm{W}$, ou $UI = 24 \times 0{,}5 = 12\ \mathrm{W}$.</li>
+    <li>Flux lié : $\psi = LI = 1{,}2 \times 0{,}5 = 0{,}6\ \mathrm{Wb}$.</li>
+    <li>Énergie stockée : $W = \tfrac{1}{2}LI^2 = 0{,}5 \times 1{,}2 \times 0{,}25 = 0{,}15\ \mathrm{J}$. Contrôle : $\tfrac{1}{2}\psi I = 0{,}5 \times 0{,}6 \times 0{,}5 = 0{,}15\ \mathrm{J}$.</li>
+    <li>Enclenchement : pente initiale $\mathrm{d}i/\mathrm{d}t = U/L = 24/1{,}2 = 20\ \mathrm{A/s}$ ; constante de temps $L/r = 1{,}2/48 = 25\ \mathrm{ms}$. Le courant de maintien est pratiquement atteint après quelques constantes de temps, soit une centaine de millisecondes, ce qui est cohérent avec les temps de fermeture annoncés pour les contacteurs en continu. En réalité, l'inductance est plus faible armature ouverte, ce qui accélère le début de la montée.</li>
+  </ol>
+  <h3 id="h-coupure">Tension à la coupure</h3>
+  <ol>
+    <li>À la coupure, le courant de la bobine ne peut pas sauter. S'il décroît linéairement de $0{,}5\ \mathrm{A}$ à zéro en $\Delta t$, la bobine porte $u_L = L\,\Delta i/\Delta t = -1{,}2 \times 0{,}5/\Delta t = -0{,}6/\Delta t$, en volts si $\Delta t$ est en secondes. Le signe moins indique que la borne du bas devient positive.</li>
+    <li>$\Delta t = 10\ \mu\mathrm{s}$, ordre de grandeur de la commutation d'un transistor : $|u_L| = 0{,}6/10^{-5} = 60\,000\ \mathrm{V}$. Cette valeur n'est jamais atteinte : bien avant, le transistor claque ou un arc s'amorce, et c'est lui qui absorbe l'énergie. Elle montre seulement qu'une coupure rapide sans protection est destructrice.</li>
+    <li>$\Delta t = 1\ \mathrm{ms}$ : $|u_L| = 600\ \mathrm{V}$ ; encore dix fois trop.</li>
+    <li>$\Delta t = 20\ \mathrm{ms}$ : $|u_L| = 30\ \mathrm{V}$.</li>
+    <li>Tension vue par la sortie : la loi des mailles entre le pôle $+24\ \mathrm{V}$, la sortie, la bobine et le $0\ \mathrm{V}$ donne $u_Q = U - u_L = 24 + |u_L|$ pendant la coupure. Pour respecter $u_Q \leq 60\ \mathrm{V}$ avec une marge, on retient $|u_L| \leq 30\ \mathrm{V}$, soit $u_Q \leq 54\ \mathrm{V}$ ; même avec le bus au plus haut, $27\ \mathrm{V}$ selon l'étude du chargeur, $u_Q$ reste à $57\ \mathrm{V}$.</li>
+    <li>Durée minimale de décroissance correspondante, dans l'hypothèse linéaire : $\Delta t \geq LI/|u_L| = 0{,}6/30 = 20\ \mathrm{ms}$. Un transistor ne sait pas couper aussi lentement : il faut un composant qui impose lui-même cette tension de $30\ \mathrm{V}$ et offre un chemin au courant, l'écrêteur.</li>
+    <li>Énergie à absorber par coupure : au plus $W = 0{,}15\ \mathrm{J}$, partagée entre l'écrêteur et la résistance du fil. Contrôle d'aire : pendant la décroissance, $|u_L| \times \Delta t = 30 \times 0{,}020 = 0{,}6\ \mathrm{V \cdot s}$, égal au flux lié $\psi$ à détruire.</li>
+  </ol>
+  <p>
+    Résultat final : la bobine consomme $0{,}5\ \mathrm{A}$ et $12\ \mathrm{W}$ en maintien, porte un flux lié de
+    $0{,}6\ \mathrm{Wb}$ et stocke $0{,}15\ \mathrm{J}$. Coupée par un transistor sans protection, elle produirait en
+    théorie des dizaines de kilovolts ; pour que la sortie ne voie pas plus de $54\ \mathrm{V}$ au bus nominal, la
+    tension de la bobine doit être limitée à $30\ \mathrm{V}$, ce qui impose que son courant mette au moins
+    $20\ \mathrm{ms}$ à s'annuler, en première approximation. La section I montre qu'un écrêteur de $30\ \mathrm{V}$
+    réalise exactement cela, et que la résistance du fil raccourcit même la décroissance à $14{,}7\ \mathrm{ms}$.
+  </p>
+  <figure id="h-km-figure">
+<svg viewBox="0 0 800 420" role="img" aria-label="Bobine du contacteur KM1 commandée par une sortie à transistor Q de l'automate sur le bus 24 volts, protégée par un écrêteur formé d'une diode D et d'une diode Zener Z : en conduction le courant de 0,5 ampère traverse la bobine et l'écrêteur est bloqué ; à la coupure le courant continue dans le même sens dans la bobine et se referme par l'écrêteur, la tension de la bobine vaut moins 30 volts et la sortie supporte 54 volts">
+      <defs>
+        <marker id="fl-h-i" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-h-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M40 50H330 M120 50V92 M120 92V128 M120 128V160H280V208 M200 160V176 M200 176a12 12 0 0 1 0 24a12 12 0 0 1 0 24a12 12 0 0 1 0 24a12 12 0 0 1 0 24V282 M200 318V340 M40 340H330 M280 230V250M280 272V340 M60 340V352M48 352H72M53 358H67M57 364H63 M268 208H292M264 276L268 272H292L296 268 M440 50H730 M520 50V92 M520 92L542 124 M520 128V160H680V208 M600 160V176 M600 176a12 12 0 0 1 0 24a12 12 0 0 1 0 24a12 12 0 0 1 0 24a12 12 0 0 1 0 24V282 M600 318V340 M440 340H730 M680 230V250M680 272V340 M460 340V352M448 352H472M453 358H467M457 364H463 M668 208H692M664 276L668 272H692L696 268"/>
+        <rect x="189" y="282" width="22" height="36" rx="3"/><rect x="589" y="282" width="22" height="36" rx="3"/>
+      </g>
+      <path d="M268 230H292L280 208ZM268 250H292L280 272Z M668 230H692L680 208ZM668 250H692L680 272Z" stroke="currentColor" stroke-width="2" fill="currentColor" fill-opacity="0.2" stroke-linejoin="round"/>
+      <path d="M600 340H680M680 340V272M680 250V230M680 208V160H600" stroke="currentColor" stroke-width="4.2" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.45"/>
+      <g fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="120" cy="92" r="3"/><circle cx="120" cy="128" r="3"/><circle cx="520" cy="92" r="3"/><circle cx="520" cy="128" r="3"/></g>
+      <g fill="currentColor" stroke="none"><circle cx="120" cy="160" r="4"/><circle cx="200" cy="160" r="4"/><circle cx="200" cy="340" r="4"/><circle cx="280" cy="340" r="4"/><circle cx="520" cy="160" r="4"/><circle cx="600" cy="160" r="4"/><circle cx="600" cy="340" r="4"/><circle cx="680" cy="340" r="4"/></g>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M138 150H178" marker-end="url(#fl-h-i)"/><path d="M662 330V300" marker-end="url(#fl-h-i)"/><path d="M662 150H622" marker-end="url(#fl-h-i)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M160 300V184" marker-end="url(#fl-h-u)"/><path d="M560 300V184" marker-end="url(#fl-h-u)"/><path d="M490 150V62" marker-end="url(#fl-h-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="185" y="24" text-anchor="middle" font-weight="600">sortie active : conduction</text><text x="156" y="144" text-anchor="middle">i</text><text x="150" y="246" text-anchor="end" fill="var(--serie-2)">u_L</text><text x="150" y="262" text-anchor="end" fill="var(--serie-2)" font-size="11">+24 V</text><text x="185" y="384" text-anchor="middle">i = 24 / 48 = 0,5 A ; écrêteur bloqué</text><text x="185" y="402" text-anchor="middle">u_Q ≈ 0 ; W = L i² / 2 = 0,15 J</text><text x="40" y="44">+24 V</text><text x="40" y="334">0 V</text><text x="132" y="104" font-size="11.5">Q</text><text x="214" y="222" font-size="11.5">KM1</text><text x="214" y="238" font-size="11.5">1,2 H</text><text x="216" y="304" font-size="11.5">48 Ω</text><text x="300" y="236" font-size="11.5">D</text><text x="300" y="268" font-size="11.5">Z</text><text x="192" y="188" text-anchor="end" font-weight="600">+</text><text x="585" y="24" text-anchor="middle" font-weight="600">sortie bloquée : coupure</text><text x="642" y="144" text-anchor="middle">i</text><text x="656" y="322" text-anchor="end">i</text><text x="550" y="246" text-anchor="end" fill="var(--serie-2)">u_L</text><text x="550" y="262" text-anchor="end" fill="var(--serie-2)" font-size="11">-30 V</text><text x="482" y="100" text-anchor="end" fill="var(--serie-2)">u_Q</text><text x="482" y="116" text-anchor="end" fill="var(--serie-2)" font-size="11">54 V</text><text x="585" y="384" text-anchor="middle">i continue par l'écrêteur</text><text x="585" y="402" text-anchor="middle">u_Q = 24 + 30 = 54 V ; i nul en 14,7 ms</text><text x="440" y="44">+24 V</text><text x="440" y="334">0 V</text><text x="532" y="104" font-size="11.5">Q</text><text x="614" y="222" font-size="11.5">KM1</text><text x="614" y="238" font-size="11.5">1,2 H</text><text x="616" y="304" font-size="11.5">48 Ω</text><text x="700" y="236" font-size="11.5">D</text><text x="700" y="268" font-size="11.5">Z</text><text x="592" y="188" text-anchor="end" font-weight="600">+</text>
+      </g>
+    </svg>
+    <figcaption>
+      La bobine de $KM1$ commandée par la sortie $Q$ de l'automate, dessinée comme un interrupteur, en deux états. Le
+      conducteur du haut est le pôle $+24\ \mathrm{V}$ du bus, celui du bas le $0\ \mathrm{V}$, référence de potentiel.
+      La bobine est représentée par son inductance idéale de $1{,}2\ \mathrm{H}$ en série avec sa résistance de
+      $48\ \Omega$ ; à droite, l'écrêteur associe une diode $D$ et une diode Zener $Z$ tête-bêche, dont l'ensemble
+      conduit vers le haut dès que la tension dépasse environ $30\ \mathrm{V}$. À gauche, sortie active : le courant
+      $i$ (flèche épaisse) traverse la bobine de haut en bas, la tension $u_L$ (flèche fine, pointée vers la borne
+      $+$ de la bobine) vaut $+24\ \mathrm{V}$ et l'écrêteur est bloqué. À droite, sortie bloquée : le courant garde son
+      sens dans la bobine et se referme par l'écrêteur, chemin surligné en trait épais ; avec les mêmes flèches de
+      référence, $u_L$ vaut $-30\ \mathrm{V}$, et la sortie supporte $u_Q = 54\ \mathrm{V}$, flèche fine pointée vers le
+      pôle $+24\ \mathrm{V}$.
+    </figcaption>
+  </figure>
+  <p>
+    La courbe suivante généralise le calcul : elle donne la tension de coupure, en valeur absolue, en fonction de la
+    durée de décroissance du courant, pour la bobine de $KM1$ à son courant de maintien. Elle montre que la tension
+    admissible n'est respectée que pour des décroissances de plusieurs millisecondes, hors de portée d'un simple
+    interrupteur électronique.
+  </p>
+  <figure id="h-coupure-figure">
+    <div id="h-coupure-trace"></div>
+    <figcaption>
+      Axe horizontal : durée $\Delta t$ de la décroissance linéaire du courant, de $0{,}5\ \mathrm{A}$ à zéro, en
+      millisecondes, de $1$ à $50$. Axe vertical : tension de la bobine en valeur absolue, $LI/\Delta t$, en volts, de
+      $0$ à $200$ ; la courbe sort par le haut du graphique pour les durées inférieures à $3\ \mathrm{ms}$. Le trait
+      horizontal en tirets repère la limite de $30\ \mathrm{V}$ retenue pour la bobine, et le point marqué la durée
+      minimale correspondante, $20\ \mathrm{ms}$.
+    </figcaption>
+  </figure>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <p>
+    Cas concret : protéger la sortie de l'automate qui commande $KM1$, et plus généralement toutes les bobines
+    alimentées en continu de l'armoire (contacteurs, relais, électrovannes, freins de moteur). Les contraintes
+    d'exploitation sont de trois ordres. La sortie à transistor ne doit jamais dépasser sa tenue en tension, sous peine
+    de destruction immédiate ou de vieillissement prématuré. Le contacteur doit retomber assez vite quand l'automate
+    coupe sa bobine, en particulier s'il participe à un arrêt : le délai de retombée fait partie du temps de réponse
+    de la fonction. Enfin, la surtension et le courant qui s'interrompt rayonnent des perturbations vers les câbles de
+    mesure voisins, sujet repris dans le cours Compatibilité électromagnétique. Beaucoup de sorties d'automate
+    intègrent un écrêteur interne, et beaucoup de contacteurs proposent un module de protection adapté ; leurs
+    caractéristiques exactes sont des données du constructeur, à vérifier plutôt qu'à supposer.
+  </p>
+  <p>
+    Principe de toutes les protections : offrir au courant de la bobine un chemin quand la sortie s'ouvre, et fixer la
+    tension de ce chemin. Si l'écrêteur impose une tension $U_e$ presque constante aux bornes de la bobine, le courant
+    décroît sous l'effet de $U_e$ et de la chute $ri$ dans le fil, et le résultat admis ici, établi dans le cours
+    Régime transitoire RL, donne la durée d'annulation du courant, avec $\tau = L/r$ :
+  </p>
+  <div class="formule-cle">
+    $$t_0 = \tau\,\ln\!\left(1 + \frac{rI}{U_e}\right), \qquad W_e = U_e\int_0^{t_0} i\,\mathrm{d}t = U_e\left(\tau I - \frac{U_e}{r}\,t_0\right)$$
+    <p class="formule-cle-legende">
+      $t_0$ durée d'annulation du courant ($\mathrm{s}$) ; $\tau = L/r$ constante de temps ($\mathrm{s}$) ; $I$ courant
+      à l'ouverture ($\mathrm{A}$) ; $r$ résistance de la bobine ($\Omega$) ; $U_e$ tension d'écrêtage ($\mathrm{V}$) ;
+      $W_e$ énergie absorbée par l'écrêteur ($\mathrm{J}$), le reste de $\tfrac{1}{2}LI^2$ étant dissipé dans $r$.
+      Hypothèses : écrêteur idéal à tension constante, inductance constante, capacités parasites négligées. Cas
+      limites : $U_e$ grand devant $rI$ redonne la décroissance linéaire, $t_0 \approx LI/U_e$ ; $U_e \to 0$ fait
+      tendre $t_0$ vers l'infini, le courant ne décroissant plus que par la résistance du fil. Vérification
+      dimensionnelle : le logarithme porte sur un rapport de tensions, sans dimension, et $t_0$ a la dimension de
+      $\tau$.
+    </p>
+  </div>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Protections de la bobine de KM1 (1,2 H, 48 Ω, 0,5 A, bus 24 V), valeurs du modèle idéal</caption>
+      <thead><tr><th>Protection</th><th>Tension vue par la sortie</th><th>Annulation du courant</th><th>Énergie absorbée par la protection</th><th>Commentaire</th></tr></thead>
+      <tbody>
+        <tr><td>Aucune</td><td>limitée par un arc ou un claquage</td><td>très brève</td><td>$0{,}15\ \mathrm{J}$ dans l'arc ou le transistor</td><td>destruction de la sortie, usure des contacts, perturbations</td></tr>
+        <tr><td>Diode seule, $U_e \approx 0{,}7\ \mathrm{V}$</td><td>$24{,}7\ \mathrm{V}$</td><td>$89\ \mathrm{ms}$</td><td>$7{,}8\ \mathrm{mJ}$ ($142\ \mathrm{mJ}$ dans le fil)</td><td>protection parfaite de la sortie, mais retombée très retardée</td></tr>
+        <tr><td>Diode et Zener, $U_e = 30\ \mathrm{V}$</td><td>$54\ \mathrm{V}$</td><td>$14{,}7\ \mathrm{ms}$</td><td>$99{,}5\ \mathrm{mJ}$ ($50{,}5\ \mathrm{mJ}$ dans le fil)</td><td>compromis entre tenue de la sortie et vitesse de retombée</td></tr>
+        <tr><td>Diode bidirectionnelle de suppression ou varistance, $U_e \approx 30\ \mathrm{V}$</td><td>voisine de $54\ \mathrm{V}$</td><td>voisine de $15\ \mathrm{ms}$</td><td>voisine de $0{,}1\ \mathrm{J}$</td><td>non polarisée, utilisable aussi en alternatif ; la varistance vieillit avec les chocs</td></tr>
+        <tr><td>Circuit RC en parallèle</td><td>selon les valeurs</td><td>oscillation amortie</td><td>dans la résistance du circuit</td><td>surtout pour les bobines alimentées en alternatif ; calcul dans le cours Régime transitoire RLC</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Le tableau montre le compromis. Plus la tension d'écrêtage est haute, plus le courant s'annule vite et plus la
+    retombée est franche, mais plus la sortie est sollicitée ; plus elle est basse, mieux la sortie est protégée, mais
+    le contacteur retombe tard, ce qui allonge le temps d'arrêt et laisse les contacts principaux s'ouvrir lentement,
+    donc s'user davantage sous l'arc. La diode seule, souvent montée par habitude, est le choix le plus défavorable pour
+    la retombée. Le choix retenu pour $KM1$, une diode et une Zener donnant $30\ \mathrm{V}$, respecte la tenue de la
+    sortie avec une marge de $6\ \mathrm{V}$ au bus nominal et de $3\ \mathrm{V}$ au bus le plus haut, et limite le
+    retard à une quinzaine de millisecondes. La diode doit être montée pour être bloquée en fonctionnement normal : à
+    l'envers, elle court-circuiterait la sortie dès son activation. Le dimensionnement en courant et en énergie de ces
+    composants sera fait dans le cours Régime transitoire RL.
+  </p>
+
+  <h3 id="i-coupure-section">Animation : la coupure d'une bobine protégée par un écrêteur</h3>
+  <p>
+    L'animation rejoue l'ouverture de la sortie qui alimente $KM1$, à partir de l'instant où le transistor se bloque.
+    Le curseur choisit la tension d'écrêtage $U_e$, de celle d'une diode seule à $60\ \mathrm{V}$, et le temps est piloté
+    par vous. Avant de lancer la lecture, prédisez : si vous doublez $U_e$, que deviennent la durée d'annulation du
+    courant, la tension vue par la sortie et l'énergie absorbée par l'écrêteur ? L'énergie totale dissipée pendant la
+    coupure change-t-elle ?
+  </p>
+  <figure id="i-coupure-figure">
+    <div class="m-toile-cadre schema-vivant" id="i-coupure"></div>
+    <figcaption>
+      Le bus $24\ \mathrm{V}$, pôle $+$ en haut, alimente la bobine par la sortie $Q$, ouverte pendant toute
+      l'animation ; le $0\ \mathrm{V}$, en bas, est la référence de potentiel. La bobine est représentée par son
+      inductance idéale et sa résistance ; l'écrêteur, à droite, est dessiné comme un bloc de tension $U_e$. Le chemin
+      du courant, bobine puis écrêteur, est tracé en trait plein épais tant que le courant n'est pas nul, et les
+      points ronds s'y déplacent dans le sens du courant, d'autant plus vite qu'il est fort. La flèche fine à gauche de
+      la bobine est la tension $u_L$ de la bobine entière, inductance et résistance, avec la même référence qu'en
+      conduction ; la flèche fine à gauche de la sortie est la tension $u_Q$ qu'elle supporte, pointée vers le pôle
+      $+24\ \mathrm{V}$. Leurs valeurs s'affichent à côté des flèches. Le graphique placé dessous trace le courant
+      rapporté à $0{,}5\ \mathrm{A}$ et $u_L$ rapportée à $U_e$ jusqu'à l'instant courant ; leurs noms figurent dans
+      sa légende.
+    </figcaption>
+  </figure>
+  <div id="i-coupure-trace"></div>
+  <div id="i-coupure-curseurs"></div>
+  <div id="i-coupure-lecteur"></div>
+  <div id="i-coupure-valeurs"></div>
+  <p>
+    Interprétation : avec $U_e = 30\ \mathrm{V}$, le courant s'annule en $14{,}7\ \mathrm{ms}$ et l'écrêteur absorbe
+    $99{,}5\ \mathrm{mJ}$. En doublant $U_e$ à $60\ \mathrm{V}$, la durée tombe à $8{,}4\ \mathrm{ms}$, mais la sortie
+    verrait $84\ \mathrm{V}$, au-delà de sa tenue ; avec la diode seule, le courant met $89\ \mathrm{ms}$ à s'annuler
+    et la sortie ne voit que $24{,}7\ \mathrm{V}$. Dans tous les cas, la somme de l'énergie absorbée par l'écrêteur et de
+    celle dissipée dans le fil reste égale à $0{,}15\ \mathrm{J}$ : l'écrêteur ne choisit pas combien d'énergie est
+    évacuée, seulement où et en combien de temps. La décroissance est presque linéaire pour un écrêtage élevé et
+    nettement courbée pour la diode seule, où seule la résistance du fil freine le courant. Le modèle ignore la capacité
+    parasite de la bobine, qui arrondit le front de tension, et la variation de l'inductance quand l'armature s'ouvre.
+  </p>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : bobine du contacteur de la pompe</span>
+    <p>
+      Nouvelle brique du petit site industriel, deuxième du module consacré au stockage d'énergie. Le contacteur $KM1$
+      du départ pompe reçoit un modèle de sa bobine en courant continu : $1{,}2\ \mathrm{H}$ et $48\ \Omega$, soit
+      $0{,}5\ \mathrm{A}$ et $12\ \mathrm{W}$ sur le bus $24\ \mathrm{V}$ secouru, à compter dans le plafond de
+      $6\ \mathrm{A}$ retenu pour les charges permanentes de ce bus ; flux lié de $0{,}6\ \mathrm{Wb}$ et énergie de
+      $0{,}15\ \mathrm{J}$ ; commande par une sortie à transistor de tenue $60\ \mathrm{V}$, protégée par un écrêteur
+      diode et Zener de $30\ \mathrm{V}$, soit $54\ \mathrm{V}$ au plus sur la sortie au bus nominal, annulation du
+      courant en $14{,}7\ \mathrm{ms}$ et $0{,}1\ \mathrm{J}$ absorbé par coupure. Ces valeurs sont des hypothèses
+      d'étude, à remplacer par la documentation du contacteur et de l'automate retenus. Elles alimenteront le cours
+      Régime transitoire RL, où la protection sera dimensionnée, et les cours Automates programmables industriels et
+      Compatibilité électromagnétique.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li>
+      <strong>Croire qu'on peut couper instantanément le courant d'une bobine.</strong> Le courant d'une inductance est continu ; si l'on tente de l'annuler en $\Delta t$, la tension vaut environ $LI/\Delta t$, et une coupure de $10\ \mu\mathrm{s}$ sur la bobine de $KM1$ donnerait $60\ \mathrm{kV}$. En pratique, c'est l'organe de coupure qui claque ou un arc qui se forme : toute bobine commandée par un semi-conducteur doit avoir un chemin de décharge.
+    </li>
+    <li>
+      <strong>Confondre la valeur du courant et sa variation.</strong> $u = L\,\mathrm{d}i/\mathrm{d}t$ : une inductance idéale parcourue par un fort courant constant n'a aucune tension à ses bornes, et une inductance dont le courant passe par zéro peut porter une tension maximale. Raisonner "beaucoup de courant, donc beaucoup de tension" est faux pour une inductance.
+    </li>
+    <li>
+      <strong>Oublier la résistance du fil, ou l'inverse.</strong> En régime continu, l'inductance idéale est un court-circuit, mais une bobine réelle garde sa résistance $r$, qui fixe le courant. Erreur symétrique sur le terrain : alimenter en continu une bobine prévue pour l'alternatif. En alternatif, c'est surtout l'inductance qui limite le courant, notion développée dans le cours Impédances en régime sinusoïdal ; en continu, il ne reste que la faible résistance du fil, et la bobine brûle.
+    </li>
+    <li>
+      <strong>Associer les inductances comme des condensateurs.</strong> Les inductances non couplées s'additionnent en série et leurs inverses s'additionnent en parallèle, comme les résistances. Deux inductances de $10\ \mathrm{mH}$ en série donnent $20\ \mathrm{mH}$, pas $5\ \mathrm{mH}$.
+    </li>
+    <li>
+      <strong>Oublier le carré du nombre de spires.</strong> $L$ est proportionnelle à $N^2$ : rebobiner une bobine avec deux fois moins de spires divise son inductance par quatre, pas par deux. Le champ, lui, est proportionnel à $N$.
+    </li>
+    <li>
+      <strong>Supposer l'inductance constante quel que soit le courant.</strong> Un noyau de fer sature : au-delà, $\mu_r$ s'effondre, l'inductance chute et le courant monte brutalement pour un faible supplément de tension. Le modèle $\psi = Li$ n'est valable que sous l'induction de saturation.
+    </li>
+    <li>
+      <strong>Monter une diode de roue libre à l'envers.</strong> Elle doit être bloquée en fonctionnement normal, cathode côté borne positive de la bobine. À l'envers, elle court-circuite la bobine dès que la sortie s'active : la sortie passe en défaut ou la diode est détruite, et le contacteur ne colle pas.
+    </li>
+    <li>
+      <strong>Croire qu'une diode de roue libre est sans conséquence.</strong> Elle protège parfaitement la sortie, mais le courant ne décroît plus que par la résistance du fil : la retombée du contacteur est retardée de plusieurs dizaines de millisecondes, $89\ \mathrm{ms}$ dans le modèle de $KM1$. Si le contacteur participe à une fonction d'arrêt, ce retard doit être pris en compte ou supprimé par un écrêtage plus élevé.
+    </li>
+    <li>
+      <strong>Se tromper de signe.</strong> Écrire $u = -L\,\mathrm{d}i/\mathrm{d}t$ en convention récepteur, en confondant la tension aux bornes avec la force électromotrice $e = -\mathrm{d}\psi/\mathrm{d}t$. Contrôle simple : en convention récepteur, une bobine dont le courant croît reçoit de la puissance, donc $u$ et $i$ ont le même signe.
+    </li>
+  </ol>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de
+    diagnostic industriel et une question conceptuelle. La correction de chacun reste masquée jusqu'à une tentative ou
+    un clic explicite sur "Voir la correction", puis se déroule étape par étape, accompagnée d'un schéma annoté ou d'une
+    courbe.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma.</p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$H = \frac{N\,i}{l}, \qquad B = \mu_0\,\mu_r\,H$$
+    $$\psi = N\,\Phi = L\,i, \qquad L = \frac{\mu_0\,\mu_r\,N^2\,S}{l}$$
+    $$u = L\,\frac{\mathrm{d}i}{\mathrm{d}t} \quad (\text{convention récepteur})$$
+    $$W = \frac{1}{2}\,L\,I^2 = \frac{\psi^2}{2L}$$
+    $$L_{eq,\text{série}} = \sum_k L_k, \qquad \frac{1}{L_{eq,\parallel}} = \sum_k \frac{1}{L_k}$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>En régime continu établi, une inductance idéale est un court-circuit ; à la fermeture d'un circuit où elle ne portait aucun courant, c'est un circuit ouvert.</li>
+      <li>Le courant d'une bobine ne peut pas sauter ; c'est lui qu'il faut conserver d'un instant à l'autre.</li>
+      <li>Toute ouverture d'un circuit inductif produit une surtension : prévoir un chemin au courant et vérifier la tenue de l'organe de coupure.</li>
+      <li>Une diode seule protège la sortie mais retarde la retombée ; un écrêtage plus élevé accélère la retombée mais sollicite la sortie.</li>
+      <li>L'inductance d'une bobine à noyau n'est constante que sous la saturation, et celle d'un électroaimant dépend de la position de son armature.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Un courant crée un champ magnétique ; dans un solénoïde long, $B = \mu_0\mu_rNi/l$. Le flux
+    lié $\psi = N\Phi$ est proportionnel au courant, $\psi = Li$, avec $L = \mu_0\mu_rN^2S/l$. D'après la loi de
+    Faraday, une variation de flux induit une tension qui s'oppose à sa cause : en convention récepteur,
+    $u = L\,\mathrm{d}i/\mathrm{d}t$. Le courant d'une bobine est donc continu ; une bobine idéale est un court-circuit
+    en régime continu et un circuit ouvert à la fermeture d'un circuit sans courant initial. L'énergie
+    $\tfrac{1}{2}LI^2$ est stockée dans le champ et doit être évacuée à l'ouverture, sans quoi la tension devient
+    destructrice. Les inductances s'associent comme les résistances. Protéger une bobine, c'est offrir un chemin au
+    courant et choisir sa tension d'écrêtage, compromis entre tenue de la sortie et vitesse de retombée.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent,
+    <a href="#/cours/condensateurs-et-champ-electrique">Condensateurs et champ électrique</a> ; une sur le cours
+    <a href="#/cours/tension-courant-charge-et-puissance">Tension, courant, charge et puissance</a>, vieux d'une
+    semaine exactement ; la question sur un cours vieux d'un mois n'est pas encore applicable, et elle est remplacée par
+    une question sur le cours <a href="#/cours/loi-d-ohm-et-resistivite">Loi d'Ohm et résistivité</a>, qui donne la
+    résistance du fil d'une bobine.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : vérifier numériquement la relation $u = L\,\mathrm{d}i/\mathrm{d}t$ et le bilan d'énergie de la coupure,
+    comparer diode seule et écrêtage dans LTspice, puis observer une vraie bobine de relais. Prédiction à écrire avant
+    de commencer : pour la bobine de $KM1$, l'énergie dissipée dans l'écrêteur sera-t-elle plus grande avec une diode
+    seule ou avec une diode et une Zener de $30\ \mathrm{V}$ ? Et le temps d'annulation du courant ?
+  </p>
+  <ol>
+    <li>
+      En Python, simuler la coupure par la méthode d'Euler : $L = 1{,}2\ \mathrm{H}$, $r = 48\ \Omega$, $i(0) = 0{,}5\
+      \mathrm{A}$, écrêteur de tension $U_e$. À chaque pas $\Delta t = 10^{-5}\ \mathrm{s}$, tant que $i > 0$, calculer
+      la tension de l'inductance idéale, $u_L = -U_e - ri$, puis $i \leftarrow i + u_L\Delta t/L$, et
+      accumuler $W_e \leftarrow W_e + U_ei\Delta t$ et $W_r \leftarrow W_r + ri^2\Delta t$. Relever la durée
+      d'annulation pour $U_e = 0{,}7$, $30$ et $60\ \mathrm{V}$, et vérifier que $W_e + W_r = 0{,}15\ \mathrm{J}$.
+    </li>
+    <li>
+      Réduire le pas de temps et vérifier que les résultats ne changent plus ; tracer $i(t)$ pour les trois valeurs avec
+      matplotlib et comparer à la formule de la section I.
+    </li>
+    <li>
+      Dans LTspice, saisir la netlist <code>V1 vcc 0 24</code>, <code>Vc ctl 0 PULSE(0 5 0 1u 1u 200m 400m)</code>,
+      <code>S1 vcc out ctl 0 SW1</code>, <code>.model SW1 SW(Ron=0.05 Roff=10Meg Vt=2.5)</code>,
+      <code>L1 out n1 1.2</code>, <code>R1 n1 0 48</code>, <code>D1 z out DD</code>, <code>DZ1 z 0 DZ</code>,
+      <code>.model DD D</code>, <code>.model DZ D(BV=30 IBV=1m)</code>, <code>.tran 0 300m 0 10u</code>,
+      <code>.end</code>. Tracer <code>V(out)</code>, <code>V(vcc)-V(out)</code> et <code>I(L1)</code> après
+      l'ouverture, à $200\ \mathrm{ms}$.
+    </li>
+    <li>
+      Remplacer <code>DZ1 z 0 DZ</code> par <code>Rz z 0 1m</code> pour obtenir une diode seule, puis supprimer
+      <code>D1</code> et <code>DZ1</code> pour observer la coupure sans protection, limitée seulement par
+      <code>Roff</code>.
+    </li>
+    <li>
+      Mesure facultative, en très basse tension uniquement : alimenter sous $12$ ou $24\ \mathrm{V}$ un relais
+      industriel à bobine continue, avec une diode de roue libre montée cathode côté pôle positif, et observer à
+      l'oscilloscope, avec une sonde adaptée et une masse unique, la tension de la bobine à l'ouverture d'un
+      interrupteur. Recommencer avec une diode et une Zener. Ne jamais toucher les bornes pendant la manœuvre.
+    </li>
+  </ol>
+  <p>
+    Résultats attendus : la méthode d'Euler donne environ $89\ \mathrm{ms}$ pour la diode seule, $14{,}7\ \mathrm{ms}$
+    pour $30\ \mathrm{V}$ et $8{,}4\ \mathrm{ms}$ pour $60\ \mathrm{V}$, avec $W_e + W_r = 0{,}150\ \mathrm{J}$ à mieux
+    que le pour cent. Dans LTspice, <code>V(out)</code> plonge vers $-31\ \mathrm{V}$ environ avec la Zener, et
+    $V(vcc) - V(out)$ reste vers $55\ \mathrm{V}$ ; avec la diode seule, <code>V(out)</code> reste vers
+    $-0{,}8\ \mathrm{V}$ et le courant s'éteint lentement ; sans protection, la tension atteint des mégavolts, valeur
+    absurde qui ne traduit que l'absence de chemin pour le courant. Au banc, le relais protégé par une diode seule
+    retombe de façon audiblement plus tardive. Anomalies à observer : un pas de temps trop grand fait osciller ou
+    diverger la simulation au moment de l'annulation du courant ; la capacité parasite de la bobine réelle produit une
+    courte oscillation au front de tension ; une diode montée à l'envers fait chauffer le circuit dès la fermeture,
+    à interrompre immédiatement.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est
+    calculé dans ce navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent
+    enregistrées localement pour suivre votre progression.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Un courant crée un champ, et le flux lié qu'il produit est proportionnel au courant : $\psi = Li$, avec $L = \mu_0\mu_rN^2S/l$ pour un solénoïde long ; l'énergie $\tfrac{1}{2}LI^2$ est stockée dans le champ, tant que le noyau ne sature pas.</li>
+    <li data-rang="02">$u = L\,\mathrm{d}i/\mathrm{d}t$ : court-circuit en régime continu, courant continu dans le temps, circuit ouvert à la fermeture d'un circuit sans courant initial ; c'est le dual exact du condensateur.</li>
+    <li data-rang="03">Ouvrir un circuit inductif sans chemin pour le courant produit une surtension destructrice ; l'écrêteur fixe la tension de coupure, donc la durée d'annulation du courant, mais l'énergie à évacuer reste $\tfrac{1}{2}LI^2$.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> raisonner avec une tension qui dépend de la vitesse de variation du
+    courant et non de sa valeur, et en tirer les bons signes, en particulier à l'ouverture, où la tension de la bobine
+    change de signe alors que son courant garde le sien. Le schéma principal de la section F et le schéma de la
+    section H, qui gardent les mêmes flèches de référence en conduction et à la coupure, sont faits pour lever cette
+    difficulté.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Régime transitoire RC, établit l'équation du
+    circuit formé d'une source, d'une résistance et d'un condensateur. Question à préparer : pour un condensateur de
+    $100\ \mu\mathrm{F}$ chargé à travers $10\ \mathrm{k\Omega}$ sous $12\ \mathrm{V}$, écrivez la loi des mailles en
+    remplaçant le courant par $C\,\mathrm{d}u/\mathrm{d}t$ ; quelle grandeur, homogène à un temps, apparaît devant la
+    dérivée, et quelle serait son homologue dans l'animation d'établissement du courant de cette séance ?
+  </p>
+
+</article>
