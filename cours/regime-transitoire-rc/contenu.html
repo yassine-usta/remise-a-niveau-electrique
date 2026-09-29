@@ -1,0 +1,1117 @@
+<article class="cours" data-slug="regime-transitoire-rc">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/inductances-et-champ-magnetique">Inductances et champ magnétique</a> s'est achevé sur
+      une question : pour un condensateur de $100\ \mu\mathrm{F}$ chargé à travers $10\ \mathrm{k\Omega}$ sous
+      $12\ \mathrm{V}$, quelle grandeur homogène à un temps apparaît devant la dérivée quand on écrit la loi des mailles
+      avec $i = C\,\mathrm{d}u/\mathrm{d}t$ ? La maille donne $12 = 10^4\,i + u$, soit
+      $10^4 \times 100 \times 10^{-6}\,\mathrm{d}u/\mathrm{d}t + u = 12$ : le coefficient de la dérivée est le produit
+      $RC = 1\ \mathrm{s}$. Son homologue dans l'animation d'établissement du courant d'une bobine était $L/R$. Cette
+      séance fait de ce produit l'outil central : elle résout l'équation, en tire la charge et la décharge, le bilan
+      d'énergie et une méthode rapide valable pour tout circuit du premier ordre. Elle s'appuie sur la relation
+      $i = C\,\mathrm{d}u/\mathrm{d}t$ et la continuité de la tension du cours
+      <a href="#/cours/condensateurs-et-champ-electrique">Condensateurs et champ électrique</a>, sur la loi des mailles
+      du cours <a href="#/cours/lois-de-kirchhoff">Lois de Kirchhoff</a> et sur l'équivalent de Thévenin du cours
+      <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes de Thévenin, Norton et
+      superposition</a>.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Un circuit résistif répond instantanément : si la source change, tous les courants changent au même instant. Dès
+    qu'un condensateur est présent, le circuit acquiert une mémoire. Sa tension ne peut pas sauter, elle rejoint
+    progressivement sa nouvelle valeur, et la durée de ce rattrapage est fixée par la constante de temps $\tau = RC$.
+    Le régime transitoire RC est ainsi le premier modèle dynamique du parcours, et le plus utilisé en pratique : il
+    décrit la mise sous tension d'un bus continu de variateur et le courant d'appel qui l'accompagne, la décharge de
+    sécurité d'un condensateur de puissance après coupure, le filtre antirebond d'une entrée tout ou rien d'automate,
+    le retard d'une mise sous tension ou d'un réarmement, le filtrage d'une mesure analogique bruitée, le circuit
+    d'aide à la commutation d'un interrupteur de puissance et la réponse d'un capteur de température à un changement
+    brusque.
+  </p>
+  <p>
+    Savoir lire un régime transitoire RC, c'est pouvoir répondre en quelques lignes à des questions de conception
+    très concrètes : combien de temps faut-il attendre avant de fermer le contacteur qui court-circuite la résistance
+    de précharge d'un variateur ? Quelle pointe de courant le pont redresseur subira-t-il ? Combien d'énergie la
+    résistance de précharge doit-elle absorber à chaque mise sous tension ? Au bout de combien de minutes un bus
+    continu peut-il être touché sans danger ? Ces réponses ne demandent ni logiciel ni transformée : trois valeurs
+    suffisent, la valeur initiale, la valeur finale et la constante de temps. La même équation reviendra dans le cours
+    Régime transitoire RL, avec la constante de temps $L/R$, dans le cours Filtres passifs, sous forme fréquentielle,
+    et dans le module d'automatique, où le système du premier ordre est le modèle de référence.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Établir l'équation différentielle d'un circuit RC série à partir de la loi des mailles et de $i = C\,\mathrm{d}u/\mathrm{d}t$, et la résoudre pour une source constante et une tension initiale quelconque.</li>
+    <li data-rang="02">Calculer la constante de temps $\tau$ vue par un condensateur placé dans un réseau résistif quelconque, en passant par la résistance de Thévenin.</li>
+    <li data-rang="03">Calculer la tension, le courant et la puissance à un instant donné, et l'instant auquel une tension atteint un seuil, lors d'une charge ou d'une décharge.</li>
+    <li data-rang="04">Établir et interpréter le bilan énergétique d'une charge : énergie fournie, stockée et dissipée, et expliquer pourquoi la perte ne dépend pas de la résistance.</li>
+    <li data-rang="05">Interpréter les courbes de charge et de décharge à l'aide des repères à $\tau$, $3\tau$ et $5\tau$ et de la tangente, et prévoir la réponse à une suite d'échelons.</li>
+    <li data-rang="06">Dimensionner une précharge de bus continu : résistance, pointe de courant, énergie impulsionnelle et temporisation du contacteur de court-circuit.</li>
+    <li data-rang="07">Diagnostiquer un défaut de précharge ou de temporisation à partir de symptômes observés sur une installation.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois acquis sont mobilisés. Le premier est mathématique : la fonction exponentielle et son inverse, le logarithme
+    népérien. Il faut savoir que $e^{-x}$ décroît de $1$ vers $0$, que $e^{-1} \approx 0{,}368$, que la dérivée de
+    $e^{-t/\tau}$ vaut $-\tfrac{1}{\tau}e^{-t/\tau}$, et que $e^{-x} = a$ équivaut à $x = \ln(1/a)$. Le deuxième vient
+    du cours <a href="#/cours/condensateurs-et-champ-electrique">Condensateurs et champ électrique</a> : en convention
+    récepteur, $i = C\,\mathrm{d}u/\mathrm{d}t$, la tension d'un condensateur est continue, et il se comporte comme un
+    circuit ouvert en régime continu établi. Le troisième vient du cours
+    <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes de Thévenin, Norton et
+    superposition</a> : la résistance de Thévenin vue entre deux bornes se calcule en éteignant les sources
+    indépendantes, une source de tension éteinte devenant un fil. Le mini-test ci-dessous n'est pas noté ; la correction
+    de chaque question reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la correction".
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-rattrapage">Un rattrapage d'autant plus lent que l'écart est faible</h3>
+  <p>
+    Fermons un interrupteur qui relie une source continue $E$ à un condensateur déchargé à travers une résistance $R$.
+    À l'instant de la fermeture, le condensateur n'a encore reçu aucune charge : sa tension est nulle, puisqu'elle ne
+    peut pas sauter. Toute la tension de la source se retrouve donc aux bornes de la résistance, et le courant vaut
+    $E/R$, sa valeur maximale. Ce courant apporte des charges sur les armatures, la tension du condensateur monte, et
+    la tension laissée à la résistance, $E - u_C$, diminue d'autant. Le courant diminue donc aussi, et la tension monte
+    de moins en moins vite.
+  </p>
+  <p>
+    Tout le régime transitoire tient dans une phrase : à chaque instant, la vitesse de montée de la tension est
+    proportionnelle à l'écart qui reste à combler, $E - u_C$. Quand l'écart est grand, le rattrapage est rapide ; quand
+    il devient petit, le rattrapage ralentit d'autant. Une grandeur qui diminue à une vitesse proportionnelle à
+    elle-même décroît exponentiellement : l'écart perd la même fraction de sa valeur pendant chaque intervalle de temps
+    égal. En théorie, il n'est jamais comblé ; en pratique, il devient négligeable au bout de quelques constantes de
+    temps. Pendant la décharge, le mécanisme est le même : l'écart à combler est alors la tension du condensateur
+    elle-même, qui s'écoule à travers la résistance.
+  </p>
+  <p>
+    Analogie contrôlée : un réservoir rempli par un tuyau étroit depuis une grande cuve dont le niveau est fixe. Le
+    débit dans le tuyau est proportionnel à la différence de niveau entre la cuve et le réservoir ; il est maximal au
+    début, puis diminue à mesure que le réservoir se remplit. Le niveau d'eau joue le rôle de la tension, le débit
+    celui du courant, la section du réservoir celui de la capacité et l'étroitesse du tuyau celui de la résistance.
+    Un réservoir plus large ou un tuyau plus étroit rendent le remplissage plus lent, sans changer le niveau final :
+    la durée caractéristique est proportionnelle au produit des deux, comme $\tau = RC$.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie du réservoir</span>
+    <p>
+      L'analogie rend bien compte de la décroissance du débit, du rôle symétrique de la capacité et de la résistance, et
+      de l'indépendance entre la durée du remplissage et la hauteur visée. Elle en déforme d'autres aspects. Dans un
+      condensateur, aucune charge ne traverse le diélectrique : la charge qui arrive sur une armature est égale à celle
+      qui quitte l'autre, et le courant n'est "continu" à travers le condensateur que grâce au courant de déplacement ;
+      un réservoir, lui, accumule réellement de la matière. La tension d'un condensateur peut devenir négative, un niveau
+      d'eau non. Enfin, l'écoulement réel dans un tuyau n'est proportionnel à la différence de niveau qu'en régime
+      laminaire, alors que la loi d'Ohm reste linéaire sur une plage bien plus large : l'analogie est plus fragile que le
+      modèle électrique qu'elle illustre.
+    </p>
+  </div>
+
+  <h3 id="d-anim-section">Animation : charge puis décharge, pas à pas</h3>
+  <p>
+    L'animation montre le circuit de la séance : une source $E$, un inverseur $K$, une résistance $R$ et un
+    condensateur $C$ initialement déchargé. De $0$ à $5\tau$, $K$ est en position 1 et la source charge le
+    condensateur ; à $5\tau$, $K$ bascule en position 2 et le condensateur se décharge dans la même résistance. Les
+    points qui circulent dans les fils sont des porteurs dessinés dans le sens réel du courant, avec un déplacement
+    proportionnel à la charge transportée ; les signes $+$ et $-$ sur les armatures sont en nombre proportionnel à la
+    tension du condensateur. Le temps est piloté par vous : lecture, pause, vitesse et remise à zéro. Avant de lancer
+    la lecture, prédisez qualitativement : à quel instant le courant est-il le plus fort ? Le courant change-t-il de
+    sens au basculement de $K$ ? La tension du condensateur, elle, saute-t-elle à ce moment ? Quelle part de l'énergie
+    fournie par la source finit stockée dans le condensateur ?
+  </p>
+  <figure id="d-anim-figure">
+    <div class="m-toile-cadre schema-vivant" id="d-anim"></div>
+    <figcaption>
+      La source $E$, borne $+$ en haut, est reliée à la position 1 de l'inverseur $K$ ; la position 2 renvoie
+      directement au conducteur du bas, qui est la référence de potentiel (symbole de masse). La lame de $K$, en trait
+      épais, montre la position active. La flèche épaisse sur le fil du haut donne le sens de référence du courant $i$,
+      qui entre par l'armature $+$ du condensateur : convention récepteur. La flèche fine $u_C$ pointe vers cette
+      armature. Les porteurs circulent dans le sens réel du courant : dans le sens de la flèche pendant la charge, en
+      sens inverse pendant la décharge, où $i$ est donc négatif. Ils disparaissent entre les armatures, que le courant ne
+      traverse que sous forme de courant de déplacement. Les jauges horizontales donnent $u_C/E$ et $|i|/I_0$, avec
+      $I_0 = E/R$.
+    </figcaption>
+  </figure>
+  <div id="d-anim-lecteur"></div>
+  <div id="d-anim-valeurs"></div>
+  <p>
+    Interprétation : le courant est maximal juste après la fermeture, quand l'écart $E - u_C$ est maximal ; il décroît
+    ensuite en même temps que la tension de la résistance. Au basculement de $K$, la tension du condensateur ne saute
+    pas : elle vaut encore $0{,}993\,E$. C'est le courant qui saute, de presque zéro à $-E/R$ : le condensateur,
+    devenu générateur, pousse le courant dans l'autre sens à travers la résistance. Le panneau d'énergies montre le
+    résultat le plus surprenant de la séance : à la fin de la charge, la source a fourni $CE^2$, le condensateur en
+    garde la moitié, et la résistance a dissipé l'autre moitié. Pendant la décharge, la source ne fournit plus rien et
+    la résistance dissipe l'énergie stockée. Ces trois constats, courant discontinu, tension continue, moitié de
+    l'énergie perdue, sont établis dans la section suivante.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-equation">Mise en équation</h3>
+  <p>
+    Circuit de référence : la source de tension idéale $E$ est reliée à l'instant $t = 0$, par la position 1 de $K$, à
+    la résistance $R$ en série avec le condensateur $C$, dont la tension juste avant la manœuvre vaut $U_0$. Les
+    orientations sont celles du schéma principal de la section F : courant $i$ orienté de la source vers l'armature
+    $+$ du condensateur, tensions $u_R$ et $u_C$ en convention récepteur, conducteur du bas pris comme référence de
+    potentiel. Pour $t > 0$, la loi des mailles donne $E = u_R + u_C$ ; la loi d'Ohm donne $u_R = Ri$ ; la relation du
+    condensateur donne $i = C\,\mathrm{d}u_C/\mathrm{d}t$. En remplaçant :
+  </p>
+  <div class="formule-cle">
+    $$RC\,\frac{\mathrm{d}u_C}{\mathrm{d}t} + u_C = E, \qquad \tau = RC$$
+    <p class="formule-cle-legende">
+      $R$ en ohms, $C$ en farads, $u_C$ et $E$ en volts, $t$ et $\tau$ en secondes. Hypothèses : résistance et capacité
+      constantes et linéaires, source idéale constante pour $t > 0$, interrupteur idéal qui bascule instantanément,
+      inductance du câblage négligée. C'est une équation différentielle linéaire du premier ordre à coefficients
+      constants : une seule grandeur mémorise le passé, la tension du condensateur, d'où le nom de circuit du premier
+      ordre.
+    </p>
+  </div>
+  <p>
+    Vérification dimensionnelle : $[RC] = \Omega \cdot \mathrm{F} = \dfrac{\mathrm{V}}{\mathrm{A}} \cdot
+    \dfrac{\mathrm{A \cdot s}}{\mathrm{V}} = \mathrm{s}$. Le produit $RC$ est bien une durée, et chaque terme de
+    l'équation est une tension.
+  </p>
+
+  <h3 id="e-solution">Résolution et forme universelle</h3>
+  <p>
+    Première méthode, la séparation des variables. L'équation s'écrit $\dfrac{\mathrm{d}u_C}{E - u_C} =
+    \dfrac{\mathrm{d}t}{\tau}$. En intégrant de l'instant $0^+$, où $u_C = U_0$ par continuité, jusqu'à l'instant $t$ :
+    $-\ln\dfrac{E - u_C(t)}{E - U_0} = \dfrac{t}{\tau}$, soit $E - u_C(t) = (E - U_0)\,e^{-t/\tau}$. L'écart à la
+    valeur finale décroît exponentiellement, comme l'annonçait l'intuition. Seconde méthode, celle qui se généralise :
+    la solution est la somme d'une solution particulière, ici le régime permanent $u_C = E$, et de la solution générale
+    de l'équation sans second membre, $A\,e^{rt}$ avec $\tau r + 1 = 0$, donc $r = -1/\tau$. La constante $A$ est fixée
+    par la condition initiale : $u_C(0^+) = E + A = U_0$, donc $A = U_0 - E$. Les deux méthodes donnent :
+  </p>
+  <div class="formule-cle">
+    $$u_C(t) = E + (U_0 - E)\,e^{-t/\tau}, \qquad i(t) = C\,\frac{\mathrm{d}u_C}{\mathrm{d}t} = \frac{E - U_0}{R}\,e^{-t/\tau}, \qquad u_R(t) = (E - U_0)\,e^{-t/\tau}$$
+    <p class="formule-cle-legende">
+      Valable pour $t > 0$. Cas limites : à $t = 0^+$, $u_C = U_0$ et $i = (E - U_0)/R$ ; quand $t \to \infty$,
+      $u_C \to E$ et $i \to 0$, le condensateur devient un circuit ouvert. Si $U_0 = E$, rien ne se passe : il n'y a
+      pas d'écart à combler. Le courant, lui, saute à la fermeture : il valait zéro juste avant, il vaut
+      $(E - U_0)/R$ juste après, ce qui est permis car seule la tension du condensateur est tenue d'être continue.
+    </p>
+  </div>
+  <p>
+    Toutes les grandeurs d'un circuit linéaire du premier ordre alimenté par des sources constantes ont la même forme :
+    une valeur finale, plus l'écart initial à cette valeur finale multiplié par $e^{-t/\tau}$. C'est la forme universelle
+    qui fonde la méthode rapide de la section G :
+  </p>
+  <div class="formule-cle">
+    $$x(t) = x_\infty + \bigl(x(0^+) - x_\infty\bigr)\,e^{-t/\tau}, \qquad t_{x} = \tau\,\ln\frac{x(0^+) - x_\infty}{x - x_\infty}$$
+    <p class="formule-cle-legende">
+      $x$ désigne n'importe quelle tension ou n'importe quel courant du circuit ; $x(0^+)$ est sa valeur juste après la
+      manœuvre, obtenue par la continuité de $u_C$ ; $x_\infty$ sa valeur en régime continu établi, condensateur
+      remplacé par un circuit ouvert. La seconde relation donne l'instant $t_x$ où la grandeur atteint la valeur $x$ ;
+      elle découle de la première en prenant le logarithme. Elle n'a de sens que si $x$ est situé entre $x(0^+)$ et
+      $x_\infty$ : une valeur au-delà de la valeur finale n'est jamais atteinte.
+    </p>
+  </div>
+  <p>
+    Décharge : avec $K$ en position 2, la source est remplacée par un fil, donc $E = 0$ dans les formules. La tension
+    décroît selon $u_C = U_0\,e^{-t/\tau}$ et le courant vaut $i = -\dfrac{U_0}{R}\,e^{-t/\tau}$ : il est négatif par
+    rapport au sens de référence, car le condensateur débite maintenant dans la résistance. Repères numériques, à
+    connaître par cœur : après $\tau$, l'écart initial est réduit à $36{,}8\ \%$, donc $63{,}2\ \%$ du chemin est
+    parcouru ; après $2\tau$, $86{,}5\ \%$ ; après $3\tau$, $95{,}0\ \%$ ; après $5\tau$, $99{,}3\ \%$. La moitié du
+    chemin est parcourue en $\tau\ln 2 = 0{,}693\,\tau$, et la montée de $10\ \%$ à $90\ \%$ dure $\tau\ln 9 = 2{,}2\,\tau$.
+  </p>
+  <p>
+    Propriété de la tangente : en dérivant la forme universelle, $\mathrm{d}x/\mathrm{d}t = (x_\infty - x)/\tau$. La
+    tangente à la courbe, en n'importe quel point, atteint donc la valeur finale au bout d'une durée $\tau$. À
+    l'origine, cela fournit une construction graphique de $\tau$ sur un relevé d'oscilloscope : on trace la tangente au
+    départ et on lit l'instant où elle coupe l'asymptote. Le chronogramme ci-dessous rassemble ces repères pour la
+    charge et pour la décharge.
+  </p>
+  <figure id="e-chrono-figure">
+    <svg viewBox="0 0 880 380" role="img" aria-label="Chronogramme de la charge et de la décharge d'un condensateur : tension croissante de 0 vers E et courant décroissant de E sur R vers 0 pendant la charge ; tension décroissante de E vers 0 et courant négatif remontant de moins E sur R vers 0 pendant la décharge ; tangentes à l'origine et repères à une, deux, trois et cinq constantes de temps">
+      <g stroke="currentColor" stroke-width="1.4" fill="none" opacity="0.8">
+        <path d="M70 170H390M70 180V32"/>
+        <path d="M70 300H390M70 310V196"/>
+        <path d="M520 170H840M520 180V32"/>
+        <path d="M520 210H840M520 322V196"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.2" fill="none" stroke-dasharray="6 5" opacity="0.7">
+        <path d="M70 50H380"/>
+        <path d="M70 170L130 50"/>
+        <path d="M130 170V94.1H70"/>
+        <path d="M70 210L130 300"/>
+        <path d="M520 50L580 170"/>
+        <path d="M580 170V125.9H520"/>
+        <path d="M520 300L580 210"/>
+        <path d="M190 170V66.2M250 170V56"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M70.0 170.0 L77.5 155.9 L85.0 143.5 L92.5 132.5 L100.0 122.8 L107.5 114.2 L115.0 106.7 L122.5 100.0 L130.0 94.1 L137.5 89.0 L145.0 84.4 L152.5 80.3 L160.0 76.8 L167.5 73.6 L175.0 70.9 L182.5 68.4 L190.0 66.2 L197.5 64.3 L205.0 62.6 L212.5 61.2 L220.0 59.9 L227.5 58.7 L235.0 57.7 L242.5 56.8 L250.0 56.0 L257.5 55.3 L265.0 54.7 L272.5 54.1 L280.0 53.6 L287.5 53.2 L295.0 52.8 L302.5 52.5 L310.0 52.2 L317.5 51.9 L325.0 51.7 L332.5 51.5 L340.0 51.3 L347.5 51.2 L355.0 51.0 L362.5 50.9 L370.0 50.8"/>
+        <path d="M70 300V210.0 L77.5 220.6 L85.0 229.9 L92.5 238.1 L100.0 245.4 L107.5 251.8 L115.0 257.5 L122.5 262.5 L130.0 266.9 L137.5 270.8 L145.0 274.2 L152.5 277.2 L160.0 279.9 L167.5 282.3 L175.0 284.4 L182.5 286.2 L190.0 287.8 L197.5 289.3 L205.0 290.5 L212.5 291.6 L220.0 292.6 L227.5 293.5 L235.0 294.2 L242.5 294.9 L250.0 295.5 L257.5 296.0 L265.0 296.5 L272.5 296.9 L280.0 297.3 L287.5 297.6 L295.0 297.9 L302.5 298.1 L310.0 298.4 L317.5 298.5 L325.0 298.7 L332.5 298.9 L340.0 299.0 L347.5 299.1 L355.0 299.2 L362.5 299.3 L370.0 299.4"/>
+        <path d="M520.0 50.0 L527.5 64.1 L535.0 76.5 L542.5 87.5 L550.0 97.2 L557.5 105.8 L565.0 113.3 L572.5 120.0 L580.0 125.9 L587.5 131.0 L595.0 135.6 L602.5 139.7 L610.0 143.2 L617.5 146.4 L625.0 149.1 L632.5 151.6 L640.0 153.8 L647.5 155.7 L655.0 157.4 L662.5 158.8 L670.0 160.1 L677.5 161.3 L685.0 162.3 L692.5 163.2 L700.0 164.0 L707.5 164.7 L715.0 165.3 L722.5 165.9 L730.0 166.4 L737.5 166.8 L745.0 167.2 L752.5 167.5 L760.0 167.8 L767.5 168.1 L775.0 168.3 L782.5 168.5 L790.0 168.7 L797.5 168.8 L805.0 169.0 L812.5 169.1 L820.0 169.2"/>
+        <path d="M520 210V300.0 L527.5 289.4 L535.0 280.1 L542.5 271.9 L550.0 264.6 L557.5 258.2 L565.0 252.5 L572.5 247.5 L580.0 243.1 L587.5 239.2 L595.0 235.8 L602.5 232.8 L610.0 230.1 L617.5 227.7 L625.0 225.6 L632.5 223.8 L640.0 222.2 L647.5 220.7 L655.0 219.5 L662.5 218.4 L670.0 217.4 L677.5 216.5 L685.0 215.8 L692.5 215.1 L700.0 214.5 L707.5 214.0 L715.0 213.5 L722.5 213.1 L730.0 212.7 L737.5 212.4 L745.0 212.1 L752.5 211.9 L760.0 211.6 L767.5 211.5 L775.0 211.3 L782.5 211.1 L790.0 211.0 L797.5 210.9 L805.0 210.8 L812.5 210.7 L820.0 210.6"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="230" y="18" text-anchor="middle" font-weight="600">charge : K en 1, U0 = 0</text>
+        <text x="680" y="18" text-anchor="middle" font-weight="600">décharge : K en 2, départ à E</text>
+        <text x="62" y="40" text-anchor="end" font-size="11.5">u_C</text>
+        <text x="62" y="206" text-anchor="end" font-size="11.5">i</text>
+        <text x="512" y="40" text-anchor="end" font-size="11.5">u_C</text>
+        <text x="512" y="200" text-anchor="end" font-size="11.5">i</text>
+        <text x="62" y="54" text-anchor="end">E</text>
+        <text x="62" y="98" text-anchor="end">0,63 E</text>
+        <text x="62" y="214" text-anchor="end">E/R</text>
+        <text x="512" y="54" text-anchor="end">E</text>
+        <text x="512" y="130" text-anchor="end">0,37 E</text>
+        <text x="512" y="304" text-anchor="end">-E/R</text>
+        <text x="130" y="188" text-anchor="middle" font-size="11">τ</text>
+        <text x="190" y="188" text-anchor="middle" font-size="11">2τ</text>
+        <text x="250" y="188" text-anchor="middle" font-size="11">3τ</text>
+        <text x="370" y="188" text-anchor="middle" font-size="11">5τ</text>
+        <text x="130" y="318" text-anchor="middle" font-size="11">τ</text>
+        <text x="580" y="188" text-anchor="middle" font-size="11">τ</text>
+        <text x="700" y="188" text-anchor="middle" font-size="11">3τ</text>
+        <text x="820" y="188" text-anchor="middle" font-size="11">5τ</text>
+        <text x="396" y="174" font-size="11">t</text>
+        <text x="396" y="304" font-size="11">t</text>
+        <text x="846" y="174" font-size="11">t</text>
+        <text x="846" y="214" font-size="11">t</text>
+        <text x="270" y="120" font-size="11.5">86 % à 2τ, 95 % à 3τ</text>
+        <text x="270" y="136" font-size="11.5">99,3 % à 5τ</text>
+        <text x="200" y="258" font-size="11.5">tangente : 0 à τ</text>
+        <text x="660" y="90" font-size="11.5">13,5 % à 2τ, 5 % à 3τ</text>
+        <text x="660" y="106" font-size="11.5">0,7 % à 5τ</text>
+        <text x="620" y="280" font-size="11.5">i négatif : C débite</text>
+        <text x="440" y="356" text-anchor="middle" font-size="11.5">tangente à l'origine en tirets : elle atteint la valeur finale au bout de τ</text>
+        <text x="440" y="374" text-anchor="middle" font-size="11.5">i orienté vers l'armature + de C (convention récepteur) ; masse : référence 0 V</text>
+      </g>
+    </svg>
+    <figcaption>
+      Chronogramme de la charge (colonne de gauche) et de la décharge (colonne de droite) dans une même résistance.
+      Graphiques du haut : tension $u_C$ du condensateur ; graphiques du bas : courant $i$, orienté vers l'armature $+$
+      comme dans le schéma principal. En charge, $u_C$ part de $0$ et tend vers $E$, tandis que $i$ saute à $E/R$ puis
+      décroît vers zéro. En décharge, $u_C$ part de $E$ et décroît vers zéro, tandis que $i$ saute à $-E/R$ puis
+      remonte vers zéro : il est négatif car le condensateur débite. Les traits en tirets sont les tangentes à l'origine,
+      qui atteignent la valeur finale au bout de $\tau$, les repères verticaux à $\tau$, $2\tau$ et $3\tau$, et les
+      niveaux $0{,}63\,E$ et $0{,}37\,E$ lus à $\tau$. Les deux courbes de tension ont exactement la même forme,
+      retournée : c'est l'écart à la valeur finale qui décroît dans les deux cas.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-tangente-section">Simulation interactive : lire la courbe et sa tangente</h3>
+  <p>
+    La simulation trace $u_C(t)$ pour des valeurs de $R$, $C$, $E$ et $U_0$ réglées par les curseurs, sur une durée de
+    $5\tau$. Le point rond, sur l'axe des temps, se déplace à la souris, au doigt ou au clavier : il fixe l'instant
+    étudié, et le schéma trace la tangente à la courbe en cet instant, en tirets, jusqu'à la valeur finale. Avant de
+    manipuler, prédisez : si vous doublez $E$, la durée pour atteindre $63\ \%$ du chemin change-t-elle ? Si $U_0$
+    est supérieure à $E$, que devient le sens du courant ? La tangente atteint-elle l'asymptote au bout de $\tau$
+    quel que soit l'instant choisi ?
+  </p>
+  <figure id="e-tangente-figure">
+    <div class="m-toile-cadre schema-vivant" id="e-tangente"></div>
+    <figcaption>
+      Axe horizontal : le temps, gradué en millisecondes et en multiples de $\tau$ ; axe vertical : la tension $u_C$ en
+      volts. La courbe épaisse est $u_C(t)$, la ligne horizontale en tirets longs la valeur finale $E$, et le segment en
+      tirets courts la tangente au point étudié, prolongée jusqu'à la valeur finale ; les deux repères verticaux fins
+      marquent l'instant étudié et cet instant augmenté de $\tau$. Le point rond sur l'axe du bas est la poignée qui
+      choisit l'instant ; le petit disque sur la courbe en est l'image.
+    </figcaption>
+  </figure>
+  <div id="e-tangente-curseurs"></div>
+  <div id="e-tangente-valeurs"></div>
+  <p>
+    Interprétation : doubler $E$ double toutes les tensions et le courant, mais ne change ni $\tau$ ni la durée pour
+    parcourir une fraction donnée du chemin, car la forme universelle ne dépend que du rapport $t/\tau$. Avec
+    $U_0 > E$, l'écart initial est négatif : le courant est négatif dès le départ, le condensateur se décharge
+    partiellement vers la source jusqu'à $E$. La tangente atteint l'asymptote au bout de $\tau$ en tout point, ce qui
+    traduit $\mathrm{d}u_C/\mathrm{d}t = (E - u_C)/\tau$ : la pente est l'écart divisé par la constante de temps.
+    Remarquez enfin que le panneau affiche l'écart restant en pour cent de l'écart initial : il ne dépend que de
+    $t/\tau$, et vaut $36{,}8\ \%$ en $t = \tau$ quelles que soient les valeurs choisies.
+  </p>
+
+  <h3 id="e-euler-section">Animation : construire l'exponentielle pas à pas</h3>
+  <p>
+    La relation $\mathrm{d}u_C/\mathrm{d}t = (E - u_C)/\tau$ se lit aussi comme une règle de construction : connaissant
+    la tension à un instant, on connaît la pente, donc on peut avancer d'un petit pas $\Delta t$ en suivant la tangente,
+    puis recommencer. C'est la méthode d'Euler, celle que vous programmerez dans le travail pratique et que les
+    simulateurs de circuits raffinent. Avant de lancer la construction, prédisez : avec un pas égal à $\tau$, où
+    tombera le premier point ? Que se passe-t-il pour un pas supérieur à $2\tau$ ?
+  </p>
+  <figure id="e-euler-figure">
+    <div class="m-toile-cadre schema-vivant" id="e-euler"></div>
+    <figcaption>
+      Axe horizontal : le temps en multiples de $\tau$ ; axe vertical : $u_C/E$. La courbe exacte est tracée en trait
+      fin en tirets, la valeur finale en tirets longs. Les segments épais sont les pas de la méthode d'Euler : chacun part
+      du point précédent avec la pente $(E - u_C)/\tau$ calculée en ce point, et les petits disques marquent les valeurs
+      obtenues. Le curseur règle la durée du pas, le lecteur fait avancer la construction.
+    </figcaption>
+  </figure>
+  <div id="e-euler-curseurs"></div>
+  <div id="e-euler-lecteur"></div>
+  <div id="e-euler-valeurs"></div>
+  <p>
+    Interprétation : avec un petit pas, les segments épousent l'exponentielle ; l'erreur, toujours par excès pendant une
+    charge car la tangente d'une courbe concave passe au-dessus d'elle, est d'autant plus faible que le pas est petit. Avec $\Delta t = \tau$, le premier pas atteint exactement
+    $E$ : la tangente à l'origine rejoint l'asymptote en $\tau$, c'est la propriété de la tangente. Au-delà, la
+    construction dépasse la valeur finale et oscille, et pour $\Delta t > 2\tau$ elle diverge, puisque chaque pas
+    multiplie l'écart par $1 - \Delta t/\tau$, de module supérieur à $1$. Un simulateur numérique ne donne donc un
+    résultat fiable que si son pas est petit devant la plus petite constante de temps du circuit : c'est la première
+    règle de tout calcul numérique d'un régime transitoire.
+  </p>
+
+  <h3 id="e-thevenin">Constante de temps vue par le condensateur</h3>
+  <p>
+    Dans un circuit réel, le condensateur est rarement en série avec une seule résistance et une seule source. Le
+    cours <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes de Thévenin, Norton et
+    superposition</a> fournit la clé : vu des bornes du condensateur, tout réseau linéaire de résistances et de sources
+    constantes se ramène à une source $E_{th}$ en série avec une résistance $R_{th}$. Le circuit se réduit alors
+    exactement au circuit RC de référence, avec $\tau = R_{th}\,C$ et une valeur finale $u_\infty = E_{th}$.
+  </p>
+  <figure id="e-thevenin-figure">
+    <svg viewBox="0 0 860 320" role="img" aria-label="Réduction d'un réseau vu par un condensateur : source E, résistance R1 en série, résistance R2 en parallèle sur le condensateur, remplacés par une source de Thévenin E th en série avec R th">
+      <defs>
+        <marker id="fl-e-th" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-e-th-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <rect x="24" y="28" width="286" height="238" rx="10" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="6 5" opacity="0.6"/>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="60" cy="150" r="20"/>
+        <path d="M60 130V60H110M170 60H360V130M360 150V240H60V170"/>
+        <rect x="110" y="48" width="60" height="24" rx="3"/>
+        <path d="M260 60V110M260 170V240"/>
+        <rect x="248" y="110" width="24" height="60" rx="3"/>
+        <path d="M330 130H390M330 150H390" stroke-width="3.2"/>
+        <circle cx="600" cy="150" r="20"/>
+        <path d="M600 130V60H650M710 60H790V130M790 150V240H600V170"/>
+        <rect x="650" y="48" width="60" height="24" rx="3"/>
+        <path d="M760 130H820M760 150H820" stroke-width="3.2"/>
+        <path d="M200 240V252M188 252H212M193 258H207M197 264H203"/>
+      </g>
+      <g fill="currentColor" stroke="none"><circle cx="260" cy="60" r="4"/><circle cx="260" cy="240" r="4"/></g>
+      <g stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M468 150H536" marker-end="url(#fl-e-th)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M414 214V82" marker-end="url(#fl-e-th-u)"/>
+        <path d="M844 214V82" marker-end="url(#fl-e-th-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="60" y="146" text-anchor="middle" font-weight="600">+</text>
+        <text x="32" y="156" text-anchor="end">E</text>
+        <text x="140" y="92" text-anchor="middle">R1</text>
+        <text x="236" y="146" text-anchor="end">R2</text>
+        <text x="372" y="124" font-weight="600">+</text>
+        <text x="372" y="176">C</text>
+        <text x="424" y="154" fill="var(--serie-2)">u_C</text>
+        <text x="268" y="52">A</text>
+        <text x="167" y="290" text-anchor="middle" font-size="11.5">réseau linéaire vu des bornes de C</text>
+        <text x="502" y="138" text-anchor="middle" font-size="11.5">Thévenin</text>
+        <text x="600" y="146" text-anchor="middle" font-weight="600">+</text>
+        <text x="572" y="156" text-anchor="end">E_th</text>
+        <text x="680" y="92" text-anchor="middle">R_th</text>
+        <text x="802" y="124" font-weight="600">+</text>
+        <text x="802" y="176">C</text>
+        <text x="836" y="232" text-anchor="end" fill="var(--serie-2)">u_C</text>
+        <text x="700" y="274" text-anchor="middle" font-size="11.5">E_th = E R2 / (R1 + R2)</text>
+        <text x="700" y="292" text-anchor="middle" font-size="11.5">R_th = R1 R2 / (R1 + R2), source éteinte</text>
+        <text x="700" y="310" text-anchor="middle" font-size="11.5">τ = R_th C ; u_C tend vers E_th</text>
+        <text x="228" y="276" font-size="11">0 V</text>
+      </g>
+    </svg>
+    <figcaption>
+      À gauche, un réseau courant : la source $E$ (borne $+$ en haut) charge le condensateur à travers $R_1$, et $R_2$
+      est en parallèle sur le condensateur, par exemple une résistance de décharge ou l'entrée d'un appareil de mesure.
+      Le cadre en tirets délimite tout ce que "voit" le condensateur entre le nœud $A$ et la masse, référence de
+      potentiel. La flèche fine $u_C$ pointe vers l'armature $+$, en convention récepteur. À droite, l'équivalent de
+      Thévenin : la source $E_{th}$ est la tension à vide entre $A$ et la masse, condensateur retiré, et $R_{th}$ la
+      résistance vue entre ces bornes, source $E$ remplacée par un fil, soit $R_1$ en parallèle avec $R_2$. Le
+      condensateur se charge vers $E_{th}$, et non vers $E$, avec la constante de temps $R_{th}C$, plus courte que
+      $R_1C$.
+    </figcaption>
+  </figure>
+  <p>
+    Deux conséquences pratiques. D'abord, la valeur finale et la constante de temps doivent être calculées dans le même
+    circuit, celui qui existe après la manœuvre : si un interrupteur déconnecte la source à la fin de la charge, la
+    décharge se fait dans $R_2$ seule, avec $\tau = R_2C$, et non plus dans $R_1 \parallel R_2$. Ensuite, une
+    résistance en parallèle sur le condensateur raccourcit la constante de temps tout en abaissant la valeur finale :
+    c'est l'erreur classique d'une temporisation qui n'atteint jamais son seuil. L'exemple de la section H et l'exercice
+    avancé de la section K l'illustrent.
+  </p>
+
+  <h3 id="e-energie">Bilan énergétique d'une charge</h3>
+  <p>
+    Pendant la charge de $U_0$ à $E$, la source fournit $W_s = \displaystyle\int_0^\infty E\,i\,\mathrm{d}t = E\,\Delta q
+    = E\,C\,(E - U_0)$, puisque la charge totale débitée est la variation de charge du condensateur,
+    $\Delta q = C(E - U_0)$. Le condensateur gagne $\Delta W_C = \tfrac{1}{2}C(E^2 - U_0^2)$. La résistance dissipe :
+  </p>
+  <div class="formule-cle">
+    $$W_R = \int_0^\infty R\,i^2\,\mathrm{d}t = R\,\frac{(E - U_0)^2}{R^2}\int_0^\infty e^{-2t/\tau}\,\mathrm{d}t = \frac{(E - U_0)^2}{R}\cdot\frac{RC}{2} = \frac{1}{2}\,C\,(E - U_0)^2$$
+    <p class="formule-cle-legende">
+      Énergies en joules. Contrôle du bilan : $\tfrac{1}{2}C(E - U_0)(E + U_0) + \tfrac{1}{2}C(E - U_0)^2 =
+      C(E - U_0)E = W_s$. Pour une charge complète depuis zéro, la source fournit $CE^2$, le condensateur en stocke
+      $\tfrac{1}{2}CE^2$ et la résistance en dissipe autant : le rendement est de $50\ \%$, quelle que soit $R$.
+    </p>
+  </div>
+  <p>
+    Interprétation : une résistance plus faible donne un courant plus fort mais plus bref ; l'énergie $\int Ri^2\,\mathrm{d}t$
+    est proportionnelle à $R \times (1/R)^2 \times R$, et $R$ disparaît. Cas limite $R \to 0$ : le modèle prédit une
+    charge instantanée avec un courant infini qui dissiperait quand même $\tfrac{1}{2}CE^2$ ; en réalité, la résistance
+    des connexions, la résistance série du condensateur et l'inductance du câblage, que le cours Régime transitoire RLC
+    prendra en compte, limitent le courant et absorbent cette énergie, parfois sous forme d'étincelle. Conséquence de
+    conception : la perte ne dépend que de l'écart de tension $E - U_0$ au moment de la manœuvre. Pour charger
+    efficacement un condensateur, il faut lui présenter une source dont la tension suit la sienne de près, ce que font
+    les convertisseurs à découpage, étudiés dans le cours Hacheurs DC-DC ; et un contacteur qui court-circuite une
+    résistance de précharge ne doit se fermer qu'une fois l'écart devenu faible, puisque l'énergie dissipée à la
+    fermeture vaut $\tfrac{1}{2}C\,\Delta U^2$.
+  </p>
+
+  <h3 id="e-carre-section">Réponse à une suite d'échelons</h3>
+  <p>
+    Quand la source bascule périodiquement entre $0$ et $E$, chaque basculement démarre un nouveau régime transitoire,
+    dont la valeur initiale est la tension atteinte juste avant, par continuité, et la valeur finale le nouveau niveau de
+    la source. Pour un signal carré de demi-période $h$, après quelques périodes, la tension oscille entre deux valeurs
+    stables $U_{\min}$ et $U_{\max}$. En posant $a = e^{-h/\tau}$, la charge donne $U_{\max} = E + (U_{\min} - E)\,a$
+    et la décharge $U_{\min} = U_{\max}\,a$ ; en résolvant ce système de deux équations :
+  </p>
+  <div class="formule-cle">
+    $$U_{\max} = \frac{E}{1 + a}, \qquad U_{\min} = \frac{E\,a}{1 + a}, \qquad \Delta U = E\,\frac{1 - a}{1 + a}, \qquad a = e^{-h/\tau}$$
+    <p class="formule-cle-legende">
+      Cas limites : si $h \gg \tau$, $a \to 0$, la tension a le temps de faire tout le chemin, $U_{\min} \to 0$ et
+      $U_{\max} \to E$. Si $h \ll \tau$, $a \approx 1 - h/\tau$, la tension reste proche de la valeur moyenne $E/2$ et
+      oscille en triangle d'amplitude crête à crête $\Delta U \approx Eh/(2\tau)$ : le circuit lisse le signal, c'est un
+      filtre passe-bas. La valeur moyenne de $u_C$ en régime établi vaut toujours $E/2$, celle de la source, puisque le
+      courant moyen dans le condensateur est nul.
+    </p>
+  </div>
+  <p>
+    Avant de manipuler la simulation ci-dessous, prédisez : pour une période égale à $\tau$, la tension du
+    condensateur atteindra-t-elle $E$ ? Combien de périodes faudra-t-il pour que l'oscillation se stabilise ? Que
+    devient l'ondulation si l'on multiplie la fréquence par dix ?
+  </p>
+  <figure id="e-carre-figure">
+    <div id="e-carre-trace"></div>
+    <figcaption>
+      Tracé temporel, pour $E = 10\ \mathrm{V}$ : en bleu et en trait fin, la tension carrée de la source, entre $0$ et
+      $E$ ; en trait épais, la tension $u_C$ du condensateur, partant de zéro. Les deux lignes horizontales en tirets
+      repèrent les valeurs $U_{\min}$ et $U_{\max}$ du régime établi calculées par les formules ci-dessus. Les curseurs
+      règlent $R$, $C$ et la fréquence ; la légende sous le tracé nomme chaque courbe avec sa couleur réelle.
+    </figcaption>
+  </figure>
+  <div id="e-carre-curseurs"></div>
+  <p>
+    Interprétation : pour une période égale à $\tau$, la demi-période vaut $0{,}5\,\tau$, et la tension ne parcourt
+    qu'environ $39\ \%$ du chemin à chaque demi-période : elle oscille entre $0{,}38\,E$ et $0{,}62\,E$ environ, jamais
+    jusqu'à $E$. Le régime établi est atteint au bout d'environ $5\tau$, quel que soit le nombre de périodes que cela
+    représente : la constante de temps gouverne aussi l'installation de l'oscillation. Multiplier la fréquence par dix,
+    quand la période est déjà courte devant $\tau$, divise l'ondulation environ par dix. C'est le principe du lissage
+    d'une tension découpée et du filtrage d'une mesure bruitée, qui sera repris en termes de fréquence de coupure dans
+    le cours Filtres passifs.
+  </p>
+
+  <h3 id="e-statut">Statut des énoncés</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Ce qui relève de la loi, de la convention, de l'approximation, de la conception et du constructeur</caption>
+      <thead><tr><th>Énoncé</th><th>Statut</th><th>Commentaire</th></tr></thead>
+      <tbody>
+        <tr><td>Conservation de la charge et loi des mailles</td><td>Loi physique</td><td>Valable dans l'approximation des régimes quasi stationnaires, très largement satisfaite pour des durées de l'ordre de la microseconde et au-delà.</td></tr>
+        <tr><td>$i = C\,\mathrm{d}u/\mathrm{d}t$ et continuité de $u_C$</td><td>Modèle du condensateur idéal</td><td>Conséquence de $q = Cu$ ; exacte tant que $C$ est constante et le courant fini.</td></tr>
+        <tr><td>Sens de $i$, flèches de tension, choix de la masse</td><td>Conventions</td><td>Choisies une fois pour toutes ; elles fixent le signe des résultats, pas la physique.</td></tr>
+        <tr><td>Source idéale, interrupteur instantané, câblage sans inductance</td><td>Approximations</td><td>Justifiées si la résistance interne de la source est incluse dans $R$ et si $\tau$ est grand devant les durées de commutation.</td></tr>
+        <tr><td>Régime considéré comme établi après $5\tau$</td><td>Règle de conception</td><td>Écart résiduel de $0{,}7\ \%$ ; on retient $3\tau$ ($5\ \%$) ou $7\tau$ ($0{,}1\ \%$) selon la précision exigée.</td></tr>
+        <tr><td>Énergie impulsionnelle d'une résistance, tenue d'un contacteur, capacité et tolérance d'un condensateur</td><td>Données constructeur</td><td>À lire dans la documentation du composant retenu ; les valeurs de ce cours sont des hypothèses d'étude.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, qui fixe les conventions du circuit de charge et de décharge
+    et ses deux circuits équivalents, l'organigramme de résolution et le tableau comparatif des méthodes. Le
+    chronogramme, la réduction de Thévenin, les animations et les simulations ont été placés au fil du texte, au
+    contact des explications qu'ils illustrent ; ils sont rappelés en fin de section.
+  </p>
+
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 1000 430" role="img" aria-label="Schéma principal : source E, inverseur K à deux positions, charge en position 1 et décharge en position 2, résistance R, condensateur C, courant i orienté vers l'armature plus, tensions u R et u C en convention récepteur, masse ; à droite, circuit équivalent à l'instant zéro plus avec le condensateur remplacé par une source U0, et circuit équivalent en régime établi avec le condensateur remplacé par un circuit ouvert">
+      <defs>
+        <marker id="fl-f-i" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-f-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="70" cy="210" r="22"/>
+        <path d="M70 188V90H150"/>
+        <path d="M153 153V330"/>
+        <path d="M208 90H250M320 90H400V190M400 210V330H70V232"/>
+        <rect x="250" y="76" width="70" height="28" rx="3"/>
+        <path d="M370 190H430M370 210H430" stroke-width="3.4"/>
+        <path d="M240 330V342M226 342H254M231 348H249M236 354H244"/>
+        <path d="M205 90L158 84" stroke-width="3"/>
+      </g>
+      <path d="M205 90L158 146" stroke="currentColor" stroke-width="1.6" fill="none" stroke-dasharray="5 4" opacity="0.7"/>
+      <g fill="none" stroke="currentColor" stroke-width="1.8">
+        <circle cx="153" cy="90" r="3.5"/><circle cx="153" cy="150" r="3.5"/><circle cx="205" cy="90" r="3.5"/>
+      </g>
+      <g fill="currentColor" stroke="none"><circle cx="153" cy="330" r="4"/></g>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M336 90H372" marker-end="url(#fl-f-i)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M318 58H258" marker-end="url(#fl-f-u)"/>
+        <path d="M458 262V140" marker-end="url(#fl-f-u)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="560" cy="120" r="18"/>
+        <path d="M560 102V70H610M670 70H760V102M760 138V170H560V138"/>
+        <rect x="610" y="58" width="60" height="24" rx="3"/>
+        <circle cx="760" cy="120" r="18"/>
+        <circle cx="560" cy="330" r="18"/>
+        <path d="M560 312V280H610M670 280H760V310M760 344V376H560V348"/>
+        <rect x="610" y="268" width="60" height="24" rx="3"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="760" cy="314" r="4"/><circle cx="760" cy="340" r="4"/></g>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M690 70H724" marker-end="url(#fl-f-i)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="250" y="24" text-anchor="middle" font-weight="600">circuit de charge et de décharge</text>
+        <text x="70" y="204" text-anchor="middle" font-weight="600">+</text>
+        <text x="70" y="226" text-anchor="middle" font-weight="600">-</text>
+        <text x="40" y="215" text-anchor="end">E</text>
+        <text x="118" y="80" text-anchor="middle" font-size="11.5">1 : charge</text>
+        <text x="166" y="174" font-size="11.5">2 : décharge</text>
+        <text x="190" y="70" text-anchor="middle">K</text>
+        <text x="285" y="126" text-anchor="middle">R</text>
+        <text x="354" y="80" text-anchor="middle">i</text>
+        <text x="288" y="46" text-anchor="middle" fill="var(--serie-2)">u_R</text>
+        <text x="362" y="186" text-anchor="end" font-weight="600">+</text>
+        <text x="440" y="232">C</text>
+        <text x="468" y="206" fill="var(--serie-2)">u_C</text>
+        <text x="262" y="372" font-size="11.5">masse : référence 0 V</text>
+        <text x="250" y="400" text-anchor="middle" font-size="11.5">convention récepteur pour R et C : i entre par la borne +</text>
+        <text x="660" y="24" text-anchor="middle" font-weight="600">à t = 0+ : C garde sa tension U0</text>
+        <text x="560" y="116" text-anchor="middle" font-weight="600">+</text>
+        <text x="532" y="125" text-anchor="end">E</text>
+        <text x="640" y="104" text-anchor="middle">R</text>
+        <text x="707" y="60" text-anchor="middle">i</text>
+        <text x="760" y="116" text-anchor="middle" font-weight="600">+</text>
+        <text x="786" y="125">U0</text>
+        <text x="660" y="198" text-anchor="middle" font-size="11.5">i(0+) = (E - U0) / R</text>
+        <text x="660" y="216" text-anchor="middle" font-size="11.5">U0 = 0 : C équivaut à un fil</text>
+        <text x="660" y="244" text-anchor="middle" font-weight="600">t infini : C = circuit ouvert</text>
+        <text x="560" y="326" text-anchor="middle" font-weight="600">+</text>
+        <text x="532" y="335" text-anchor="end">E</text>
+        <text x="640" y="314" text-anchor="middle">R</text>
+        <text x="776" y="331">u_C = E</text>
+        <text x="660" y="404" text-anchor="middle" font-size="11.5">i = 0 ; u_R = 0 ; W_C = C E² / 2</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal. À gauche, le circuit de la séance : la source $E$, borne $+$ en haut, alimente la position 1 de
+      l'inverseur $K$ ; la position 2 est reliée directement au conducteur du bas, la masse, qui est la référence de
+      potentiel. La lame en trait plein épais montre $K$ en position 1 (charge) ; la lame en pointillés montre la
+      position 2 (décharge). La flèche épaisse fixe le sens de référence du courant $i$, qui entre par la borne $+$ du
+      condensateur ; les flèches fines $u_R$ et $u_C$ sont en convention récepteur, pointées vers la borne par laquelle
+      entre $i$. À droite, en haut, le circuit équivalent juste après une manœuvre : le condensateur est remplacé par une
+      source de tension égale à sa tension $U_0$ juste avant, ce qui donne $i(0^+) = (E - U_0)/R$ ; s'il était
+      déchargé, cette source devient un fil. En bas, le circuit équivalent en régime continu établi : le condensateur est
+      un circuit ouvert, le courant est nul et $u_C = E$. Ces deux circuits résistifs fournissent la valeur initiale et
+      la valeur finale de n'importe quelle grandeur, la troisième information étant $\tau = RC$.
+    </figcaption>
+  </figure>
+
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Circuit à un condensateur, sources constantes par morceaux"] --> B["Conventions, référence de potentiel, instant de la manœuvre"]
+  B --> C["Avant : régime établi, C ouvert, calculer U0"]
+  C --> D["Juste après : C = source U0, calculer x(0+)"]
+  D --> E["Temps long : C ouvert, calculer x infini"]
+  E --> F["Sources éteintes : R_th vue par C, τ = R_th C"]
+  F --> G["x(t) = x infini + (x(0+) - x infini) exp(-t / τ)"]
+  G --> H{"Nouvelle manœuvre avant 5 τ ?"}
+  H -->|"oui"| I["Valeur atteinte = nouvelle valeur initiale"]
+  I --> D
+  H -->|"non"| J{"Question posée ?"}
+  J -->|"valeur à un instant"| K["Remplacer t"]
+  J -->|"instant d'un seuil"| L["t = τ ln((x(0+) - x infini) / (x - x infini))"]
+  J -->|"énergie"| M["C U² / 2 stockée ; C ΔU² / 2 perdue"]
+  K --> N["Contrôles : unités, signes, valeurs limites, bilan d'énergie"]
+  L --> N
+  M --> N</pre>
+    <figcaption>
+      Organigramme de résolution. Les rectangles sont des étapes, les losanges des décisions, les libellés sur les
+      flèches les réponses. Le tronc commun obtient les trois informations de la forme universelle à partir de deux
+      circuits résistifs, celui de l'instant $0^+$ et celui du régime établi, et d'un calcul de résistance vue. La boucle
+      de gauche traite les manœuvres successives : chaque nouvel échelon repart de la valeur atteinte, grâce à la
+      continuité de $u_C$. La dernière décision oriente selon la question posée, et toutes les branches aboutissent aux
+      mêmes contrôles.
+    </figcaption>
+  </figure>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Quatre méthodes pour un régime transitoire du premier ordre</caption>
+      <thead><tr><th>Méthode</th><th>Quand la choisir</th><th>Atout</th><th>Limite</th></tr></thead>
+      <tbody>
+        <tr><td>Trois grandeurs : $x(0^+)$, $x_\infty$, $\tau$</td><td>Un seul condensateur équivalent, sources constantes par morceaux</td><td>Quelques lignes, aucune équation différentielle à écrire, contrôle immédiat</td><td>Inapplicable si la source varie pendant le transitoire (rampe, sinusoïde) ou si un composant est non linéaire</td></tr>
+        <tr><td>Équation différentielle résolue à la main</td><td>Source variable simple, démonstration, vérification d'une formule</td><td>Donne la forme exacte et fait apparaître les hypothèses</td><td>Plus long ; devient lourd dès deux éléments de stockage</td></tr>
+        <tr><td>Simulation numérique : Euler en Python, LTspice</td><td>Non-linéarités, commutations multiples, plusieurs éléments de stockage</td><td>Traite des cas sans solution analytique</td><td>Pas de temps à maîtriser ; le résultat ne vaut que ce que vaut le modèle ; toujours précédée d'une prédiction</td></tr>
+        <tr><td>Transformée de Laplace</td><td>Systèmes d'ordre élevé, lien avec les fonctions de transfert</td><td>Systématique, traite conditions initiales et entrées quelconques</td><td>Outil du module d'automatique, au cours Modélisation des systèmes dynamiques</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-anim-figure" data-renvoi="d-anim-figure">l'animation de la charge puis de la décharge</a>, section D ;</li>
+    <li><a href="#e-chrono-figure" data-renvoi="e-chrono-figure">le chronogramme de la charge et de la décharge avec ses repères</a>, <a href="#e-tangente-figure" data-renvoi="e-tangente-figure">la simulation de la courbe et de sa tangente</a>, <a href="#e-euler-figure" data-renvoi="e-euler-figure">la construction pas à pas de l'exponentielle</a>, <a href="#e-thevenin-figure" data-renvoi="e-thevenin-figure">la réduction de Thévenin vue par le condensateur</a> et <a href="#e-carre-figure" data-renvoi="e-carre-figure">la simulation de la réponse à un signal carré</a>, section E ;</li>
+    <li><a href="#h-circuit-figure" data-renvoi="h-circuit-figure">le circuit de temporisation de l'exemple et son équivalent</a> et <a href="#h-trace-figure" data-renvoi="h-trace-figure">la courbe de charge et de décharge de l'exemple</a>, section H ;</li>
+    <li><a href="#i-precharge-figure" data-renvoi="i-precharge-figure">l'animation et la simulation de la précharge du bus continu</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour tout circuit comportant un seul condensateur, ou un groupement réductible à un seul, et des sources constantes par morceaux :</p>
+  <ol>
+    <li>Fixer les conventions : sens de référence du courant du condensateur, entrant par sa borne $+$ (convention récepteur), référence de potentiel, et instant $t = 0$ de la manœuvre étudiée.</li>
+    <li>Déterminer $U_0 = u_C(0^-)$ dans le circuit d'avant la manœuvre : en régime établi, condensateur remplacé par un circuit ouvert ; sinon, par la valeur atteinte lors du transitoire précédent.</li>
+    <li>Circuit à l'instant $0^+$ : remplacer le condensateur par une source de tension $U_0$ (un fil si $U_0 = 0$), résoudre ce circuit résistif et en tirer $x(0^+)$ pour chaque grandeur utile. Seule $u_C$ est tenue d'être continue ; les courants et les autres tensions peuvent sauter.</li>
+    <li>Circuit du régime établi, après la manœuvre : remplacer le condensateur par un circuit ouvert et calculer $x_\infty$.</li>
+    <li>Constante de temps : éteindre les sources indépendantes du circuit d'après la manœuvre, calculer la résistance $R_{th}$ vue des bornes du condensateur, puis $\tau = R_{th}C$.</li>
+    <li>Écrire $x(t) = x_\infty + (x(0^+) - x_\infty)\,e^{-t/\tau}$, puis répondre : valeur à un instant, instant d'un seuil par $t = \tau\ln\frac{x(0^+) - x_\infty}{x - x_\infty}$, énergie stockée $\tfrac{1}{2}Cu^2$ ou perdue $\tfrac{1}{2}C\,\Delta U^2$ pour un échelon.</li>
+    <li>Pour une manœuvre suivante, reprendre à l'étape 2 avec la valeur atteinte à cet instant.</li>
+    <li>Contrôler : dimension de $\tau$, valeurs à $0^+$ et à l'infini, signe du courant (positif si $u_C$ monte), seuil situé entre la valeur initiale et la valeur finale, ordre de grandeur (un seuil à $63\ \%$ du chemin est atteint en $\tau$), bilan d'énergie.</li>
+  </ol>
+  <p>
+    Choix de méthode : cette procédure est préférable dès que les sources sont constantes par morceaux ; elle évite
+    d'écrire l'équation différentielle, qu'elle résout une fois pour toutes. On revient à l'équation différentielle
+    quand la source varie pendant le transitoire, et à la simulation numérique quand un composant n'est pas linéaire,
+    par exemple un pont de diodes qui ne conduit que près des crêtes de la tension du réseau.
+  </p>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Situation : un circuit de temporisation retarde la validation d'un démarrage. Une source continue de
+    $24\ \mathrm{V}$ est appliquée à l'instant $t = 0$ par un contact $K$ à un pont formé de $R_1 = 10\ \mathrm{k\Omega}$
+    et $R_2 = 15\ \mathrm{k\Omega}$ ; un condensateur de $47\ \mu\mathrm{F}$, initialement déchargé, est placé en
+    parallèle sur $R_2$. Un comparateur, d'entrée supposée de résistance infinie, valide le démarrage quand $u_C$
+    dépasse $10\ \mathrm{V}$. À $t = 2\ \mathrm{s}$, le contact $K$ s'ouvre : le condensateur se décharge dans $R_2$
+    seule. On cherche le retard de validation, puis la durée après l'ouverture pendant laquelle $u_C$ reste au-dessus
+    de $2\ \mathrm{V}$, seuil en dessous duquel la temporisation est considérée comme réarmée.
+  </p>
+  <figure id="h-circuit-figure">
+    <svg viewBox="0 0 780 330" role="img" aria-label="Circuit de temporisation : source 24 volts, contact K, résistance R1 de 10 kilohms vers le nœud A, résistance R2 de 15 kilohms et condensateur de 47 microfarads entre A et la masse ; à droite, équivalent de Thévenin 14,4 volts et 6 kilohms">
+      <defs>
+        <marker id="fl-h-i" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-h-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="60" cy="160" r="20"/>
+        <path d="M60 140V60H100M143 60H170M240 60H450V140M450 160V260H60V180"/>
+        <path d="M106 60L138 44"/>
+        <rect x="170" y="48" width="70" height="24" rx="3"/>
+        <path d="M330 60V110M330 180V260"/>
+        <rect x="318" y="110" width="24" height="70" rx="3"/>
+        <path d="M420 140H480M420 160H480" stroke-width="3.4"/>
+        <path d="M250 260V272M236 272H264M241 278H259M246 284H254"/>
+        <circle cx="590" cy="160" r="18"/>
+        <path d="M590 142V60H620M680 60H710V140M710 160V260H590V178"/>
+        <rect x="620" y="48" width="60" height="24" rx="3"/>
+        <path d="M680 140H740M680 160H740" stroke-width="3.4"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="103" cy="60" r="3.2"/><circle cx="140" cy="60" r="3.2"/></g>
+      <g fill="currentColor" stroke="none"><circle cx="330" cy="60" r="4"/><circle cx="330" cy="260" r="4"/></g>
+      <g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round">
+        <path d="M262 60H294" marker-end="url(#fl-h-i)"/>
+        <path d="M306 118V150" marker-end="url(#fl-h-i)"/>
+        <path d="M450 84V116" marker-end="url(#fl-h-i)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M512 236V96" marker-end="url(#fl-h-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="60" y="156" text-anchor="middle" font-weight="600">+</text>
+        <text x="32" y="150" text-anchor="end">24 V</text>
+        <text x="92" y="48" text-anchor="end">K</text>
+        <text x="122" y="26" text-anchor="middle" font-size="11">fermé à t = 0</text>
+        <text x="205" y="96" text-anchor="middle">R1 = 10 kΩ</text>
+        <text x="278" y="48" text-anchor="middle">i1</text>
+        <text x="338" y="52">A</text>
+        <text x="298" y="140" text-anchor="end">i2</text>
+        <text x="352" y="150">R2</text>
+        <text x="352" y="166" font-size="11">15 kΩ</text>
+        <text x="462" y="104">i_C</text>
+        <text x="412" y="136" text-anchor="end" font-weight="600">+</text>
+        <text x="420" y="190">47 µF</text>
+        <text x="520" y="170" fill="var(--serie-2)">u_C</text>
+        <text x="268" y="300" font-size="11.5">masse : 0 V</text>
+        <text x="665" y="30" text-anchor="middle" font-weight="600">équivalent vu par C</text>
+        <text x="590" y="156" text-anchor="middle" font-weight="600">+</text>
+        <text x="614" y="196">E_th</text>
+        <text x="650" y="94" text-anchor="middle">6 kΩ</text>
+        <text x="750" y="190" text-anchor="end">47 µF</text>
+        <text x="650" y="282" text-anchor="middle" font-size="11.5">E_th = 14,4 V ; R_th = 6 kΩ</text>
+        <text x="650" y="300" text-anchor="middle" font-size="11.5">charge : τ = 6 kΩ × 47 µF = 0,282 s</text>
+        <text x="650" y="318" text-anchor="middle" font-size="11.5">décharge : τ' = R2 C = 0,705 s</text>
+      </g>
+    </svg>
+    <figcaption>
+      Circuit de temporisation de l'exemple. La source de $24\ \mathrm{V}$, borne $+$ en haut, est appliquée par le
+      contact $K$, dessiné ouvert avant $t = 0$. Les flèches épaisses fixent les sens de référence : $i_1$ dans $R_1$ vers
+      le nœud $A$, $i_2$ dans $R_2$ vers la masse, $i_C$ vers l'armature $+$ du condensateur, de sorte que la loi des nœuds
+      en $A$ s'écrit $i_1 = i_2 + i_C$. La flèche fine $u_C$ est en convention récepteur ; la masse est la référence de
+      potentiel. À droite, l'équivalent de Thévenin vu des bornes du condensateur pendant la charge : $14{,}4\ \mathrm{V}$
+      et $6\ \mathrm{k\Omega}$. Après l'ouverture de $K$, $R_1$ n'est plus reliée à rien et la décharge se fait dans $R_2$
+      seule.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Données : $E = 24\ \mathrm{V}$, $R_1 = 10\ \mathrm{k\Omega}$, $R_2 = 15\ \mathrm{k\Omega}$, $C = 47\ \mu\mathrm{F}$,
+    $U_0 = 0$, seuil de validation $10\ \mathrm{V}$, ouverture de $K$ à $2\ \mathrm{s}$, seuil de réarmement
+    $2\ \mathrm{V}$. Inconnues : valeur finale et constante de temps de la charge, courants à $0^+$, retard de
+    validation, énergie stockée, tension à l'ouverture de $K$, constante de temps de la décharge et durée au-dessus de
+    $2\ \mathrm{V}$. Stratégie : méthode des trois grandeurs de la section G, appliquée successivement à la charge
+    ($K$ fermé) puis à la décharge ($K$ ouvert), la valeur atteinte à $2\ \mathrm{s}$ servant de valeur initiale à la
+    décharge.
+  </p>
+
+  <h3 id="h-charge">Charge : K fermé</h3>
+  <ol>
+    <li>Valeur initiale : le condensateur est déchargé, $u_C(0^+) = u_C(0^-) = 0$. À $0^+$ il équivaut à un fil entre $A$ et la masse : $R_2$ est court-circuitée, $i_2(0^+) = 0$, et $i_C(0^+) = i_1(0^+) = 24/10^4 = 2{,}4\ \mathrm{mA}$.</li>
+    <li>Valeur finale : condensateur en circuit ouvert, pont diviseur à vide, $u_\infty = E_{th} = 24 \times \dfrac{15}{10 + 15} = 14{,}4\ \mathrm{V}$ ; alors $i_C = 0$ et $i_1 = i_2 = 24/25\,000 = 0{,}96\ \mathrm{mA}$.</li>
+    <li>Constante de temps : source éteinte, le condensateur voit $R_1 \parallel R_2 = \dfrac{10 \times 15}{10 + 15} = 6\ \mathrm{k\Omega}$, d'où $\tau = 6 \times 10^3 \times 47 \times 10^{-6} = 0{,}282\ \mathrm{s}$. Contrôle : le courant initial vaut bien $E_{th}/R_{th} = 14{,}4/6000 = 2{,}4\ \mathrm{mA}$.</li>
+    <li>Loi de charge : $u_C(t) = 14{,}4\,\bigl(1 - e^{-t/0{,}282}\bigr)$ en volts, $t$ en secondes.</li>
+    <li>Retard de validation : $t_{10} = \tau\ln\dfrac{0 - 14{,}4}{10 - 14{,}4} = 0{,}282 \times \ln\dfrac{14{,}4}{4{,}4} = 0{,}282 \times \ln 3{,}273 = 0{,}282 \times 1{,}186 = 0{,}334\ \mathrm{s}$.</li>
+    <li>Énergie stockée en fin de charge : $W = \tfrac{1}{2} \times 47 \times 10^{-6} \times 14{,}4^2 = 4{,}87\ \mathrm{mJ}$.</li>
+    <li>Tension à l'ouverture de $K$, à $t = 2\ \mathrm{s}$, soit $7{,}09\,\tau$ : $u_C = 14{,}4\,(1 - e^{-7{,}09}) = 14{,}39\ \mathrm{V}$, pratiquement la valeur finale.</li>
+  </ol>
+
+  <h3 id="h-decharge">Décharge : K ouvert</h3>
+  <ol>
+    <li>Valeur initiale : $u_C$ est continue, elle vaut $14{,}39\ \mathrm{V}$ juste après l'ouverture. Le courant du condensateur, lui, saute de $0$ à $i_C = -14{,}39/15\,000 = -0{,}96\ \mathrm{mA}$ : négatif, le condensateur débite dans $R_2$.</li>
+    <li>Valeur finale : sans source, $u_\infty = 0$.</li>
+    <li>Constante de temps : le condensateur ne voit plus que $R_2$, car $R_1$ est en l'air : $\tau' = 15 \times 10^3 \times 47 \times 10^{-6} = 0{,}705\ \mathrm{s}$, deux fois et demie plus longue que la charge.</li>
+    <li>Durée au-dessus de $2\ \mathrm{V}$ : $t' = 0{,}705 \times \ln\dfrac{14{,}39}{2} = 0{,}705 \times 1{,}973 = 1{,}39\ \mathrm{s}$ après l'ouverture.</li>
+  </ol>
+  <p>
+    Résultat : le démarrage est validé $0{,}334\ \mathrm{s}$ après la fermeture de $K$ ; après l'ouverture, la
+    temporisation n'est réarmée qu'au bout de $1{,}39\ \mathrm{s}$. Contrôles de cohérence. Unités : des ohms fois des
+    farads donnent des secondes. Ordre de grandeur : $10\ \mathrm{V}$ représente $69\ \%$ du chemin vers
+    $14{,}4\ \mathrm{V}$, donc le seuil est atteint un peu après $\tau$, entre $\tau$ ($9{,}10\ \mathrm{V}$) et $2\tau$
+    ($12{,}45\ \mathrm{V}$) : $1{,}19\,\tau$ convient. Valeurs limites : à $0^+$, toute la tension est sur $R_1$ et
+    $i_2 = 0$ ; en régime établi, $i_C = 0$ et le pont fonctionne à vide. Piège évité : prendre $\tau = R_1C = 0{,}47\
+    \mathrm{s}$ et viser $24\ \mathrm{V}$ aurait donné $t_{10} = 0{,}47 \ln(24/14) = 0{,}253\ \mathrm{s}$, résultat faux
+    de $24\ \%$, et une décharge calculée avec $6\ \mathrm{k\Omega}$ au lieu de $15\ \mathrm{k\Omega}$ aurait sous-estimé le
+    temps de réarmement d'un facteur $2{,}5$.
+  </p>
+  <figure id="h-trace-figure">
+    <div id="h-trace"></div>
+    <figcaption>
+      Courbe calculée de l'exemple : $u_C(t)$ pendant la charge puis la décharge. Les points marqués repèrent le
+      franchissement du seuil de $10\ \mathrm{V}$ à $0{,}334\ \mathrm{s}$, l'ouverture de $K$ à $2\ \mathrm{s}$ et le
+      passage sous $2\ \mathrm{V}$ à $3{,}39\ \mathrm{s}$ ; les lignes en tirets indiquent les deux seuils.
+    </figcaption>
+  </figure>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+
+  <h3 id="i-probleme">Précharge du bus continu d'un variateur</h3>
+  <p>
+    Un variateur de fréquence redresse la tension triphasée du réseau et la stocke dans un bus continu, formé de
+    condensateurs de forte capacité : c'est le bus étudié dans le cours
+    <a href="#/cours/condensateurs-et-champ-electrique">Condensateurs et champ électrique</a> pour le variateur de la
+    pompe, soit $2{,}2\ \mathrm{mF}$ chargés à la valeur crête de la tension composée, $400\sqrt{2} = 565{,}7\ \mathrm{V}$.
+    À la mise sous tension, ces condensateurs sont déchargés : vus du réseau, ils se comportent comme un court-circuit.
+    Sans précaution, le courant d'appel ne serait limité que par l'impédance du réseau, des câbles et du pont de
+    diodes, soit quelques dizaines de milliohms : des milliers d'ampères pendant quelques millisecondes, de quoi faire
+    fondre les fusibles, détériorer les diodes et souder les contacts. La solution classique consiste à charger le bus à
+    travers une résistance de précharge $R_p$, puis à la court-circuiter par un contacteur, noté ici $KM2$, une fois le
+    bus chargé ; certains variateurs utilisent un pont mixte à thyristors dont l'angle d'amorçage est augmenté
+    progressivement, notion du cours Thyristors et redresseurs commandés.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Hypothèses du modèle</span>
+    <p>
+      Le redresseur alimenté par le réseau est modélisé comme une source continue idéale de $565{,}7\ \mathrm{V}$
+      appliquée d'un coup : c'est une approximation. En réalité, le pont de diodes ne conduit que lorsque la tension
+      redressée dépasse celle du bus, près des crêtes du réseau ; la charge réelle progresse par paliers à
+      $300\ \mathrm{Hz}$ et dure un peu plus longtemps que le modèle ne l'indique. L'impédance du réseau et la
+      résistance série des condensateurs sont négligées devant $R_p$, et la résistance de fermeture de $KM2$,
+      réseau et pont compris, est prise égale à $0{,}1\ \Omega$ pour estimer la pointe de courant à sa fermeture. Toutes
+      les valeurs sont des hypothèses d'étude à remplacer par la documentation du variateur retenu.
+    </p>
+  </div>
+  <p>
+    Calculs, avec $R_p = 47\ \Omega$ et $C = 2{,}2\ \mathrm{mF}$ : la constante de temps vaut
+    $\tau = 47 \times 2{,}2 \times 10^{-3} = 0{,}1034\ \mathrm{s}$. La pointe de courant, à $0^+$, vaut
+    $565{,}7/47 = 12{,}0\ \mathrm{A}$, et la puissance instantanée dans la résistance à cet instant,
+    $565{,}7^2/47 = 6{,}81\ \mathrm{kW}$ : une résistance de quelques dizaines de watts en régime permanent doit donc
+    être choisie pour sa tenue en énergie impulsionnelle, donnée constructeur. L'énergie dissipée pendant une précharge
+    complète est, d'après le bilan de la section E, égale à l'énergie stockée : $\tfrac{1}{2} \times 2{,}2 \times 10^{-3}
+    \times 565{,}7^2 = 352\ \mathrm{J}$, quelle que soit $R_p$. Au réseau haut, $+10\ \%$, elle monte à
+    $425{,}9\ \mathrm{J}$ et la pointe à $13{,}2\ \mathrm{A}$.
+  </p>
+  <p>
+    Temporisation de $KM2$ : à sa fermeture, l'écart $\Delta U$ restant entre la source et le bus est comblé presque
+    instantanément à travers $0{,}1\ \Omega$ ; la pointe de courant vaut $\Delta U/0{,}1$ et l'énergie dissipée
+    $\tfrac{1}{2}C\,\Delta U^2$. Fermer trop tôt annule le bénéfice de la précharge : à $\tau$, l'écart vaut encore
+    $208\ \mathrm{V}$, soit une pointe de l'ordre de $2\ \mathrm{kA}$ et $47{,}6\ \mathrm{J}$ ; à $3\tau$,
+    $28{,}2\ \mathrm{V}$, $282\ \mathrm{A}$ et $0{,}87\ \mathrm{J}$ ; à $5\tau$, $3{,}8\ \mathrm{V}$, $38\ \mathrm{A}$ et
+    $16\ \mathrm{mJ}$. Une temporisation de $0{,}6\ \mathrm{s}$, soit $5{,}8\,\tau$, laisse un écart de
+    $1{,}7\ \mathrm{V}$ et une pointe de $17\ \mathrm{A}$, du même ordre que la précharge elle-même. En pratique, les
+    variateurs ferment souvent $KM2$ sur un critère de tension, le bus ayant atteint un pourcentage de sa valeur
+    attendue, plutôt que sur une durée fixe : ce critère reste valable si le réseau est bas ou si la capacité a changé.
+  </p>
+
+  <h3 id="i-precharge-section">Animation et simulation : la précharge du bus</h3>
+  <p>
+    La simulation reprend le bus du variateur de la pompe. Les curseurs règlent la résistance de précharge, l'instant de
+    fermeture de $KM2$ et la tension composée du réseau ; le lecteur fait avancer le temps, et le schéma montre l'état
+    de $KM2$ et le courant de charge. Avant de lancer, prédisez : si l'on divise $R_p$ par deux, l'énergie dissipée
+    dans la résistance change-t-elle ? La pointe à la fermeture de $KM2$ augmente-t-elle ou diminue-t-elle si l'on
+    garde la même temporisation avec une résistance plus forte ?
+  </p>
+  <figure id="i-precharge-figure">
+    <div class="m-toile-cadre schema-vivant" id="i-precharge"></div>
+    <div id="i-precharge-tension"></div>
+    <div id="i-precharge-courant"></div>
+    <figcaption>
+      En haut, le schéma du circuit de précharge : le redresseur, modélisé par une source continue de borne $+$ en haut,
+      alimente le bus par la résistance de précharge $R_p$, que le contact de $KM2$ court-circuite une fois fermé ; le
+      bus est représenté par sa capacité équivalente $C$ et ses résistances d'équilibrage $R_e$, et la ligne du bas est
+      la référence de potentiel du bus. La flèche épaisse donne le sens du courant de charge $i$, son épaisseur suit sa
+      valeur ; la jauge donne $u_C$ rapportée à la tension de la source. Au-dessous, deux tracés : la tension du bus
+      $u_C(t)$, puis le courant $i(t)$ dans $R_p$ ; sur chacun, le trait vertical en tirets marque l'instant de
+      fermeture de $KM2$ et le petit disque l'instant courant du lecteur.
+    </figcaption>
+  </figure>
+  <div id="i-precharge-curseurs"></div>
+  <div id="i-precharge-lecteur"></div>
+  <div id="i-precharge-valeurs"></div>
+  <p>
+    Interprétation : diviser $R_p$ par deux double la pointe de courant et la puissance initiale, raccourcit la
+    précharge, mais laisse l'énergie dissipée dans la résistance inchangée, égale à $\tfrac{1}{2}CU^2$. Avec une
+    résistance plus forte et la même temporisation, le bus est moins chargé à la fermeture de $KM2$ : l'écart et la
+    pointe à la fermeture augmentent, jusqu'à dépasser largement la pointe de précharge que l'on voulait éviter. Le
+    choix de $R_p$ et celui de la temporisation sont donc liés : la temporisation doit valoir au moins cinq constantes
+    de temps, avec une marge pour la tolérance de la capacité, souvent de $-10\ \%$ à $+20\ \%$ selon la technologie, et
+    pour le fonctionnement réel par paliers du pont de diodes.
+  </p>
+
+  <h3 id="i-compromis">Contraintes, risques et compromis</h3>
+  <ul>
+    <li><strong>Mises sous tension répétées.</strong> Chaque précharge complète dépose $352\ \mathrm{J}$ dans $R_p$. Si l'exploitation coupe et remet le variateur toutes les minutes, la puissance moyenne atteint $352/60 = 5{,}9\ \mathrm{W}$, et la résistance, dimensionnée pour des impulsions isolées, peut surchauffer : le constructeur limite le nombre de mises sous tension par heure.</li>
+    <li><strong>Défaut de $KM2$.</strong> Si le contacteur ne se ferme pas, bobine coupée ou commande défaillante, tout le courant du moteur traverse $R_p$ : quelques ampères suffisent à la détruire en quelques minutes, et la tension du bus s'effondre sous la charge. Les variateurs surveillent la tension du bus et déclenchent en défaut de sous-tension ; un contrôle de la tension aux bornes de $R_p$ en fonctionnement, qui doit rester quasi nulle, confirme le diagnostic.</li>
+    <li><strong>Décharge de sécurité.</strong> Après coupure, le bus reste chargé. Les résistances d'équilibrage de $47\ \mathrm{k\Omega}$ par étage, retenues dans le cours Condensateurs et champ électrique, déchargent chaque étage de $4{,}4\ \mathrm{mF}$ avec $\tau = 47 \times 10^3 \times 4{,}4 \times 10^{-3} = 206{,}8\ \mathrm{s}$ ; le bus passe sous $50\ \mathrm{V}$ au bout de $206{,}8 \times \ln(565{,}7/50) = 502\ \mathrm{s}$, soit $8{,}4\ \mathrm{min}$. Ce calcul confirme l'estimation de ce cours ; il justifie l'étiquette d'attente avant intervention et la vérification d'absence de tension au multimètre.</li>
+    <li><strong>Compromis.</strong> Une résistance plus forte réduit la pointe et la puissance instantanée mais allonge la précharge et la temporisation, donc le délai de disponibilité du variateur ; une résistance plus faible soulage la temporisation mais sollicite davantage le pont et la résistance en puissance. Une résistance à coefficient de température positif limite d'elle-même le courant en cas de précharges trop rapprochées.</li>
+  </ul>
+
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : précharge du bus continu du variateur de la pompe</span>
+    <p>
+      Nouvelle brique du petit site industriel, troisième du module consacré au stockage d'énergie et aux régimes
+      transitoires. Le bus continu du variateur de la pompe, $2{,}2\ \mathrm{mF}$ sous $565{,}7\ \mathrm{V}$, reçoit
+      son circuit de précharge : résistance de $47\ \Omega$, $\tau = 0{,}103\ \mathrm{s}$, pointe de $12{,}0\ \mathrm{A}$
+      et $6{,}8\ \mathrm{kW}$ au premier instant, $352\ \mathrm{J}$ dissipés dans la résistance à chaque mise sous
+      tension, autant que l'énergie stockée ($425{,}9\ \mathrm{J}$ au réseau haut) ; contacteur de court-circuit $KM2$
+      temporisé à $0{,}6\ \mathrm{s}$, soit $5{,}8\,\tau$, écart résiduel de $1{,}7\ \mathrm{V}$ à sa fermeture ;
+      décharge de sécurité par les résistances d'équilibrage, $\tau = 207\ \mathrm{s}$ par étage, sous $50\ \mathrm{V}$ en
+      $8{,}4\ \mathrm{min}$. Le modèle d'échelon continu et toutes les valeurs sont des hypothèses d'étude, à remplacer
+      par la documentation du variateur retenu. La commande de $KM2$ et la surveillance de la tension du bus rejoindront
+      la logique de fonctionnement normal et dégradé traitée dans le cours Automates programmables industriels, et les
+      protections du bus seront reprises dans le cours Protections des convertisseurs.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li>
+      <strong>Prendre la mauvaise résistance pour calculer $\tau$.</strong> La constante de temps utilise la résistance de Thévenin vue par le condensateur, sources éteintes, dans le circuit qui existe après la manœuvre. Dans l'exemple de la section H, $R_1C$ donne $0{,}47\ \mathrm{s}$ au lieu de $0{,}282\ \mathrm{s}$ pour la charge, et $6\ \mathrm{k\Omega}$ au lieu de $15\ \mathrm{k\Omega}$ fausserait la décharge.
+    </li>
+    <li>
+      <strong>Supposer la continuité du courant.</strong> Seule la tension du condensateur est continue. Le courant saute à chaque manœuvre : de $0$ à $E/R$ à la fermeture, et il change de signe au passage de la charge à la décharge. Écrire $i(0^+) = i(0^-)$ pour un condensateur est la confusion avec la bobine, dont c'est le courant qui est continu.
+    </li>
+    <li>
+      <strong>Viser la tension de la source au lieu de la valeur finale.</strong> Le condensateur tend vers la tension à vide vue de ses bornes, $E_{th}$, pas vers $E$. Une temporisation dont le seuil dépasse $E_{th}$ ne se déclenche jamais, quelle que soit la durée d'attente : c'est un défaut de conception, pas un réglage trop long.
+    </li>
+    <li>
+      <strong>Oublier la valeur initiale non nulle.</strong> Après une coupure brève, un condensateur n'est pas déchargé : la formule $E(1 - e^{-t/\tau})$ ne s'applique plus. Il faut $u_C = E + (U_0 - E)e^{-t/\tau}$ ; oublier $U_0$ fausse les temporisations de réarmement et surestime l'énergie de précharge.
+    </li>
+    <li>
+      <strong>Croire qu'une résistance plus forte réduit l'énergie perdue à la charge.</strong> Elle réduit la pointe de courant et la puissance instantanée, pas l'énergie : $\tfrac{1}{2}C(E - U_0)^2$ quelle que soit $R$. Une résistance de précharge doit être dimensionnée en énergie impulsionnelle, pas seulement en puissance.
+    </li>
+    <li>
+      <strong>Considérer que le régime est établi après $\tau$.</strong> Après une constante de temps, il reste $37\ \%$ de l'écart. Fermer le contacteur de précharge à $\tau$ laisserait $208\ \mathrm{V}$ d'écart sur le bus de la pompe. La règle de conception usuelle est $3\tau$ à $5\tau$ selon la précision requise, avec une marge pour les tolérances.
+    </li>
+    <li>
+      <strong>Se tromper de signe sur le courant de décharge.</strong> Avec le sens de référence de la charge, le courant de décharge est négatif. Un résultat positif signale une orientation changée en cours de calcul : le contrôle est que $i$ et $\mathrm{d}u_C/\mathrm{d}t$ ont toujours le même signe en convention récepteur.
+    </li>
+    <li>
+      <strong>Appliquer $t = \tau\ln(\dots)$ hors de son domaine.</strong> Le logarithme d'un nombre négatif ou nul signale un seuil situé au-delà de la valeur finale ou du mauvais côté de la valeur initiale : ce seuil n'est jamais atteint. Ce message mathématique est un résultat physique, pas une erreur de calculatrice.
+    </li>
+    <li>
+      <strong>Simuler avec un pas de temps trop grand.</strong> Un pas de l'ordre de $\tau$ fausse le résultat, et un pas supérieur à $2\tau$ fait diverger la méthode d'Euler. La courbe obtenue peut paraître plausible ; la prédiction qualitative préalable et la réduction du pas sont les deux garde-fous.
+    </li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain : une temporisation RC qui dérive avec le temps signale souvent un condensateur
+    électrolytique vieilli, dont la capacité baisse et la résistance de fuite diminue, ce qui raccourcit $\tau$ et abaisse
+    la valeur finale ; une précharge qui déclenche en défaut de sous-tension au réseau bas signale une temporisation ou un
+    seuil de tension réglé trop près de la valeur nominale.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de
+    diagnostic industriel et une question conceptuelle. La correction de chacun reste masquée jusqu'à une tentative ou
+    un clic explicite sur "Voir la correction", puis se déroule étape par étape, accompagnée d'une courbe ou d'un schéma
+    annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma.</p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$RC\,\frac{\mathrm{d}u_C}{\mathrm{d}t} + u_C = E, \qquad \tau = R_{th}\,C$$
+    $$x(t) = x_\infty + \bigl(x(0^+) - x_\infty\bigr)\,e^{-t/\tau}$$
+    $$t_x = \tau\,\ln\frac{x(0^+) - x_\infty}{x - x_\infty}$$
+    $$i(0^+) = \frac{E - U_0}{R}, \qquad W_R = \frac{1}{2}\,C\,(E - U_0)^2$$
+    $$u_C(\tau) = 0{,}632\,E, \qquad u_C(3\tau) = 0{,}950\,E, \qquad u_C(5\tau) = 0{,}993\,E \quad (U_0 = 0)$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>La constante de temps se calcule avec la résistance de Thévenin vue par le condensateur, dans le circuit d'après la manœuvre.</li>
+      <li>Seule la tension du condensateur est continue ; courants et autres tensions peuvent sauter.</li>
+      <li>La valeur finale est la tension à vide vue du condensateur, pas forcément celle de la source.</li>
+      <li>L'énergie perdue à la charge vaut $\tfrac{1}{2}C\,\Delta U^2$, indépendamment de la résistance.</li>
+      <li>Après $\tau$, il reste $37\ \%$ de l'écart : attendre $3\tau$ à $5\tau$ avant de considérer le régime établi.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Un condensateur relié à une source par une résistance obéit à
+    $RC\,\mathrm{d}u_C/\mathrm{d}t + u_C = E$ : la vitesse de variation de sa tension est proportionnelle à l'écart
+    restant. Toute grandeur du circuit suit donc $x(t) = x_\infty + (x(0^+) - x_\infty)e^{-t/\tau}$, avec
+    $\tau = R_{th}C$ ; trois grandeurs suffisent, obtenues sur deux circuits résistifs. La tension est continue, le
+    courant saute à chaque manœuvre. L'écart tombe à $37\ \%$ en $\tau$ et sous $1\ \%$ en $5\tau$, et la tangente
+    atteint la valeur finale en $\tau$. Une charge depuis zéro dissipe dans la résistance autant d'énergie qu'elle en
+    stocke, $\tfrac{1}{2}CE^2$, quelle que soit $R$. En précharge de bus continu, la résistance limite la pointe, pas
+    l'énergie, et le contacteur de court-circuit ne doit se fermer qu'après plusieurs constantes de temps.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent,
+    <a href="#/cours/inductances-et-champ-magnetique">Inductances et champ magnétique</a> ; une sur le cours
+    <a href="#/cours/loi-d-ohm-et-resistivite">Loi d'Ohm et résistivité</a>, vieux d'une semaine exactement ; la
+    question sur un cours vieux d'un mois n'est pas encore applicable, et elle est remplacée par une question sur le cours
+    <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes de Thévenin, Norton et
+    superposition</a>, dont la résistance vue sert directement au calcul de $\tau$.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : vérifier numériquement la forme universelle, le bilan d'énergie et la précharge du bus, puis relever une
+    vraie courbe de charge. Prédictions à écrire avant de commencer : pour l'exemple de la section H, la méthode d'Euler
+    avec un pas de $10\ \mathrm{ms}$ donnera-t-elle un retard de validation plus court ou plus long que
+    $0{,}334\ \mathrm{s}$ ? Dans la précharge, l'énergie dissipée dans $R_p$ sera-t-elle différente avec
+    $22\ \Omega$ et avec $100\ \Omega$ ?
+  </p>
+  <ol>
+    <li>
+      En Python, simuler la charge de l'exemple de la section H par la méthode d'Euler : $E_{th} = 14{,}4\ \mathrm{V}$,
+      $R_{th} = 6\ \mathrm{k\Omega}$, $C = 47\ \mu\mathrm{F}$, $u(0) = 0$ ; à chaque pas,
+      $u \leftarrow u + \Delta t\,(E_{th} - u)/(R_{th}C)$. Relever l'instant où $u$ dépasse $10\ \mathrm{V}$ pour
+      $\Delta t = 10$, $1$ et $0{,}1\ \mathrm{ms}$ et comparer à $0{,}334\ \mathrm{s}$. Poursuivre jusqu'à
+      $2\ \mathrm{s}$, puis simuler la décharge avec $\tau' = 0{,}705\ \mathrm{s}$ et relever le passage sous
+      $2\ \mathrm{V}$.
+    </li>
+    <li>
+      Dans le même programme, simuler la précharge avec $R_p = 22$, $47$ et $100\ \Omega$, $C = 2{,}2\ \mathrm{mF}$,
+      $U = 565{,}7\ \mathrm{V}$, en accumulant $W_R \leftarrow W_R + R_p\,i^2\,\Delta t$ jusqu'à $10\,\tau$ ; tracer
+      $u(t)$ et $i(t)$ avec matplotlib et vérifier que $W_R$ vaut $352\ \mathrm{J}$ à mieux que le pour cent dans les
+      trois cas.
+    </li>
+    <li>
+      Dans LTspice, saisir la netlist <code>V1 n1 0 PULSE(0 24 0 1u 1u 2 10)</code>, <code>R1 n1 a 10k</code>,
+      <code>R2 a 0 15k</code>, <code>C1 a 0 47u</code>, <code>.tran 0 5 0 1m</code>, <code>.end</code>. Attention : ici
+      la source retombe à $0$ à $2\ \mathrm{s}$ au lieu de s'ouvrir, la décharge se fait donc dans $R_1 \parallel R_2$ ;
+      pour reproduire l'ouverture de $K$, remplacer la source par <code>V1 n0 0 24</code> et ajouter l'interrupteur
+      <code>S1 n0 n1 ctl 0 SW1</code>, <code>Vc ctl 0 PULSE(5 0 2 1u 1u 10 20)</code>,
+      <code>.model SW1 SW(Ron=0.01 Roff=1G Vt=2.5)</code>. Mesurer avec le curseur les instants de passage à
+      $10\ \mathrm{V}$ et à $2\ \mathrm{V}$ dans les deux versions et expliquer l'écart.
+    </li>
+    <li>
+      Mesure facultative, en très basse tension uniquement : monter $R = 10\ \mathrm{k\Omega}$ et
+      $C = 100\ \mu\mathrm{F}$ sous $12\ \mathrm{V}$, avec un bouton poussoir pour la charge et une résistance de
+      décharge ; relever $u_C$ toutes les secondes au multimètre ou, mieux, à l'oscilloscope en mode monocoup, masse de la
+      sonde sur le pôle négatif. Tracer $\ln\bigl(E - u_C\bigr)$ en fonction de $t$ : la pente vaut $-1/\tau$.
+      Respecter la polarité du condensateur électrolytique.
+    </li>
+  </ol>
+  <p>
+    Résultats attendus : avec la méthode d'Euler, le seuil de $10\ \mathrm{V}$ est franchi à $0{,}33\ \mathrm{s}$ environ
+    pour un pas de $10\ \mathrm{ms}$, un peu plus tôt que $0{,}334\ \mathrm{s}$, car la méthode d'Euler surestime la
+    tension pendant une charge, puis la valeur converge vers $0{,}334\ \mathrm{s}$ quand le pas diminue ; le passage sous
+    $2\ \mathrm{V}$ se fait $1{,}39\ \mathrm{s}$ après l'ouverture. L'énergie dissipée en précharge est la même pour les
+    trois résistances, $352\ \mathrm{J}$, seules la pointe et la durée changent. Dans LTspice, la version sans
+    interrupteur donne une décharge avec $\tau = 0{,}282\ \mathrm{s}$, passage sous $2\ \mathrm{V}$ en $0{,}56\ \mathrm{s}$
+    environ, contre $1{,}39\ \mathrm{s}$ avec l'interrupteur. Au banc, la droite de $\ln(E - u_C)$ donne $\tau$ proche de
+    $1\ \mathrm{s}$, à la tolérance du condensateur près, souvent $\pm 20\ \%$. Anomalies à observer : une courbe qui
+    plafonne sous $E$ trahit la résistance d'entrée du multimètre ($10\ \mathrm{M\Omega}$) ou la fuite du condensateur,
+    qui forment un diviseur avec $R$ ; une constante de temps très différente de la valeur nominale signale un
+    condensateur vieilli ; un pas de simulation trop grand fait apparaître des marches ou des oscillations.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est
+    calculé dans ce navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent
+    enregistrées localement pour suivre votre progression. Cette séance contribue directement au jalon de fin du module
+    Stockage d'énergie et régimes transitoires : résoudre méthodiquement des circuits continus et transitoires simples,
+    expliquer le stockage d'énergie et vérifier les résultats.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Dans un circuit du premier ordre, toute grandeur suit $x_\infty + (x(0^+) - x_\infty)e^{-t/\tau}$ : trois informations suffisent, la valeur juste après la manœuvre, la valeur finale et $\tau = R_{th}C$.</li>
+    <li data-rang="02">La tension du condensateur est continue et rattrape l'écart à une vitesse proportionnelle à cet écart : $37\ \%$ restent après $\tau$, moins de $1\ \%$ après $5\tau$, et le courant, lui, saute à chaque manœuvre.</li>
+    <li data-rang="03">Charger un condensateur à travers une résistance dissipe $\tfrac{1}{2}C\,\Delta U^2$, quelle que soit la résistance : c'est ce qui dimensionne une résistance de précharge et la temporisation de son contacteur.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> identifier le bon circuit pour chacune des trois grandeurs, en
+    particulier la résistance vue par le condensateur et la valeur finale quand une résistance est en parallèle sur lui,
+    ou quand la manœuvre modifie le circuit, comme l'ouverture de $K$ dans l'exemple de la section H. Le schéma principal
+    de la section F, avec ses deux circuits équivalents, et la réduction de Thévenin de la section E sont faits pour
+    lever cette difficulté.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Régime transitoire RL, applique la même méthode à une
+    bobine. Question à préparer : la bobine du contacteur $KM1$ de la pompe, $1{,}2\ \mathrm{H}$ et $48\ \Omega$, est
+    mise sous $24\ \mathrm{V}$ ; en remplaçant le rôle de la tension du condensateur par celui du courant de la bobine,
+    quelles sont la valeur initiale, la valeur finale et la constante de temps de ce courant, et au bout de combien de
+    temps atteint-il $95\ \%$ de sa valeur finale ?
+  </p>
+
+</article>
