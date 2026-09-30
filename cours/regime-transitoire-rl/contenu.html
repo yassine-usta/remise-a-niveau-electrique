@@ -1,0 +1,1248 @@
+<article class="cours" data-slug="regime-transitoire-rl">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/regime-transitoire-rc">Régime transitoire RC</a> s'est achevé sur une question : la
+      bobine du contacteur $KM1$ de la pompe, $1{,}2\ \mathrm{H}$ et $48\ \Omega$, est mise sous $24\ \mathrm{V}$ ; en
+      remplaçant le rôle de la tension du condensateur par celui du courant de la bobine, quelles sont la valeur
+      initiale, la valeur finale et la constante de temps de ce courant ? Réponse : le courant part de $0$, car il ne peut
+      pas sauter ; il tend vers $24/48 = 0{,}5\ \mathrm{A}$, la bobine devenant un simple fil résistif en régime établi ;
+      et la constante de temps vaut $L/R = 1{,}2/48 = 25\ \mathrm{ms}$. Il atteint $95\ \%$ de sa valeur finale après
+      $3\tau = 75\ \mathrm{ms}$. Cette séance justifie ce transfert de méthode, puis traite ce que le circuit RC ne
+      connaissait pas : l'ouverture d'un circuit inductif, la surtension qu'elle provoque et le chemin qu'il faut offrir
+      au courant. Elle s'appuie sur la relation $u = L\,\mathrm{d}i/\mathrm{d}t$, la continuité du courant et l'énergie
+      $\tfrac{1}{2}Li^2$ du cours <a href="#/cours/inductances-et-champ-magnetique">Inductances et champ magnétique</a>,
+      sur la forme universelle du premier ordre du cours <a href="#/cours/regime-transitoire-rc">Régime transitoire
+      RC</a>, et sur les lois des nœuds et des mailles du cours <a href="#/cours/lois-de-kirchhoff">Lois de
+      Kirchhoff</a>.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Presque tous les actionneurs électriques sont inductifs : bobines de contacteurs et de relais, électrovannes, freins
+    électromagnétiques, électroaimants de levage, enroulements d'excitation des machines, et même l'enroulement d'un
+    moteur vu par l'onduleur qui le découpe. Chaque fois qu'on les alimente, le courant met un temps fini à s'établir ;
+    chaque fois qu'on les coupe, le courant refuse de s'annuler instantanément. Le régime transitoire RL décrit ces deux
+    phases. Il fixe le temps d'appel d'un contacteur, le retard de retombée d'un relais, le temps de réponse d'une
+    électrovanne ou d'un frein, et surtout la surtension qui apparaît à l'ouverture d'un circuit inductif, capable de
+    détruire une sortie à transistor d'automate, d'user les contacts par l'arc et de perturber les circuits voisins.
+  </p>
+  <p>
+    Le travail central de la séance en découle : dimensionner le chemin de roue libre d'une bobine, c'est-à-dire choisir
+    le composant qui prendra le relais du courant à l'ouverture, diode seule, diode et Zener ou résistance de décharge,
+    et vérifier sa tenue en tension, en courant et en énergie. Le même mécanisme gouverne la diode de roue libre d'un
+    hacheur, qui assure la continuité du courant dans l'inductance à chaque période de découpage, et la commande par
+    modulation de largeur d'impulsion d'une bobine d'électrovanne, qui fixe un courant moyen avec une ondulation
+    d'autant plus faible que la constante de temps est grande devant la période. On retrouvera ces notions dans les
+    cours Hacheurs DC-DC et Protections des convertisseurs, et le système du premier ordre servira de modèle de référence
+    dans le module d'automatique.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Établir l'équation différentielle d'un circuit RL série à partir de la loi des mailles et de $u = L\,\mathrm{d}i/\mathrm{d}t$, et la résoudre pour une source constante et un courant initial quelconque.</li>
+    <li data-rang="02">Calculer la constante de temps $\tau = L/R_{th}$ vue par une bobine placée dans un réseau résistif, et expliquer pourquoi une résistance plus forte raccourcit le transitoire.</li>
+    <li data-rang="03">Calculer le courant et la tension à un instant donné, et l'instant auquel le courant atteint un seuil d'appel ou de retombée.</li>
+    <li data-rang="04">Calculer la surtension à l'ouverture d'un circuit inductif selon le chemin offert au courant, et expliquer le compromis entre tension de coupure et vitesse d'extinction.</li>
+    <li data-rang="05">Dimensionner une diode de roue libre et un écrêteur : tension inverse, courant crête, énergie par coupure, puissance moyenne et retard de retombée.</li>
+    <li data-rang="06">Interpréter la réponse d'une bobine commandée en modulation de largeur d'impulsion : courant moyen, ondulation et rôle de la diode de roue libre.</li>
+    <li data-rang="07">Diagnostiquer un défaut de protection de bobine à partir de symptômes : sortie détruite, retombée lente, contacts usés.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois acquis sont mobilisés. Le premier vient du cours
+    <a href="#/cours/inductances-et-champ-magnetique">Inductances et champ magnétique</a> : en convention récepteur, la
+    tension aux bornes d'une inductance idéale vaut $u_L = L\,\mathrm{d}i/\mathrm{d}t$, son courant est continu, elle
+    stocke l'énergie $\tfrac{1}{2}Li^2$ et se comporte comme un fil en régime continu établi. Le deuxième vient du cours
+    <a href="#/cours/regime-transitoire-rc">Régime transitoire RC</a> : une grandeur d'un circuit du premier ordre suit
+    $x(t) = x_\infty + (x(0^+) - x_\infty)\,e^{-t/\tau}$, et l'instant d'un seuil s'obtient avec un logarithme
+    népérien. Le troisième vient du cours <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes de
+    Thévenin, Norton et superposition</a> : la résistance vue entre deux bornes se calcule sources indépendantes
+    éteintes. Le mini-test ci-dessous n'est pas noté ; la correction de chaque question reste masquée jusqu'à une
+    tentative ou un clic explicite sur "Voir la correction".
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-inertie">Un courant qui a de l'inertie</h3>
+  <p>
+    Fermons un interrupteur qui applique une tension continue $E$ à une bobine de résistance $R$. Juste après la
+    fermeture, le courant est encore nul : le flux dans la bobine ne peut pas apparaître instantanément, car il faudrait
+    une tension infinie. La résistance ne fait donc chuter aucune tension, et toute la tension de la source se retrouve
+    aux bornes de l'inductance : $L\,\mathrm{d}i/\mathrm{d}t = E$, le courant croît à sa vitesse maximale $E/L$. À
+    mesure qu'il croît, la résistance consomme une part croissante de la tension, $Ri$, et il n'en reste plus que
+    $E - Ri$ pour faire croître le courant. La montée ralentit, et le courant tend vers $E/R$, valeur pour laquelle la
+    résistance consomme toute la tension et l'inductance plus rien.
+  </p>
+  <p>
+    On retrouve exactement le mécanisme du circuit RC, les rôles étant échangés : la vitesse de variation du courant est
+    proportionnelle à l'écart qui reste à combler, $E/R - i$, et cet écart décroît exponentiellement. La grandeur qui a
+    de la mémoire n'est plus la tension d'un condensateur, mais le courant d'une bobine. À l'ouverture, cette inertie
+    devient une contrainte : le courant exige de continuer à circuler. S'il trouve un chemin, par exemple une diode, il
+    décroît progressivement en dissipant l'énergie stockée ; s'il n'en trouve pas, la bobine produit la tension qu'il
+    faut pour s'en créer un, en faisant claquer l'air entre les contacts ou le transistor qui vient de s'ouvrir.
+  </p>
+  <p>
+    Analogie contrôlée : l'eau qui s'écoule dans une longue conduite alimentée par un réservoir. Ouvrir la vanne ne met
+    pas l'eau en mouvement instantanément : la différence de pression accélère la colonne d'eau, et le frottement dans
+    la conduite limite la vitesse finale. La masse d'eau joue le rôle de l'inductance, le débit celui du courant, la
+    pression celui de la tension et le frottement celui de la résistance. Fermer brusquement la vanne en bout de conduite
+    provoque un coup de bélier, une surpression brutale qui peut rompre la canalisation : c'est l'équivalent exact de la
+    surtension à l'ouverture d'une bobine, et la soupape ou le réservoir anti-bélier qu'on installe en hydraulique jouent
+    le rôle de la diode de roue libre ou de l'écrêteur.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie de la conduite</span>
+    <p>
+      L'analogie rend bien compte de l'inertie du débit, de la vitesse finale fixée par le frottement et du coup de
+      bélier à la fermeture. Elle en déforme d'autres aspects. L'inertie hydraulique est portée par une masse qui se
+      déplace, alors que l'énergie d'une bobine est stockée dans le champ magnétique, y compris dans l'air autour des
+      conducteurs, et non dans le mouvement des électrons, dont l'énergie cinétique est négligeable. Le frottement réel
+      d'une conduite n'est proportionnel au débit qu'en régime laminaire, et le coup de bélier se propage à la vitesse du
+      son dans l'eau, ce qui introduit un temps de propagation absent du modèle à constantes localisées. Enfin,
+      l'inductance d'une bobine à noyau de fer n'est constante que loin de la saturation, alors que la masse d'eau l'est
+      toujours : l'analogie est plus fidèle que le composant réel sur ce point.
+    </p>
+  </div>
+
+  <h3 id="d-anim-section">Animation : établissement puis roue libre, pas à pas</h3>
+  <p>
+    L'animation montre le circuit de la séance : une source $E$, un interrupteur commandé $K$, une bobine d'inductance
+    $L$ et de résistance $r$, et une diode de roue libre $D$ montée en parallèle sur la bobine, supposée idéale. De $0$ à
+    $5\tau$, $K$ est fermé et la source établit le courant ; à $5\tau$, $K$ s'ouvre. Les points qui circulent sont des
+    porteurs dessinés dans le sens réel du courant, avec un déplacement proportionnel à la charge transportée : leur
+    vitesse est donc l'image du courant. Le temps est piloté par vous : lecture, pause, vitesse et remise à zéro. Avant
+    de lancer la lecture, prédisez qualitativement : le courant est-il le plus fort juste après la fermeture, comme dans
+    le circuit RC ? À l'ouverture de $K$, le courant de la bobine s'arrête-t-il, change-t-il de sens, ou continue-t-il
+    dans le même sens ? Par où passe-t-il alors ? La tension $u_L$ change-t-elle de signe ?
+  </p>
+  <figure id="d-anim-figure">
+    <div class="m-toile-cadre schema-vivant" id="d-anim"></div>
+    <figcaption>
+      La source $E$, borne $+$ en haut, alimente le nœud $A$ par l'interrupteur $K$, dont la lame en trait épais montre
+      l'état. La bobine est dessinée comme une inductance idéale $L$ (les boucles) en série avec sa résistance $r$ (le
+      rectangle), entre $A$ et le nœud $B$ ; le conducteur du bas, relié à $B$, est la référence de potentiel. La diode
+      $D$, à droite, a sa cathode (le trait) côté $A$ : elle est bloquée tant que $K$ est fermé. La flèche épaisse sur le
+      fil du haut fixe le sens de référence du courant $i$, qui entre dans la bobine par sa borne $+$ : convention
+      récepteur. La flèche fine $u_L$ pointe vers cette borne. Les porteurs circulent dans le sens réel du courant ; les
+      jauges horizontales donnent $i/I_\infty$, avec $I_\infty = E/r$, et l'énergie stockée rapportée à sa valeur
+      finale $\tfrac{1}{2}LI_\infty^2$.
+    </figcaption>
+  </figure>
+  <div id="d-anim-lecteur"></div>
+  <div id="d-anim-valeurs"></div>
+  <p>
+    Interprétation : contrairement au circuit RC, le courant est nul juste après la fermeture et croît ensuite ; c'est la
+    tension $u_L$ qui est maximale au départ, égale à $E$, puis décroît. À l'ouverture de $K$, le courant de la bobine ne
+    saute pas : il continue dans le même sens dans la bobine et se referme par la diode, qui se débloque d'elle-même. Les
+    porteurs changent de boucle sans s'arrêter. C'est la tension $u_L$ qui saute, de presque zéro à $-r\,i$, négative :
+    la bobine, devenue générateur, restitue son énergie, dissipée dans sa propre résistance. Le panneau d'énergies
+    montre une différence avec le circuit RC : tant que $K$ reste fermé, la source continue de fournir de l'énergie, qui
+    part entièrement en chaleur dans $r$ une fois le courant établi ; la bobine, elle, ne stocke que
+    $\tfrac{1}{2}LI_\infty^2$ et la rend intégralement pendant la roue libre.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-equation">Mise en équation</h3>
+  <p>
+    Circuit de référence : la source de tension idéale $E$ est reliée à l'instant $t = 0$ par l'interrupteur $K$ à une
+    bobine d'inductance $L$ en série avec une résistance totale $R$, qui regroupe la résistance du fil de la bobine,
+    celle des conducteurs et la résistance interne de la source. Le courant de la bobine juste avant la manœuvre vaut
+    $I_0$. Les orientations sont celles du schéma principal de la section F : courant $i$ orienté de $A$ vers $B$ dans la
+    bobine, tension $u_L$ de l'inductance en convention récepteur, conducteur du bas pris comme référence de potentiel.
+    Pour $t > 0$, la loi des mailles donne $E = u_R + u_L$ ; la loi d'Ohm donne $u_R = Ri$ ; la relation de l'inductance
+    donne $u_L = L\,\mathrm{d}i/\mathrm{d}t$. En remplaçant :
+  </p>
+  <div class="formule-cle">
+    $$L\,\frac{\mathrm{d}i}{\mathrm{d}t} + R\,i = E \quad\Longleftrightarrow\quad \frac{L}{R}\,\frac{\mathrm{d}i}{\mathrm{d}t} + i = \frac{E}{R}, \qquad \tau = \frac{L}{R}$$
+    <p class="formule-cle-legende">
+      $L$ en henrys, $R$ en ohms, $i$ en ampères, $E$ en volts, $t$ et $\tau$ en secondes. Hypothèses : inductance
+      constante (noyau loin de la saturation, pas de mouvement de l'armature), résistance constante, source idéale
+      constante pour $t > 0$, interrupteur idéal, capacités parasites de la bobine négligées. Une seule grandeur mémorise
+      le passé, le courant de la bobine : c'est un circuit du premier ordre, de même forme que le circuit RC, avec $i$ à
+      la place de $u_C$ et $E/R$ à la place de $E$.
+    </p>
+  </div>
+  <p>
+    Vérification dimensionnelle : $[L/R] = \dfrac{\mathrm{H}}{\Omega} = \dfrac{\mathrm{V \cdot s / A}}{\mathrm{V / A}} =
+    \mathrm{s}$. Le rapport $L/R$ est bien une durée. Attention au sens de variation, opposé à celui du circuit RC :
+    une résistance plus forte raccourcit la constante de temps d'un circuit RL, alors qu'elle allonge celle d'un circuit
+    RC. Intuition : une résistance forte limite le courant final $E/R$, que l'inductance atteint donc plus vite avec la
+    même pente initiale $E/L$.
+  </p>
+
+  <h3 id="e-solution">Résolution, forme universelle et tension de la bobine</h3>
+  <p>
+    La résolution est celle du cours <a href="#/cours/regime-transitoire-rc">Régime transitoire RC</a>. Solution
+    particulière constante : le régime permanent $i = E/R = I_\infty$. Solution de l'équation sans second membre :
+    $A\,e^{-t/\tau}$. Condition initiale, par continuité du courant de la bobine : $i(0^+) = I_0$, donc
+    $A = I_0 - I_\infty$. D'où :
+  </p>
+  <div class="formule-cle">
+    $$i(t) = I_\infty + (I_0 - I_\infty)\,e^{-t/\tau}, \qquad u_L(t) = L\,\frac{\mathrm{d}i}{\mathrm{d}t} = (E - R\,I_0)\,e^{-t/\tau}, \qquad I_\infty = \frac{E}{R}$$
+    <p class="formule-cle-legende">
+      Valable pour $t > 0$. Cas limites : à $t = 0^+$, $i = I_0$ et $u_L = E - RI_0$ ; si la bobine partait sans
+      courant, $u_L(0^+) = E$, elle "prend" toute la tension et se comporte comme un circuit ouvert. Quand
+      $t \to \infty$, $i \to E/R$ et $u_L \to 0$ : l'inductance devient un fil. Si $I_0 = I_\infty$, rien ne se passe.
+      La tension $u_L$ saute à la manœuvre, de $0$ à $E - RI_0$, ce qui est permis : seul le courant est tenu d'être
+      continu. Vérification dimensionnelle : $RI_0$ est une tension, et $u_L$ a la dimension de $E$.
+    </p>
+  </div>
+  <p>
+    La forme universelle $x(t) = x_\infty + (x(0^+) - x_\infty)\,e^{-t/\tau}$ et la formule de l'instant d'un seuil
+    $t_x = \tau\ln\dfrac{x(0^+) - x_\infty}{x - x_\infty}$ s'appliquent donc telles quelles, avec deux changements : la
+    grandeur continue est le courant de la bobine, et la bobine se remplace par une source de courant $I_0$ à l'instant
+    $0^+$ et par un fil en régime établi. Les repères numériques sont les mêmes : $63{,}2\ \%$ du chemin après $\tau$,
+    $95{,}0\ \%$ après $3\tau$, $99{,}3\ \%$ après $5\tau$, et la tangente à l'origine, de pente $E/L$ pour une bobine
+    partant de zéro, atteint la valeur finale au bout de $\tau$.
+  </p>
+  <p>
+    Extinction dans une résistance : si, à $t = 0$, la bobine parcourue par $I_0$ est isolée de la source et refermée sur
+    une résistance, la résistance totale de la nouvelle maille étant $R'$, alors $I_\infty = 0$, $\tau' = L/R'$,
+    $i = I_0\,e^{-t/\tau'}$ et $u_L = -R'I_0\,e^{-t/\tau'}$. La tension est négative : la bobine se comporte en
+    générateur et pousse son courant, dans le même sens qu'avant, à travers la résistance. Le chronogramme ci-dessous
+    rassemble l'établissement et l'extinction.
+  </p>
+  <figure id="e-chrono-figure">
+    <svg viewBox="0 0 880 380" role="img" aria-label="Chronogramme de l'établissement et de l'extinction du courant d'une bobine : pendant l'établissement, courant croissant de 0 vers E sur R et tension de l'inductance décroissant de E vers 0 ; pendant l'extinction dans une résistance R prime, courant décroissant de I0 vers 0 et tension négative remontant de moins R prime I0 vers 0 ; tangentes à l'origine et repères à une, deux, trois et cinq constantes de temps">
+      <g stroke="currentColor" stroke-width="1.4" fill="none" opacity="0.8">
+        <path d="M70 170H390M70 180V32"/>
+        <path d="M70 300H390M70 310V196"/>
+        <path d="M520 170H840M520 180V32"/>
+        <path d="M520 210H840M520 322V196"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.2" fill="none" stroke-dasharray="6 5" opacity="0.7">
+        <path d="M70 50H380"/>
+        <path d="M70 170L130 50"/>
+        <path d="M130 170V94.1H70"/>
+        <path d="M70 210L130 300"/>
+        <path d="M520 50L580 170"/>
+        <path d="M580 170V125.9H520"/>
+        <path d="M520 300L580 210"/>
+        <path d="M190 170V66.2M250 170V56"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M70.0 170.0 L77.5 155.9 L85.0 143.5 L92.5 132.5 L100.0 122.8 L107.5 114.2 L115.0 106.7 L122.5 100.0 L130.0 94.1 L137.5 89.0 L145.0 84.4 L152.5 80.3 L160.0 76.8 L167.5 73.6 L175.0 70.9 L182.5 68.4 L190.0 66.2 L197.5 64.3 L205.0 62.6 L212.5 61.2 L220.0 59.9 L227.5 58.7 L235.0 57.7 L242.5 56.8 L250.0 56.0 L257.5 55.3 L265.0 54.7 L272.5 54.1 L280.0 53.6 L287.5 53.2 L295.0 52.8 L302.5 52.5 L310.0 52.2 L317.5 51.9 L325.0 51.7 L332.5 51.5 L340.0 51.3 L347.5 51.2 L355.0 51.0 L362.5 50.9 L370.0 50.8"/>
+        <path d="M70 300V210.0 L77.5 220.6 L85.0 229.9 L92.5 238.1 L100.0 245.4 L107.5 251.8 L115.0 257.5 L122.5 262.5 L130.0 266.9 L137.5 270.8 L145.0 274.2 L152.5 277.2 L160.0 279.9 L167.5 282.3 L175.0 284.4 L182.5 286.2 L190.0 287.8 L197.5 289.3 L205.0 290.5 L212.5 291.6 L220.0 292.6 L227.5 293.5 L235.0 294.2 L242.5 294.9 L250.0 295.5 L257.5 296.0 L265.0 296.5 L272.5 296.9 L280.0 297.3 L287.5 297.6 L295.0 297.9 L302.5 298.1 L310.0 298.4 L317.5 298.5 L325.0 298.7 L332.5 298.9 L340.0 299.0 L347.5 299.1 L355.0 299.2 L362.5 299.3 L370.0 299.4"/>
+        <path d="M520.0 50.0 L527.5 64.1 L535.0 76.5 L542.5 87.5 L550.0 97.2 L557.5 105.8 L565.0 113.3 L572.5 120.0 L580.0 125.9 L587.5 131.0 L595.0 135.6 L602.5 139.7 L610.0 143.2 L617.5 146.4 L625.0 149.1 L632.5 151.6 L640.0 153.8 L647.5 155.7 L655.0 157.4 L662.5 158.8 L670.0 160.1 L677.5 161.3 L685.0 162.3 L692.5 163.2 L700.0 164.0 L707.5 164.7 L715.0 165.3 L722.5 165.9 L730.0 166.4 L737.5 166.8 L745.0 167.2 L752.5 167.5 L760.0 167.8 L767.5 168.1 L775.0 168.3 L782.5 168.5 L790.0 168.7 L797.5 168.8 L805.0 169.0 L812.5 169.1 L820.0 169.2"/>
+        <path d="M520 210V300.0 L527.5 289.4 L535.0 280.1 L542.5 271.9 L550.0 264.6 L557.5 258.2 L565.0 252.5 L572.5 247.5 L580.0 243.1 L587.5 239.2 L595.0 235.8 L602.5 232.8 L610.0 230.1 L617.5 227.7 L625.0 225.6 L632.5 223.8 L640.0 222.2 L647.5 220.7 L655.0 219.5 L662.5 218.4 L670.0 217.4 L677.5 216.5 L685.0 215.8 L692.5 215.1 L700.0 214.5 L707.5 214.0 L715.0 213.5 L722.5 213.1 L730.0 212.7 L737.5 212.4 L745.0 212.1 L752.5 211.9 L760.0 211.6 L767.5 211.5 L775.0 211.3 L782.5 211.1 L790.0 211.0 L797.5 210.9 L805.0 210.8 L812.5 210.7 L820.0 210.6"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="230" y="18" text-anchor="middle" font-weight="600">établissement : K fermé, I0 = 0</text>
+        <text x="680" y="18" text-anchor="middle" font-weight="600">extinction dans R' : départ à I0</text>
+        <text x="62" y="40" text-anchor="end" font-size="11.5">i</text>
+        <text x="62" y="194" text-anchor="end" font-size="11.5">u_L</text>
+        <text x="512" y="40" text-anchor="end" font-size="11.5">i</text>
+        <text x="512" y="200" text-anchor="end" font-size="11.5">u_L</text>
+        <text x="62" y="54" text-anchor="end">E/R</text>
+        <text x="62" y="98" text-anchor="end">0,63 E/R</text>
+        <text x="62" y="214" text-anchor="end">E</text>
+        <text x="512" y="54" text-anchor="end">I0</text>
+        <text x="512" y="130" text-anchor="end">0,37 I0</text>
+        <text x="512" y="304" text-anchor="end">-R' I0</text>
+        <text x="130" y="188" text-anchor="middle" font-size="11">τ</text>
+        <text x="190" y="188" text-anchor="middle" font-size="11">2τ</text>
+        <text x="250" y="188" text-anchor="middle" font-size="11">3τ</text>
+        <text x="370" y="188" text-anchor="middle" font-size="11">5τ</text>
+        <text x="130" y="318" text-anchor="middle" font-size="11">τ</text>
+        <text x="580" y="188" text-anchor="middle" font-size="11">τ'</text>
+        <text x="700" y="188" text-anchor="middle" font-size="11">3τ'</text>
+        <text x="820" y="188" text-anchor="middle" font-size="11">5τ'</text>
+        <text x="396" y="174" font-size="11">t</text>
+        <text x="396" y="304" font-size="11">t</text>
+        <text x="846" y="174" font-size="11">t</text>
+        <text x="846" y="214" font-size="11">t</text>
+        <text x="270" y="120" font-size="11.5">86 % à 2τ, 95 % à 3τ</text>
+        <text x="270" y="136" font-size="11.5">99,3 % à 5τ</text>
+        <text x="190" y="258" font-size="11.5">u_L saute de 0 à E</text>
+        <text x="660" y="90" font-size="11.5">13,5 % à 2τ', 5 % à 3τ'</text>
+        <text x="660" y="106" font-size="11.5">0,7 % à 5τ'</text>
+        <text x="610" y="280" font-size="11.5">u_L négatif : L restitue</text>
+        <text x="440" y="356" text-anchor="middle" font-size="11.5">tangente à l'origine en tirets : elle atteint la valeur finale au bout de τ</text>
+        <text x="440" y="374" text-anchor="middle" font-size="11.5">i de A vers B dans la bobine, u_L en convention récepteur ; masse : référence 0 V</text>
+      </g>
+    </svg>
+    <figcaption>
+      Chronogramme de l'établissement (colonne de gauche) et de l'extinction dans une résistance (colonne de droite).
+      Graphiques du haut : courant $i$ de la bobine ; graphiques du bas : tension $u_L$ de l'inductance, en convention
+      récepteur comme dans le schéma principal. Pendant l'établissement, $i$ part de $0$ sans saut et tend vers $E/R$,
+      tandis que $u_L$ saute à $E$ puis décroît vers zéro. Pendant l'extinction, $i$ part de $I_0$, toujours sans saut,
+      et décroît vers zéro avec $\tau' = L/R'$, tandis que $u_L$ saute à $-R'I_0$ puis remonte vers zéro : la bobine
+      restitue son énergie. Les traits en tirets sont les tangentes à l'origine, qui atteignent la valeur finale au bout
+      d'une constante de temps, les repères verticaux à $\tau$, $2\tau$ et $3\tau$, et les niveaux $0{,}63\,E/R$ et
+      $0{,}37\,I_0$ lus à une constante de temps. Comparé au chronogramme du circuit RC, les rôles sont échangés :
+      c'est ici le courant qui est continu et la tension qui saute.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-tangente-section">Simulation interactive : courant, tension et tangente</h3>
+  <p>
+    La simulation trace le courant $i(t)$ et la tension $u_L(t)$ pour des valeurs de $L$, $R$, $E$ et $I_0$ réglées par
+    les curseurs, sur une durée de $5\tau$. Le point rond sur l'axe du bas se déplace à la souris, au doigt ou au
+    clavier : il fixe l'instant étudié, et le schéma trace la tangente à la courbe de courant en cet instant, en tirets,
+    jusqu'à la valeur finale. Avant de manipuler, prédisez : si vous doublez $R$ sans toucher à $L$, le transitoire
+    devient-il plus lent ou plus rapide, et que devient le courant final ? Si $I_0$ est supérieur à $E/R$, quel est le
+    signe de $u_L$ ? La pente initiale du courant dépend-elle de $R$ quand $I_0 = 0$ ?
+  </p>
+  <figure id="e-tangente-figure">
+    <div class="m-toile-cadre schema-vivant" id="e-tangente"></div>
+    <figcaption>
+      Graphique du haut : le courant $i$ en ampères, courbe épaisse, avec sa valeur finale $E/R$ en tirets longs et la
+      tangente au point étudié en tirets courts, prolongée jusqu'à la valeur finale ; les repères verticaux fins marquent
+      l'instant étudié et cet instant augmenté de $\tau$. Graphique du milieu : la tension $u_L$ en volts, courbe
+      épaisse, avec sa ligne de zéro ; le petit disque marque sa valeur à l'instant étudié. Axe du bas : le temps, gradué
+      en millisecondes et en multiples de $\tau$ ; le point rond est la poignée qui choisit l'instant.
+    </figcaption>
+  </figure>
+  <div id="e-tangente-curseurs"></div>
+  <div id="e-tangente-valeurs"></div>
+  <p>
+    Interprétation : doubler $R$ divise par deux la constante de temps et le courant final, sans changer la pente
+    initiale $E/L$ quand la bobine part de zéro : le courant atteint plus vite une valeur plus basse. C'est pourquoi on
+    accélère l'appel d'un électroaimant en l'alimentant sous une tension plus élevée à travers une résistance série :
+    même courant final, constante de temps plus courte. Avec $I_0 > E/R$, l'écart initial est négatif, $u_L$ est
+    négative dès le départ, et la bobine restitue une partie de son énergie pendant que le courant décroît vers $E/R$.
+    Comme pour le circuit RC, la tangente atteint la valeur finale au bout de $\tau$ en tout point, traduction de
+    $\mathrm{d}i/\mathrm{d}t = (I_\infty - i)/\tau$, et le panneau montre que $u_L = L\,\mathrm{d}i/\mathrm{d}t$ est à
+    chaque instant proportionnelle à cette pente.
+  </p>
+
+  <h3 id="e-thevenin">Constante de temps vue par la bobine</h3>
+  <p>
+    Quand la bobine est insérée dans un réseau, le cours
+    <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes de Thévenin, Norton et
+    superposition</a> fournit la réduction : vu des bornes de la bobine, le réseau linéaire équivaut à une source
+    $E_{th}$ en série avec $R_{th}$. La bobine voit donc un circuit RL de référence, avec $\tau = L/R_{th}$ et un courant
+    final $I_\infty = E_{th}/R_{th}$, qui est le courant de court-circuit du réseau entre les bornes de la bobine, puisque
+    la bobine idéale est un fil en régime établi.
+  </p>
+  <figure id="e-thevenin-figure">
+    <svg viewBox="0 0 860 320" role="img" aria-label="Réduction d'un réseau vu par une bobine : source E, résistance R1 en série, résistance R2 en parallèle sur la bobine, remplacés par une source de Thévenin E th en série avec R th">
+      <defs>
+        <marker id="fl-e-th" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-e-th-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <rect x="24" y="28" width="286" height="238" rx="10" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="6 5" opacity="0.6"/>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="60" cy="150" r="20"/>
+        <path d="M60 130V60H110M170 60H360V110"/>
+        <path d="M360 110a10 10 0 0 1 0 20a10 10 0 0 1 0 20a10 10 0 0 1 0 20a10 10 0 0 1 0 20"/>
+        <path d="M360 190V240H60V170"/>
+        <rect x="110" y="48" width="60" height="24" rx="3"/>
+        <path d="M260 60V110M260 170V240"/>
+        <rect x="248" y="110" width="24" height="60" rx="3"/>
+        <circle cx="600" cy="150" r="20"/>
+        <path d="M600 130V60H650M710 60H790V110"/>
+        <path d="M790 110a10 10 0 0 1 0 20a10 10 0 0 1 0 20a10 10 0 0 1 0 20a10 10 0 0 1 0 20"/>
+        <path d="M790 190V240H600V170"/>
+        <rect x="650" y="48" width="60" height="24" rx="3"/>
+        <path d="M200 240V252M188 252H212M193 258H207M197 264H203"/>
+      </g>
+      <g fill="currentColor" stroke="none"><circle cx="260" cy="60" r="4"/><circle cx="260" cy="240" r="4"/></g>
+      <g stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M468 150H536" marker-end="url(#fl-e-th)"/>
+        <path d="M330 72V100" marker-end="url(#fl-e-th)"/>
+        <path d="M760 72V100" marker-end="url(#fl-e-th)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M404 204V112" marker-end="url(#fl-e-th-u)"/>
+        <path d="M826 204V112" marker-end="url(#fl-e-th-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="60" y="146" text-anchor="middle" font-weight="600">+</text>
+        <text x="37" y="156" text-anchor="end">E</text>
+        <text x="140" y="92" text-anchor="middle">R1</text>
+        <text x="236" y="146" text-anchor="end">R2</text>
+        <text x="348" y="108" text-anchor="end" font-weight="600">+</text>
+        <text x="376" y="228">L</text>
+        <text x="322" y="88" text-anchor="end">i</text>
+        <text x="412" y="160" fill="var(--serie-2)">u_L</text>
+        <text x="268" y="52">A</text>
+        <text x="167" y="290" text-anchor="middle" font-size="11.5">réseau linéaire vu des bornes de L</text>
+        <text x="502" y="138" text-anchor="middle" font-size="11.5">Thévenin</text>
+        <text x="600" y="146" text-anchor="middle" font-weight="600">+</text>
+        <text x="572" y="156" text-anchor="end">E_th</text>
+        <text x="680" y="92" text-anchor="middle">R_th</text>
+        <text x="778" y="108" text-anchor="end" font-weight="600">+</text>
+        <text x="804" y="228">L</text>
+        <text x="752" y="88" text-anchor="end">i</text>
+        <text x="832" y="164" fill="var(--serie-2)">u_L</text>
+        <text x="690" y="274" text-anchor="middle" font-size="11.5">E_th = E R2 / (R1 + R2) ; R_th = R1 R2 / (R1 + R2)</text>
+        <text x="690" y="292" text-anchor="middle" font-size="11.5">τ = L / R_th ; i tend vers E_th / R_th = E / R1</text>
+        <text x="690" y="310" text-anchor="middle" font-size="11.5">(courant de court-circuit entre les bornes de L)</text>
+        <text x="228" y="276" font-size="11">0 V</text>
+      </g>
+    </svg>
+    <figcaption>
+      À gauche, un réseau courant : la source $E$ (borne $+$ en haut) alimente la bobine à travers $R_1$, et $R_2$ est en
+      parallèle sur la bobine, par exemple une résistance de décharge. Le cadre en tirets délimite ce que "voit" la
+      bobine entre le nœud $A$ et la masse, référence de potentiel. La flèche épaisse $i$ fixe le sens de référence du
+      courant de la bobine, qui entre par sa borne $+$ ; la flèche fine $u_L$ pointe vers cette borne, en convention
+      récepteur. À droite, l'équivalent de Thévenin : $E_{th}$ est la tension à vide entre $A$ et la masse, bobine
+      retirée, et $R_{th}$ la résistance vue entre ces bornes, source $E$ remplacée par un fil, soit $R_1$ en parallèle
+      avec $R_2$. La bobine tend vers le courant $E_{th}/R_{th} = E/R_1$, car en régime établi elle court-circuite $R_2$,
+      avec la constante de temps $L/R_{th}$, plus longue que $L/R_1$.
+    </figcaption>
+  </figure>
+  <p>
+    Deux conséquences pratiques, symétriques de celles du circuit RC. D'abord, $\tau$ et le courant final doivent être
+    calculés dans le circuit qui existe après la manœuvre : quand $K$ s'ouvre, la bobine ne voit plus que la résistance
+    de la maille de roue libre, et c'est elle qui fixe la vitesse d'extinction. Ensuite, une résistance placée en
+    parallèle sur une bobine abaisse $R_{th}$ et allonge donc la constante de temps de l'établissement, alors qu'une
+    résistance en parallèle sur un condensateur la raccourcit : la dualité échange série et parallèle, tension et
+    courant, résistance et conductance.
+  </p>
+
+  <h3 id="e-ouverture">L'ouverture : surtension et chemin de roue libre</h3>
+  <p>
+    Au moment où $K$ s'ouvre, la bobine porte le courant $I_0$ et l'interrupteur impose $i = 0$ dans sa branche. Si la
+    bobine n'a pas d'autre chemin, les deux exigences sont incompatibles : le courant devrait passer de $I_0$ à zéro en
+    une durée nulle, donc $u_L = L\,\mathrm{d}i/\mathrm{d}t \to -\infty$. En réalité, la tension monte jusqu'à ce qu'un
+    chemin apparaisse : arc entre les contacts qui s'écartent, claquage en avalanche du transistor, ou courant dans les
+    capacités parasites de la bobine et du câblage, qui forment avec l'inductance un circuit oscillant étudié dans le
+    cours Régime transitoire RLC. Un raisonnement simple borne le phénomène : si l'interrupteur ouvert est modélisé par
+    une très grande résistance $R_{\mathrm{off}}$, la tension à ses bornes vaut $E + R_{\mathrm{off}}\,I_0$ à l'instant
+    $0^+$, soit des dizaines de kilovolts pour quelques centaines de milliampères et quelques mégohms.
+  </p>
+  <p>
+    La solution consiste à prévoir le chemin. Le cas le plus simple est une résistance de décharge $R_d$ placée en
+    parallèle sur la bobine : à l'ouverture, le courant $I_0$ passe dans $R_d$, la tension de la bobine saute à $-R_dI_0$
+    et l'interrupteur supporte $E + R_dI_0$. La maille de décharge a pour résistance $r + R_d$, d'où :
+  </p>
+  <div class="formule-cle">
+    $$u_{K}(0^+) = E + R_d\,I_0, \qquad \tau' = \frac{L}{r + R_d}, \qquad W_{R_d} = \frac{1}{2}\,L\,I_0^2\,\frac{R_d}{r + R_d}$$
+    <p class="formule-cle-legende">
+      $u_K$ tension aux bornes de l'interrupteur ouvert ($\mathrm{V}$) ; $R_d$ résistance de décharge ($\Omega$) ; $r$
+      résistance du fil de la bobine ($\Omega$) ; $I_0$ courant à l'ouverture ($\mathrm{A}$) ; $W_{R_d}$ part de
+      l'énergie stockée dissipée dans $R_d$ ($\mathrm{J}$), le reste l'étant dans $r$, puisque les deux résistances
+      sont parcourues par le même courant. Hypothèses : inductance constante, résistances linéaires, capacités parasites
+      négligées. Cas limites : $R_d \to 0$ redonne la roue libre idéale, extinction lente avec $\tau' = L/r$ et aucune
+      surtension ; $R_d \to \infty$ redonne la coupure sans chemin, extinction instantanée et surtension infinie. Le
+      produit $u_K \times \tau'$ tend vers $LI_0$ quand $R_d \gg r$ : on ne peut pas à la fois couper vite et couper
+      sous faible tension.
+    </p>
+  </div>
+  <p>
+    Cette dernière remarque est la loi de Faraday sous forme intégrale : pour annuler le courant, il faut détruire le
+    flux lié $\psi = LI_0$, et $\int u_L\,\mathrm{d}t = -\Delta\psi = -LI_0$. L'aire sous la courbe de tension pendant
+    l'extinction est imposée ; une tension faible implique une durée longue. La résistance de décharge a un défaut
+    supplémentaire : elle est parcourue en permanence par $E/R_d$ tant que $K$ est fermé, et consomme $E^2/R_d$ pour
+    rien. D'où l'usage de composants qui ne conduisent que pendant la coupure.
+  </p>
+
+  <h3 id="e-coupure-section">Animation et simulation : couper une bobine sur une résistance</h3>
+  <p>
+    L'animation reprend la bobine du contacteur $KM1$, $1{,}2\ \mathrm{H}$ et $48\ \Omega$, alimentée sous
+    $24\ \mathrm{V}$, donc parcourue par $0{,}5\ \mathrm{A}$. Une résistance de décharge $R_d$, réglée par le curseur,
+    est placée en parallèle sur la bobine. $K$ s'ouvre à $t = 10\ \mathrm{ms}$ ; le lecteur fait avancer le temps.
+    Avant de lancer, prédisez : pour que la sortie qui commande la bobine, de tenue $60\ \mathrm{V}$, soit protégée,
+    quelle valeur maximale de $R_d$ faut-il ? Avec cette valeur, le courant s'éteint-il plus vite ou plus lentement
+    qu'avec $R_d = 10\ \Omega$ ? Quelle est la consommation permanente de $R_d$ ?
+  </p>
+  <figure id="e-coupure-figure">
+    <div class="m-toile-cadre schema-vivant" id="e-coupure"></div>
+    <div id="e-coupure-courant"></div>
+    <div id="e-coupure-tension"></div>
+    <figcaption>
+      En haut, le circuit : la source de $24\ \mathrm{V}$, borne $+$ en haut, alimente la bobine par l'interrupteur $K$,
+      dont la lame montre l'état ; la bobine ($L$ et $r$) est en parallèle avec la résistance de décharge $R_d$ entre le
+      nœud $A$ et le conducteur du bas, référence de potentiel. Les flèches épaisses donnent le sens réel du courant
+      dans la bobine et dans $R_d$, avec une épaisseur proportionnelle à sa valeur ; la jauge donne le courant de la
+      bobine rapporté à $0{,}5\ \mathrm{A}$. Au-dessous, deux tracés : le courant $i$ de la bobine, puis la tension $u_K$
+      aux bornes de l'interrupteur, avec la ligne en tirets de la tenue de $60\ \mathrm{V}$ ; sur chacun, le trait
+      vertical en tirets marque l'ouverture de $K$ et le petit disque l'instant courant du lecteur.
+    </figcaption>
+  </figure>
+  <div id="e-coupure-curseurs"></div>
+  <div id="e-coupure-lecteur"></div>
+  <div id="e-coupure-valeurs"></div>
+  <p>
+    Interprétation : la tenue de $60\ \mathrm{V}$ impose $24 + 0{,}5\,R_d \leq 60$, soit $R_d \leq 72\ \Omega$. Avec
+    $72\ \Omega$, la constante de temps d'extinction vaut $1{,}2/120 = 10\ \mathrm{ms}$, deux fois plus courte qu'avec
+    $10\ \Omega$ ($20{,}7\ \mathrm{ms}$) : plus de tension, extinction plus rapide, c'est le compromis de la loi de
+    Faraday. Mais la résistance de $72\ \Omega$ consomme en permanence $24^2/72 = 8\ \mathrm{W}$ et $0{,}33\ \mathrm{A}$
+    sur le bus, deux tiers du courant de la bobine elle-même : c'est inacceptable sur le bus $24\ \mathrm{V}$ secouru,
+    plafonné à $6\ \mathrm{A}$. La résistance de décharge n'est utilisée seule que pour de gros enroulements alimentés
+    en permanence, comme l'excitation d'une machine, où elle est souvent mise en service par un contact au moment de la
+    coupure. Pour une bobine de commande, on lui préfère une diode, qui ne conduit que pendant la coupure.
+  </p>
+
+  <h3 id="e-roue-libre">Diode de roue libre et écrêteur : extinction sous tension constante</h3>
+  <p>
+    Une diode montée en parallèle sur la bobine, cathode côté borne $+$, est bloquée en fonctionnement normal. À
+    l'ouverture, le courant de la bobine se referme par elle : la diode se débloque d'elle-même, et la tension de la
+    bobine est fixée à $-U_e$, où $U_e$ est la tension du chemin de roue libre : environ $0{,}7\ \mathrm{V}$ pour une
+    diode seule, $U_Z + 0{,}7\ \mathrm{V}$ pour une diode en série avec une diode Zener tête-bêche, ou la tension
+    d'écrêtage d'une diode de suppression de transitoires. La bobine réelle ($L$ et $r$) est alors refermée sur une
+    source de tension constante $U_e$ qui s'oppose au courant : $L\,\mathrm{d}i/\mathrm{d}t + r\,i = -U_e$. C'est encore
+    un premier ordre, de constante de temps $\tau = L/r$, mais dont la valeur finale fictive vaut $-U_e/r$ : le courant
+    vise une valeur négative qu'il n'atteindra jamais, car la diode se bloque dès qu'il s'annule. Avec la forme
+    universelle, $i(0^+) = I_0$ et $i_\infty = -U_e/r$ :
+  </p>
+  <div class="formule-cle">
+    $$i(t) = \Bigl(I_0 + \frac{U_e}{r}\Bigr)e^{-t/\tau} - \frac{U_e}{r}, \qquad t_0 = \tau\,\ln\!\left(1 + \frac{r\,I_0}{U_e}\right), \qquad W_e = U_e\int_0^{t_0} i\,\mathrm{d}t = U_e\left(\tau\,I_0 - \frac{U_e}{r}\,t_0\right)$$
+    <p class="formule-cle-legende">
+      $t_0$ durée d'annulation du courant ($\mathrm{s}$), obtenue en écrivant $i(t_0) = 0$ ; $\tau = L/r$ ; $W_e$
+      énergie absorbée par le chemin de roue libre ($\mathrm{J}$), le reste de $\tfrac{1}{2}LI_0^2$ étant dissipé dans
+      $r$. Dérivation de $W_e$ : l'intégrale de l'exponentielle vaut $(I_0 + U_e/r)\,\tau\,(1 - e^{-t_0/\tau})$, et
+      $1 - e^{-t_0/\tau} = I_0/(I_0 + U_e/r)$ par définition de $t_0$, d'où $\int_0^{t_0} i\,\mathrm{d}t = \tau I_0 -
+      (U_e/r)\,t_0$, qui est la charge $Q$ ayant traversé la diode. Cas limites : $U_e \gg rI_0$ donne
+      $\ln(1 + x) \approx x$, donc $t_0 \approx LI_0/U_e$, extinction linéaire, et $W_e \to \tfrac{1}{2}LI_0^2$ ;
+      $U_e \to 0$ fait tendre $t_0$ vers l'infini, le courant ne décroissant plus que par $r$. Vérification
+      dimensionnelle : $rI_0/U_e$ est sans dimension, $t_0$ a celle de $\tau$, et $U_e \times \tau I_0$ est en
+      $\mathrm{V \cdot s \cdot A} = \mathrm{J}$.
+    </p>
+  </div>
+  <p>
+    Ce sont les formules admises dans le cours <a href="#/cours/inductances-et-champ-magnetique">Inductances et champ
+    magnétique</a>, désormais établies. Dimensionner le chemin de roue libre revient à vérifier cinq grandeurs. La
+    tension inverse que la diode supporte en fonctionnement normal est celle de l'alimentation, à prendre à sa valeur
+    maximale avec une marge large, car la diode est aussi exposée aux surtensions du réseau d'alimentation. Le courant
+    crête direct est le courant de la bobine à l'ouverture, $I_0$, pendant une durée de l'ordre de $t_0$ : c'est une
+    impulsion, à comparer à la tenue en surcharge de la diode, pas seulement à son courant moyen. L'énergie par coupure
+    $W_e$ et la puissance crête $U_eI_0$ dimensionnent la Zener ou la diode de suppression, dont la puissance
+    admissible dépend de la durée de l'impulsion, donnée du constructeur. La puissance moyenne vaut $W_e$ multipliée par
+    le nombre de coupures par seconde. Enfin, la tension vue par l'interrupteur à l'ouverture vaut $E + U_e$, à
+    comparer à sa tenue.
+  </p>
+
+  <h3 id="e-mli-section">Simulation interactive : bobine commandée en modulation de largeur d'impulsion</h3>
+  <p>
+    Quand l'interrupteur est ouvert et fermé périodiquement, à la fréquence $f = 1/T$ avec un rapport cyclique
+    $\alpha$ (fraction de la période pendant laquelle $K$ est fermé), la diode de roue libre prend le relais à chaque
+    ouverture. Chaque phase est un régime transitoire du premier ordre de même constante de temps $\tau = L/r$ : vers
+    $E/r$ quand $K$ est fermé, vers zéro quand il est ouvert, en négligeant la chute de tension de la diode. En régime
+    établi, le courant oscille entre $I_{\min}$ et $I_{\max}$. En posant $a = e^{-\alpha T/\tau}$ et
+    $b = e^{-(1 - \alpha)T/\tau}$, les deux conditions de raccordement $I_{\max} = I_\infty + (I_{\min} - I_\infty)\,a$ et
+    $I_{\min} = I_{\max}\,b$ donnent :
+  </p>
+  <div class="formule-cle">
+    $$I_{\max} = \frac{E}{r}\,\frac{1 - a}{1 - ab}, \qquad I_{\min} = I_{\max}\,b, \qquad \bar{I} = \alpha\,\frac{E}{r}, \qquad \Delta I \approx \frac{E\,\alpha(1 - \alpha)}{L\,f} \quad (T \ll \tau)$$
+    <p class="formule-cle-legende">
+      $\bar{I}$ courant moyen ($\mathrm{A}$), exact en régime établi : la tension moyenne aux bornes de la bobine est
+      $\alpha E$, celle de l'inductance est nulle en moyenne puisque son courant revient à la même valeur à chaque
+      période, donc $r\bar{I} = \alpha E$. $\Delta I = I_{\max} - I_{\min}$ ondulation crête à crête ($\mathrm{A}$) ;
+      l'approximation s'obtient en assimilant chaque morceau d'exponentielle à une droite de pente $(E - r\bar{I})/L$ pendant
+      $\alpha T$. Hypothèses : diode idéale, interrupteur idéal, inductance constante. Cas limites : $T \gg \tau$, le
+      courant a le temps d'aller de $0$ à $E/r$ à chaque période et la commande devient du tout ou rien ; $T \ll \tau$,
+      l'ondulation devient faible devant la moyenne, la bobine lisse le courant. L'ondulation est maximale pour
+      $\alpha = 0{,}5$. Vérification dimensionnelle : $\mathrm{V}/(\mathrm{H} \cdot \mathrm{Hz}) = \mathrm{V \cdot s /
+      H} = \mathrm{A}$.
+    </p>
+  </div>
+  <p>
+    La simulation reprend une électrovanne de $24\ \mathrm{V}$ de résistance $r = 24\ \Omega$ ; les curseurs règlent son
+    inductance, la fréquence de découpage et le rapport cyclique, et le tracé montre le courant en régime établi sur
+    trois périodes. Avant de manipuler, prédisez : pour $\alpha = 0{,}5$, le courant moyen dépend-il de la fréquence ?
+    Que devient l'ondulation si l'on multiplie la fréquence par quatre ? Et si l'on divise l'inductance par deux ?
+  </p>
+  <figure id="e-mli-figure">
+    <div id="e-mli-trace"></div>
+    <figcaption>
+      Tracé temporel sur trois périodes, en régime établi : la courbe épaisse est le courant $i(t)$ de la bobine, qui
+      monte quand $K$ est fermé et descend par la diode quand $K$ est ouvert ; la ligne horizontale fine est le courant
+      moyen $\alpha E/r$ ; les lignes en tirets repèrent $I_{\max}$ et $I_{\min}$ calculés par les formules ci-dessus.
+      La légende sous le tracé nomme chaque courbe avec sa couleur réelle, et le panneau de mesures donne l'ondulation
+      exacte et son approximation.
+    </figcaption>
+  </figure>
+  <div id="e-mli-curseurs"></div>
+  <p>
+    Interprétation : le courant moyen ne dépend que de $\alpha$ et de $r$, jamais de la fréquence ni de l'inductance ;
+    c'est ce qui permet de régler la force d'un électroaimant, ou de réduire le courant de maintien d'une bobine une
+    fois collée, par le seul rapport cyclique. Quand la période est courte devant $\tau$, multiplier la fréquence par
+    quatre divise l'ondulation par quatre, et diviser l'inductance par deux la double : les deux leviers apparaissent
+    au même endroit de la formule. La diode n'est pas un accessoire : sans elle, chaque ouverture provoquerait la
+    surtension de la section précédente, des milliers de fois par seconde. Elle conduit pendant $(1 - \alpha)T$ à chaque
+    période, avec un courant moyen voisin de $(1 - \alpha)\bar{I}$, et doit donc être dimensionnée en courant permanent,
+    et plus seulement en impulsion. Ce montage est le cœur du hacheur abaisseur du cours Hacheurs DC-DC.
+  </p>
+
+  <h3 id="e-energie">Bilan énergétique</h3>
+  <p>
+    Pendant l'établissement depuis $I_0 = 0$, la puissance fournie par la source se partage à chaque instant :
+    $E\,i = R\,i^2 + L\,i\,\mathrm{d}i/\mathrm{d}t = R\,i^2 + \mathrm{d}\bigl(\tfrac{1}{2}Li^2\bigr)/\mathrm{d}t$. En
+    intégrant de $0$ à $t$ :
+  </p>
+  <div class="formule-cle">
+    $$W_s(t) = \int_0^t E\,i\,\mathrm{d}t = \frac{1}{2}\,L\,i(t)^2 + \int_0^t R\,i^2\,\mathrm{d}t, \qquad W_L = \frac{1}{2}\,L\,I_\infty^2 = \frac{L E^2}{2 R^2}$$
+    <p class="formule-cle-legende">
+      Énergies en joules. Contrairement au circuit RC, le bilan ne s'arrête pas en fin de transitoire : une fois le
+      courant établi, la source fournit en permanence $E^2/R$, entièrement dissipée dans $R$, et l'énergie fournie croît
+      sans limite. La bobine ne stocke que $\tfrac{1}{2}LI_\infty^2$, et la restitue intégralement à l'ouverture : à la
+      résistance de roue libre, à la diode et à la Zener, ou à l'arc s'il n'y a pas de chemin. Cas limite
+      $R \to 0$ : le courant final et l'énergie stockée tendent vers l'infini, et l'inductance idéale sous tension
+      continue voit son courant croître linéairement, $i = Et/L$ ; c'est le mécanisme de la saturation d'un noyau
+      alimenté sous tension continue, et celui de la montée du courant dans un court-circuit inductif.
+    </p>
+  </div>
+  <p>
+    Conséquence de conception : l'énergie qu'un chemin de roue libre doit absorber à chaque coupure est au plus
+    $\tfrac{1}{2}LI_0^2$, quelle que soit sa nature ; le choix du composant ne décide que de la répartition de cette
+    énergie entre lui et la résistance du fil, et de la durée de l'extinction. Pour une bobine de contacteur, quelques
+    dixièmes de joule ; pour l'excitation d'un alternateur, des kilojoules, ce qui impose des résistances de décharge
+    dimensionnées comme de véritables organes de puissance.
+  </p>
+
+  <h3 id="e-statut">Statut des énoncés</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Ce qui relève de la loi, de la convention, de l'approximation, de la conception et du constructeur</caption>
+      <thead><tr><th>Énoncé</th><th>Statut</th><th>Commentaire</th></tr></thead>
+      <tbody>
+        <tr><td>Loi de Faraday, loi des mailles, conservation de l'énergie</td><td>Lois physiques</td><td>Dans l'approximation des régimes quasi stationnaires, valable pour des bobines de dimensions petites devant la longueur d'onde.</td></tr>
+        <tr><td>$u_L = L\,\mathrm{d}i/\mathrm{d}t$ et continuité du courant</td><td>Modèle de l'inductance idéale</td><td>Exact tant que $L$ est constante et la tension finie ; faux près de la saturation ou quand l'armature d'un électroaimant se déplace.</td></tr>
+        <tr><td>Sens de $i$, flèches de tension, choix de la masse</td><td>Conventions</td><td>Elles fixent le signe de $u_L$ à l'ouverture, pas la physique : la tension de la bobine s'inverse, le courant non.</td></tr>
+        <tr><td>Diode idéale, tension d'écrêtage constante, capacités parasites négligées</td><td>Approximations</td><td>Justifiées pour des durées grandes devant la microseconde ; la capacité parasite fixe la surtension réelle d'une coupure sans protection.</td></tr>
+        <tr><td>Tension inverse de la diode au moins deux fois la tension d'alimentation maximale ; régime établi après $5\tau$</td><td>Règles de conception</td><td>Marges usuelles, à adapter à l'environnement électrique et à la précision recherchée.</td></tr>
+        <tr><td>Seuils d'appel et de retombée d'un contacteur, tenue d'une sortie, puissance impulsionnelle d'une Zener</td><td>Données constructeur</td><td>À lire dans la documentation des matériels retenus ; les valeurs de ce cours sont des hypothèses d'étude.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, qui fixe les conventions du circuit d'établissement et de
+    roue libre et ses deux circuits équivalents, l'organigramme de résolution et deux tableaux comparatifs : la dualité
+    entre circuits RC et RL, et les chemins de roue libre. Le chronogramme, la réduction de Thévenin, les animations et
+    les simulations ont été placés au fil du texte, au contact des explications qu'ils illustrent ; ils sont rappelés en
+    fin de section.
+  </p>
+
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 1000 440" role="img" aria-label="Schéma principal : source E, interrupteur K, bobine formée d'une inductance L et d'une résistance r entre les nœuds A et B, diode de roue libre D en parallèle, cathode côté A ; courants i K, i L et i D, tension u L en convention récepteur, masse ; à droite, circuit équivalent à l'instant zéro plus avec la bobine remplacée par une source de courant I0, et circuit équivalent en régime établi avec l'inductance remplacée par un fil">
+      <defs>
+        <marker id="fl-f-i" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-f-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="70" cy="210" r="22"/>
+        <path d="M70 188V90H147"/>
+        <path d="M208 90H530V193"/>
+        <path d="M400 90V120"/>
+        <path d="M400 120a10 10 0 0 1 0 20a10 10 0 0 1 0 20a10 10 0 0 1 0 20a10 10 0 0 1 0 20"/>
+        <path d="M400 200V220M400 270V340"/>
+        <rect x="388" y="220" width="24" height="50" rx="3"/>
+        <path d="M514 193H546"/>
+        <path d="M514 223H546L530 195Z"/>
+        <path d="M530 223V340H70V232"/>
+        <path d="M240 340V352M226 352H254M231 358H249M236 364H244"/>
+        <path d="M150 90L201 86" stroke-width="3"/>
+      </g>
+      <path d="M150 90L192 62" stroke="currentColor" stroke-width="1.6" fill="none" stroke-dasharray="5 4" opacity="0.7"/>
+      <g fill="none" stroke="currentColor" stroke-width="1.8">
+        <circle cx="150" cy="90" r="3.5"/><circle cx="205" cy="90" r="3.5"/>
+      </g>
+      <g fill="currentColor" stroke="none"><circle cx="400" cy="90" r="4"/><circle cx="400" cy="340" r="4"/></g>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M280 90H318" marker-end="url(#fl-f-i)"/>
+        <path d="M372 284V318" marker-end="url(#fl-f-i)"/>
+        <path d="M562 300V258" marker-end="url(#fl-f-i)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M446 198V126" marker-end="url(#fl-f-u)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="670" cy="120" r="18"/>
+        <path d="M670 102V70H720M780 70H900V102M900 138V170H670V138"/>
+        <rect x="720" y="58" width="60" height="24" rx="3"/>
+        <circle cx="900" cy="120" r="18"/>
+        <circle cx="670" cy="330" r="18"/>
+        <path d="M670 312V280H720M780 280H900V376H670V348"/>
+        <rect x="720" y="268" width="60" height="24" rx="3"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M900 108V128" marker-end="url(#fl-f-i)"/>
+        <path d="M818 280H852" marker-end="url(#fl-f-i)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="300" y="24" text-anchor="middle" font-weight="600">circuit d'établissement et de roue libre</text>
+        <text x="70" y="204" text-anchor="middle" font-weight="600">+</text>
+        <text x="70" y="226" text-anchor="middle" font-weight="600">-</text>
+        <text x="40" y="215" text-anchor="end">E</text>
+        <text x="178" y="56" text-anchor="middle">K</text>
+        <text x="408" y="80">A</text>
+        <text x="408" y="360">B</text>
+        <text x="386" y="126" text-anchor="end" font-weight="600">+</text>
+        <text x="420" y="166">L</text>
+        <text x="420" y="250">r</text>
+        <text x="572" y="214">D</text>
+        <text x="300" y="80" text-anchor="middle">i_K</text>
+        <text x="364" y="306" text-anchor="end">i_L</text>
+        <text x="572" y="286">i_D</text>
+        <text x="454" y="166" fill="var(--serie-2)">u_L</text>
+        <text x="262" y="382" font-size="11.5">masse : référence 0 V</text>
+        <text x="300" y="410" text-anchor="middle" font-size="11.5">convention récepteur : i_L entre par la borne + de la bobine</text>
+        <text x="300" y="428" text-anchor="middle" font-size="11.5">nœud A : i_K + i_D = i_L</text>
+        <text x="820" y="24" text-anchor="middle" font-weight="600">à t = 0+ : L impose I0</text>
+        <text x="670" y="116" text-anchor="middle" font-weight="600">+</text>
+        <text x="642" y="125" text-anchor="end">E</text>
+        <text x="750" y="104" text-anchor="middle">R</text>
+        <text x="926" y="125">I0</text>
+        <text x="820" y="198" text-anchor="middle" font-size="11.5">u_L(0+) = E - R I0</text>
+        <text x="820" y="216" text-anchor="middle" font-size="11.5">I0 = 0 : L équivaut à un circuit ouvert</text>
+        <text x="820" y="244" text-anchor="middle" font-weight="600">t infini : L = fil</text>
+        <text x="670" y="326" text-anchor="middle" font-weight="600">+</text>
+        <text x="642" y="335" text-anchor="end">E</text>
+        <text x="750" y="314" text-anchor="middle">R</text>
+        <text x="836" y="270" text-anchor="middle">i</text>
+        <text x="912" y="331">L : fil</text>
+        <text x="820" y="404" text-anchor="middle" font-size="11.5">i = E / R ; u_L = 0</text>
+        <text x="820" y="422" text-anchor="middle" font-size="11.5">W_L = L i² / 2</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal. À gauche, le circuit de la séance : la source $E$, borne $+$ en haut, alimente le nœud $A$ par
+      l'interrupteur $K$, dessiné fermé en trait plein épais et ouvert en pointillés. Entre $A$ et $B$, la bobine réelle,
+      inductance idéale $L$ en série avec sa résistance $r$ ; en parallèle, la diode de roue libre $D$, cathode (le
+      trait) côté $A$, donc bloquée tant que $K$ est fermé. Le conducteur du bas, relié à $B$, est la référence de
+      potentiel. Les flèches épaisses fixent les sens de référence : $i_K$ dans $K$ vers $A$, $i_L$ dans la bobine de
+      $A$ vers $B$, $i_D$ dans la diode de son anode vers sa cathode ; la loi des nœuds en $A$ s'écrit
+      $i_K + i_D = i_L$. La flèche fine $u_L$ pointe vers la borne $+$ de la bobine, par laquelle entre $i_L$ :
+      convention récepteur. Quand $K$ s'ouvre, $i_K$ tombe à zéro et la continuité de $i_L$ impose $i_D = i_L$. À
+      droite, en haut, le circuit équivalent juste après une manœuvre : la bobine est remplacée par une source de
+      courant égale à son courant $I_0$ juste avant ; si elle ne portait aucun courant, cette source devient un circuit
+      ouvert. En bas, le circuit équivalent en régime continu établi : l'inductance est un fil, le courant vaut $E/R$, où
+      $R$ regroupe toutes les résistances de la maille, $r$ comprise. Ces deux circuits résistifs donnent la valeur
+      initiale et la valeur finale de n'importe quelle grandeur, la troisième information étant $\tau = L/R$.
+    </figcaption>
+  </figure>
+
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Circuit à une bobine, sources constantes par morceaux"] --> B["Conventions : sens de i, borne +, référence de potentiel, instant t = 0"]
+  B --> C["Avant : régime établi, L = fil, calculer I0"]
+  C --> D{"Source déconnectée ?"}
+  D -->|"non"| F["Juste après : L = source de courant I0, calculer x(0+)"]
+  D -->|"oui"| G{"Chemin de roue libre ?"}
+  G -->|"non"| H["Surtension destructrice : prévoir diode, Zener ou résistance"]
+  H --> G
+  G -->|"oui"| F
+  F --> J["Temps long : L = fil, calculer x infini (fictif - U_e / r si écrêteur)"]
+  J --> K["Sources éteintes : R_th vue par L, τ = L / R_th"]
+  K --> M["x(t) = x infini + (x(0+) - x infini) exp(-t / τ)"]
+  M --> N{"Question posée ?"}
+  N -->|"instant d'un seuil"| P["t = τ ln((x(0+) - x infini) / (x - x infini))"]
+  N -->|"tension d'ouverture"| Q["u_K = E + R_d I0 ou E + U_e"]
+  N -->|"énergie"| S["L I0² / 2 à évacuer ; W_e = U_e (τ I0 - U_e t0 / r)"]
+  P --> T["Contrôles : unités, continuité de i, signes, tenue en tension, bilan d'énergie"]
+  Q --> T
+  S --> T</pre>
+    <figcaption>
+      Organigramme de résolution. Les rectangles sont des étapes, les losanges des décisions, les libellés sur les
+      flèches les réponses. Le tronc commun est celui du circuit RC, avec la bobine remplacée par une source de courant
+      à l'instant $0^+$ et par un fil en régime établi. La branche propre au circuit RL traite l'ouverture : avant tout
+      calcul, on vérifie qu'un chemin existe pour le courant de la bobine ; sinon, le modèle prédit une surtension
+      infinie et la conception doit être corrigée. Avec un écrêteur, la valeur finale est fictive, $-U_e/r$, et le calcul
+      s'arrête à l'annulation du courant. Toutes les branches aboutissent aux mêmes contrôles.
+    </figcaption>
+  </figure>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Dualité entre le circuit RC et le circuit RL</caption>
+      <thead><tr><th>Propriété</th><th>Circuit RC</th><th>Circuit RL</th></tr></thead>
+      <tbody>
+        <tr><td>Grandeur continue, porteuse de la mémoire</td><td>Tension $u_C$ du condensateur</td><td>Courant $i_L$ de la bobine</td></tr>
+        <tr><td>Équation</td><td>$RC\,\mathrm{d}u_C/\mathrm{d}t + u_C = E$</td><td>$(L/R)\,\mathrm{d}i/\mathrm{d}t + i = E/R$</td></tr>
+        <tr><td>Constante de temps</td><td>$\tau = R_{th}C$ : croît avec $R$</td><td>$\tau = L/R_{th}$ : décroît quand $R$ croît</td></tr>
+        <tr><td>Équivalent à l'instant $0^+$</td><td>Source de tension $U_0$ (fil si déchargé)</td><td>Source de courant $I_0$ (circuit ouvert si $I_0 = 0$)</td></tr>
+        <tr><td>Équivalent en régime continu établi</td><td>Circuit ouvert</td><td>Fil</td></tr>
+        <tr><td>Grandeur qui saute à la manœuvre</td><td>Courant</td><td>Tension</td></tr>
+        <tr><td>Manœuvre dangereuse</td><td>Fermeture sur un écart de tension : pointe de courant</td><td>Ouverture sous courant : pointe de tension</td></tr>
+        <tr><td>Énergie stockée</td><td>$\tfrac{1}{2}Cu^2$, bornée en régime établi</td><td>$\tfrac{1}{2}Li^2$, bornée ; la source dissipe $E^2/R$ en permanence</td></tr>
+        <tr><td>Protection typique</td><td>Résistance de précharge</td><td>Diode de roue libre, écrêteur, résistance de décharge</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Chemins de roue libre d'une bobine alimentée en continu (courant $I_0$, résistance $r$, alimentation $E$)</caption>
+      <thead><tr><th>Chemin</th><th>Tension vue par l'interrupteur</th><th>Durée d'extinction</th><th>Énergie dans le chemin</th><th>Quand le choisir</th></tr></thead>
+      <tbody>
+        <tr><td>Aucun</td><td>limitée par un arc, un claquage ou les capacités parasites</td><td>très brève</td><td>$\tfrac{1}{2}LI_0^2$ dans l'arc ou le transistor</td><td>jamais sur une sortie électronique</td></tr>
+        <tr><td>Diode seule, $U_e \approx 0{,}7\ \mathrm{V}$</td><td>$E + 0{,}7\ \mathrm{V}$</td><td>$\tau\ln(1 + rI_0/0{,}7)$, longue</td><td>faible, l'essentiel part dans $r$</td><td>bobines sans exigence de retombée rapide, hacheurs</td></tr>
+        <tr><td>Diode et Zener, $U_e = U_Z + 0{,}7\ \mathrm{V}$</td><td>$E + U_e$</td><td>$\tau\ln(1 + rI_0/U_e)$</td><td>$U_e(\tau I_0 - U_e t_0/r)$</td><td>compromis entre tenue de la sortie et vitesse de retombée</td></tr>
+        <tr><td>Résistance de décharge $R_d$</td><td>$E + R_dI_0$, puis décroissante</td><td>$\tau' = L/(r + R_d)$, exponentielle</td><td>$\tfrac{1}{2}LI_0^2\,R_d/(r + R_d)$</td><td>gros enroulements, souvent insérée par un contact à la coupure</td></tr>
+        <tr><td>Diode de suppression ou varistance</td><td>voisine de $E + U_e$</td><td>voisine du cas Zener</td><td>voisine du cas Zener</td><td>non polarisée, utilisable en alternatif ; la varistance vieillit avec les chocs</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-anim-figure" data-renvoi="d-anim-figure">l'animation de l'établissement puis de la roue libre</a>, section D ;</li>
+    <li><a href="#e-chrono-figure" data-renvoi="e-chrono-figure">le chronogramme de l'établissement et de l'extinction</a>, <a href="#e-tangente-figure" data-renvoi="e-tangente-figure">la simulation du courant, de la tension et de la tangente</a>, <a href="#e-thevenin-figure" data-renvoi="e-thevenin-figure">la réduction de Thévenin vue par la bobine</a>, <a href="#e-coupure-figure" data-renvoi="e-coupure-figure">l'animation de la coupure sur une résistance de décharge</a> et <a href="#e-mli-figure" data-renvoi="e-mli-figure">la simulation de la commande en modulation de largeur d'impulsion</a>, section E ;</li>
+    <li><a href="#h-circuit-figure" data-renvoi="h-circuit-figure">le circuit du frein et de son écrêteur</a> et <a href="#h-trace-figure" data-renvoi="h-trace-figure">les courbes de courant de l'exemple</a>, section H ;</li>
+    <li><a href="#i-km1-figure" data-renvoi="i-km1-figure">l'animation de l'appel et de la retombée du contacteur KM1</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour tout circuit comportant une seule bobine, ou un groupement réductible à une seule, et des sources constantes par morceaux :</p>
+  <ol>
+    <li>Fixer les conventions : sens de référence du courant de la bobine, entrant par sa borne $+$ (convention récepteur), référence de potentiel, instant $t = 0$ de la manœuvre étudiée.</li>
+    <li>Déterminer $I_0 = i_L(0^-)$ dans le circuit d'avant la manœuvre : en régime établi, inductance remplacée par un fil ; sinon, valeur atteinte lors du transitoire précédent.</li>
+    <li>Si la manœuvre ouvre la branche de la bobine, identifier le chemin que prendra son courant. S'il n'y en a pas, s'arrêter : la conception est à corriger, le modèle prédit une surtension sans limite.</li>
+    <li>Circuit à l'instant $0^+$ : remplacer la bobine par une source de courant $I_0$ (un circuit ouvert si $I_0 = 0$), résoudre ce circuit résistif et en tirer $x(0^+)$ pour chaque grandeur utile, en particulier la tension aux bornes de l'interrupteur qui s'ouvre. Seul $i_L$ est tenu d'être continu.</li>
+    <li>Circuit du régime établi après la manœuvre : inductance remplacée par un fil, calcul de $x_\infty$. Si le chemin comporte un écrêteur de tension $U_e$, la valeur finale est fictive, $-U_e/r$, et le transitoire s'arrête quand le courant s'annule.</li>
+    <li>Constante de temps : éteindre les sources indépendantes du circuit d'après la manœuvre, calculer la résistance $R_{th}$ vue des bornes de l'inductance, puis $\tau = L/R_{th}$.</li>
+    <li>Écrire $x(t) = x_\infty + (x(0^+) - x_\infty)\,e^{-t/\tau}$, puis répondre : valeur à un instant, instant d'un seuil par $t = \tau\ln\frac{x(0^+) - x_\infty}{x - x_\infty}$, durée d'annulation $t_0 = \tau\ln(1 + rI_0/U_e)$, énergie stockée $\tfrac{1}{2}LI_0^2$ et énergie absorbée par le chemin de roue libre.</li>
+    <li>Contrôler : dimension de $\tau$, continuité de $i_L$, signe de $u_L$ (positif quand le courant croît), tension de l'interrupteur inférieure à sa tenue avec marge, ordre de grandeur (extinction voisine de $LI_0/U_e$ pour un écrêtage élevé), bilan d'énergie.</li>
+  </ol>
+  <p>
+    Choix de méthode : cette procédure suffit dès que les sources sont constantes par morceaux et l'inductance
+    constante. On revient à l'équation différentielle quand la source varie pendant le transitoire, et à la simulation
+    numérique quand l'inductance varie avec le courant (saturation) ou avec la position de l'armature, ou quand la diode
+    doit être représentée avec sa caractéristique réelle ; la transformée de Laplace, vue dans le module d'automatique,
+    prend le relais pour les circuits à plusieurs éléments de stockage.
+  </p>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Situation : un convoyeur est équipé d'un frein électromagnétique à manque de courant. Un ressort serre le frein ;
+    la bobine, alimentée sous $24\ \mathrm{V}$ continus par un transistor $Q$, le desserre en attirant l'armature. Données
+    d'étude : inductance $L = 0{,}64\ \mathrm{H}$, supposée constante, résistance $r = 16\ \Omega$ ; le frein se
+    desserre quand le courant dépasse $1{,}2\ \mathrm{A}$ et se serre quand il redescend sous $0{,}3\ \mathrm{A}$ ; le
+    transistor tient $100\ \mathrm{V}$. Exigence de sécurité : le frein doit être serré moins de $15\ \mathrm{ms}$ après
+    l'ordre de freinage. On cherche le temps de desserrage, puis on dimensionne le chemin de roue libre : diode seule
+    ou diode et Zener.
+  </p>
+  <figure id="h-circuit-figure">
+    <svg viewBox="0 0 780 340" role="img" aria-label="Circuit du frein : alimentation 24 volts, transistor Q vers le nœud A, bobine de 0,64 henry et 16 ohms entre A et B, écrêteur formé d'une diode Zener Z de 39 volts et d'une diode D tête-bêche en parallèle sur la bobine">
+      <defs>
+        <marker id="fl-h-i" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-h-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="60" cy="170" r="20"/>
+        <path d="M60 150V70H120M163 70H480V110"/>
+        <path d="M123 70L158 64" stroke-width="3"/>
+        <path d="M330 70V100"/>
+        <path d="M330 100a10 10 0 0 1 0 20a10 10 0 0 1 0 20a10 10 0 0 1 0 20a10 10 0 0 1 0 20"/>
+        <path d="M330 180V195M330 245V290"/>
+        <rect x="318" y="195" width="24" height="50" rx="3"/>
+        <path d="M466 110H494L480 136Z"/>
+        <path d="M462 142L466 137H494L498 132"/>
+        <path d="M480 137V180"/>
+        <path d="M466 180H494"/>
+        <path d="M466 208H494L480 182Z"/>
+        <path d="M480 208V290H60V190"/>
+        <path d="M200 290V302M186 302H214M191 308H209M196 314H204"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="120" cy="70" r="3.2"/><circle cx="161" cy="70" r="3.2"/></g>
+      <g fill="currentColor" stroke="none"><circle cx="330" cy="70" r="4"/><circle cx="330" cy="290" r="4"/></g>
+      <g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round">
+        <path d="M232 70H270" marker-end="url(#fl-h-i)"/>
+        <path d="M512 262V222" marker-end="url(#fl-h-i)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M168 44H116" marker-end="url(#fl-h-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="60" y="166" text-anchor="middle" font-weight="600">+</text>
+        <text x="32" y="174" text-anchor="end">24 V</text>
+        <text x="140" y="92" text-anchor="middle">Q</text>
+        <text x="142" y="34" text-anchor="middle" fill="var(--serie-2)">u_Q</text>
+        <text x="250" y="60" text-anchor="middle">i</text>
+        <text x="338" y="62">A</text>
+        <text x="338" y="310">B</text>
+        <text x="318" y="106" text-anchor="end" font-weight="600">+</text>
+        <text x="350" y="138">L = 0,64 H</text>
+        <text x="350" y="224">r = 16 Ω</text>
+        <text x="504" y="128">Z 39 V</text>
+        <text x="504" y="200">D</text>
+        <text x="522" y="246">i_e</text>
+        <text x="222" y="330" font-size="11.5">masse : 0 V</text>
+        <text x="570" y="96" font-weight="600">frein à manque de courant</text>
+        <text x="570" y="122" font-size="11.5">bobine 24 V, 1,5 A, 36 W</text>
+        <text x="570" y="142" font-size="11.5">desserrage : i &gt; 1,2 A</text>
+        <text x="570" y="162" font-size="11.5">serrage : i &lt; 0,3 A</text>
+        <text x="570" y="182" font-size="11.5">tenue de Q : 100 V</text>
+        <text x="570" y="208" font-size="11.5">Q ouvert :</text>
+        <text x="570" y="226" font-size="11.5">u_Q = 24 + U_e</text>
+        <text x="570" y="252" font-size="11.5">i_e : courant de l'écrêteur</text>
+        <text x="570" y="270" font-size="11.5">pendant la coupure</text>
+      </g>
+    </svg>
+    <figcaption>
+      Circuit du frein. L'alimentation de $24\ \mathrm{V}$, borne $+$ en haut, est reliée au nœud $A$ par le transistor
+      $Q$, représenté comme un interrupteur fermé. La bobine du frein, inductance $L$ et résistance $r$, est entre $A$ et
+      $B$ ; le conducteur du bas est la référence de potentiel. L'écrêteur est en parallèle sur la bobine : une diode
+      Zener $Z$ (triangle pointé vers le bas, trait coudé) en série avec une diode $D$ (triangle pointé vers le haut),
+      montées tête-bêche. En fonctionnement normal, $D$ est polarisée en inverse et bloque tout courant. À l'ouverture de
+      $Q$, le courant de la bobine continue de $A$ vers $B$ et remonte par l'écrêteur, sens de la flèche $i_e$ : $D$
+      conduit en direct et $Z$ en avalanche, ce qui fixe la tension de la bobine à $-U_e$, avec $U_e = 39\ \mathrm{V}$
+      pour l'ensemble. La flèche fine $u_Q$ pointe vers la borne de $Q$ reliée à l'alimentation, dont le potentiel est
+      le plus élevé : $u_Q = 24 + U_e$ pendant la coupure. Sans la Zener, il ne reste que la diode seule, avec
+      $U_e \approx 0{,}8\ \mathrm{V}$ à ce courant.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Données : $E = 24\ \mathrm{V}$, $L = 0{,}64\ \mathrm{H}$, $r = 16\ \Omega$, seuil de desserrage $1{,}2\ \mathrm{A}$,
+    seuil de serrage $0{,}3\ \mathrm{A}$, chute de la diode seule $0{,}8\ \mathrm{V}$, tenue de $Q$ $100\ \mathrm{V}$,
+    exigence de serrage $15\ \mathrm{ms}$, cadence de $10$ freinages par minute. Inconnues : constante de temps, courant
+    établi, temps de desserrage, énergie stockée ; avec une diode seule, temps de serrage ; tension d'écrêtage minimale
+    pour respecter l'exigence ; avec l'écrêteur retenu, temps de serrage, durée d'annulation, énergie, puissance crête
+    et puissance moyenne dans l'écrêteur, tension vue par $Q$. Stratégie : méthode de la section G pour l'établissement,
+    puis formules de la roue libre sous tension constante de la section E pour la coupure.
+  </p>
+
+  <h3 id="h-etablissement">Établissement : Q fermé</h3>
+  <ol>
+    <li>Valeur initiale : $i(0^+) = i(0^-) = 0$, la bobine n'était pas alimentée. À $0^+$ elle équivaut à un circuit ouvert et reçoit toute la tension : $u_L(0^+) = 24\ \mathrm{V}$, pente initiale $\mathrm{d}i/\mathrm{d}t = E/L = 24/0{,}64 = 37{,}5\ \mathrm{A/s}$.</li>
+    <li>Valeur finale : inductance remplacée par un fil, $I_\infty = 24/16 = 1{,}5\ \mathrm{A}$ ; puissance permanente $24 \times 1{,}5 = 36\ \mathrm{W}$.</li>
+    <li>Constante de temps : $\tau = L/r = 0{,}64/16 = 0{,}04\ \mathrm{s} = 40\ \mathrm{ms}$.</li>
+    <li>Temps de desserrage : $t_d = \tau\ln\dfrac{0 - 1{,}5}{1{,}2 - 1{,}5} = 40 \times \ln 5 = 40 \times 1{,}609 = 64{,}4\ \mathrm{ms}$.</li>
+    <li>Énergie stockée en régime établi : $W = \tfrac{1}{2} \times 0{,}64 \times 1{,}5^2 = 0{,}72\ \mathrm{J}$.</li>
+  </ol>
+
+  <h3 id="h-diode">Coupure avec une diode seule</h3>
+  <ol>
+    <li>Valeur initiale : $I_0 = 1{,}5\ \mathrm{A}$, par continuité. Valeur finale fictive : $-U_e/r = -0{,}8/16 = -0{,}05\ \mathrm{A}$. Constante de temps inchangée : la maille de roue libre ne contient que $r$ et la diode, $\tau = 40\ \mathrm{ms}$.</li>
+    <li>Loi de décroissance : $i(t) = 1{,}55\,e^{-t/\tau} - 0{,}05$ en ampères.</li>
+    <li>Temps de serrage : $t_s = \tau\ln\dfrac{1{,}5 + 0{,}05}{0{,}3 + 0{,}05} = 40 \times \ln 4{,}429 = 40 \times 1{,}488 = 59{,}5\ \mathrm{ms}$, quatre fois l'exigence : la diode seule est refusée.</li>
+    <li>Pour mémoire, annulation du courant en $t_0 = 40 \times \ln(1 + 24/0{,}8) = 40 \times \ln 31 = 137\ \mathrm{ms}$, et énergie dans la diode $0{,}8 \times (0{,}04 \times 1{,}5 - 0{,}05 \times 0{,}1374) = 42{,}5\ \mathrm{mJ}$ : presque toute l'énergie part dans $r$.</li>
+  </ol>
+
+  <h3 id="h-ecreteur">Choix et vérification de l'écrêteur</h3>
+  <ol>
+    <li>Tension minimale : on impose $i(15\ \mathrm{ms}) = 0{,}3\ \mathrm{A}$. Avec $a = e^{-15/40} = 0{,}6873$ et $x = U_e/r$ : $(1{,}5 + x)\,a - x = 0{,}3$, d'où $x = \dfrac{1{,}5\,a - 0{,}3}{1 - a} = \dfrac{1{,}0309 - 0{,}3}{0{,}3127} = 2{,}337\ \mathrm{A}$, soit $U_e \geq 16 \times 2{,}337 = 37{,}4\ \mathrm{V}$.</li>
+    <li>Valeur retenue : écrêteur de $39\ \mathrm{V}$ au total, première valeur courante au-dessus de $37{,}4\ \mathrm{V}$. Tension vue par $Q$ : $24 + 39 = 63\ \mathrm{V}$, sous sa tenue de $100\ \mathrm{V}$, avec encore $34\ \mathrm{V}$ de marge si le bus monte à $27\ \mathrm{V}$ ($66\ \mathrm{V}$).</li>
+    <li>Temps de serrage : $x = 39/16 = 2{,}4375\ \mathrm{A}$ et $t_s = 40 \times \ln\dfrac{1{,}5 + 2{,}4375}{0{,}3 + 2{,}4375} = 40 \times \ln 1{,}4384 = 40 \times 0{,}3635 = 14{,}5\ \mathrm{ms}$, conforme.</li>
+    <li>Annulation du courant : $t_0 = 40 \times \ln(1 + 24/39) = 40 \times 0{,}4796 = 19{,}2\ \mathrm{ms}$.</li>
+    <li>Charge et énergie dans l'écrêteur : $Q = \tau I_0 - (U_e/r)\,t_0 = 0{,}04 \times 1{,}5 - 2{,}4375 \times 0{,}01918 = 13{,}2\ \mathrm{mC}$, puis $W_e = 39 \times 0{,}01324 = 0{,}516\ \mathrm{J}$ ; la résistance du fil dissipe le reste, $0{,}72 - 0{,}516 = 0{,}204\ \mathrm{J}$.</li>
+    <li>Puissance crête dans l'écrêteur, au premier instant : $39 \times 1{,}5 = 58{,}5\ \mathrm{W}$, décroissant à zéro en $19{,}2\ \mathrm{ms}$ ; puissance moyenne à $10$ freinages par minute : $0{,}516 \times 10/60 = 0{,}086\ \mathrm{W}$.</li>
+    <li>Diode $D$ : en fonctionnement normal elle bloque la tension d'alimentation, $27\ \mathrm{V}$ au plus ; avec la marge d'un facteur deux au moins, une tension inverse de $100\ \mathrm{V}$ ou plus convient. En coupure, elle conduit une impulsion de $1{,}5\ \mathrm{A}$ décroissant en $19{,}2\ \mathrm{ms}$, soit $13{,}2\ \mathrm{mC}$, à comparer à sa tenue en surcharge ; son courant moyen, $13{,}2\ \mathrm{mC} \times 10/60 = 2{,}2\ \mathrm{mA}$, est négligeable.</li>
+  </ol>
+  <p>
+    Résultat : desserrage en $64{,}4\ \mathrm{ms}$ ; serrage en $14{,}5\ \mathrm{ms}$ grâce à un écrêteur de
+    $39\ \mathrm{V}$ ($59{,}5\ \mathrm{ms}$ avec une diode seule) ; $0{,}516\ \mathrm{J}$ et $58{,}5\ \mathrm{W}$ crête par
+    coupure dans l'écrêteur, $0{,}086\ \mathrm{W}$ en moyenne ; $63\ \mathrm{V}$ sur $Q$. Le composant d'écrêtage se
+    choisit sur sa courbe de puissance crête admissible en fonction de la durée de l'impulsion, donnée du constructeur :
+    les diodes de suppression de transitoires sont spécifiées sur des impulsions de l'ordre de la milliseconde, et leur
+    puissance admissible décroît quand l'impulsion s'allonge ; une Zener de faible puissance prévue pour la régulation
+    ne convient pas. Contrôles de cohérence. Unités : des henrys sur des ohms donnent des secondes, des volts fois des
+    coulombs des joules. Ordre de grandeur : l'extinction linéaire donnerait $LI_0/U_e = 0{,}96/39 = 24{,}6\ \mathrm{ms}$ ;
+    la valeur exacte, $19{,}2\ \mathrm{ms}$, est plus courte, car la résistance du fil aide l'écrêteur. Bilan :
+    $0{,}516 + 0{,}204 = 0{,}72\ \mathrm{J}$, l'énergie stockée. Aire : la charge $13{,}2\ \mathrm{mC}$ est voisine de
+    celle d'un triangle de $1{,}5\ \mathrm{A}$ sur $19{,}2\ \mathrm{ms}$, $14{,}4\ \mathrm{mC}$, un peu inférieure car la
+    décroissance est légèrement convexe. Réserve : l'armature qui se déplace fait varier $L$ ; les temps calculés sont des
+    ordres de grandeur à confirmer par une mesure du courant à l'oscilloscope.
+  </p>
+  <figure id="h-trace-figure">
+    <div id="h-trace"></div>
+    <figcaption>
+      Courbes calculées de l'exemple : courant de la bobine du frein pendant l'établissement, puis après l'ordre de
+      freinage donné à $300\ \mathrm{ms}$, avec une diode seule (courbe fine) et avec l'écrêteur de $39\ \mathrm{V}$
+      (courbe épaisse). Les lignes en tirets repèrent les seuils de desserrage, $1{,}2\ \mathrm{A}$, et de serrage,
+      $0{,}3\ \mathrm{A}$ ; les points marqués donnent le desserrage à $64{,}4\ \mathrm{ms}$ et les deux instants de
+      serrage. La légende sous le tracé nomme chaque courbe avec sa couleur réelle.
+    </figcaption>
+  </figure>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+
+  <h3 id="i-probleme">La bobine du contacteur KM1 sur le bus 24 V secouru</h3>
+  <p>
+    Le cours <a href="#/cours/inductances-et-champ-magnetique">Inductances et champ magnétique</a> a équipé le
+    contacteur $KM1$ du départ pompe, bobine de $1{,}2\ \mathrm{H}$ et $48\ \Omega$ commandée par une sortie à transistor
+    de l'automate de tenue $60\ \mathrm{V}$, d'un écrêteur diode et Zener de $30\ \mathrm{V}$, en admettant les formules
+    de l'extinction. Cette séance les a établies ; il reste à dimensionner les composants en courant et en énergie, et à
+    chiffrer les temps d'appel et de retombée du contacteur, qui conditionnent la réactivité de la commande de la pompe
+    et la durée pendant laquelle ses contacts principaux s'ouvrent sous arc. Le bus $24\ \mathrm{V}$ secouru, étudié
+    dans le cours <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes de Thévenin, Norton et
+    superposition</a>, varie entre $24\ \mathrm{V}$ environ et $27\ \mathrm{V}$ en charge d'entretien.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Hypothèses du modèle</span>
+    <p>
+      Inductance constante de $1{,}2\ \mathrm{H}$ : c'est une approximation grossière pour un contacteur, dont l'inductance
+      augmente fortement quand l'armature se ferme et réduit l'entrefer ; à l'appel, le mouvement de l'armature produit une
+      force électromotrice qui creuse momentanément le courant, creux visible à l'oscilloscope et signature d'un collage
+      correct. Seuil d'appel pris à $0{,}3\ \mathrm{A}$ et seuil de retombée à $0{,}1\ \mathrm{A}$ : hypothèses d'étude,
+      les vraies valeurs se lisent en tension d'appel et de retombée dans la documentation du contacteur. Écrêteur idéal de
+      $30\ \mathrm{V}$, sortie idéale. Toutes les valeurs sont à remplacer par celles des matériels retenus.
+    </p>
+  </div>
+  <p>
+    Appel : $\tau = 1{,}2/48 = 25\ \mathrm{ms}$ et $I_\infty = 0{,}5\ \mathrm{A}$ au bus nominal ; le seuil de
+    $0{,}3\ \mathrm{A}$ est atteint en $25 \times \ln\dfrac{0{,}5}{0{,}5 - 0{,}3} = 25 \times \ln 2{,}5 = 22{,}9\ \mathrm{ms}$.
+    Retombée, à partir de $I_0 = 0{,}5\ \mathrm{A}$ : avec la diode seule ($0{,}7\ \mathrm{V}$), le courant passe sous
+    $0{,}1\ \mathrm{A}$ en $25 \times \ln\dfrac{0{,}5 + 0{,}0146}{0{,}1 + 0{,}0146} = 37{,}6\ \mathrm{ms}$ et s'annule en
+    $89{,}1\ \mathrm{ms}$ ; avec l'écrêteur de $30\ \mathrm{V}$, $U_e/r = 0{,}625\ \mathrm{A}$, la retombée survient en
+    $25 \times \ln\dfrac{1{,}125}{0{,}725} = 11{,}0\ \mathrm{ms}$ et le courant s'annule en $14{,}7\ \mathrm{ms}$.
+  </p>
+  <p>
+    Dimensionnement au cas le plus défavorable, bus à $27\ \mathrm{V}$ : $I_0 = 27/48 = 0{,}5625\ \mathrm{A}$,
+    énergie stockée $\tfrac{1}{2} \times 1{,}2 \times 0{,}5625^2 = 0{,}190\ \mathrm{J}$. Tension vue par la sortie :
+    $27 + 30 = 57\ \mathrm{V}$, sous la tenue de $60\ \mathrm{V}$. Annulation en
+    $25 \times \ln(1 + 27/30) = 16{,}0\ \mathrm{ms}$ ; énergie dans l'écrêteur
+    $30 \times (0{,}025 \times 0{,}5625 - 0{,}625 \times 0{,}01605) = 0{,}121\ \mathrm{J}$ ; puissance crête
+    $30 \times 0{,}5625 = 16{,}9\ \mathrm{W}$ au premier instant. À six manœuvres par minute, la puissance moyenne reste
+    voisine de $0{,}121 \times 6/60 = 0{,}012\ \mathrm{W}$ : c'est l'impulsion, et non la moyenne, qui dimensionne la
+    Zener ou la diode de suppression. La diode $D$ bloque au plus $27\ \mathrm{V}$ : une tension inverse de
+    $100\ \mathrm{V}$ ou plus laisse la marge nécessaire aux surtensions du bus.
+  </p>
+
+  <h3 id="i-km1-section">Animation : appel et retombée du contacteur KM1</h3>
+  <p>
+    L'animation reprend la bobine de $KM1$ au bus nominal. La sortie de l'automate s'active à $t = 0$ et se désactive à
+    $t = 200\ \mathrm{ms}$ ; le curseur règle la tension d'écrêtage $U_e$, de celle d'une diode seule à $33\ \mathrm{V}$,
+    au-delà de laquelle la sortie ne serait plus protégée au bus haut. Le lecteur fait avancer le temps ; le schéma
+    montre le chemin du courant et l'état du contact principal, collé ou retombé selon les seuils d'hypothèse. Avant de
+    lancer, prédisez : le temps d'appel dépend-il de $U_e$ ? Si l'on double $U_e$, le retard de retombée est-il divisé
+    par deux ? L'énergie absorbée par l'écrêteur augmente-t-elle ou diminue-t-elle avec $U_e$ ?
+  </p>
+  <figure id="i-km1-figure">
+    <div class="m-toile-cadre schema-vivant" id="i-km1"></div>
+    <div id="i-km1-trace"></div>
+    <figcaption>
+      En haut, le circuit de commande : le bus $+24\ \mathrm{V}$ alimente la bobine de $KM1$ ($L$ et $r$) par la sortie
+      $Q$ de l'automate, dont la lame montre l'état ; l'écrêteur, bloc $U_e$ formé d'une diode et d'une Zener, est en
+      parallèle sur la bobine ; le conducteur du bas est la référence $0\ \mathrm{V}$. Les flèches épaisses donnent le
+      sens réel du courant dans la sortie, dans la bobine et dans l'écrêteur, avec une épaisseur proportionnelle à sa
+      valeur. Le trait en tirets relie la bobine au contact principal de $KM1$, dessiné à droite, fermé quand le
+      contacteur est collé. Au-dessous, le courant de la bobine en fonction du temps, avec les seuils d'appel et de
+      retombée en tirets, l'instant de désactivation de la sortie et le petit disque de l'instant courant.
+    </figcaption>
+  </figure>
+  <div id="i-km1-curseurs"></div>
+  <div id="i-km1-lecteur"></div>
+  <div id="i-km1-valeurs"></div>
+  <p>
+    Interprétation : le temps d'appel ne dépend pas de $U_e$, puisque l'écrêteur est bloqué tant que la sortie conduit.
+    Le retard de retombée diminue quand $U_e$ augmente, mais pas proportionnellement : passer de $15$ à $30\ \mathrm{V}$
+    le fait passer d'environ $16{,}9$ à $11{,}0\ \mathrm{ms}$, car la résistance du fil contribue elle aussi à la
+    décroissance. L'énergie absorbée par l'écrêteur augmente avec $U_e$, de quelques millijoules pour une diode seule à
+    près de $0{,}1\ \mathrm{J}$ à $30\ \mathrm{V}$, tandis que celle dissipée dans le fil diminue d'autant : la somme
+    reste $0{,}15\ \mathrm{J}$. Le curseur borne $U_e$ à $33\ \mathrm{V}$ : au bus haut de $27\ \mathrm{V}$, la sortie
+    verrait alors exactement $60\ \mathrm{V}$, sa tenue, sans aucune marge.
+  </p>
+
+  <h3 id="i-compromis">Contraintes, risques et compromis</h3>
+  <ul>
+    <li><strong>Retombée et sécurité.</strong> Si $KM1$ participe à un arrêt, son retard de retombée s'ajoute au temps de réaction de la chaîne. Une diode seule, souvent montée par habitude, allonge ce retard d'un facteur trois ou quatre ; le choix de la protection de bobine fait partie de la conception de la fonction d'arrêt.</li>
+    <li><strong>Usure des contacts principaux.</strong> Une retombée lente écarte lentement les contacts principaux sous courant : l'arc dure plus longtemps et érode les pastilles. Un écrêtage plus élevé accélère la séparation, au prix d'une tension plus forte sur la sortie.</li>
+    <li><strong>Défaillance de l'écrêteur.</strong> Une Zener qui claque passe généralement en court-circuit : la protection dégénère en diode seule, la sortie reste protégée, mais la retombée ralentit sans symptôme visible. Une diode coupée, en revanche, supprime tout chemin : la sortie subit la surtension de coupure à chaque manœuvre et finit par être détruite.</li>
+    <li><strong>Polarité.</strong> Une diode montée à l'envers court-circuite la bobine dès l'activation de la sortie : la sortie passe en défaut de surintensité ou la diode est détruite, et le contacteur ne colle pas.</li>
+    <li><strong>Compromis.</strong> Une Zener plus haute raccourcit la retombée mais réduit la marge de tenue de la sortie au bus haut ; une Zener plus basse préserve la sortie mais ralentit la retombée. Le choix de $30\ \mathrm{V}$ garde $3\ \mathrm{V}$ de marge à $27\ \mathrm{V}$ ; un module de protection proposé par le constructeur du contacteur, dimensionné pour sa bobine, est souvent la solution la plus sûre.</li>
+  </ul>
+
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : protection de la bobine de KM1 dimensionnée en courant et en énergie</span>
+    <p>
+      Nouvelle brique du petit site industriel, quatrième du module consacré au stockage d'énergie et aux régimes
+      transitoires. La bobine du contacteur $KM1$ du départ pompe, $1{,}2\ \mathrm{H}$ et $48\ \Omega$ sur le bus
+      $24\ \mathrm{V}$ secouru, reçoit ses temps de fonctionnement et le dimensionnement de son écrêteur : constante de
+      temps de $25\ \mathrm{ms}$, appel à $0{,}3\ \mathrm{A}$ (hypothèse) en $22{,}9\ \mathrm{ms}$ ; coupure par diode et
+      Zener de $30\ \mathrm{V}$, courant annulé en $14{,}7\ \mathrm{ms}$ et retombée à $0{,}1\ \mathrm{A}$ (hypothèse) en
+      $11{,}0\ \mathrm{ms}$, contre $37{,}6\ \mathrm{ms}$ avec une diode seule ; au bus haut de $27\ \mathrm{V}$,
+      $0{,}56\ \mathrm{A}$, $0{,}121\ \mathrm{J}$ et $16{,}9\ \mathrm{W}$ crête dans l'écrêteur, $57\ \mathrm{V}$ sur la
+      sortie de tenue $60\ \mathrm{V}$ ; diode de $100\ \mathrm{V}$ au moins ; environ $0{,}01\ \mathrm{W}$ en moyenne à
+      six manœuvres par minute. Toutes ces valeurs sont des hypothèses d'étude, à remplacer par la documentation du
+      contacteur et de l'automate retenus. Le retard de retombée sera repris dans la logique d'arrêt du cours Automates
+      programmables industriels.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li>
+      <strong>Écrire $\tau = RL$ ou $\tau = R/L$.</strong> La constante de temps d'un circuit RL est $L/R$, et la seule vérification dimensionnelle suffit à trancher : $\mathrm{H}/\Omega = \mathrm{s}$, alors que $\Omega \cdot \mathrm{H}$ et $\Omega/\mathrm{H}$ n'ont pas la dimension d'un temps. L'erreur vient du parallèle trop littéral avec $RC$.
+    </li>
+    <li>
+      <strong>Croire qu'une résistance plus forte ralentit le transitoire RL.</strong> C'est vrai pour un circuit RC, faux pour un circuit RL : augmenter $R$ raccourcit $\tau = L/R$. Une bobine qu'on veut rapide s'alimente sous une tension plus haute à travers une résistance série.
+    </li>
+    <li>
+      <strong>Supposer la continuité de la tension de la bobine.</strong> Seul le courant est continu. La tension saute à chaque manœuvre : de $0$ à $E$ à la fermeture, de $E - RI_0$ à $-R'I_0$ ou $-U_e$ à l'ouverture. Écrire $u_L(0^+) = u_L(0^-)$ est la confusion avec le condensateur.
+    </li>
+    <li>
+      <strong>Croire que le courant s'inverse à l'ouverture.</strong> C'est la tension de la bobine qui s'inverse ; son courant garde son sens et sa valeur, puis décroît. Dans le schéma principal, $i_L$ reste positif pendant toute la roue libre, et la diode conduit dans son sens direct.
+    </li>
+    <li>
+      <strong>Calculer l'extinction avec la résistance d'établissement.</strong> La constante de temps de la roue libre est celle de la maille de roue libre : $L/r$ pour une diode, $L/(r + R_d)$ pour une résistance de décharge, et non $L/R$ avec la résistance de la source. Le courant final de l'extinction est nul, ou fictif et négatif avec un écrêteur.
+    </li>
+    <li>
+      <strong>Monter la diode de roue libre à l'envers.</strong> Elle doit être bloquée en fonctionnement normal, cathode côté borne positive de la bobine. À l'envers, elle court-circuite la bobine dès l'activation de la sortie, qui passe en défaut ou détruit la diode.
+    </li>
+    <li>
+      <strong>Croire que la diode seule est une protection sans défaut.</strong> Elle protège parfaitement l'interrupteur, mais la tension d'extinction n'est que de $0{,}7\ \mathrm{V}$ : le courant décroît avec la seule résistance du fil, et la retombée d'un contacteur ou le serrage d'un frein est retardé d'un facteur trois ou quatre ($59{,}5$ contre $14{,}5\ \mathrm{ms}$ pour le frein de la section H).
+    </li>
+    <li>
+      <strong>Dimensionner l'écrêteur sur la puissance moyenne.</strong> La puissance moyenne se compte en centièmes de watt, la puissance crête en dizaines de watts pendant une dizaine de millisecondes. C'est la tenue impulsionnelle, lue sur la courbe du constructeur pour la bonne durée, qui dimensionne la Zener ou la diode de suppression.
+    </li>
+    <li>
+      <strong>Oublier la tension d'alimentation dans la tension vue par l'interrupteur.</strong> À l'ouverture, l'interrupteur voit $E + U_e$ ou $E + R_dI_0$, pas seulement $U_e$ ou $R_dI_0$. Un écrêteur de $39\ \mathrm{V}$ sur une alimentation de $24\ \mathrm{V}$ impose $63\ \mathrm{V}$ au transistor, et la tension maximale de l'alimentation doit être prise en compte.
+    </li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain : une sortie à transistor détruite après quelques manœuvres sur une bobine signale presque
+    toujours une protection absente ou coupée ; un contacteur qui retombe lentement depuis une intervention signale un
+    module de protection remplacé par une simple diode, ou une Zener passée en court-circuit ; une diode de roue libre
+    qui chauffe dans un montage à découpage signale une diode trop lente ou sous-dimensionnée en courant permanent. La
+    mesure décisive est le relevé du courant de la bobine et de la tension de l'interrupteur à l'oscilloscope, avec une
+    sonde différentielle ou une sonde de courant, pendant une coupure.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de
+    diagnostic industriel et une question conceptuelle. La correction de chacun reste masquée jusqu'à une tentative ou
+    un clic explicite sur "Voir la correction", puis se déroule étape par étape, accompagnée d'une courbe ou d'un schéma
+    annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma.</p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$L\,\frac{\mathrm{d}i}{\mathrm{d}t} + R\,i = E, \qquad \tau = \frac{L}{R_{th}}$$
+    $$i(t) = I_\infty + (I_0 - I_\infty)\,e^{-t/\tau}, \qquad u_L(t) = (E - R\,I_0)\,e^{-t/\tau}$$
+    $$u_K(0^+) = E + R_d\,I_0, \qquad \tau' = \frac{L}{r + R_d}$$
+    $$t_0 = \tau\,\ln\!\left(1 + \frac{r\,I_0}{U_e}\right), \qquad W_e = U_e\left(\tau\,I_0 - \frac{U_e}{r}\,t_0\right)$$
+    $$\bar{I} = \alpha\,\frac{E}{r}, \qquad \Delta I \approx \frac{E\,\alpha(1 - \alpha)}{L\,f}$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>La constante de temps est $L/R_{th}$ : une résistance plus forte la raccourcit.</li>
+      <li>Seul le courant de la bobine est continu ; sa tension saute et s'inverse à l'ouverture.</li>
+      <li>Une bobine parcourue par un courant ne s'ouvre jamais sans chemin de roue libre.</li>
+      <li>L'interrupteur voit $E + U_e$ à l'ouverture : vérifier sa tenue au cas d'alimentation maximale.</li>
+      <li>Diode seule : sortie protégée mais retombée lente ; l'écrêteur se dimensionne en impulsion, pas en moyenne.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Une bobine alimentée à travers une résistance obéit à $L\,\mathrm{d}i/\mathrm{d}t + Ri = E$ :
+    son courant, continu, rejoint $E/R$ avec la constante de temps $\tau = L/R_{th}$, tandis que sa tension saute à $E$
+    puis s'annule. La méthode des trois grandeurs du circuit RC s'applique, la bobine devenant une source de courant à
+    l'instant $0^+$ et un fil en régime établi. À l'ouverture, le courant exige un chemin : sans lui, la surtension est
+    destructrice. Une diode de roue libre protège l'interrupteur mais ralentit l'extinction ; un écrêteur de tension
+    $U_e$ l'accélère, $t_0 = \tau\ln(1 + rI_0/U_e)$, au prix d'une tension $E + U_e$ sur l'interrupteur. L'énergie
+    $\tfrac{1}{2}LI_0^2$ est toujours évacuée ; le chemin choisit seulement où et en combien de temps.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent,
+    <a href="#/cours/regime-transitoire-rc">Régime transitoire RC</a> ; une sur le cours
+    <a href="#/cours/lois-de-kirchhoff">Lois de Kirchhoff</a>, vieux d'une semaine exactement ; la question sur un cours
+    vieux d'un mois n'est pas encore applicable, et elle est remplacée par une question sur le cours
+    <a href="#/cours/inductances-et-champ-magnetique">Inductances et champ magnétique</a>, dont l'énergie magnétique
+    dimensionne directement le chemin de roue libre.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : vérifier numériquement les formules de l'extinction, comparer les protections dans un simulateur de
+    circuits, puis observer une vraie bobine. Prédictions à écrire avant de commencer : pour le frein de la section H,
+    la méthode d'Euler avec un pas de $1\ \mathrm{ms}$ donnera-t-elle un temps de serrage plus court ou plus long que
+    $14{,}5\ \mathrm{ms}$ ? Dans LTspice, la tension de l'interrupteur à l'ouverture sera-t-elle exactement $63\ \mathrm{V}$
+    avec une vraie Zener ?
+  </p>
+  <ol>
+    <li>
+      En Python, simuler l'établissement puis la coupure de la bobine du frein par la méthode d'Euler : $L = 0{,}64\
+      \mathrm{H}$, $r = 16\ \Omega$ ; pendant l'établissement, $i \leftarrow i + \Delta t\,(24 - r\,i)/L$ ; après
+      l'ordre de freinage et tant que $i > 0$, $i \leftarrow i + \Delta t\,(-U_e - r\,i)/L$, en accumulant
+      $W_e \leftarrow W_e + U_e\,i\,\Delta t$. Relever le temps de desserrage, le temps de serrage et $W_e$ pour
+      $U_e = 0{,}8$ et $39\ \mathrm{V}$ et des pas de $1$, $0{,}1$ et $0{,}01\ \mathrm{ms}$ ; comparer à $64{,}4$,
+      $59{,}5$ et $14{,}5\ \mathrm{ms}$ et à $0{,}516\ \mathrm{J}$.
+    </li>
+    <li>
+      Dans le même programme, simuler la commande en modulation de largeur d'impulsion de l'électrovanne de la section E,
+      $r = 24\ \Omega$, $L = 0{,}12\ \mathrm{H}$, $f = 1\ \mathrm{kHz}$, $\alpha = 0{,}5$, sur $50\ \mathrm{ms}$, et
+      tracer le courant avec matplotlib ; mesurer le courant moyen et l'ondulation en régime établi.
+    </li>
+    <li>
+      Dans LTspice, saisir la netlist <code>V1 vp 0 24</code>, <code>S1 vp a ctl 0 SW1</code>,
+      <code>Vc ctl 0 PULSE(5 0 200m 1u 1u 1 2)</code>, <code>.model SW1 SW(Ron=0.01 Roff=10Meg Vt=2.5)</code>,
+      <code>L1 a b 0.64</code>, <code>R1 b 0 16</code>, <code>D1 0 a D</code>, <code>.tran 0 400m 0 10u</code>,
+      <code>.end</code>. La diode <code>D1</code>, anode à la masse et cathode en <code>a</code>, est la diode de roue
+      libre seule. Relever le courant dans <code>L1</code> et la tension <code>V(vp)-V(a)</code> aux bornes de
+      l'interrupteur. Remplacer ensuite <code>D1</code> par une diode <code>D1 k a D</code> en série avec une Zener
+      <code>D2 k 0 DZ</code>, avec <code>.model DZ D(BV=38.3 IBV=1m)</code>, et comparer. Enfin, supprimer toute
+      protection et observer la tension de l'interrupteur, que seule sa résistance à l'état ouvert limite.
+    </li>
+    <li>
+      Mesure facultative, en très basse tension uniquement : alimenter sous $24\ \mathrm{V}$ un relais ou un contacteur
+      auxiliaire à bobine continue, avec une diode de roue libre montée cathode côté pôle positif, et observer à
+      l'oscilloscope le courant de bobine à l'aide d'une résistance de mesure de $1\ \Omega$ placée côté masse, sonde
+      référencée à la masse de l'alimentation. Comparer l'établissement, avec le creux dû au mouvement de l'armature, et
+      la retombée avec la diode seule puis avec une diode et une Zener.
+    </li>
+  </ol>
+  <p>
+    Résultats attendus : avec la méthode d'Euler, les temps convergent vers $64{,}4$, $59{,}5$ et $14{,}5\ \mathrm{ms}$
+    quand le pas diminue, et $W_e$ vers $0{,}516\ \mathrm{J}$ ; avec un pas de $1\ \mathrm{ms}$, l'erreur sur le
+    serrage atteint quelques pour cent. En modulation, le courant moyen vaut $0{,}5\ \mathrm{A}$ et l'ondulation voisine
+    de $50\ \mathrm{mA}$ crête à crête. Dans LTspice, l'interrupteur voit environ $24{,}8\ \mathrm{V}$ avec la diode
+    seule et un peu plus de $63\ \mathrm{V}$ avec la Zener, dont la tension augmente avec le courant ; sans protection,
+    le simulateur affiche des kilovolts, limités seulement par <code>Roff</code>, ce qui illustre la surtension
+    destructrice. Au banc, la retombée est nettement plus rapide avec la Zener. Anomalies à observer : un courant qui ne
+    s'établit pas selon une exponentielle, à cause du mouvement de l'armature ou de la saturation du noyau ; une tension
+    d'ouverture plus haute que prévu, due à l'inductance du câblage ou à une diode lente ; une oscillation rapide à la fin
+    de l'extinction, due aux capacités parasites, que le cours Régime transitoire RLC expliquera.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est
+    calculé dans ce navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent
+    enregistrées localement pour suivre votre progression. Cette séance contribue directement au jalon de fin du module
+    Stockage d'énergie et régimes transitoires : résoudre méthodiquement des circuits continus et transitoires simples,
+    expliquer le stockage d'énergie et vérifier les résultats.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Le courant d'une bobine est continu et suit $I_\infty + (I_0 - I_\infty)e^{-t/\tau}$ avec $\tau = L/R_{th}$ : la méthode des trois grandeurs s'applique, la bobine devenant une source de courant à l'instant $0^+$ et un fil en régime établi.</li>
+    <li data-rang="02">À l'ouverture, le courant exige un chemin : la tension de la bobine s'inverse et prend la valeur que ce chemin lui impose, $-R_dI_0$ ou $-U_e$ ; sans chemin, elle devient destructrice.</li>
+    <li data-rang="03">Détruire le flux $LI_0$ demande une aire tension fois temps : couper vite exige une tension élevée, et $t_0 = \tau\ln(1 + rI_0/U_e)$ chiffre ce compromis entre tenue de l'interrupteur et vitesse de retombée.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> raisonner correctement sur les signes à l'ouverture, c'est-à-dire
+    admettre que le courant garde son sens pendant que la tension de la bobine s'inverse, et en déduire la tension vue
+    par l'interrupteur, $E + U_e$. Le schéma principal de la section F, avec sa loi des nœuds $i_K + i_D = i_L$, et
+    l'animation de la section D sont faits pour lever cette difficulté.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Régime transitoire RLC, réunit bobine et condensateur.
+    Question à préparer : si la bobine de $KM1$ ($1{,}2\ \mathrm{H}$, $0{,}15\ \mathrm{J}$ stockés à $0{,}5\ \mathrm{A}$)
+    était coupée sans écrêteur, avec pour seul chemin une capacité parasite de $1\ \mu\mathrm{F}$ à ses bornes, quelle
+    tension crête ce condensateur atteindrait-il s'il recevait toute l'énergie de la bobine, et quel ordre de grandeur
+    de durée, construit à partir de $L$ et de $C$, caractériserait cet échange d'énergie ?
+  </p>
+
+</article>
