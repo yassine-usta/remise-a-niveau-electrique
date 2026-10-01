@@ -1,0 +1,1156 @@
+<article class="cours" data-slug="regime-transitoire-rlc">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/regime-transitoire-rl">Régime transitoire RL</a> s'est achevé sur une question : la bobine
+      du contacteur $KM1$, $1{,}2\ \mathrm{H}$ et $0{,}15\ \mathrm{J}$ stockés à $0{,}5\ \mathrm{A}$, est coupée sans
+      écrêteur, avec pour seul chemin une capacité parasite de $1\ \mu\mathrm{F}$ ; quelle tension crête ce condensateur
+      atteindrait-il s'il recevait toute l'énergie de la bobine, et quelle durée construite avec $L$ et $C$ caractériserait
+      l'échange ? Réponse : en écrivant $\tfrac{1}{2}CU^2 = 0{,}15\ \mathrm{J}$, on trouve
+      $U = \sqrt{0{,}3/10^{-6}} = 548\ \mathrm{V}$, soit $I_0\sqrt{L/C}$ ; la seule durée que l'on puisse former avec
+      $L$ et $C$ est $\sqrt{LC} = \sqrt{1{,}2 \times 10^{-6}} = 1{,}10\ \mathrm{ms}$, et l'énergie fait l'aller-retour
+      entre la bobine et le condensateur avec une période $2\pi\sqrt{LC} = 6{,}88\ \mathrm{ms}$. Avec une capacité parasite
+      réaliste de l'ordre du nanofarad, la tension crête dépasserait $17\ \mathrm{kV}$ : c'est ce qui claque les contacts
+      ou le transistor. Cette séance établit ce résultat et le généralise : dès qu'une bobine et un condensateur coexistent,
+      l'énergie peut osciller entre eux, et la résistance décide si cette oscillation est visible ou non. Elle mobilise la
+      relation $i = C\,\mathrm{d}u/\mathrm{d}t$ du cours <a href="#/cours/condensateurs-et-champ-electrique">Condensateurs
+      et champ électrique</a>, la relation $u = L\,\mathrm{d}i/\mathrm{d}t$ du cours
+      <a href="#/cours/inductances-et-champ-magnetique">Inductances et champ magnétique</a>, la méthode des valeurs
+      initiale et finale des cours <a href="#/cours/regime-transitoire-rc">Régime transitoire RC</a> et
+      <a href="#/cours/regime-transitoire-rl">Régime transitoire RL</a>, et les nombres complexes du cours
+      <a href="#/cours/diagnostic-initial-et-remise-a-niveau-mathematique">Diagnostic initial et remise à niveau
+      mathématique</a>.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Un circuit réel ne contient jamais une seule réserve d'énergie. Un câble possède une inductance, une entrée
+    d'équipement un condensateur de filtrage ; un bus continu de variateur associe une self de lissage et une batterie de
+    condensateurs ; une bobine de contacteur a une capacité entre spires ; une ligne longue, un transformateur à vide, un
+    filtre d'harmoniques ou un convertisseur à découpage alignent inductances et capacités. Dès que deux éléments de
+    stockage de nature différente coexistent, l'énergie peut passer de l'un à l'autre : le champ électrique se vide dans
+    le champ magnétique, qui le recharge en sens inverse. La réponse à une manœuvre peut alors dépasser sa valeur finale,
+    osciller, et mettre un temps bien plus long que prévu à se stabiliser.
+  </p>
+  <p>
+    Ces dépassements ont des conséquences concrètes : une alimentation $24\ \mathrm{V}$ branchée à chaud sur un module
+    peut faire monter son entrée au-delà de $35\ \mathrm{V}$ ; un bus continu de variateur court-circuité trop tôt après
+    sa précharge peut dépasser son seuil de surtension ; un écrêteur absent laisse une bobine charger sa capacité parasite
+    jusqu'à des kilovolts ; une boucle de régulation mal réglée oscille autour de sa consigne. Le travail central de la
+    séance est de savoir classer un circuit RLC, c'est-à-dire prévoir sans simulation s'il oscillera, et de calculer ses
+    paramètres dynamiques : pulsation propre, coefficient d'amortissement, dépassement, pseudo-période et temps
+    d'établissement. Ce vocabulaire du second ordre est celui de l'automatique : on le retrouvera tel quel dans les cours
+    Modélisation des systèmes dynamiques et Réponse temporelle et performances, et en régime sinusoïdal dans le cours
+    Résonance série et parallèle.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Établir l'équation différentielle du second ordre d'un circuit RLC série à partir des lois de Kirchhoff, et l'écrire sous la forme canonique en $\omega_0$ et $\zeta$.</li>
+    <li data-rang="02">Calculer la pulsation propre $\omega_0$, le coefficient d'amortissement $\zeta$, le facteur de qualité $Q$ et la résistance critique d'un circuit RLC série ou parallèle.</li>
+    <li data-rang="03">Classer un circuit en régime apériodique, critique ou pseudo-périodique à partir du signe du discriminant, et expliquer physiquement chacun des trois comportements.</li>
+    <li data-rang="04">Calculer le dépassement, l'instant du premier maximum, la pseudo-période et un ordre de grandeur du temps d'établissement d'une réponse indicielle.</li>
+    <li data-rang="05">Identifier $\zeta$ et $\omega_0$ à partir d'une réponse mesurée, par le dépassement ou le décrément logarithmique et la pseudo-période.</li>
+    <li data-rang="06">Dimensionner un amortissement pour respecter un dépassement maximal, et interpréter le compromis entre rapidité, dépassement et pertes.</li>
+    <li data-rang="07">Diagnostiquer une surtension ou une oscillation transitoire dans une installation : branchement à chaud, court-circuit de précharge prématuré, coupure d'une bobine.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois acquis sont indispensables. Le premier est la paire de relations des éléments de stockage, en convention
+    récepteur : $i = C\,\mathrm{d}u_C/\mathrm{d}t$ pour le condensateur, dont la tension est continue, et
+    $u_L = L\,\mathrm{d}i/\mathrm{d}t$ pour la bobine, dont le courant est continu ; en régime continu établi, le
+    condensateur est un circuit ouvert et la bobine un fil. Le deuxième vient du cours
+    <a href="#/cours/diagnostic-initial-et-remise-a-niveau-mathematique">Diagnostic initial et remise à niveau
+    mathématique</a> : une équation du second degré $ar^2 + br + c = 0$ de discriminant négatif a deux racines complexes
+    conjuguées $r = \sigma \pm j\omega$, et $e^{(\sigma + j\omega)t} = e^{\sigma t}(\cos\omega t + j\sin\omega t)$. Le
+    troisième est un réflexe de trigonométrie : $a\cos x + b\sin x = A\cos(x - \varphi)$ avec $A = \sqrt{a^2 + b^2}$. Le
+    mini-test ci-dessous n'est pas noté ; la correction de chaque question reste masquée jusqu'à une tentative ou un clic
+    explicite sur "Voir la correction".
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-echange">Deux réservoirs qui se renvoient l'énergie</h3>
+  <p>
+    Prenons un condensateur chargé sous la tension $U_0$ et refermons-le, à l'instant $t = 0$, sur une bobine et une
+    résistance en série. Au départ, toute l'énergie est électrique, $\tfrac{1}{2}CU_0^2$, et le courant est nul, car celui
+    de la bobine ne peut pas sauter. Le condensateur pousse le courant à travers la bobine, qui s'oppose à sa croissance :
+    le courant monte progressivement pendant que la tension du condensateur baisse. Quand cette tension s'annule, le
+    condensateur n'a plus rien à fournir, mais le courant est maximal et l'énergie est presque entièrement magnétique,
+    $\tfrac{1}{2}Li^2$. La bobine refuse que ce courant s'arrête : elle continue de le pousser dans le même sens, ce qui
+    recharge le condensateur avec la polarité inverse. Le courant finit par s'annuler, le condensateur est chargé en sens
+    contraire, et le mouvement repart dans l'autre sens.
+  </p>
+  <p>
+    Sans résistance, cet échange se poursuivrait indéfiniment à la pulsation $1/\sqrt{LC}$ : c'est l'oscillateur LC. La
+    résistance prélève à chaque instant $Ri^2$ sur l'énergie qui circule. Si elle est faible, l'énergie fait de nombreux
+    allers-retours en s'amenuisant : la réponse est une oscillation amortie. Si elle est forte, elle dissipe l'énergie
+    avant que la bobine ait pu recharger le condensateur en sens inverse : la tension rejoint zéro sans jamais le
+    franchir. Entre les deux, une valeur particulière de la résistance, la résistance critique, sépare les deux
+    comportements. Tout le cours consiste à chiffrer cette compétition entre l'échange réversible, fixé par $L$ et $C$, et
+    la dissipation, fixée par $R$.
+  </p>
+  <p>
+    Analogie contrôlée : une masse suspendue à un ressort et plongée dans un liquide. Le ressort stocke de l'énergie
+    potentielle, comme le condensateur ; la masse en mouvement stocke de l'énergie cinétique, comme la bobine ; le
+    liquide freine proportionnellement à la vitesse, comme la résistance. Écartée puis lâchée, la masse oscille dans
+    l'air, revient lentement sans dépasser dans du miel, et rejoint le plus vite possible sa position d'équilibre sans
+    dépasser pour une viscosité intermédiaire : c'est le réglage d'un amortisseur de voiture. La correspondance est
+    exacte : la charge $q$ joue le rôle de la position, le courant celui de la vitesse, $L$ celui de la masse, $1/C$ celui
+    de la raideur et $R$ celui du coefficient de frottement visqueux.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie mécanique</span>
+    <p>
+      L'analogie reproduit fidèlement l'équation, donc les trois régimes, la pulsation propre et le dépassement. Elle a
+      cependant des limites. Le frottement visqueux n'est proportionnel à la vitesse que pour des vitesses faibles ; une
+      résistance réelle reste linéaire sur une plage bien plus large, mais elle varie avec la température et, aux
+      fréquences élevées, avec l'effet de peau. Un ressort réel a une masse répartie, comme une ligne a une inductance et
+      une capacité réparties : au-delà d'une certaine fréquence, le modèle à trois éléments localisés cesse d'être valable
+      et il faut un modèle de propagation. Enfin, la masse ne peut pas devenir négative, alors qu'en électricité le
+      courant et la tension changent de signe sans difficulté : la position $q$ peut traverser zéro, c'est ce que montre
+      l'inversion de la tension du condensateur.
+    </p>
+  </div>
+
+  <h3 id="d-anim-section">Animation : la décharge oscillante d'un condensateur dans une bobine</h3>
+  <p>
+    L'animation reprend ce circuit : un condensateur $C$ chargé sous $U_0$, borne $+$ en haut, se décharge à $t = 0$ par la
+    fermeture de $K$ dans une bobine idéale $L$ en série avec une résistance $R$. Les points qui circulent représentent les
+    porteurs, dessinés dans le sens réel du courant, avec un déplacement proportionnel à la charge transportée : quand ils
+    reviennent en arrière, le courant a changé de sens. Les jauges donnent l'énergie électrique du condensateur,
+    l'énergie magnétique de la bobine et l'énergie déjà dissipée dans la résistance, rapportées à l'énergie initiale. Le
+    temps est piloté par vous : lecture, pause, vitesse et remise à zéro, et le curseur règle la résistance en fraction de
+    la résistance critique. Avant de lancer la lecture, prédisez qualitativement : avec une résistance faible, le courant
+    change-t-il de sens ? La tension du condensateur devient-elle négative ? Que valent l'énergie électrique et l'énergie
+    magnétique quand le courant est maximal ? Avec $R$ égal à la résistance critique, les porteurs reviennent-ils en
+    arrière ?
+  </p>
+  <figure id="d-anim-figure">
+    <div class="m-toile-cadre schema-vivant" id="d-anim"></div>
+    <figcaption>
+      Le condensateur $C$, à gauche, a sa borne $+$ en haut ; il est relié par l'interrupteur $K$, dont la lame en trait
+      épais montre l'état, à la résistance $R$ puis à la bobine $L$ dessinée par ses boucles ; le conducteur du bas est la
+      référence de potentiel. La flèche épaisse sur le fil du haut fixe le sens de référence du courant $i$, sortant de la
+      borne $+$ du condensateur : $i = -C\,\mathrm{d}u_C/\mathrm{d}t$ avec cette orientation. Les porteurs se déplacent
+      dans le sens réel du courant, d'autant plus vite que le courant est fort. Les trois jauges horizontales donnent,
+      en pourcentage de l'énergie initiale $\tfrac{1}{2}CU_0^2$, l'énergie électrique $W_C$, l'énergie magnétique $W_L$
+      et l'énergie dissipée $W_R$ ; leur somme vaut toujours $100\ \%$.
+    </figcaption>
+  </figure>
+  <div id="d-anim-curseurs"></div>
+  <div id="d-anim-lecteur"></div>
+  <div id="d-anim-valeurs"></div>
+  <p>
+    Interprétation : avec une résistance faible devant la résistance critique, les porteurs repartent en arrière à chaque
+    demi-période, la tension du condensateur devient négative, puis positive, avec une amplitude qui décroît. Quand le
+    courant est maximal, la tension du condensateur est nulle à la chute dans $R$ près : l'énergie est alors presque
+    entièrement magnétique. Les jauges montrent l'énergie qui passe d'un réservoir à l'autre pendant que $W_R$ croît par
+    paliers, plus vite quand le courant est fort. À la résistance critique et au-delà, les porteurs ne reviennent jamais
+    en arrière : le courant garde son signe, la tension du condensateur rejoint zéro sans le franchir, et l'énergie part
+    en chaleur avant d'avoir pu être renvoyée au condensateur. Au-delà de la résistance critique, la décharge devient
+    plus lente : une résistance très forte limite le courant au point que le condensateur se vide comme dans un circuit
+    RC, alors qu'une résistance proche de la valeur critique donne le retour le plus rapide sans oscillation.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-equation">Mise en équation du circuit RLC série</h3>
+  <p>
+    Circuit de référence, celui du schéma principal de la section F : une source de tension idéale $E$, constante pour
+    $t > 0$, est reliée à l'instant $t = 0$ par l'interrupteur $K$ à une résistance $R$, une bobine idéale $L$ et un
+    condensateur $C$ en série. $R$ regroupe toutes les résistances de la maille : résistance du fil de la bobine,
+    résistance série du condensateur, conducteurs et source. Le courant $i$ est orienté dans le sens horaire, sortant de
+    la borne $+$ de la source ; chaque élément passif est en convention récepteur, et le conducteur du bas est la référence
+    de potentiel. Juste avant la manœuvre, le condensateur porte la tension $U_0$ et la bobine le courant $I_0$. La loi des
+    mailles donne $E = u_R + u_L + u_C$, avec $u_R = Ri$, $u_L = L\,\mathrm{d}i/\mathrm{d}t$ et
+    $i = C\,\mathrm{d}u_C/\mathrm{d}t$. En remplaçant $i$, on obtient une seule équation en $u_C$ :
+  </p>
+  <div class="formule-cle">
+    $$LC\,\frac{\mathrm{d}^2u_C}{\mathrm{d}t^2} + RC\,\frac{\mathrm{d}u_C}{\mathrm{d}t} + u_C = E \quad\Longleftrightarrow\quad \frac{\mathrm{d}^2u_C}{\mathrm{d}t^2} + 2\zeta\omega_0\,\frac{\mathrm{d}u_C}{\mathrm{d}t} + \omega_0^2\,u_C = \omega_0^2\,E$$
+    $$\omega_0 = \frac{1}{\sqrt{LC}}, \qquad \zeta = \frac{R}{2}\sqrt{\frac{C}{L}} = \frac{R}{2Z_0}, \qquad Z_0 = \sqrt{\frac{L}{C}}, \qquad \alpha = \zeta\,\omega_0 = \frac{R}{2L}, \qquad Q = \frac{1}{2\zeta} = \frac{1}{R}\sqrt{\frac{L}{C}}$$
+    <p class="formule-cle-legende">
+      $L$ en henrys, $C$ en farads, $R$ en ohms, $u_C$ et $E$ en volts, $t$ en secondes. $\omega_0$ pulsation propre
+      ($\mathrm{rad/s}$), pulsation à laquelle le circuit oscillerait sans résistance ; $\zeta$ coefficient d'amortissement,
+      sans dimension ; $Z_0$ impédance caractéristique ($\Omega$) ; $\alpha$ coefficient d'atténuation
+      ($\mathrm{s^{-1}}$) ; $Q$ facteur de qualité, sans dimension. Hypothèses : éléments linéaires et constants (bobine
+      loin de la saturation, condensateur sans effet de la tension sur sa capacité), source idéale constante pour
+      $t > 0$, interrupteur idéal, dimensions petites devant la longueur d'onde des signaux (éléments localisés). Deux
+      grandeurs mémorisent le passé, $u_C$ et $i$ : le circuit est du second ordre, et il faut deux conditions initiales.
+    </p>
+  </div>
+  <p>
+    Vérifications dimensionnelles : $[LC] = \dfrac{\mathrm{V \cdot s}}{\mathrm{A}} \cdot \dfrac{\mathrm{A \cdot s}}{\mathrm{V}} = \mathrm{s^2}$,
+    donc $\omega_0$ est bien l'inverse d'un temps ; $[RC] = \mathrm{s}$, ce qui rend homogènes les trois termes du membre de
+    gauche ; $\sqrt{L/C}$ s'exprime en $\sqrt{\Omega \cdot \mathrm{s} / (\mathrm{s}/\Omega)} = \Omega$, donc $\zeta$ est le
+    rapport sans dimension de deux résistances. Le paramètre $\zeta$ compare la résistance dissipative $R$ à l'impédance
+    caractéristique $Z_0$, qui est le rapport tension sur courant de l'échange réversible : à énergie égale,
+    $\tfrac{1}{2}CU^2 = \tfrac{1}{2}LI^2$ donne $U/I = \sqrt{L/C}$. C'est exactement la tension crête $I_0\sqrt{L/C}$ de
+    la question d'ouverture.
+  </p>
+  <p>
+    Conditions initiales : la continuité de la tension du condensateur donne $u_C(0^+) = U_0$, et celle du courant de la
+    bobine $i(0^+) = I_0$, d'où $\dfrac{\mathrm{d}u_C}{\mathrm{d}t}(0^+) = \dfrac{I_0}{C}$. En régime établi, le
+    condensateur est un circuit ouvert, le courant s'annule et $u_C \to E$ : c'est la solution particulière constante.
+    Le régime transitoire est la solution de l'équation sans second membre, de la forme $e^{rt}$, où $r$ vérifie
+    l'équation caractéristique.
+  </p>
+
+  <h3 id="e-regimes">Équation caractéristique et classement en trois régimes</h3>
+  <div class="formule-cle">
+    $$r^2 + 2\zeta\omega_0\,r + \omega_0^2 = 0, \qquad \Delta' = \omega_0^2\,(\zeta^2 - 1), \qquad r_{1,2} = -\zeta\omega_0 \pm \omega_0\sqrt{\zeta^2 - 1}, \qquad R_c = 2\sqrt{\frac{L}{C}}$$
+    <p class="formule-cle-legende">
+      $r_1$ et $r_2$, en $\mathrm{s^{-1}}$, sont les pôles du circuit. Le signe du discriminant réduit $\Delta'$ ne dépend
+      que de $\zeta$ comparé à $1$, c'est-à-dire de $R$ comparée à la résistance critique $R_c$, qui vaut le double de
+      l'impédance caractéristique. Dérivation : pour $u_C = e^{rt}$, l'équation sans second membre donne
+      $(r^2 + 2\zeta\omega_0 r + \omega_0^2)\,e^{rt} = 0$. Dans les trois cas, la partie réelle des pôles est négative
+      dès que $R > 0$ : le transitoire s'éteint toujours, le circuit passif est stable.
+    </p>
+  </div>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Les trois régimes d'un circuit RLC série soumis à un échelon $E$, à partir du repos ($U_0 = 0$, $I_0 = 0$)</caption>
+      <thead><tr><th>Régime</th><th>Condition</th><th>Pôles</th><th>Tension $u_C(t)$</th><th>Courant $i(t)$</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Apériodique</td><td>$\zeta > 1$, $R > R_c$</td><td>deux réels négatifs $r_1 > r_2$</td>
+          <td>$E\left[1 + \dfrac{r_2\,e^{r_1t} - r_1\,e^{r_2t}}{r_1 - r_2}\right]$</td>
+          <td>$\dfrac{E}{L}\,\dfrac{e^{r_1t} - e^{r_2t}}{r_1 - r_2}$</td>
+        </tr>
+        <tr>
+          <td>Critique</td><td>$\zeta = 1$, $R = R_c$</td><td>double, $-\omega_0$</td>
+          <td>$E\left[1 - (1 + \omega_0t)\,e^{-\omega_0t}\right]$</td>
+          <td>$\dfrac{E}{L}\,t\,e^{-\omega_0t}$</td>
+        </tr>
+        <tr>
+          <td>Pseudo-périodique</td><td>$\zeta < 1$, $R < R_c$</td><td>complexes conjugués $-\alpha \pm j\omega_d$</td>
+          <td>$E\left[1 - e^{-\alpha t}\left(\cos\omega_dt + \dfrac{\alpha}{\omega_d}\sin\omega_dt\right)\right]$</td>
+          <td>$\dfrac{E}{L\omega_d}\,e^{-\alpha t}\sin\omega_dt$</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Chaque expression se vérifie aux deux bouts : à $t = 0$, $u_C = 0$ et $i = 0$ ; quand $t \to \infty$, $u_C \to E$ et
+    $i \to 0$. Pour le régime pseudo-périodique, on écrit $u_C = E + e^{-\alpha t}(A\cos\omega_dt + B\sin\omega_dt)$, avec
+    $\omega_d = \omega_0\sqrt{1 - \zeta^2}$ ; la condition $u_C(0) = 0$ donne $A = -E$, et la condition
+    $\mathrm{d}u_C/\mathrm{d}t(0) = -\alpha A + \omega_dB = 0$ donne $B = -E\alpha/\omega_d$. Le courant s'obtient par
+    $i = C\,\mathrm{d}u_C/\mathrm{d}t$, en utilisant $LC\,\omega_0^2 = 1$. Pour des conditions initiales quelconques,
+    $A = U_0 - E$ et $B = (I_0/C + \alpha A)/\omega_d$ ; la même démarche donne les constantes des deux autres régimes,
+    avec $A_1 + A_2 = U_0 - E$ et $r_1A_1 + r_2A_2 = I_0/C$ en apériodique. Les trois allures sont comparées ci-dessous.
+  </p>
+  <figure id="e-trois-figure">
+    <svg viewBox="0 0 880 410" role="img" aria-label="Trois réponses indicielles d'un circuit RLC série en fonction de oméga zéro t : pseudo-périodique pour zêta égal à 0,2 avec un dépassement de 53 pour cent au premier maximum, critique pour zêta égal à 1, apériodique pour zêta égal à 2 ; repères de la valeur finale, du premier maximum, de la pseudo-période et de la bande à plus ou moins 5 pour cent">
+      <g stroke="currentColor" stroke-width="1.4" fill="none" opacity="0.8">
+        <path d="M70 330H662M70 338V44"/>
+        <path d="M118.3 330v6M166.7 330v6M215 330v6M263.3 330v6M311.7 330v6M360 330v6M408.3 330v6M456.7 330v6M505 330v6M553.3 330v6M601.7 330v6M650 330v6"/>
+      </g>
+      <rect x="70" y="151.5" width="580" height="17" fill="currentColor" opacity="0.08"/>
+      <g stroke="currentColor" stroke-width="1.2" fill="none" stroke-dasharray="6 5" opacity="0.75">
+        <path d="M70 160H650"/>
+        <path d="M225 330V70.5H70"/>
+        <path d="M535 136V108"/>
+        <path d="M299 330V168"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.4" fill="none">
+        <path d="M232 108H528"/><path d="M232 104 225 108 232 112M528 104 535 108 528 112"/>
+      </g>
+      <path d="M70.0 330.0L74.8 329.2L79.7 326.7L84.5 322.7L89.3 317.3L94.2 310.5L99.0 302.5L103.8 293.5L108.7 283.5L113.5 272.6L118.3 261.1L123.2 249.1L128.0 236.7L132.8 224.0L137.7 211.1L142.5 198.3L147.3 185.6L152.2 173.1L157.0 161.0L161.8 149.4L166.7 138.3L171.5 127.9L176.3 118.2L181.2 109.3L186.0 101.2L190.8 94.0L195.7 87.8L200.5 82.5L205.3 78.2L210.2 74.8L215.0 72.4L219.8 71.0L224.7 70.5L229.5 70.9L234.3 72.1L239.2 74.2L244.0 77.0L248.8 80.5L253.7 84.7L258.5 89.4L263.3 94.6L268.2 100.3L273.0 106.3L277.8 112.7L282.7 119.2L287.5 125.9L292.3 132.6L297.2 139.4L302.0 146.1L306.8 152.7L311.7 159.1L316.5 165.2L321.3 171.1L326.2 176.6L331.0 181.7L335.8 186.4L340.7 190.7L345.5 194.5L350.3 197.8L355.2 200.6L360.0 203.0L364.8 204.8L369.7 206.1L374.5 206.8L379.3 207.1L384.2 207.0L389.0 206.3L393.8 205.3L398.7 203.8L403.5 202.0L408.3 199.8L413.2 197.4L418.0 194.6L422.8 191.6L427.7 188.5L432.5 185.1L437.3 181.7L442.2 178.2L447.0 174.6L451.8 171.1L456.7 167.5L461.5 164.1L466.3 160.7L471.2 157.5L476.0 154.4L480.8 151.5L485.7 148.7L490.5 146.2L495.3 144.0L500.2 141.9L505.0 140.2L509.8 138.7L514.7 137.4L519.5 136.5L524.3 135.8L529.2 135.4L534.0 135.2L538.8 135.3L543.7 135.6L548.5 136.1L553.3 136.9L558.2 137.8L563.0 138.9L567.8 140.2L572.7 141.7L577.5 143.2L582.3 144.9L587.2 146.6L592.0 148.5L596.8 150.3L601.7 152.2L606.5 154.1L611.3 155.9L616.2 157.7L621.0 159.5L625.8 161.2L630.7 162.9L635.5 164.4L640.3 165.8L645.2 167.2L650.0 168.4" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M70.0 330.0L74.8 329.2L79.7 327.0L84.5 323.7L89.3 319.5L94.2 314.7L99.0 309.3L103.8 303.5L108.7 297.5L113.5 291.3L118.3 285.1L123.2 278.8L128.0 272.6L132.8 266.6L137.7 260.6L142.5 254.8L147.3 249.2L152.2 243.9L157.0 238.7L161.8 233.7L166.7 229.0L171.5 224.5L176.3 220.3L181.2 216.2L186.0 212.4L190.8 208.8L195.7 205.5L200.5 202.3L205.3 199.3L210.2 196.5L215.0 193.9L219.8 191.4L224.7 189.1L229.5 187.0L234.3 185.0L239.2 183.1L244.0 181.4L248.8 179.8L253.7 178.3L258.5 176.9L263.3 175.6L268.2 174.4L273.0 173.3L277.8 172.2L282.7 171.3L287.5 170.4L292.3 169.6L297.2 168.8L302.0 168.1L306.8 167.5L311.7 166.9L316.5 166.3L321.3 165.8L326.2 165.3L331.0 164.9L335.8 164.5L340.7 164.1L345.5 163.8L350.3 163.5L355.2 163.2L360.0 162.9L364.8 162.7L369.7 162.5L374.5 162.3L379.3 162.1L384.2 161.9L389.0 161.8L393.8 161.6L398.7 161.5L403.5 161.4L408.3 161.2L413.2 161.1L418.0 161.0L422.8 161.0L427.7 160.9L432.5 160.8L437.3 160.7L442.2 160.7L447.0 160.6L451.8 160.6L456.7 160.5L461.5 160.5L466.3 160.4L471.2 160.4L476.0 160.4L480.8 160.3L485.7 160.3L490.5 160.3L495.3 160.3L500.2 160.2L505.0 160.2L509.8 160.2L514.7 160.2L519.5 160.2L524.3 160.1L529.2 160.1L534.0 160.1L538.8 160.1L543.7 160.1L548.5 160.1L553.3 160.1L558.2 160.1L563.0 160.1L567.8 160.1L572.7 160.1L577.5 160.1L582.3 160.0L650.0 160.0" stroke="currentColor" stroke-width="2.4" fill="none" stroke-dasharray="12 6" stroke-linecap="round"/>
+      <path d="M70.0 330.0L74.8 329.3L79.7 327.4L84.5 324.7L89.3 321.6L94.2 318.2L99.0 314.5L103.8 310.9L108.7 307.1L113.5 303.4L118.3 299.8L123.2 296.2L128.0 292.6L132.8 289.2L137.7 285.8L142.5 282.5L147.3 279.3L152.2 276.1L157.0 273.1L161.8 270.1L166.7 267.2L171.5 264.3L176.3 261.6L181.2 258.9L186.0 256.3L190.8 253.7L195.7 251.3L200.5 248.8L205.3 246.5L210.2 244.2L215.0 242.0L219.8 239.8L224.7 237.7L229.5 235.6L234.3 233.6L239.2 231.7L244.0 229.8L248.8 228.0L253.7 226.2L258.5 224.4L263.3 222.7L268.2 221.1L273.0 219.4L277.8 217.9L282.7 216.3L287.5 214.8L292.3 213.4L297.2 212.0L302.0 210.6L306.8 209.3L311.7 208.0L316.5 206.7L321.3 205.5L326.2 204.3L331.0 203.1L335.8 202.0L340.7 200.8L345.5 199.8L350.3 198.7L355.2 197.7L360.0 196.7L364.8 195.7L369.7 194.8L374.5 193.9L379.3 193.0L384.2 192.1L389.0 191.2L393.8 190.4L398.7 189.6L403.5 188.8L408.3 188.1L413.2 187.3L418.0 186.6L422.8 185.9L427.7 185.2L432.5 184.5L437.3 183.9L442.2 183.3L447.0 182.7L451.8 182.1L456.7 181.5L461.5 180.9L466.3 180.4L471.2 179.8L476.0 179.3L480.8 178.8L485.7 178.3L490.5 177.8L495.3 177.3L500.2 176.9L505.0 176.4L509.8 176.0L514.7 175.6L519.5 175.2L524.3 174.8L529.2 174.4L534.0 174.0L538.8 173.6L543.7 173.3L548.5 172.9L553.3 172.6L558.2 172.2L563.0 171.9L567.8 171.6L572.7 171.3L577.5 171.0L582.3 170.7L587.2 170.4L592.0 170.1L596.8 169.9L601.7 169.6L606.5 169.4L611.3 169.1L616.2 168.9L621.0 168.6L625.8 168.4L630.7 168.2L635.5 168.0L640.3 167.8L645.2 167.6L650.0 167.4" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="2 5" stroke-linecap="round"/>
+      <g fill="currentColor" stroke="none"><circle cx="225" cy="70.5" r="4.5"/><circle cx="535" cy="135.2" r="4"/><circle cx="299" cy="168.2" r="4"/></g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="62" y="40" text-anchor="end" font-size="11.5">u_C / E</text>
+        <text x="62" y="334" text-anchor="end">0</text>
+        <text x="62" y="164" text-anchor="end">1</text>
+        <text x="62" y="75" text-anchor="end">1,53</text>
+        <text x="670" y="334" font-size="11.5">ω0 t</text>
+        <text x="166.7" y="352" text-anchor="middle" font-size="11">2</text>
+        <text x="263.3" y="352" text-anchor="middle" font-size="11">4</text>
+        <text x="360" y="352" text-anchor="middle" font-size="11">6</text>
+        <text x="456.7" y="352" text-anchor="middle" font-size="11">8</text>
+        <text x="553.3" y="352" text-anchor="middle" font-size="11">10</text>
+        <text x="650" y="352" text-anchor="middle" font-size="11">12</text>
+        <text x="236" y="62">premier maximum : dépassement D = 53 %</text>
+        <text x="380" y="100" text-anchor="middle">pseudo-période Td</text>
+        <text x="225" y="372" text-anchor="middle" font-size="11">ω0 tp = 3,21</text>
+        <text x="306" y="300" font-size="11">critique : 95 % à ω0 t = 4,74</text>
+        <text x="590" y="195" font-size="11" text-anchor="middle">bande ± 5 %</text>
+        <text x="690" y="74" font-weight="600">ζ = 0,2</text>
+        <text x="690" y="92" font-size="11.5">trait plein épais</text>
+        <text x="690" y="108" font-size="11.5">pseudo-périodique</text>
+        <text x="690" y="150" font-weight="600">ζ = 1</text>
+        <text x="690" y="168" font-size="11.5">tirets longs</text>
+        <text x="690" y="184" font-size="11.5">critique</text>
+        <text x="690" y="226" font-weight="600">ζ = 2</text>
+        <text x="690" y="244" font-size="11.5">pointillés</text>
+        <text x="690" y="260" font-size="11.5">apériodique</text>
+        <text x="440" y="396" text-anchor="middle" font-size="11.5">échelon E à t = 0, départ du repos : u_C(0) = 0 et i(0) = 0 ; même ω0 pour les trois courbes</text>
+      </g>
+    </svg>
+    <figcaption>
+      Les trois réponses temporelles attendues, tracées pour une même pulsation propre en fonction du temps réduit
+      $\omega_0t$. Axe vertical : $u_C/E$. Le trait plein épais est le régime pseudo-périodique ($\zeta = 0{,}2$) : la
+      tension dépasse $E$ de $53\ \%$ au premier maximum, atteint à $\omega_0t_p = 3{,}21$, puis oscille autour de $E$ avec
+      la pseudo-période $T_d$, mesurée entre deux maxima successifs et signalée par la double flèche. Les tirets longs
+      sont le régime critique ($\zeta = 1$) : aucun dépassement, et $95\ \%$ de la valeur finale dès $\omega_0t = 4{,}74$,
+      repère vertical en tirets. Les pointillés sont le régime apériodique ($\zeta = 2$) : aucun dépassement non plus, mais
+      une montée bien plus lente, qui n'atteint $95\ \%$ qu'à $\omega_0t = 11{,}5$. La bande grisée autour de $u_C/E = 1$
+      est la bande de $\pm 5\ \%$ qui définit le temps d'établissement. Les trois courbes partent avec une tangente
+      horizontale : le courant initial est nul, donc la pente de $u_C$ aussi, différence majeure avec le circuit RC.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-indicateurs">Paramètres dynamiques du régime pseudo-périodique</h3>
+  <p>
+    Le régime pseudo-périodique est le plus riche, et c'est lui qui pose les problèmes de surtension. Le courant
+    $i = \dfrac{E}{L\omega_d}\,e^{-\alpha t}\sin\omega_dt$ s'annule pour $\omega_dt = k\pi$ : la tension du condensateur
+    passe alors par ses extrema. Au premier, $t_p = \pi/\omega_d$, on a $\cos\omega_dt_p = -1$ et $\sin\omega_dt_p = 0$,
+    donc $u_C(t_p) = E\left(1 + e^{-\alpha t_p}\right)$. Le dépassement relatif s'en déduit, avec
+    $\alpha/\omega_d = \zeta/\sqrt{1 - \zeta^2}$ :
+  </p>
+  <div class="formule-cle">
+    $$\omega_d = \omega_0\sqrt{1 - \zeta^2}, \qquad T_d = \frac{2\pi}{\omega_d}, \qquad t_p = \frac{\pi}{\omega_d}, \qquad D = \frac{u_{\max} - E}{E - U_0} = \exp\!\left(-\frac{\pi\zeta}{\sqrt{1 - \zeta^2}}\right)$$
+    $$\zeta = \frac{-\ln D}{\sqrt{\pi^2 + \ln^2 D}}, \qquad \delta = \ln\frac{d_k}{d_{k+1}} = \alpha\,T_d = \frac{2\pi\zeta}{\sqrt{1 - \zeta^2}}, \qquad t_{5\%} \leq \frac{1}{\alpha}\ln\frac{20}{\sqrt{1 - \zeta^2}} \approx \frac{3}{\zeta\,\omega_0}$$
+    <p class="formule-cle-legende">
+      $\omega_d$ pseudo-pulsation ($\mathrm{rad/s}$) et $T_d$ pseudo-période ($\mathrm{s}$) ; $t_p$ instant du premier
+      maximum ; $D$ dépassement relatif, sans dimension, valable pour un départ à courant nul depuis $U_0$ quelconque ;
+      $\delta$ décrément logarithmique, logarithme du rapport de deux écarts $d_k = |u_{\max,k} - E|$ séparés d'une
+      pseudo-période ; $t_{5\%}$ temps d'établissement à $\pm 5\ \%$. Cas limites : $\zeta \to 0$ donne $D \to 1$, la
+      tension monte jusqu'à $2E$ et oscille sans fin à $\omega_0$ ; $\zeta \to 1$ donne $D \to 0$ et $T_d \to \infty$, on
+      rejoint le régime critique. Le dépassement ne dépend que de $\zeta$ : ni de $\omega_0$, ni de $E$. La borne de
+      $t_{5\%}$ vient de l'enveloppe $E\,e^{-\alpha t}/\sqrt{1 - \zeta^2}$ des écarts ; c'est un majorant, la valeur
+      exacte étant plus courte, car les extrema ne touchent pas l'enveloppe à chaque instant ($\omega_0t_{5\%} = 11{,}0$
+      exactement pour $\zeta = 0{,}2$, contre $15$ par la règle $3/\zeta$).
+    </p>
+  </div>
+  <p>
+    Ces relations servent dans les deux sens. Pour prévoir : connaissant $R$, $L$ et $C$, on calcule $\zeta$, puis $D$ et
+    $t_p$. Pour identifier : sur un relevé d'oscilloscope, on mesure le dépassement ou le rapport de deux écarts
+    successifs, on en tire $\zeta$, puis la pseudo-période donne $\omega_d$ et $\omega_0 = \omega_d/\sqrt{1 - \zeta^2}$.
+    Le décrément logarithmique est plus robuste que le seul dépassement, car il ne dépend ni de la valeur finale ni de
+    l'état initial exact. Deux repères à retenir : $\zeta = 0{,}5$ donne $16\ \%$ de dépassement, et
+    $\zeta = 0{,}69$ en donne $5\ \%$ ; le nombre d'oscillations visibles est voisin de $Q$.
+  </p>
+
+  <h3 id="e-reponse-section">Simulation interactive : réponse à un échelon et lecture des paramètres</h3>
+  <p>
+    La simulation trace la tension $u_C(t)$ et le courant $i(t)$ d'un circuit RLC série soumis à un échelon, à partir du
+    repos, pour les valeurs de $R$, $L$, $C$ et $E$ réglées par les curseurs. Le point rond sur l'axe du bas se déplace à
+    la souris, au doigt ou au clavier : il fixe l'instant étudié, dont les valeurs s'affichent en direct. Avant de
+    manipuler, prédisez : en partant de $R = 40\ \Omega$, si vous divisez $R$ par deux, le dépassement augmente-t-il, et
+    la pseudo-période change-t-elle beaucoup ? Si vous multipliez $L$ par quatre sans toucher à $R$ ni à $C$, que deviennent
+    $\omega_0$ et $\zeta$ ? Pour quelle valeur de $R$ le dépassement disparaît-il, avec $L = 10\ \mathrm{mH}$ et
+    $C = 1\ \mu\mathrm{F}$ ?
+  </p>
+  <figure id="e-reponse-figure">
+    <div class="m-toile-cadre schema-vivant" id="e-reponse"></div>
+    <figcaption>
+      Graphique du haut : la tension $u_C$ en volts, courbe épaisse, avec la valeur finale $E$ en tirets longs ; en régime
+      pseudo-périodique, les deux courbes fines en tirets courts sont l'enveloppe $E \pm E\,e^{-\alpha t}/\sqrt{1 - \zeta^2}$,
+      et le petit losange marque le premier maximum. Graphique du milieu : le courant $i$ en milliampères, courbe épaisse,
+      avec sa ligne de zéro. Les repères verticaux fins marquent l'instant étudié. Axe du bas : le temps en
+      millisecondes ; le point rond est la poignée qui choisit l'instant. L'étiquette en haut à droite indique le régime.
+    </figcaption>
+  </figure>
+  <div id="e-reponse-curseurs"></div>
+  <div id="e-reponse-valeurs"></div>
+  <p>
+    Interprétation : diviser $R$ par deux divise $\zeta$ par deux et augmente nettement le dépassement, tandis que la
+    pseudo-période change à peine tant que $\zeta$ reste petit, puisque $\omega_d = \omega_0\sqrt{1 - \zeta^2}$ reste
+    voisin de $\omega_0$. Multiplier $L$ par quatre divise $\omega_0$ par deux et divise aussi $\zeta$ par deux, car
+    $\zeta = \tfrac{R}{2}\sqrt{C/L}$ : la réponse devient deux fois plus lente et plus oscillante. Le dépassement disparaît
+    pour $R \geq R_c = 2\sqrt{L/C} = 200\ \Omega$. Le courant est nul au départ, croît, puis change de signe à chaque
+    extremum de la tension : il s'annule exactement aux instants où $u_C$ atteint un maximum ou un minimum, conséquence
+    directe de $i = C\,\mathrm{d}u_C/\mathrm{d}t$. Avec une résistance forte, observez que la montée devient lente :
+    au-delà de $R_c$, augmenter l'amortissement ralentit la réponse au lieu de l'accélérer.
+  </p>
+
+  <h3 id="e-poles-section">Lecture dans le plan complexe : placer les pôles</h3>
+  <p>
+    Les deux pôles $r = -\alpha \pm j\omega_d$ résument toute la dynamique. Leur partie réelle $-\alpha$ fixe la vitesse
+    de décroissance de l'enveloppe, $e^{-\alpha t}$ ; leur partie imaginaire $\omega_d$ fixe la pulsation des oscillations.
+    Leur distance à l'origine vaut $\sqrt{\alpha^2 + \omega_d^2} = \omega_0$, et l'angle $\theta$ qu'ils font avec l'axe
+    réel négatif vérifie $\cos\theta = \zeta$ : les pôles d'amortissement constant sont sur une même demi-droite issue de
+    l'origine, ceux de pulsation propre constante sur un même cercle. En régime critique, les deux pôles se rejoignent sur
+    l'axe réel ; en apériodique, ils s'y séparent, l'un se rapprochant de l'origine et dominant la réponse lente.
+  </p>
+  <div class="formule-cle">
+    $$r = -\alpha \pm j\omega_d, \qquad |r| = \omega_0, \qquad \cos\theta = \zeta, \qquad e^{rt} = e^{-\alpha t}\,\bigl(\cos\omega_dt \pm j\sin\omega_dt\bigr)$$
+    <p class="formule-cle-legende">
+      $\theta$ angle entre la direction d'un pôle et l'axe réel négatif. La forme réelle de la solution est la somme des
+      deux exponentielles complexes conjuguées, qui donne $e^{-\alpha t}(A\cos\omega_dt + B\sin\omega_dt)$ : c'est le lien
+      avec les nombres complexes du cours <a href="#/cours/diagnostic-initial-et-remise-a-niveau-mathematique">Diagnostic
+      initial et remise à niveau mathématique</a>. Un pôle à partie réelle positive donnerait une enveloppe croissante :
+      c'est l'instabilité, impossible pour un circuit passif, mais centrale dans les boucles de régulation.
+    </p>
+  </div>
+  <p>
+    La simulation place le pôle supérieur dans le plan complexe ; le pôle conjugué, dessiné en cercle creux, suit en
+    symétrique. Le pôle se déplace à la souris, au doigt ou au clavier, et la réponse normalisée $u_C/E$ est tracée à
+    droite sur une durée fixe de $5\ \mathrm{ms}$, pour une comparaison directe. Avant de manipuler, prédisez : en
+    déplaçant le pôle verticalement, sans changer sa partie réelle, l'enveloppe change-t-elle ? Et le dépassement ? En le
+    déplaçant le long d'une demi-droite issue de l'origine, qu'est-ce qui reste constant dans la réponse ?
+  </p>
+  <figure id="e-poles-figure">
+    <div class="m-toile-cadre schema-vivant" id="e-poles"></div>
+    <figcaption>
+      À gauche, le plan complexe des pôles : axe horizontal, partie réelle $\sigma$ en milliers de $\mathrm{s^{-1}}$ ; axe
+      vertical, partie imaginaire $\omega$ en milliers de $\mathrm{rad/s}$. Le point rond plein est le pôle supérieur,
+      déplaçable ; le cercle creux est son conjugué. Le trait plein relie l'origine au pôle, sa longueur vaut $\omega_0$ ;
+      l'arc en tirets indique l'angle $\theta$ dont le cosinus est $\zeta$. Les demi-droites fines en pointillés
+      correspondent à $\zeta = 0{,}2$, $0{,}5$ et $0{,}7$. Un pôle posé sur l'axe réel correspond au régime critique. À
+      droite, la réponse $u_C/E$ à un échelon, de $0$ à $5\ \mathrm{ms}$, en trait épais, avec la valeur finale en tirets
+      et son enveloppe en tirets courts.
+    </figcaption>
+  </figure>
+  <div id="e-poles-valeurs"></div>
+  <p>
+    Interprétation : un déplacement vertical, à partie réelle constante, garde la même enveloppe $e^{-\alpha t}$, donc le
+    même temps d'établissement, mais augmente la fréquence des oscillations et donc le dépassement, puisque $\zeta$
+    diminue. Un déplacement le long d'une demi-droite issue de l'origine garde $\zeta$ et donc le dépassement : seule
+    l'échelle de temps change, d'autant plus rapide que le pôle est loin de l'origine. Rapprocher le pôle de l'axe
+    imaginaire ralentit l'extinction ; le poser sur l'axe imaginaire donnerait une oscillation entretenue. Cette lecture
+    géométrique sera celle des cours Réponse temporelle et performances et Critères de stabilité.
+  </p>
+
+  <h3 id="e-parallele">Circuit RLC parallèle et dualité</h3>
+  <p>
+    Une source de courant $I$ alimentant une résistance, une bobine et un condensateur en parallèle donne, par la loi des
+    nœuds et la tension commune $u$, l'équation $C\,\mathrm{d}u/\mathrm{d}t + u/R + i_L = I$ avec
+    $u = L\,\mathrm{d}i_L/\mathrm{d}t$, soit $LC\,\mathrm{d}^2i_L/\mathrm{d}t^2 + (L/R)\,\mathrm{d}i_L/\mathrm{d}t + i_L = I$.
+    C'est la même forme canonique, avec la même pulsation propre mais un amortissement différent : dans le circuit
+    parallèle, la résistance amortit d'autant plus qu'elle est faible, car c'est elle qui détourne le courant de
+    l'échange entre $L$ et $C$. La dualité échange série et parallèle, tension et courant, résistance et conductance,
+    inductance et capacité.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <caption>RLC série et RLC parallèle</caption>
+      <thead><tr><th>Grandeur</th><th>RLC série, source de tension</th><th>RLC parallèle, source de courant</th></tr></thead>
+      <tbody>
+        <tr><td>Variable naturelle</td><td>tension $u_C$ du condensateur</td><td>courant $i_L$ de la bobine</td></tr>
+        <tr><td>Pulsation propre</td><td>$\omega_0 = 1/\sqrt{LC}$</td><td>$\omega_0 = 1/\sqrt{LC}$</td></tr>
+        <tr><td>Coefficient d'amortissement</td><td>$\zeta = \dfrac{R}{2}\sqrt{\dfrac{C}{L}}$ : croît avec $R$</td><td>$\zeta = \dfrac{1}{2R}\sqrt{\dfrac{L}{C}}$ : décroît quand $R$ croît</td></tr>
+        <tr><td>Facteur de qualité</td><td>$Q = \dfrac{1}{R}\sqrt{\dfrac{L}{C}}$</td><td>$Q = R\sqrt{\dfrac{C}{L}}$</td></tr>
+        <tr><td>Résistance critique</td><td>$R_c = 2\sqrt{L/C}$, pas de dépassement si $R \geq R_c$</td><td>$R_c = \tfrac{1}{2}\sqrt{L/C}$, pas de dépassement si $R \leq R_c$</td></tr>
+        <tr><td>Exemple industriel</td><td>câble d'alimentation et condensateur d'entrée ; self de bus continu</td><td>bobine coupée sur sa capacité parasite et sa résistance de décharge ; circuit bouchon</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="e-resonance-section">Animation : la résonance transitoire</h3>
+  <p>
+    Si la source n'est plus un échelon mais une tension sinusoïdale $e(t) = E_m\sin\omega t$ appliquée à $t = 0$, la
+    réponse est la somme d'un régime forcé, sinusoïdal à la pulsation de la source, et du même régime libre que plus haut,
+    qui s'éteint avec $e^{-\alpha t}$. Quand la pulsation de la source est voisine de $\omega_0$, chaque période apporte
+    au circuit un supplément d'énergie en phase avec son oscillation propre : l'amplitude de $u_C$ croît progressivement,
+    jusqu'à environ $Q\,E_m$ en régime établi. La croissance se fait avec la constante de temps de l'enveloppe,
+    $1/\alpha = 2Q/\omega_0$ : plus le circuit est sélectif, plus il met de temps à atteindre sa grande amplitude. Quand la
+    pulsation de la source est un peu différente de $\omega_0$, régime forcé et régime libre interfèrent, et l'amplitude
+    bat à la pulsation $|\omega - \omega_0|$ avant de se stabiliser.
+  </p>
+  <p>
+    L'animation applique une sinusoïde d'amplitude $E_m = 1\ \mathrm{V}$ à un circuit de pulsation propre fixée,
+    $f_0 = 1\ \mathrm{kHz}$. Les curseurs règlent le rapport $f/f_0$ et le facteur de qualité ; le lecteur fait avancer le
+    temps et trace la tension au fur et à mesure. Avant de lancer, prédisez : à $f = f_0$ avec $Q = 10$, la tension du
+    condensateur dépassera-t-elle celle de la source ? En combien de périodes environ atteindra-t-elle $63\ \%$ de son
+    amplitude finale ? Que se passe-t-il à $f = 0{,}9\,f_0$ ?
+  </p>
+  <figure id="e-resonance-figure">
+    <div id="e-resonance-trace"></div>
+    <figcaption>
+      Tracé temporel sur $40$ périodes propres, soit $40\ \mathrm{ms}$ : la courbe épaisse est la tension $u_C(t)$ du
+      condensateur, tracée jusqu'à l'instant courant du lecteur ; la courbe fine est la tension de la source, d'amplitude
+      $1\ \mathrm{V}$ ; les deux lignes en tirets repèrent $\pm Q\,E_m$, amplitude atteinte à la résonance exacte en
+      régime établi. La légende sous le tracé nomme chaque courbe avec sa couleur réelle.
+    </figcaption>
+  </figure>
+  <div id="e-resonance-curseurs"></div>
+  <div id="e-resonance-lecteur"></div>
+  <div id="e-resonance-valeurs"></div>
+  <p>
+    Interprétation : à $f = f_0$ et $Q = 10$, la tension du condensateur atteint dix fois celle de la source ; l'enveloppe
+    croît comme $Q\,E_m(1 - e^{-\alpha t})$, avec $1/\alpha = 2Q/\omega_0 = 3{,}2\ \mathrm{ms}$, soit environ trois
+    périodes pour atteindre $63\ \%$. Avec $Q = 30$, l'amplitude finale triple mais il faut trois fois plus de temps pour
+    l'atteindre. À $f = 0{,}9\,f_0$, l'amplitude bat à $100\ \mathrm{Hz}$ environ, la différence des deux fréquences,
+    puis se stabilise à une valeur bien plus faible, voisine de $5\ E_m$ pour $Q = 10$. C'est le danger d'un circuit
+    peu amorti excité près de sa fréquence propre : un harmonique de rang $5$ ou $7$ du réseau, à $250$ ou
+    $350\ \mathrm{Hz}$, peut faire monter la tension d'une batterie de condensateurs, ce qui sera traité dans les cours
+    Résonance série et parallèle et Harmoniques et qualité de l'énergie.
+  </p>
+
+  <h3 id="e-energie">Bilan énergétique</h3>
+  <p>
+    L'énergie stockée à un instant quelconque est la somme des deux énergies, électrique et magnétique. En multipliant la
+    loi des mailles par $i$, on obtient $E\,i = R\,i^2 + L\,i\,\dfrac{\mathrm{d}i}{\mathrm{d}t} + u_C\,C\,\dfrac{\mathrm{d}u_C}{\mathrm{d}t}$,
+    c'est-à-dire :
+  </p>
+  <div class="formule-cle">
+    $$W(t) = \frac{1}{2}\,L\,i^2 + \frac{1}{2}\,C\,u_C^2, \qquad E\,i = R\,i^2 + \frac{\mathrm{d}W}{\mathrm{d}t}, \qquad Q \approx 2\pi\,\frac{W}{\Delta W_{\text{par période}}} \quad (\zeta \ll 1)$$
+    <p class="formule-cle-legende">
+      Énergies en joules, puissances en watts. En régime libre ($E = 0$), $\mathrm{d}W/\mathrm{d}t = -Ri^2 \leq 0$ :
+      l'énergie ne peut que décroître, et le fait en moyenne comme $e^{-2\alpha t}$, puisque les amplitudes décroissent comme
+      $e^{-\alpha t}$. Sur une pseudo-période, la fraction perdue vaut $1 - e^{-2\alpha T_d} \approx 4\pi\zeta = 2\pi/Q$ :
+      d'où l'interprétation énergétique du facteur de qualité. Pour un échelon $E$ appliqué à partir du repos, la source
+      fournit $E \times CE$, puisque la charge finale du condensateur est $CE$ ; le condensateur stocke
+      $\tfrac{1}{2}CE^2$ et la résistance dissipe l'autre moitié, $\tfrac{1}{2}CE^2$, quels que soient $R$ et $L$ : même
+      bilan que pour le circuit RC, l'inductance ne change que la manière dont la perte se répartit dans le temps.
+    </p>
+  </div>
+  <p>
+    Conséquence pratique : diminuer $R$ pour réduire les pertes en régime établi ne réduit pas l'énergie perdue pendant
+    une charge, mais augmente le dépassement. Inversement, amortir un circuit en ajoutant une résistance ne coûte rien en
+    énergie de charge, mais coûte des pertes permanentes si cette résistance est traversée par le courant de
+    fonctionnement : c'est pourquoi on préfère souvent une branche d'amortissement, résistance en série avec un
+    condensateur, qui ne voit que le courant transitoire.
+  </p>
+
+  <h3 id="e-statut">Statut des énoncés</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Ce qui relève de la loi, de la convention, de l'approximation, de la conception et du constructeur</caption>
+      <thead><tr><th>Énoncé</th><th>Statut</th><th>Commentaire</th></tr></thead>
+      <tbody>
+        <tr><td>Lois des mailles et des nœuds, conservation de l'énergie, $i = C\,\mathrm{d}u/\mathrm{d}t$ et $u = L\,\mathrm{d}i/\mathrm{d}t$</td><td>Lois physiques et modèles des éléments idéaux</td><td>Dans l'approximation des régimes quasi stationnaires, éléments localisés et linéaires.</td></tr>
+        <tr><td>Sens de $i$, flèches de tension, choix de la variable $u_C$ ou $i$</td><td>Conventions</td><td>Elles changent les signes des constantes, jamais $\omega_0$, $\zeta$ ni la classification.</td></tr>
+        <tr><td>Noms "apériodique", "critique", "pseudo-périodique", définition de $D$ et de $t_{5\%}$</td><td>Conventions de vocabulaire</td><td>Le seuil de $5\ \%$ est un choix ; on rencontre aussi $2\ \%$, avec $t_{2\%} \approx 4/(\zeta\omega_0)$.</td></tr>
+        <tr><td>$t_{5\%} \approx 3/(\zeta\omega_0)$, $\omega_d \approx \omega_0$ pour $\zeta$ petit, nombre d'oscillations voisin de $Q$</td><td>Approximations</td><td>Majorants ou ordres de grandeur ; le calcul exact se fait sur la solution complète.</td></tr>
+        <tr><td>Viser $\zeta$ entre $0{,}6$ et $0{,}8$ pour un bon compromis rapidité et dépassement ; amortir par une branche RC plutôt que par une résistance série</td><td>Règles de conception</td><td>Usuelles en filtrage et en automatique, à adapter au cahier des charges.</td></tr>
+        <tr><td>Tenue en tension d'une entrée, seuil de surtension d'un bus continu, inductance d'un câble par mètre</td><td>Données constructeur</td><td>À lire dans les documentations des matériels retenus ; les valeurs du cours sont des hypothèses d'étude.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, qui fixe les conventions du circuit RLC série et ses deux
+    circuits équivalents, l'organigramme de résolution et deux tableaux comparatifs : les trois régimes, puis les circuits
+    du premier et du second ordre. Les trois réponses temporelles, les animations et les simulations ont été placées au
+    fil du texte, au contact des explications qu'elles illustrent ; elles sont rappelées en fin de section.
+  </p>
+
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 1000 470" role="img" aria-label="Schéma principal : source E, interrupteur K, résistance R, bobine L et condensateur C en série ; courant i dans le sens horaire, tensions u_R, u_L et u_C en convention récepteur, masse ; à droite, circuit équivalent à l'instant zéro plus, condensateur remplacé par une source de tension U0 et bobine par une source de courant I0, et circuit équivalent en régime établi, bobine remplacée par un fil et condensateur par un circuit ouvert">
+      <defs>
+        <marker id="fl-f-i" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-f-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="70" cy="230" r="22"/>
+        <path d="M70 208V90H147"/>
+        <path d="M208 90H250"/>
+        <rect x="250" y="78" width="60" height="24" rx="3"/>
+        <path d="M310 90H520V110"/>
+        <path d="M520 110a10 10 0 0 1 0 20a10 10 0 0 1 0 20a10 10 0 0 1 0 20a10 10 0 0 1 0 20"/>
+        <path d="M520 190V240"/>
+        <path d="M498 240H542M498 254H542" stroke-width="3"/>
+        <path d="M520 254V350H70V252"/>
+        <path d="M300 350V362M286 362H314M291 368H309M296 374H304"/>
+        <path d="M150 90L201 86" stroke-width="3"/>
+      </g>
+      <path d="M150 90L192 62" stroke="currentColor" stroke-width="1.6" fill="none" stroke-dasharray="5 4" opacity="0.7"/>
+      <g fill="none" stroke="currentColor" stroke-width="1.8">
+        <circle cx="150" cy="90" r="3.5"/><circle cx="205" cy="90" r="3.5"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round">
+        <path d="M352 90H392" marker-end="url(#fl-f-i)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M314 60H254" marker-end="url(#fl-f-u)"/>
+        <path d="M566 188V116" marker-end="url(#fl-f-u)"/>
+        <path d="M566 274V226" marker-end="url(#fl-f-u)"/>
+        <path d="M30 256V210" marker-end="url(#fl-f-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="300" y="24" text-anchor="middle" font-weight="600">circuit RLC série soumis à un échelon</text>
+        <text x="70" y="225" text-anchor="middle" font-weight="600">+</text>
+        <text x="70" y="246" text-anchor="middle" font-weight="600">-</text>
+        <text x="20" y="238" text-anchor="end" fill="var(--serie-2)">E</text>
+        <text x="178" y="118" text-anchor="middle">K</text>
+        <text x="242" y="74" text-anchor="end" font-weight="600">+</text>
+        <text x="280" y="124" text-anchor="middle">R</text>
+        <text x="284" y="50" text-anchor="middle" fill="var(--serie-2)">u_R</text>
+        <text x="372" y="80" text-anchor="middle">i</text>
+        <text x="506" y="120" text-anchor="end" font-weight="600">+</text>
+        <text x="500" y="156" text-anchor="end">L</text>
+        <text x="576" y="156" fill="var(--serie-2)">u_L</text>
+        <text x="506" y="236" text-anchor="end" font-weight="600">+</text>
+        <text x="490" y="252" text-anchor="end">C</text>
+        <text x="576" y="254" fill="var(--serie-2)">u_C</text>
+        <text x="320" y="380" font-size="11.5">masse : référence 0 V</text>
+        <text x="300" y="414" text-anchor="middle" font-size="11.5">maille : E = R i + L di/dt + u_C, avec i = C du_C/dt</text>
+        <text x="300" y="434" text-anchor="middle" font-size="11.5">R, L et C en convention récepteur ; source E en convention générateur</text>
+        <text x="300" y="454" text-anchor="middle" font-size="11.5">K fermé à t = 0 ; avant : u_C = U0 et i = I0</text>
+        <text x="815" y="24" text-anchor="middle" font-weight="600">à t = 0+ : C impose U0, L impose I0</text>
+        <text x="670" y="116" text-anchor="middle" font-weight="600">+</text>
+        <text x="644" y="125" text-anchor="end">E</text>
+        <text x="735" y="104" text-anchor="middle">R</text>
+        <text x="850" y="44" text-anchor="middle">I0 (pour L)</text>
+        <text x="940" y="116" text-anchor="middle" font-weight="600">+</text>
+        <text x="914" y="125" text-anchor="end">U0 (pour C)</text>
+        <text x="815" y="198" text-anchor="middle" font-size="11.5">i(0+) = I0 ; u_C(0+) = U0</text>
+        <text x="815" y="216" text-anchor="middle" font-size="11.5">u_L(0+) = E - R I0 - U0</text>
+        <text x="815" y="234" text-anchor="middle" font-size="11.5">repos : C = fil, L = circuit ouvert</text>
+        <text x="815" y="266" text-anchor="middle" font-weight="600">t infini : L = fil, C = ouvert</text>
+        <text x="670" y="346" text-anchor="middle" font-weight="600">+</text>
+        <text x="644" y="355" text-anchor="end">E</text>
+        <text x="735" y="334" text-anchor="middle">R</text>
+        <text x="805" y="292" text-anchor="middle">L : fil</text>
+        <text x="914" y="350" text-anchor="end">C : ouvert</text>
+        <text x="815" y="430" text-anchor="middle" font-size="11.5">i = 0 ; u_R = u_L = 0</text>
+        <text x="815" y="448" text-anchor="middle" font-size="11.5">u_C = E ; W = C E² / 2</text>
+      </g>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="670" cy="120" r="18"/>
+        <path d="M670 102V70H710M760 70H832M868 70H940V102M940 138V170H670V138"/>
+        <rect x="710" y="58" width="50" height="24" rx="3"/>
+        <circle cx="850" cy="70" r="18"/>
+        <circle cx="940" cy="120" r="18"/>
+        <circle cx="670" cy="350" r="18"/>
+        <path d="M670 332V300H710M760 300H940V338M940 352V400H670V368"/>
+        <rect x="710" y="288" width="50" height="24" rx="3"/>
+        <path d="M922 338H958M922 352H958" stroke-width="3"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M838 70H858" marker-end="url(#fl-f-i)"/>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal. À gauche, le circuit de la séance : la source $E$, borne $+$ en haut, alimente par l'interrupteur
+      $K$, dessiné fermé en trait plein épais et ouvert en pointillés, la résistance $R$, la bobine $L$ et le condensateur
+      $C$ en série ; le conducteur du bas est la référence de potentiel. La flèche épaisse fixe le sens de référence du
+      courant $i$, horaire, sortant de la borne $+$ de la source. Les flèches fines $u_R$, $u_L$ et $u_C$ pointent chacune
+      vers la borne $+$ de l'élément, celle par laquelle entre $i$ : convention récepteur ; la flèche fine $E$ pointe vers
+      la borne $+$ de la source, d'où sort $i$ : convention générateur. À droite, en haut, le circuit équivalent juste
+      après la manœuvre : le condensateur est remplacé par une source de tension égale à sa tension $U_0$ juste avant, et
+      la bobine par une source de courant égale à son courant $I_0$, dont la flèche intérieure donne le sens ; à partir du
+      repos, la source de tension devient un fil et la source de courant un circuit ouvert. Ce circuit donne $u_L(0^+)$,
+      donc la pente initiale du courant. En bas, le circuit équivalent en régime continu établi : la bobine est un fil et le
+      condensateur un circuit ouvert, le courant est nul et $u_C = E$. Contrairement aux circuits du premier ordre, ces
+      deux circuits ne suffisent plus : il faut aussi $\omega_0$ et $\zeta$ pour connaître le chemin entre les deux.
+    </figcaption>
+  </figure>
+
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Circuit avec une bobine et un condensateur, sources constantes par morceaux"] --> B["Conventions : sens de i, flèches de tension, référence de potentiel, instant t = 0"]
+  B --> C["Avant la manœuvre : U0 = u_C(0-) et I0 = i_L(0-)"]
+  C --> D["Après la manœuvre : réduire le réseau vu par L et C"]
+  D --> E{"L et C en série ou en parallèle ?"}
+  E -->|"série"| F["ω0 = 1 / √(LC) ; ζ = (R / 2) √(C / L)"]
+  E -->|"parallèle"| G["ω0 = 1 / √(LC) ; ζ = √(L / C) / (2 R)"]
+  F --> H{"Valeur de ζ ?"}
+  G --> H
+  H -->|"ζ supérieur à 1"| I["Apériodique : deux exponentielles, pôle lent dominant"]
+  H -->|"ζ égal à 1"| J["Critique : (A + B t) exp(-ω0 t)"]
+  H -->|"ζ inférieur à 1"| K["Pseudo-périodique : ωd, Td, tp, D, t5%"]
+  I --> L["Constantes : u_C(0+) = U0 et du_C/dt(0+) = I0 / C"]
+  J --> L
+  K --> L
+  L --> M["Contrôles : dimensions, valeurs à 0+ et à l'infini, signe de i aux extrema, bilan d'énergie"]</pre>
+    <figcaption>
+      Organigramme de résolution. Les rectangles sont des étapes, les losanges des décisions, les libellés sur les flèches
+      les réponses. Le tronc commun reprend celui des circuits du premier ordre : conventions, état initial par continuité
+      de $u_C$ et de $i_L$, réduction du réseau. La décision propre au second ordre est la valeur de $\zeta$, qui fixe la
+      forme de la solution ; les deux conditions initiales fixent ensuite ses deux constantes. Toutes les branches
+      aboutissent aux mêmes contrôles, dont un propre au second ordre : le courant du condensateur s'annule aux extrema de
+      sa tension.
+    </figcaption>
+  </figure>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Comparaison des trois régimes d'un circuit RLC</caption>
+      <thead><tr><th>Critère</th><th>Apériodique, $\zeta > 1$</th><th>Critique, $\zeta = 1$</th><th>Pseudo-périodique, $\zeta < 1$</th></tr></thead>
+      <tbody>
+        <tr><td>Pôles</td><td>deux réels distincts</td><td>un réel double, $-\omega_0$</td><td>complexes conjugués, $-\alpha \pm j\omega_d$</td></tr>
+        <tr><td>Dépassement</td><td>aucun</td><td>aucun</td><td>$D = e^{-\pi\zeta/\sqrt{1 - \zeta^2}}$, de $0$ à $100\ \%$</td></tr>
+        <tr><td>Rapidité</td><td>lente, dominée par le pôle proche de l'origine, de constante de temps voisine de $RC$ si $\zeta \gg 1$</td><td>la plus rapide sans dépassement : $95\ \%$ à $\omega_0t = 4{,}74$</td><td>montée rapide, mais établissement en $3/(\zeta\omega_0)$ environ</td></tr>
+        <tr><td>Signe du courant pour un échelon</td><td>constant</td><td>constant</td><td>alterné, nul à chaque extremum de $u_C$</td></tr>
+        <tr><td>Énergie</td><td>dissipée avant tout retour</td><td>limite du retour</td><td>échanges successifs entre $L$ et $C$</td></tr>
+        <tr><td>Exemple</td><td>précharge d'un bus continu par résistance</td><td>réglage visé pour un afficheur à aiguille</td><td>bus continu après court-circuit de la précharge ; branchement à chaud</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Du premier au second ordre</caption>
+      <thead><tr><th>Propriété</th><th>RC et RL</th><th>RLC</th></tr></thead>
+      <tbody>
+        <tr><td>Grandeurs mémorisées</td><td>une : $u_C$ ou $i_L$</td><td>deux : $u_C$ et $i_L$</td></tr>
+        <tr><td>Équation</td><td>premier ordre, un paramètre $\tau$</td><td>second ordre, deux paramètres $\omega_0$ et $\zeta$</td></tr>
+        <tr><td>Conditions initiales nécessaires</td><td>une</td><td>deux</td></tr>
+        <tr><td>Réponse à un échelon</td><td>monotone, pente maximale au départ</td><td>monotone ou oscillante, pente nulle au départ pour $u_C$ partant du repos</td></tr>
+        <tr><td>Effet d'une résistance plus forte</td><td>RC plus lent, RL plus rapide</td><td>moins de dépassement ; au-delà de $R_c$, montée plus lente</td></tr>
+        <tr><td>Valeur maximale possible pour un échelon</td><td>la valeur finale</td><td>jusqu'au double de l'échelon si $\zeta \to 0$</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-anim-figure" data-renvoi="d-anim-figure">l'animation de la décharge oscillante d'un condensateur dans une bobine</a>, section D ;</li>
+    <li><a href="#e-trois-figure" data-renvoi="e-trois-figure">les trois réponses temporelles</a>, <a href="#e-reponse-figure" data-renvoi="e-reponse-figure">la simulation de la réponse à un échelon</a>, <a href="#e-poles-figure" data-renvoi="e-poles-figure">le plan complexe des pôles</a> et <a href="#e-resonance-figure" data-renvoi="e-resonance-figure">l'animation de la résonance transitoire</a>, section E ;</li>
+    <li><a href="#h-circuit-figure" data-renvoi="h-circuit-figure">le circuit du branchement à chaud</a> et <a href="#h-trace-figure" data-renvoi="h-trace-figure">les courbes de l'exemple, avant et après amortissement</a>, section H ;</li>
+    <li><a href="#i-bus-figure" data-renvoi="i-bus-figure">l'animation du court-circuit de la précharge du bus continu</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour tout circuit comportant une bobine et un condensateur, ou des groupements réductibles à une seule bobine et un seul condensateur, et des sources constantes par morceaux :</p>
+  <ol>
+    <li>Fixer les conventions : sens de référence du courant, flèches de tension en convention récepteur pour les éléments passifs, référence de potentiel, instant $t = 0$ de la manœuvre.</li>
+    <li>Déterminer l'état d'avant la manœuvre : $U_0 = u_C(0^-)$ et $I_0 = i_L(0^-)$, en régime établi par les équivalents condensateur ouvert et bobine en fil, sinon à partir du transitoire précédent.</li>
+    <li>Circuit d'après la manœuvre : réduire le reste du réseau vu par l'ensemble $L$ et $C$ (Thévenin pour une maille série, Norton pour un montage parallèle), puis identifier la structure série ou parallèle.</li>
+    <li>Calculer $\omega_0 = 1/\sqrt{LC}$, $Z_0 = \sqrt{L/C}$, puis $\zeta$ par la formule de la structure : $R/(2Z_0)$ en série, $Z_0/(2R)$ en parallèle ; en déduire $R_c$ et $Q = 1/(2\zeta)$.</li>
+    <li>Classer : apériodique si $\zeta > 1$, critique si $\zeta = 1$, pseudo-périodique si $\zeta < 1$. Écrire la solution générale : valeur finale plus régime libre de la forme adaptée.</li>
+    <li>Fixer les deux constantes avec $u_C(0^+) = U_0$ et $\mathrm{d}u_C/\mathrm{d}t(0^+) = I_0/C$ (ou, en parallèle, $i_L(0^+) = I_0$ et $\mathrm{d}i_L/\mathrm{d}t(0^+) = U_0/L$).</li>
+    <li>Répondre à la question : valeur ou instant particulier ; en pseudo-périodique, $\omega_d$, $T_d$, $t_p = \pi/\omega_d$, $D$, valeur crête $E + (E - U_0)D$ pour un départ à courant nul, courant crête voisin de $(E - U_0)/Z_0$ si $\zeta$ est petit, et $t_{5\%} \approx 3/(\zeta\omega_0)$.</li>
+    <li>Contrôler : dimensions, valeurs à $0^+$ et à l'infini, pente initiale ($u_L(0^+)/L$ pour le courant), annulation du courant aux extrema de $u_C$, crête inférieure à $2E - U_0$, bilan d'énergie ; comparer les tensions crêtes aux tenues des matériels.</li>
+  </ol>
+  <p>
+    Choix de méthode : cette procédure suffit pour un échelon et des éléments linéaires. Pour dimensionner un
+    amortissement, on part de l'objectif de dépassement, on en tire $\zeta$ minimal par $\zeta = -\ln D/\sqrt{\pi^2 + \ln^2D}$,
+    puis la résistance. Pour une excitation sinusoïdale ou périodique, la méthode complexe du module de régime sinusoïdal
+    est plus efficace en régime établi. Pour un réseau à plusieurs condensateurs et bobines, l'écriture matricielle du
+    cours Méthodes de résolution systématique et la simulation prennent le relais ; pour des éléments non linéaires, comme
+    un pont de diodes qui bloque le courant inverse, seule la simulation, ou un raisonnement par morceaux, donne la réponse
+    exacte.
+  </p>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Situation : dans l'armoire automate, un module d'entrées déporté est alimenté en $24\ \mathrm{V}$ continus par un câble
+    de $12\ \mathrm{m}$ à deux conducteurs de $4\ \mathrm{mm^2}$. L'entrée du module comporte un condensateur de filtrage
+    de $100\ \mu\mathrm{F}$, et sa tension d'entrée ne doit jamais dépasser $36\ \mathrm{V}$, même brièvement (hypothèse
+    de documentation). Un technicien branche le connecteur sous tension, ce qui applique un échelon de $24\ \mathrm{V}$ au
+    câble. Inductance de la boucle formée par les deux conducteurs : environ $0{,}8\ \mu\mathrm{H}$ par mètre de câble,
+    soit $L = 10\ \mu\mathrm{H}$ (hypothèse, ordre de grandeur pour deux conducteurs jointifs). Résistance totale de la
+    boucle, connexions comprises : $R = 0{,}1\ \Omega$, cohérente avec $0{,}0175 \times 24/4 = 0{,}105\ \Omega$ pour le
+    cuivre. On cherche si le module survit au branchement à chaud, puis l'amortissement qui limite le dépassement à
+    $5\ \%$.
+  </p>
+  <figure id="h-circuit-figure">
+    <svg viewBox="0 0 820 350" role="img" aria-label="Circuit du branchement à chaud : alimentation 24 volts, connecteur K, câble de 12 mètres modélisé par une inductance de 10 microhenrys et une résistance de 0,1 ohm, condensateur d'entrée du module de 100 microfarads ; courant i et tension u_C en convention récepteur">
+      <defs>
+        <marker id="fl-h-i" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+        <marker id="fl-h-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="var(--serie-2)"/>
+        </marker>
+      </defs>
+      <rect x="196" y="36" width="300" height="236" rx="10" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="6 5" opacity="0.6"/>
+      <rect x="520" y="36" width="160" height="236" rx="10" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="6 5" opacity="0.6"/>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="70" cy="160" r="22"/>
+        <path d="M70 138V80H120M166 80H230"/>
+        <path d="M230 80a10 10 0 0 1 20 0a10 10 0 0 1 20 0a10 10 0 0 1 20 0a10 10 0 0 1 20 0"/>
+        <path d="M310 80H350"/>
+        <rect x="350" y="68" width="60" height="24" rx="3"/>
+        <path d="M410 80H600V146"/>
+        <path d="M578 146H622M578 160H622" stroke-width="3"/>
+        <path d="M600 160V240H70V182"/>
+        <path d="M300 240V252M286 252H314M291 258H309M296 264H304"/>
+        <path d="M123 80L158 74" stroke-width="3"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="120" cy="80" r="3.2"/><circle cx="163" cy="80" r="3.2"/></g>
+      <g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round">
+        <path d="M444 80H482" marker-end="url(#fl-h-i)"/>
+      </g>
+      <g stroke="var(--serie-2)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M646 184V122" marker-end="url(#fl-h-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="70" y="156" text-anchor="middle" font-weight="600">+</text>
+        <text x="40" y="164" text-anchor="end">24 V</text>
+        <text x="142" y="106" text-anchor="middle">K</text>
+        <text x="270" y="60" text-anchor="middle">L = 10 µH</text>
+        <text x="380" y="114" text-anchor="middle">R = 0,1 Ω</text>
+        <text x="462" y="70" text-anchor="middle">i</text>
+        <text x="588" y="142" text-anchor="end" font-weight="600">+</text>
+        <text x="606" y="104" font-size="11">C = 100 µF</text>
+        <text x="656" y="158" fill="var(--serie-2)">u_C</text>
+        <text x="346" y="292" text-anchor="middle" font-size="11.5">câble 2 × 12 m, 4 mm² : boucle L et R</text>
+        <text x="600" y="292" text-anchor="middle" font-size="11.5">entrée du module</text>
+        <text x="600" y="310" text-anchor="middle" font-size="11.5">tenue : 36 V</text>
+        <text x="318" y="262" font-size="11.5">masse : 0 V</text>
+        <text x="410" y="336" text-anchor="middle" font-size="11.5">K fermé à t = 0 ; départ du repos : u_C(0) = 0 et i(0) = 0</text>
+      </g>
+    </svg>
+    <figcaption>
+      Circuit du branchement à chaud. L'alimentation de $24\ \mathrm{V}$, borne $+$ en haut, est supposée idéale ; le
+      connecteur $K$ se ferme à $t = 0$. Le cadre en tirets de gauche délimite le câble, modélisé par l'inductance $L$ de
+      la boucle et sa résistance $R$, toutes deux ramenées dans le conducteur aller, ce qui ne change pas la maille. Le
+      cadre de droite délimite l'entrée du module, réduite à son condensateur $C$, borne $+$ en haut. La flèche épaisse fixe
+      le sens de référence du courant $i$ ; la flèche fine $u_C$ pointe vers la borne $+$ du condensateur, en convention
+      récepteur. Le conducteur du bas est la référence de potentiel. On néglige le courant consommé par le module pendant
+      les premières centaines de microsecondes, hypothèse prudente, car une charge résistive amortirait le circuit.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Données : $E = 24\ \mathrm{V}$, $L = 10\ \mu\mathrm{H}$, $R = 0{,}1\ \Omega$, $C = 100\ \mu\mathrm{F}$, départ du
+    repos, tenue de l'entrée $36\ \mathrm{V}$, courant consommé en fonctionnement $2\ \mathrm{A}$. Inconnues : $\omega_0$,
+    $f_0$, $Z_0$, $\zeta$, $Q$, régime ; dépassement, tension crête et instant du maximum ; pseudo-période ; courant
+    crête ; temps d'établissement ; résistance série qui limite le dépassement à $5\ \%$, avec sa chute de tension et ses
+    pertes. Stratégie : méthode de la section G, puis inversion de la formule du dépassement.
+  </p>
+
+  <h3 id="h-classement">Classement et paramètres dynamiques</h3>
+  <ol>
+    <li>Pulsation propre : $LC = 10^{-5} \times 10^{-4} = 10^{-9}\ \mathrm{s^2}$, donc $\omega_0 = 1/\sqrt{10^{-9}} = 31\,623\ \mathrm{rad/s}$ et $f_0 = \omega_0/(2\pi) = 5\,033\ \mathrm{Hz}$.</li>
+    <li>Impédance caractéristique : $Z_0 = \sqrt{10^{-5}/10^{-4}} = \sqrt{0{,}1} = 0{,}316\ \Omega$ ; résistance critique $R_c = 2Z_0 = 0{,}632\ \Omega$.</li>
+    <li>Amortissement : $\zeta = R/(2Z_0) = 0{,}1/0{,}632 = 0{,}158$, donc $Q = 1/(2\zeta) = 3{,}16$. Comme $\zeta < 1$, le régime est pseudo-périodique ; $\alpha = R/(2L) = 0{,}1/(2 \times 10^{-5}) = 5\,000\ \mathrm{s^{-1}}$.</li>
+    <li>Pseudo-pulsation : $\omega_d = 31\,623 \times \sqrt{1 - 0{,}025} = 31\,225\ \mathrm{rad/s}$, soit $f_d = 4\,970\ \mathrm{Hz}$ et $T_d = 201\ \mu\mathrm{s}$.</li>
+    <li>Dépassement : $\pi\zeta/\sqrt{1 - \zeta^2} = \pi \times 0{,}158/0{,}987 = 0{,}503$, d'où $D = e^{-0{,}503} = 0{,}605$, soit $60{,}5\ \%$.</li>
+    <li>Tension crête : $u_{\max} = 24 \times (1 + 0{,}605) = 38{,}5\ \mathrm{V}$, atteinte à $t_p = \pi/\omega_d = 100{,}6\ \mu\mathrm{s}$. Elle dépasse la tenue de $36\ \mathrm{V}$ : le module est en danger à chaque branchement à chaud.</li>
+    <li>Courant crête : en dérivant $i = \dfrac{E}{L\omega_d}e^{-\alpha t}\sin\omega_dt$, le maximum survient pour $\tan\omega_dt = \omega_d/\alpha = 6{,}245$, soit $t = 45{,}2\ \mu\mathrm{s}$, et vaut $\dfrac{24}{10^{-5} \times 31\,225} \times e^{-0{,}226} \times 0{,}987 = 76{,}9 \times 0{,}798 \times 0{,}987 = 60{,}5\ \mathrm{A}$. L'estimation rapide $E/Z_0 = 75{,}9\ \mathrm{A}$ en donne l'ordre de grandeur par excès.</li>
+    <li>Temps d'établissement à $\pm 5\ \%$ : $3/\alpha = 0{,}60\ \mathrm{ms}$ par l'enveloppe ; la valeur exacte, lue sur la courbe, est $0{,}53\ \mathrm{ms}$.</li>
+  </ol>
+
+  <h3 id="h-amortissement">Dimensionnement de l'amortissement</h3>
+  <ol>
+    <li>Objectif : $D \leq 0{,}05$, donc $\ln D = -3{,}00$ et $\zeta \geq 3{,}00/\sqrt{\pi^2 + 9{,}00} = 3{,}00/4{,}34 = 0{,}690$.</li>
+    <li>Résistance totale minimale : $R \geq 2\zeta Z_0 = 2 \times 0{,}690 \times 0{,}316 = 0{,}436\ \Omega$, soit au moins $0{,}336\ \Omega$ à ajouter.</li>
+    <li>Choix : une résistance normalisée de $0{,}39\ \Omega$, ce qui donne $R = 0{,}49\ \Omega$, $\zeta = 0{,}49/0{,}632 = 0{,}775$ et $D = e^{-\pi \times 0{,}775/0{,}632} = e^{-3{,}85} = 2{,}1\ \%$ : crête à $24{,}5\ \mathrm{V}$, courant crête de $32{,}8\ \mathrm{A}$, établissement en $0{,}10\ \mathrm{ms}$ environ.</li>
+    <li>Prix à payer en fonctionnement, sous $2\ \mathrm{A}$ : chute de tension $0{,}39 \times 2 = 0{,}78\ \mathrm{V}$ et pertes $0{,}39 \times 2^2 = 1{,}56\ \mathrm{W}$ permanentes.</li>
+  </ol>
+  <p>
+    Résultat : sans précaution, le branchement à chaud provoque une oscillation à $4{,}97\ \mathrm{kHz}$ qui porte l'entrée à
+    $38{,}5\ \mathrm{V}$ au bout de $101\ \mu\mathrm{s}$, avec une pointe de courant de $60{,}5\ \mathrm{A}$ ; une résistance
+    série de $0{,}39\ \Omega$ ramène la crête à $24{,}5\ \mathrm{V}$, au prix de $0{,}78\ \mathrm{V}$ de chute et
+    $1{,}56\ \mathrm{W}$ de pertes. Ce prix est souvent jugé trop élevé ; les solutions courantes sont alors une branche
+    d'amortissement, résistance en série avec un condensateur placée en parallèle sur l'entrée, qui ne voit que le courant
+    transitoire, un limiteur d'appel, ou l'interdiction du branchement sous tension, inscrite dans la consigne
+    d'exploitation. Contrôles de cohérence. Unités : $\sqrt{\mathrm{H}/\mathrm{F}}$ est en ohms, $1/\sqrt{\mathrm{H \cdot F}}$
+    en $\mathrm{rad/s}$. Bornes : la crête est inférieure à $2E = 48\ \mathrm{V}$, maximum théorique sans amortissement.
+    Courant : il s'annule à $t_p$, au maximum de tension, comme l'exige $i = C\,\mathrm{d}u_C/\mathrm{d}t$. Énergie :
+    l'alimentation fournit $E \times CE = 57{,}6\ \mathrm{mJ}$, le condensateur en garde $\tfrac{1}{2}CE^2 = 28{,}8\ \mathrm{mJ}$
+    et la résistance en dissipe autant, avec ou sans résistance ajoutée. Réserves : l'inductance du câble dépend de sa
+    pose, et le contact du connecteur rebondit, ce qui produit plusieurs échelons successifs ; seule une mesure à
+    l'oscilloscope au branchement confirme la crête.
+  </p>
+  <figure id="h-trace-figure">
+    <div id="h-trace"></div>
+    <figcaption>
+      Courbes calculées de l'exemple : tension d'entrée du module après le branchement, sans résistance ajoutée
+      ($R = 0{,}1\ \Omega$, courbe épaisse) et avec la résistance série de $0{,}39\ \Omega$ ($R = 0{,}49\ \Omega$, courbe
+      fine). La ligne en tirets supérieure repère la tenue de $36\ \mathrm{V}$, la ligne inférieure la tension nominale de
+      $24\ \mathrm{V}$ ; les points marqués donnent les deux crêtes. La légende sous le tracé nomme chaque courbe avec sa
+      couleur réelle.
+    </figcaption>
+  </figure>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+
+  <h3 id="i-probleme">Le bus continu du variateur de la pompe et sa self de lissage</h3>
+  <p>
+    Le cours <a href="#/cours/regime-transitoire-rc">Régime transitoire RC</a> a dimensionné la précharge du bus continu
+    du variateur de la pompe : condensateurs équivalents de $2{,}2\ \mathrm{mF}$, tension nominale $565{,}7\ \mathrm{V}$,
+    résistance de précharge de $47\ \Omega$, contacteur $KM2$ qui la court-circuite au bout de $0{,}6\ \mathrm{s}$. Le
+    modèle ignorait une inductance pourtant présente : la plupart des variateurs de cette puissance comportent une self
+    de lissage, côté continu ou côté réseau, qui réduit les harmoniques de courant absorbés. Avec cette self, le bus
+    devient un circuit RLC série, alimenté par le pont de diodes. La question est double : le calcul de précharge par le
+    modèle RC reste-t-il valable, et que se passe-t-il au moment où $KM2$ court-circuite la résistance de précharge ?
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Hypothèses du modèle</span>
+    <p>
+      Pont de diodes et réseau représentés par une source continue idéale de $565{,}7\ \mathrm{V}$ (échelon continu), en
+      ignorant l'ondulation à $300\ \mathrm{Hz}$ et l'impédance du réseau. Self de lissage de $1\ \mathrm{mH}$ (hypothèse
+      d'étude), résistance totale de la maille après court-circuit de la précharge de $0{,}1\ \Omega$ (self, câblage,
+      contacts et résistance série des condensateurs). Variateur à l'arrêt pendant la précharge : aucun courant de charge.
+      Courant de précharge résiduel, quelques ampères, négligé devant les courants de court-circuit de la précharge. Le
+      seuil de déclenchement en surtension du bus est une donnée constructeur, à lire dans la documentation du variateur
+      retenu.
+    </p>
+  </div>
+  <p>
+    Pendant la précharge : $\omega_0 = 1/\sqrt{10^{-3} \times 2{,}2 \times 10^{-3}} = 674\ \mathrm{rad/s}$, soit
+    $f_0 = 107\ \mathrm{Hz}$, et $Z_0 = \sqrt{10^{-3}/2{,}2 \times 10^{-3}} = 0{,}674\ \Omega$. Avec $R = 47\ \Omega$,
+    $\zeta = 47/(2 \times 0{,}674) = 34{,}9$ : régime très apériodique. Les deux constantes de temps valent
+    $-1/r_1 = 0{,}1034\ \mathrm{s}$ et $-1/r_2 = 21{,}3\ \mu\mathrm{s}$, pratiquement $RC = 0{,}1034\ \mathrm{s}$ et
+    $L/R = 21{,}3\ \mu\mathrm{s}$ : le pôle lent est celui du circuit RC, le pôle rapide celui de la self, qui ne retarde
+    le courant que de quelques dizaines de microsecondes. Le dimensionnement de la précharge par le modèle RC reste donc
+    valable, ce qui illustre une règle générale : quand $\zeta \gg 1$, un second ordre se comporte comme deux premiers
+    ordres découplés.
+  </p>
+  <p>
+    Après le court-circuit de la précharge : $R = 0{,}1\ \Omega$ donne $\zeta = 0{,}1/1{,}348 = 0{,}074$ et $Q = 6{,}74$ :
+    régime franchement pseudo-périodique, de pseudo-période $9{,}35\ \mathrm{ms}$ et de dépassement
+    $D = e^{-\pi \times 0{,}074/0{,}997} = 79{,}2\ \%$. Tout écart entre la tension du réseau redressé et celle du bus au
+    moment de la fermeture de $KM2$ est donc presque doublé. À $0{,}6\ \mathrm{s}$, l'écart résiduel calculé dans le cours
+    <a href="#/cours/regime-transitoire-rc">Régime transitoire RC</a> vaut $565{,}7\,e^{-0{,}6/0{,}1034} = 1{,}7\ \mathrm{V}$ :
+    le dépassement n'est que de $0{,}792 \times 1{,}7 = 1{,}35\ \mathrm{V}$, et la pointe de courant d'environ
+    $2{,}3\ \mathrm{A}$. La self fait mieux que la résistance de $0{,}1\ \Omega$ seule, qui laissait prévoir $17\ \mathrm{A}$
+    : elle limite la pointe à l'ordre de $\Delta U/Z_0$ au lieu de $\Delta U/R$.
+  </p>
+  <p>
+    Fermeture prématurée de $KM2$, le bus n'étant chargé qu'à moitié, soit $282{,}8\ \mathrm{V}$ : l'écart de
+    $282{,}8\ \mathrm{V}$ produit une crête de $565{,}7 + 0{,}792 \times 282{,}8 = 789{,}6\ \mathrm{V}$, atteinte
+    $4{,}7\ \mathrm{ms}$ après la fermeture, et une pointe de courant de $375\ \mathrm{A}$ au bout de $2{,}2\ \mathrm{ms}$.
+    Une limite du modèle linéaire aggrave encore la situation : le pont de diodes ne laisse pas passer de courant inverse.
+    Le courant s'annule pour la première fois exactement au maximum de tension ; les diodes se bloquent alors, et le bus
+    reste chargé à $789{,}6\ \mathrm{V}$ au lieu de redescendre en oscillant, jusqu'à ce qu'une charge ou les résistances
+    d'équilibrage le déchargent. Le variateur, à l'arrêt, déclenche en surtension, ou ses condensateurs, de tenue totale
+    $900\ \mathrm{V}$, sont sollicités bien au-delà de leur tension nominale. La temporisation de $KM2$ protège donc à la
+    fois contre la pointe de courant et contre la surtension.
+  </p>
+
+  <h3 id="i-bus-section">Animation : court-circuiter la précharge</h3>
+  <p>
+    L'animation reprend le bus du variateur. Le curseur règle la tension du bus au moment où $KM2$ se ferme, de $50$ à
+    $100\ \%$ de la tension nominale ; le lecteur fait avancer le temps, de $0$ à $40\ \mathrm{ms}$ après la fermeture. Le
+    schéma montre le courant dans la self, avec une épaisseur proportionnelle à sa valeur, et la jauge de tension du bus.
+    Les tracés comparent le modèle linéaire, où le courant peut s'inverser, et le comportement avec le pont de diodes, qui
+    bloque le courant inverse. Avant de lancer, prédisez : si $KM2$ se ferme à $80\ \%$ de la tension nominale, quelle est
+    la tension crête ? Avec le pont de diodes, la tension du bus redescend-elle ensuite vers $565{,}7\ \mathrm{V}$ ? La
+    pointe de courant est-elle proportionnelle à l'écart de tension ?
+  </p>
+  <figure id="i-bus-figure">
+    <div class="m-toile-cadre schema-vivant" id="i-bus"></div>
+    <div id="i-bus-tension"></div>
+    <div id="i-bus-courant"></div>
+    <figcaption>
+      En haut, le circuit : la source continue de $565{,}7\ \mathrm{V}$, borne $+$ en haut, représente le réseau redressé
+      par le pont de diodes, dessiné par une diode en série ; vient ensuite la résistance de précharge $R_p$, court-circuitée
+      par le contact $KM2$ dont la lame montre l'état, puis la self de lissage $L$ et les condensateurs du bus $C$, borne
+      $+$ en haut ; le conducteur du bas est la référence de potentiel. La flèche épaisse donne le sens réel du courant dans
+      la self, avec une épaisseur proportionnelle à sa valeur ; la jauge verticale donne la tension du bus, avec les
+      repères de la tension nominale et de la tenue de $900\ \mathrm{V}$. Au-dessous, la tension du bus puis le courant,
+      chacun avec deux courbes : modèle linéaire en trait fin, pont de diodes en trait épais ; le petit disque marque
+      l'instant courant du lecteur. La légende sous chaque tracé nomme les courbes avec leur couleur réelle.
+    </figcaption>
+  </figure>
+  <div id="i-bus-curseurs"></div>
+  <div id="i-bus-lecteur"></div>
+  <div id="i-bus-valeurs"></div>
+  <p>
+    Interprétation : à $80\ \%$, l'écart vaut $113{,}1\ \mathrm{V}$ et la crête $565{,}7 + 0{,}792 \times 113{,}1 = 655{,}3\ \mathrm{V}$.
+    Avec le pont de diodes, le courant s'arrête à son premier passage par zéro, au maximum de tension, et le bus reste à
+    cette valeur : le modèle linéaire, qui prévoit un retour oscillant vers $565{,}7\ \mathrm{V}$, est optimiste. La pointe
+    de courant est proportionnelle à l'écart, puisque l'équation est linéaire tant que le courant est positif :
+    $150\ \mathrm{A}$ à $80\ \%$, $375\ \mathrm{A}$ à $50\ \%$. Seule une précharge menée jusqu'à quelques volts d'écart rend
+    ces deux contraintes négligeables, ce qui confirme la temporisation de $0{,}6\ \mathrm{s}$, soit $5{,}8$ constantes de
+    temps.
+  </p>
+
+  <h3 id="i-compromis">Contraintes, risques et compromis</h3>
+  <ul>
+    <li><strong>Temporisation de KM2.</strong> Raccourcir la temporisation pour gagner du temps à la mise sous tension se paie en surtension et en pointe de courant : à $0{,}1\ \mathrm{s}$ seulement, le bus n'est qu'à $350{,}6\ \mathrm{V}$ et la crête atteint $735{,}9\ \mathrm{V}$. Une surveillance de la tension du bus, qui n'autorise la fermeture qu'au-delà d'un seuil, est plus robuste qu'une temporisation fixe.</li>
+    <li><strong>Résistance de précharge défaillante.</strong> Une résistance de précharge dont la valeur a dérivé vers le haut, ou remplacée par une valeur plus forte, allonge la constante de temps : à $0{,}6\ \mathrm{s}$, le bus est loin de sa valeur finale et la fermeture de $KM2$ provoque le même dépassement qu'une temporisation trop courte.</li>
+    <li><strong>Amortissement faible du bus.</strong> Avec $Q = 6{,}74$, le bus résonne à $107\ \mathrm{Hz}$ ; toute perturbation du réseau voisine de cette fréquence, ou une variation brusque de la charge, provoque une oscillation lente à s'éteindre. La commande du variateur intègre souvent un amortissement actif de ce mode, fonction propre à chaque constructeur.</li>
+    <li><strong>Choix de la self.</strong> Une self plus forte réduit les harmoniques de courant et la pointe à la fermeture de $KM2$, mais abaisse $f_0$ et augmente l'impédance caractéristique, donc les variations de tension du bus lors des à-coups de charge. Le compromis est fait par le constructeur ; l'intégrateur vérifie la compatibilité avec le réseau et la protection amont.</li>
+    <li><strong>Sécurité d'intervention.</strong> Le bus reste chargé après coupure, et une surcharge due à un dépassement peut le laisser au-delà de sa tension nominale : la décharge de sécurité par les résistances d'équilibrage, environ $8\ \mathrm{min}$ sous $50\ \mathrm{V}$, doit être attendue et la tension vérifiée avant toute intervention.</li>
+  </ul>
+
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : la self de lissage du bus continu et le court-circuit de la précharge</span>
+    <p>
+      Nouvelle brique du petit site industriel, cinquième du module consacré au stockage d'énergie et aux régimes
+      transitoires. Le bus continu du variateur de la pompe, $2{,}2\ \mathrm{mF}$ sous $565{,}7\ \mathrm{V}$, reçoit une
+      self de lissage de $1\ \mathrm{mH}$ (hypothèse) et devient un circuit RLC série : $f_0 = 107\ \mathrm{Hz}$,
+      $Z_0 = 0{,}674\ \Omega$. Pendant la précharge par $47\ \Omega$, $\zeta = 34{,}9$ : régime apériodique dominé par
+      $\tau = 0{,}103\ \mathrm{s}$, le modèle RC reste valable. Après le court-circuit par $KM2$ ($0{,}1\ \Omega$),
+      $\zeta = 0{,}074$, $Q = 6{,}74$, dépassement de $79\ \%$ : à $0{,}6\ \mathrm{s}$ (écart $1{,}7\ \mathrm{V}$), pointe
+      d'environ $2{,}3\ \mathrm{A}$ et $1{,}35\ \mathrm{V}$ de dépassement, négligeables ; une fermeture à mi-charge
+      porterait le bus à $790\ \mathrm{V}$ avec $375\ \mathrm{A}$ crête, et le pont de diodes le maintiendrait à cette
+      valeur. Décision : conserver la temporisation de $0{,}6\ \mathrm{s}$ et y ajouter une autorisation de fermeture
+      conditionnée à la tension du bus, logique reprise dans le cours Automates programmables industriels. Toutes les
+      valeurs sont des hypothèses d'étude, à remplacer par la documentation du variateur retenu.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li>
+      <strong>Croire qu'une réponse ne peut pas dépasser sa valeur finale.</strong> C'est vrai au premier ordre, faux au second : en régime pseudo-périodique, la tension du condensateur dépasse $E$ et peut approcher $2E$ quand l'amortissement est faible. Dimensionner une tenue en tension sur la seule valeur finale, comme pour un circuit RC, sous-estime la contrainte jusqu'à un facteur deux.
+    </li>
+    <li>
+      <strong>Appliquer la formule de $\zeta$ du circuit série à un circuit parallèle.</strong> En série, $\zeta = \tfrac{R}{2}\sqrt{C/L}$ croît avec $R$ ; en parallèle, $\zeta = \tfrac{1}{2R}\sqrt{L/C}$ décroît quand $R$ croît. Une résistance de décharge de forte valeur placée en parallèle sur une bobine amortit donc peu. Il faut d'abord identifier la structure, après réduction du réseau.
+    </li>
+    <li>
+      <strong>Confondre $\omega_0$ et $\omega_d$, ou pulsation et fréquence.</strong> La pseudo-période mesurée est $2\pi/\omega_d$, pas $2\pi/\omega_0$ ; l'écart est négligeable pour $\zeta$ petit mais atteint $40\ \%$ pour $\zeta = 0{,}7$. Et $\omega_0 = 1/\sqrt{LC}$ est en radians par seconde : oublier le facteur $2\pi$ donne une fréquence six fois trop forte.
+    </li>
+    <li>
+      <strong>Utiliser une seule condition initiale.</strong> Un second ordre a deux constantes ; la condition $u_C(0^+) = U_0$ ne suffit pas. La seconde vient du courant de la bobine : $\mathrm{d}u_C/\mathrm{d}t(0^+) = I_0/C$. L'oublier, en supposant par exemple une pente initiale $E/(RC)$ comme au premier ordre, donne une solution fausse dès le départ.
+    </li>
+    <li>
+      <strong>Croire que l'amortissement critique est toujours le meilleur réglage.</strong> Il donne la réponse la plus rapide sans aucun dépassement, mais un léger dépassement accepté, $\zeta$ entre $0{,}6$ et $0{,}8$, donne une montée plus rapide et un établissement comparable. Le bon réglage dépend du cahier des charges : tenue en tension, précision, vitesse.
+    </li>
+    <li>
+      <strong>Croire qu'augmenter l'amortissement accélère toujours la réponse.</strong> En dessous de $\zeta = 1$, augmenter $R$ réduit le dépassement et souvent le temps d'établissement ; au-dessus, augmenter $R$ ralentit la réponse, qui tend vers celle d'un circuit RC de constante de temps $RC$. Un bus continu en précharge est très lent pour cette raison.
+    </li>
+    <li>
+      <strong>Appliquer le modèle linéaire à un circuit qui contient des diodes.</strong> Le pont de diodes d'un variateur ou d'un redresseur bloque le courant inverse : l'oscillation s'arrête à la première annulation du courant, et la tension reste à sa valeur crête. Le modèle linéaire prévoit à tort un retour vers la valeur nominale.
+    </li>
+    <li>
+      <strong>Négliger l'inductance des câbles et la capacité des bobines.</strong> Quelques microhenrys de câble et un condensateur d'entrée suffisent à former un circuit peu amorti ; quelques nanofarads entre les spires d'une bobine suffisent à porter sa tension de coupure à des kilovolts. Les éléments parasites ne figurent pas sur les schémas, mais ils fixent les surtensions réelles.
+    </li>
+    <li>
+      <strong>Amortir par une résistance série sans compter les pertes permanentes.</strong> La résistance qui amortit le transitoire est traversée par le courant de fonctionnement : chute de tension et échauffement permanents. Une branche d'amortissement résistance et condensateur, en parallèle, n'est parcourue que par le courant transitoire.
+    </li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain : une entrée d'équipement détruite au branchement sous tension, alors qu'elle supporte la
+    tension nominale, signale un dépassement pseudo-périodique dû au câble ; un variateur qui déclenche en surtension à la
+    mise sous tension, et jamais en fonctionnement, signale une précharge incomplète au moment de la fermeture du
+    contacteur de court-circuit ; un relais ou un contacteur dont les contacts de commande s'usent anormalement signale
+    une coupure inductive sans écrêteur, avec oscillation sur la capacité parasite. La mesure décisive est le relevé à
+    l'oscilloscope de la tension et du courant pendant la manœuvre : la pseudo-période donne $\omega_0$, le décrément
+    logarithmique donne $\zeta$, et l'on remonte ainsi à $L$ et à $C$.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de
+    diagnostic industriel et une question conceptuelle. La correction de chacun reste masquée jusqu'à une tentative ou un
+    clic explicite sur "Voir la correction", puis se déroule étape par étape, accompagnée d'une courbe ou d'un schéma
+    annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma.</p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$LC\,\frac{\mathrm{d}^2u_C}{\mathrm{d}t^2} + RC\,\frac{\mathrm{d}u_C}{\mathrm{d}t} + u_C = E$$
+    $$\omega_0 = \frac{1}{\sqrt{LC}}, \qquad \zeta_{\text{série}} = \frac{R}{2}\sqrt{\frac{C}{L}}, \qquad \zeta_{\text{parallèle}} = \frac{1}{2R}\sqrt{\frac{L}{C}}, \qquad Q = \frac{1}{2\zeta}$$
+    $$R_c = 2\sqrt{\frac{L}{C}}, \qquad r_{1,2} = -\zeta\omega_0 \pm \omega_0\sqrt{\zeta^2 - 1}$$
+    $$\omega_d = \omega_0\sqrt{1 - \zeta^2}, \qquad t_p = \frac{\pi}{\omega_d}, \qquad D = \exp\!\left(-\frac{\pi\zeta}{\sqrt{1 - \zeta^2}}\right)$$
+    $$t_{5\%} \approx \frac{3}{\zeta\,\omega_0}, \qquad \delta = \frac{2\pi\zeta}{\sqrt{1 - \zeta^2}}, \qquad W = \frac{1}{2}Li^2 + \frac{1}{2}Cu_C^2$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>Un second ordre peut dépasser sa valeur finale, jusqu'à près du double : dimensionner les tenues sur la crête.</li>
+      <li>Identifier la structure avant d'écrire $\zeta$ : en parallèle, une résistance plus forte amortit moins.</li>
+      <li>Deux conditions initiales : $u_C(0^+) = U_0$ et $\mathrm{d}u_C/\mathrm{d}t(0^+) = I_0/C$.</li>
+      <li>Au-delà de l'amortissement critique, plus de résistance signifie une réponse plus lente.</li>
+      <li>Diodes, saturation et éléments parasites sortent du modèle linéaire : ils peuvent figer une crête ou créer une oscillation imprévue.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Un circuit qui associe une bobine et un condensateur obéit à une équation du second ordre,
+    caractérisée par la pulsation propre $\omega_0 = 1/\sqrt{LC}$ et le coefficient d'amortissement $\zeta$, rapport de la
+    résistance à deux fois l'impédance caractéristique $\sqrt{L/C}$ en série. L'énergie oscille entre les deux réservoirs
+    pendant que la résistance la dissipe. Si $\zeta > 1$, la réponse est apériodique et lente ; si $\zeta = 1$, critique,
+    la plus rapide sans dépassement ; si $\zeta < 1$, pseudo-périodique, avec un dépassement
+    $D = e^{-\pi\zeta/\sqrt{1 - \zeta^2}}$, une pseudo-période $2\pi/\omega_d$ et un établissement en $3/(\zeta\omega_0)$
+    environ. Ces relations servent à prévoir une surtension, à identifier un circuit sur un relevé et à dimensionner un
+    amortissement.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent,
+    <a href="#/cours/regime-transitoire-rl">Régime transitoire RL</a> ; une sur le cours
+    <a href="#/cours/associations-de-resistances-et-diviseurs">Associations de résistances et diviseurs</a>, vieux d'une
+    semaine exactement ; la question sur un cours vieux d'un mois n'est pas encore applicable, et elle est remplacée par
+    une question sur le cours <a href="#/cours/condensateurs-et-champ-electrique">Condensateurs et champ électrique</a>,
+    dont l'énergie électrique est l'un des deux réservoirs de l'échange étudié aujourd'hui.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : vérifier numériquement les formules du second ordre, comparer les trois régimes dans un simulateur de
+    circuits, puis identifier un vrai circuit RLC à partir d'un relevé. Prédictions à écrire avant de commencer : pour
+    l'exemple de la section H, la méthode d'Euler explicite avec un pas de $5\ \mu\mathrm{s}$ donnera-t-elle une crête plus
+    haute ou plus basse que $38{,}5\ \mathrm{V}$ ? Dans LTspice, le dépassement mesuré sera-t-il exactement de
+    $60{,}5\ \%$ ? Au banc, la fréquence d'oscillation sera-t-elle égale à $f_0$ calculée avec les valeurs nominales ?
+  </p>
+  <ol>
+    <li>
+      En Python, simuler l'exemple de la section H avec les deux variables d'état $u_C$ et $i$ :
+      $\mathrm{d}u_C/\mathrm{d}t = i/C$ et $\mathrm{d}i/\mathrm{d}t = (E - Ri - u_C)/L$, avec $E = 24\ \mathrm{V}$,
+      $R = 0{,}1\ \Omega$, $L = 10\ \mu\mathrm{H}$, $C = 100\ \mu\mathrm{F}$, sur $1\ \mathrm{ms}$. Programmer d'abord la
+      méthode d'Euler explicite, puis la méthode d'Euler semi-implicite (actualiser $i$, puis $u_C$ avec le nouveau
+      $i$), pour des pas de $5$, $1$ et $0{,}1\ \mu\mathrm{s}$. Relever la crête, l'instant du maximum et la pseudo-période,
+      et comparer à $38{,}5\ \mathrm{V}$, $100{,}6\ \mu\mathrm{s}$ et $201\ \mu\mathrm{s}$. Tracer $u_C(t)$ avec
+      matplotlib, puis l'énergie $W = \tfrac{1}{2}Li^2 + \tfrac{1}{2}Cu_C^2$.
+    </li>
+    <li>
+      Dans le même programme, faire varier $R$ de $0{,}05$ à $2\ \Omega$ et tracer le dépassement mesuré en fonction de
+      $\zeta$, superposé à la formule $e^{-\pi\zeta/\sqrt{1 - \zeta^2}}$ ; repérer $R_c = 0{,}632\ \Omega$.
+    </li>
+    <li>
+      Dans LTspice, saisir la netlist <code>V1 in 0 PULSE(0 24 10u 10n 10n 1 2)</code>, <code>R1 in a 0.1</code>,
+      <code>L1 a b 10u</code>, <code>C1 b 0 100u</code>, <code>.tran 0 1m 0 0.1u</code>, <code>.end</code>. Relever
+      <code>V(b)</code> et <code>I(L1)</code>, mesurer la crête et la pseudo-période avec les curseurs. Remplacer ensuite
+      <code>R1</code> par <code>.step param R list 0.1 0.49 0.632 2</code> avec <code>R1 in a {R}</code>, pour superposer
+      les régimes pseudo-périodique, faiblement dépassant, critique et apériodique.
+    </li>
+    <li>
+      Mesure facultative, en très basse tension uniquement : relier un générateur de signaux réglé en signal carré de
+      $0$ à $5\ \mathrm{V}$, à $50\ \mathrm{Hz}$, à une bobine de $10\ \mathrm{mH}$ en série avec un condensateur film de
+      $1\ \mu\mathrm{F}$, et observer à l'oscilloscope la tension du condensateur, sonde référencée à la masse du
+      générateur. Mesurer la pseudo-période et le rapport de deux écarts successifs, en déduire $\zeta$ et $\omega_0$, puis
+      la résistance totale de la maille, et la comparer à la somme de la résistance de sortie du générateur
+      (souvent $50\ \Omega$) et de la résistance de la bobine mesurée à l'ohmmètre.
+    </li>
+  </ol>
+  <p>
+    Résultats attendus : la méthode d'Euler explicite surestime la crête et fait croître artificiellement l'énergie, d'autant
+    plus que le pas est grand : avec $5\ \mu\mathrm{s}$, soit $40$ points par pseudo-période, elle donne une crête de
+    $42{,}7\ \mathrm{V}$, $11\ \%$ trop haute, puis $39{,}3\ \mathrm{V}$ avec $1\ \mu\mathrm{s}$ et $38{,}6\ \mathrm{V}$ avec
+    $0{,}1\ \mu\mathrm{s}$ ; la méthode semi-implicite, qui conserve beaucoup mieux l'énergie, donne déjà $38{,}5\ \mathrm{V}$
+    avec $5\ \mu\mathrm{s}$, l'instant du maximum étant seulement quantifié par le pas. Dans LTspice, le dépassement mesuré est très proche de $60{,}5\ \%$, à la résolution des curseurs près,
+    tant que le front de la source est bref devant $T_d$ ; un front de plusieurs dizaines de microsecondes réduit le
+    dépassement. Au banc, l'oscillation est voisine de $1{,}59\ \mathrm{kHz}$, avec une pseudo-période de $0{,}63\ \mathrm{ms}$
+    environ, et la résistance identifiée dépasse légèrement la somme attendue, à cause des pertes du noyau et de l'effet de
+    peau. Anomalies à observer : une fréquence propre décalée par la tolérance des composants, de l'ordre de $\pm 10\ \%$ ;
+    une oscillation qui ne décroît pas exponentiellement, signe d'une bobine qui sature ; une seconde oscillation, très
+    rapide, due à la capacité des sondes et des fils.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est calculé
+    dans ce navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées
+    localement pour suivre votre progression. Cette séance contribue directement au jalon de fin du module Stockage
+    d'énergie et régimes transitoires : résoudre méthodiquement des circuits continus et transitoires simples, expliquer
+    le stockage d'énergie et vérifier les résultats.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Une bobine et un condensateur échangent leur énergie à la pulsation $\omega_0 = 1/\sqrt{LC}$, et la résistance la dissipe : le coefficient d'amortissement $\zeta$, rapport de la résistance à $2\sqrt{L/C}$ en série, résume cette compétition.</li>
+    <li data-rang="02">Le signe de $\zeta - 1$ classe le circuit : apériodique, critique ou pseudo-périodique ; seul le régime pseudo-périodique dépasse, de $D = e^{-\pi\zeta/\sqrt{1 - \zeta^2}}$, jusqu'à près du double de l'échelon.</li>
+    <li data-rang="03">Les mêmes relations servent à prévoir une surtension, à identifier $\zeta$ et $\omega_0$ sur un relevé et à dimensionner un amortissement, en gardant à l'esprit les limites du modèle linéaire : diodes, saturation, éléments parasites.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> passer de l'équation à son interprétation, c'est-à-dire relier le
+    signe d'un discriminant à un comportement physique, et ne pas mélanger les formules du circuit série et du circuit
+    parallèle. L'animation de la section D, qui montre l'énergie passer d'un réservoir à l'autre, et le plan complexe de la
+    section E, qui relie la position des pôles à la forme de la réponse, sont faits pour lever cette difficulté.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Méthodes de résolution systématique, met les circuits sous
+    forme matricielle. Question à préparer : avec les variables d'état $x_1 = u_C$ et $x_2 = i$, le circuit RLC série
+    s'écrit $\mathrm{d}x_1/\mathrm{d}t = x_2/C$ et $\mathrm{d}x_2/\mathrm{d}t = (E - Rx_2 - x_1)/L$. Écrivez ce système
+    sous la forme $\dot{x} = Ax + BE$ avec une matrice $A$ de taille $2 \times 2$ : que valent la trace et le déterminant
+    de $A$, et pourquoi ses valeurs propres sont-elles exactement les pôles $r_1$ et $r_2$ calculés aujourd'hui ?
+  </p>
+
+</article>
