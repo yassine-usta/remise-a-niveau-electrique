@@ -1,0 +1,1375 @@
+<article class="cours" data-slug="methodes-de-resolution-systematique">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/regime-transitoire-rlc">Régime transitoire RLC</a> s'est achevé sur une question : avec les
+      variables d'état $x_1 = u_C$ et $x_2 = i$, le circuit RLC série s'écrit $\mathrm{d}x_1/\mathrm{d}t = x_2/C$ et
+      $\mathrm{d}x_2/\mathrm{d}t = (E - Rx_2 - x_1)/L$ ; que valent la trace et le déterminant de la matrice $A$ de
+      l'écriture $\dot{x} = Ax + BE$, et pourquoi ses valeurs propres sont-elles les pôles du circuit ? Réponse : en
+      rangeant les coefficients ligne par ligne,
+      $A = \begin{pmatrix} 0 &amp; 1/C \\ -1/L &amp; -R/L \end{pmatrix}$ et $B = \begin{pmatrix} 0 \\ 1/L \end{pmatrix}$.
+      La trace vaut $-R/L = -2\zeta\omega_0$ et le déterminant $0 \times (-R/L) - (1/C)(-1/L) = 1/(LC) = \omega_0^2$. Les
+      valeurs propres $r$ annulent $\det(rI - A) = r^2 + (R/L)\,r + 1/(LC)$, qui est exactement l'équation caractéristique
+      $r^2 + 2\zeta\omega_0 r + \omega_0^2 = 0$ : chercher une solution de la forme $x = x_0\,e^{rt}$ du système sans
+      source revient à écrire $Ax_0 = r\,x_0$. La somme des pôles est la trace, leur produit le déterminant. Cette séance
+      généralise ce passage du schéma à une matrice : elle apprend à mettre en équations n'importe quel réseau, à choisir
+      les inconnues qui donnent le plus petit système, à le résoudre sous forme matricielle, puis à valider la solution
+      par un bilan d'énergie et par la simulation. Elle s'appuie sur les lois du cours
+      <a href="#/cours/lois-de-kirchhoff">Lois de Kirchhoff</a>, sur les équivalences du cours
+      <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes de Thévenin, Norton et superposition</a> et
+      sur les relations des éléments de stockage des cours <a href="#/cours/regime-transitoire-rc">Régime transitoire RC</a>
+      et <a href="#/cours/regime-transitoire-rl">Régime transitoire RL</a>.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Les méthodes vues jusqu'ici, associations série et parallèle, diviseurs, Thévenin et superposition, sont des
+    raccourcis : elles réduisent un réseau à la main quand sa structure s'y prête. Elles deviennent fragiles dès que le
+    réseau compte plusieurs sources et plusieurs nœuds entrelacés : un pont de Wheatstone chargé par son appareil de
+    mesure ne se réduit par aucune association série ou parallèle, un bus continu alimenté par un chargeur et une
+    batterie qui dessert plusieurs armoires oblige à suivre plusieurs chutes de tension à la fois, et un réseau de
+    distribution réel compte des centaines de nœuds. À la main, l'ingénieur qui improvise ses équations oublie une
+    branche, compte deux fois une loi des mailles ou se trompe de signe ; un logiciel, lui, ne sait rien improviser.
+  </p>
+  <p>
+    Les méthodes systématiques répondent aux deux besoins. Elles fixent une procédure qui donne toujours un système
+    complet et indépendant, du plus petit nombre d'inconnues possible, écrit sous la forme matricielle $GV = I$ ou
+    $RJ = E$ ; ce système se résout par un algorithme connu, se vérifie par un bilan de puissance, et se transmet tel quel
+    à un programme. C'est exactement ce que font les simulateurs de circuits de la famille SPICE (analyse nodale
+    modifiée, puis intégration pas à pas pour les régimes transitoires), les logiciels de calcul de réseaux (matrice
+    d'admittance nodale, que l'on retrouvera dans le cours Flux de puissance) et les outils de dimensionnement
+    d'installations. Le travail central de la séance est de résoudre un réseau à plusieurs nœuds sous forme matricielle,
+    puis de valider le résultat ; il prépare directement le pont de mesure du cours Révision 2 et mini-projet capteur.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Compter les nœuds et les branches d'un réseau, et en déduire le nombre d'équations indépendantes de la méthode des nœuds, $n - 1$, et de la méthode des mailles, $b - n + 1$.</li>
+    <li data-rang="02">Écrire par inspection la matrice de conductance $G$ et le vecteur des courants injectés $I$ d'un réseau, sources de tension réelles converties en sources de Norton.</li>
+    <li data-rang="03">Traiter une source de tension idéale par un supernœud ou par l'analyse nodale modifiée, et une source de courant dans la méthode des mailles par une supermaille.</li>
+    <li data-rang="04">Résoudre un système de trois équations par élimination de Gauss, et interpréter chaque élimination comme une réduction du réseau.</li>
+    <li data-rang="05">Valider une solution par le résidu des lois des nœuds, par un bilan de puissance et par une méthode indépendante.</li>
+    <li data-rang="06">Écrire un circuit dynamique sous forme d'état $\dot{x} = Ax + Bu$, relier les valeurs propres de $A$ aux constantes de temps, et choisir un pas de simulation stable.</li>
+    <li data-rang="07">Diagnostiquer une matrice singulière ou une simulation qui diverge, et en déduire l'erreur de modélisation correspondante.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois acquis suffisent. Le premier vient du cours <a href="#/cours/lois-de-kirchhoff">Lois de Kirchhoff</a> : la somme
+    des courants qui sortent d'un nœud est nulle, et la somme algébrique des tensions le long d'une maille est nulle. Le
+    deuxième vient du cours <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes de Thévenin, Norton
+    et superposition</a> : une source de tension $E$ en série avec une résistance $R$ équivaut, vue de ses bornes, à une
+    source de courant $E/R$ en parallèle avec la même résistance. Le troisième est un minimum d'algèbre linéaire : le
+    produit d'une matrice par un vecteur, le déterminant d'une matrice $2 \times 2$,
+    $\det\begin{pmatrix} a &amp; b \\ c &amp; d \end{pmatrix} = ad - bc$, et la règle de Cramer, qui donne chaque inconnue
+    comme un rapport de deux déterminants. Le mini-test ci-dessous n'est pas noté ; la correction de chaque question reste
+    masquée jusqu'à une tentative ou un clic explicite sur "Voir la correction".
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-potentiels">Des potentiels qui s'équilibrent</h3>
+  <p>
+    Choisissons un conducteur de référence, la masse, et attribuons à chaque autre nœud un potentiel mesuré par rapport à
+    elle. Ce choix suffit à décrire tout le réseau : la tension d'une branche est la différence des potentiels de ses
+    deux extrémités, et la loi des mailles est alors vérifiée d'office, car une somme de différences de potentiels le
+    long d'un circuit fermé revient à son point de départ. Il ne reste qu'une loi à imposer, la conservation de la charge
+    en chaque nœud. Or le courant qui quitte un nœud par une résistance vaut la conductance de cette résistance
+    multipliée par l'écart de potentiel : un nœud plus haut que ses voisins se vide vers eux, un nœud plus bas se
+    remplit. L'état d'équilibre est celui où, en chaque nœud, ce qui entre égale ce qui sort.
+  </p>
+  <p>
+    Cette loi locale a une conséquence simple : sans source qui lui injecte un courant, le potentiel d'un nœud est la
+    moyenne des potentiels de ses voisins, pondérée par les conductances qui l'y relient. C'est le théorème de Millman,
+    vu comme une règle d'équilibre. Un nœud fortement relié à un voisin, par une petite résistance, en suit le potentiel ;
+    un nœud faiblement relié s'en affranchit. La matrice de conductance que l'on construira en section E n'est rien
+    d'autre que l'inventaire de ces liens : sur sa diagonale, la somme des conductances qui touchent chaque nœud ; hors de
+    la diagonale, avec un signe moins, la conductance qui relie deux nœuds.
+  </p>
+  <p>
+    Analogie contrôlée : des réservoirs d'eau reliés par des tuyaux. Le niveau d'eau joue le rôle du potentiel, le débit
+    celui du courant, la facilité d'écoulement d'un tuyau celui de la conductance ; une pompe qui injecte un débit
+    constant joue le rôle d'une source de courant, et un réservoir dont le niveau est maintenu constant celui d'une
+    source de tension. Le niveau de chaque réservoir se stabilise quand les débits entrant et sortant s'équilibrent.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie hydraulique</span>
+    <p>
+      L'analogie reproduit fidèlement la loi des nœuds et le rôle des conductances, donc la structure de la matrice. Elle
+      a pourtant trois limites. Un débit dans un tuyau réel n'est proportionnel à la différence de niveau qu'en écoulement
+      lent et laminaire ; une résistance électrique reste linéaire sur une plage bien plus large. Un réservoir met du temps
+      à se remplir, alors qu'un réseau purement résistif atteint son équilibre instantanément : le temps n'apparaît
+      qu'avec les condensateurs et les bobines, qui seront traités par les variables d'état. Enfin, le niveau d'un
+      réservoir ne peut pas devenir négatif, alors qu'un potentiel électrique peut descendre sous celui de la référence
+      sans difficulté ; la référence elle-même est une convention, choisie par commodité.
+    </p>
+  </div>
+
+  <h3 id="d-relax-section">Animation : un réseau qui trouve son équilibre nœud par nœud</h3>
+  <p>
+    L'animation applique la règle d'équilibre au réseau de référence de la section E, à trois nœuds inconnus. On part de
+    potentiels tous nuls, puis on visite les nœuds l'un après l'autre : chaque visite remplace le potentiel du nœud par
+    la moyenne pondérée de ses voisins, augmentée de l'effet des sources qui lui sont reliées, en utilisant les valeurs
+    les plus récentes. Cette procédure itérative porte le nom de méthode de Gauss-Seidel. Les trois colonnes représentent
+    les potentiels $V_1$, $V_2$ et $V_3$, le trait horizontal en tirets de chaque colonne la solution exacte, et l'encadré
+    de droite la formule appliquée à la visite en cours. Le déroulement est piloté par vous : lecture, pause, vitesse et
+    remise à zéro. Avant de lancer la lecture, prédisez qualitativement : les potentiels vont-ils monter régulièrement,
+    osciller autour de la solution ou la dépasser ? Lequel des trois nœuds atteindra le premier sa valeur finale ? Combien
+    de passages faudra-t-il pour que l'écart devienne inférieur à $1\ \%$ ?
+  </p>
+  <figure id="d-relax-figure">
+    <div class="m-toile-cadre schema-vivant" id="d-relax"></div>
+    <figcaption>
+      Chaque colonne est un nœud ; sa hauteur, lue sur l'échelle de gauche, est son potentiel en volts par rapport à la
+      référence, le conducteur du bas. Sous les colonnes, les deux
+      résistances dessinées rappellent les liaisons entre nœuds voisins, avec leur conductance en millisiemens ; les
+      sources et les liaisons vers la référence de chaque nœud sont indiquées au-dessus de sa colonne. La source
+      $E_1 = 12\ \mathrm{V}$ agit sur le nœud 1 à travers $1\ \mathrm{mS}$, la source de courant $I_s = 4\ \mathrm{mA}$
+      est injectée dans le nœud 2. La colonne encadrée en trait épais est celle que
+      l'on met à jour ; le trait horizontal en tirets marque la valeur exacte, $8$, $6$ et $4\ \mathrm{V}$.
+    </figcaption>
+  </figure>
+  <div id="d-relax-lecteur"></div>
+  <div id="d-relax-valeurs"></div>
+  <p>
+    Interprétation : les trois potentiels montent sans jamais dépasser la solution, et l'écart restant est divisé par
+    deux à chaque passage complet : $50\ \%$ de la valeur finale après le premier passage, $75\ \%$ après le deuxième,
+    $87{,}5\ \%$ après le troisième. Il faut sept passages pour descendre sous $1\ \%$ d'écart, et treize pour atteindre
+    le millivolt. Aucun nœud n'arrive en avance : les trois progressent au même rythme relatif, car chacun dépend de ses
+    voisins et le défaut de l'un se propage aux autres. La méthode converge parce que chaque nœud est plus fortement
+    relié à l'ensemble de ses voisins et à la référence qu'à chacun d'eux pris isolément : la matrice est à diagonale
+    dominante. Elle illustre une idée physique, l'équilibre local des courants, mais elle reste
+    lente ; la section E résout le même système en une seule passe, par élimination.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-graphe">Compter avant d'écrire : nœuds, branches et inconnues</h3>
+  <p>
+    Un réseau est d'abord un graphe. Une branche est un dipôle, ou une association en série de dipôles parcourue par
+    un même courant ; un nœud est un point où se rejoignent au moins deux branches, en comptant comme un seul nœud tout
+    ensemble de points reliés par des fils sans résistance. Notons $b$ le nombre de branches et $n$ le nombre de nœuds.
+    Chaque branche porte deux inconnues, sa tension et son courant, soit $2b$ inconnues. La loi de chaque branche,
+    $u = Ri$, $u = E$ ou $i = I_s$, en fournit $b$. Les lois de Kirchhoff fournissent le reste : $n - 1$ lois des nœuds
+    indépendantes, car la loi du dernier nœud est la somme des autres, et $b - n + 1$ lois des mailles indépendantes,
+    celles des mailles que l'on peut choisir chacune avec au moins une branche nouvelle. Le compte est juste :
+    $b + (n - 1) + (b - n + 1) = 2b$.
+  </p>
+  <p>
+    Ce compte dit aussi combien d'inconnues il faut garder au minimum. En prenant pour inconnues les potentiels des
+    nœuds, référence exclue, on n'a plus que $n - 1$ inconnues, et les lois des mailles sont satisfaites d'office :
+    c'est la méthode des nœuds. En prenant pour inconnues des courants de maille, qui circulent chacun le long d'une
+    maille indépendante, on n'a plus que $b - n + 1$ inconnues, et les lois des nœuds sont satisfaites d'office : c'est
+    la méthode des mailles. Le réseau de référence de cette séance, dessiné ci-dessous, compte $b = 6$ branches et
+    $n = 4$ nœuds, dont la référence : trois inconnues dans les deux méthodes. Les valeurs sont choisies pour donner des
+    nombres ronds ; elles sont typiques d'un circuit de commande en $12\ \mathrm{V}$, avec des résistances en kiloohms et
+    des courants en milliampères.
+  </p>
+  <figure id="e-circuit-figure">
+    <svg viewBox="0 0 820 470" role="img" aria-label="Réseau de référence : source E1 de 12 volts et résistance Ra vers le nœud 1, résistance Rb entre les nœuds 1 et 2, résistance Rc du nœud 2 vers la référence, source de courant Is de 4 milliampères injectée dans le nœud 2, résistance Rd entre les nœuds 2 et 3, résistance Re du nœud 3 vers la référence ; en dessous, graphe à quatre nœuds et six branches">
+      <defs>
+        <marker id="fl-e-circ" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="80" cy="190" r="22"/>
+        <path d="M80 168V80H130M210 80H300M380 80H560M560 80H580M660 80H740V140M740 220V290H80V212"/>
+        <rect x="130" y="68" width="80" height="24" rx="3"/>
+        <rect x="300" y="68" width="80" height="24" rx="3"/>
+        <rect x="580" y="68" width="80" height="24" rx="3"/>
+        <path d="M440 80V140M440 220V290"/>
+        <rect x="428" y="140" width="24" height="80" rx="3"/>
+        <rect x="728" y="140" width="24" height="80" rx="3"/>
+        <path d="M540 80V168M540 212V290"/>
+        <circle cx="540" cy="190" r="22"/>
+        <path d="M540 204V178" marker-end="url(#fl-e-circ)"/>
+        <path d="M410 290V302M396 302H424M401 308H419M406 314H414"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.8" fill="none">
+        <path d="M228 80H252" marker-end="url(#fl-e-circ)"/>
+        <path d="M394 80H418" marker-end="url(#fl-e-circ)"/>
+        <path d="M440 236V262" marker-end="url(#fl-e-circ)"/>
+        <path d="M678 80H702" marker-end="url(#fl-e-circ)"/>
+        <path d="M740 236V262" marker-end="url(#fl-e-circ)"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="260" cy="80" r="5"/><circle cx="440" cy="80" r="5"/><circle cx="540" cy="80" r="5"/>
+        <circle cx="740" cy="80" r="5"/><circle cx="440" cy="290" r="5"/><circle cx="540" cy="290" r="5"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="80" y="185" text-anchor="middle" font-weight="600">+</text>
+        <text x="50" y="194" text-anchor="end">E1</text><text x="50" y="210" text-anchor="end">12 V</text>
+        <text x="170" y="60" text-anchor="middle">Ra = 1 kΩ</text>
+        <text x="340" y="60" text-anchor="middle">Rb = 0,5 kΩ</text>
+        <text x="620" y="60" text-anchor="middle">Rd = 1 kΩ</text>
+        <text x="420" y="176" text-anchor="end">Rc</text><text x="420" y="192" text-anchor="end">1 kΩ</text>
+        <text x="566" y="186">Is</text><text x="566" y="202">4 mA</text>
+        <text x="760" y="176">Re</text><text x="760" y="192">2 kΩ</text>
+        <text x="260" y="40" text-anchor="middle" font-weight="600">nœud 1 : V1</text>
+        <text x="490" y="40" text-anchor="middle" font-weight="600">nœud 2 : V2</text>
+        <text x="740" y="40" text-anchor="middle" font-weight="600">nœud 3 : V3</text>
+        <text x="240" y="104" text-anchor="middle">ia</text>
+        <text x="406" y="104" text-anchor="middle">ib</text>
+        <text x="456" y="254">ic</text>
+        <text x="690" y="104" text-anchor="middle">id</text>
+        <text x="756" y="254">ie</text>
+        <text x="410" y="334" text-anchor="middle">nœud 0 : référence, 0 V</text>
+      </g>
+      <g stroke="currentColor" stroke-width="1.6" fill="none" opacity="0.85">
+        <path d="M210 370H380M400 370H570"/>
+        <path d="M207 378L382 446"/>
+        <path d="M383 380Q350 415 384 442M397 380Q430 415 396 442"/>
+        <path d="M573 378L398 446"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <circle cx="200" cy="370" r="10" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <circle cx="390" cy="370" r="10" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <circle cx="580" cy="370" r="10" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <circle cx="390" cy="450" r="10" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <text x="200" y="374" text-anchor="middle">1</text><text x="390" y="374" text-anchor="middle">2</text>
+        <text x="580" y="374" text-anchor="middle">3</text><text x="390" y="454" text-anchor="middle">0</text>
+        <text x="295" y="362" text-anchor="middle">b</text><text x="485" y="362" text-anchor="middle">d</text>
+        <text x="280" y="420" text-anchor="end">a (E1, Ra)</text>
+        <text x="352" y="414" text-anchor="end">c</text><text x="428" y="414">Is</text>
+        <text x="500" y="420">e</text>
+        <text x="80" y="374" text-anchor="middle">graphe :</text>
+        <text x="720" y="414" text-anchor="middle">n = 4 nœuds</text><text x="720" y="432" text-anchor="middle">b = 6 branches</text>
+      </g>
+    </svg>
+    <figcaption>
+      Réseau de référence. La source $E_1$ a sa borne $+$ en haut ; la flèche dans le cercle de $I_s$ indique le sens du
+      courant imposé, injecté dans le nœud 2 depuis la référence. Les flèches sur les fils fixent les sens de référence
+      des courants de branche, $i_a$ à $i_e$, chaque résistance étant en convention récepteur. Les potentiels $V_1$,
+      $V_2$ et $V_3$ sont mesurés par rapport au conducteur du bas, le nœud 0. Le schéma du dessous est le graphe du réseau : chaque cercle
+      est un nœud, chaque trait une branche, désignée par la lettre de sa résistance ; la branche a regroupe $E_1$ et
+      $R_a$ en série, et les deux traits courbes entre les nœuds 2 et 0 sont les branches parallèles $R_c$ et $I_s$. Les
+      six branches sont $E_1$ avec $R_a$, $R_b$, $R_c$, $I_s$, $R_d$ et $R_e$.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-noeuds-methode">Méthode des nœuds : la matrice de conductance</h3>
+  <p>
+    Écrivons la loi des nœuds au nœud $k$ en comptant positivement les courants qui sortent par les résistances et
+    positivement le courant que les sources injectent. Une résistance de conductance $G = 1/R$ reliant le nœud $k$ au
+    nœud $j$ emporte le courant $G(V_k - V_j)$ ; reliée à la référence, elle emporte $GV_k$. Une source de tension réelle,
+    $E$ en série avec $R$, est d'abord remplacée par son équivalent de Norton : une source de courant $E/R$ injectée dans
+    le nœud, en parallèle avec la conductance $1/R$ vers l'autre borne. En regroupant les termes en $V_k$ et en $V_j$, on
+    obtient une équation linéaire par nœud, et l'ensemble s'écrit sous forme matricielle :
+  </p>
+  <div class="formule-cle">
+    $$G\,V = I, \qquad G_{kk} = \sum_{\text{branches touchant } k} G, \qquad G_{kj} = -\sum_{\text{branches entre } k \text{ et } j} G \ \ (j \neq k), \qquad I_k = \sum_{\text{sources reliées à } k} I_{\text{injecté}}$$
+    <p class="formule-cle-legende">
+      $V$ vecteur des $n - 1$ potentiels de nœud, en volts, référence exclue ; $G$ matrice de conductance, en siemens,
+      carrée de taille $n - 1$ ; $I$ vecteur des courants injectés par les sources, en ampères, comptés positivement
+      quand ils entrent dans le nœud. Hypothèses : éléments linéaires, régime continu ou instant figé, sources de
+      tension munies d'une résistance série (sinon voir l'analyse nodale modifiée), aucune source commandée. Sous ces
+      hypothèses, $G$ est symétrique, $G_{kj} = G_{jk}$, et à diagonale dominante : $G_{kk} \geq \sum_{j \neq k} |G_{kj}|$,
+      l'égalité stricte manquant dès qu'une branche relie le nœud à la référence.
+    </p>
+  </div>
+  <p>
+    Dérivation sur le réseau de référence, avec les résistances en kiloohms, les conductances en millisiemens, les
+    potentiels en volts et les courants en milliampères, ce qui garde des nombres simples :
+  </p>
+  <ul>
+    <li>nœud 1 : $\dfrac{V_1 - 12}{1} + \dfrac{V_1 - V_2}{0{,}5} = 0$, soit $3V_1 - 2V_2 = 12$ ;</li>
+    <li>nœud 2 : $\dfrac{V_2 - V_1}{0{,}5} + \dfrac{V_2}{1} + \dfrac{V_2 - V_3}{1} = 4$, soit $-2V_1 + 4V_2 - V_3 = 4$ ;</li>
+    <li>nœud 3 : $\dfrac{V_3 - V_2}{1} + \dfrac{V_3}{2} = 0$, soit $-V_2 + 1{,}5V_3 = 0$.</li>
+  </ul>
+  <div class="formule-cle">
+    $$\begin{pmatrix} 3 &amp; -2 &amp; 0 \\ -2 &amp; 4 &amp; -1 \\ 0 &amp; -1 &amp; 1{,}5 \end{pmatrix} \begin{pmatrix} V_1 \\ V_2 \\ V_3 \end{pmatrix} = \begin{pmatrix} 12 \\ 4 \\ 0 \end{pmatrix} \quad\Longrightarrow\quad V_1 = 8\ \mathrm{V}, \quad V_2 = 6\ \mathrm{V}, \quad V_3 = 4\ \mathrm{V}$$
+    <p class="formule-cle-legende">
+      Matrice en $\mathrm{mS}$, potentiels en $\mathrm{V}$, second membre en $\mathrm{mA}$. Lecture par inspection : le
+      $3$ du coin est $1/R_a + 1/R_b = 1 + 2$ ; le $-2$ est $-1/R_b$ ; le $4$ est $1/R_b + 1/R_c + 1/R_d$ ; le $12$ est le
+      courant de Norton de la source, $E_1/R_a = 12\ \mathrm{V}/1\ \mathrm{k\Omega}$ ; le $4$ du second membre est $I_s$.
+      Contrôle dimensionnel : $\mathrm{mS} \times \mathrm{V} = \mathrm{mA}$, chaque ligne est un bilan de courants.
+    </p>
+  </div>
+  <p>
+    Cas limites. Avec un seul nœud inconnu, la matrice se réduit à un nombre et l'on retrouve le théorème de Millman :
+    $V = \sum (E_i G_i) / \sum G_i$. Si l'on rend $R_b$ très petite, $G_{11}$, $G_{22}$ et $|G_{12}|$ deviennent très
+    grands, les lignes 1 et 2 tendent à se confondre et les nœuds 1 et 2 prennent le même potentiel : ils fusionnent.
+    Si l'on rend $R_c$ et $R_e$ infinies et qu'on supprime la source $E_1$, plus aucune branche ne relie les nœuds à la
+    référence : chaque ligne de $G$ a une somme nulle, le déterminant s'annule et le système n'a plus de solution
+    unique, car les potentiels ne sont alors définis qu'à une constante près. C'est le message "matrice singulière" des
+    simulateurs.
+  </p>
+
+  <h3 id="e-noeuds-sim-section">Simulation interactive : la matrice qui suit le réseau</h3>
+  <p>
+    La simulation reprend le réseau de référence. Les curseurs règlent la source $E_1$, la source de courant $I_s$ et
+    trois résistances ; la matrice $G$, le vecteur $I$, la solution, les courants de branche et le bilan de puissance
+    sont recalculés à chaque réglage, par élimination de Gauss. Les flèches des courants de branche indiquent le sens
+    réel du courant : elles se retournent quand le courant change de signe. Avant de toucher aux curseurs, prédisez
+    qualitativement : si l'on augmente $R_c$, $V_2$ monte-t-il ou descend-il, et $V_1$ suit-il ? Quels coefficients de la
+    matrice changent quand on modifie $R_b$, et lesquels restent fixes ? Pour quelle valeur de $I_s$ le courant $i_a$
+    s'annule-t-il, et que fait-il au-delà ?
+  </p>
+  <figure id="e-noeuds-figure">
+    <div class="m-toile-cadre schema-vivant" id="e-noeuds"></div>
+    <figcaption>
+      En haut, le réseau de référence avec ses potentiels de nœud et ses courants de branche, en sens réel ; en bas, le
+      système $GV = I$ écrit avec les valeurs courantes, matrice en millisiemens, potentiels en volts, courants injectés
+      en milliampères. La référence de potentiel est le conducteur du bas ; $E_1$ a sa borne $+$ en haut, et $I_s$ est
+      injecté dans le nœud 2.
+    </figcaption>
+  </figure>
+  <div id="e-noeuds-curseurs"></div>
+  <div id="e-noeuds-valeurs"></div>
+  <p>
+    Interprétation : augmenter $R_c$ réduit la fuite du nœud 2 vers la référence, donc $V_2$ monte, et $V_1$ le suit,
+    plus faiblement, parce qu'il est relié au nœud 2 par $R_b$. Modifier $R_b$ change exactement quatre coefficients,
+    $G_{11}$, $G_{22}$, $G_{12}$ et $G_{21}$, en gardant la symétrie : chaque résistance apporte sa conductance sur la
+    diagonale de ses deux nœuds et la retranche aux deux places croisées. Avec les autres valeurs de référence, le
+    courant $i_a$ s'annule pour $I_s = 16\ \mathrm{mA}$ : $V_1$ atteint alors $12\ \mathrm{V}$ et la source $E_1$ ne
+    fournit plus rien. Au-delà, $V_1$ dépasse $E_1$, $i_a$ change de signe et la source $E_1$ absorbe de la puissance ;
+    le bilan, lui, reste nul quel que soit le réglage, à l'arrondi près : c'est un contrôle que l'on retrouvera en
+    validation.
+  </p>
+
+  <h3 id="e-mna">Sources de tension idéales : supernœud et analyse nodale modifiée</h3>
+  <p>
+    Une source de tension idéale, sans résistance série, n'a pas d'équivalent de Norton : son courant peut prendre
+    n'importe quelle valeur, et il ne s'exprime pas à partir des potentiels. Deux parades existent. La première, à la
+    main, est le supernœud : on entoure la source et ses deux nœuds d'une même frontière, on écrit une seule loi des
+    nœuds pour l'ensemble, ce qui fait disparaître le courant inconnu de la source, et on la complète par la contrainte
+    $V_a - V_b = E$. Si la source est reliée à la référence, c'est encore plus simple : le potentiel du nœud est connu
+    et sort des inconnues. La seconde parade, systématique, est l'analyse nodale modifiée : on garde le courant $i_E$ de
+    la source comme inconnue supplémentaire, on l'ajoute aux deux lois des nœuds concernées, et on ajoute une ligne qui
+    exprime la contrainte de tension.
+  </p>
+  <div class="formule-cle">
+    $$\begin{pmatrix} G &amp; B \\ B^{\mathsf{T}} &amp; 0 \end{pmatrix} \begin{pmatrix} V \\ i_E \end{pmatrix} = \begin{pmatrix} I \\ E \end{pmatrix}, \qquad B_{a} = +1, \quad B_{b} = -1, \quad \text{autres termes de } B \text{ nuls}$$
+    <p class="formule-cle-legende">
+      Source $E$ entre les nœuds $a$, borne $+$, et $b$ ; $i_E$ en ampères est le courant qui quitte le nœud $a$ pour
+      traverser la source de sa borne $+$ vers sa borne $-$. La colonne $B$ ajoute $+i_E$ à la loi du nœud $a$ et $-i_E$
+      à celle du nœud $b$ ; la ligne $B^{\mathsf{T}}$ écrit $V_a - V_b = E$. Avec cette convention, une source qui fournit
+      de la puissance a un courant $i_E$ négatif, comme dans les résultats d'un simulateur SPICE. La matrice reste
+      symétrique, mais elle n'est plus à diagonale dominante : un zéro apparaît sur la diagonale, ce qui impose de choisir
+      les pivots avec soin.
+    </p>
+  </div>
+  <figure id="e-mna-figure">
+    <svg viewBox="0 0 800 250" role="img" aria-label="Source de tension idéale E entre deux nœuds a et b, courant iE inconnu, et motif de la matrice de l'analyse nodale modifiée avec des plus un et moins un dans la ligne et la colonne ajoutées">
+      <defs>
+        <marker id="fl-e-mna" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M60 60H300M60 180H300"/>
+        <circle cx="180" cy="120" r="24"/>
+        <path d="M180 60V96M180 144V180"/>
+        <path d="M40 60H60M40 180H60M300 60H320M300 180H320" stroke-dasharray="4 4"/>
+      </g>
+      <path d="M200 74V92" stroke="currentColor" stroke-width="1.8" fill="none" marker-end="url(#fl-e-mna)"/>
+      <g fill="currentColor" stroke="none"><circle cx="180" cy="60" r="5"/><circle cx="180" cy="180" r="5"/></g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="180" y="115" text-anchor="middle" font-weight="600">+</text>
+        <text x="180" y="136" text-anchor="middle">−</text>
+        <text x="150" y="124" text-anchor="end">E</text>
+        <text x="208" y="88">iE</text>
+        <text x="180" y="44" text-anchor="middle" font-weight="600">nœud a : Va</text>
+        <text x="180" y="204" text-anchor="middle" font-weight="600">nœud b : Vb</text>
+        <text x="180" y="230" text-anchor="middle">le reste du réseau se raccorde en tirets</text>
+      </g>
+      <g stroke="currentColor" stroke-width="1.6" fill="none">
+        <path d="M430 40h-8v170h8M700 40h8v170h-8"/>
+        <path d="M632 46V204M436 168H694" stroke-dasharray="4 4" opacity="0.7"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="490" y="30" text-anchor="middle">a</text><text x="570" y="30" text-anchor="middle">b</text><text x="665" y="30" text-anchor="middle">iE</text>
+        <text x="410" y="74" text-anchor="end">a</text><text x="410" y="124" text-anchor="end">b</text><text x="410" y="194" text-anchor="end">contrainte</text>
+        <text x="490" y="74" text-anchor="middle">G_aa</text><text x="570" y="74" text-anchor="middle">G_ab</text><text x="665" y="74" text-anchor="middle" font-weight="600">+1</text>
+        <text x="490" y="124" text-anchor="middle">G_ba</text><text x="570" y="124" text-anchor="middle">G_bb</text><text x="665" y="124" text-anchor="middle" font-weight="600">−1</text>
+        <text x="490" y="194" text-anchor="middle" font-weight="600">+1</text><text x="570" y="194" text-anchor="middle" font-weight="600">−1</text><text x="665" y="194" text-anchor="middle">0</text>
+        <text x="740" y="74">I_a</text><text x="740" y="124">I_b</text><text x="740" y="194">E</text>
+        <text x="726" y="134" text-anchor="middle">=</text>
+      </g>
+    </svg>
+    <figcaption>
+      À gauche, une source de tension idéale $E$ placée entre deux nœuds quelconques, borne $+$ côté $a$ ; la flèche
+      $i_E$ est le sens de référence du courant inconnu, de $a$ vers $b$ à travers la source. À droite, la contribution de
+      cette source au système : une colonne et une ligne ajoutées, séparées par les tirets, qui portent $+1$ au nœud $a$
+      et $-1$ au nœud $b$, et la valeur $E$ au second membre. Les termes $G$ du bloc en haut à gauche sont ceux des
+      résistances raccordées aux nœuds, inchangés. Si $b$ est la référence, sa ligne et sa colonne disparaissent.
+    </figcaption>
+  </figure>
+  <p>
+    Appliquée au réseau de référence en considérant $E_1$ comme une source idéale placée entre un quatrième nœud et la
+    référence, l'analyse nodale modifiée donne un système de cinq inconnues, $V_1$ à $V_4$ et $i_E$, au lieu de trois. Le
+    résultat est le même, avec en prime $i_E = -4\ \mathrm{mA}$ : la source débite $4\ \mathrm{mA}$ par sa borne $+$.
+    À la main, la conversion de Norton ou le supernœud donnent un système plus petit ; pour un programme, l'analyse
+    nodale modifiée est préférable, car elle accepte toutes les sources sans cas particulier. C'est la formulation des
+    simulateurs de la famille SPICE.
+  </p>
+
+  <h3 id="e-mailles">Méthode des mailles : la matrice de résistance</h3>
+  <p>
+    Pour un réseau planaire, que l'on peut dessiner sans croisement de fils, les mailles indépendantes les plus simples
+    sont les fenêtres du dessin. On fait circuler dans chacune un courant de maille $J_k$, tous orientés dans le même
+    sens, ici le sens horaire ; le courant d'une branche est le courant de maille qui la parcourt, ou la différence des
+    deux courants de maille qui la partagent. La loi des mailles écrite pour chaque fenêtre donne, par inspection, un
+    système dual de celui des nœuds :
+  </p>
+  <div class="formule-cle">
+    $$R\,J = E, \qquad R_{kk} = \sum_{\text{maille } k} R, \qquad R_{kj} = -\sum_{\text{branches communes à } k \text{ et } j} R \ \ (j \neq k), \qquad E_k = \sum_{\text{maille } k} \pm E$$
+    <p class="formule-cle-legende">
+      $J$ vecteur des $b - n + 1$ courants de maille, en ampères ; $R$ matrice de résistance, en ohms ; $E_k$ somme des
+      forces électromotrices de la maille $k$, comptées positivement quand la source pousse le courant dans le sens de
+      $J_k$. Hypothèses : réseau planaire, mailles toutes orientées dans le même sens, sources de courant munies d'une
+      résistance parallèle (sinon voir la supermaille). Le signe moins hors diagonale vient de ce que deux mailles
+      voisines de même sens parcourent leur branche commune en sens opposés. Contrôle dimensionnel :
+      $\Omega \times \mathrm{A} = \mathrm{V}$, chaque ligne est une loi des mailles. Cas limite : avec une seule maille,
+      la matrice se réduit à un nombre et l'on retrouve $J = \sum E / \sum R$, le courant d'un circuit série.
+    </p>
+  </div>
+  <p>
+    Le réseau de référence s'y prête mal, et c'est instructif. Ses trois fenêtres sont la maille de gauche ($E_1$,
+    $R_a$, $R_b$, $R_c$), la maille centrale ($R_c$, $I_s$) et la maille de droite ($I_s$, $R_d$, $R_e$). La source de
+    courant $I_s$ est commune aux deux dernières : sa tension est inconnue, on ne peut donc écrire la loi des mailles
+    d'aucune des deux. On les réunit en une supermaille, dont le contour évite $I_s$, et l'on ajoute la contrainte imposée
+    par la source.
+  </p>
+  <figure id="e-mailles-figure">
+    <svg viewBox="0 0 820 340" role="img" aria-label="Réseau de référence avec trois courants de maille J1, J2 et J3 dans le sens horaire ; la supermaille réunit les mailles 2 et 3 autour de la source de courant Is">
+      <defs>
+        <marker id="fl-e-mail" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="80" cy="190" r="22"/>
+        <path d="M80 168V80H130M210 80H300M380 80H580M660 80H740V140M740 220V290H80V212"/>
+        <rect x="130" y="68" width="80" height="24" rx="3"/>
+        <rect x="300" y="68" width="80" height="24" rx="3"/>
+        <rect x="580" y="68" width="80" height="24" rx="3"/>
+        <path d="M440 80V140M440 220V290"/>
+        <rect x="428" y="140" width="24" height="80" rx="3"/>
+        <rect x="728" y="140" width="24" height="80" rx="3"/>
+        <path d="M540 80V168M540 212V290"/>
+        <circle cx="540" cy="190" r="22"/>
+        <path d="M540 204V178" marker-end="url(#fl-e-mail)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.7" fill="none">
+        <path d="M200 230A64 64 0 1 1 300 230" marker-end="url(#fl-e-mail)"/>
+        <path d="M472 222A26 26 0 1 1 508 222" marker-end="url(#fl-e-mail)"/>
+        <path d="M600 236A48 48 0 1 1 680 236" marker-end="url(#fl-e-mail)"/>
+        <path d="M458 98H722V280H458Z" stroke-dasharray="7 5" opacity="0.75"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="80" y="185" text-anchor="middle" font-weight="600">+</text>
+        <text x="50" y="194" text-anchor="end">E1</text>
+        <text x="170" y="60" text-anchor="middle">Ra</text><text x="340" y="60" text-anchor="middle">Rb</text>
+        <text x="620" y="60" text-anchor="middle">Rd</text>
+        <text x="420" y="184" text-anchor="end">Rc</text><text x="760" y="184">Re</text>
+        <text x="250" y="186" text-anchor="middle" font-weight="600">J1</text>
+        <text x="490" y="146" text-anchor="middle" font-weight="600">J2</text>
+        <text x="640" y="196" text-anchor="middle" font-weight="600">J3</text>
+        <text x="590" y="318" text-anchor="middle">supermaille : contour en tirets, autour de Is</text>
+        <text x="250" y="318" text-anchor="middle">sens horaire pour les trois mailles</text>
+      </g>
+    </svg>
+    <figcaption>
+      Les trois arcs fléchés sont les courants de maille $J_1$, $J_2$ et $J_3$, tous dans le sens horaire ; $E_1$ a sa
+      borne $+$ en haut et $I_s$ impose un courant montant dans sa branche. Le rectangle en tirets est le contour de la
+      supermaille : il passe par $R_c$, $R_d$ et $R_e$ et contourne la source de courant, dont la tension est inconnue.
+      Le courant de branche de $R_c$, compté vers le bas, vaut $J_1 - J_2$ ; celui de $I_s$, compté vers le haut, vaut
+      $J_3 - J_2$.
+    </figcaption>
+  </figure>
+  <p>
+    Équations, en kiloohms, volts et milliampères : maille 1, $(1 + 0{,}5 + 1)J_1 - 1 \times J_2 = 12$ ; supermaille,
+    $1 \times (J_2 - J_1) + (1 + 2)J_3 = 0$ ; contrainte de la source, $J_3 - J_2 = 4$. En remplaçant $J_3$ par
+    $J_2 + 4$, la supermaille devient $-J_1 + 4J_2 = -12$ ; avec $J_2 = 2{,}5J_1 - 12$ tiré de la maille 1, on obtient
+    $9J_1 = 36$, soit $J_1 = 4\ \mathrm{mA}$, $J_2 = -2\ \mathrm{mA}$ et $J_3 = 2\ \mathrm{mA}$. Courants de branche :
+    $i_a = i_b = J_1 = 4\ \mathrm{mA}$, $i_c = J_1 - J_2 = 6\ \mathrm{mA}$, $i_d = i_e = J_3 = 2\ \mathrm{mA}$ ; d'où
+    $V_2 = R_c\,i_c = 6\ \mathrm{V}$ et $V_3 = R_e\,i_e = 4\ \mathrm{V}$, exactement comme par la méthode des nœuds. Le
+    courant de maille négatif $J_2$ n'a rien d'anormal : le sens horaire était un choix, et le signe le corrige.
+  </p>
+  <p>
+    Choix entre les deux méthodes : on compte $n - 1$ et $b - n + 1$, et l'on prend la plus petite, en pénalisant les
+    sources gênantes. Les sources de courant et les réseaux à nombreuses branches en parallèle favorisent les nœuds ; les
+    sources de tension et les réseaux en échelle à mailles peu nombreuses favorisent les mailles. Les réseaux non
+    planaires et les programmes de calcul imposent les nœuds, car la notion de fenêtre n'y existe plus.
+  </p>
+
+  <h3 id="e-resolution">Résoudre le système : Cramer, Gauss et ce que fait l'élimination</h3>
+  <p>
+    Pour deux inconnues, la règle de Cramer est la plus rapide à la main : chaque inconnue est le rapport du déterminant
+    obtenu en remplaçant sa colonne par le second membre au déterminant du système. Au-delà de trois inconnues, elle
+    devient inutilisable, car le nombre d'opérations d'un déterminant développé croît comme $n!$. L'élimination de Gauss
+    est la méthode générale : on utilise la première équation pour faire disparaître $V_1$ des suivantes, puis la
+    deuxième pour faire disparaître $V_2$, et ainsi de suite jusqu'à un système triangulaire, que l'on résout en
+    remontant. Le coût est d'environ $\tfrac{2}{3}n^3$ opérations, et les simulateurs, qui traitent des matrices
+    creuses de milliers de nœuds, n'en effectuent qu'une faible partie en évitant les zéros.
+  </p>
+  <div class="formule-cle">
+    $$\text{ligne } j \leftarrow \text{ligne } j - \frac{G_{jk}}{G_{kk}}\,\text{ligne } k \quad (j > k), \qquad G'_{jj} = G_{jj} - \frac{G_{jk}\,G_{kj}}{G_{kk}}, \qquad I'_j = I_j - \frac{G_{jk}}{G_{kk}}\,I_k$$
+    <p class="formule-cle-legende">
+      $G_{kk}$ est le pivot, $G'$ et $I'$ les coefficients après élimination du nœud $k$. Hypothèse : pivot non nul ; pour
+      une matrice de conductance à diagonale dominante, les pivots restent positifs et l'on peut éliminer dans l'ordre
+      naturel ; pour l'analyse nodale modifiée, qui a des zéros sur la diagonale, il faut permuter les lignes, c'est le
+      pivotage. Unités : $G_{jk}G_{kj}/G_{kk}$ est une conductance, $(G_{jk}/G_{kk})I_k$ un courant.
+    </p>
+  </div>
+  <p>
+    L'élimination a un sens physique. Éliminer $V_1$ du réseau de référence donne $G'_{22} = 4 - (-2)(-2)/3 = 8/3\ \mathrm{mS}$
+    et $I'_2 = 4 - (-2/3) \times 12 = 12\ \mathrm{mA}$. Or $8/3 = 2/3 + 1 + 1$, où $2/3\ \mathrm{mS}$ est la conductance de
+    $R_a$ et $R_b$ en série, $1{,}5\ \mathrm{k\Omega}$ ; et $12 = 4 + 8$, où $8\ \mathrm{mA}$ est le courant de Norton de
+    $E_1$ à travers ces $1{,}5\ \mathrm{k\Omega}$. Éliminer un nœud, c'est donc le faire disparaître du schéma en
+    remplaçant les branches qui y aboutissent par un équivalent : la transformation série de deux résistances, ou plus
+    généralement la transformation étoile-polygone. L'élimination de Gauss est une réduction de réseau écrite en
+    algèbre ; la remontée réintroduit ensuite les nœuds éliminés un à un.
+  </p>
+
+  <h3 id="e-gauss-section">Animation : l'élimination de Gauss pas à pas</h3>
+  <p>
+    L'animation applique l'élimination au système du réseau de référence, écrit sous forme de matrice augmentée : la
+    matrice $G$ suivie, après le trait vertical, du second membre $I$. Chaque étape affiche l'opération effectuée, met en
+    évidence le pivot et la ligne modifiée, et donne à droite l'interprétation en termes de réseau. Le déroulement est
+    piloté par vous : lecture, pause, vitesse et remise à zéro. Avant de lancer la lecture, prédisez : faudra-t-il
+    modifier la troisième ligne lors de l'élimination de $V_1$ ? Quelle valeur prendra le pivot de la troisième ligne à
+    la fin, et à quelle conductance du réseau correspondra-t-il ?
+  </p>
+  <figure id="e-gauss-figure">
+    <div class="m-toile-cadre schema-vivant" id="e-gauss"></div>
+    <figcaption>
+      La matrice augmentée est écrite en millisiemens à gauche du trait vertical, en milliampères à droite ; les colonnes
+      correspondent à $V_1$, $V_2$ et $V_3$. Le pivot utilisé est entouré d'un cadre en trait plein ; la ligne modifiée à
+      l'étape en cours est soulignée par un fond grisé. Le texte du bas donne l'opération, celui de droite sa lecture
+      physique.
+    </figcaption>
+  </figure>
+  <div id="e-gauss-lecteur"></div>
+  <p>
+    Interprétation : la troisième ligne n'a pas besoin d'être modifiée lors de l'élimination de $V_1$, car le nœud 3
+    n'est pas relié au nœud 1 : le coefficient est déjà nul. Cette propriété, qui fait que la matrice d'un grand réseau
+    est surtout faite de zéros, est ce qui rend les gros calculs possibles. Le dernier pivot vaut $9/8\ \mathrm{mS}$ :
+    c'est la conductance totale vue du nœud 3 vers la référence quand les sources sont éteintes, soit $R_e = 2\ \mathrm{k\Omega}$
+    en parallèle avec $R_d$ en série avec le reste, $1 + (1{,}5 \parallel 1) = 1{,}6\ \mathrm{k\Omega}$ :
+    $0{,}5 + 1/1{,}6 = 1{,}125\ \mathrm{mS}$. Le second membre correspondant, $4{,}5\ \mathrm{mA}$, est le courant de
+    court-circuit du nœud 3 vers la référence, c'est-à-dire le courant de Norton du reste du réseau vu de ce nœud, et
+    $V_3 = 4{,}5/1{,}125 = 4\ \mathrm{V}$ : la dernière ligne de l'élimination est le théorème de Norton appliqué au
+    dernier nœud.
+  </p>
+  <div class="encadre attention">
+    <span class="encadre-titre">Précision, arrondis et conditionnement</span>
+    <p>
+      Une solution numérique n'est pas plus précise que la plus petite différence qu'elle doit calculer. Quand deux nœuds
+      sont reliés par une très faible résistance, leurs potentiels sont presque égaux et le courant qui les relie est le
+      quotient d'une petite différence par une petite résistance : arrondir les potentiels au dixième de volt peut
+      alors fausser ce courant de plusieurs dizaines de pour cent. Un rapport de $10^{12}$ entre la plus forte et la plus
+      faible conductance, une résistance de $1\ \mu\Omega$ à côté d'une résistance de $1\ \mathrm{M\Omega}$ par exemple,
+      rend la matrice mal conditionnée, et même un calcul en double précision perd alors une grande partie de ses
+      chiffres significatifs. Règle de conception : garder au moins quatre chiffres significatifs dans les calculs
+      intermédiaires, n'arrondir qu'à la fin, et ne pas modéliser par des résistances quasi nulles ce qui peut être
+      représenté par une simple fusion de nœuds.
+    </p>
+  </div>
+
+  <h3 id="e-validation">Valider une solution : résidu, bilan de puissance et méthode indépendante</h3>
+  <p>
+    Une solution se valide par des contrôles qui ne dépendent pas de la façon dont elle a été obtenue. Le premier est le
+    résidu : on reporte les potentiels trouvés dans chaque loi des nœuds, écrite directement sur le schéma et non sur la
+    matrice, pour détecter aussi une erreur de mise en équations. Le deuxième est le bilan de puissance, qui découle du
+    théorème de Tellegen : pour des tensions qui vérifient la loi des mailles et des courants qui vérifient la loi des
+    nœuds, orientés dans la même convention récepteur pour toutes les branches, la somme des produits tension-courant
+    est nulle.
+  </p>
+  <div class="formule-cle">
+    $$\sum_{k=1}^{b} u_k\,i_k = 0 \quad\Longleftrightarrow\quad \sum P_{\text{fournie par les sources}} = \sum P_{\text{absorbée par les récepteurs}}$$
+    <p class="formule-cle-legende">
+      $u_k$ en volts et $i_k$ en ampères, orientés en convention récepteur pour chaque branche, sources comprises : une
+      source qui fournit de la puissance a alors un produit $u_k i_k$ négatif. Dérivation : avec $u_k = V_{\text{départ}} - V_{\text{arrivée}}$,
+      la somme se regroupe nœud par nœud en $\sum_{\text{nœuds}} V_m \times (\text{somme des courants sortant du nœud } m)$,
+      nulle d'après la loi des nœuds. Le théorème ne dépend ni de la nature ni de la linéarité des dipôles : c'est une
+      conséquence des seules lois de Kirchhoff. Un bilan qui ne s'annule pas signale donc une erreur de signe, de branche
+      ou de calcul.
+    </p>
+  </div>
+  <p>
+    Sur le réseau de référence : $E_1$ fournit $12\ \mathrm{V} \times 4\ \mathrm{mA} = 48\ \mathrm{mW}$ ; la source de
+    courant fournit $V_2 \times I_s = 6 \times 4 = 24\ \mathrm{mW}$ ; total $72\ \mathrm{mW}$. Les résistances
+    absorbent $R_a\,i_a^2 = 16\ \mathrm{mW}$, $R_b\,i_b^2 = 8\ \mathrm{mW}$, $R_c\,i_c^2 = 36\ \mathrm{mW}$,
+    $R_d\,i_d^2 = 4\ \mathrm{mW}$ et $R_e\,i_e^2 = 8\ \mathrm{mW}$, soit $72\ \mathrm{mW}$. Le bilan est nul, et la
+    méthode des mailles a donné les mêmes courants : la solution est validée par trois voies indépendantes.
+  </p>
+  <figure id="e-bilan-figure">
+    <svg viewBox="0 0 800 232" role="img" aria-label="Bilan de puissance du réseau de référence : 48 milliwatts fournis par E1 et 24 par Is, soit 72 ; 16, 8, 36, 4 et 8 milliwatts absorbés par Ra, Rb, Rc, Rd et Re, soit 72">
+      <g stroke="currentColor" stroke-width="1.6" fill="none">
+        <rect x="160" y="40" width="384" height="44" rx="3"/>
+        <rect x="544" y="40" width="192" height="44" rx="3"/>
+        <rect x="160" y="130" width="128" height="44" rx="3"/>
+        <rect x="288" y="130" width="64" height="44" rx="3"/>
+        <rect x="352" y="130" width="288" height="44" rx="3"/>
+        <rect x="640" y="130" width="32" height="44" rx="3"/>
+        <rect x="672" y="130" width="64" height="44" rx="3"/>
+        <path d="M160 196V206M736 196V206M160 201H736"/>
+      </g>
+      <g stroke="none">
+        <rect x="161" y="41" width="382" height="42" style="fill: var(--serie-1)" opacity="0.35"/>
+        <rect x="545" y="41" width="190" height="42" style="fill: var(--serie-2)" opacity="0.35"/>
+        <rect x="353" y="131" width="286" height="42" style="fill: var(--serie-3)" opacity="0.3"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="146" y="58" text-anchor="end" font-weight="600">fournie</text><text x="146" y="74" text-anchor="end">72 mW</text>
+        <text x="146" y="148" text-anchor="end" font-weight="600">absorbée</text><text x="146" y="164" text-anchor="end">72 mW</text>
+        <text x="352" y="67" text-anchor="middle">E1 : 12 V x 4 mA = 48 mW</text>
+        <text x="640" y="67" text-anchor="middle">Is : 6 V x 4 mA = 24</text>
+        <text x="224" y="157" text-anchor="middle">Ra : 16</text>
+        <text x="320" y="157" text-anchor="middle">Rb : 8</text>
+        <text x="496" y="157" text-anchor="middle">Rc : 36 mW</text>
+        <text x="656" y="122" text-anchor="middle">Rd : 4</text>
+        <text x="704" y="157" text-anchor="middle">Re : 8</text>
+        <text x="448" y="218" text-anchor="middle">même longueur totale : écart de bilan nul</text>
+      </g>
+    </svg>
+    <figcaption>
+      Chaque barre est une puissance en milliwatts, à l'échelle : $8$ pixels de dessin par milliwatt. La bande du haut
+      empile les puissances fournies par les deux sources, celle du bas les puissances absorbées par les cinq
+      résistances. Les deux bandes ont exactement la même longueur, ce que traduit le théorème de Tellegen. La plus
+      grosse part est absorbée par $R_c$, qui porte le plus fort courant, $6\ \mathrm{mA}$.
+    </figcaption>
+  </figure>
+  <p>
+    Deux contrôles rapides complètent le bilan. Dans un réseau de résistances qui ne contient que des sources de tension,
+    chaque potentiel est compris entre le plus bas et le plus haut des potentiels imposés par les sources : un potentiel
+    hors de cet intervalle trahit une erreur. Avec des sources de courant, cette règle ne tient plus, comme on l'a vu en
+    simulation quand $V_1$ dépasse $E_1$. Enfin, une méthode indépendante, mailles au lieu de nœuds, Thévenin vu d'une
+    branche, ou simulation, doit redonner les mêmes valeurs à l'arrondi près.
+  </p>
+
+  <h3 id="e-etat">Circuits dynamiques : variables d'état et simulation pas à pas</h3>
+  <p>
+    Quand le réseau contient des condensateurs et des bobines, les grandeurs qui mémorisent le passé sont les tensions
+    des condensateurs et les courants des bobines, les seules qui ne peuvent pas sauter. On les range dans un vecteur
+    d'état $x$ ; à chaque instant, si $x$ est connu, le reste du réseau est un réseau résistif que l'on sait résoudre, et
+    les relations $i_C = C\,\mathrm{d}u_C/\mathrm{d}t$ et $u_L = L\,\mathrm{d}i_L/\mathrm{d}t$ donnent la dérivée de $x$.
+    Pour un réseau linéaire, on obtient un système différentiel du premier ordre, de taille égale au nombre d'éléments de
+    stockage indépendants :
+  </p>
+  <div class="formule-cle">
+    $$\frac{\mathrm{d}x}{\mathrm{d}t} = A\,x + B\,u, \qquad \det(rI - A) = 0 \ \Longrightarrow\ \text{pôles } r_i, \qquad \tau_i = -\frac{1}{\operatorname{Re} r_i}$$
+    <p class="formule-cle-legende">
+      $x$ vecteur d'état (volts et ampères), $u$ vecteur des sources, $A$ matrice d'état en $\mathrm{s^{-1}}$, $B$ matrice
+      d'entrée ; $I$ est ici la matrice identité. Les valeurs propres $r_i$ de $A$ sont les pôles du circuit : chaque mode
+      propre évolue en $e^{r_it}$, et $\tau_i$ est sa constante de temps. Hypothèses : éléments linéaires et invariants,
+      condensateurs et bobines indépendants (pas de maille formée uniquement de condensateurs et de sources de tension,
+      pas de nœud où n'aboutissent que des bobines et des sources de courant). Pour le circuit RLC série, on retrouve
+      $\operatorname{tr} A = -R/L$ et $\det A = 1/(LC)$ ; pour un circuit RC seul, $A = -1/(RC)$ et $\tau = RC$.
+    </p>
+  </div>
+  <p>
+    Un ordinateur ne résout pas ce système exactement : il avance par pas de temps $h$. La méthode d'Euler explicite
+    remplace la dérivée par la pente au début du pas, $x_{k+1} = x_k + h(Ax_k + Bu)$ ; la méthode d'Euler implicite
+    utilise la pente à la fin du pas, $x_{k+1} = x_k + h(Ax_{k+1} + Bu)$, ce qui oblige à résoudre un système à chaque
+    pas ; la méthode des trapèzes fait la moyenne des deux. Sur l'équation d'un seul mode,
+    $\mathrm{d}x/\mathrm{d}t = -x/\tau$, chaque pas multiplie l'écart à la valeur finale par un facteur d'amplification :
+  </p>
+  <div class="formule-cle">
+    $$g_{\text{explicite}} = 1 - \frac{h}{\tau}, \qquad g_{\text{implicite}} = \frac{1}{1 + h/\tau}, \qquad g_{\text{trapèzes}} = \frac{1 - h/(2\tau)}{1 + h/(2\tau)}, \qquad \text{exact} : e^{-h/\tau}$$
+    <p class="formule-cle-legende">
+      $h$ pas de temps et $\tau$ constante de temps, en secondes ; $g$ sans dimension. La méthode est stable si
+      $|g| \lt 1$, et la réponse numérique est monotone si $g \geq 0$. Euler explicite : stable seulement si $h \lt 2\tau$,
+      monotone si $h \leq \tau$. Euler implicite : toujours stable et monotone, mais trop lente. Trapèzes : toujours
+      stable, la plus précise, car son erreur décroît comme $h^2$ au lieu de $h$ ; mais $g$ devient négatif dès que
+      $h \gt 2\tau$, ce qui produit une oscillation numérique d'un pas sur l'autre. Cas limite : pour $h \to 0$, les trois
+      facteurs tendent vers $1 - h/\tau$, développement de $e^{-h/\tau}$.
+    </p>
+  </div>
+  <p>
+    Le point décisif est que le pas est limité par la plus petite constante de temps du réseau, même si elle ne
+    concerne qu'un détail sans intérêt. Un réseau qui mêle une constante de temps de $1\ \mu\mathrm{s}$ et une autre de
+    $1\ \mathrm{s}$ est dit raide : la méthode explicite y exigerait un million de pas par seconde simulée. C'est
+    pourquoi les simulateurs de circuits emploient des méthodes implicites, trapèzes ou méthode de Gear, et transforment
+    chaque condensateur, pour un pas donné, en un modèle compagnon : avec Euler implicite,
+    $i_C = C\,(u_{k+1} - u_k)/h$ s'écrit $i_C = G_h\,u_{k+1} - G_h\,u_k$, soit une conductance $G_h = C/h$ en parallèle
+    avec une source de courant $G_hu_k$ qui injecte le passé dans le nœud. Une bobine devient de même une conductance
+    $h/L$ en parallèle avec une source de courant égale à $i_k$. Chaque pas de temps se ramène ainsi à une résolution
+    nodale $GV = I$ : la méthode des nœuds sert aussi aux régimes transitoires.
+  </p>
+
+  <h3 id="e-compagnon-section">Animation : le modèle compagnon d'un condensateur</h3>
+  <p>
+    L'animation simule la charge d'un condensateur $C = 1\ \mu\mathrm{F}$ par une source $E = 10\ \mathrm{V}$ à travers
+    $R = 1\ \mathrm{k\Omega}$, soit $\tau = 1\ \mathrm{ms}$, avec Euler implicite et un pas $h = 0{,}25\ \mathrm{ms}$. À
+    chaque pas, le condensateur est remplacé par sa conductance compagnon $G_h = C/h = 4\ \mathrm{mS}$ et par la source
+    de courant $G_hu_k$ ; l'unique équation nodale $(1 + 4)\,u_{k+1} = 10 + 4u_k$, en milliampères, donne la tension
+    suivante, ajoutée au tracé. Le déroulement est piloté par vous : lecture, pause, vitesse et remise à zéro. Avant de
+    lancer la lecture, prédisez : les points calculés seront-ils au-dessus ou au-dessous de la courbe exacte ? L'écart
+    va-t-il croître sans limite, ou passer par un maximum puis se résorber ?
+  </p>
+  <figure id="e-compagnon-figure">
+    <div class="m-toile-cadre schema-vivant" id="e-compagnon"></div>
+    <figcaption>
+      À gauche, le circuit tel que le voit le calcul au pas $k$ : la source $E$, borne $+$ en haut, la résistance $R$ et,
+      à la place du condensateur, la conductance $G_h$ en parallèle avec la source de courant $G_hu_k$, dont la flèche
+      indique l'injection dans le nœud $u$ ; la référence est le conducteur du bas. À droite, la tension en fonction du
+      temps : la courbe en tirets est la solution exacte $10(1 - e^{-t/\tau})$, les disques reliés en trait plein sont les
+      valeurs calculées pas à pas ; le dernier disque, plus gros, est le pas en cours.
+    </figcaption>
+  </figure>
+  <div id="e-compagnon-lecteur"></div>
+  <div id="e-compagnon-valeurs"></div>
+  <p>
+    Interprétation : les points calculés restent sous la courbe exacte, car Euler implicite utilise à chaque pas la pente
+    de fin de pas, plus faible que la pente moyenne pendant une charge qui ralentit : la méthode est légèrement trop
+    lente, avec un facteur $0{,}8$ par pas au lieu de $e^{-0{,}25} = 0{,}779$. L'écart croît d'abord, atteint un maximum
+    d'environ $0{,}42\ \mathrm{V}$ vers $t = \tau$, puis se résorbe, car les deux courbes tendent vers la même valeur
+    finale $E$ : la méthode est stable et conserve le régime établi. Le point essentiel est ailleurs : à chaque pas, le
+    calcul n'a résolu qu'un réseau résistif, celui de gauche. Un simulateur fait exactement cela, avec des milliers de
+    nœuds et un pas qu'il adapte en permanence à la précision demandée.
+  </p>
+
+  <h3 id="e-pas-section">Simulation interactive : pas de calcul et stabilité numérique</h3>
+  <p>
+    La simulation compare la solution exacte de la charge d'un circuit RC, $u/E = 1 - e^{-t/\tau}$, aux valeurs
+    calculées par la méthode choisie avec un pas $h$ réglable, exprimé en fraction de $\tau$. Avant de toucher aux
+    curseurs, prédisez qualitativement : avec la méthode explicite, la courbe calculée reste-t-elle monotone pour
+    $h = 1{,}5\tau$ ? Que se passe-t-il pour $h = 2{,}5\tau$ ? La méthode des trapèzes, réputée la plus précise,
+    reste-t-elle monotone pour $h = 3\tau$ ? Laquelle des trois méthodes est la plus proche de la courbe exacte pour
+    $h = 0{,}25\tau$ ?
+  </p>
+  <figure id="e-pas-figure">
+    <div id="e-pas"></div>
+    <figcaption>
+      Axe horizontal : temps rapporté à $\tau$ ; axe vertical : tension rapportée à l'échelon $E$. Le trait fin est la
+      solution exacte, le trait épais la solution numérique, dont chaque disque est une valeur calculée. La ligne en
+      tirets horizontale marque la valeur finale. Le facteur d'amplification $g$ de la méthode, affiché sous le
+      graphique, résume son comportement.
+    </figcaption>
+  </figure>
+  <div id="e-pas-curseurs"></div>
+  <div id="e-pas-valeurs"></div>
+  <p>
+    Interprétation : avec la méthode explicite, la courbe calculée dépasse la valeur finale puis oscille autour d'elle
+    dès que $h \gt \tau$, car le facteur $g = 1 - h/\tau$ devient négatif ; pour $h = 1{,}5\tau$, $g = -0{,}5$ et
+    l'oscillation s'amortit, pour $h = 2{,}5\tau$, $g = -1{,}5$ et elle diverge : un circuit stable paraît instable, la
+    faute en revient au calcul. La méthode implicite reste monotone pour tout pas, mais elle est trop lente. La méthode
+    des trapèzes est de loin la plus précise pour un petit pas : avec $h = 0{,}1\tau$, elle donne $0{,}6324$ à $t = \tau$
+    contre $0{,}6321$ exactement, alors que l'explicite donne $0{,}6513$ et l'implicite $0{,}6145$ ; mais pour $h = 3\tau$,
+    $g = -0{,}2$ et la réponse alterne d'un pas sur l'autre autour de la valeur finale. C'est l'oscillation numérique que
+    l'on observe parfois dans un simulateur sur une tension qui devrait être lisse. Règle de conception : un pas de
+    l'ordre du dixième de la plus petite constante de temps qui intéresse l'étude.
+  </p>
+
+  <h3 id="e-statut">Statut des énoncés</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Ce qui est loi, convention, approximation, règle de conception ou choix d'un logiciel</caption>
+      <thead><tr><th>Énoncé</th><th>Statut</th></tr></thead>
+      <tbody>
+        <tr><td>Lois des nœuds et des mailles, loi d'Ohm d'une résistance linéaire, théorème de Tellegen</td><td>lois physiques, ou conséquences directes des lois de Kirchhoff</td></tr>
+        <tr><td>Choix du nœud de référence, sens horaire des mailles, convention récepteur, signe du courant d'une source en analyse nodale modifiée</td><td>conventions : elles changent les signes, jamais la physique</td></tr>
+        <tr><td>Nombre d'équations indépendantes, $n - 1$ et $b - n + 1$</td><td>propriété mathématique du graphe</td></tr>
+        <tr><td>Éléments localisés et linéaires, sources idéales, modèle de Norton d'un chargeur ou d'une batterie</td><td>approximations, valables à basse fréquence et dans une plage de fonctionnement</td></tr>
+        <tr><td>Solution par Euler, trapèzes ou Gear à pas fini</td><td>approximation numérique, d'erreur contrôlable par le pas</td></tr>
+        <tr><td>Pas égal au dixième de la plus petite constante de temps utile ; quatre chiffres significatifs dans les calculs intermédiaires</td><td>règles de conception</td></tr>
+        <tr><td>Tolérances de convergence, méthode d'intégration par défaut, pas maximal d'un simulateur</td><td>choix propres à chaque logiciel, à lire dans sa documentation</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, la chaîne complète qui mène d'un schéma électrique à une
+    solution validée, puis l'organigramme du choix de méthode et un tableau comparatif. Le réseau de référence, les
+    figures des méthodes, les animations et les simulations ont été placés au fil du texte, au contact des explications
+    qu'ils illustrent ; ils sont rappelés en fin de section.
+  </p>
+
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 1000 340" role="img" aria-label="Chaîne complète en cinq étapes : schéma, équations, matrice, solution, validation, avec une flèche de retour de la validation vers le schéma en cas d'écart">
+      <defs>
+        <marker id="fl-f-chaine" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="1.8" fill="none">
+        <rect x="8" y="40" width="168" height="200" rx="8"/>
+        <rect x="208" y="40" width="168" height="200" rx="8"/>
+        <rect x="408" y="40" width="168" height="200" rx="8"/>
+        <rect x="608" y="40" width="168" height="200" rx="8"/>
+        <rect x="808" y="40" width="168" height="200" rx="8"/>
+        <path d="M178 140H202" marker-end="url(#fl-f-chaine)"/>
+        <path d="M378 140H402" marker-end="url(#fl-f-chaine)"/>
+        <path d="M578 140H602" marker-end="url(#fl-f-chaine)"/>
+        <path d="M778 140H802" marker-end="url(#fl-f-chaine)"/>
+        <path d="M892 242V300H92V250" stroke-dasharray="7 5" marker-end="url(#fl-f-chaine)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round">
+        <path d="M26 142V100H34M48 100H66M80 100H120M134 100H150V130M150 150V190H26V158"/>
+        <rect x="34" y="94" width="14" height="12" rx="2"/>
+        <rect x="66" y="94" width="14" height="12" rx="2"/>
+        <rect x="120" y="94" width="14" height="12" rx="2"/>
+        <circle cx="26" cy="150" r="8"/>
+        <path d="M92 100V130M92 150V190M112 100V133M112 147V190"/>
+        <rect x="86" y="130" width="12" height="20" rx="2"/>
+        <circle cx="112" cy="140" r="7"/>
+        <path d="M112 145V135M109 138L112 134L115 138"/>
+        <rect x="144" y="130" width="12" height="20" rx="2"/>
+        <path d="M424 92v76M560 92v76M528 92v76" stroke-width="1.4"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="57" cy="100" r="3.5"/><circle cx="92" cy="100" r="3.5"/><circle cx="150" cy="100" r="3.5"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11">
+        <text x="92" y="64" text-anchor="middle" font-weight="600" font-size="12.5">1. Schéma</text>
+        <text x="57" y="88" text-anchor="middle">1</text><text x="100" y="88" text-anchor="middle">2</text><text x="150" y="88" text-anchor="middle">3</text>
+        <text x="92" y="212" text-anchor="middle">référence 0 en bas</text>
+        <text x="92" y="228" text-anchor="middle">sens, polarités</text>
+        <text x="292" y="64" text-anchor="middle" font-weight="600" font-size="12.5">2. Équations</text>
+        <text x="216" y="100" font-size="10.5">(1) 3V1 - 2V2 = 12</text>
+        <text x="216" y="124" font-size="10.5">(2) -2V1 + 4V2 - V3 = 4</text>
+        <text x="216" y="148" font-size="10.5">(3) -V2 + 1,5V3 = 0</text>
+        <text x="292" y="196" text-anchor="middle">une loi des nœuds</text>
+        <text x="292" y="212" text-anchor="middle">par nœud inconnu</text>
+        <text x="292" y="228" text-anchor="middle">n - 1 = 3</text>
+        <text x="492" y="64" text-anchor="middle" font-weight="600" font-size="12.5">3. Matrice</text>
+        <text x="442" y="112" text-anchor="middle">3</text><text x="474" y="112" text-anchor="middle">-2</text><text x="506" y="112" text-anchor="middle">0</text><text x="545" y="112" text-anchor="middle">12</text>
+        <text x="442" y="136" text-anchor="middle">-2</text><text x="474" y="136" text-anchor="middle">4</text><text x="506" y="136" text-anchor="middle">-1</text><text x="545" y="136" text-anchor="middle">4</text>
+        <text x="442" y="160" text-anchor="middle">0</text><text x="474" y="160" text-anchor="middle">-1</text><text x="506" y="160" text-anchor="middle">1,5</text><text x="545" y="160" text-anchor="middle">0</text>
+        <text x="492" y="196" text-anchor="middle">G (mS) | I (mA)</text>
+        <text x="492" y="212" text-anchor="middle">symétrique,</text>
+        <text x="492" y="228" text-anchor="middle">diagonale dominante</text>
+        <text x="692" y="64" text-anchor="middle" font-weight="600" font-size="12.5">4. Solution</text>
+        <text x="692" y="100" text-anchor="middle">Gauss : triangle</text>
+        <text x="692" y="124" text-anchor="middle">V3 = 4 V</text>
+        <text x="692" y="144" text-anchor="middle">V2 = 6 V</text>
+        <text x="692" y="164" text-anchor="middle">V1 = 8 V</text>
+        <text x="692" y="212" text-anchor="middle">puis courants</text>
+        <text x="692" y="228" text-anchor="middle">de branche</text>
+        <text x="892" y="64" text-anchor="middle" font-weight="600" font-size="12.5">5. Validation</text>
+        <text x="892" y="100" text-anchor="middle">résidu des nœuds : 0</text>
+        <text x="892" y="124" text-anchor="middle">72 mW = 72 mW</text>
+        <text x="892" y="148" text-anchor="middle">mailles : ic = 6 mA</text>
+        <text x="892" y="172" text-anchor="middle">ordres de grandeur</text>
+        <text x="892" y="212" text-anchor="middle">trois voies</text>
+        <text x="892" y="228" text-anchor="middle">indépendantes</text>
+        <text x="190" y="30" text-anchor="middle">conventions</text>
+        <text x="390" y="30" text-anchor="middle">inspection</text>
+        <text x="590" y="30" text-anchor="middle">élimination</text>
+        <text x="790" y="30" text-anchor="middle">contrôles</text>
+        <text x="492" y="322" text-anchor="middle">écart non nul : erreur de signe, de branche ou de calcul, revenir au schéma</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal : la chaîne de résolution appliquée au réseau de référence. Les cinq cadres se lisent de gauche à
+      droite ; les mots au-dessus des flèches pleines nomment l'opération qui fait passer d'une étape à la suivante. Dans
+      le cadre 1, le réseau de référence est redessiné en réduction : la source $E_1$ à gauche, les nœuds 1, 2 et 3 sur le
+      conducteur du haut, $R_c$, la source de courant $I_s$ et $R_e$ vers la référence, le conducteur du bas ; les
+      polarités et les sens de courant complets sont ceux de la figure du réseau de référence en section E. Dans le cadre 3, les deux traits verticaux encadrent la matrice et le
+      troisième sépare le second membre. La flèche de retour en tirets rappelle que la validation peut renvoyer au
+      schéma : c'est la boucle qui distingue un calcul vérifié d'un calcul seulement effectué.
+    </figcaption>
+  </figure>
+
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Réseau à analyser"] --> B{"Condensateurs ou bobines ?"}
+  B -->|"non"| C["Compter n nœuds et b branches"]
+  B -->|"oui, régime établi"| D["Condensateur ouvert, bobine en fil"]
+  B -->|"oui, transitoire"| E["Variables d'état : tensions des C, courants des L"]
+  D --> C
+  E --> F["dx/dt = A x + B u ; pôles = valeurs propres de A"]
+  F --> G["Simulation pas à pas, modèle compagnon, pas voisin de τmin / 10"]
+  C --> H{"Le plus petit : n - 1 ou b - n + 1 ? Réseau planaire ?"}
+  H -->|"nœuds"| I["Méthode des nœuds : G V = I"]
+  H -->|"mailles, réseau planaire"| J["Méthode des mailles : R J = E"]
+  I --> K{"Source de tension idéale ?"}
+  K -->|"oui"| L["Supernœud à la main, analyse nodale modifiée par programme"]
+  K -->|"non"| M["Conversion de Norton des sources réelles"]
+  J --> N{"Source de courant ?"}
+  N -->|"oui"| O["Supermaille et contrainte de la source"]
+  N -->|"non"| P["Écriture par inspection"]
+  L --> Q["Résolution : Cramer jusqu'à 3 inconnues, sinon élimination de Gauss"]
+  M --> Q
+  O --> Q
+  P --> Q
+  Q --> R["Validation : résidu, bilan de puissance, méthode indépendante"]
+  G --> R</pre>
+    <figcaption>
+      Organigramme du choix de méthode. Les rectangles sont des étapes, les losanges des décisions, les libellés des
+      flèches les réponses. La première décision sépare les réseaux résistifs, ou ramenés à des réseaux résistifs en
+      régime établi, des réseaux dynamiques traités par variables d'état. La deuxième compare les tailles des deux
+      systèmes ; les décisions suivantes traitent les sources qui n'entrent pas directement dans la méthode choisie.
+      Toutes les branches aboutissent à la même validation.
+    </figcaption>
+  </figure>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Comparaison des méthodes systématiques</caption>
+      <thead><tr><th>Critère</th><th>Nœuds</th><th>Mailles</th><th>Nodale modifiée</th><th>Variables d'état</th></tr></thead>
+      <tbody>
+        <tr><td>Inconnues</td><td>potentiels de nœud</td><td>courants de maille</td><td>potentiels et courants des sources de tension</td><td>tensions des condensateurs, courants des bobines</td></tr>
+        <tr><td>Nombre</td><td>$n - 1$</td><td>$b - n + 1$</td><td>$n - 1$ plus une par source de tension</td><td>nombre d'éléments de stockage indépendants</td></tr>
+        <tr><td>Sources faciles</td><td>de courant, de tension avec résistance série</td><td>de tension, de courant avec résistance parallèle</td><td>toutes</td><td>toutes, dans $Bu$</td></tr>
+        <tr><td>Cas gênant</td><td>source de tension idéale : supernœud</td><td>source de courant : supermaille ; réseau non planaire</td><td>zéros sur la diagonale : pivotage</td><td>constantes de temps très dispersées : réseau raide</td></tr>
+        <tr><td>Matrice</td><td>symétrique, à diagonale dominante</td><td>symétrique, à diagonale dominante</td><td>symétrique, diagonale incomplète</td><td>quelconque, valeurs propres à partie réelle négative si le réseau est passif</td></tr>
+        <tr><td>Usage typique</td><td>calcul à la main, réseaux de distribution</td><td>circuits en échelle, peu de mailles</td><td>simulateurs SPICE</td><td>automatique, simulation dynamique</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-relax-figure" data-renvoi="d-relax-figure">l'animation de l'équilibre nœud par nœud</a>, section D ;</li>
+    <li><a href="#e-circuit-figure" data-renvoi="e-circuit-figure">le réseau de référence et son graphe</a>, <a href="#e-noeuds-figure" data-renvoi="e-noeuds-figure">la simulation de la matrice de conductance</a>, <a href="#e-mna-figure" data-renvoi="e-mna-figure">le motif de l'analyse nodale modifiée</a>, <a href="#e-mailles-figure" data-renvoi="e-mailles-figure">les courants de maille et la supermaille</a>, <a href="#e-gauss-figure" data-renvoi="e-gauss-figure">l'animation de l'élimination de Gauss</a>, <a href="#e-bilan-figure" data-renvoi="e-bilan-figure">le bilan de puissance</a>, <a href="#e-compagnon-figure" data-renvoi="e-compagnon-figure">l'animation du modèle compagnon</a> et <a href="#e-pas-figure" data-renvoi="e-pas-figure">la simulation du pas de calcul</a>, section E ;</li>
+    <li><a href="#h-pont-figure" data-renvoi="h-pont-figure">le pont de Wheatstone chargé</a>, section H ;</li>
+    <li><a href="#i-bus-figure" data-renvoi="i-bus-figure">la simulation du bus 24 V secouru</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour tout réseau linéaire, résistif ou ramené à un réseau résistif, à résoudre sous forme matricielle :</p>
+  <ol>
+    <li>Redessiner le schéma : repérer les nœuds en fusionnant les points reliés par des fils, numéroter les nœuds et les branches, choisir le nœud de référence, de préférence celui qui touche le plus de branches ou la masse physique.</li>
+    <li>Fixer les conventions : polarité de chaque source, sens de référence de chaque courant de branche, convention récepteur pour les éléments passifs.</li>
+    <li>Compter : $n - 1$ inconnues pour les nœuds, $b - n + 1$ pour les mailles ; choisir la méthode la plus courte, en tenant compte des sources qui imposent un supernœud ou une supermaille.</li>
+    <li>Préparer les sources : convertir chaque source de tension réelle en source de Norton pour les nœuds, chaque source de courant réelle en source de Thévenin pour les mailles ; traiter les sources idéales par supernœud, analyse nodale modifiée ou supermaille.</li>
+    <li>Écrire le système par inspection, dans un jeu d'unités cohérent ($\mathrm{k\Omega}$, $\mathrm{mS}$, $\mathrm{V}$, $\mathrm{mA}$ par exemple) ; contrôler la symétrie, le signe moins hors diagonale et la dominance de la diagonale.</li>
+    <li>Résoudre : Cramer pour deux inconnues, élimination de Gauss au-delà, en gardant au moins quatre chiffres significatifs ; pour un circuit dynamique, écrire $\dot{x} = Ax + Bu$, chercher les valeurs propres, puis simuler avec un pas voisin du dixième de la plus petite constante de temps utile.</li>
+    <li>Revenir aux grandeurs demandées : courants de branche par différence de potentiels, tension d'une source de courant, puissance de chaque élément.</li>
+    <li>Valider : résidu de chaque loi des nœuds écrite sur le schéma, bilan de puissance nul, méthode indépendante (mailles, Thévenin vu d'une branche, simulation), ordres de grandeur et cas limites ; en cas d'écart, revenir à l'étape 1.</li>
+  </ol>
+  <p>
+    Choix de méthode : la réduction à la main, par associations et Thévenin, reste la plus rapide quand une seule
+    grandeur est demandée dans un réseau qui s'y prête. La méthode matricielle s'impose dès que plusieurs grandeurs sont
+    demandées, que le réseau ne se réduit pas par associations, ou que le calcul doit être répété pour plusieurs jeux de
+    valeurs : on écrit la matrice une fois, et on la recalcule. La simulation s'impose pour les régimes transitoires des
+    réseaux de plus de deux éléments de stockage et pour les éléments non linéaires ; elle ne dispense jamais du contrôle
+    par un calcul simplifié.
+  </p>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Situation : un capteur résistif de valeur de repos $1\ \mathrm{k\Omega}$ est monté dans un pont de Wheatstone,
+    complété par trois résistances fixes $R_1 = R_2 = R_3 = 1\ \mathrm{k\Omega}$. Le pont est alimenté par une source de
+    $E = 10\ \mathrm{V}$ dont la résistance interne, câblage compris, vaut $R_s = 50\ \Omega$ (hypothèse). Le capteur est
+    à $+10\ \%$ de sa valeur de repos : $R_x = 1{,}1\ \mathrm{k\Omega}$. La tension de déséquilibre est mesurée entre
+    les points milieux $B$ et $C$ par une entrée de mesure différentielle de résistance $R_m = 10\ \mathrm{k\Omega}$
+    (hypothèse). Inconnues : la tension mesurée $U_m = V_C - V_B$, le courant $i_m$ dans l'entrée de mesure et l'erreur due
+    à la charge que cette entrée impose au pont. Le réseau ne se réduit par aucune association série ou parallèle, à
+    cause de $R_m$ qui relie les deux branches.
+  </p>
+  <figure id="h-pont-figure">
+    <svg viewBox="0 0 760 380" role="img" aria-label="Pont de Wheatstone chargé : source E de 10 volts avec résistance interne Rs de 50 ohms vers le nœud A ; R1 de A vers B, R2 de B vers la référence, R3 de A vers C, capteur Rx de C vers la référence, entrée de mesure Rm de 10 kiloohms entre B et C">
+      <defs>
+        <marker id="fl-h-pont" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="90" cy="200" r="22"/>
+        <path d="M90 178V60H130M200 60H550V90M250 60V90M550 150V180M250 150V180M250 180V210M550 180V210M250 270V320H90V222M550 270V320H250"/>
+        <rect x="130" y="48" width="70" height="24" rx="3"/>
+        <rect x="238" y="90" width="24" height="60" rx="3"/>
+        <rect x="538" y="90" width="24" height="60" rx="3"/>
+        <rect x="238" y="210" width="24" height="60" rx="3"/>
+        <rect x="538" y="210" width="24" height="60" rx="3"/>
+        <path d="M250 180H360M440 180H550"/>
+        <rect x="360" y="168" width="80" height="24" rx="3"/>
+        <path d="M400 320V332M386 332H414M391 338H409M396 344H404"/>
+        <path d="M528 262L572 218" stroke-width="1.6"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.8" fill="none">
+        <path d="M210 60H234" marker-end="url(#fl-h-pont)"/>
+        <path d="M346 180H324" marker-end="url(#fl-h-pont)"/>
+        <path d="M366 214H432" marker-end="url(#fl-h-pont)"/>
+      </g>
+      <g fill="currentColor" stroke="none"><circle cx="250" cy="60" r="5"/><circle cx="550" cy="60" r="5"/><circle cx="250" cy="180" r="5"/><circle cx="550" cy="180" r="5"/><circle cx="250" cy="320" r="5"/></g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="90" y="195" text-anchor="middle" font-weight="600">+</text>
+        <text x="60" y="196" text-anchor="end">E</text><text x="60" y="212" text-anchor="end">10 V</text>
+        <text x="165" y="40" text-anchor="middle">Rs = 50 Ω</text>
+        <text x="222" y="80" text-anchor="middle">is</text>
+        <text x="400" y="44" text-anchor="middle" font-weight="600">nœud A</text>
+        <text x="226" y="124" text-anchor="end">R1 = 1 kΩ</text><text x="226" y="244" text-anchor="end">R2 = 1 kΩ</text>
+        <text x="574" y="124">R3 = 1 kΩ</text><text x="580" y="244">Rx = 1,1 kΩ</text><text x="580" y="260">capteur</text>
+        <text x="400" y="160" text-anchor="middle">Rm = 10 kΩ</text>
+        <text x="335" y="204" text-anchor="middle">im</text>
+        <text x="226" y="184" text-anchor="end" font-weight="600">B</text>
+        <text x="574" y="184" font-weight="600">C</text>
+        <text x="400" y="234" text-anchor="middle">Um = VC - VB</text>
+        <text x="400" y="366" text-anchor="middle">référence 0 V</text>
+      </g>
+    </svg>
+    <figcaption>
+      Pont de Wheatstone chargé par son entrée de mesure. La source $E$ a sa borne $+$ en haut ; $i_s$ est le courant
+      qu'elle débite vers le nœud $A$. Les points milieux $B$ et $C$ sont reliés par $R_m$ ; le courant $i_m$ y est compté
+      de $C$ vers $B$, et la flèche placée sous $R_m$ désigne la tension mesurée $U_m = V_C - V_B$, la pointe du côté
+      de $C$. Le capteur $R_x$ est barré d'un trait oblique, symbole d'une résistance variable. Les potentiels sont
+      mesurés par rapport au conducteur du bas.
+    </figcaption>
+  </figure>
+  <p>
+    Stratégie : $b = 6$ branches et $n = 4$ nœuds donnent trois inconnues dans les deux méthodes ; on choisit les nœuds,
+    car la grandeur cherchée est une différence de potentiels. On prend le conducteur du bas comme référence, on
+    convertit la source réelle en source de Norton, $E/R_s = 10/0{,}05 = 200\ \mathrm{mA}$ en parallèle avec
+    $1/R_s = 20\ \mathrm{mS}$, et l'on travaille en kiloohms, millisiemens, volts et milliampères. Puis on valide par le
+    bilan de puissance et par le théorème de Thévenin vu de $R_m$.
+  </p>
+
+  <h3 id="h-systeme">Mise en équations et matrice</h3>
+  <ul>
+    <li>Nœud $A$ : $G_{AA} = 20 + 1 + 1 = 22\ \mathrm{mS}$, relié à $B$ et à $C$ par $1\ \mathrm{mS}$, courant injecté $200\ \mathrm{mA}$.</li>
+    <li>Nœud $B$ : $G_{BB} = 1 + 1 + 0{,}1 = 2{,}1\ \mathrm{mS}$ ($R_1$, $R_2$, $R_m$).</li>
+    <li>Nœud $C$ : $G_{CC} = 1 + 1/1{,}1 + 0{,}1 = 2{,}00909\ \mathrm{mS}$ ($R_3$, $R_x$, $R_m$).</li>
+  </ul>
+  <div class="formule-cle">
+    $$\begin{pmatrix} 22 &amp; -1 &amp; -1 \\ -1 &amp; 2{,}1 &amp; -0{,}1 \\ -1 &amp; -0{,}1 &amp; 2{,}00909 \end{pmatrix} \begin{pmatrix} V_A \\ V_B \\ V_C \end{pmatrix} = \begin{pmatrix} 200 \\ 0 \\ 0 \end{pmatrix}$$
+    <p class="formule-cle-legende">
+      Matrice en $\mathrm{mS}$, potentiels en $\mathrm{V}$, second membre en $\mathrm{mA}$. Contrôles avant calcul : la
+      matrice est symétrique, ses termes hors diagonale sont négatifs, et chaque diagonale dépasse la somme des valeurs
+      absolues de sa ligne, de $20\ \mathrm{mS}$ pour $A$ (lien à la référence par $R_s$), de $1\ \mathrm{mS}$ pour $B$
+      ($R_2$) et de $0{,}909\ \mathrm{mS}$ pour $C$ ($R_x$).
+    </p>
+  </div>
+
+  <h3 id="h-calcul">Élimination de Gauss</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Élimination puis remontée, coefficients en mS, seconds membres en mA</caption>
+      <thead><tr><th>Étape</th><th>Opération</th><th>Résultat</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>ligne $B$ $\leftarrow$ ligne $B + \tfrac{1}{22}$ ligne $A$</td><td>$2{,}054545\,V_B - 0{,}145455\,V_C = 9{,}090909$</td></tr>
+        <tr><td>2</td><td>ligne $C$ $\leftarrow$ ligne $C + \tfrac{1}{22}$ ligne $A$</td><td>$-0{,}145455\,V_B + 1{,}963636\,V_C = 9{,}090909$</td></tr>
+        <tr><td>3</td><td>ligne $C$ $\leftarrow$ ligne $C + \tfrac{0{,}145455}{2{,}054545}$ ligne $B$, facteur $0{,}070796$</td><td>$1{,}953339\,V_C = 9{,}734513$</td></tr>
+        <tr><td>4</td><td>remontée</td><td>$V_C = 9{,}734513/1{,}953339 = 4{,}98353\ \mathrm{V}$</td></tr>
+        <tr><td>5</td><td>remontée</td><td>$V_B = (9{,}090909 + 0{,}145455 \times 4{,}98353)/2{,}054545 = 4{,}77759\ \mathrm{V}$</td></tr>
+        <tr><td>6</td><td>remontée</td><td>$V_A = (200 + 4{,}77759 + 4{,}98353)/22 = 9{,}53460\ \mathrm{V}$</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Résultat : $U_m = V_C - V_B = 4{,}98353 - 4{,}77759 = 0{,}2059\ \mathrm{V}$ et
+    $i_m = U_m/R_m = 0{,}2059/10 = 0{,}02059\ \mathrm{mA}$, soit $20{,}6\ \mu\mathrm{A}$ de $C$ vers $B$. Courant de
+    source : $i_s = (10 - 9{,}5346)/0{,}05 = 9{,}308\ \mathrm{mA}$. Courants de branche : $i_{R1} = 4{,}757\ \mathrm{mA}$,
+    $i_{R2} = 4{,}778\ \mathrm{mA}$, $i_{R3} = 4{,}551\ \mathrm{mA}$, $i_{Rx} = 4{,}530\ \mathrm{mA}$.
+  </p>
+
+  <h3 id="h-controle">Contrôles de cohérence</h3>
+  <ul>
+    <li>Résidus : au nœud $C$, le courant arrivant par $R_3$, $4{,}551\ \mathrm{mA}$, égale la somme des courants qui repartent par $R_x$ et $R_m$, $4{,}530 + 0{,}021 = 4{,}551\ \mathrm{mA}$ ; au nœud $B$, $4{,}757 + 0{,}021 = 4{,}778\ \mathrm{mA}$.</li>
+    <li>Bilan de puissance : la force électromotrice fournit $E\,i_s = 10 \times 9{,}308 = 93{,}08\ \mathrm{mW}$ ; les résistances absorbent $4{,}33$ ($R_s$) $+ 22{,}63$ ($R_1$) $+ 22{,}83$ ($R_2$) $+ 20{,}71$ ($R_3$) $+ 22{,}58$ ($R_x$) $+ 0{,}004$ ($R_m$) $= 93{,}08\ \mathrm{mW}$. Écart nul.</li>
+    <li>Méthode indépendante : sans $R_m$, la tension à vide entre $C$ et $B$ vaut $E_{th} = 0{,}2270\ \mathrm{V}$ et la résistance vue entre $B$ et $C$, source éteinte, $R_{th} = 1\,023{,}8\ \Omega$, soit à peu près $R_1 \parallel R_2 + R_3 \parallel R_x = 500 + 523{,}8\ \Omega$, la faible $R_s$ en plus. Alors $U_m = 0{,}2270 \times 10/(10 + 1{,}0238) = 0{,}2059\ \mathrm{V}$ : identique.</li>
+    <li>Ordre de grandeur : pont idéal, $R_s = 0$ et $R_m$ infinie, $U_m = 10\,(1{,}1/2{,}1 - 0{,}5) = 0{,}238\ \mathrm{V}$. La résistance interne abaisse l'alimentation du pont à $9{,}53\ \mathrm{V}$, d'où $0{,}2270\ \mathrm{V}$, et l'entrée de mesure prélève encore $9{,}3\ \%$.</li>
+    <li>Dimensions : $\mathrm{mS} \times \mathrm{V} = \mathrm{mA}$ dans chaque ligne ; $\mathrm{V} \times \mathrm{mA} = \mathrm{mW}$ dans le bilan.</li>
+  </ul>
+  <p>
+    Conclusion d'ingénieur : l'entrée de mesure de $10\ \mathrm{k\Omega}$, seulement dix fois plus grande que la
+    résistance de Thévenin du pont, sous-estime le déséquilibre de $9{,}3\ \%$. Pour descendre sous $1\ \%$, il faut
+    $R_m \geq 99\,R_{th}$, soit environ $100\ \mathrm{k\Omega}$, ou mieux un amplificateur d'instrumentation, dont la
+    résistance d'entrée se chiffre en mégaohms ou au-delà. Ce calcul est le point de départ du cours Révision 2 et
+    mini-projet capteur.
+  </p>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <h3 id="i-probleme">Le bus 24 V secouru du site, mis en matrice</h3>
+  <p>
+    Le projet fil rouge a construit pas à pas le bus $24\ \mathrm{V}$ continu secouru de l'armoire automate. Le cours
+    <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes de Thévenin, Norton et superposition</a> l'a
+    réduit à un équivalent unique, $25{,}5\ \mathrm{V}$ et $0{,}25\ \Omega$, en supposant le chargeur, la batterie et les
+    charges raccordés au même point. Le cours <a href="#/cours/inductances-et-champ-magnetique">Inductances et champ
+    magnétique</a> y a ajouté la bobine du contacteur $KM1$ du départ pompe, $48\ \Omega$ en régime établi. Or cette
+    bobine se trouve dans l'armoire du départ pompe, à $40\ \mathrm{m}$, et la batterie est dans un coffret voisin : le
+    bus n'est plus un point, c'est un petit réseau à trois nœuds, que l'équivalent unique ne décrit plus. La question
+    d'exploitation est la suivante : en fonctionnement dégradé, chargeur coupé et batterie en fin d'autonomie, la tension
+    qui reste aux bornes de la bobine suffit-elle encore à fermer $KM1$ pour redémarrer la pompe ?
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Données du bus 24 V secouru (hypothèses d'étude, à remplacer par la documentation des matériels retenus)</caption>
+      <thead><tr><th>Élément</th><th>Modèle</th><th>Raccordement</th></tr></thead>
+      <tbody>
+        <tr><td>Chargeur</td><td>$27\ \mathrm{V}$ en série avec $0{,}5\ \Omega$</td><td>nœud 1, jeu de barres de l'armoire automate</td></tr>
+        <tr><td>Armoire automate</td><td>$6\ \Omega$</td><td>nœud 1</td></tr>
+        <tr><td>Batterie</td><td>force électromotrice $24\ \mathrm{V}$ (de $21{,}6$ en fin de décharge à $25{,}5\ \mathrm{V}$), en série avec $0{,}5\ \Omega$</td><td>nœud 2, bornes du coffret batterie</td></tr>
+        <tr><td>Liaison batterie</td><td>$0{,}05\ \Omega$, environ $2 \times 6\ \mathrm{m}$ en $4\ \mathrm{mm^2}$</td><td>entre les nœuds 1 et 2</td></tr>
+        <tr><td>Câble vers l'armoire du départ pompe</td><td>$0{,}576\ \Omega$, $2 \times 40\ \mathrm{m}$ en $2{,}5\ \mathrm{mm^2}$</td><td>entre les nœuds 1 et 3</td></tr>
+        <tr><td>Bobine de $KM1$</td><td>$48\ \Omega$ en régime établi ; fermeture garantie à $85\ \%$ de $24\ \mathrm{V}$, soit $20{,}4\ \mathrm{V}$ (hypothèse de documentation)</td><td>nœud 3</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Mise en équations par la méthode des nœuds, en siemens, volts et ampères. Les deux sources réelles deviennent des
+    sources de Norton : $27/0{,}5 = 54\ \mathrm{A}$ avec $2\ \mathrm{S}$ au nœud 1, et $24/0{,}5 = 48\ \mathrm{A}$ avec
+    $2\ \mathrm{S}$ au nœud 2. Les conductances valent $1/6 = 0{,}1667\ \mathrm{S}$ pour l'armoire, $20\ \mathrm{S}$ pour
+    la liaison batterie, $1{,}7361\ \mathrm{S}$ pour le câble et $0{,}02083\ \mathrm{S}$ pour la bobine :
+  </p>
+  <div class="formule-cle">
+    $$\begin{pmatrix} 23{,}9028 &amp; -20 &amp; -1{,}7361 \\ -20 &amp; 22 &amp; 0 \\ -1{,}7361 &amp; 0 &amp; 1{,}7569 \end{pmatrix} \begin{pmatrix} V_1 \\ V_2 \\ V_3 \end{pmatrix} = \begin{pmatrix} 54 \\ 48 \\ 0 \end{pmatrix} \quad\Longrightarrow\quad V_1 = 24{,}376\ \mathrm{V}, \quad V_2 = 24{,}342\ \mathrm{V}, \quad V_3 = 24{,}087\ \mathrm{V}$$
+    <p class="formule-cle-legende">
+      Chargeur en service, batterie à $24\ \mathrm{V}$, bobine alimentée. $G_{11} = 2 + 0{,}1667 + 20 + 1{,}7361$ ; le zéro
+      en position $(2, 3)$ traduit l'absence de liaison directe entre la batterie et l'armoire du départ pompe. Contrôle :
+      sans câbles ni bobine, on retrouve l'équivalent de Thévenin, $V_1 = 25{,}5 \times 6/6{,}25 = 24{,}48\ \mathrm{V}$.
+    </p>
+  </div>
+  <p>
+    Lecture : le chargeur débite $(27 - 24{,}376)/0{,}5 = 5{,}248\ \mathrm{A}$ ; la batterie se recharge sous
+    $(24{,}342 - 24)/0{,}5 = 0{,}684\ \mathrm{A}$ ; l'armoire automate consomme $4{,}063\ \mathrm{A}$ et la bobine
+    $0{,}502\ \mathrm{A}$, à $100{,}4\ \%$ de sa tension assignée. Bilan : le chargeur fournit $27 \times 5{,}248 = 141{,}70\ \mathrm{W}$ ;
+    ils se répartissent en $99{,}03\ \mathrm{W}$ pour l'armoire, $12{,}09\ \mathrm{W}$ pour la bobine,
+    $16{,}41\ \mathrm{W}$ stockés dans la batterie, $14{,}00\ \mathrm{W}$ dans les résistances internes et
+    $0{,}17\ \mathrm{W}$ dans les liaisons : écart nul. Remarque de précision : le courant de recharge vient d'une
+    différence de $0{,}342\ \mathrm{V}$ ; arrondir $V_2$ à $24{,}3\ \mathrm{V}$ le ferait tomber à $0{,}6\ \mathrm{A}$,
+    soit $12\ \%$ d'erreur.
+  </p>
+
+  <h3 id="i-bus-section">Simulation interactive : le bus secouru en fonctionnement normal et dégradé</h3>
+  <p>
+    La simulation résout le même système à chaque réglage. Les curseurs mettent le chargeur en service ou le coupent,
+    règlent la force électromotrice de la batterie selon son état de charge, choisissent la section du câble vers
+    l'armoire du départ pompe et alimentent ou non la bobine. Avant de toucher aux curseurs, prédisez qualitativement :
+    chargeur coupé, la batterie passe-t-elle de la recharge à la décharge, et de combien la tension de la bobine
+    baisse-t-elle ? En fin de décharge, à $21{,}6\ \mathrm{V}$, la bobine reçoit-elle encore $20{,}4\ \mathrm{V}$ ?
+    Passer le câble de $2{,}5$ à $6\ \mathrm{mm^2}$ suffirait-il à rétablir la marge ?
+  </p>
+  <figure id="i-bus-figure">
+    <div class="m-toile-cadre schema-vivant" id="i-bus"></div>
+    <figcaption>
+      Le bus est dessiné avec sa référence, le conducteur $0\ \mathrm{V}$ du bas. À gauche, le chargeur, borne $+$ en
+      haut, et sa résistance interne alimentent le nœud 1, auquel est raccordée l'armoire automate ; au centre, la
+      batterie, plaque longue $+$ en haut, et sa résistance interne forment le nœud 2 ; en haut à droite, le câble mène au
+      nœud 3 et à la bobine de $KM1$. Les potentiels de nœud s'affichent à côté de chaque nœud ; la flèche de la branche
+      batterie indique le sens réel de son courant, vers le haut en décharge et vers le bas en recharge. Un élément coupé
+      est dessiné en tirets.
+    </figcaption>
+  </figure>
+  <div id="i-bus-curseurs"></div>
+  <div id="i-bus-valeurs"></div>
+  <p>
+    Interprétation : chargeur coupé, la batterie passe immédiatement en décharge, à $4{,}07\ \mathrm{A}$ sous
+    $24\ \mathrm{V}$, et la bobine tombe à $21{,}50\ \mathrm{V}$, soit $89{,}6\ \%$ : la marge existe encore. Mais à
+    $21{,}6\ \mathrm{V}$, fin de décharge, la bobine ne reçoit plus que $19{,}35\ \mathrm{V}$, soit $80{,}6\ \%$, sous le
+    seuil de fermeture garanti de $20{,}4\ \mathrm{V}$. La section du câble n'y change presque rien : la chute dans le
+    câble n'est que de $0{,}23\ \mathrm{V}$ en $2{,}5\ \mathrm{mm^2}$, et passer à $6\ \mathrm{mm^2}$ ne rend que
+    $0{,}13\ \mathrm{V}$, pour $19{,}48\ \mathrm{V}$ seulement. La tension manquante est perdue dans la résistance interne de
+    la batterie, traversée par tout le courant du bus, armoire automate et bobine : $3{,}67 \times 0{,}5 = 1{,}83\ \mathrm{V}$. Le
+    bilan de puissance reste nul dans tous les cas, ce qui valide le modèle à chaque réglage.
+  </p>
+
+  <h3 id="i-compromis">Contraintes, risques et choix d'ingénierie</h3>
+  <p>
+    Le modèle étant linéaire et la batterie seule source en fonctionnement dégradé, tous les potentiels sont
+    proportionnels à sa force électromotrice : $V_3 = 0{,}8959\,E_b$ bobine alimentée. La fermeture de $KM1$ n'est donc
+    garantie que pour $E_b \geq 20{,}4/0{,}8959 = 22{,}77\ \mathrm{V}$. L'automate ne connaît pas $E_b$, mais il mesure
+    la tension du bus au nœud 1 par le pont diviseur du cours <a href="#/cours/associations-de-resistances-et-diviseurs">Associations
+    de résistances et diviseurs</a>. Bobine non alimentée, cette tension vaut $0{,}9160\,E_b$, d'où un seuil de
+    $0{,}9160 \times 22{,}77 = 20{,}86\ \mathrm{V}$, arrondi à $20{,}9\ \mathrm{V}$, soit environ $6{,}92\ \mathrm{V}$ sur
+    l'entrée analogique $0$ à $10\ \mathrm{V}$, dont le rapport de division vaut $7{,}95/24$.
+  </p>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Décision pour le projet fil rouge</span>
+    <p>
+      En fonctionnement secouru, l'ordre de fermeture de $KM1$ est conditionné à une tension de bus d'au moins
+      $20{,}9\ \mathrm{V}$ mesurée avant la commande ; en dessous, l'automate signale "redémarrage pompe impossible,
+      batterie faible" plutôt que de tenter une fermeture incertaine, qui pourrait laisser le contacteur vibrer et ses
+      contacts s'user. Le câble de $2{,}5\ \mathrm{mm^2}$ est conservé, puisque l'agrandir ne règle rien. Deux
+      alternatives ont été écartées pour l'instant : un délestage de l'armoire automate pendant la fermeture, qui
+      relèverait la tension mais coupe la supervision au mauvais moment, et une batterie de résistance interne plus
+      faible, plus chère ; elles seront réexaminées avec la documentation réelle des matériels.
+    </p>
+  </div>
+  <p>
+    Risques et limites du calcul : la résistance interne d'une batterie augmente au froid et avec le vieillissement, ce
+    qui abaisse encore la tension ; le seuil de $85\ \%$ est une hypothèse de documentation ; le modèle linéaire ignore
+    la limitation de courant du chargeur, qui en surcharge se comporte en source de courant plutôt qu'en source de
+    tension. Le compromis retenu privilégie la sûreté de manœuvre : refuser un redémarrage vaut mieux qu'une fermeture
+    hésitante. La méthode, elle, est générale : dès que les charges d'un bus sont réparties, il faut un nœud par point de
+    raccordement, et la matrice se reconstruit en quelques minutes à chaque modification de l'installation.
+  </p>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li>
+      <strong>Mettre un signe plus hors de la diagonale.</strong> Le terme $G_{kj}$ vaut moins la conductance qui relie les nœuds $k$ et $j$ : le courant qui quitte $k$ vers $j$ est $G(V_k - V_j)$, et $V_j$ y entre avec un signe moins. Un terme positif hors diagonale, dans un réseau sans source commandée, est toujours une erreur ; il se voit d'un coup d'œil si l'on contrôle la matrice avant de la résoudre.
+    </li>
+    <li>
+      <strong>Inclure le nœud de référence dans les inconnues.</strong> Avec $n$ potentiels au lieu de $n - 1$, chaque ligne de la matrice a une somme nulle, les lignes sont liées et le déterminant est nul : le système est singulier, car les potentiels ne sont définis qu'à une constante près tant qu'aucune référence n'est choisie.
+    </li>
+    <li>
+      <strong>Écrire une loi des nœuds avec le courant d'une source de tension idéale comme s'il était connu.</strong> Ce courant dépend du reste du réseau. Il faut soit l'éliminer par un supernœud, soit le garder comme inconnue avec l'analyse nodale modifiée ; de même, la tension d'une source de courant est inconnue dans la méthode des mailles.
+    </li>
+    <li>
+      <strong>Mélanger les unités.</strong> Écrire une ligne en siemens et une autre en millisiemens, ou des courants en ampères avec des conductances en millisiemens, fausse la solution d'un facteur mille sans que la matrice paraisse anormale. Le remède est de choisir un jeu cohérent ($\mathrm{k\Omega}$, $\mathrm{mS}$, $\mathrm{V}$, $\mathrm{mA}$) et de l'écrire en tête du calcul.
+    </li>
+    <li>
+      <strong>Compter les mailles en regardant le dessin au lieu du graphe.</strong> Le nombre de mailles indépendantes est $b - n + 1$, pas le nombre de boucles que l'œil trouve : un réseau à deux fenêtres possède trois boucles, dont une seule est redondante. Et dans un réseau non planaire, les fenêtres ne définissent plus des mailles indépendantes ; il faut passer aux nœuds.
+    </li>
+    <li>
+      <strong>Arrondir trop tôt.</strong> Les courants obtenus par différence de potentiels voisins perdent leurs chiffres significatifs : sur le bus secouru, arrondir $V_2$ au dixième de volt fausse de $12\ \%$ le courant de recharge de la batterie. On garde quatre à six chiffres jusqu'au bout.
+    </li>
+    <li>
+      <strong>Faire confiance à une simulation sans prédiction.</strong> Un pas trop grand en méthode explicite fait osciller ou diverger un circuit stable ; la méthode des trapèzes fait apparaître une oscillation de pas en pas. Un résultat numérique qui contredit le signe ou l'ordre de grandeur prévu est d'abord suspect : on réduit le pas, on change de méthode et on compare.
+    </li>
+    <li>
+      <strong>Laisser un nœud flottant dans un simulateur.</strong> Un nœud relié au reste du circuit uniquement par des condensateurs, ou un groupe de nœuds sans aucun chemin vers la masse, n'a pas de potentiel défini en continu : la matrice du point de repos est singulière, et le simulateur refuse de calculer. On ajoute une résistance de fuite réaliste vers la masse, de quelques mégaohms par exemple, ce qui modélise d'ailleurs une isolation réelle.
+    </li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain : quand un calcul de réseau, une feuille de calcul de chute de tension ou une simulation
+    donne un résultat surprenant, on refait le bilan de puissance. S'il n'est pas nul, l'erreur est dans la mise en
+    équations : branche oubliée, signe, unité. S'il est nul mais que les valeurs contredisent les mesures, l'erreur est
+    dans le modèle : résistance de câble sous-estimée, batterie plus résistive que prévu, charge oubliée. Les mesures de
+    tension aux nœuds, comparées aux potentiels calculés, localisent la branche fautive : la chute anormale se trouve
+    entre les deux nœuds où l'écart entre calcul et mesure change brusquement.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de
+    diagnostic industriel et une question conceptuelle. La correction de chacun reste masquée jusqu'à une tentative ou un
+    clic explicite sur "Voir la correction", puis se déroule étape par étape, accompagnée d'un schéma annoté ou d'une
+    courbe.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma.</p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$n - 1 \ \text{équations de nœuds}, \qquad b - n + 1 \ \text{équations de mailles}$$
+    $$G\,V = I, \qquad G_{kk} = \sum G, \qquad G_{kj} = -\sum G_{\text{entre } k \text{ et } j}, \qquad I_k = \sum \frac{E}{R} + \sum I_s$$
+    $$\begin{pmatrix} G &amp; B \\ B^{\mathsf{T}} &amp; 0 \end{pmatrix} \begin{pmatrix} V \\ i_E \end{pmatrix} = \begin{pmatrix} I \\ E \end{pmatrix}, \qquad R\,J = E$$
+    $$\sum_k u_k\,i_k = 0 \quad \text{(Tellegen : puissance fournie = puissance absorbée)}$$
+    $$\dot{x} = Ax + Bu, \qquad \text{pôles} = \text{valeurs propres de } A, \qquad G_h = \frac{C}{h}, \qquad g_{\text{explicite}} = 1 - \frac{h}{\tau}$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>Hors de la diagonale, toujours un signe moins ; la matrice d'un réseau passif sans source commandée est symétrique.</li>
+      <li>La référence ne fait pas partie des inconnues ; un nœud sans chemin vers elle rend la matrice singulière.</li>
+      <li>Source de tension idéale : supernœud ou analyse nodale modifiée ; source de courant dans les mailles : supermaille.</li>
+      <li>Garder quatre chiffres significatifs au moins, surtout pour les différences de potentiels voisins.</li>
+      <li>Toujours valider : résidu, bilan de puissance, méthode indépendante ; en simulation, un pas petit devant la plus petite constante de temps.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Un réseau de $b$ branches et $n$ nœuds se décrit par $n - 1$ potentiels de nœud ou par
+    $b - n + 1$ courants de maille. La méthode des nœuds écrit par inspection $GV = I$ : sur la diagonale, la somme des
+    conductances touchant chaque nœud ; hors diagonale, moins les conductances de liaison ; au second membre, les
+    courants injectés par les sources de Norton. Les sources idéales se traitent par supernœud ou par l'analyse nodale
+    modifiée des simulateurs. L'élimination de Gauss résout le système en réduisant le réseau nœud par nœud. Un
+    bilan de puissance nul, garanti par le théorème de Tellegen, et une méthode indépendante valident la solution. Les circuits dynamiques s'écrivent $\dot{x} = Ax + Bu$ ; leurs pôles sont les valeurs propres de $A$, et leur
+    simulation enchaîne des résolutions nodales avec un pas limité par la plus petite constante de temps.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent,
+    <a href="#/cours/regime-transitoire-rlc">Régime transitoire RLC</a> ; une sur le cours
+    <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes de Thévenin, Norton et superposition</a>,
+    vieux d'une semaine exactement ; la question sur un cours vieux d'un mois n'est pas encore applicable, et elle est
+    remplacée par une question sur le cours <a href="#/cours/lois-de-kirchhoff">Lois de Kirchhoff</a>, dont les deux lois
+    sont la matière première de toutes les méthodes vues aujourd'hui.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : programmer la chaîne complète, schéma, matrice, solution, validation, puis la confronter à un simulateur
+    et, si possible, à une mesure. Prédictions à écrire avant de commencer : le courant de la source affiché par LTspice
+    pour le pont de la section H sera-t-il positif ou négatif ? Avec un voltmètre de $10\ \mathrm{M\Omega}$ à la place de
+    l'entrée de $10\ \mathrm{k\Omega}$, la tension lue sera-t-elle plus proche de $0{,}206$ ou de $0{,}227\ \mathrm{V}$ ?
+    Pour la charge RC simulée avec Euler explicite et $h = 0{,}1\tau$, la valeur à $t = \tau$ sera-t-elle au-dessus ou
+    au-dessous de $0{,}632\,E$ ?
+  </p>
+  <ol>
+    <li>
+      En Python, écrire une fonction qui reçoit une liste de branches (nœud de départ, nœud d'arrivée, résistance, force
+      électromotrice ou courant de source) et construit $G$ et $I$ par inspection ; programmer l'élimination de Gauss avec
+      recherche du plus grand pivot, puis la remontée, et comparer à <code>numpy.linalg.solve</code> si la bibliothèque
+      est disponible. Appliquer au réseau de référence (attendu : $8$, $6$ et $4\ \mathrm{V}$), puis au pont de la section
+      H. Calculer automatiquement le résidu de chaque loi des nœuds et le bilan de puissance.
+    </li>
+    <li>
+      Toujours en Python, faire varier $R_x$ de $0{,}9$ à $1{,}1\ \mathrm{k\Omega}$ par pas de $10\ \Omega$ et tracer
+      $U_m(R_x)$ pour $R_m = 10\ \mathrm{k\Omega}$, $100\ \mathrm{k\Omega}$ et $10\ \mathrm{M\Omega}$ ; relever l'écart à
+      la droite tangente en $R_x = 1\ \mathrm{k\Omega}$.
+    </li>
+    <li>
+      Simuler la charge d'un circuit RC, $\tau = 1\ \mathrm{ms}$, avec Euler explicite, Euler implicite et la méthode des
+      trapèzes, pour $h = 0{,}1$, $0{,}5$, $1{,}5$ et $2{,}5\ \mathrm{ms}$ ; tracer les trois réponses et la solution
+      exacte, et vérifier les facteurs d'amplification de la section E.
+    </li>
+    <li>
+      Dans LTspice, saisir la netlist <code>V1 s 0 10</code>, <code>Rs s a 50</code>, <code>R1 a b 1k</code>,
+      <code>R2 b 0 1k</code>, <code>R3 a c 1k</code>, <code>Rx c 0 1.1k</code>, <code>Rm b c 10k</code>, <code>.op</code>,
+      <code>.end</code>. Lire les potentiels <code>V(a)</code>, <code>V(b)</code>, <code>V(c)</code> et le courant
+      <code>I(V1)</code>. Remplacer ensuite <code>Rm b c 10k</code> par <code>Rm b c {Rm}</code> avec
+      <code>.step param Rm list 10k 100k 10Meg</code>. Enfin, retirer <code>R2</code> et <code>Rx</code> pour les
+      remplacer par deux condensateurs de $1\ \mu\mathrm{F}$, et lancer <code>.op</code> : noter le message obtenu.
+    </li>
+    <li>
+      Mesure facultative, en très basse tension uniquement : câbler le pont avec des résistances à $1\ \%$ et une
+      résistance de $1{,}1\ \mathrm{k\Omega}$ à la place du capteur, l'alimenter sous $10\ \mathrm{V}$ par une alimentation
+      de laboratoire limitée à $50\ \mathrm{mA}$, et mesurer au multimètre les potentiels des nœuds par rapport au moins de
+      l'alimentation, puis $U_m$ avec et sans une résistance de $10\ \mathrm{k\Omega}$ entre $B$ et $C$.
+    </li>
+  </ol>
+  <p>
+    Résultats attendus : le solveur programmé redonne $V_A = 9{,}5346\ \mathrm{V}$, $V_B = 4{,}7776\ \mathrm{V}$ et
+    $V_C = 4{,}9835\ \mathrm{V}$, un résidu de l'ordre de $10^{-15}$ et un bilan de $93{,}08\ \mathrm{mW}$ des deux côtés.
+    $U_m(R_x)$ est légèrement concave : l'écart à la tangente atteint quelques pour cent aux extrémités de la plage. LTspice
+    affiche les mêmes potentiels et <code>I(V1)</code> $= -9{,}308\ \mathrm{mA}$, négatif parce que le simulateur compte
+    positivement le courant qui entre dans la source par sa borne $+$ : c'est la convention de l'analyse nodale
+    modifiée. Avec $R_m$ de $100\ \mathrm{k\Omega}$ puis $10\ \mathrm{M\Omega}$, $U_m$ remonte à $0{,}2247$ puis
+    $0{,}2270\ \mathrm{V}$. Avec deux condensateurs à la place de $R_2$ et $R_x$, les nœuds $B$ et $C$ n'ont plus de
+    chemin continu vers la masse : le calcul du point de repos signale une matrice singulière ou un nœud flottant. En
+    simulation de la charge RC, Euler explicite donne $0{,}6513\,E$ à $t = \tau$ avec $h = 0{,}1\tau$, au-dessus de la
+    valeur exacte $0{,}6321\,E$, l'implicite $0{,}6145\,E$ et les trapèzes $0{,}6324\,E$. Au banc, avec une alimentation de
+    laboratoire de résistance interne négligeable, $U_m$ vaut environ $0{,}216\ \mathrm{V}$ avec la résistance de
+    $10\ \mathrm{k\Omega}$ et $0{,}238\ \mathrm{V}$ sans elle. Anomalies à
+    observer : un déséquilibre décalé de quelques dizaines de millivolts par la tolérance des résistances à $1\ \%$, que la
+    mesure des potentiels de nœud permet d'attribuer à une branche ; un multimètre en calibre courant laissé par erreur
+    entre $B$ et $C$, qui court-circuite le pont ; une alimentation qui passe en limitation de courant si un nœud est
+    relié par erreur à la masse.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est calculé
+    dans ce navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées
+    localement pour suivre votre progression. Cette séance contribue directement au jalon de fin du module Stockage
+    d'énergie et régimes transitoires : résoudre méthodiquement des circuits continus et transitoires simples, expliquer
+    les phénomènes de stockage d'énergie et vérifier les résultats.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">On compte avant d'écrire : $n - 1$ potentiels de nœud ou $b - n + 1$ courants de maille suffisent, et la méthode des nœuds s'écrit par inspection sous la forme $GV = I$, matrice symétrique à diagonale dominante.</li>
+    <li data-rang="02">Résoudre, c'est réduire : chaque élimination de Gauss fait disparaître un nœud du réseau, et la dernière ligne est un théorème de Norton ; les sources idéales passent par le supernœud ou l'analyse nodale modifiée.</li>
+    <li data-rang="03">Un résultat n'est acquis qu'une fois validé : résidu, bilan de puissance nul, méthode indépendante ; en dynamique, les pôles sont les valeurs propres de $A$ et le pas de simulation se règle sur la plus petite constante de temps.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> écrire la matrice sans erreur de signe ni d'unité, et traiter les
+    sources idéales sans improviser. L'animation de la section D, qui montre chaque nœud s'équilibrer avec ses voisins, et
+    la simulation de la section E, qui montre quels coefficients changent quand on modifie une résistance, sont faites
+    pour lever cette difficulté ; le bilan de puissance est le filet de sécurité qui la détecte.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Révision 2 et mini-projet capteur, conçoit l'interface
+    d'un capteur résistif. Question à préparer : dans le pont de la section H, avec $R_s = 0$ et une mesure idéale, le
+    capteur vaut $R_x = R_0(1 + x)$, les trois autres bras valant $R_0$. Exprimez la tension de déséquilibre $U_m$ en
+    fonction de $E$ et de $x$ : est-elle proportionnelle à $x$, et quelle erreur commet-on en l'assimilant à $Ex/4$ pour
+    $x = 0{,}1$ ? Enfin, si cette tension doit être filtrée par un passe-bas RC avant conversion, quelle résistance du pont
+    s'ajoute à celle du filtre ?
+  </p>
+
+</article>
