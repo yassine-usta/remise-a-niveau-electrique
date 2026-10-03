@@ -1,0 +1,1254 @@
+<article class="cours" data-slug="revision-2-et-mini-projet-capteur">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/methodes-de-resolution-systematique">Méthodes de résolution systématique</a> s'est achevé
+      sur une question : dans un pont de Wheatstone alimenté par une source idéale $E$, trois bras valent $R_0$ et le
+      capteur vaut $R_x = R_0(1 + x)$ ; la tension de déséquilibre est-elle proportionnelle à $x$ ? Réponse : le point
+      milieu du demi-pont de référence est à $E/2$, celui du demi-pont capteur à $E(1 + x)/(2 + x)$, d'où
+      $U_m = E\left[\dfrac{1 + x}{2 + x} - \dfrac{1}{2}\right] = \dfrac{E\,x}{2(2 + x)}$. La tension n'est pas
+      proportionnelle à $x$ : le $x$ du dénominateur courbe la caractéristique. L'approximation $Ex/4$ surestime la valeur
+      exacte dans le rapport $(2 + x)/2$, soit de $5\ \%$ pour $x = 0{,}1$. Enfin, vue des deux points milieux, la
+      source éteinte, le pont présente la résistance de Thévenin $R_0/2 + R_0(1 + x)/(2 + x)$, voisine de $R_0$ : c'est
+      elle qui s'ajoute à la résistance d'un filtre RC placé derrière le pont, et qui fixe donc, avec elle, la constante
+      de temps. Cette séance réunit tout le module : elle réemploie les lois des circuits continus pour concevoir
+      l'interface d'un capteur résistif, et les régimes transitoires des cours
+      <a href="#/cours/condensateurs-et-champ-electrique">Condensateurs et champ électrique</a>,
+      <a href="#/cours/regime-transitoire-rc">Régime transitoire RC</a> et
+      <a href="#/cours/regime-transitoire-rlc">Régime transitoire RLC</a> pour en régler le filtrage et la rapidité.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Presque toutes les grandeurs physiques d'un site industriel finissent par être lues comme une résistance qui varie :
+    sonde de platine dans une gaine de pompe, thermistance dans une armoire ou un bobinage de moteur, jauge de
+    contrainte collée sur un pont-bascule, potentiomètre de recopie d'une vanne, photorésistance d'un détecteur
+    crépusculaire. Le capteur ne fournit ni tension ni courant ; c'est l'interface qui l'alimente, transforme sa
+    variation de résistance en tension, la protège des perturbations, puis la livre au convertisseur d'un automate. Une
+    erreur de conception à ce niveau ne se voit pas sur le schéma : l'automate affiche un nombre plausible, mais faux de
+    plusieurs degrés, et la régulation qui s'en sert est fausse d'autant.
+  </p>
+  <p>
+    Concevoir cette interface oblige à mobiliser l'ensemble des acquis des deux premiers modules : loi d'Ohm et
+    résistivité pour le capteur et le câble, diviseur chargé et théorème de Thévenin pour le pont, méthode des nœuds
+    pour vérifier le réseau complet, bilan de puissance pour l'auto-échauffement, condensateur et régime transitoire du
+    premier ordre pour le filtre, constante de temps pour le délai d'établissement avant conversion. C'est pourquoi cette
+    séance de révision prend la forme d'un mini-projet : concevoir une interface de capteur résistif alimentée en courant
+    continu, la chiffrer, puis la vérifier. Elle marque aussi le jalon de fin de module : résoudre méthodiquement des
+    circuits continus et transitoires simples, expliquer les phénomènes de stockage d'énergie et vérifier les résultats.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Calculer la résistance d'une sonde de platine et d'une thermistance CTN à une température donnée, et leur coefficient de température, en précisant le modèle et son domaine de validité.</li>
+    <li data-rang="02">Dimensionner un demi-pont de mesure : choisir la résistance fixe qui maximise la sensibilité, et l'alimentation qui limite l'auto-échauffement à une valeur imposée.</li>
+    <li data-rang="03">Calculer la tension de déséquilibre d'un pont de Wheatstone, son erreur de non-linéarité, sa résistance de Thévenin, et expliquer la compensation du câble par un montage trois fils.</li>
+    <li data-rang="04">Intégrer la charge de l'entrée de mesure dans le modèle, et inverser ce modèle pour passer du code du convertisseur à la température.</li>
+    <li data-rang="05">Dimensionner un filtre RC en tenant compte de la résistance de Thévenin du pont : atténuation d'une perturbation à 50 Hz, constante de temps au pire cas, délai d'établissement à un demi-pas de quantification.</li>
+    <li data-rang="06">Établir un budget d'erreur chiffré et le comparer à un cahier des charges, en distinguant erreurs corrigeables et incertitudes.</li>
+    <li data-rang="07">Diagnostiquer une coupure, un court-circuit ou une erreur de modèle à partir de la valeur lue par l'automate.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois acquis suffisent. Du cours <a href="#/cours/associations-de-resistances-et-diviseurs">Associations de
+    résistances et diviseurs</a> : un diviseur $R_1$, $R_2$ alimenté sous $E$ donne $E\,R_2/(R_1 + R_2)$ à vide, et moins
+    dès qu'une charge se place en parallèle sur $R_2$. Du cours <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes
+    de Thévenin, Norton et superposition</a> : ce même diviseur équivaut, vu de sa sortie, à une source
+    $E\,R_2/(R_1 + R_2)$ en série avec $R_1 \parallel R_2$. Du cours <a href="#/cours/regime-transitoire-rc">Régime
+    transitoire RC</a> : après un échelon, l'écart à la valeur finale vaut $\Delta V\,e^{-t/\tau}$ avec $\tau = R\,C$, où
+    $R$ est la résistance de Thévenin vue par le condensateur. Le mini-test ci-dessous n'est pas noté ; la correction de
+    chaque question reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la correction".
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-resistance">Pourquoi une résistance dépend de la température</h3>
+  <p>
+    Dans un métal, le nombre d'électrons libres est fixé par la structure cristalline et ne dépend presque pas de la
+    température. Ce qui change, c'est leur parcours : en s'échauffant, le réseau d'atomes vibre davantage et dévie plus
+    souvent les électrons. La résistivité augmente donc, et de façon presque linéaire : le platine gagne environ
+    $0{,}385\ \%$ par kelvin. C'est un effet faible, mais très reproductible, d'où l'usage du platine pour les mesures
+    précises. Dans un semi-conducteur, au contraire, les porteurs libres sont rares et leur nombre croît très vite avec
+    la température, car l'agitation thermique libère des électrons liés. Cet effet l'emporte largement sur la gêne due
+    aux vibrations : la résistance chute, et elle chute de façon exponentielle. Une thermistance à coefficient de
+    température négatif, ou CTN, perd ainsi environ $4\ \%$ par kelvin vers $25\ ^\circ\mathrm{C}$, dix fois plus que le
+    platine, mais selon une loi fortement non linéaire.
+  </p>
+  <p>
+    Le capteur ne fait que changer de résistance. Pour lire ce changement, il faut lui faire traverser un courant : la
+    tension qui apparaît à ses bornes porte l'information. Ce courant a deux conséquences qui structurent toute la
+    conception. Il dissipe une puissance $R\,I^2$ dans le capteur, qui s'échauffe au-dessus du milieu qu'il est censé
+    mesurer. Et la tension produite dépend aussi de la source qui l'alimente, si bien qu'une source instable se
+    confond avec une variation de température.
+  </p>
+
+  <h3 id="d-balance">Le pont, une balance à deux plateaux</h3>
+  <p>
+    Un pont de Wheatstone compare deux diviseurs alimentés par la même source : l'un contient le capteur, l'autre est
+    fixe et sert de référence. À la température de référence, les deux points milieux sont au même potentiel et la
+    tension entre eux est nulle ; dès que le capteur s'écarte de sa valeur de référence, un écart apparaît, de signe
+    donné par le sens de la variation. L'analogie est celle d'une balance à deux plateaux : on ne mesure pas un poids,
+    on mesure un déséquilibre par rapport à une masse étalon. Ce que la balance gagne, c'est l'insensibilité au zéro :
+    une petite variation se lit sur un fond nul, au lieu d'être une petite différence entre deux grandes tensions.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie de la balance</span>
+    <p>
+      Une balance à l'équilibre ne dépend pas de l'intensité de la pesanteur : seul le zéro en est indépendant pour le
+      pont aussi, mais hors de l'équilibre, la tension de déséquilibre est proportionnelle à la tension d'alimentation $E$,
+      comme le serait l'écart d'une balance proportionnel à $g$. Une balance déséquilibrée bascule franchement, alors
+      que le pont fournit un écart proportionnel puis de moins en moins proportionnel à la variation du capteur. Enfin, la
+      balance n'est pas perturbée par l'appareil qui lit sa position, alors qu'une entrée de mesure branchée entre les
+      points milieux tire un courant et déplace leurs potentiels : la résistance de Thévenin du pont doit rester petite
+      devant celle de l'entrée.
+    </p>
+  </div>
+
+  <h3 id="d-pont-section">Animation : un pont de platine qui se déséquilibre</h3>
+  <p>
+    L'animation représente un pont dont trois bras valent $100\ \Omega$ et dont le quatrième est une sonde Pt100,
+    alimenté sous $E = 0{,}2\ \mathrm{V}$, ce qui limite le courant de la sonde à environ $1\ \mathrm{mA}$. La température
+    de la sonde se règle en faisant glisser la poignée sur le thermomètre, au clavier avec les flèches une fois la
+    poignée sélectionnée, ou en lançant la lecture, qui la fait monter de $0$ à $100\ ^\circ\mathrm{C}$ ; la vitesse et la
+    remise à zéro sont à votre disposition. Avant de lancer la lecture, prédisez qualitativement : la tension de
+    déséquilibre $U_m$ croîtra-t-elle proportionnellement à la température, plus vite ou moins vite ? Atteindra-t-elle
+    des volts ou des millivolts à $100\ ^\circ\mathrm{C}$ ? Lequel des deux points milieux bouge ?
+  </p>
+  <figure id="d-pont-figure">
+    <div class="schema-vivant" id="d-pont"></div>
+    <figcaption>
+      Pont de Wheatstone alimenté par la source $E$, borne $+$ en haut, référence $0\ \mathrm{V}$ sur le conducteur du
+      bas. Les deux bras de gauche forment le demi-pont de référence, de point milieu $B$ ; à droite, $R_3$ en haut et la
+      sonde Pt100 en bas forment le demi-pont capteur, de point milieu $C$. La flèche de tension $U_m$ va de $B$ vers
+      $C$ : elle désigne $U_m = V_C - V_B$, positive quand la sonde s'échauffe. Le thermomètre à droite porte la poignée
+      ronde qui règle la température, et sa colonne pleine monte avec elle. Sous le pont, sur une échelle dilatée de
+      $95$ à $110\ \mathrm{mV}$, deux barres horizontales donnent les potentiels : la barre à contour en pointillé est
+      $V_B$, la barre pleine en trait continu est $V_C$.
+    </figcaption>
+  </figure>
+  <div id="d-pont-lecteur"></div>
+  <div id="d-pont-valeurs"></div>
+  <p>
+    Interprétation : seul le point $C$ bouge, $V_B$ restant à $E/2 = 100\ \mathrm{mV}$. La tension de déséquilibre ne
+    dépasse pas $16{,}1\ \mathrm{mV}$ à $100\ ^\circ\mathrm{C}$ : un signal de quelques millivolts, qu'aucune entrée
+    d'automate $0$ à $10\ \mathrm{V}$ ne lit correctement sans amplification. Elle croît un peu moins vite que la
+    température : l'approximation linéaire $Ex/4$ donne $19{,}25\ \mathrm{mV}$ à $100\ ^\circ\mathrm{C}$, soit $19\ \%$
+    de trop, et l'écart relatif vaut $x/2$, où $x = 0{,}385$ à cette température. Le pont d'une Pt100 donne donc un zéro
+    propre mais un signal faible et légèrement courbé ; son amplification sera traitée dans le cours Conditionnement
+    analogique. Pour une thermistance, dont la variation relative est dix fois plus forte, un simple demi-pont fournit
+    directement des centaines de millivolts : c'est la solution retenue pour le mini-projet.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-synthese">Synthèse du module : ce qu'il faut savoir refaire</h3>
+  <p>
+    Le mini-projet s'appuie sur les relations des éléments vues depuis le début du module. Le tableau les rassemble
+    sous une forme homogène : relation entre tension et courant, grandeur continue, énergie stockée, comportement en
+    régime établi et constante de temps dans un circuit du premier ordre. Il se lit ligne par ligne ; la dernière ligne
+    rappelle les deux méthodes de mise en équations du cours précédent.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Relations à maîtriser en fin de module, en convention récepteur</caption>
+      <thead><tr><th>Élément</th><th>Relation</th><th>Grandeur continue</th><th>Énergie</th><th>Régime continu établi</th><th>Premier ordre</th></tr></thead>
+      <tbody>
+        <tr><td>Résistance</td><td>$u = R\,i$</td><td>aucune</td><td>dissipe $R\,i^2$</td><td>inchangée</td><td>fixe $\tau$ avec C ou L</td></tr>
+        <tr><td>Condensateur</td><td>$i = C\,\mathrm{d}u/\mathrm{d}t$</td><td>tension $u_C$</td><td>stocke $\tfrac{1}{2}C u^2$</td><td>circuit ouvert</td><td>$\tau = R_{\mathrm{th}}\,C$</td></tr>
+        <tr><td>Bobine</td><td>$u = L\,\mathrm{d}i/\mathrm{d}t$</td><td>courant $i_L$</td><td>stocke $\tfrac{1}{2}L i^2$</td><td>court-circuit</td><td>$\tau = L/R_{\mathrm{th}}$</td></tr>
+        <tr><td>RLC série</td><td>$\ddot{u}_C + 2\zeta\omega_0\dot{u}_C + \omega_0^2 u_C = \omega_0^2 E$</td><td>$u_C$ et $i$</td><td>échange entre C et L</td><td>C ouvert, L en fil</td><td>$\zeta = \tfrac{R}{2}\sqrt{C/L}$, $\omega_0 = 1/\sqrt{LC}$</td></tr>
+        <tr><td>Réseau linéaire</td><td>$G\,V = I$ ou $R\,J = E$</td><td>variables d'état</td><td>bilan nul (Tellegen)</td><td>réseau résistif</td><td>pôles = valeurs propres de $A$</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Une seule formule résume tous les premiers ordres : $x(t) = x_\infty + \left(x(0^+) - x_\infty\right)e^{-t/\tau}$, où
+    $x(0^+)$ découle de la continuité de $u_C$ ou de $i_L$, $x_\infty$ du schéma en régime établi, et $\tau$ de la
+    résistance de Thévenin vue par l'élément de stockage. C'est elle qui servira au filtre de l'interface, et, par
+    analogie, à l'échauffement du capteur.
+  </p>
+
+  <h3 id="e-capteurs">Modèles des capteurs résistifs : platine et thermistance</h3>
+  <p>
+    Pour une sonde de platine entre $0$ et $100\ ^\circ\mathrm{C}$, on utilise le modèle linéaire
+  </p>
+  <div class="formule-cle">
+    $$R_{\mathrm{Pt}}(\theta) = R_0\,(1 + \alpha\,\theta), \qquad x = \alpha\,\theta$$
+    <p class="formule-cle-legende">
+      $R_0$ : résistance à $0\ ^\circ\mathrm{C}$, en ohms ($100\ \Omega$ pour une Pt100) ; $\theta$ : température en degrés
+      Celsius ; $\alpha$ : coefficient moyen, en $\mathrm{K^{-1}}$, $\alpha = 0{,}00385\ \mathrm{K^{-1}}$ pour les sondes
+      industrielles courantes ; $x$ : variation relative, sans dimension. Hypothèses : plage $0$ à $100\ ^\circ\mathrm{C}$ ;
+      au-delà, le modèle du constructeur ajoute des termes du second ordre et plus. Vérification dimensionnelle :
+      $\alpha\,\theta$ est un produit de $\mathrm{K^{-1}}$ par des kelvins d'écart, donc sans dimension. Cas limite :
+      $\theta = 0$ redonne $R_0$. Interprétation : $0{,}385\ \Omega$ par kelvin pour une Pt100.
+    </p>
+  </div>
+  <p>
+    Pour une thermistance CTN, le modèle à paramètre $B$ découle de la loi d'activation des porteurs : leur densité
+    varie comme $e^{-E_a/(k_B T)}$, où $E_a$ est une énergie d'activation et $k_B$ la constante de Boltzmann, donc la
+    résistance comme l'inverse. En rapportant la résistance à sa valeur $R_{25}$ à $T_{25} = 298{,}15\ \mathrm{K}$, la
+    constante se simplifie :
+  </p>
+  <div class="formule-cle">
+    $$R_T(T) = R_{25}\,\exp\!\left[B\left(\frac{1}{T} - \frac{1}{T_{25}}\right)\right], \qquad
+    \alpha_T = \frac{1}{R_T}\frac{\mathrm{d}R_T}{\mathrm{d}T} = -\frac{B}{T^2}$$
+    <p class="formule-cle-legende">
+      $T$ : température absolue en kelvins ; $B$ : constante du matériau en kelvins, $B = E_a/k_B$ ; $R_{25}$ en ohms.
+      Dérivation du coefficient : $\ln R_T = \ln R_{25} + B/T - B/T_{25}$, d'où $\mathrm{d}(\ln R_T)/\mathrm{d}T = -B/T^2$.
+      Dimension : $B/T^2$ est en $\mathrm{K/K^2} = \mathrm{K^{-1}}$, comme un coefficient de température. Cas limites :
+      $T = T_{25}$ redonne $R_{25}$ ; quand $T$ croît sans limite, $R_T$ tend vers $R_{25}\,e^{-B/T_{25}}$, valeur
+      que le modèle ne prétend pas décrire. Hypothèses : modèle approché, précis à quelques dixièmes de kelvin sur une
+      plage de $50$ à $80\ \mathrm{K}$ autour de $25\ ^\circ\mathrm{C}$ ; sur une plage plus large, le constructeur fournit
+      une table ou les coefficients de Steinhart et Hart.
+    </p>
+  </div>
+  <p>
+    Avec $R_{25} = 10\ \mathrm{k\Omega}$ et $B = 3\,950\ \mathrm{K}$ (valeurs supposées dans toute la séance), le
+    coefficient vaut $-3\,950/298{,}15^2 = -4{,}44\ \%$ par kelvin à $25\ ^\circ\mathrm{C}$, $-5{,}29\ \%$ à
+    $0\ ^\circ\mathrm{C}$ et $-3{,}56\ \%$ à $60\ ^\circ\mathrm{C}$ : la sensibilité relative diminue quand la température
+    monte. La figure compare les deux capteurs sur la plage du mini-projet, $-10$ à $60\ ^\circ\mathrm{C}$.
+  </p>
+  <figure id="e-rt-figure">
+    <svg viewBox="0 0 640 330" role="img" aria-label="Résistance rapportée à sa valeur à 25 degrés en fonction de la température, de moins 10 à 60 degrés : la thermistance CTN passe de 5,82 à 0,25, la sonde Pt100 reste entre 0,88 et 1,12">
+      <g stroke="currentColor" stroke-width="1.4" fill="none" opacity="0.55">
+        <path d="M80 270H580M80 270V30"/>
+        <path d="M80 232H575M80 194H575M80 156H575M80 118H575M80 80H575M80 42H575" stroke-dasharray="2 5"/>
+        <path d="M150 270v6M220 270v6M290 270v6M360 270v6M430 270v6M500 270v6M570 270v6"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M80.0 48.7 L94.0 72.4 L108.0 93.2 L122.0 111.6 L136.0 127.9 L150.0 142.2 L164.0 155.0 L178.0 166.3 L192.0 176.4 L206.0 185.3 L220.0 193.3 L234.0 200.5 L248.0 206.9 L262.0 212.6 L276.0 217.7 L290.0 222.4 L304.0 226.5 L318.0 230.3 L332.0 233.6 L346.0 236.7 L360.0 239.5 L374.0 242.0 L388.0 244.2 L402.0 246.3 L416.0 248.2 L430.0 249.9 L444.0 251.4 L458.0 252.8 L472.0 254.1 L486.0 255.3 L500.0 256.4 L514.0 257.4 L528.0 258.3 L542.0 259.1 L556.0 259.9 L570.0 260.6"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.4" fill="none" stroke-dasharray="9 6" stroke-linecap="round">
+        <path d="M80.0 236.7 L150.0 235.3 L220.0 234.0 L290.0 232.7 L360.0 231.3 L430.0 230.0 L500.0 228.7 L570.0 227.3"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.2" fill="none" stroke-dasharray="4 4" opacity="0.8">
+        <path d="M325 270V232H80"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="325" cy="232" r="4.5"/><circle cx="150" cy="142.2" r="4"/><circle cx="430" cy="249.9" r="4"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="72" y="274" text-anchor="end">0</text><text x="72" y="236" text-anchor="end">1</text>
+        <text x="72" y="160" text-anchor="end">3</text><text x="72" y="84" text-anchor="end">5</text>
+        <text x="80" y="292" text-anchor="middle">-10</text><text x="150" y="292" text-anchor="middle">0</text>
+        <text x="290" y="292" text-anchor="middle">20</text><text x="430" y="292" text-anchor="middle">40</text>
+        <text x="570" y="292" text-anchor="middle">60</text>
+        <text x="330" y="318" text-anchor="middle">température θ en °C</text>
+        <text x="20" y="22">R / R(25 °C)</text>
+        <text x="160" y="136">CTN : 3,36 à 0 °C</text>
+        <text x="424" y="268" text-anchor="end">0,53 à 40 °C</text>
+        <text x="96" y="58">CTN, trait plein : 5,82 à -10 °C</text>
+        <text x="380" y="220">Pt100, tirets : 0,88 à 1,12</text>
+        <text x="250" y="258">1 à 25 °C</text>
+      </g>
+    </svg>
+    <figcaption>
+      Résistance de chaque capteur divisée par sa valeur à $25\ ^\circ\mathrm{C}$, en fonction de la température. La
+      courbe en trait plein est la thermistance CTN, modèle $B = 3\,950\ \mathrm{K}$ ; la droite en tirets est la Pt100,
+      modèle linéaire. Les deux passent par $1$ à $25\ ^\circ\mathrm{C}$, repère marqué par les pointillés. La CTN varie
+      d'un facteur $23$ sur la plage, la Pt100 de $28\ \%$ seulement : la première donne un fort signal non linéaire, la
+      seconde un faible signal presque linéaire.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-demipont">Le demi-pont de mesure et le choix de la résistance fixe</h3>
+  <p>
+    Le montage le plus simple place le capteur en série avec une résistance fixe $R_f$ sous une tension continue $E$.
+    Pour le mini-projet, la CTN est en haut, reliée à $+E$, et $R_f$ en bas, reliée à la référence : la tension de
+    sortie monte quand la température monte, ce qui rend la lecture intuitive, et nous verrons en section I que cette
+    disposition facilite aussi le diagnostic des défauts de câblage.
+  </p>
+  <figure id="e-demipont-figure">
+    <svg viewBox="0 0 560 320" role="img" aria-label="Demi-pont de mesure : source E, borne plus en haut, thermistance RT en haut, résistance fixe Rf en bas, sortie V au point milieu A mesurée par rapport à la référence 0 volt, courant I descendant">
+      <defs>
+        <marker id="fl-e-dp" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto"><path d="M0 0 8 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="90" cy="150" r="22"/>
+        <path d="M90 128V40H260V70M260 130V160M260 220V260H90V172"/>
+        <rect x="248" y="70" width="24" height="60" rx="3"/>
+        <path d="M238 128L284 76"/>
+        <rect x="248" y="160" width="24" height="60" rx="3"/>
+        <path d="M260 145H420M260 260H430"/>
+        <path d="M175 260V272M161 272H189M166 278H184M171 284H179"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.8" fill="none">
+        <path d="M290 40V58" marker-end="url(#fl-e-dp)"/>
+        <path d="M430 250V160" marker-end="url(#fl-e-dp)"/>
+      </g>
+      <g fill="currentColor" stroke="none"><circle cx="260" cy="145" r="5"/><circle cx="420" cy="145" r="4"/></g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="90" y="146" text-anchor="middle" font-weight="600">+</text>
+        <text x="60" y="154" text-anchor="end">E</text>
+        <text x="296" y="98">RT, CTN</text><text x="296" y="114">θ en °C</text>
+        <text x="282" y="194">Rf</text>
+        <text x="298" y="52">I</text>
+        <text x="270" y="140">A</text>
+        <text x="440" y="206">V = VA</text>
+        <text x="175" y="306" text-anchor="middle">0 V, référence</text>
+      </g>
+    </svg>
+    <figcaption>
+      Demi-pont à thermistance. La source $E$ a sa borne $+$ en haut ; le courant $I$ circule de haut en bas dans la CTN
+      puis dans $R_f$, tous deux en convention récepteur. Le trait oblique sur le rectangle du haut est le symbole d'une
+      résistance variable avec la température. La tension de sortie $V$ est le potentiel du point milieu $A$ par rapport
+      à la référence, le conducteur du bas ; sa flèche part de la référence et pointe vers $A$.
+    </figcaption>
+  </figure>
+  <p>
+    À vide, la loi du diviseur donne $V = E\,R_f/(R_f + R_T)$. La sensibilité à la température s'obtient en dérivant par
+    rapport à $R_T$, puis en multipliant par $\mathrm{d}R_T/\mathrm{d}T = \alpha_T R_T$ :
+  </p>
+  <div class="formule-cle">
+    $$V = \frac{E\,R_f}{R_f + R_T}, \qquad S = \frac{\mathrm{d}V}{\mathrm{d}T} = -\frac{E\,R_f}{(R_f + R_T)^2}\,\alpha_T R_T
+    = \frac{E\,B}{T^2}\,\frac{R_f\,R_T}{(R_f + R_T)^2}$$
+    <p class="formule-cle-legende">
+      $S$ en $\mathrm{V/K}$. Dimension : $E$ en volts, $B/T^2$ en $\mathrm{K^{-1}}$, la fraction de résistances sans
+      dimension. Cas limites : $R_f \to 0$ ou $R_f \to \infty$ annulent $S$, la sortie collant à $0$ ou à $E$ ; $E = 0$
+      l'annule aussi. Hypothèses : sortie à vide, source idéale.
+    </p>
+  </div>
+  <p>
+    Le facteur $R_f R_T/(R_f + R_T)^2$ se réécrit $r/(1 + r)^2$ avec $r = R_f/R_T$ ; sa dérivée $(1 - r)/(1 + r)^3$
+    s'annule pour $r = 1$. La sensibilité est donc maximale quand la résistance fixe égale la résistance du capteur à la
+    température où l'on veut lire le plus finement, et elle vaut alors $S_{\max} = E\,|\alpha_T|/4$. Pour une
+    thermistance de $10\ \mathrm{k\Omega}$ à $25\ ^\circ\mathrm{C}$, on choisit $R_f = 10\ \mathrm{k\Omega}$ ; sous
+    $E = 2{,}5\ \mathrm{V}$, la sensibilité vaut $2{,}5 \times 0{,}0444/4 = 27{,}8\ \mathrm{mV/K}$. C'est une règle de
+    conception, pas une loi : si l'on veut une réponse plus linéaire sur une large plage, on s'écarte volontairement de
+    cet optimum.
+  </p>
+
+  <h3 id="e-demipont-sim-section">Simulation interactive : choisir la résistance fixe et l'alimentation</h3>
+  <p>
+    La simulation trace la tension de sortie à vide du demi-pont en fonction de la température, de $-10$ à
+    $60\ ^\circ\mathrm{C}$. Les curseurs règlent $R_f$ et $E$ ; la poignée ronde, sur l'axe des températures, place le
+    point de fonctionnement, où la tangente donne la sensibilité. Prédictions à écrire avant de manipuler : avec
+    $R_f = 2{,}5\ \mathrm{k\Omega}$, la zone la plus pentue de la courbe se déplacera-t-elle vers le froid ou vers le
+    chaud ? En doublant $E$, de combien la sensibilité et la puissance dissipée dans la CTN seront-elles multipliées ?
+  </p>
+  <figure id="e-demipont-sim-figure">
+    <div class="schema-vivant" id="e-demipont-sim"></div>
+    <figcaption>
+      Axe horizontal : température de la CTN, en degrés Celsius ; axe vertical : tension de sortie $V$, en volts, de $0$
+      à $E$. La courbe en trait plein correspond aux réglages des curseurs ; la courbe en pointillé, au réglage de
+      référence $R_f = 10\ \mathrm{k\Omega}$ sous la même tension $E$. Le segment épais centré sur le point de
+      fonctionnement est la tangente, dont la pente est la sensibilité $S$. La poignée se déplace sur la ligne graduée
+      sous l'axe.
+    </figcaption>
+  </figure>
+  <div id="e-demipont-curseurs"></div>
+  <div id="e-demipont-valeurs"></div>
+  <p>
+    Interprétation : la sensibilité est maximale à la température où $R_T = R_f$. Avec $R_f = 2{,}5\ \mathrm{k\Omega}$,
+    ce point passe vers $60\ ^\circ\mathrm{C}$, et la lecture devient grossière au froid ; avec $R_f = 33\ \mathrm{k\Omega}$,
+    il passe vers $0\ ^\circ\mathrm{C}$. La courbe est en S : elle est presque linéaire autour de son point le plus pentu
+    et s'aplatit aux extrémités. Doubler $E$ double la sensibilité, mais quadruple la puissance dissipée dans la CTN,
+    qui vaut au plus $E^2/(4R_f)$ : la sensibilité se paie en auto-échauffement, comme on le chiffre plus bas.
+  </p>
+
+  <h3 id="e-wheatstone">Le pont complet : déséquilibre, non-linéarité et câble</h3>
+  <p>
+    Ajouter au demi-pont capteur un demi-pont de référence donne le pont de Wheatstone de la section D. Avec trois bras
+    égaux à $R_0$ et un capteur $R_0(1 + x)$, on a établi en introduction
+  </p>
+  <div class="formule-cle">
+    $$U_m = \frac{E\,x}{2(2 + x)} \approx \frac{E\,x}{4}, \qquad \varepsilon_{\mathrm{lin}} = \frac{Ex/4 - U_m}{U_m} = \frac{x}{2},
+    \qquad R_{\mathrm{th}} = \frac{R_0}{2} + \frac{R_0(1 + x)}{2 + x}$$
+    <p class="formule-cle-legende">
+      $U_m$ en volts, mesurée par une entrée idéale entre les points milieux ; $x$ sans dimension ; $R_{\mathrm{th}}$ en
+      ohms, résistance vue entre les points milieux, source éteinte. Cas limite : $x = 0$ donne $U_m = 0$, l'équilibre,
+      et $R_{\mathrm{th}} = R_0$. Hypothèses : source idéale, entrée de mesure de résistance infinie.
+    </p>
+  </div>
+  <p>
+    Le pont n'améliore pas la sensibilité, qui reste au mieux $E|\alpha|/4$ par kelvin comme pour le demi-pont : il
+    retire le décalage de $E/2$, ce qui permet d'amplifier le seul écart. Il est indispensable pour une Pt100, dont le
+    signal utile est de quelques millivolts ; il n'apporte rien d'essentiel à une CTN lue par un convertisseur de
+    plusieurs volts de pleine échelle.
+  </p>
+  <p>
+    Le câble fausse une sonde de faible résistance. Une Pt100 reliée par $40\ \mathrm{m}$ de câble $2 \times 0{,}5\ \mathrm{mm^2}$,
+    soit $80\ \mathrm{m}$ de cuivre aller et retour de résistance $0{,}018 \times 80/0{,}5 = 2{,}88\ \Omega$, paraît plus
+    chaude de $2{,}88/0{,}385 = 7{,}5\ \mathrm{K}$. Le montage trois fils corrige cette erreur : le fil 2 prolonge le bras $R_3$ jusqu'à une borne de la sonde, le
+    fil 1 ramène l'autre borne vers la référence, et le fil 3, qui relie la première borne à l'entrée de mesure, ne
+    transporte aucun courant. Les deux fils parcourus par le courant, de même résistance $r$, se trouvent ainsi dans deux
+    bras adjacents du même demi-pont, et leurs effets se compensent à l'équilibre.
+  </p>
+  <figure id="e-troisfils-figure">
+    <svg viewBox="0 0 680 310" role="img" aria-label="Montage trois fils d'une Pt100 : le fil 2 de résistance r prolonge le bras R3 jusqu'à la borne a de la sonde, le fil 1 de résistance r ramène la borne b vers la référence, le fil 3 relie la borne a au point de mesure C sans transporter de courant">
+      <defs>
+        <marker id="fl-e-3f" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto"><path d="M0 0 8 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="1.4" fill="none" stroke-dasharray="6 5" opacity="0.8">
+        <path d="M400 60H660V290H400Z"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="60" cy="150" r="20"/>
+        <path d="M60 130V40H340V70M160 40V70M160 120V170M160 220V260M60 170V260H380V240H420"/>
+        <rect x="148" y="70" width="24" height="50" rx="3"/><rect x="148" y="170" width="24" height="50" rx="3"/>
+        <rect x="328" y="70" width="24" height="50" rx="3"/>
+        <path d="M340 120V160H420M480 160H560V180M560 230V240H480"/>
+        <rect x="420" y="148" width="60" height="24" rx="3"/><rect x="420" y="228" width="60" height="24" rx="3"/>
+        <rect x="548" y="180" width="24" height="50" rx="3"/>
+        <path d="M560 160V110H480M420 110H380"/>
+        <rect x="420" y="98" width="60" height="24" rx="3"/>
+        <path d="M60 260V272M46 272H74M51 278H69M56 284H64"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.8" fill="none">
+        <path d="M376 160H404" marker-end="url(#fl-e-3f)"/>
+        <path d="M512 240H492" marker-end="url(#fl-e-3f)"/>
+      </g>
+      <g fill="currentColor" stroke="none"><circle cx="160" cy="145" r="4.5"/><circle cx="380" cy="110" r="4.5"/><circle cx="560" cy="160" r="4"/><circle cx="560" cy="240" r="4"/></g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="60" y="146" text-anchor="middle" font-weight="600">+</text><text x="34" y="154" text-anchor="end">E</text>
+        <text x="182" y="100">R1</text><text x="182" y="200">R2</text><text x="148" y="149" text-anchor="end">B</text>
+        <text x="318" y="100" text-anchor="end">R3</text>
+        <text x="380" y="98" text-anchor="middle" font-weight="600">C</text>
+        <text x="450" y="138" text-anchor="middle">fil 3 : r, I = 0</text>
+        <text x="450" y="190" text-anchor="middle">fil 2 : r</text>
+        <text x="450" y="270" text-anchor="middle">fil 1 : r</text>
+        <text x="580" y="210">Pt100</text>
+        <text x="572" y="156">a</text><text x="572" y="254">b</text>
+        <text x="530" y="78" text-anchor="middle">câble et sonde, à 40 m</text>
+        <text x="60" y="302" text-anchor="middle">0 V</text>
+      </g>
+    </svg>
+    <figcaption>
+      Montage trois fils. Le cadre en tirets délimite ce qui se trouve à $40\ \mathrm{m}$ : les trois conducteurs du
+      câble, chacun de résistance $r$, et la sonde, de bornes $a$ et $b$. Le fil 2 prolonge le bras $R_3$ jusqu'à la
+      borne $a$ ; le fil 1 ramène la borne $b$ vers la référence, la borne $-$ de $E$. Les flèches donnent le sens du
+      courant de la branche capteur, qui traverse $R_3$, le fil 2, la sonde puis le fil 1. Le bras du haut vaut donc
+      $R_3 + r$ et celui du bas $R_{\mathrm{Pt}} + r$. Le fil 3 relie la borne $a$ au point de mesure $C$ ; l'entrée
+      étant idéale, il ne transporte aucun courant et ne crée aucune chute. Le pont se lit entre $B$ et $C$.
+    </figcaption>
+  </figure>
+  <p>
+    À l'équilibre, $R_3 + r = R_{\mathrm{Pt}} + r$ entraîne $R_{\mathrm{Pt}} = R_3$ : la résistance des fils disparaît.
+    Hors équilibre, la compensation est partielle, mais l'erreur tombe de plusieurs kelvins à quelques centièmes. Pour
+    une CTN de $10\ \mathrm{k\Omega}$, au contraire, les mêmes $2{,}88\ \Omega$ ne représentent que $0{,}029\ \%$ de la
+    résistance, soit $2{,}88/(10\,000 \times 0{,}0444) = 0{,}006\ \mathrm{K}$ : deux fils suffisent.
+  </p>
+
+  <h3 id="e-charge">Charger le diviseur : l'entrée de mesure et le filtre font partie du modèle</h3>
+  <p>
+    L'interface du mini-projet ajoute derrière le point $A$ une résistance série $R_s$, un condensateur $C$ vers la
+    référence et l'entrée de l'automate, de résistance $R_{\mathrm{in}}$. En régime continu établi, le condensateur est
+    un circuit ouvert ; $R_s$ et $R_{\mathrm{in}}$ forment une charge $R_s + R_{\mathrm{in}}$ en parallèle sur $R_f$, et
+    un second diviseur entre $A$ et l'entrée $B$. On obtient, sans approximation :
+  </p>
+  <div class="formule-cle">
+    $$R_p = R_f \parallel (R_s + R_{\mathrm{in}}), \qquad k = \frac{R_{\mathrm{in}}}{R_s + R_{\mathrm{in}}}, \qquad
+    V_B = k\,E\,\frac{R_p}{R_T + R_p} \quad\Longleftrightarrow\quad R_T = R_p\left(\frac{k\,E}{V_B} - 1\right)$$
+    <p class="formule-cle-legende">
+      Toutes les résistances en ohms, $E$ et $V_B$ en volts, $k$ sans dimension. Cas limites : $R_{\mathrm{in}} \to \infty$
+      redonne $k = 1$ et $R_p = R_f$, le diviseur à vide ; $R_T \to 0$ donne $V_B = kE$ ; $R_T \to \infty$ donne
+      $V_B = 0$. Hypothèses : régime continu établi, éléments linéaires, courants de fuite du condensateur négligés.
+    </p>
+  </div>
+  <p>
+    La seconde forme est celle que l'automate doit programmer : elle convertit la tension lue en résistance, puis le
+    modèle $B$ inversé, $1/T = 1/T_{25} + \ln(R_T/R_{25})/B$, donne la température. La charge n'est pas une erreur tant
+    qu'elle figure dans le modèle ; elle le devient si le programme utilise la formule du diviseur à vide. Avec
+    $R_f = R_s = 10\ \mathrm{k\Omega}$ et $R_{\mathrm{in}} = 100\ \mathrm{k\Omega}$, on a $R_p = 9{,}167\ \mathrm{k\Omega}$
+    et $k = 0{,}9091$ : à $25\ ^\circ\mathrm{C}$, l'entrée reçoit $1{,}087\ \mathrm{V}$ au lieu des $1{,}25\ \mathrm{V}$ du
+    diviseur à vide, et un programme qui ignorerait la charge calculerait $R_T = 13{,}0\ \mathrm{k\Omega}$, soit
+    $19{,}2\ ^\circ\mathrm{C}$ au lieu de $25\ ^\circ\mathrm{C}$.
+  </p>
+
+  <h3 id="e-echauffement">Auto-échauffement : un bilan de puissance et un circuit thermique</h3>
+  <p>
+    Le capteur dissipe $P = R_T I^2$ avec $I = E/(R_T + R_p)$. En régime établi, il évacue cette puissance vers le milieu
+    ambiant à travers une conductance thermique $\delta$, la constante de dissipation, en watts par kelvin : son
+    excès de température vaut $\Delta T = P/\delta$. La puissance est maximale quand le capteur égale la résistance qui
+    l'alimente : c'est le théorème du transfert maximal de puissance du cours
+    <a href="#/cours/revision-1-et-etude-de-cas-continu">Révision 1 et étude de cas continu</a>, appliqué au dipôle de
+    Thévenin $(E, R_p)$ vu de la CTN.
+  </p>
+  <div class="formule-cle">
+    $$P = \frac{E^2 R_T}{(R_T + R_p)^2} \leq \frac{E^2}{4R_p}, \qquad \Delta T = \frac{P}{\delta}, \qquad
+    E_{\max} = \sqrt{4\,R_p\,\delta\,\Delta T_{\max}}$$
+    <p class="formule-cle-legende">
+      $P$ en watts, $\delta$ en $\mathrm{W/K}$, $\Delta T$ en kelvins. Dimension : $\mathrm{V^2/\Omega} = \mathrm{W}$ et
+      $\mathrm{W}/(\mathrm{W/K}) = \mathrm{K}$. Hypothèses : régime thermique établi, $\delta$ constant ; la valeur
+      $\delta = 1{,}5\ \mathrm{mW/K}$ retenue ici, typique d'une petite perle enrobée dans l'air calme, est une donnée
+      constructeur qui chute en air immobile et monte dans un liquide ou en air brassé.
+    </p>
+  </div>
+  <p>
+    Sous $E = 10\ \mathrm{V}$, la CTN de $10\ \mathrm{k\Omega}$ dissiperait $2{,}72\ \mathrm{mW}$ à $25\ ^\circ\mathrm{C}$ et
+    lirait $1{,}81\ \mathrm{K}$ de trop ; sous $E = 2{,}5\ \mathrm{V}$, la puissance tombe à $0{,}170\ \mathrm{mW}$ et
+    l'erreur à $0{,}11\ \mathrm{K}$. C'est l'arbitrage central de la conception : la sensibilité croît comme $E$, la
+    puissance comme $E^2$.
+  </p>
+  <p>
+    Le même circuit thermique a une dynamique. Le capteur possède une capacité thermique $C_{\mathrm{th}}$, en joules
+    par kelvin, qui stocke de l'énergie comme un condensateur stocke des charges ; la conductance $\delta$ joue le rôle
+    de $1/R$, la température celui de la tension, la puissance celui du courant. L'équation
+    $C_{\mathrm{th}}\,\mathrm{d}T_c/\mathrm{d}t = \delta\,(T_a - T_c) + P$ est exactement celle d'un circuit RC : la
+    température du capteur suit celle de l'air avec la constante de temps $\tau_{\mathrm{th}} = C_{\mathrm{th}}/\delta$.
+  </p>
+  <figure id="e-thermique-figure">
+    <svg viewBox="0 0 640 230" role="img" aria-label="Analogie thermique et électrique : à gauche, source de température Ta, conductance delta, capacité thermique Cth et source de puissance P ; à droite, circuit RC électrique équivalent">
+      <g stroke="currentColor" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="50" cy="110" r="20"/>
+        <path d="M50 90V40H100M160 40H240V90M240 120V170H50V130M240 40H290V90M290 130V170H240"/>
+        <rect x="100" y="28" width="60" height="24" rx="3"/>
+        <path d="M222 90H258M222 102H258" stroke-width="3"/><path d="M240 102V120"/>
+        <circle cx="290" cy="110" r="20"/><path d="M290 122V100"/><path d="M284 106 290 98 296 106"/>
+        <circle cx="380" cy="110" r="20"/>
+        <path d="M380 90V40H430M490 40H570V90M570 120V170H380V130"/>
+        <rect x="430" y="28" width="60" height="24" rx="3"/>
+        <path d="M552 90H588M552 102H588" stroke-width="3"/><path d="M570 102V120"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="50" y="114" text-anchor="middle">Ta</text>
+        <text x="130" y="20" text-anchor="middle">1/δ en K/W</text>
+        <text x="214" y="102" text-anchor="end">Cth</text>
+        <text x="318" y="114">P</text>
+        <text x="240" y="30" text-anchor="middle">Tc</text>
+        <text x="165" y="200" text-anchor="middle">thermique : Tc en K, P en W</text>
+        <text x="380" y="106" text-anchor="middle" font-weight="600">+</text><text x="352" y="114" text-anchor="end">E</text>
+        <text x="460" y="20" text-anchor="middle">R en Ω</text>
+        <text x="600" y="100">C</text>
+        <text x="570" y="30" text-anchor="middle">uC</text>
+        <text x="480" y="200" text-anchor="middle">électrique : uC en V, i en A</text>
+        <text x="165" y="222" text-anchor="middle">référence : 0 K d'écart</text>
+        <text x="480" y="222" text-anchor="middle">référence : 0 V</text>
+      </g>
+    </svg>
+    <figcaption>
+      Analogie thermique contrôlée. À gauche, la source de température $T_a$ (l'air) alimente le nœud $T_c$ (le capteur)
+      à travers la résistance thermique $1/\delta$ ; la capacité $C_{\mathrm{th}}$ relie ce nœud à la référence, et la
+      source de puissance $P$, flèche vers le haut, y injecte l'échauffement électrique. À droite, le circuit RC
+      électrique équivalent, source $E$ borne $+$ en haut. Limite de l'analogie : il n'existe pas d'inductance
+      thermique, si bien qu'un circuit thermique passif ne peut jamais osciller.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-thermique-section">Animation : la sonde plongée dans un air plus froid</h3>
+  <p>
+    La sonde, à l'équilibre à $25\ ^\circ\mathrm{C}$, est soudain exposée à un air à $5\ ^\circ\mathrm{C}$ (ouverture de
+    la porte de l'armoire en hiver, par exemple). Hypothèse : $\tau_{\mathrm{th}} = 10\ \mathrm{s}$, valeur typique d'une
+    petite perle dans l'air calme ; le filtre électrique, de constante de temps voisine de $0{,}3\ \mathrm{s}$, est
+    négligé devant elle. La lecture fait avancer le temps, que vous pouvez arrêter, ralentir ou remettre à zéro.
+    Prédiction : au bout de $10\ \mathrm{s}$, la sonde aura-t-elle parcouru le tiers, la moitié ou les deux tiers de
+    l'écart ? Combien de temps faudra-t-il pour que la lecture soit à moins de $0{,}2\ \mathrm{K}$ de l'air ?
+  </p>
+  <figure id="e-thermique-anim-figure">
+    <div id="e-thermique-anim"></div>
+    <figcaption>
+      Axe horizontal : temps écoulé depuis le changement d'air, en secondes ; axe vertical : température en degrés
+      Celsius. La courbe de la sonde se trace au fur et à mesure de la lecture ; la ligne en tirets marque l'air à
+      $5\ ^\circ\mathrm{C}$, et le point indique l'instant courant.
+    </figcaption>
+  </figure>
+  <div id="e-thermique-lecteur"></div>
+  <div id="e-thermique-valeurs"></div>
+  <p>
+    Interprétation : à $t = \tau_{\mathrm{th}} = 10\ \mathrm{s}$, la sonde a parcouru $63\ \%$ de l'écart et lit
+    $12{,}4\ ^\circ\mathrm{C}$ ; à $30\ \mathrm{s}$, $6{,}0\ ^\circ\mathrm{C}$. L'écart de $20\ \mathrm{K}$ passe sous
+    $0{,}2\ \mathrm{K}$ après $\tau_{\mathrm{th}}\ln(100) = 46\ \mathrm{s}$. C'est le capteur, pas l'électronique, qui
+    fixe la rapidité de la mesure : il ne sert à rien de rendre le filtre électrique plus rapide que la sonde, et il
+    serait absurde de faire réagir le réchauffage de l'armoire en moins d'une minute.
+  </p>
+
+  <h3 id="e-filtre">Le filtre RC : atténuation et délai d'établissement</h3>
+  <p>
+    Le câble de $40\ \mathrm{m}$ chemine près des câbles de puissance et capte une tension parasite à $50\ \mathrm{Hz}$. Le
+    filtre $R_s$, $C$ l'atténue. Vu du condensateur, les sources éteintes, le réseau présente la résistance de Thévenin
+    $R_{\mathrm{eq}} = \left[(R_T \parallel R_f) + R_s\right] \parallel R_{\mathrm{in}}$ : la résistance du pont s'ajoute à
+    celle du filtre, et elle varie avec la température. En notant $k'$ le rapport du diviseur continu entre la tension
+    de Thévenin du demi-pont et l'entrée :
+  </p>
+  <div class="formule-cle">
+    $$\tau = R_{\mathrm{eq}}\,C, \qquad |H(f)| = \frac{k'}{\sqrt{1 + (2\pi f\tau)^2}}, \qquad
+    t_{\text{ét}} = \tau\,\ln\frac{\Delta V}{q/2}$$
+    <p class="formule-cle-legende">
+      $\tau$ en secondes ; $|H|$ sans dimension, rapport entre la tension parasite à l'entrée et celle superposée à la
+      tension de Thévenin du demi-pont ; $k' = R_{\mathrm{in}}/\left[(R_T \parallel R_f) + R_s + R_{\mathrm{in}}\right]$ ;
+      $t_{\text{ét}}$ : délai pour qu'un échelon $\Delta V$ soit établi à un demi-pas $q/2$ près, déduit de
+      $\Delta V e^{-t/\tau} = q/2$. Cas limites : $f \to 0$ donne $|H| = k'$, le gain continu ; à $f = 1/(2\pi\tau)$, le
+      gain est divisé par $\sqrt{2}$. Hypothèses : condensateur idéal, sans fuite ; perturbation en mode différentiel.
+    </p>
+  </div>
+  <p>
+    Le pire cas pour l'atténuation est la température où $R_{\mathrm{eq}}$ est la plus petite, donc la plus chaude, car
+    $R_T$ y est faible ; le pire cas pour le délai est la plus froide. Avec $R_s = 10\ \mathrm{k\Omega}$ et
+    $C = 22\ \mu\mathrm{F}$, $\tau$ vaut $0{,}344\ \mathrm{s}$ à $-10\ ^\circ\mathrm{C}$, $0{,}287\ \mathrm{s}$ à
+    $25\ ^\circ\mathrm{C}$ et $0{,}236\ \mathrm{s}$ à $60\ ^\circ\mathrm{C}$. Le condensateur doit être à film : un
+    électrolytique de cette valeur présente un courant de fuite de l'ordre du microampère, qui, traversant
+    $R_{\mathrm{eq}} \approx 13\ \mathrm{k\Omega}$, décalerait la mesure de plus de $10\ \mathrm{mV}$, soit près d'un
+    demi-kelvin.
+  </p>
+
+  <h3 id="e-conversion">La conversion : pas de quantification et résolution en température</h3>
+  <p>
+    Le convertisseur de l'automate découpe sa pleine échelle $V_{\mathrm{PE}}$ en $2^n$ pas égaux. Hypothèse pour le
+    projet : entrée $0$ à $10\ \mathrm{V}$, $n = 12$ bits. Le code est l'entier le plus proche de $V_B/q$ ; l'erreur de
+    quantification est comprise entre $-q/2$ et $+q/2$. La résolution en température est le pas divisé par la
+    sensibilité de la chaîne au point considéré :
+  </p>
+  <div class="formule-cle">
+    $$q = \frac{V_{\mathrm{PE}}}{2^n} = \frac{10}{4\,096} = 2{,}44\ \mathrm{mV}, \qquad N = \mathrm{arrondi}\!\left(\frac{V_B}{q}\right),
+    \qquad \Delta T_q = \frac{q}{S_B}$$
+    <p class="formule-cle-legende">
+      $q$ en volts, $N$ sans dimension, $S_B = \mathrm{d}V_B/\mathrm{d}T$ en $\mathrm{V/K}$, $\Delta T_q$ en kelvins.
+      Avec la charge, $S_B = k\,E\,B\,R_p R_T/\left[T^2(R_T + R_p)^2\right]$, soit $25{,}2\ \mathrm{mV/K}$ à
+      $25\ ^\circ\mathrm{C}$ et une résolution de $0{,}097\ \mathrm{K}$. Hypothèse : convertisseur idéal ; ses erreurs de
+      décalage et de gain, exprimées en pourcentage de la pleine échelle, s'ajoutent au budget.
+    </p>
+  </div>
+
+  <h3 id="e-quantif-section">Animation : la marche d'escalier du convertisseur</h3>
+  <p>
+    L'animation agrandit le bas de l'échelle du convertisseur : l'entrée balaie lentement les dix premiers pas, et la
+    sortie numérique, multipliée par $q$, reproduit l'entrée en marches d'escalier. La lecture, la pause, la vitesse et
+    la remise à zéro sont commandées par vous. Prédiction : l'erreur de quantification sera-t-elle toujours du même
+    signe ? Où sera-t-elle nulle, et où sera-t-elle maximale ?
+  </p>
+  <figure id="e-quantif-figure">
+    <div id="e-quantif"></div>
+    <figcaption>
+      Axe horizontal : tension d'entrée en millivolts ; axe vertical : tension en millivolts. La première courbe de la
+      légende est la sortie quantifiée $N\,q$, en escalier ; la deuxième est l'entrée idéale, la droite $V = V_B$ ; la
+      troisième, l'erreur de quantification $Nq - V$ amplifiée trois fois et centrée sur $-5\ \mathrm{mV}$, dont la ligne
+      horizontale en tirets marque la valeur nulle. Le point marque l'instant courant et le code $N$ correspondant.
+    </figcaption>
+  </figure>
+  <div id="e-quantif-lecteur"></div>
+  <div id="e-quantif-valeurs"></div>
+  <p>
+    Interprétation : l'erreur prend alternativement les deux signes, en dents de scie ; elle est nulle au milieu de
+    chaque marche, quand l'entrée vaut exactement un multiple de $q$, et vaut $\pm q/2 = \pm 1{,}22\ \mathrm{mV}$ aux
+    transitions. Sa valeur maximale est fixe en volts, si bien qu'en kelvins elle grandit là où la sensibilité diminue :
+    $0{,}16\ \mathrm{K}$ par pas à $-10\ ^\circ\mathrm{C}$, $0{,}18\ \mathrm{K}$ à $60\ ^\circ\mathrm{C}$. C'est aussi
+    pourquoi on règle le filtre pour que le résidu à $50\ \mathrm{Hz}$ reste sous un demi-pas : au-delà, la perturbation
+    ferait sauter le code d'une marche à l'autre.
+  </p>
+
+  <h3 id="e-statut">Statut des énoncés</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Lois, conventions, approximations, règles de conception et données constructeur</caption>
+      <thead><tr><th>Énoncé</th><th>Statut</th></tr></thead>
+      <tbody>
+        <tr><td>Loi des nœuds, loi des mailles, $P = R I^2$, $i = C\,\mathrm{d}u/\mathrm{d}t$</td><td>lois physiques</td></tr>
+        <tr><td>Résistance qui croît avec la température dans un métal, décroît dans un semi-conducteur</td><td>loi physique, qualitative</td></tr>
+        <tr><td>CTN en haut du demi-pont, sens de $U_m$, référence $0\ \mathrm{V}$ sur le conducteur du bas</td><td>conventions de ce cours</td></tr>
+        <tr><td>Modèle linéaire de la Pt100, modèle $B$ de la CTN, $\delta$ constant, $\tau_{\mathrm{th}}$ unique</td><td>approximations</td></tr>
+        <tr><td>$R_f = R_T$ au point de lecture le plus fin, résidu parasite sous $q/2$, auto-échauffement petit devant la précision visée</td><td>règles de conception</td></tr>
+        <tr><td>$R_{25}$, $B$, tolérances, $\delta$, $\tau_{\mathrm{th}}$, $R_{\mathrm{in}}$, nombre de bits, précision du module, coefficient $0{,}00385\ \mathrm{K^{-1}}$</td><td>données du constructeur ou d'une norme de produit, à vérifier sur la documentation</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, la chaîne de mesure complète du capteur à la température
+    affichée, puis l'organigramme de conception de l'interface et un tableau comparatif des montages. Les figures des
+    capteurs, du demi-pont, du montage trois fils et du circuit thermique, ainsi que les animations et les simulations,
+    ont été placées au fil du texte, au contact des explications qu'elles illustrent ; elles sont rappelées en fin de
+    section.
+  </p>
+
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 1000 380" role="img" aria-label="Chaîne de mesure simple : capteur CTN, demi-pont alimenté par la référence de 2,5 volts, filtre RC, conversion analogique numérique sur 12 bits, traitement dans l'automate, avec les valeurs à 25 degrés à chaque étape">
+      <defs>
+        <marker id="fl-f-chaine" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto"><path d="M0 0 8 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="1.8" fill="none">
+        <rect x="8" y="50" width="170" height="210" rx="8"/>
+        <rect x="208" y="50" width="190" height="210" rx="8"/>
+        <rect x="428" y="50" width="170" height="210" rx="8"/>
+        <rect x="628" y="50" width="160" height="210" rx="8"/>
+        <rect x="818" y="50" width="174" height="210" rx="8"/>
+        <path d="M180 155H202" marker-end="url(#fl-f-chaine)"/>
+        <path d="M400 155H422" marker-end="url(#fl-f-chaine)"/>
+        <path d="M600 155H622" marker-end="url(#fl-f-chaine)"/>
+        <path d="M790 155H812" marker-end="url(#fl-f-chaine)"/>
+        <path d="M905 262V320H93V266" stroke-dasharray="7 5" marker-end="url(#fl-f-chaine)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="80" y="100" width="22" height="50" rx="3"/><path d="M70 146L112 104"/>
+        <path d="M91 100V84M91 150V170"/>
+        <path d="M240 90H300V104M300 144V160M300 200V226H240"/>
+        <rect x="290" y="104" width="20" height="40" rx="3"/><path d="M282 142L318 106"/>
+        <rect x="290" y="160" width="20" height="40" rx="3"/>
+        <path d="M300 152H350"/>
+        <path d="M450 152H480M520 152H560V168M560 182V210M545 210H575"/>
+        <rect x="480" y="142" width="40" height="20" rx="3"/>
+        <path d="M546 168H574M546 182H574" stroke-width="2.6"/>
+        <path d="M650 110H710L740 150L710 190H650Z"/>
+      </g>
+      <g fill="currentColor" stroke="none"><circle cx="300" cy="152" r="4"/><circle cx="560" cy="152" r="4"/></g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11">
+        <text x="93" y="74" text-anchor="middle" font-weight="600" font-size="12.5">1. Capteur</text>
+        <text x="93" y="194" text-anchor="middle">CTN 10 kΩ, B 3950 K</text>
+        <text x="93" y="212" text-anchor="middle">à 40 m, 2 fils</text>
+        <text x="93" y="236" text-anchor="middle">RT = 10,0 kΩ</text>
+        <text x="303" y="74" text-anchor="middle" font-weight="600" font-size="12.5">2. Demi-pont</text>
+        <text x="236" y="86" text-anchor="end">+</text><text x="236" y="100" text-anchor="end">2,5 V</text>
+        <text x="318" y="186">Rf 10 kΩ</text>
+        <text x="330" y="144">A</text>
+        <text x="303" y="246" text-anchor="middle">VA = 1,196 V</text>
+        <text x="513" y="74" text-anchor="middle" font-weight="600" font-size="12.5">3. Filtre RC</text>
+        <text x="500" y="134" text-anchor="middle">Rs 10 kΩ</text>
+        <text x="540" y="182" text-anchor="end">C 22 µF</text>
+        <text x="548" y="142">B</text>
+        <text x="513" y="232" text-anchor="middle">τ = 0,29 s, -39 dB</text>
+        <text x="513" y="248" text-anchor="middle">VB = 1,087 V</text>
+        <text x="708" y="74" text-anchor="middle" font-weight="600" font-size="12.5">4. Conversion</text>
+        <text x="690" y="154" text-anchor="middle">CAN</text>
+        <text x="708" y="214" text-anchor="middle">0 à 10 V, 12 bits</text>
+        <text x="708" y="230" text-anchor="middle">Rin = 100 kΩ</text>
+        <text x="708" y="248" text-anchor="middle">N = 445</text>
+        <text x="905" y="74" text-anchor="middle" font-weight="600" font-size="12.5">5. Automate</text>
+        <text x="905" y="110" text-anchor="middle">RT = Rp (kE/VB - 1)</text>
+        <text x="905" y="134" text-anchor="middle">1/T = 1/T25</text>
+        <text x="905" y="150" text-anchor="middle">+ ln(RT/R25)/B</text>
+        <text x="905" y="174" text-anchor="middle">- 0,11 K d'auto-</text>
+        <text x="905" y="190" text-anchor="middle">échauffement</text>
+        <text x="905" y="214" text-anchor="middle">tests de défaut</text>
+        <text x="905" y="248" text-anchor="middle">θ = 25,0 °C</text>
+        <text x="190" y="40" text-anchor="middle">résistance</text>
+        <text x="412" y="40" text-anchor="middle">tension</text>
+        <text x="612" y="40" text-anchor="middle">tension filtrée</text>
+        <text x="802" y="40" text-anchor="middle">code</text>
+        <text x="500" y="346" text-anchor="middle">validation : bilan de puissance, cas limites, comparaison à un thermomètre de référence ; écart : revenir au capteur</text>
+        <text x="500" y="368" text-anchor="middle">0 V : référence commune de la chaîne, conducteur du bas de chaque étage</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal : la chaîne de mesure simple du mini-projet, du capteur à la température affichée, avec les
+      valeurs à $25\ ^\circ\mathrm{C}$. Les cinq cadres se lisent de gauche à droite ; le mot au-dessus de chaque flèche
+      pleine nomme la grandeur transmise. Dans le cadre 2, la référence de $2{,}5\ \mathrm{V}$ alimente la CTN, en haut,
+      et $R_f$, en bas ; dans le cadre 3, $R_s$ est en série et $C$ va du point $B$ à la référence ; le cadre 4 est le
+      convertisseur, d'entrée $B$ ; le cadre 5 résume les calculs programmés. Toutes les tensions sont mesurées par
+      rapport au conducteur $0\ \mathrm{V}$. La flèche de retour en tirets rappelle que la validation peut renvoyer au
+      capteur : une mesure n'est acquise qu'après comparaison à une référence.
+    </figcaption>
+  </figure>
+
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Cahier des charges : plage, précision, rapidité, distance"] --> B{"Variation relative du capteur ?"}
+  B -->|"forte, CTN"| C["Demi-pont : Rf = RT au point de lecture le plus fin"]
+  B -->|"faible, Pt100"| D["Pont de Wheatstone, trois fils, amplification"]
+  C --> E["Choisir E : auto-échauffement P / δ petit devant la précision"]
+  D --> E
+  E --> F["Écrire le modèle chargé : Rp, k, Rin, Rs"]
+  F --> G["Filtre : τ = Req C au pire cas chaud, résidu 50 Hz sous q/2"]
+  G --> H["Délai d'établissement : τ ln(ΔV / (q/2)) au pire cas froid"]
+  H --> I["Résolution : q / S aux extrémités de la plage"]
+  I --> J["Budget d'erreur : tolérances, module, quantification, échauffement"]
+  J --> K{"Budget dans la précision visée ?"}
+  K -->|"non"| L["Changer E, Rf, capteur, module ou étalonner"]
+  L --> E
+  K -->|"oui"| M["Seuils de défaut, temporisation, validation au banc"]</pre>
+    <figcaption>
+      Organigramme de conception d'une interface de capteur résistif. Les rectangles sont des étapes, les losanges des
+      décisions, les libellés des flèches les réponses. La première décision choisit le montage selon l'amplitude du
+      signal ; la boucle de retour, depuis le budget d'erreur, renvoie au choix de l'alimentation, car c'est le paramètre
+      qui arbitre entre sensibilité et auto-échauffement.
+    </figcaption>
+  </figure>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Comparaison des montages de mesure de température résistive, câble de 40 m en 2 x 0,5 mm²</caption>
+      <thead><tr><th>Critère</th><th>Demi-pont à CTN</th><th>Pont à Pt100, deux fils</th><th>Pont à Pt100, trois fils</th></tr></thead>
+      <tbody>
+        <tr><td>Signal utile</td><td>centaines de millivolts, lisible directement</td><td>quelques millivolts, à amplifier</td><td>quelques millivolts, à amplifier</td></tr>
+        <tr><td>Linéarité</td><td>forte courbure, modèle $B$ à inverser</td><td>presque linéaire, écart $x/2$ du pont</td><td>idem</td></tr>
+        <tr><td>Effet du câble</td><td>$0{,}006\ \mathrm{K}$, négligeable</td><td>$+7{,}5\ \mathrm{K}$, inacceptable</td><td>compensé à l'équilibre</td></tr>
+        <tr><td>Interchangeabilité</td><td>tolérance de $R_{25}$ et de $B$, $0{,}2$ à $0{,}3\ \mathrm{K}$</td><td>bonne, sondes de classe normalisée</td><td>bonne</td></tr>
+        <tr><td>Plage typique</td><td>quelques dizaines de kelvins autour de l'ambiante</td><td>large, jusqu'à plusieurs centaines de degrés</td><td>idem</td></tr>
+        <tr><td>Usage typique</td><td>armoires, ambiance, électronique</td><td>sondes proches du module seulement</td><td>process, paliers, fluides</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-pont-figure" data-renvoi="d-pont-figure">l'animation du pont de platine qui se déséquilibre</a>, section D ;</li>
+    <li><a href="#e-rt-figure" data-renvoi="e-rt-figure">les caractéristiques de la CTN et de la Pt100</a>, <a href="#e-demipont-figure" data-renvoi="e-demipont-figure">le demi-pont et ses conventions</a>, <a href="#e-demipont-sim-figure" data-renvoi="e-demipont-sim-figure">la simulation du choix de la résistance fixe</a>, <a href="#e-troisfils-figure" data-renvoi="e-troisfils-figure">le montage trois fils</a>, <a href="#e-thermique-figure" data-renvoi="e-thermique-figure">l'analogie thermique</a>, <a href="#e-thermique-anim-figure" data-renvoi="e-thermique-anim-figure">l'animation de la réponse thermique</a> et <a href="#e-quantif-figure" data-renvoi="e-quantif-figure">l'animation de la quantification</a>, section E ;</li>
+    <li><a href="#h-interface-figure" data-renvoi="h-interface-figure">le schéma complet de l'interface</a>, section H ;</li>
+    <li><a href="#i-interface-sim-figure" data-renvoi="i-interface-sim-figure">la simulation de l'interface complète</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour concevoir ou vérifier l'interface d'un capteur résistif alimentée en continu :</p>
+  <ol>
+    <li>Traduire le cahier des charges en nombres : plage de mesure, précision et résolution visées, rapidité utile, distance au module, nature et amplitude des perturbations ; noter ce qui est hypothèse.</li>
+    <li>Modéliser le capteur sur la plage : résistance aux extrémités et au point central, coefficient de température, données du constructeur (tolérances, constante de dissipation, constante de temps).</li>
+    <li>Choisir le montage : demi-pont si la variation relative est forte, pont complet avec amplification si elle est faible ; deux, trois ou quatre fils selon le rapport entre la résistance du câble et la variation par kelvin.</li>
+    <li>Fixer $R_f$ égale à la résistance du capteur au point de lecture le plus fin, puis $E$ par la contrainte d'auto-échauffement $E \leq \sqrt{4R_p\,\delta\,\Delta T_{\max}}$.</li>
+    <li>Écrire le modèle complet, charges comprises, par diviseurs successifs ou par la méthode des nœuds ; l'inverser pour la formule que programmera l'automate.</li>
+    <li>Dimensionner le filtre avec la résistance de Thévenin vue par le condensateur : atténuation au pire cas où $R_{\mathrm{eq}}$ est minimale, délai d'établissement au pire cas où elle est maximale ; choisir un condensateur à faible fuite.</li>
+    <li>Calculer la sensibilité et la résolution aux extrémités de la plage, puis le budget d'erreur, en séparant les erreurs systématiques corrigeables des incertitudes.</li>
+    <li>Valider : dimensions, cas limites ($R_T \to 0$ et $R_T \to \infty$), loi des nœuds aux nœuds du schéma, bilan de puissance, comparaison à un thermomètre de référence ; définir les seuils de défaut et la temporisation de mise sous tension.</li>
+  </ol>
+  <p>
+    Choix de méthode : les diviseurs successifs suffisent tant que le réseau est une chaîne d'étages, comme ici ; la
+    méthode des nœuds s'impose dès qu'un élément relie deux branches, comme l'entrée différentielle d'un pont chargé. Le
+    budget pire cas, somme des valeurs absolues, est la règle prudente pour une sécurité ; la somme quadratique, plus
+    réaliste pour des erreurs indépendantes, sera justifiée dans le cours Métrologie électrique.
+  </p>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Situation : mesurer la température d'une armoire déportée entre $-10$ et $60\ ^\circ\mathrm{C}$ avec une CTN de
+    $R_{25} = 10\ \mathrm{k\Omega}$, $B = 3\,950\ \mathrm{K}$, $\delta = 1{,}5\ \mathrm{mW/K}$, raccordée par $40\ \mathrm{m}$
+    de câble $2 \times 0{,}5\ \mathrm{mm^2}$. Interface : référence $E = 2{,}5\ \mathrm{V}$, $R_f = 10\ \mathrm{k\Omega}$,
+    filtre $R_s = 10\ \mathrm{k\Omega}$ et $C = 22\ \mu\mathrm{F}$ à film, entrée $0$ à $10\ \mathrm{V}$ de
+    $R_{\mathrm{in}} = 100\ \mathrm{k\Omega}$ sur $12$ bits. Perturbation supposée : $100\ \mathrm{mV}$ crête à
+    $50\ \mathrm{Hz}$ superposés à la tension de Thévenin du demi-pont. Exigences : résolution meilleure que
+    $0{,}2\ \mathrm{K}$ sur toute la plage, auto-échauffement inférieur à $0{,}15\ \mathrm{K}$, résidu à
+    $50\ \mathrm{Hz}$ inférieur à $q/2$. Toutes ces valeurs sont des hypothèses d'étude.
+  </p>
+  <p>
+    Inconnues : tension d'entrée, code et sensibilité aux points $-10$, $0$, $25$, $40$ et $60\ ^\circ\mathrm{C}$ ;
+    auto-échauffement ; constante de temps, atténuation et délai d'établissement ; vérification par la loi des nœuds et le
+    bilan de puissance. Stratégie : modèle du capteur, puis réduction de la chaîne par diviseurs successifs, puis
+    Thévenin vu du condensateur pour la dynamique.
+  </p>
+  <figure id="h-interface-figure">
+    <svg viewBox="0 0 900 330" role="img" aria-label="Schéma complet de l'interface : référence 2,5 volts, câble de 40 mètres de résistance 2,88 ohms au total, CTN, point A, résistance Rf vers la référence, résistance série Rs, point B, condensateur C et entrée de l'automate de 100 kiloohms vers la référence">
+      <defs>
+        <marker id="fl-h-int" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto"><path d="M0 0 8 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="1.4" fill="none" stroke-dasharray="6 5" opacity="0.8">
+        <path d="M108 20H330V300H108Z"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="70" cy="160" r="22"/>
+        <path d="M70 138V60H120M150 60H200V90M200 150V180H240M270 180H380"/>
+        <rect x="120" y="50" width="30" height="20" rx="3"/>
+        <rect x="240" y="170" width="30" height="20" rx="3"/>
+        <rect x="188" y="90" width="24" height="60" rx="3"/><path d="M178 146L222 94"/>
+        <path d="M70 182V270H780"/>
+        <path d="M380 180V200M380 250V270"/>
+        <rect x="368" y="200" width="24" height="50" rx="3"/>
+        <path d="M380 180H440M500 180H600V205M600 219V270M600 180H700V200M700 250V270"/>
+        <rect x="440" y="168" width="60" height="24" rx="3"/>
+        <path d="M584 205H616M584 219H616" stroke-width="3"/>
+        <rect x="688" y="200" width="24" height="50" rx="3"/>
+        <path d="M700 180H760M760 160V250L815 205Z"/>
+        <path d="M430 270V282M416 282H444M421 288H439M426 294H434"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.8" fill="none">
+        <path d="M86 60H112" marker-end="url(#fl-h-int)"/>
+        <path d="M410 196V240" marker-end="url(#fl-h-int)"/>
+        <path d="M640 260V196" marker-end="url(#fl-h-int)"/>
+      </g>
+      <g fill="currentColor" stroke="none"><circle cx="380" cy="180" r="5"/><circle cx="600" cy="180" r="5"/><circle cx="700" cy="180" r="5"/></g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="70" y="156" text-anchor="middle" font-weight="600">+</text>
+        <text x="40" y="150" text-anchor="end">E</text><text x="40" y="166" text-anchor="end">2,5 V</text>
+        <text x="96" y="50">I</text>
+        <text x="135" y="40" text-anchor="middle">r/2</text><text x="255" y="208" text-anchor="middle">r/2</text>
+        <text x="226" y="116">RT, CTN</text><text x="226" y="132">10 kΩ à 25 °C</text>
+        <text x="240" y="42" text-anchor="middle">armoire déportée, 40 m</text>
+        <text x="220" y="292" text-anchor="middle">r = 2,88 Ω au total</text>
+        <text x="380" y="166" text-anchor="middle" font-weight="600">A</text>
+        <text x="356" y="230" text-anchor="end">Rf</text><text x="356" y="246" text-anchor="end">10 kΩ</text>
+        <text x="418" y="226">IRf</text>
+        <text x="470" y="160" text-anchor="middle">Rs = 10 kΩ</text>
+        <text x="600" y="166" text-anchor="middle" font-weight="600">B</text>
+        <text x="560" y="215" text-anchor="end">C 22 µF</text>
+        <text x="648" y="236">VB</text>
+        <text x="722" y="230">Rin</text><text x="722" y="246">100 kΩ</text>
+        <text x="822" y="200">CAN</text><text x="822" y="216">12 bits</text>
+        <text x="520" y="316" text-anchor="middle">0 V, référence de l'automate et de la source</text>
+      </g>
+    </svg>
+    <figcaption>
+      Interface complète. Le cadre en tirets regroupe ce qui se trouve dans l'armoire déportée : la CTN et les deux
+      conducteurs du câble, chacun de résistance $r/2 = 1{,}44\ \Omega$. La source $E$ a sa borne $+$ en haut ; le
+      courant $I$ circule dans la CTN puis se partage au point $A$ entre $R_f$, courant $I_{R_f}$ vers la référence, et
+      la branche $R_s$ vers l'entrée. Le condensateur $C$ et la résistance d'entrée $R_{\mathrm{in}}$ sont tous deux entre
+      $B$ et la référence ; $V_B$ est fléchée de la référence vers $B$. Tous les éléments passifs sont en convention
+      récepteur.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-calcul">Calculs étape par étape</h3>
+  <ol>
+    <li>
+      Capteur. $R_T(25\ ^\circ\mathrm{C}) = 10{,}00\ \mathrm{k\Omega}$ ; à $0\ ^\circ\mathrm{C}$,
+      $R_T = 10 \exp\left[3\,950\left(\tfrac{1}{273{,}15} - \tfrac{1}{298{,}15}\right)\right] = 10\,e^{1{,}2125} = 33{,}62\ \mathrm{k\Omega}$ ;
+      de même $58{,}25\ \mathrm{k\Omega}$ à $-10\ ^\circ\mathrm{C}$, $5{,}302\ \mathrm{k\Omega}$ à $40\ ^\circ\mathrm{C}$ et
+      $2{,}486\ \mathrm{k\Omega}$ à $60\ ^\circ\mathrm{C}$.
+    </li>
+    <li>
+      Câble. $r = 0{,}018 \times 80/0{,}5 = 2{,}88\ \Omega$, soit $0{,}029\ \%$ de $R_T$ à $25\ ^\circ\mathrm{C}$ et
+      $2{,}88/(10\,000 \times 0{,}0444) = 0{,}006\ \mathrm{K}$ d'erreur : négligé dans la suite, après vérification.
+    </li>
+    <li>
+      Réduction de la charge. $R_p = 10 \parallel 110 = 10 \times 110/120 = 9{,}167\ \mathrm{k\Omega}$ ;
+      $k = 100/110 = 0{,}9091$ ; $kE = 2{,}273\ \mathrm{V}$.
+    </li>
+    <li>
+      Tension et code à $25\ ^\circ\mathrm{C}$. $V_A = 2{,}5 \times 9{,}167/19{,}167 = 1{,}1957\ \mathrm{V}$, puis
+      $V_B = k\,V_A = 1{,}0870\ \mathrm{V}$, et $N = 1{,}0870/0{,}002441 = 445{,}2$, code $445$.
+    </li>
+    <li>
+      Sensibilité à $25\ ^\circ\mathrm{C}$. $S_B = kE\,\dfrac{B}{T^2}\dfrac{R_p R_T}{(R_T + R_p)^2}
+      = 2{,}273 \times 0{,}04444 \times \dfrac{9{,}167 \times 10}{19{,}167^2} = 0{,}02520\ \mathrm{V/K}$, d'où une résolution
+      $q/S_B = 2{,}441/25{,}20 = 0{,}097\ \mathrm{K}$.
+    </li>
+    <li>
+      Auto-échauffement. $I = 2{,}5/19{,}167 = 0{,}1304\ \mathrm{mA}$ ; $P = 10\,000 \times (0{,}1304 \times 10^{-3})^2 = 0{,}170\ \mathrm{mW}$ ;
+      $\Delta T = 0{,}170/1{,}5 = 0{,}113\ \mathrm{K}$. Le maximum sur la plage, $E^2/(4R_p) = 0{,}170\ \mathrm{mW}$, est
+      atteint pour $R_T = R_p$, vers $27\ ^\circ\mathrm{C}$ : l'exigence de $0{,}15\ \mathrm{K}$ est tenue.
+    </li>
+    <li>
+      Filtre à $25\ ^\circ\mathrm{C}$. $R_T \parallel R_f = 5{,}000\ \mathrm{k\Omega}$ ; $R_{\mathrm{eq}} = 15 \parallel 100 = 13{,}04\ \mathrm{k\Omega}$ ;
+      $\tau = 13{,}04 \times 10^3 \times 22 \times 10^{-6} = 0{,}287\ \mathrm{s}$ ; $f_c = 1/(2\pi\tau) = 0{,}555\ \mathrm{Hz}$.
+      À $50\ \mathrm{Hz}$, $2\pi \times 50 \times 0{,}287 = 90{,}2$, d'où $1/\sqrt{1 + 90{,}2^2} = 0{,}0111$, soit
+      $-39{,}1\ \mathrm{dB}$ ; avec $k' = 100/115 = 0{,}870$, le résidu vaut $100 \times 0{,}870 \times 0{,}0111 = 0{,}96\ \mathrm{mV}$ crête.
+    </li>
+    <li>
+      Pire cas chaud, $60\ ^\circ\mathrm{C}$. $R_T \parallel R_f = 1{,}991\ \mathrm{k\Omega}$, $R_{\mathrm{eq}} = 10{,}71\ \mathrm{k\Omega}$,
+      $\tau = 0{,}236\ \mathrm{s}$, atténuation $-37{,}4\ \mathrm{dB}$, $k' = 0{,}893$, résidu $1{,}21\ \mathrm{mV}$ : juste sous
+      $q/2 = 1{,}22\ \mathrm{mV}$. L'exigence est tenue, sans marge ; c'est la condition qui dimensionne $C$.
+    </li>
+    <li>
+      Délai d'établissement à la mise sous tension, à $25\ ^\circ\mathrm{C}$ : l'entrée part de $0$ et doit atteindre
+      $1{,}087\ \mathrm{V}$ à $q/2$ près, d'où $t = 0{,}287 \times \ln(1{,}087/0{,}00122) = 0{,}287 \times 6{,}79 = 1{,}95\ \mathrm{s}$.
+      Au froid, $\tau$ atteint $0{,}344\ \mathrm{s}$ mais l'échelon est plus petit ; on retient une temporisation de
+      $2\ \mathrm{s}$ avant de valider la mesure.
+    </li>
+  </ol>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Résultats sur la plage de mesure</caption>
+      <thead><tr><th>θ (°C)</th><th>RT (kΩ)</th><th>VB (V)</th><th>Code N</th><th>SB (mV/K)</th><th>Résolution (K)</th><th>ΔT auto (K)</th><th>τ (s)</th><th>Résidu 50 Hz (mV)</th></tr></thead>
+      <tbody>
+        <tr><td>-10</td><td>58,25</td><td>0,3090</td><td>127</td><td>15,2</td><td>0,160</td><td>0,053</td><td>0,344</td><td>0,78</td></tr>
+        <tr><td>0</td><td>33,62</td><td>0,4869</td><td>199</td><td>20,3</td><td>0,121</td><td>0,077</td><td>0,331</td><td>0,82</td></tr>
+        <tr><td>25</td><td>10,00</td><td>1,0870</td><td>445</td><td>25,2</td><td>0,097</td><td>0,113</td><td>0,287</td><td>0,96</td></tr>
+        <tr><td>40</td><td>5,302</td><td>1,4400</td><td>590</td><td>21,3</td><td>0,115</td><td>0,106</td><td>0,261</td><td>1,07</td></tr>
+        <tr><td>60</td><td>2,486</td><td>1,7878</td><td>732</td><td>13,6</td><td>0,180</td><td>0,076</td><td>0,236</td><td>1,21</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="h-controle">Contrôles de cohérence</h3>
+  <ul>
+    <li>Dimensions : $S_B$ est le produit de volts par des $\mathrm{K^{-1}}$ et un rapport de résistances, donc en $\mathrm{V/K}$ ; $\tau$ est en $\Omega \cdot \mathrm{F} = \mathrm{s}$.</li>
+    <li>Cas limites : $R_T \to 0$ donne $V_B = kE = 2{,}273\ \mathrm{V}$, le maximum possible ; $R_T \to \infty$ donne $0\ \mathrm{V}$. Toutes les valeurs du tableau sont entre les deux et croissent avec la température.</li>
+    <li>Loi des nœuds à $25\ ^\circ\mathrm{C}$. Au nœud $A$ : entrent $(2{,}5 - 1{,}1957)/10 = 0{,}13043\ \mathrm{mA}$ ; sortent $1{,}1957/10 = 0{,}11957\ \mathrm{mA}$ dans $R_f$ et $(1{,}1957 - 1{,}0870)/10 = 0{,}01087\ \mathrm{mA}$ dans $R_s$, au total $0{,}13043\ \mathrm{mA}$. Au nœud $B$ : $0{,}01087\ \mathrm{mA}$ entrent, $1{,}0870/100 = 0{,}01087\ \mathrm{mA}$ sortent dans $R_{\mathrm{in}}$, le condensateur ne conduisant pas en régime établi.</li>
+    <li>Bilan de puissance : la référence fournit $2{,}5 \times 0{,}13043 = 0{,}3261\ \mathrm{mW}$ ; la CTN absorbe $0{,}1701$, $R_f$ $0{,}1430$, $R_s$ $0{,}0012$ et $R_{\mathrm{in}}$ $0{,}0118\ \mathrm{mW}$, soit $0{,}3261\ \mathrm{mW}$. Le condensateur stocke $\tfrac{1}{2} \times 22 \times 10^{-6} \times 1{,}087^2 = 13{,}0\ \mu\mathrm{J}$, sans rien dissiper.</li>
+    <li>Ordres de grandeur : la sensibilité de $25{,}2\ \mathrm{mV/K}$ est inférieure aux $27{,}8\ \mathrm{mV/K}$ du demi-pont à vide, ce qui est attendu : le second diviseur la réduit dans le rapport $k = 0{,}909$, tandis que la charge sur $R_f$ ne coûte presque rien, car $R_p = 9{,}17\ \mathrm{k\Omega}$ reste proche de l'optimum $R_T = 10\ \mathrm{k\Omega}$.</li>
+  </ul>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <h3 id="i-probleme">La température de l'armoire déportée du site</h3>
+  <p>
+    Le cours <a href="#/cours/revision-1-et-etude-de-cas-continu">Révision 1 et étude de cas continu</a> avait conclu
+    que le réchauffage anti-condensation de $60\ \mathrm{W}$ de l'armoire déportée, à $40\ \mathrm{m}$ du tableau, devait
+    être alimenté hors du bus $24\ \mathrm{V}$ secouru ou commandé par thermostat. Le mini-projet fournit cette mesure :
+    l'automate lit la température de l'armoire, enclenche le réchauffage sous $10\ ^\circ\mathrm{C}$, le coupe au-dessus
+    de $15\ ^\circ\mathrm{C}$, et signale une alarme au-dessus de $50\ ^\circ\mathrm{C}$. L'hystérésis de $5\ \mathrm{K}$
+    est très supérieure à la résolution et au bruit résiduel, ce qui évite les battements du contacteur. La référence de
+    $2{,}5\ \mathrm{V}$ est un régulateur de précision alimenté par le bus secouru ; sa consommation de quelques
+    milliampères est négligeable devant le plafond de $6\ \mathrm{A}$ fixé pour ce bus.
+  </p>
+  <p>
+    Contraintes d'exploitation : le câble partage sur une partie du trajet le chemin de câbles du départ pompe, d'où la
+    perturbation à $50\ \mathrm{Hz}$ ; l'armoire est exposée au soleil l'été et au gel l'hiver ; l'exploitant veut pouvoir
+    remplacer la sonde sans réétalonner. Risques : une coupure de câble qui ferait croire au gel et enclencherait le
+    réchauffage en plein été, un programme qui ignorerait la charge de l'entrée, une sonde montée contre la tôle chauffée
+    par le soleil plutôt que dans l'air de l'armoire.
+  </p>
+
+  <h3 id="i-sim-section">Simulation interactive : l'interface complète à la mise sous tension</h3>
+  <p>
+    La simulation calcule l'interface complète pour la température et les composants que vous choisissez, puis trace la
+    tension d'entrée de l'automate pendant les quatre premières secondes après la mise sous tension, perturbation à
+    $50\ \mathrm{Hz}$ comprise. Prédictions à écrire avant de manipuler : si vous doublez $C$, que deviennent le résidu à
+    $50\ \mathrm{Hz}$ et le délai d'établissement ? Si la température passe de $25$ à $60\ ^\circ\mathrm{C}$, la constante
+    de temps augmente-t-elle ou diminue-t-elle ? Que lirait un programme qui ignore la charge de l'entrée si l'on remplace
+    $R_s$ par un fil ?
+  </p>
+  <figure id="i-interface-sim-figure">
+    <div id="i-interface-sim"></div>
+    <figcaption>
+      Deux tracés partagent le même axe horizontal, le temps depuis la mise sous tension, en secondes. En haut, la
+      tension $V_B$ à l'entrée, en volts : la première courbe de la légende est la tension réelle, perturbation résiduelle
+      comprise, la deuxième sa valeur finale sans perturbation. En bas, l'écart entre les deux, en millivolts, vu de
+      près : les deux lignes horizontales en tirets marquent $\pm q/2 = \pm 1{,}22\ \mathrm{mV}$. Sur les deux tracés,
+      le trait vertical en pointillé marque le délai d'établissement calculé.
+    </figcaption>
+  </figure>
+  <div id="i-interface-curseurs"></div>
+  <div id="i-interface-valeurs"></div>
+  <p>
+    Interprétation : doubler $C$ double $\tau$, divise le résidu à $50\ \mathrm{Hz}$ par deux environ, puisque
+    l'atténuation d'un premier ordre loin de sa coupure est proportionnelle à $1/\tau$, et double le délai
+    d'établissement. Quand la température monte, $R_T$ diminue, la résistance de Thévenin vue par $C$ aussi, et la
+    constante de temps décroît : le filtre est moins efficace au chaud, ce qui justifie le dimensionnement à
+    $60\ ^\circ\mathrm{C}$. Sans $R_s$, $k$ passe à $1$ et $R_p$ à $9{,}09\ \mathrm{k\Omega}$ : le programme naïf ne se
+    trompe plus que de $2{,}1\ \mathrm{K}$ environ à $25\ ^\circ\mathrm{C}$, contre $5{,}8\ \mathrm{K}$ avec $R_s$, mais
+    l'entrée perd sa résistance de protection et la constante de temps devient très dépendante de la température. La
+    bonne réponse n'est pas de supprimer $R_s$, mais de programmer le modèle chargé.
+  </p>
+
+  <h3 id="i-compromis">Budget d'erreur, diagnostic et choix d'ingénierie</h3>
+  <p>
+    Le budget est établi à $25\ ^\circ\mathrm{C}$ en déplaçant un à un chaque paramètre de sa tolérance supposée et en
+    recalculant la température lue avec le modèle programmé.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Budget d'erreur à 25 °C, tolérances supposées</caption>
+      <thead><tr><th>Source</th><th>Hypothèse</th><th>Effet sur la lecture (K)</th><th>Nature</th></tr></thead>
+      <tbody>
+        <tr><td>Précision du module d'entrée</td><td>$\pm 0{,}1\ \%$ de la pleine échelle, $\pm 10\ \mathrm{mV}$</td><td>$\pm 0{,}40$</td><td>incertitude, réduite par étalonnage</td></tr>
+        <tr><td>Tolérance de $R_{25}$</td><td>$\pm 1\ \%$</td><td>$\mp 0{,}22$</td><td>propre à chaque sonde, réduite par étalonnage</td></tr>
+        <tr><td>Résistance d'entrée $R_{\mathrm{in}}$</td><td>$\pm 1\ \%$</td><td>$\pm 0{,}06$</td><td>incertitude</td></tr>
+        <tr><td>Quantification</td><td>$\pm q/2$</td><td>$\pm 0{,}05$</td><td>incertitude</td></tr>
+        <tr><td>Référence $E$</td><td>$\pm 0{,}1\ \%$</td><td>$\pm 0{,}04$</td><td>incertitude</td></tr>
+        <tr><td>Résistance série $R_s$</td><td>$\pm 1\ \%$</td><td>$\mp 0{,}04$</td><td>incertitude</td></tr>
+        <tr><td>Auto-échauffement</td><td>$+0{,}11\ \mathrm{K}$ corrigé, $\delta$ connu à $30\ \%$</td><td>$\pm 0{,}03$</td><td>systématique corrigé</td></tr>
+        <tr><td>Résistance fixe $R_f$</td><td>$\pm 0{,}1\ \%$</td><td>$\pm 0{,}02$</td><td>incertitude</td></tr>
+        <tr><td>Câble</td><td>$2{,}88\ \Omega$</td><td>$-0{,}006$</td><td>systématique négligé</td></tr>
+        <tr><td>Total</td><td>somme des valeurs absolues ; somme quadratique</td><td>$0{,}87$ ; $0{,}47$</td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Le pire cas dépasse la précision de $\pm 0{,}5\ \mathrm{K}$ que l'on viserait pour une régulation fine ; la somme
+    quadratique la respecte de justesse. Le module d'entrée, et non le capteur, domine : une tension utile de
+    $1{,}1\ \mathrm{V}$ sur une pleine échelle de $10\ \mathrm{V}$ subit une erreur de module calculée sur $10\ \mathrm{V}$.
+    Pour la fonction retenue, un thermostat à $5\ \mathrm{K}$ d'hystérésis, cette précision suffit largement.
+  </p>
+  <p>
+    Diagnostic de câblage, permis par la disposition de la CTN en haut du demi-pont : une coupure de la CTN ou du câble
+    annule le courant et ramène $V_B$ à $0$, lu comme un froid extrême ; un court-circuit du câble donne
+    $V_B = kE = 2{,}273\ \mathrm{V}$, lu comme une chaleur extrême. L'automate déclare donc la mesure invalide sous
+    $0{,}10\ \mathrm{V}$, code $41$, ce qui correspond à $-30\ ^\circ\mathrm{C}$, et au-dessus de $2{,}11\ \mathrm{V}$, code
+    $865$, ce qui correspond à $100\ ^\circ\mathrm{C}$, deux valeurs physiquement impossibles dans l'armoire. Sur défaut, il
+    force le réchauffage dans un état sûr choisi par l'exploitant et émet une alarme, au lieu de réguler sur une valeur
+    fausse.
+  </p>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Décision pour le projet fil rouge</span>
+    <p>
+      La température de l'armoire déportée est mesurée par une CTN de $10\ \mathrm{k\Omega}$ ($B = 3\,950\ \mathrm{K}$),
+      en haut d'un demi-pont de $10\ \mathrm{k\Omega}$ alimenté sous $2{,}5\ \mathrm{V}$, raccordée par deux fils de
+      $0{,}5\ \mathrm{mm^2}$, filtrée par $10\ \mathrm{k\Omega}$ et $22\ \mu\mathrm{F}$ à film et lue par une entrée
+      $0$ à $10\ \mathrm{V}$. L'automate programme le modèle chargé ($R_p = 9{,}167\ \mathrm{k\Omega}$, $k = 0{,}9091$),
+      retranche $0{,}11\ \mathrm{K}$ d'auto-échauffement, valide la mesure $2\ \mathrm{s}$ après la mise sous tension et la
+      déclare invalide hors de $0{,}10$ à $2{,}11\ \mathrm{V}$. Un étalonnage en un point est fait à la mise en service avec
+      un thermomètre de référence. Alternatives écartées pour l'instant : une Pt100 trois fils avec module dédié, plus
+      précise et interchangeable mais plus chère, réservée aux mesures de procédé ; une alimentation sous
+      $10\ \mathrm{V}$, qui quadruplerait le signal utile mais porterait l'auto-échauffement à $1{,}8\ \mathrm{K}$. Toutes
+      les valeurs sont des hypothèses à remplacer par la documentation de la sonde et du module retenus.
+    </p>
+  </div>
+  <p>
+    Compromis résumés : la sensibilité contre l'auto-échauffement, réglée par $E$ ; le filtrage contre la rapidité,
+    réglé par $C$, sans enjeu ici puisque la sonde elle-même met une minute à suivre l'air ; la protection de l'entrée
+    contre l'erreur de charge, réglée par $R_s$ et neutralisée par le modèle ; le coût contre l'interchangeabilité, réglé
+    par le choix du capteur et de l'étalonnage.
+  </p>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li>
+      <strong>Programmer la formule du diviseur à vide.</strong> L'entrée de l'automate et la résistance du filtre chargent le pont ; les ignorer fait lire $19{,}2\ ^\circ\mathrm{C}$ au lieu de $25\ ^\circ\mathrm{C}$ dans le montage étudié. Le modèle doit contenir toutes les résistances du chemin, ou l'on étalonne le montage réel.
+    </li>
+    <li>
+      <strong>Augmenter la tension d'alimentation pour gagner en précision.</strong> La sensibilité croît comme $E$, mais l'auto-échauffement comme $E^2$ : sous $10\ \mathrm{V}$, la CTN se chauffe de $1{,}8\ \mathrm{K}$ et la mesure devient plus fausse alors qu'elle paraît plus fine. Il faut comparer la résolution gagnée à l'échauffement ajouté.
+    </li>
+    <li>
+      <strong>Calculer la constante de temps du filtre avec la seule résistance du filtre.</strong> Le condensateur voit la résistance de Thévenin de tout le réseau : $R_s$ plus celle du pont, en parallèle avec l'entrée. Elle varie avec la température, et le pire cas d'atténuation est au chaud.
+    </li>
+    <li>
+      <strong>Croire que le pont de Wheatstone est linéaire.</strong> La tension de déséquilibre vaut $Ex/[2(2 + x)]$ ; l'approximation $Ex/4$ commet une erreur relative de $x/2$, soit $10\ \%$ pour une Pt100 à $50\ ^\circ\mathrm{C}$.
+    </li>
+    <li>
+      <strong>Raccorder une Pt100 en deux fils sur une longue distance.</strong> Les $2{,}88\ \Omega$ de $40\ \mathrm{m}$ de câble en $0{,}5\ \mathrm{mm^2}$ ajoutent $7{,}5\ \mathrm{K}$. Le montage trois fils compense le câble ; la même longueur est sans effet sur une CTN de $10\ \mathrm{k\Omega}$.
+    </li>
+    <li>
+      <strong>Utiliser un condensateur électrolytique dans un filtre de mesure à haute impédance.</strong> Son courant de fuite traverse la résistance de Thévenin et décale la tension de plusieurs millivolts, qui varient avec la température et le vieillissement. On emploie un condensateur à film, ou l'on réduit les résistances.
+    </li>
+    <li>
+      <strong>Confondre résolution et précision.</strong> Le convertisseur distingue $0{,}1\ \mathrm{K}$, mais l'erreur totale atteint plusieurs dixièmes de kelvin à cause des tolérances. Afficher deux décimales ne rend pas la mesure plus juste.
+    </li>
+    <li>
+      <strong>Lire la mesure dès la mise sous tension.</strong> Le condensateur part de $0\ \mathrm{V}$ ; pendant environ $2\ \mathrm{s}$, l'automate lirait un froid fictif, de quoi enclencher le réchauffage ou déclencher une alarme de défaut à chaque redémarrage.
+    </li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain : une lecture figée au bas de l'échelle indique une coupure, en haut de l'échelle un
+    court-circuit ; une lecture plausible mais décalée d'une valeur constante de quelques kelvins oriente vers une erreur
+    de modèle ou de paramètre ($R_{25}$, $B$, charge oubliée), qu'un relevé à deux températures connues distingue : un
+    décalage identique aux deux points est une erreur de zéro, un décalage qui croît est une erreur de pente. Une lecture
+    qui fluctue au rythme du démarrage de la pompe révèle une perturbation insuffisamment filtrée ou un câble posé contre
+    les conducteurs de puissance. On mesure enfin au multimètre $E$, $V_A$ et $V_B$, et on les compare au modèle : l'étage
+    où l'écart apparaît est l'étage fautif.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de
+    diagnostic industriel et une question conceptuelle. Les données communes sont celles du mini-projet, sauf mention
+    contraire : $R_{25} = 10\ \mathrm{k\Omega}$, $B = 3\,950\ \mathrm{K}$, $\delta = 1{,}5\ \mathrm{mW/K}$,
+    $T_{25} = 298{,}15\ \mathrm{K}$. La correction de chacun reste masquée jusqu'à une tentative ou un clic explicite
+    sur "Voir la correction", puis se déroule étape par étape, accompagnée d'un schéma annoté ou d'une courbe.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma.</p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$R_{\mathrm{Pt}} = R_0(1 + \alpha\theta), \qquad R_T = R_{25}\,e^{B(1/T - 1/T_{25})}, \qquad \alpha_T = -\frac{B}{T^2}$$
+    $$V = \frac{E\,R_f}{R_f + R_T}, \qquad S_{\max} = \frac{E\,|\alpha_T|}{4} \ \text{pour}\ R_f = R_T$$
+    $$U_m = \frac{E\,x}{2(2 + x)} \approx \frac{E\,x}{4}, \qquad \varepsilon_{\mathrm{lin}} = \frac{x}{2}$$
+    $$P \leq \frac{E^2}{4R_p}, \qquad \Delta T = \frac{P}{\delta}, \qquad \tau_{\mathrm{th}} = \frac{C_{\mathrm{th}}}{\delta}$$
+    $$\tau = R_{\mathrm{eq}}C, \qquad t_{\text{ét}} = \tau\ln\frac{\Delta V}{q/2}, \qquad q = \frac{V_{\mathrm{PE}}}{2^n}, \qquad \Delta T_q = \frac{q}{S}$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>Le modèle programmé doit contenir toutes les résistances du chemin de mesure, entrée et filtre compris.</li>
+      <li>La sensibilité croît comme $E$, l'auto-échauffement comme $E^2$ : vérifier $P/\delta$ avant d'augmenter l'alimentation.</li>
+      <li>La constante de temps du filtre se calcule avec la résistance de Thévenin vue par le condensateur, au pire cas de température.</li>
+      <li>Une Pt100 sur câble long se raccorde en trois ou quatre fils ; une CTN de forte valeur tolère deux fils.</li>
+      <li>Résolution n'est pas précision : le budget d'erreur, dominé ici par le module, fixe ce que l'on peut affirmer.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Un capteur résistif se lit en lui faisant traverser un courant. La CTN varie fortement et
+    de façon exponentielle, la Pt100 faiblement et presque linéairement. Le demi-pont donne une sensibilité maximale
+    quand la résistance fixe égale celle du capteur ; le pont de Wheatstone supprime le décalage, au prix d'une
+    non-linéarité $x/2$, et le montage trois fils compense le câble. L'entrée de mesure et le filtre chargent le pont :
+    ils doivent figurer dans le modèle inversé par l'automate. L'auto-échauffement, borné par $E^2/(4R_p\delta)$, limite
+    l'alimentation. Le filtre RC se dimensionne avec la résistance de Thévenin du pont, au pire cas chaud pour
+    l'atténuation, et impose un délai d'établissement. La résolution vaut $q/S$, mais la précision résulte du budget
+    d'erreur.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent,
+    <a href="#/cours/methodes-de-resolution-systematique">Méthodes de résolution systématique</a> ; une sur le cours
+    <a href="#/cours/revision-1-et-etude-de-cas-continu">Révision 1 et étude de cas continu</a>, vieux d'une semaine
+    exactement ; la question sur un cours vieux d'un mois n'est pas encore applicable, et elle est remplacée par une
+    question sur le cours <a href="#/cours/loi-d-ohm-et-resistivite">Loi d'Ohm et résistivité</a>, dont la
+    résistivité et sa dépendance à la température sont la base physique des capteurs étudiés aujourd'hui.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : vérifier par le calcul, par la simulation et, si possible, par la mesure, le comportement de l'interface
+    du mini-projet. Prédictions à écrire avant de commencer : la tension lue par un multimètre au point $A$ sera-t-elle
+    supérieure ou inférieure à celle du point $B$, et de combien en pourcentage ? Une CTN tenue entre deux doigts
+    montera-t-elle à sa température d'équilibre en quelques secondes ou en une minute ? Dans LTspice, le résidu à
+    $50\ \mathrm{Hz}$ sera-t-il plus grand à $-10$ ou à $60\ ^\circ\mathrm{C}$ ?
+  </p>
+  <ol>
+    <li>
+      En Python, écrire deux fonctions : <code>vb(theta)</code>, qui calcule la tension d'entrée par le modèle chargé, et
+      <code>theta(vb)</code>, qui l'inverse. Vérifier que <code>theta(vb(t))</code> redonne <code>t</code> à
+      $10^{-9}\ \mathrm{K}$ près de $-10$ à $60\ ^\circ\mathrm{C}$. Tracer $V_B(\theta)$, la sensibilité et la résolution,
+      puis l'erreur que commettrait le modèle à vide.
+    </li>
+    <li>
+      Toujours en Python, établir le budget d'erreur de la section I à $0$, $25$ et $40\ ^\circ\mathrm{C}$ en déplaçant un
+      paramètre à la fois, puis par tirage aléatoire de tous les paramètres dans leurs tolérances (mille tirages
+      uniformes) ; comparer l'écart maximal observé à la somme des valeurs absolues et à la somme quadratique.
+    </li>
+    <li>
+      Dans LTspice, représenter la CTN par une résistance comportementale <code>R=10k*exp(3950*(1/(T+273.15)-1/298.15))</code>
+      avec <code>.param T=25</code> et <code>.step param T list -10 25 60</code>. Ajouter, en série avec la référence, une
+      source <code>SINE(0 0.1 50)</code>. Lancer <code>.tran 0 4 0 1m</code>, relever le délai pour que $V_B$ reste à
+      $1{,}22\ \mathrm{mV}$ de sa valeur finale et l'amplitude du résidu en fin de tracé.
+    </li>
+    <li>
+      Mesure facultative, en très basse tension uniquement : câbler le demi-pont avec une CTN de $10\ \mathrm{k\Omega}$,
+      une résistance de $10\ \mathrm{k\Omega}$ à $1\ \%$, une alimentation de laboratoire réglée à $2{,}5\ \mathrm{V}$ et
+      limitée à $10\ \mathrm{mA}$. Mesurer $V_A$ à l'ambiante, puis CTN tenue entre deux doigts, en relevant la tension
+      toutes les cinq secondes pendant une minute ; enfin, régler l'alimentation à $10\ \mathrm{V}$ et observer la
+      dérive lente de la tension, CTN laissée à l'air immobile.
+    </li>
+  </ol>
+  <p>
+    Résultats attendus : à $25\ ^\circ\mathrm{C}$, le modèle donne $V_A = 1{,}196\ \mathrm{V}$ et $V_B = 1{,}087\ \mathrm{V}$,
+    soit $V_B$ inférieure de $9{,}1\ \%$, rapport $k$ du second diviseur ; le modèle à vide se trompe de
+    $5{,}8\ \mathrm{K}$. Les tirages aléatoires donnent un écart maximal compris entre la somme quadratique et la somme
+    des valeurs absolues, plus proche de la première. LTspice retrouve un délai voisin de $2\ \mathrm{s}$ à
+    $25\ ^\circ\mathrm{C}$ et un résidu crête d'environ $0{,}8\ \mathrm{mV}$ à $-10\ ^\circ\mathrm{C}$ et $1{,}2\ \mathrm{mV}$ à
+    $60\ ^\circ\mathrm{C}$. Au banc, la CTN tenue entre deux doigts monte vers une trentaine de degrés avec une constante
+    de temps de l'ordre de dix secondes, et la tension suit une exponentielle ; sous $10\ \mathrm{V}$, la tension dérive
+    pendant plusieurs dizaines de secondes, signe de l'auto-échauffement, d'environ $2\ \mathrm{K}$ en air calme, moins si
+    l'air est brassé. Anomalies à observer : une lecture instable quand on approche la main sans la toucher, signe d'un
+    couplage parasite sur des fils longs non torsadés ; une tension qui ne revient pas à sa valeur initiale, signe d'un
+    échauffement de la résistance fixe ou d'une variation de l'alimentation ; un multimètre de faible impédance
+    d'entrée qui abaisse lui-même la tension mesurée au point $A$.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est calculé
+    dans ce navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées
+    localement pour suivre votre progression.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <div class="encadre industriel">
+    <span class="encadre-titre">Jalon de fin du module Stockage d'énergie et régimes transitoires</span>
+    <p>
+      Le jalon demande d'être capable de résoudre méthodiquement des circuits continus et transitoires simples,
+      d'expliquer les phénomènes de stockage d'énergie et de vérifier les résultats. Il est atteint si, sans regarder
+      les corrections : vous avez résolu juste au moins cinq des sept exercices de la section K, dont l'exercice avancé
+      ou celui sur le filtre ; vous obtenez au moins sept sur dix au quiz et cinq sur sept à la révision espacée ; vous
+      savez expliquer pourquoi la tension d'un condensateur et le courant d'une bobine sont continus, et vérifier un
+      résultat par la loi des nœuds et le bilan de puissance comme dans la section H. Si l'un de ces points manque,
+      reprenez le cours correspondant parmi <a href="#/cours/regime-transitoire-rc">Régime transitoire RC</a>,
+      <a href="#/cours/regime-transitoire-rl">Régime transitoire RL</a>,
+      <a href="#/cours/regime-transitoire-rlc">Régime transitoire RLC</a> et
+      <a href="#/cours/methodes-de-resolution-systematique">Méthodes de résolution systématique</a> avant d'aborder le
+      régime sinusoïdal.
+    </p>
+  </div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Un capteur résistif ne se lit qu'en lui faisant traverser un courant : le demi-pont donne la meilleure sensibilité quand $R_f = R_T$, mais la sensibilité croît comme $E$ et l'auto-échauffement comme $E^2$.</li>
+    <li data-rang="02">Tout ce qui est branché sur le pont fait partie du modèle : l'entrée et le filtre le chargent, la résistance du pont fixe la constante de temps du filtre, et l'automate doit inverser le modèle chargé.</li>
+    <li data-rang="03">Une mesure se valide comme un circuit : cas limites, loi des nœuds, bilan de puissance, budget d'erreur ; résolution n'est pas précision.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> raisonner sur une chaîne d'étages qui se chargent mutuellement,
+    et choisir le bon pire cas pour chaque exigence : le chaud pour l'atténuation, le froid pour le délai et les
+    extrémités pour la résolution. La simulation de la section I, qui recalcule toute la chaîne pour chaque température,
+    est faite pour lever cette difficulté ; le tableau de la section H en est la version écrite.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Signaux périodiques et sinusoïdes, décrit les tensions
+    alternatives. Question à préparer : la perturbation de cette séance s'écrit $u(t) = 0{,}1\,\sin(100\pi t)$ en volts.
+    Quelles sont sa fréquence, sa période, sa valeur moyenne et sa valeur efficace ? Si l'on superpose cette perturbation
+    à la tension continue de $1{,}087\ \mathrm{V}$, la valeur efficace de la somme vaut-elle $1{,}087 + 0{,}071$ ou
+    $\sqrt{1{,}087^2 + 0{,}071^2}\ \mathrm{V}$, et pourquoi ?
+  </p>
+
+</article>
