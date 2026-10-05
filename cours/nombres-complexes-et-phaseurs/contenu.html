@@ -1,0 +1,1096 @@
+<article class="cours" data-slug="nombres-complexes-et-phaseurs">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/signaux-periodiques-et-sinusoides">Signaux périodiques et sinusoïdes</a> s'est achevé sur
+      une question : deux tensions de même fréquence, $u_1 = 10\cos\omega t$ et $u_2 = 10\cos(\omega t - \pi/2)$, en volts,
+      sont mises en série ; quelle est l'amplitude de leur somme, et de quel angle est-elle déphasée par rapport à $u_1$ ?
+      Réponse : les deux rayons tournants de longueur $10$ font un angle droit, leur somme est la diagonale du carré qu'ils
+      forment, de longueur $10\sqrt{2} = 14{,}14\ \mathrm{V}$, placée à mi-chemin, donc en retard de $45^\circ$ sur $u_1$ :
+      $u_1 + u_2 = 14{,}14\cos(\omega t - \pi/4)$. La formule
+      $U_m^2 = U_{m1}^2 + U_{m2}^2 + 2U_{m1}U_{m2}\cos(\varphi_1 - \varphi_2) = 100 + 100 + 0 = 200$ le confirme. Vous venez
+      de faire, sans le nommer, un calcul par phaseurs : remplacer chaque sinusoïde par un vecteur figé, additionner les
+      vecteurs, puis relire le résultat comme une sinusoïde. Cette séance donne à ce geste son outil exact, le nombre
+      complexe. Elle s'appuie sur les formes cartésienne et polaire vues dans le cours
+      <a href="#/cours/diagnostic-initial-et-remise-a-niveau-mathematique">Diagnostic initial et remise à niveau
+      mathématique</a>, sur la loi des nœuds du cours <a href="#/cours/lois-de-kirchhoff">Lois de Kirchhoff</a> et sur les
+      équations différentielles des cours <a href="#/cours/regime-transitoire-rc">Régime transitoire RC</a> et
+      <a href="#/cours/regime-transitoire-rl">Régime transitoire RL</a>.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    En régime sinusoïdal, chaque calcul de circuit devient vite un exercice de trigonométrie : additionner deux
+    courants de même fréquence mais de phases différentes demande des formules d'addition, dériver le courant d'une
+    inductance change un cosinus en sinus, et l'équation différentielle d'un circuit RLC alimenté par le réseau se résout
+    au prix de plusieurs pages. Les ingénieurs du réseau électrique de la fin du dix-neuvième siècle, Steinmetz en tête,
+    ont remplacé ces calculs par une algèbre de nombres complexes : une sinusoïde de fréquence connue est entièrement
+    décrite par deux nombres, son amplitude et sa phase, que l'on range dans un seul nombre complexe, le phaseur. La
+    somme de sinusoïdes devient une somme de complexes, la dérivée devient une multiplication par $j\omega$, et une
+    équation différentielle devient une équation algébrique.
+  </p>
+  <p>
+    Tout le reste du parcours repose sur cet outil : les impédances, les puissances active et réactive, la correction du
+    facteur de puissance, la résonance, le triphasé, les transformateurs, les schémas équivalents des machines, les
+    diagrammes de Bode et les réseaux de séquence. Sur le terrain, il sert chaque fois qu'on additionne des courants de
+    départs dans un tableau, qu'on calcule une chute de tension le long d'un câble, qu'on lit un analyseur de réseau qui
+    affiche des modules et des angles, ou qu'on règle une protection directionnelle. Le travail central de cette séance
+    est la conversion sans erreur entre trois écritures d'une même grandeur : l'expression temporelle
+    $u(t) = U_m\cos(\omega t + \varphi)$, la forme cartésienne $a + jb$ et la forme polaire $U\angle\varphi$.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Convertir un nombre complexe entre formes cartésienne, polaire et exponentielle, en plaçant l'argument dans le bon quadrant.</li>
+    <li data-rang="02">Calculer sommes, produits, quotients et conjugués de nombres complexes, en choisissant la forme la plus adaptée à chaque opération.</li>
+    <li data-rang="03">Expliquer géométriquement la formule d'Euler et l'effet d'une multiplication par $e^{j\theta}$ et par $j$.</li>
+    <li data-rang="04">Convertir une grandeur sinusoïdale entre son expression temporelle, en cosinus ou en sinus, et son phaseur efficace, dans les deux sens.</li>
+    <li data-rang="05">Calculer la somme de plusieurs courants ou tensions de même fréquence par les phaseurs et contrôler le résultat en un instant particulier.</li>
+    <li data-rang="06">Interpréter la dérivation et l'intégration temporelles comme des multiplications par $j\omega$ et $1/(j\omega)$.</li>
+    <li data-rang="07">Diagnostiquer l'emploi abusif des phaseurs : fréquences différentes, régime transitoire, circuit non linéaire, courant déformé.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois acquis suffisent. Le premier est l'écriture d'une sinusoïde du cours
+    <a href="#/cours/signaux-periodiques-et-sinusoides">Signaux périodiques et sinusoïdes</a> :
+    $u(t) = U_m\cos(\omega t + \varphi_u)$, avec l'amplitude $U_m = \sqrt{2}\,U$, la pulsation $\omega = 2\pi f$ en
+    $\mathrm{rad/s}$ et la phase à l'origine $\varphi_u$, ainsi que la convention de déphasage
+    $\varphi = \varphi_u - \varphi_i$, positive quand le courant est en retard. Le deuxième est le nombre complexe du
+    cours <a href="#/cours/diagnostic-initial-et-remise-a-niveau-mathematique">Diagnostic initial et remise à niveau
+    mathématique</a> : $z = a + jb$ avec $j^2 = -1$, son module $|z| = \sqrt{a^2 + b^2}$ et son argument, angle du point
+    $(a, b)$ mesuré depuis l'axe réel. En électricité, on écrit $j$ et non $i$, réservé au courant. Le troisième est la
+    trigonométrie : $\cos(a + b) = \cos a\cos b - \sin a\sin b$, $\sin x = \cos(x - \pi/2)$ et la dérivée
+    $\dfrac{\mathrm{d}}{\mathrm{d}t}\cos(\omega t) = -\omega\sin(\omega t)$. Le mini-test ci-dessous n'est pas noté ; la
+    correction de chaque question reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la correction".
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-photo">Une sinusoïde est une rotation ; un phaseur en est la photographie</h3>
+  <p>
+    Le cours précédent a montré qu'une sinusoïde est l'ombre d'un rayon qui tourne à vitesse constante. Plaçons ce
+    rayon dans le plan complexe : son extrémité est le nombre $U_m e^{j(\omega t + \varphi)}$, qui tourne dans le sens
+    trigonométrique à la vitesse angulaire $\omega$, et sa projection sur l'axe réel, sa partie réelle, vaut
+    $U_m\cos(\omega t + \varphi)$ : c'est la grandeur physique. Dans un circuit linéaire alimenté par le réseau, toutes
+    les tensions et tous les courants tournent à la même vitesse, celle de l'alternateur. Puisque la rotation est
+    commune, elle ne porte aucune information propre à une grandeur : ce qui distingue le courant du ventilateur de celui
+    du radiateur, c'est la longueur de son rayon et l'angle qu'il fait avec les autres. On peut donc photographier tous
+    les rayons à l'instant $t = 0$ et ne garder que cette photographie : chaque rayon figé est un phaseur.
+  </p>
+  <p>
+    Analogie contrôlée : la lampe stroboscopique d'un atelier, réglée sur la vitesse de rotation d'une machine, fige
+    l'image de la poulie et des repères qu'elle porte ; on lit alors à loisir leurs positions relatives, sans être gêné par
+    la rotation. Le phaseur est cette image figée. Ajouter deux grandeurs revient à ajouter les deux rayons figés,
+    pointe à la suite de l'autre, puis à faire de nouveau tourner le résultat.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie et du phaseur</span>
+    <p>
+      Le stroboscope ne fige qu'une seule vitesse : tout ce qui tourne à une autre vitesse continue de bouger sur
+      l'image. De même, des phaseurs ne s'additionnent que s'ils représentent des grandeurs de même fréquence ; un
+      courant à $250\ \mathrm{Hz}$ et un courant à $50\ \mathrm{Hz}$ n'ont pas de déphasage constant et ne se placent pas sur
+      le même diagramme. Le phaseur suppose aussi le régime permanent sinusoïdal : pendant une mise sous tension, le
+      terme transitoire exponentiel des cours <a href="#/cours/regime-transitoire-rc">Régime transitoire RC</a> et
+      <a href="#/cours/regime-transitoire-rlc">Régime transitoire RLC</a> n'est pas une rotation et échappe à la
+      photographie. Enfin, il suppose un circuit linéaire : un pont de diodes ou un noyau saturé déforment le courant, qui
+      cesse d'être une sinusoïde. Le stroboscope montre aussi une vitesse apparente nulle pour un objet immobile ; le
+      phaseur, lui, ne représente jamais une grandeur continue, sauf dans le cas limite $\omega = 0$.
+    </p>
+  </div>
+
+  <h3 id="d-tournant-section">Animation : le vecteur tournant et son ombre</h3>
+  <p>
+    L'animation place le plan complexe en haut à gauche : axe réel horizontal vers la droite, axe imaginaire vertical vers
+    le haut. Le phaseur figé, photographie à $t = 0$, est la flèche en tirets dont la pointe est une poignée ronde : on
+    la déplace à la souris, au doigt ou au clavier pour régler l'amplitude et la phase. La flèche en trait plein épais est
+    le vecteur tournant, égal au phaseur multiplié par $e^{j\omega t}$ ; le lecteur fait avancer l'angle $\omega t$ sur une
+    période. Sous le plan, la bande des temps se lit de haut en bas, de $0$ à $20\ \mathrm{ms}$ : chaque point de la
+    courbe a pour abscisse la partie réelle du vecteur tournant, alignée avec l'axe réel du plan. À droite, les trois
+    écritures de la grandeur se mettent à jour. Avant de manipuler, prédisez : si vous tournez le phaseur figé de
+    $+90^\circ$, la courbe de la bande des temps est-elle décalée vers le haut ou vers le bas, et de combien de
+    millisecondes ? Où placer le phaseur pour que $u(0)$ soit nul et que la tension commence par croître ?
+  </p>
+  <figure id="d-tournant-figure">
+    <div class="schema-vivant" id="d-tournant"></div>
+    <figcaption>
+      En haut à gauche, le plan complexe ; le cercle fin en tirets a pour rayon $400\ \mathrm{V}$. Le phaseur figé en
+      amplitude, $U_m e^{j\varphi}$, est la flèche en tirets terminée par la poignée ; l'arc fin près de l'origine marque sa
+      phase $\varphi$, comptée depuis l'axe réel dans le sens trigonométrique. Le vecteur tournant
+      $U_m e^{j(\omega t + \varphi)}$ est la flèche en trait plein épais ; le trait vertical en pointillés descend de sa
+      pointe vers l'axe réel, puis jusqu'à la bande des temps. En bas, l'axe des temps est vertical, orienté vers le bas
+      et gradué en millisecondes à $50\ \mathrm{Hz}$ ; la courbe en trait plein est $u(t)$ tracée jusqu'à l'instant courant,
+      la courbe en pointillés fins la période complète. À droite, l'expression temporelle, le phaseur efficace en forme
+      polaire et en forme cartésienne, et la valeur instantanée.
+    </figcaption>
+  </figure>
+  <div id="d-tournant-lecteur"></div>
+  <div id="d-tournant-valeurs"></div>
+  <p>
+    Interprétation : tourner le phaseur figé de $+90^\circ$ décale la courbe d'un quart de période, $5\ \mathrm{ms}$, vers
+    le haut de la bande, c'est-à-dire vers les instants antérieurs : la grandeur atteint son maximum plus tôt, elle est en
+    avance. Un phaseur pointé vers le bas, à $-90^\circ$, donne $u(0) = 0$ et une tension qui croît ensuite : c'est
+    $U_m\cos(\omega t - \pi/2) = U_m\sin\omega t$. La longueur de la flèche fixe l'amplitude, son angle la phase à l'origine,
+    et la rotation, commune à toutes les grandeurs du circuit, n'apporte rien de plus : le phaseur contient toute
+    l'information utile dès que la fréquence est connue.
+  </p>
+
+  <h3 id="d-quart">Multiplier par $j$ : un quart de tour</h3>
+  <p>
+    Multiplier un nombre complexe par $j$ envoie $1$ sur $j$, et $j$ sur $j^2 = -1$ : c'est une rotation de $90^\circ$ dans le
+    sens trigonométrique, sans changement de longueur. Or dériver une sinusoïde l'avance d'un quart de période :
+    $\dfrac{\mathrm{d}}{\mathrm{d}t}\cos\omega t = -\omega\sin\omega t = \omega\cos(\omega t + \pi/2)$. Les deux gestes
+    coïncident : dériver revient à multiplier le phaseur par $j$, puis par $\omega$ pour l'amplitude. C'est pourquoi la
+    tension d'une inductance, $u = L\,\mathrm{d}i/\mathrm{d}t$, est en avance de $90^\circ$ sur son courant, et pourquoi le
+    courant d'un condensateur, $i = C\,\mathrm{d}u/\mathrm{d}t$, est en avance de $90^\circ$ sur sa tension. La
+    multiplication par $\omega$ dit aussi que l'effet grandit avec la fréquence : une variation plus rapide induit une
+    tension plus forte, comme l'a montré la loi de Faraday dans le cours
+    <a href="#/cours/inductances-et-champ-magnetique">Inductances et champ magnétique</a>.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-formes">Nombres complexes : formes cartésienne, polaire et exponentielle</h3>
+  <p>
+    Un nombre complexe $z$ est un point du plan, repéré soit par ses coordonnées cartésiennes, partie réelle $a$ et
+    partie imaginaire $b$, soit par ses coordonnées polaires, module $r$ et argument $\theta$. On passe de l'une à l'autre
+    par la trigonométrie du triangle rectangle formé par l'origine, le point et sa projection sur l'axe réel.
+  </p>
+  <div class="formule-cle">
+    $$z = a + jb = r(\cos\theta + j\sin\theta) = r\,e^{j\theta} = r\angle\theta, \qquad j^2 = -1$$
+    $$r = |z| = \sqrt{a^2 + b^2}, \qquad \theta = \arg z = \operatorname{atan2}(b, a), \qquad a = r\cos\theta, \quad b = r\sin\theta$$
+    <p class="formule-cle-legende">
+      $a = \operatorname{Re} z$ et $b = \operatorname{Im} z$ sont réels, de l'unité de la grandeur représentée (volts,
+      ampères) ; $r \geq 0$ a la même unité ; $\theta$ est un angle, en radians dans l'exponentielle, souvent en degrés
+      dans la notation $r\angle\theta$. La fonction $\operatorname{atan2}(b, a)$ renvoie l'angle du point $(a, b)$ entre
+      $-180^\circ$ et $+180^\circ$, dans le bon quadrant ; la formule $\arctan(b/a)$ n'est juste que pour $a > 0$, et il faut
+      lui ajouter $180^\circ$ quand $a < 0$. Exemple : $3 + j4 = 5\angle 53{,}13^\circ$, mais $-3 - j4 = 5\angle -126{,}87^\circ$,
+      alors que $\arctan(-4/-3)$ redonne $53{,}13^\circ$. Vérification dimensionnelle : $r$ et $a$ ont la même unité,
+      $\cos\theta$ est sans dimension. Cas limites : $\theta = 0$ donne un réel positif, $\theta = \pm 90^\circ$ un
+      imaginaire pur, $\theta = 180^\circ$ un réel négatif ; pour $z = 0$, l'argument n'est pas défini.
+    </p>
+  </div>
+  <p>
+    Le schéma ci-dessous place deux nombres opposés dans le plan : il montre ce que mesurent le module et l'argument,
+    et pourquoi l'arc tangente seul confond les quadrants opposés.
+  </p>
+  <figure id="e-plan-figure">
+    <svg viewBox="0 0 720 420" role="img" aria-label="Plan complexe : axe réel horizontal, axe imaginaire vertical ; point z1 égal à 3 plus j4 dans le premier quadrant, module 5, argument 53,13 degrés ; point z2 égal à moins 3 moins j4 dans le troisième quadrant, même module, argument moins 126,87 degrés ; projections en pointillés sur les deux axes">
+      <defs>
+        <marker id="fl-e-plan" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto-start-reverse">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="1.4" fill="none" opacity="0.8">
+        <path d="M120 200H620" marker-end="url(#fl-e-plan)"/>
+        <path d="M360 392V14" marker-end="url(#fl-e-plan)"/>
+        <path d="M320 196v8M280 196v8M240 196v8M400 196v8M440 196v8M480 196v8"/>
+        <path d="M356 160h8M356 120h8M356 80h8M356 40h8M356 240h8M356 280h8M356 320h8M356 360h8"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.1" fill="none" stroke-dasharray="4 4" opacity="0.75">
+        <path d="M480 40V200M480 40H360"/>
+        <path d="M240 360V200M240 360H360"/>
+      </g>
+      <path d="M360 200L478.2 42.4" stroke="currentColor" stroke-width="2.8" fill="none" stroke-linecap="round" marker-end="url(#fl-e-plan)"/>
+      <path d="M360 200L241.8 357.6" stroke="currentColor" stroke-width="2.4" fill="none" stroke-dasharray="10 6" marker-end="url(#fl-e-plan)"/>
+      <g stroke="currentColor" stroke-width="1.4" fill="none">
+        <path d="M410 200A50 50 0 0 0 390 160" marker-end="url(#fl-e-plan)"/>
+        <path d="M430 200A70 70 0 0 1 318 256" stroke-dasharray="3 3" marker-end="url(#fl-e-plan)"/>
+      </g>
+      <g fill="currentColor" stroke="none"><circle cx="480" cy="40" r="4.5"/><circle cx="240" cy="360" r="4.5"/></g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="622" y="218">Re</text>
+        <text x="368" y="22">Im</text>
+        <text x="490" y="46">z1 = 3 + j4 = 5 ∠ 53,13°</text>
+        <text x="40" y="378">z2 = -3 - j4 = 5 ∠ -126,87°</text>
+        <text x="480" y="218" text-anchor="middle">a = 3</text>
+        <text x="350" y="44" text-anchor="end">b = 4</text>
+        <text x="240" y="190" text-anchor="middle">-3</text>
+        <text x="370" y="364">-4</text>
+        <text x="440" y="140">r = 5</text>
+        <text x="414" y="176">θ1</text>
+        <text x="404" y="282">θ2 &lt; 0</text>
+        <text x="40" y="40" font-size="11.5">atan(b / a) donne 53,13°</text>
+        <text x="40" y="56" font-size="11.5">pour z1 et pour z2 ;</text>
+        <text x="40" y="72" font-size="11.5">pour z2, a &lt; 0 :</text>
+        <text x="40" y="88" font-size="11.5">retrancher 180°</text>
+        <text x="40" y="410" font-size="11.5">z1 : trait plein ; z2 = -z1 : tirets ; projections : pointillés</text>
+      </g>
+    </svg>
+    <figcaption>
+      Plan complexe, une graduation par unité. Le point $z_1 = 3 + j4$ (flèche en trait plein) se projette sur l'axe réel
+      en $a = 3$ et sur l'axe imaginaire en $b = 4$ (pointillés) ; la longueur de la flèche est le module $r = 5$, l'arc plein
+      près de l'origine est l'argument $\theta_1 = 53{,}13^\circ$, compté positivement dans le sens trigonométrique. Le point
+      $z_2 = -z_1$ (flèche en tirets) a le même module ; son argument, arc en pointillés parcouru dans le sens horaire, vaut
+      $\theta_2 = -126{,}87^\circ$, soit $53{,}13^\circ - 180^\circ$. Les deux points ont le même rapport $b/a$ : c'est pourquoi
+      l'arc tangente ne suffit pas.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-quadrant-section">Simulation interactive : convertir sans se tromper de quadrant</h3>
+  <p>
+    La simulation place un point $z = a + jb$ déplaçable dans tout le plan, de $-5$ à $+5$ sur chaque axe. Les valeurs
+    affichées donnent les deux parties, le module, l'argument calculé par $\operatorname{atan2}$ et celui que donnerait la
+    touche $\tan^{-1}$ d'une calculatrice appliquée à $b/a$. Avant de manipuler, prédisez : dans quels quadrants les deux
+    arguments diffèrent-ils, et de combien ? Que se passe-t-il quand le point traverse l'axe imaginaire ?
+  </p>
+  <figure id="e-quadrant-figure">
+    <div class="schema-vivant" id="e-quadrant"></div>
+    <figcaption>
+      Plan complexe gradué de $-5$ à $+5$. La flèche en trait plein relie l'origine au point déplaçable ; les pointillés
+      le projettent sur les deux axes. L'arc plein est l'argument correct, celui de $\operatorname{atan2}$ ; l'arc en tirets,
+      tracé seulement quand il diffère, est l'angle que donnerait $\arctan(b/a)$, et la flèche en tirets la direction
+      correspondante, opposée au point.
+    </figcaption>
+  </figure>
+  <div id="e-quadrant-valeurs"></div>
+  <p>
+    Interprétation : les deux arguments coïncident dans les quadrants de droite, $a > 0$, et diffèrent d'exactement
+    $180^\circ$ dans les quadrants de gauche : $\arctan(b/a)$ désigne alors le point opposé $-z$. En traversant l'axe
+    imaginaire, $b/a$ passe par l'infini et l'arc tangente saute de $+90^\circ$ à $-90^\circ$, alors que l'argument vrai
+    varie continûment. Sur le terrain, cette erreur transforme un courant en retard en un courant en avance de sens
+    opposé, par exemple pour un départ qui renvoie de l'énergie. Le réflexe est de placer le point dans le plan avant de
+    conclure, ou d'utiliser la fonction $\operatorname{atan2}$ ou la conversion polaire de la calculatrice.
+  </p>
+
+  <h3 id="e-operations">Opérations : chaque forme a son usage</h3>
+  <p>
+    L'addition et la soustraction se font en forme cartésienne, composante par composante, comme des vecteurs. La
+    multiplication et la division se font en forme polaire : on multiplie ou divise les modules, on ajoute ou retranche
+    les arguments, conséquence directe de $e^{j\theta_1}e^{j\theta_2} = e^{j(\theta_1 + \theta_2)}$. Le conjugué
+    $z^* = a - jb = r\angle -\theta$ est le symétrique par rapport à l'axe réel ; il sert à rendre réel un dénominateur et,
+    dans le cours Puissances en courant alternatif, à définir la puissance complexe.
+  </p>
+  <div class="formule-cle">
+    $$z_1 + z_2 = (a_1 + a_2) + j(b_1 + b_2), \qquad z_1 z_2 = r_1 r_2\angle(\theta_1 + \theta_2), \qquad \frac{z_1}{z_2} = \frac{r_1}{r_2}\angle(\theta_1 - \theta_2)$$
+    $$z\,z^* = |z|^2, \qquad \frac{1}{j} = -j, \qquad j = 1\angle 90^\circ, \qquad -1 = 1\angle 180^\circ$$
+    <p class="formule-cle-legende">
+      Exemples : $(2\angle 30^\circ)(3\angle 45^\circ) = 6\angle 75^\circ$ ; $\dfrac{2\angle 30^\circ}{3\angle 45^\circ} = 0{,}667\angle -15^\circ$.
+      En cartésien, le produit demande quatre multiplications : $(a_1 + jb_1)(a_2 + jb_2) = (a_1a_2 - b_1b_2) + j(a_1b_2 + a_2b_1)$,
+      et le quotient se calcule en multipliant numérateur et dénominateur par le conjugué du dénominateur. Unités : le
+      produit d'une tension en volts et d'un courant en ampères est en voltampères ; le quotient d'une tension par un courant
+      est en ohms. Cas limite : multiplier par $1\angle 0^\circ$ ne change rien ; diviser par $j$ fait tourner de $-90^\circ$.
+    </p>
+  </div>
+
+  <h3 id="e-euler">Formule d'Euler et exponentielle complexe</h3>
+  <p>
+    Dérivation. Posons $f(\theta) = \cos\theta + j\sin\theta$. Sa dérivée vaut $f'(\theta) = -\sin\theta + j\cos\theta = j(\cos\theta + j\sin\theta) = j\,f(\theta)$,
+    et $f(0) = 1$. La fonction $e^{j\theta}$ vérifie la même équation, $\dfrac{\mathrm{d}}{\mathrm{d}\theta}e^{j\theta} = j\,e^{j\theta}$,
+    avec la même valeur initiale ; or une équation différentielle du premier ordre et sa condition initiale n'ont qu'une
+    solution, comme pour la charge du condensateur du cours <a href="#/cours/regime-transitoire-rc">Régime transitoire
+    RC</a>. Les deux fonctions sont donc égales :
+  </p>
+  <div class="formule-cle">
+    $$e^{j\theta} = \cos\theta + j\sin\theta, \qquad \cos\theta = \frac{e^{j\theta} + e^{-j\theta}}{2}, \qquad \sin\theta = \frac{e^{j\theta} - e^{-j\theta}}{2j}$$
+    <p class="formule-cle-legende">
+      $\theta$ en radians, $e^{j\theta}$ sans dimension, de module $1$ : c'est un point du cercle unité. Interprétation :
+      $e^{j\theta}$ est l'opérateur de rotation d'angle $\theta$. Cas limites : $e^{j0} = 1$, $e^{j\pi/2} = j$,
+      $e^{j\pi} = -1$, $e^{-j\pi/2} = -j$. Avec $\theta = \omega t$, $e^{j\omega t}$ décrit le cercle unité dans le sens
+      trigonométrique, un tour par période : c'est le vecteur tournant de la section D. La seconde et la troisième
+      relations montrent qu'un cosinus est la demi-somme de deux vecteurs tournant en sens opposés ; elles serviront dans
+      le cours Introduction à Fourier.
+    </p>
+  </div>
+
+  <h3 id="e-hypothese">Hypothèse sinusoïdale</h3>
+  <p>
+    La méthode des phaseurs repose sur trois conditions, à vérifier avant tout calcul. Le circuit est linéaire : ses
+    éléments sont des résistances, inductances et condensateurs constants, et des sources ; c'est ce qui permet la
+    superposition du cours <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes de Thévenin, Norton
+    et superposition</a>. Toutes les sources ont la même fréquence. Le régime est permanent : la réponse d'un circuit
+    linéaire stable à une source sinusoïdale est la somme d'un terme transitoire, qui décroît comme $e^{-t/\tau}$, et d'un
+    terme forcé sinusoïdal de même fréquence que la source ; après $5\tau$ environ, il ne reste que le second, et c'est lui
+    seul que décrivent les phaseurs. Sous ces conditions, chaque tension et chaque courant du circuit est une sinusoïde de
+    pulsation $\omega$, que l'on peut écrire $x(t) = X_m\cos(\omega t + \varphi_x)$.
+  </p>
+
+  <h3 id="e-phaseur">Le phaseur : définition et propriétés</h3>
+  <p>
+    Avec la formule d'Euler, $X_m\cos(\omega t + \varphi_x) = \operatorname{Re}\left[X_m e^{j\varphi_x} e^{j\omega t}\right]$.
+    Le facteur $e^{j\omega t}$ est commun à toutes les grandeurs ; ce qui caractérise $x$ est le nombre complexe
+    $X_m e^{j\varphi_x}$, son amplitude complexe. En électrotechnique, on utilise de préférence le phaseur efficace, dont le
+    module est la valeur efficace, celle des plaques signalétiques et des appareils de mesure :
+  </p>
+  <div class="formule-cle">
+    $$x(t) = X\sqrt{2}\cos(\omega t + \varphi_x) \quad \Longleftrightarrow \quad \underline{X} = X e^{j\varphi_x} = X\angle\varphi_x, \qquad x(t) = \operatorname{Re}\left[\sqrt{2}\,\underline{X}\,e^{j\omega t}\right]$$
+    <p class="formule-cle-legende">
+      $\underline{X}$ phaseur efficace, complexe, souligné pour le distinguer de sa valeur efficace $X = |\underline{X}|$,
+      en volts ou en ampères ; $X_m = \sqrt{2}\,X$ l'amplitude ; $\varphi_x$ la phase à l'origine, en radians ou en degrés ;
+      $\omega$ en $\mathrm{rad/s}$, connue et commune à tout le circuit, donc absente du phaseur. Hypothèses : celles de
+      l'hypothèse sinusoïdale ci-dessus, et l'écriture en cosinus. Une grandeur donnée en sinus se ramène d'abord au
+      cosinus : $X_m\sin(\omega t + \alpha) = X_m\cos(\omega t + \alpha - 90^\circ)$. Exemples : $u(t) = 325{,}3\cos(\omega t + 30^\circ)$
+      donne $\underline{U} = 230\angle 30^\circ = 199{,}2 + j115{,}0\ \mathrm{V}$ ; $i(t) = 2\sin(\omega t - 20^\circ) = 2\cos(\omega t - 110^\circ)$
+      donne $\underline{I} = 1{,}414\angle -110^\circ = -0{,}484 - j1{,}329\ \mathrm{A}$. Cas limite : $\varphi_x = 0$ donne un
+      phaseur réel, qui sert de référence des phases. Dimension : $\underline{X}$ a l'unité de $x$.
+    </p>
+  </div>
+  <p>
+    Trois propriétés font l'intérêt de l'outil. Elles se démontrent à partir d'un lemme d'unicité : si
+    $\operatorname{Re}[\underline{A}\,e^{j\omega t}] = \operatorname{Re}[\underline{B}\,e^{j\omega t}]$ pour tout $t$, alors
+    $\underline{A} = \underline{B}$. En effet, à $t = 0$ on obtient $\operatorname{Re}\underline{A} = \operatorname{Re}\underline{B}$,
+    et à $\omega t = \pi/2$, où $e^{j\omega t} = j$, on obtient $\operatorname{Re}(j\underline{A}) = -\operatorname{Im}\underline{A}$,
+    donc $\operatorname{Im}\underline{A} = \operatorname{Im}\underline{B}$.
+  </p>
+  <ol>
+    <li><strong>Linéarité.</strong> Pour des réels $\lambda$ et $\mu$, $\lambda x_1 + \mu x_2$ a pour phaseur $\lambda\underline{X}_1 + \mu\underline{X}_2$, car la partie réelle est linéaire pour des coefficients réels. Une loi des nœuds $\sum i_k(t) = 0$ vraie à chaque instant devient, par le lemme, $\sum \underline{I}_k = 0$ ; une loi des mailles devient $\sum \underline{U}_k = 0$.</li>
+    <li><strong>Dérivation.</strong> $\dfrac{\mathrm{d}}{\mathrm{d}t}\operatorname{Re}[\sqrt{2}\,\underline{X}e^{j\omega t}] = \operatorname{Re}[\sqrt{2}\,j\omega\underline{X}e^{j\omega t}]$, car la dérivée commute avec la partie réelle et $e^{j\omega t}$ se dérive en $j\omega e^{j\omega t}$ : $\dfrac{\mathrm{d}x}{\mathrm{d}t}$ a pour phaseur $j\omega\underline{X}$, de module $\omega X$, en avance de $90^\circ$.</li>
+    <li><strong>Intégration.</strong> La primitive sans composante continue, seule compatible avec le régime permanent sinusoïdal, a pour phaseur $\underline{X}/(j\omega) = -j\underline{X}/\omega$, en retard de $90^\circ$.</li>
+  </ol>
+  <div class="formule-cle">
+    $$x_1 + x_2 \;\longrightarrow\; \underline{X}_1 + \underline{X}_2, \qquad \frac{\mathrm{d}x}{\mathrm{d}t} \;\longrightarrow\; j\omega\,\underline{X}, \qquad \int x\,\mathrm{d}t \;\longrightarrow\; \frac{\underline{X}}{j\omega}$$
+    <p class="formule-cle-legende">
+      Vérification dimensionnelle : $j\omega\underline{X}$ est en unité de $x$ par seconde, comme $\mathrm{d}x/\mathrm{d}t$, car
+      $j$ est sans dimension et $\omega$ en $\mathrm{s^{-1}}$. Cas limites : pour $\omega \to 0$, la dérivée d'une grandeur
+      continue est nulle, et $j\omega\underline{X} \to 0$ ; pour $\omega \to \infty$, la dérivée devient prépondérante. Ce qui
+      ne se transpose pas : le produit de deux grandeurs. Le phaseur de $u(t)\,i(t)$ n'est pas $\underline{U}\,\underline{I}$,
+      car ce produit contient une composante continue et une composante à $2\omega$ : la puissance demandera son propre
+      outil dans le cours Puissances en courant alternatif.
+    </p>
+  </div>
+  <p>
+    Conséquence immédiate pour les composants du cours <a href="#/cours/inductances-et-champ-magnetique">Inductances et
+    champ magnétique</a> et du cours <a href="#/cours/condensateurs-et-champ-electrique">Condensateurs et champ
+    électrique</a> : $u = L\,\mathrm{d}i/\mathrm{d}t$ devient $\underline{U} = jL\omega\,\underline{I}$, et $i = C\,\mathrm{d}u/\mathrm{d}t$
+    devient $\underline{I} = jC\omega\,\underline{U}$. Le rapport $\underline{U}/\underline{I}$, qui ne dépend plus du temps,
+    sera l'impédance du cours Impédances en régime sinusoïdal.
+  </p>
+
+  <h3 id="e-somme-section">Simulation interactive : additionner deux sinusoïdes de même fréquence</h3>
+  <p>
+    La simulation additionne deux tensions $u_1$ et $u_2$ de même fréquence, $50\ \mathrm{Hz}$. Dans le plan, on règle
+    chaque phaseur efficace en déplaçant sa pointe ou par les curseurs ; la somme est construite pointe à la suite de
+    l'autre, et le parallélogramme est tracé en pointillés. Le tracé du dessous montre les trois tensions instantanées sur
+    deux périodes, et le lecteur fait tourner l'ensemble des vecteurs en déplaçant l'instant étudié. Avant de manipuler,
+    prédisez : avec $U_1 = U_2 = 230\ \mathrm{V}$, pour quel déphasage la somme vaut-elle $230\ \mathrm{V}$, et pour quel
+    déphasage s'annule-t-elle ? La somme des valeurs efficaces peut-elle jamais être dépassée ?
+  </p>
+  <figure id="e-somme-figure">
+    <div class="schema-vivant" id="e-somme"></div>
+    <div id="e-somme-trace"></div>
+    <figcaption>
+      En haut, le plan complexe des phaseurs efficaces, en volts ; le cercle fin en tirets a pour rayon $400\ \mathrm{V}$. Le
+      phaseur $\underline{U}_1$ est la flèche en trait plein fin, $\underline{U}_2$ la flèche en tirets, chacune terminée par
+      une poignée ; la copie de $\underline{U}_2$ reportée à la pointe de $\underline{U}_1$ et le côté opposé du
+      parallélogramme sont en pointillés ; la somme $\underline{U}$ est la flèche épaisse. Les vecteurs sont dessinés à
+      l'instant choisi par le lecteur, donc tournés de $\omega t$. En bas, les tensions instantanées en volts sur
+      $40\ \mathrm{ms}$ ; la légende sous le tracé nomme chaque courbe avec sa couleur réelle, et le trait vertical en tirets
+      marque l'instant courant.
+    </figcaption>
+  </figure>
+  <div id="e-somme-curseurs"></div>
+  <div id="e-somme-lecteur"></div>
+  <div id="e-somme-valeurs"></div>
+  <p>
+    Interprétation : avec deux phaseurs de $230\ \mathrm{V}$, la somme vaut $2 \times 230\cos(\Delta\varphi/2)$ ; elle vaut
+    $230\ \mathrm{V}$ pour un déphasage de $120^\circ$, ce qui annonce le triphasé, $398\ \mathrm{V}$ pour $60^\circ$, et
+    s'annule en opposition, à $180^\circ$. Le module de la somme est toujours compris entre $|U_1 - U_2|$ et $U_1 + U_2$ :
+    c'est l'inégalité triangulaire, et l'addition arithmétique des valeurs efficaces n'est juste qu'en phase. À chaque
+    instant du lecteur, la courbe de la somme passe exactement par la somme des deux autres : la projection d'une somme de
+    vecteurs est la somme des projections, ce qui justifie la méthode. Enfin, faire tourner l'ensemble ne change ni les
+    longueurs ni les angles relatifs : le calcul peut se faire une fois pour toutes sur la photographie à $t = 0$.
+  </p>
+
+  <h3 id="e-derivee-section">Animation : dériver, c'est multiplier par $j\omega$</h3>
+  <p>
+    L'animation compare un courant $i(t) = I_m\cos\omega t$ d'amplitude $1\ \mathrm{A}$ et sa dérivée, divisée par
+    $\omega_0 = 314{,}16\ \mathrm{rad/s}$ pour être lisible sur la même échelle. Le curseur règle la fréquence, le lecteur
+    fait avancer l'instant étudié, et le petit diagramme à droite montre les deux phaseurs : $\underline{I}$ et
+    $j\omega\underline{I}/\omega_0$. Avant de lancer, prédisez : où se trouve le maximum de la dérivée par rapport à celui
+    du courant ? Que devient son amplitude quand la fréquence double ? Le décalage en millisecondes entre les deux maxima
+    reste-t-il constant quand la fréquence change ?
+  </p>
+  <figure id="e-derivee-figure">
+    <div id="e-derivee-trace"></div>
+    <div class="schema-vivant" id="e-derivee-phaseurs"></div>
+    <figcaption>
+      En haut, sur $40\ \mathrm{ms}$, le courant $i(t)$ et la grandeur $(\mathrm{d}i/\mathrm{d}t)/\omega_0$, sans dimension
+      rapportée à l'ampère ; la légende sous le tracé nomme chaque courbe avec sa couleur réelle, et le trait vertical en
+      tirets marque l'instant étudié. En bas, le plan complexe : le phaseur $\underline{I}$ en trait plein, le phaseur
+      $j\omega\underline{I}/\omega_0$ en tirets, tous deux dessinés à l'instant étudié ; le petit carré marque l'angle droit qui
+      les sépare.
+    </figcaption>
+  </figure>
+  <div id="e-derivee-curseurs"></div>
+  <div id="e-derivee-lecteur"></div>
+  <div id="e-derivee-valeurs"></div>
+  <p>
+    Interprétation : la dérivée atteint son maximum un quart de période avant le courant ; elle est en avance de
+    $90^\circ$ quelle que soit la fréquence, alors que le décalage en temps, $T/4$, diminue quand la fréquence augmente :
+    l'angle est l'invariant, pas la durée. Son amplitude est proportionnelle à $\omega$ : doubler la fréquence la double.
+    La valeur numérique de la dérivée à l'instant étudié, calculée par différence finie, coïncide avec la partie réelle de
+    $\sqrt{2}\,j\omega\underline{I}e^{j\omega t}$. La tension d'une inductance parcourue par ce courant suit exactement la
+    courbe de la dérivée, multipliée par $L$ : à $50\ \mathrm{Hz}$, une inductance de $0{,}1\ \mathrm{H}$ parcourue par
+    $1\ \mathrm{A}$ crête présente $31{,}4\ \mathrm{V}$ crête, en avance de $90^\circ$.
+  </p>
+
+  <h3 id="e-conventions">Conventions et comparaison des méthodes</h3>
+  <p>
+    Plusieurs conventions coexistent, et la plupart des erreurs de signe viennent de leur mélange. Le parcours écrit les
+    grandeurs en cosinus, utilise le phaseur efficace, note $j$ l'unité imaginaire, souligne les complexes et prend comme
+    référence des phases, $\varphi = 0$, la tension d'alimentation. Certains ouvrages écrivent en sinus, ou utilisent
+    l'amplitude complexe $\underline{X}_m = \sqrt{2}\,\underline{X}$ ; les mathématiciens écrivent $i$ ; les logiciels de
+    simulation et certains analyseurs affichent des amplitudes, d'autres des valeurs efficaces. Le résultat physique ne
+    dépend d'aucun de ces choix, à condition de ne pas en changer au cours d'un calcul.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Trois méthodes pour combiner des sinusoïdes de même fréquence</caption>
+      <thead><tr><th>Méthode</th><th>Principe</th><th>Points forts</th><th>Limites</th><th>Quand la choisir</th></tr></thead>
+      <tbody>
+        <tr><td>Trigonométrique</td><td>formules d'addition, identification des coefficients de $\cos\omega t$ et $\sin\omega t$</td><td>aucun outil nouveau, sens physique direct</td><td>lourde dès trois termes ou une dérivée</td><td>deux termes, vérification ponctuelle</td></tr>
+        <tr><td>Construction de Fresnel</td><td>vecteurs dessinés à l'échelle, pointe à la suite de l'autre</td><td>visuelle, révèle avance, retard et ordres de grandeur</td><td>précision graphique limitée, pas de division</td><td>raisonnement qualitatif, contrôle d'un calcul, diagnostic</td></tr>
+        <tr><td>Calcul complexe</td><td>phaseurs : additions en cartésien, produits en polaire</td><td>exacte, systématique, se programme, traite les dérivées</td><td>abstraite, erreurs de quadrant et de convention</td><td>tout circuit linéaire en régime permanent sinusoïdal</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    En pratique, on combine les deux dernières : le calcul complexe donne le résultat, la construction de Fresnel, même
+    à main levée, en contrôle la vraisemblance. Pour des grandeurs de fréquences différentes, aucune des trois ne
+    s'applique : on additionne les carrés des valeurs efficaces, comme dans le cours
+    <a href="#/cours/signaux-periodiques-et-sinusoides">Signaux périodiques et sinusoïdes</a>.
+  </p>
+
+  <h3 id="e-statut">Statut des énoncés</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Ce qui relève de la loi, de la convention, de l'approximation, de la conception et de la norme ou du constructeur</caption>
+      <thead><tr><th>Énoncé</th><th>Statut</th><th>Commentaire</th></tr></thead>
+      <tbody>
+        <tr><td>Formule d'Euler, règles de calcul des complexes, lemme d'unicité, propriétés de linéarité et de dérivation</td><td>Théorèmes mathématiques</td><td>Exacts, sans hypothèse physique.</td></tr>
+        <tr><td>Lois de Kirchhoff en phaseurs : $\sum\underline{I}_k = 0$, $\sum\underline{U}_k = 0$</td><td>Lois physiques transposées</td><td>Conservation de la charge et existence du potentiel, plus l'hypothèse sinusoïdale.</td></tr>
+        <tr><td>Écriture en cosinus, phaseur efficace, notation $j$, référence des phases sur la tension d'alimentation</td><td>Conventions</td><td>Usuelles en électrotechnique ; vérifier celles d'un logiciel ou d'un analyseur avant de comparer.</td></tr>
+        <tr><td>Régime permanent atteint, circuit linéaire, fréquence unique</td><td>Approximations de modélisation</td><td>Le transitoire est négligé après environ $5\tau$ ; un courant déformé n'est représenté que par son fondamental.</td></tr>
+        <tr><td>Calculer avec les phaseurs et contrôler par une construction de Fresnel et une valeur instantanée</td><td>Règle de conception</td><td>Bonne pratique de vérification.</td></tr>
+        <tr><td>Convention d'affichage des angles et des valeurs, efficaces ou crêtes, d'un analyseur de réseau</td><td>Donnée constructeur</td><td>À lire dans la notice de l'appareil.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, qui construit le passage d'une sinusoïde temporelle à son
+    phaseur, l'organigramme de conversion entre les trois écritures, et un tableau qui compare ces écritures. Le schéma
+    principal représente une tension $u(t) = U_m\cos(\omega t + \varphi)$ avec $\varphi = 50^\circ$, à $50\ \mathrm{Hz}$,
+    prise entre phase et neutre, le neutre étant la référence de potentiel ; l'angle est volontairement grand pour que
+    la construction soit lisible.
+  </p>
+
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 900 480" role="img" aria-label="Schéma principal : à gauche le plan complexe avec le phaseur figé à t égal zéro, d'angle phi égal à 50 degrés, et le vecteur tournant à un instant t1, d'angle omega t1 plus phi égal à 120 degrés ; projections sur l'axe réel donnant u de 0 et u de t1 ; à droite la courbe u de t égal Um cosinus de omega t plus phi sur une période, avec u de 0, u de t1 et le maximum à omega t égal 310 degrés">
+      <defs>
+        <marker id="fl-f-p" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto-start-reverse">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="1.4" fill="none" opacity="0.85">
+        <path d="M40 220H380" marker-end="url(#fl-f-p)"/>
+        <path d="M200 400V44" marker-end="url(#fl-f-p)"/>
+        <path d="M470 220H880" marker-end="url(#fl-f-p)"/>
+        <path d="M470 400V44" marker-end="url(#fl-f-p)"/>
+        <path d="M567.5 216v8M665 216v8M762.5 216v8M860 216v8"/>
+      </g>
+      <circle cx="200" cy="220" r="140" stroke="currentColor" stroke-width="1" fill="none" stroke-dasharray="3 5" opacity="0.6"/>
+      <path d="M470 80H860M470 360H860" stroke="currentColor" stroke-width="1" fill="none" stroke-dasharray="2 5" opacity="0.5"/>
+      <path d="M200 220L287.5 115.8" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" marker-end="url(#fl-f-p)"/>
+      <path d="M200 220L131.5 102.6" stroke="currentColor" stroke-width="2.4" fill="none" stroke-dasharray="10 6" marker-end="url(#fl-f-p)"/>
+      <g stroke="currentColor" stroke-width="1.1" fill="none" stroke-dasharray="3 4" opacity="0.8">
+        <path d="M290 112.8V220"/>
+        <path d="M130 98.8V220"/>
+        <path d="M290 112.8H200"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.4" fill="none">
+        <path d="M242 220A42 42 0 0 0 227 187.8"/>
+        <path d="M241.1 171A64 64 0 0 0 168 164.6" marker-end="url(#fl-f-p)"/>
+        <path d="M330 300A150 150 0 0 1 270 352" marker-start="url(#fl-f-p)" opacity="0.7"/>
+      </g>
+      <path d="M470.0 130.0L475.4 139.7L480.8 150.0L486.2 160.8L491.7 172.1L497.1 183.8L502.5 195.7L507.9 207.8L513.3 220.0L518.8 232.2L524.2 244.3L529.6 256.2L535.0 267.9L540.4 279.2L545.8 290.0L551.2 300.3L556.7 310.0L562.1 319.0L567.5 327.2L572.9 334.7L578.3 341.2L583.8 346.9L589.2 351.6L594.6 355.2L600.0 357.9L605.4 359.5L610.8 360.0L616.2 359.5L621.7 357.9L627.1 355.2L632.5 351.6L637.9 346.9L643.3 341.2L648.8 334.7L654.2 327.2L659.6 319.0L665.0 310.0L670.4 300.3L675.8 290.0L681.2 279.2L686.7 267.9L692.1 256.2L697.5 244.3L702.9 232.2L708.3 220.0L713.8 207.8L719.2 195.7L724.6 183.8L730.0 172.1L735.4 160.8L740.8 150.0L746.2 139.7L751.7 130.0L757.1 121.0L762.5 112.8L767.9 105.3L773.3 98.8L778.8 93.1L784.2 88.4L789.6 84.8L795.0 82.1L800.4 80.5L805.8 80.0L811.2 80.5L816.7 82.1L822.1 84.8L827.5 88.4L832.9 93.1L838.3 98.8L843.8 105.3L849.2 112.8L854.6 121.0L860.0 130.0" stroke="currentColor" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+      <g stroke="currentColor" stroke-width="1.1" fill="none" stroke-dasharray="3 4" opacity="0.8">
+        <path d="M545.8 290V220"/>
+        <path d="M805.8 80V220"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="290" cy="220" r="4.5"/><circle cx="130" cy="220" r="4.5"/>
+        <circle cx="470" cy="130" r="4.5"/><circle cx="545.8" cy="290" r="4.5"/><circle cx="805.8" cy="80" r="4.5"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="382" y="238">Re</text>
+        <text x="208" y="50">Im</text>
+        <text x="294" y="106">√2 U e^(jφ)</text>
+        <text x="294" y="92" font-size="11">photo à t = 0</text>
+        <text x="54" y="92">à l'instant t1</text>
+        <text x="250" y="206">φ</text>
+        <text x="214" y="150">ωt1</text>
+        <text x="338" y="312">ω</text>
+        <text x="290" y="240" text-anchor="middle">u(0)</text>
+        <text x="130" y="240" text-anchor="middle">u(t1)</text>
+        <text x="40" y="430" font-size="11.5">rotation dans le sens trigonométrique, un tour par période</text>
+        <text x="478" y="124">u(0) = Um cos φ</text>
+        <text x="553" y="306">u(t1)</text>
+        <text x="760" y="70" text-anchor="middle">maximum : ωt + φ = 360°</text>
+        <text x="462" y="84" text-anchor="end">Um</text>
+        <text x="462" y="364" text-anchor="end">-Um</text>
+        <text x="478" y="50">u(t)</text>
+        <text x="567.5" y="242" text-anchor="middle" font-size="11">90°</text>
+        <text x="665" y="242" text-anchor="middle" font-size="11">180°</text>
+        <text x="762.5" y="242" text-anchor="middle" font-size="11">270°</text>
+        <text x="860" y="242" text-anchor="middle" font-size="11">360°</text>
+        <text x="567.5" y="256" text-anchor="middle" font-size="11">5 ms</text>
+        <text x="665" y="256" text-anchor="middle" font-size="11">10 ms</text>
+        <text x="762.5" y="256" text-anchor="middle" font-size="11">15 ms</text>
+        <text x="860" y="256" text-anchor="middle" font-size="11">20 ms</text>
+        <text x="884" y="214" text-anchor="end" font-size="11">ωt</text>
+        <text x="470" y="430" font-size="11.5">u(t) = Um cos(ωt + φ) = Re[√2 U e^(jφ) e^(jωt)]</text>
+        <text x="470" y="448" font-size="11.5">phaseur efficace : U = U e^(jφ) = U ∠ φ</text>
+        <text x="470" y="466" font-size="11.5">Um = √2 U ; φ = 50° ; ωt1 = 70° ; f = 50 Hz</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal. À gauche, le plan complexe ; le cercle en tirets fins a pour rayon l'amplitude $U_m = \sqrt{2}\,U$.
+      La flèche en trait plein épais est le phaseur en amplitude, photographie du vecteur tournant à $t = 0$, d'angle
+      $\varphi$ (arc près de l'origine) ; la flèche en tirets est le même vecteur à un instant $t_1$, après une rotation
+      $\omega t_1 = 70^\circ$ (arc fléché), dans le sens trigonométrique indiqué par l'arc extérieur marqué $\omega$. Les
+      pointillés verticaux projettent chaque pointe sur l'axe réel : l'abscisse obtenue est la valeur instantanée, $u(0)$ puis
+      $u(t_1)$. À droite, la même grandeur en fonction de $\omega t$, graduée en degrés et en millisecondes à $50\ \mathrm{Hz}$ ;
+      les disques reportent $u(0) = U_m\cos 50^\circ$, $u(t_1) = U_m\cos 120^\circ$ et le maximum, atteint quand le vecteur
+      tournant passe par l'axe réel positif, à $\omega t = 310^\circ$. Le phaseur efficace $\underline{U}$ a le même angle que
+      la flèche pleine, et pour module la valeur efficace $U$.
+    </figcaption>
+  </figure>
+
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Grandeur sinusoïdale<br/>de pulsation ω connue"] --> B{"Écrite en<br/>sinus ?"}
+  B -->|"oui"| C["sin(ωt + α) = cos(ωt + α - 90°)"]
+  B -->|"non"| D["Lire Xm et φ<br/>dans Xm cos(ωt + φ)"]
+  C --> D
+  D --> E["Phaseur efficace :<br/>X = Xm / √2 ; X = X ∠ φ"]
+  E --> F{"Opération<br/>à faire ?"}
+  F -->|"somme, loi des nœuds"| G["Forme cartésienne :<br/>a = X cos φ ; b = X sin φ"]
+  F -->|"produit, quotient, dérivée"| H["Forme polaire :<br/>modules × ou ÷, angles + ou -<br/>dérivée : × jω"]
+  G --> I["Retour en polaire :<br/>X = √(a² + b²) ; φ = atan2(b, a)"]
+  H --> I
+  I --> J["Retour au temps :<br/>x(t) = X √2 cos(ωt + φ)"]
+  J --> K["Contrôles : Fresnel à main levée,<br/>valeur à t = 0, unités, quadrant"]</pre>
+    <figcaption>
+      Organigramme de conversion et de calcul. Les rectangles sont des étapes, les losanges des décisions, les libellés
+      sur les flèches les réponses. Le tronc commun ramène toute grandeur à l'écriture en cosinus, puis au phaseur
+      efficace. La décision centrale choisit la forme selon l'opération : cartésienne pour additionner, polaire pour
+      multiplier, diviser ou dériver. Le retour au temps et les contrôles ferment la boucle ; le contrôle du quadrant par
+      $\operatorname{atan2}$ y figure explicitement.
+    </figcaption>
+  </figure>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Une même tension sous ses quatre écritures : $230\ \mathrm{V}$ efficaces, en avance de $30^\circ$ sur la référence, $50\ \mathrm{Hz}$</caption>
+      <thead><tr><th>Écriture</th><th>Exemple</th><th>Lecture directe</th><th>Usage privilégié</th></tr></thead>
+      <tbody>
+        <tr><td>Temporelle</td><td>$u(t) = 325{,}3\cos(314{,}16\,t + \pi/6)$</td><td>valeur instantanée, amplitude, pulsation</td><td>oscillogramme, simulation temporelle, transitoires</td></tr>
+        <tr><td>Polaire</td><td>$\underline{U} = 230\angle 30^\circ\ \mathrm{V}$</td><td>valeur efficace et phase</td><td>produits, quotients, lecture d'un analyseur, plaques</td></tr>
+        <tr><td>Exponentielle</td><td>$\underline{U} = 230\,e^{j\pi/6}\ \mathrm{V}$</td><td>idem, angle en radians</td><td>démonstrations, dérivées, calcul littéral</td></tr>
+        <tr><td>Cartésienne</td><td>$\underline{U} = 199{,}2 + j115{,}0\ \mathrm{V}$</td><td>composantes en phase et en quadrature avec la référence</td><td>sommes, lois de Kirchhoff, composantes active et réactive</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-tournant-figure" data-renvoi="d-tournant-figure">l'animation du vecteur tournant et de son ombre</a>, section D ;</li>
+    <li><a href="#e-plan-figure" data-renvoi="e-plan-figure">le plan complexe et les deux points opposés</a>, <a href="#e-quadrant-figure" data-renvoi="e-quadrant-figure">la simulation de conversion par quadrant</a>, <a href="#e-somme-figure" data-renvoi="e-somme-figure">la simulation de la somme de deux sinusoïdes</a> et <a href="#e-derivee-figure" data-renvoi="e-derivee-figure">l'animation de la dérivation</a>, section E ;</li>
+    <li><a href="#h-circuit-figure" data-renvoi="h-circuit-figure">le schéma du tableau du local technique</a> et <a href="#h-fresnel-figure" data-renvoi="h-fresnel-figure">la construction de Fresnel des trois courants</a>, section H ;</li>
+    <li><a href="#i-tableau-figure" data-renvoi="i-tableau-figure">le jeu de barres du tableau général</a> et <a href="#i-somme-figure" data-renvoi="i-somme-figure">la simulation de la somme des courants de départs</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour convertir des grandeurs sinusoïdales et les combiner par les phaseurs :</p>
+  <ol>
+    <li>Vérifier l'hypothèse sinusoïdale : circuit linéaire, une seule fréquence, régime permanent. Si une grandeur est déformée, ne garder que son fondamental et traiter les harmoniques à part, par la somme des carrés.</li>
+    <li>Choisir la référence des phases, en général la tension d'alimentation, et noter les conventions : écriture en cosinus, phaseur efficace, sens des flèches de courant et de tension.</li>
+    <li>Ramener chaque expression temporelle à la forme $X_m\cos(\omega t + \varphi)$ : un sinus devient un cosinus en retranchant $90^\circ$ à la phase ; un signe moins devant l'amplitude ajoute ou retranche $180^\circ$ ; vérifier que toutes les grandeurs ont la même pulsation.</li>
+    <li>Écrire chaque phaseur efficace $\underline{X} = (X_m/\sqrt{2})\angle\varphi$, en indiquant si l'angle est en degrés ou en radians.</li>
+    <li>Pour une somme, une loi des nœuds ou une loi des mailles, passer en forme cartésienne, $a = X\cos\varphi$, $b = X\sin\varphi$, puis additionner composante par composante, avec les signes imposés par les sens de fléchage.</li>
+    <li>Pour un produit, un quotient, une dérivée ou une intégrale, travailler en forme polaire : multiplier ou diviser les modules, ajouter ou retrancher les angles ; dériver revient à multiplier par $j\omega = \omega\angle 90^\circ$.</li>
+    <li>Revenir en forme polaire par $X = \sqrt{a^2 + b^2}$ et $\varphi = \operatorname{atan2}(b, a)$, en plaçant le point dans son quadrant, puis à l'expression temporelle $x(t) = X\sqrt{2}\cos(\omega t + \varphi)$.</li>
+    <li>Contrôler : construction de Fresnel à main levée, cohérente en longueur et en angle ; valeur instantanée à $t = 0$ égale à la somme des valeurs instantanées des termes ; module de la somme compris entre la différence et la somme arithmétique des modules ; unités.</li>
+  </ol>
+  <p>
+    Choix de méthode : pour deux termes seulement, la formule $X^2 = X_1^2 + X_2^2 + 2X_1X_2\cos(\varphi_1 - \varphi_2)$ du cours
+    précédent est aussi rapide ; dès trois termes, ou dès qu'une dérivée intervient, le calcul complexe s'impose. Une
+    calculatrice scientifique en mode complexe, ou le module <code>cmath</code> de Python, réalise les conversions sans
+    erreur de quadrant ; il reste à vérifier le mode des angles, degrés ou radians, avant toute saisie.
+  </p>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Situation : le petit tableau monophasé du local technique est alimenté entre phase et neutre du réseau
+    $230\ \mathrm{V}$, $50\ \mathrm{Hz}$. Il dessert trois circuits : le moteur du ventilateur d'extraction, étudié à
+    l'oscilloscope dans le cours <a href="#/cours/signaux-periodiques-et-sinusoides">Signaux périodiques et
+    sinusoïdes</a> ; la résistance anti-condensation de $500\ \mathrm{W}$, ici en conduction permanente ; et un circuit
+    d'éclairage à diodes électroluminescentes, dont un analyseur portatif a relevé le courant. On veut le courant dans le
+    conducteur de phase en amont, sous ses trois écritures, pour vérifier le calibre du disjoncteur de tête.
+  </p>
+  <figure id="h-circuit-figure">
+    <svg viewBox="0 0 860 380" role="img" aria-label="Schéma du tableau du local technique : source 230 volts 50 hertz entre phase L et neutre N ; courant i dans la phase vers le nœud A ; trois branches entre la phase et le neutre : moteur du ventilateur parcouru par i v, résistance anti-condensation parcourue par i R, éclairage à diodes parcouru par i L ; tension u fléchée du neutre vers la phase en convention récepteur sur les charges ; neutre pris comme référence de potentiel">
+      <defs>
+        <marker id="fl-h-c" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="80" cy="200" r="28"/>
+        <path d="M66 200C72 188 78 188 80 200S88 212 94 200"/>
+        <path d="M80 172V70H700V140"/>
+        <path d="M80 228V330H700V240"/>
+        <path d="M380 70V174M380 226V330"/>
+        <circle cx="380" cy="200" r="26"/>
+        <path d="M540 70V160M540 240V330"/>
+        <rect x="528" y="160" width="24" height="80"/>
+        <rect x="672" y="140" width="56" height="100"/>
+        <path d="M688 175l12 18 12-18zM688 193h24"/>
+      </g>
+      <g fill="currentColor" stroke="none"><circle cx="300" cy="70" r="5"/><circle cx="380" cy="70" r="4"/><circle cx="540" cy="70" r="4"/><circle cx="380" cy="330" r="4"/><circle cx="540" cy="330" r="4"/></g>
+      <g stroke="currentColor" stroke-width="2" fill="none">
+        <path d="M150 70H226" marker-end="url(#fl-h-c)"/>
+        <path d="M380 92V138" marker-end="url(#fl-h-c)"/>
+        <path d="M540 92V138" marker-end="url(#fl-h-c)"/>
+        <path d="M700 84V122" marker-end="url(#fl-h-c)"/>
+        <path d="M612 300V104" marker-end="url(#fl-h-c)"/>
+        <path d="M30 296V112" marker-end="url(#fl-h-c)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="74" y="60">L, phase</text>
+        <text x="74" y="352">N, neutre : référence de potentiel</text>
+        <text x="116" y="196">230 V</text>
+        <text x="116" y="212">50 Hz</text>
+        <text x="188" y="60" text-anchor="middle">i</text>
+        <text x="300" y="56" text-anchor="middle">A</text>
+        <text x="380" y="205" text-anchor="middle">M</text>
+        <text x="390" y="122">iv</text>
+        <text x="550" y="122">iR</text>
+        <text x="710" y="110">iL</text>
+        <text x="620" y="206">u</text>
+        <text x="38" y="290">e</text>
+        <text x="348" y="204" text-anchor="end" font-size="11">ventilateur</text>
+        <text x="476" y="204" text-anchor="middle" font-size="11">R = 105,8 Ω</text>
+        <text x="700" y="262" text-anchor="middle" font-size="11">éclairage</text>
+        <text x="700" y="276" text-anchor="middle" font-size="11">à diodes</text>
+        <text x="390" y="372" font-size="11.5">loi des nœuds en A : i = iv + iR + iL</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma du tableau. La source, entre la phase $L$ et le neutre $N$, est fléchée en convention générateur : sa force
+      électromotrice $e$ pointe vers la phase. Le neutre est la référence de potentiel. Le courant $i$ de la phase entre
+      au nœud $A$ et se partage entre les trois branches, toutes fléchées de la phase vers le neutre ; la tension $u$,
+      commune aux trois charges et fléchée vers la phase, est en convention récepteur pour chacune. Le moteur est le
+      cercle marqué $M$, la résistance le rectangle étroit, l'éclairage à diodes le rectangle large qui porte le symbole de
+      diode.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Données, avec l'origine des temps au maximum de la tension, prise comme référence :
+    $u(t) = 325{,}3\cos(314{,}16\,t)$ en volts, soit $\underline{U} = 230\angle 0^\circ\ \mathrm{V}$. Ventilateur, relevé à
+    l'oscilloscope : $i_v(t) = 1{,}1\cos(314{,}16\,t - 0{,}565)$ en ampères, l'angle étant en radians. Résistance :
+    $500\ \mathrm{W}$ sous $230\ \mathrm{V}$, courant en phase avec la tension. Éclairage, relevé à l'analyseur, qui
+    exprime le courant en sinus : $i_L(t) = 0{,}8\sin(314{,}16\,t + 120^\circ)$ en ampères. Hypothèses : réseau
+    sinusoïdal pur, régime permanent, chaque courant réduit à son fondamental à $50\ \mathrm{Hz}$ ; le courant réel des
+    diodes électroluminescentes contient des harmoniques, ignorés ici. Inconnues : $\underline{I}$, puis $I$, $I_m$,
+    l'angle $\varphi_i$ et l'expression $i(t)$. Stratégie : méthode de la section G ; loi des nœuds en $A$,
+    $\underline{I} = \underline{I}_v + \underline{I}_R + \underline{I}_L$, calculée en cartésien.
+  </p>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li>Même pulsation pour les trois courants : $314{,}16\ \mathrm{rad/s}$, donc $50\ \mathrm{Hz}$ ; la somme par phaseurs est légitime.</li>
+    <li>Ventilateur : $0{,}565\ \mathrm{rad} = 0{,}565 \times 180/\pi = 32{,}4^\circ$ ; $I_v = 1{,}1/\sqrt{2} = 0{,}7778\ \mathrm{A}$, donc $\underline{I}_v = 0{,}7778\angle -32{,}4^\circ = 0{,}7778\cos 32{,}4^\circ - j\,0{,}7778\sin 32{,}4^\circ = 0{,}6567 - j0{,}4168\ \mathrm{A}$.</li>
+    <li>Résistance : $I_R = P/U = 500/230 = 2{,}1739\ \mathrm{A}$, en phase avec $\underline{U}$ : $\underline{I}_R = 2{,}1739 + j0\ \mathrm{A}$.</li>
+    <li>Éclairage : conversion du sinus, $0{,}8\sin(\omega t + 120^\circ) = 0{,}8\cos(\omega t + 120^\circ - 90^\circ) = 0{,}8\cos(\omega t + 30^\circ)$ ; $I_L = 0{,}8/\sqrt{2} = 0{,}5657\ \mathrm{A}$, donc $\underline{I}_L = 0{,}5657\angle 30^\circ = 0{,}4899 + j0{,}2828\ \mathrm{A}$, courant en avance : comportement capacitif de l'étage d'entrée.</li>
+    <li>Somme cartésienne : partie réelle $0{,}6567 + 2{,}1739 + 0{,}4899 = 3{,}3205\ \mathrm{A}$ ; partie imaginaire $-0{,}4168 + 0 + 0{,}2828 = -0{,}1339\ \mathrm{A}$ ; $\underline{I} = 3{,}3205 - j0{,}1339\ \mathrm{A}$.</li>
+    <li>Forme polaire : $I = \sqrt{3{,}3205^2 + 0{,}1339^2} = 3{,}323\ \mathrm{A}$ ; point dans le quatrième quadrant, $a > 0$, donc $\varphi_i = \arctan(-0{,}1339/3{,}3205) = -2{,}31^\circ$ ; $\underline{I} = 3{,}323\angle -2{,}31^\circ\ \mathrm{A}$.</li>
+    <li>Retour au temps : $I_m = 3{,}323\sqrt{2} = 4{,}700\ \mathrm{A}$ et $-2{,}31^\circ = -0{,}0403\ \mathrm{rad}$, d'où $i(t) = 4{,}700\cos(314{,}16\,t - 0{,}0403)$ en ampères ; déphasage $\varphi = \varphi_u - \varphi_i = +2{,}31^\circ$, courant très légèrement en retard.</li>
+  </ol>
+  <figure id="h-fresnel-figure">
+    <svg viewBox="0 0 640 300" role="img" aria-label="Construction de Fresnel des trois courants à l'échelle de 110 pixels par ampère : I R horizontal de 2,174 ampères, puis I v incliné de moins 32,4 degrés, puis I L incliné de plus 30 degrés, pointe à la suite de l'autre ; la somme I relie l'origine à la dernière pointe, 3,323 ampères à moins 2,31 degrés ; tension de référence U sur l'axe réel">
+      <defs>
+        <marker id="fl-h-f" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto-start-reverse">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="1.2" fill="none" opacity="0.7">
+        <path d="M60 200H610" marker-end="url(#fl-h-f)"/>
+        <path d="M90 290V84" marker-end="url(#fl-h-f)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1" fill="none" stroke-dasharray="3 4" opacity="0.7">
+        <path d="M329.1 200H392M401.4 245.8H470"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M90 200L326.1 200" marker-end="url(#fl-h-f)"/>
+        <path d="M329.1 200L398.9 244.2" marker-end="url(#fl-h-f)"/>
+        <path d="M401.4 245.8L452.7 216.2" marker-end="url(#fl-h-f)"/>
+      </g>
+      <path d="M90 200L452.3 214.6" stroke="currentColor" stroke-width="3.2" fill="none" stroke-dasharray="12 6" stroke-linecap="round" marker-end="url(#fl-h-f)"/>
+      <g stroke="currentColor" stroke-width="1.3" fill="none">
+        <path d="M369.1 200A40 40 0 0 1 362.9 221.4"/>
+        <path d="M435.4 245.8A34 34 0 0 0 430.8 228.8"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="612" y="218" text-anchor="end">Re</text>
+        <text x="98" y="90">Im</text>
+        <text x="200" y="190" text-anchor="middle">IR = 2,174 ∠ 0°</text>
+        <text x="170" y="262">Iv = 0,778 ∠ -32,4°</text>
+        <text x="470" y="240">IL = 0,566 ∠ +30°</text>
+        <text x="360" y="238" text-anchor="end" font-size="11">-32,4°</text>
+        <text x="444" y="264" font-size="11">+30°</text>
+        <text x="470" y="190">I = 3,323 ∠ -2,31° A</text>
+        <text x="60" y="30" font-size="11.5">échelle : 1 A pour 110 unités ; composantes : trait plein ;</text>
+        <text x="60" y="46" font-size="11.5">somme : tirets épais ; somme arithmétique : 3,517 A</text>
+        <text x="60" y="62" font-size="11.5">référence des phases : U = 230 ∠ 0° V, sur l'axe réel</text>
+      </g>
+    </svg>
+    <figcaption>
+      Construction de Fresnel à l'échelle, origine des angles sur la tension de référence, portée par l'axe réel. Les trois
+      phaseurs efficaces sont mis pointe à la suite de l'autre, en trait plein : $\underline{I}_R$ horizontal, puis
+      $\underline{I}_v$ qui descend de $32{,}4^\circ$ sous l'horizontale tracée en pointillés, puis $\underline{I}_L$ qui
+      remonte de $30^\circ$. La somme $\underline{I}$, en tirets épais, relie l'origine à la dernière pointe : elle est
+      presque horizontale, car la composante en retard du ventilateur et la composante en avance de l'éclairage se
+      compensent en grande partie. Les deux axes ont la même échelle : les angles se lisent sans déformation.
+    </figcaption>
+  </figure>
+  <p>
+    Contrôles de cohérence. Valeur instantanée à $t = 0$ : $i_v(0) = 1{,}1\cos(-0{,}565) = 0{,}928\ \mathrm{A}$,
+    $i_R(0) = 2{,}1739\sqrt{2} = 3{,}074\ \mathrm{A}$, $i_L(0) = 0{,}8\sin 120^\circ = 0{,}693\ \mathrm{A}$ ; la somme,
+    $4{,}696\ \mathrm{A}$, est égale à $i(0) = 4{,}700\cos(-0{,}0403) = 4{,}696\ \mathrm{A}$. Même contrôle à
+    $t = 2\ \mathrm{ms}$ : les deux calculs donnent $3{,}910\ \mathrm{A}$. Encadrement : $3{,}323\ \mathrm{A}$ est inférieur
+    à la somme arithmétique des valeurs efficaces, $0{,}778 + 2{,}174 + 0{,}566 = 3{,}517\ \mathrm{A}$, de $5{,}5\ \%$, et
+    supérieur au plus grand des courants. Construction de Fresnel : la flèche somme mesure $365$ unités, soit
+    $3{,}32\ \mathrm{A}$ à l'échelle. Unités : chaque terme est en ampères. Conclusion d'ingénierie : le disjoncteur de tête
+    voit $3{,}3\ \mathrm{A}$ efficaces au fondamental ; un calibre de $10\ \mathrm{A}$ convient largement, mais la valeur
+    efficace vraie, harmoniques de l'éclairage compris, se mesure avec un appareil TRMS. Additionner les valeurs
+    efficaces aurait surestimé le courant ; additionner les amplitudes crêtes aussi, de $1{,}1 + 3{,}074 + 0{,}8 = 4{,}974\ \mathrm{A}$
+    contre $4{,}700\ \mathrm{A}$, car les trois maxima ne surviennent pas au même instant.
+  </p>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+
+  <h3 id="i-probleme">Le courant d'arrivée du tableau général</h3>
+  <p>
+    Dans le cours <a href="#/cours/lois-de-kirchhoff">Lois de Kirchhoff</a>, le jeu de barres du tableau général a été
+    traité comme un nœud, phase par phase : départ pompe $50\ \mathrm{A}$, compresseur $32\ \mathrm{A}$, éclairage et
+    prises $16\ \mathrm{A}$, armoire automate $6\ \mathrm{A}$. La somme arithmétique, $104\ \mathrm{A}$, a été retenue comme
+    majorant du courant efficace d'arrivée, le calcul exact étant renvoyé à l'étude des phaseurs. C'est le moment de le
+    faire, car ce courant fixe le calibre du disjoncteur général, la section du câble d'arrivée et, plus tard, la puissance
+    du transformateur ou de la source équivalente. Le schéma ci-dessous situe les grandeurs.
+  </p>
+  <figure id="i-tableau-figure">
+    <svg viewBox="0 0 860 330" role="img" aria-label="Jeu de barres du tableau général, phase L1 : courant d'arrivée I depuis la source vers le jeu de barres ; quatre départs vers le bas : pompe par variateur 50 ampères efficaces dont 47,7 ampères au fondamental en phase avec la tension, compresseur 32 ampères avec cosinus phi 0,80, éclairage et prises 16 ampères avec cosinus phi 0,95, armoire automate 6 ampères avec cosinus phi 0,90 ; tension simple V1 de référence entre L1 et le neutre">
+      <defs>
+        <marker id="fl-i-t" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M430 20V110"/>
+        <path d="M110 118H750" stroke-width="6"/>
+        <path d="M170 118V250M350 118V250M530 118V250M710 118V250"/>
+        <rect x="140" y="250" width="60" height="40"/>
+        <circle cx="350" cy="270" r="20"/>
+        <rect x="500" y="250" width="60" height="40"/>
+        <rect x="680" y="250" width="60" height="40"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2" fill="none">
+        <path d="M430 34V84" marker-end="url(#fl-i-t)"/>
+        <path d="M170 140V196" marker-end="url(#fl-i-t)"/>
+        <path d="M350 140V196" marker-end="url(#fl-i-t)"/>
+        <path d="M530 140V196" marker-end="url(#fl-i-t)"/>
+        <path d="M710 140V196" marker-end="url(#fl-i-t)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="440" y="40">I : arrivée, phase L1</text>
+        <text x="440" y="58" font-size="11">référence : V1 = 230 ∠ 0° V</text>
+        <text x="110" y="106">jeu de barres L1</text>
+        <text x="180" y="160">Ip</text>
+        <text x="360" y="160">Ic</text>
+        <text x="540" y="160">Ie</text>
+        <text x="720" y="160">Ia</text>
+        <text x="170" y="275" text-anchor="middle" font-size="11">variateur</text>
+        <text x="350" y="275" text-anchor="middle">M</text>
+        <text x="530" y="275" text-anchor="middle" font-size="11">éclairage</text>
+        <text x="710" y="275" text-anchor="middle" font-size="11">automate</text>
+        <text x="170" y="306" text-anchor="middle" font-size="11">pompe : 50 A vrais</text>
+        <text x="170" y="322" text-anchor="middle" font-size="11">fond. 47,7 A, cos φ ≈ 1</text>
+        <text x="350" y="306" text-anchor="middle" font-size="11">compresseur : 32 A</text>
+        <text x="350" y="322" text-anchor="middle" font-size="11">cos φ = 0,80</text>
+        <text x="530" y="306" text-anchor="middle" font-size="11">éclairage, prises : 16 A</text>
+        <text x="530" y="322" text-anchor="middle" font-size="11">cos φ = 0,95</text>
+        <text x="710" y="306" text-anchor="middle" font-size="11">armoire : 6 A</text>
+        <text x="710" y="322" text-anchor="middle" font-size="11">cos φ = 0,90</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma unifilaire du jeu de barres, pour la seule phase $L_1$ ; les deux autres phases sont semblables. Le trait
+      épais horizontal est le jeu de barres ; le courant d'arrivée $I$ y entre par le haut, les quatre courants de départ
+      en sortent vers le bas, flèches dans le sens de la puissance absorbée. Toutes les phases sont repérées par rapport à
+      la tension simple $\underline{V}_1$ entre $L_1$ et le neutre, référence $0^\circ$. Sous chaque départ, sa valeur
+      efficace et son facteur de déplacement $\cos\varphi$, le courant étant en retard pour les quatre.
+    </figcaption>
+  </figure>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Hypothèses du modèle</span>
+    <p>
+      Charges supposées équilibrées sur les trois phases, si bien qu'une phase suffit ; éclairage et prises répartis
+      également. Pompe : courant en créneaux de $120^\circ$ du cours précédent, $50\ \mathrm{A}$ efficaces vrais, dont un
+      fondamental de $47{,}7\ \mathrm{A}$ pratiquement en phase avec la tension, car le pont de diodes conduit autour des
+      crêtes, et $14{,}8\ \mathrm{A}$ d'harmoniques. Compresseur, moteur asynchrone en démarrage direct à pleine charge,
+      $\cos\varphi = 0{,}80$ ; éclairage et prises, $0{,}95$ ; armoire automate, $0{,}90$ ; ces trois courants sont supposés
+      sinusoïdaux. Facteurs de puissance supposés, à remplacer par les plaques et par une mesure à l'analyseur de réseau.
+      Tous les départs en service simultanément : c'est le cas le plus chargé, sans coefficient de simultanéité.
+    </p>
+  </div>
+  <ol>
+    <li>Phaseurs efficaces, référence $\underline{V}_1$ : $\underline{I}_p = 47{,}75\angle 0^\circ = 47{,}75\ \mathrm{A}$ ; $\underline{I}_c = 32\angle -36{,}87^\circ = 25{,}60 - j19{,}20\ \mathrm{A}$ ; $\underline{I}_e = 16\angle -18{,}19^\circ = 15{,}20 - j5{,}00\ \mathrm{A}$ ; $\underline{I}_a = 6\angle -25{,}84^\circ = 5{,}40 - j2{,}62\ \mathrm{A}$.</li>
+    <li>Loi des nœuds au fondamental : $\underline{I}_1 = 93{,}95 - j26{,}81\ \mathrm{A}$, soit $I_1 = 97{,}7\ \mathrm{A}$ et un angle de $-15{,}93^\circ$ : facteur de déplacement global $\cos 15{,}93^\circ = 0{,}962$.</li>
+    <li>Harmoniques : seule la pompe en produit dans ce modèle ; ils ne se placent pas sur le diagramme à $50\ \mathrm{Hz}$ et s'ajoutent en quadrature : $I = \sqrt{97{,}7^2 + 14{,}8^2} = 98{,}8\ \mathrm{A}$ efficaces vrais.</li>
+    <li>Comparaison : la somme arithmétique, $104\ \mathrm{A}$, surestimait de $5{,}2\ \%$ ; elle reste un majorant sûr, jamais une valeur exacte. La somme arithmétique des seuls fondamentaux, $101{,}7\ \mathrm{A}$, surestime encore de $4\ \%$ le courant au fondamental.</li>
+  </ol>
+
+  <h3 id="i-somme-section">Simulation interactive : la somme des courants de départs</h3>
+  <p>
+    La simulation construit la somme des quatre phaseurs de départ, pointe à la suite de l'autre. Les curseurs règlent le
+    facteur de déplacement et le courant du compresseur, celui de l'éclairage, et l'hypothèse de fonctionnement du
+    compresseur : courant fixé, ou puissance active fixée, auquel cas le courant varie comme $1/\cos\varphi$. Avant de
+    manipuler, prédisez : à courant fixé de $32\ \mathrm{A}$, si le $\cos\varphi$ du compresseur passe de $0{,}80$ à
+    $0{,}60$, le courant d'arrivée augmente-t-il ou diminue-t-il ? Et à puissance active fixée ?
+  </p>
+  <figure id="i-somme-figure">
+    <div class="schema-vivant" id="i-somme"></div>
+    <figcaption>
+      Plan complexe des courants efficaces de la phase $L_1$, en ampères, à l'échelle indiquée ; l'axe réel porte la
+      tension de référence $\underline{V}_1$. Les quatre phaseurs de départ sont en trait plein, pointe à la suite de
+      l'autre, dans l'ordre pompe, compresseur, éclairage, armoire, chacun repéré par son initiale ; la somme au
+      fondamental est la flèche en tirets épais ; l'arc près de l'origine marque son angle. Le trait fin en pointillés
+      horizontal donne, pour comparaison, la longueur de la somme arithmétique des valeurs efficaces.
+    </figcaption>
+  </figure>
+  <div id="i-somme-curseurs"></div>
+  <div id="i-somme-valeurs"></div>
+  <p>
+    Interprétation : à courant fixé, abaisser le $\cos\varphi$ du compresseur diminue le courant d'arrivée, de
+    $97{,}7$ à $93{,}6\ \mathrm{A}$ pour $0{,}60$, parce que son phaseur s'écarte de la direction des autres et que la somme
+    vectorielle profite moins de son module. Ce résultat contre-intuitif rappelle qu'un phaseur n'est pas une simple
+    longueur. Mais à puissance active fixée, la situation réelle d'un moteur qui entraîne la même charge, le courant du
+    compresseur passe à $42{,}7\ \mathrm{A}$ et l'arrivée à $102{,}8\ \mathrm{A}$ : un mauvais facteur de puissance coûte
+    du courant, donc des pertes et du calibre. C'est le sujet du cours Correction du facteur de puissance. Dans tous les
+    cas, la somme vectorielle reste inférieure ou égale à la somme arithmétique, l'égalité n'étant atteinte que si tous les
+    départs ont le même angle.
+  </p>
+
+  <h3 id="i-compromis">Contraintes, risques et compromis</h3>
+  <ul>
+    <li><strong>Calibre et section.</strong> Dimensionner le disjoncteur général et le câble d'arrivée sur $98{,}8\ \mathrm{A}$ plutôt que $104\ \mathrm{A}$ peut faire gagner un calibre ; mais les facteurs de puissance réels, les démarrages et les extensions futures réduisent cette marge. La somme arithmétique reste la première estimation prudente, le calcul vectoriel la valeur de conception à justifier.</li>
+    <li><strong>Harmoniques.</strong> Le diagramme de phaseurs ne voit que le fondamental. Plusieurs variateurs sur le même jeu de barres ont des harmoniques en phase entre eux, qui s'additionnent presque arithmétiquement ; leur traitement relève des cours Harmoniques et qualité de l'énergie et Introduction à Fourier.</li>
+    <li><strong>Mesure.</strong> Un analyseur de réseau affiche les modules et les angles des phaseurs ; il faut connaître sa référence de phase, sa convention de signe et s'il affiche des valeurs efficaces ou crêtes. Une pince montée à l'envers ajoute $180^\circ$ et transforme un départ récepteur en départ générateur.</li>
+    <li><strong>Déséquilibre.</strong> L'éclairage monophasé n'est jamais parfaitement réparti : chaque phase doit être calculée séparément, et le courant du neutre, somme des trois courants de phase, sera traité dans le cours Charges triphasées déséquilibrées.</li>
+    <li><strong>Simultanéité.</strong> Tous les départs ne sont pas en pleine charge en même temps ; le coefficient de simultanéité, règle de conception propre à chaque installation et à ses normes d'application, viendra réduire encore le courant de calcul.</li>
+  </ul>
+
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : le courant d'arrivée du tableau général calculé par phaseurs</span>
+    <p>
+      Nouvelle brique du petit site industriel. Le majorant arithmétique de $104\ \mathrm{A}$ par phase, posé dans le cours
+      <a href="#/cours/lois-de-kirchhoff">Lois de Kirchhoff</a>, est remplacé par un calcul vectoriel, référence des phases
+      sur $\underline{V}_1 = 230\angle 0^\circ\ \mathrm{V}$ : pompe $47{,}7\ \mathrm{A}$ au fondamental à $0^\circ$, compresseur
+      $32\ \mathrm{A}$ à $\cos\varphi = 0{,}80$, éclairage et prises $16\ \mathrm{A}$ à $0{,}95$, armoire automate
+      $6\ \mathrm{A}$ à $0{,}90$. Courant d'arrivée au fondamental $\underline{I}_1 = 93{,}9 - j26{,}8 = 97{,}7\angle -15{,}9^\circ\ \mathrm{A}$,
+      facteur de déplacement global $0{,}962$ ; avec les $14{,}8\ \mathrm{A}$ d'harmoniques de la pompe, $98{,}8\ \mathrm{A}$
+      efficaces vrais, soit $5\ \%$ de moins que la somme arithmétique. Sensibilité : à puissance active constante, un
+      compresseur à $\cos\varphi = 0{,}60$ porterait l'arrivée à $102{,}8\ \mathrm{A}$ au fondamental. Décision : le calcul
+      vectoriel devient la méthode de référence du bilan de courant du site ; le disjoncteur général et le câble d'arrivée
+      seront choisis dans le cours Dimensionnement des câbles, après le bilan de puissance du cours Puissances en courant
+      alternatif et la compensation du cours Correction du facteur de puissance. Facteurs de puissance supposés, à
+      remplacer par les plaques des équipements retenus et par une mesure à l'analyseur de réseau.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li>
+      <strong>Se tromper de quadrant.</strong> $\arctan(b/a)$ donne $53{,}13^\circ$ pour $-3 - j4$ comme pour $3 + j4$. Dès que $a < 0$, il faut ajouter ou retrancher $180^\circ$ : $-3 - j4 = 5\angle -126{,}87^\circ$. Placer le point dans le plan avant de conclure, ou utiliser $\operatorname{atan2}$.
+    </li>
+    <li>
+      <strong>Oublier de convertir un sinus en cosinus.</strong> $i(t) = 2\sin(\omega t - 20^\circ)$ n'a pas pour phaseur $1{,}414\angle -20^\circ$ mais $1{,}414\angle -110^\circ$. Mélanger des grandeurs écrites en sinus et en cosinus décale de $90^\circ$ une partie du diagramme.
+    </li>
+    <li>
+      <strong>Mélanger amplitudes et valeurs efficaces.</strong> Additionner un phaseur en amplitude et un phaseur efficace donne un résultat faux d'un facteur indéterminé. Choisir une convention, efficace en électrotechnique, et s'y tenir ; ne multiplier par $\sqrt{2}$ qu'au retour à l'expression temporelle.
+    </li>
+    <li>
+      <strong>Additionner des modules.</strong> Les valeurs efficaces de courants de même fréquence ne s'additionnent que s'ils sont en phase. Ailleurs, la somme arithmétique surestime, de $5\ \%$ pour le tableau général, et peut être très fausse : deux courants égaux en opposition ont une somme nulle.
+    </li>
+    <li>
+      <strong>Placer sur un même diagramme des grandeurs de fréquences différentes.</strong> Un harmonique à $250\ \mathrm{Hz}$ n'a pas de phaseur sur le diagramme à $50\ \mathrm{Hz}$ : son angle relatif tourne sans cesse. On traite chaque fréquence séparément et on combine les valeurs efficaces par la somme des carrés.
+    </li>
+    <li>
+      <strong>Utiliser les phaseurs pendant un régime transitoire.</strong> Le courant de mise sous tension d'un transformateur ou la précharge d'un bus continu ne sont pas sinusoïdaux ; le phaseur décrit seulement le régime permanent, atteint après environ $5\tau$.
+    </li>
+    <li>
+      <strong>Confondre degrés et radians.</strong> Écrire $e^{j30}$ en pensant $30^\circ$, ou saisir des degrés sur une calculatrice en mode radians, donne $e^{j30} = 0{,}154 - j0{,}988$ au lieu de $0{,}866 + j0{,}5$. Écrire $30^\circ$ dans la notation polaire et $\pi/6$ dans l'exponentielle.
+    </li>
+    <li>
+      <strong>Croire que le phaseur d'un produit est le produit des phaseurs.</strong> La puissance instantanée $u(t)\,i(t)$ contient une composante continue et une composante à $2\omega$ ; $\underline{U}\,\underline{I}$ n'a pas de sens physique direct, et la puissance complexe s'écrira avec le conjugué, $\underline{U}\,\underline{I}^*$.
+    </li>
+    <li>
+      <strong>Oublier le signe imposé par le sens de fléchage.</strong> Dans une loi des nœuds, un courant fléché sortant compte négativement ; dans une construction de Fresnel, une flèche inversée est un phaseur tourné de $180^\circ$.
+    </li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain : une somme de courants de départs mesurés supérieure au courant d'arrivée n'est pas une
+    anomalie, c'est la signature de déphasages différents ; l'inverse, un courant d'arrivée supérieur à la somme des
+    départs, signale un départ oublié, un courant de fuite ou une erreur de pince. Un angle affiché proche de $180^\circ$
+    sur une charge passive signale une pince montée à l'envers. Un résultat de calcul dont la valeur à $t = 0$ ne
+    correspond pas au relevé signale une erreur de conversion sinus et cosinus ou de quadrant. Le contrôle décisif est la
+    construction de Fresnel à main levée : en dix secondes, elle dit si le module et l'angle trouvés sont plausibles.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de
+    diagnostic industriel et une question conceptuelle. La correction de chacun reste masquée jusqu'à une tentative ou un
+    clic explicite sur "Voir la correction", puis se déroule étape par étape, accompagnée d'un diagramme de phaseurs,
+    d'une courbe ou d'un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma.</p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$z = a + jb = r\angle\theta, \qquad r = \sqrt{a^2 + b^2}, \qquad \theta = \operatorname{atan2}(b, a)$$
+    $$e^{j\theta} = \cos\theta + j\sin\theta$$
+    $$x(t) = X\sqrt{2}\cos(\omega t + \varphi) \;\Longleftrightarrow\; \underline{X} = X\angle\varphi$$
+    $$z_1 z_2 = r_1 r_2\angle(\theta_1 + \theta_2), \qquad \frac{z_1}{z_2} = \frac{r_1}{r_2}\angle(\theta_1 - \theta_2)$$
+    $$\frac{\mathrm{d}x}{\mathrm{d}t} \longrightarrow j\omega\,\underline{X}, \qquad \sum\underline{I}_k = 0, \qquad \sin(\omega t + \alpha) = \cos(\omega t + \alpha - 90^\circ)$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>Placer le point dans son quadrant : $\arctan(b/a)$ se trompe de $180^\circ$ dès que $a < 0$.</li>
+      <li>Ramener tout sinus à un cosinus avant d'écrire le phaseur.</li>
+      <li>Une seule convention par calcul : phaseur efficace ou amplitude, degrés ou radians, référence des phases fixée.</li>
+      <li>Phaseurs seulement pour une même fréquence, en régime permanent, dans un circuit linéaire.</li>
+      <li>Contrôler chaque résultat par une construction de Fresnel et par une valeur instantanée.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Un nombre complexe s'écrit $a + jb$ ou $r\angle\theta$ ; on additionne en cartésien, on
+    multiplie et on divise en polaire, et l'argument se lit dans le bon quadrant. La formule d'Euler,
+    $e^{j\theta} = \cos\theta + j\sin\theta$, fait de $e^{j\omega t}$ un vecteur tournant dont la partie réelle est une
+    sinusoïde. Dans un circuit linéaire en régime permanent à fréquence unique, toutes les grandeurs tournent ensemble :
+    chacune est résumée par son phaseur efficace $X\angle\varphi$, photographie à $t = 0$. Les lois de Kirchhoff
+    deviennent des sommes de phaseurs, la dérivée devient une multiplication par $j\omega$, l'intégrale une division. La
+    somme de courants déphasés est inférieure à la somme de leurs valeurs efficaces. Grandeurs de fréquences différentes,
+    transitoires et courants déformés sortent du cadre.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent,
+    <a href="#/cours/signaux-periodiques-et-sinusoides">Signaux périodiques et sinusoïdes</a> ; une sur le cours
+    <a href="#/cours/inductances-et-champ-magnetique">Inductances et champ magnétique</a>, vieux d'une semaine exactement ;
+    la question sur un cours vieux d'un mois n'est pas encore applicable, et elle est remplacée par une question sur le
+    cours <a href="#/cours/diagnostic-initial-et-remise-a-niveau-mathematique">Diagnostic initial et remise à niveau
+    mathématique</a>, où les nombres complexes ont été introduits.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : automatiser les conversions avec Python, vérifier numériquement qu'une somme de sinusoïdes de même
+    fréquence est la sinusoïde du phaseur somme, puis retrouver un phaseur dans une simulation LTspice. Prédictions à
+    écrire avant de commencer : <code>cmath.phase(-3-4j)</code> renverra-t-il un angle positif ou négatif ? L'écart maximal
+    entre la somme échantillonnée des trois courants de la section H et la sinusoïde reconstruite sera-t-il de l'ordre
+    du milliampère ou bien plus petit ? Dans LTspice, la tension aux bornes de l'inductance sera-t-elle en avance ou en
+    retard sur le courant ?
+  </p>
+  <ol>
+    <li>
+      En Python, avec <code>cmath</code>, convertir $3 + j4$, $-3 - j4$, $-2 + j2$ et $-j5$ en module et argument par
+      <code>abs(z)</code> et <code>math.degrees(cmath.phase(z))</code>, puis revenir en cartésien par
+      <code>cmath.rect(r, math.radians(theta))</code>. Comparer avec <code>math.degrees(math.atan(b / a))</code> et noter les
+      cas où les deux diffèrent.
+    </li>
+    <li>
+      Écrire une fonction <code>phaseur(Xm, phi_deg, forme="cos")</code> qui renvoie le phaseur efficace, en convertissant
+      d'abord un sinus en cosinus. L'appliquer aux trois courants de la section H, calculer leur somme et l'afficher en
+      forme polaire.
+    </li>
+    <li>
+      Avec numpy, échantillonner $i_v + i_R + i_L$ sur $40\ \mathrm{ms}$ à $100\ \mathrm{kHz}$ à partir de leurs expressions
+      temporelles, puis comparer à $\sqrt{2}\,I\cos(\omega t + \varphi_i)$ issu du phaseur somme ; tracer l'écart avec
+      matplotlib et afficher son maximum. Calculer aussi la valeur efficace numérique de la somme.
+    </li>
+    <li>
+      Dans LTspice, saisir la netlist <code>V1 a 0 SINE(0 325.3 50 0 0 90)</code>, <code>R1 a b 10</code>,
+      <code>L1 b 0 31.83m</code>, <code>.tran 0 200m 100m 10u</code> et <code>.end</code>. La phase de <code>90</code> degrés
+      transforme le sinus de LTspice en cosinus. Mesurer à l'oscilloscope du simulateur l'amplitude de
+      <code>I(R1)</code>, celle de <code>V(b)</code> et le décalage temporel entre leurs maxima ; en déduire les phaseurs
+      efficaces $\underline{I}$ et $\underline{U}_L$, puis vérifier que $\underline{U}_L = j\omega L\,\underline{I}$.
+    </li>
+  </ol>
+  <p>
+    Résultats attendus : <code>cmath.phase</code> renvoie $-126{,}87^\circ$ pour $-3 - j4$, $135^\circ$ pour $-2 + j2$ et
+    $-90^\circ$ pour $-j5$, alors que l'arc tangente donne $53{,}13^\circ$, $-45^\circ$ et une division par zéro. Le phaseur
+    somme vaut $3{,}323\angle -2{,}31^\circ\ \mathrm{A}$ ; l'écart entre la somme échantillonnée et la sinusoïde reconstruite
+    est de l'ordre de $10^{-15}\ \mathrm{A}$, l'erreur d'arrondi de la machine, et la valeur efficace numérique vaut
+    $3{,}323\ \mathrm{A}$. Dans LTspice, $\omega L = 314{,}16 \times 0{,}03183 = 10{,}0\ \Omega$ : le courant a pour amplitude
+    $325{,}3/\sqrt{10^2 + 10^2} = 23{,}0\ \mathrm{A}$, la tension de l'inductance $230\ \mathrm{V}$ crête, et ses maxima
+    précèdent ceux du courant de $5\ \mathrm{ms}$ : avance de $90^\circ$. Le courant est en retard de $45^\circ$, soit
+    $2{,}5\ \mathrm{ms}$, sur la source. Anomalies à observer : un premier cycle déformé si la fenêtre commence à
+    $t = 0$, c'est le transitoire du cours <a href="#/cours/regime-transitoire-rl">Régime transitoire RL</a>, d'où le
+    début de l'enregistrement à $100\ \mathrm{ms}$ ; un pas de calcul trop grand qui fausse la lecture du décalage ; une
+    phase de source oubliée, qui décale tout le diagramme de $90^\circ$ sans changer les déphasages relatifs.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est calculé
+    dans ce navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées
+    localement pour suivre votre progression. Cette séance prépare le jalon de fin du module Triphasé et qualité de
+    l'énergie : maîtriser les régimes sinusoïdaux monophasés et triphasés, les puissances, la compensation, les
+    harmoniques et les filtres élémentaires. Aucune de ces notions ne se calcule sans aisance avec les phaseurs.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Un phaseur efficace $X\angle\varphi$ est la photographie à $t = 0$ du vecteur tournant dont la partie réelle, multipliée par $\sqrt{2}$, donne la grandeur : il contient toute l'information dès que la fréquence est connue et commune.</li>
+    <li data-rang="02">Les lois de Kirchhoff deviennent des sommes de complexes, faites en cartésien ; produits, quotients et dérivées, $\times\,j\omega$, se font en polaire ; l'argument se lit dans le bon quadrant.</li>
+    <li data-rang="03">L'outil exige un circuit linéaire, une fréquence unique et le régime permanent ; il se contrôle toujours par une construction de Fresnel et une valeur instantanée.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> tenir les conventions d'un bout à l'autre du calcul, cosinus contre
+    sinus, efficace contre amplitude, degrés contre radians, et placer chaque argument dans son quadrant. La simulation de
+    conversion de la section E et l'organigramme de la section F sont faits pour installer ces réflexes ; la construction
+    de Fresnel de la section H montre comment les contrôler.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Impédances en régime sinusoïdal, généralise la loi d'Ohm
+    aux phaseurs. Question à préparer : une inductance de $0{,}1\ \mathrm{H}$ est parcourue par le courant
+    $i(t) = 2\sqrt{2}\cos(314{,}16\,t)$ en ampères. En utilisant $u = L\,\mathrm{d}i/\mathrm{d}t$ et la règle de dérivation
+    de cette séance, écrivez le phaseur $\underline{U}$ de sa tension, puis le rapport $\underline{U}/\underline{I}$. Ce
+    rapport dépend-il du temps ? Que devient-il à $100\ \mathrm{Hz}$, et que devient le rapport analogue pour un
+    condensateur de $100\ \mu\mathrm{F}$ ?
+  </p>
+
+</article>
