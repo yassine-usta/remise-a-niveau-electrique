@@ -1,0 +1,1040 @@
+<article class="cours" data-slug="impedances-en-regime-sinusoidal">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/nombres-complexes-et-phaseurs">Nombres complexes et phaseurs</a> s'est achevé sur une
+      question : une inductance de $0{,}1\ \mathrm{H}$ est parcourue par $i(t) = 2\sqrt{2}\cos(314{,}16\,t)$ en ampères ;
+      quel est le phaseur de sa tension, et que vaut le rapport $\underline{U}/\underline{I}$ ? Réponse : le phaseur efficace
+      du courant est $\underline{I} = 2\angle 0^\circ\ \mathrm{A}$ ; la règle de dérivation transforme
+      $u = L\,\mathrm{d}i/\mathrm{d}t$ en $\underline{U} = jL\omega\,\underline{I} = j \times 31{,}42 \times 2 = 62{,}83\angle 90^\circ\ \mathrm{V}$.
+      Le rapport $\underline{U}/\underline{I} = j31{,}42\ \Omega$ ne contient plus le temps : c'est un nombre complexe fixe,
+      qui ne dépend que de $L$ et de la pulsation. À $100\ \mathrm{Hz}$, il double, $j62{,}83\ \Omega$. Pour un condensateur de
+      $100\ \mu\mathrm{F}$, $i = C\,\mathrm{d}u/\mathrm{d}t$ donne $\underline{I} = jC\omega\,\underline{U}$, donc
+      $\underline{U}/\underline{I} = 1/(jC\omega) = -j31{,}83\ \Omega$ à $50\ \mathrm{Hz}$ et $-j15{,}92\ \Omega$ à
+      $100\ \mathrm{Hz}$. Ce rapport porte un nom : l'impédance. Cette séance en fait l'outil central du régime
+      sinusoïdal, en s'appuyant aussi sur la loi d'Ohm du cours <a href="#/cours/loi-d-ohm-et-resistivite">Loi d'Ohm et
+      résistivité</a>, sur les associations du cours <a href="#/cours/associations-de-resistances-et-diviseurs">Associations
+      de résistances et diviseurs</a> et sur le comportement en continu des cours
+      <a href="#/cours/condensateurs-et-champ-electrique">Condensateurs et champ électrique</a> et
+      <a href="#/cours/inductances-et-champ-magnetique">Inductances et champ magnétique</a>.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    En continu, un seul nombre suffit à décrire un dipôle linéaire passif : sa résistance. En régime sinusoïdal, un
+    dipôle fait deux choses à la fois : il fixe le rapport entre les valeurs efficaces de la tension et du courant, et il
+    décale le courant dans le temps par rapport à la tension. L'impédance complexe $\underline{Z} = \underline{U}/\underline{I}$
+    range ces deux informations dans un seul nombre, son module et son argument. Avec elle, la loi d'Ohm, les lois
+    d'association, les diviseurs, Thévenin, Norton et les méthodes systématiques du cours
+    <a href="#/cours/methodes-de-resolution-systematique">Méthodes de résolution systématique</a> s'appliquent telles
+    quelles aux circuits alimentés par le réseau : on remplace les résistances par des impédances et les grandeurs par
+    leurs phaseurs.
+  </p>
+  <p>
+    L'ingénieur s'en sert partout : modèle par phase d'un moteur, d'un transformateur ou d'une ligne, chute de tension
+    dans un câble, courant de court-circuit limité par l'impédance de la source, choix d'une self de ligne pour un
+    variateur, filtre antiparasite, batterie de condensateurs de compensation, réglage d'une protection de distance qui
+    mesure justement une impédance. La seconde propriété décisive est la dépendance fréquentielle : la réactance d'une
+    inductance croît avec la fréquence, celle d'un condensateur décroît. C'est ce qui permet de filtrer, ce qui explique
+    que les condensateurs souffrent des harmoniques, et ce qui obligera, dans le cours Résonance série et parallèle, à
+    regarder de près la fréquence où les deux se compensent. Le travail central de cette séance est le calcul complet des
+    courants et des tensions d'un circuit RLC en régime sinusoïdal.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Calculer l'impédance et l'admittance d'une résistance, d'une inductance et d'un condensateur à une fréquence donnée, avec leurs unités et leur signe.</li>
+    <li data-rang="02">Expliquer physiquement pourquoi le courant d'une inductance est en retard de $90^\circ$, celui d'un condensateur en avance de $90^\circ$, et comment leurs réactances varient avec la fréquence.</li>
+    <li data-rang="03">Calculer l'impédance équivalente d'associations série, parallèle et mixtes, en choisissant entre impédances et admittances.</li>
+    <li data-rang="04">Calculer tous les courants et toutes les tensions d'un circuit RLC sinusoïdal, puis les contrôler par les lois de Kirchhoff, une valeur instantanée et un bilan de puissance active.</li>
+    <li data-rang="05">Interpréter la position d'une impédance dans le plan complexe : caractère inductif, capacitif ou résistif, angle, et comportement aux fréquences basses et élevées.</li>
+    <li data-rang="06">Dimensionner un modèle d'impédance par phase à partir de données de plaque et estimer la chute de tension d'un câble.</li>
+    <li data-rang="07">Diagnostiquer une anomalie liée à la dépendance fréquentielle, par exemple l'échauffement d'un condensateur en présence d'harmoniques.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois acquis suffisent. Le premier est le phaseur efficace du cours précédent :
+    $x(t) = X\sqrt{2}\cos(\omega t + \varphi_x) \Longleftrightarrow \underline{X} = X\angle\varphi_x$, avec la règle de
+    dérivation $\mathrm{d}x/\mathrm{d}t \to j\omega\,\underline{X}$ et le déphasage $\varphi = \varphi_u - \varphi_i$, positif
+    quand le courant est en retard. Le deuxième est le calcul complexe : addition en forme cartésienne, produit et quotient
+    en forme polaire, $1/j = -j$, et l'argument lu dans le bon quadrant. Le troisième est l'algèbre des associations de
+    résistances du cours <a href="#/cours/associations-de-resistances-et-diviseurs">Associations de résistances et
+    diviseurs</a> : en série, les résistances s'ajoutent ; en parallèle, ce sont les conductances. Le mini-test ci-dessous
+    n'est pas noté ; la correction de chaque question reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la
+    correction".
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-trois">Trois façons de s'opposer au courant</h3>
+  <p>
+    Une résistance s'oppose au courant en dissipant de l'énergie : à chaque instant, $u = Ri$, la tension suit le courant
+    sans retard, et l'opposition ne dépend pas de la vitesse à laquelle le courant change. Une inductance s'oppose, non au
+    courant, mais à ses variations : sa tension vaut $L\,\mathrm{d}i/\mathrm{d}t$. Elle est maximale quand le courant passe
+    par zéro en variant le plus vite, et nulle quand il est à son maximum, immobile un instant : la tension est en avance
+    d'un quart de période. Plus la fréquence est élevée, plus le courant change vite pour une même amplitude, plus la tension
+    nécessaire est grande : l'opposition, la réactance $L\omega$, croît avec la fréquence. Un condensateur s'oppose aux
+    variations de sa tension : son courant vaut $C\,\mathrm{d}u/\mathrm{d}t$, maximal quand la tension passe par zéro.
+    C'est le courant qui est en avance, et un condensateur se laisse traverser d'autant plus facilement que la fréquence
+    est élevée : sa réactance $1/(C\omega)$ décroît.
+  </p>
+  <p>
+    Analogie contrôlée, la mécanique d'un entraînement. La tension joue le rôle de la force, le courant celui de la
+    vitesse. Un amortisseur visqueux exerce une force proportionnelle à la vitesse, $F = bv$ : c'est la résistance. Une
+    masse exige une force proportionnelle à l'accélération, $F = m\,\mathrm{d}v/\mathrm{d}t$ : c'est l'inductance, qui a de
+    l'inertie. Un ressort exerce une force proportionnelle au déplacement, intégrale de la vitesse, $F = k\int v\,\mathrm{d}t$ :
+    c'est le condensateur, avec $k \leftrightarrow 1/C$. Secouer une masse lentement demande peu d'effort, la secouer vite en
+    demande beaucoup ; un ressort résiste surtout aux mouvements lents de grande amplitude.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie et de l'impédance</span>
+    <p>
+      L'analogie est formelle : elle respecte les équations, pas la géométrie. Des éléments en série électrique, parcourus par
+      le même courant, correspondent à des éléments mécaniques qui partagent la même vitesse, ce qui n'est pas toujours la
+      disposition intuitive d'un dessin. Elle ne dit rien des pertes réelles d'une bobine à noyau, des fuites d'un
+      condensateur ni de la saturation. L'impédance elle-même hérite de toutes les hypothèses du phaseur : circuit linéaire,
+      fréquence unique, régime permanent. Elle n'a de sens qu'à une fréquence donnée, et elle ne décrit ni la mise sous
+      tension des cours <a href="#/cours/regime-transitoire-rl">Régime transitoire RL</a> et
+      <a href="#/cours/regime-transitoire-rlc">Régime transitoire RLC</a>, ni le courant en créneaux d'un pont de diodes.
+    </p>
+  </div>
+
+  <h3 id="d-composants-section">Simulation interactive : tension et courant dans R, L et C</h3>
+  <p>
+    La simulation alimente un seul composant par une tension sinusoïdale de $230\ \mathrm{V}$ efficaces. Les trois
+    composants ont été choisis pour présenter la même opposition, $50\ \Omega$, à $50\ \mathrm{Hz}$ : $R = 50\ \Omega$,
+    $L = 159{,}2\ \mathrm{mH}$ et $C = 63{,}66\ \mu\mathrm{F}$. Le premier curseur choisit le composant, le second la
+    fréquence de la source ; le lecteur fait tourner les phaseurs et avance l'instant étudié. Avant de manipuler, prédisez :
+    à $50\ \mathrm{Hz}$, les trois courants ont-ils la même valeur efficace ? Si la fréquence passe à $100\ \mathrm{Hz}$, quel
+    courant reste inchangé, lequel est divisé par deux, lequel est doublé ? Le déphasage change-t-il avec la fréquence ?
+  </p>
+  <figure id="d-composants-figure">
+    <div class="schema-vivant" id="d-composants"></div>
+    <div id="d-composants-trace"></div>
+    <figcaption>
+      En haut à gauche, le schéma du montage : la source, fléchée en convention générateur, alimente le composant choisi,
+      fléché en convention récepteur, le neutre étant la référence de potentiel. En haut à droite, le plan complexe : le
+      phaseur de la tension $\underline{U}$, en trait plein épais, et celui du courant $\underline{I}$, en tirets, dessinés à
+      l'instant étudié, donc tournés de $\omega t$ ; l'arc marque le déphasage, et les pointillés projettent chaque pointe
+      sur l'axe réel, ce qui donne les valeurs instantanées. En bas, $u(t)$ et $i(t)$ sur $40\ \mathrm{ms}$, le courant
+      multiplié par $50$ pour être lisible sur la même échelle ; la légende sous le tracé nomme chaque courbe avec sa couleur
+      réelle, et le trait vertical en tirets marque l'instant étudié.
+    </figcaption>
+  </figure>
+  <div id="d-composants-curseurs"></div>
+  <div id="d-composants-lecteur"></div>
+  <div id="d-composants-valeurs"></div>
+  <p>
+    Interprétation : à $50\ \mathrm{Hz}$, les trois courants valent $4{,}6\ \mathrm{A}$, mais ils ne sont pas
+    interchangeables : celui de la résistance est en phase avec la tension, celui de l'inductance passe par son maximum un
+    quart de période après elle, celui du condensateur un quart de période avant. À $100\ \mathrm{Hz}$, le courant de la
+    résistance ne change pas, celui de l'inductance tombe à $2{,}3\ \mathrm{A}$ et celui du condensateur monte à
+    $9{,}2\ \mathrm{A}$. Le déphasage, lui, reste exactement $0^\circ$, $+90^\circ$ ou $-90^\circ$ quelle que soit la
+    fréquence : il est la signature de la nature du composant, alors que le module dépend de la fréquence. En suivant le
+    lecteur, on voit aussi que l'inductance et le condensateur passent par des instants où $u$ et $i$ ont des signes
+    opposés : ils rendent alors à la source l'énergie qu'ils avaient stockée.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-definition">Définition de l'impédance et de l'admittance</h3>
+  <p>
+    Soit un dipôle linéaire passif, fléché en convention récepteur, en régime permanent sinusoïdal de pulsation $\omega$.
+    Sa tension et son courant sont des sinusoïdes de même pulsation, de phaseurs efficaces $\underline{U} = U\angle\varphi_u$
+    et $\underline{I} = I\angle\varphi_i$. Leur rapport ne dépend pas du temps : c'est l'impédance complexe.
+  </p>
+  <div class="formule-cle">
+    $$\underline{Z} = \frac{\underline{U}}{\underline{I}} = \frac{U}{I}\angle(\varphi_u - \varphi_i) = Z\angle\varphi = R + jX, \qquad \underline{Y} = \frac{1}{\underline{Z}} = \frac{\underline{I}}{\underline{U}} = G + jB$$
+    <p class="formule-cle-legende">
+      $\underline{Z}$ impédance en ohms ($\Omega$) ; son module $Z = U/I$ est le rapport des valeurs efficaces, et aussi
+      celui des amplitudes ; son argument $\varphi = \varphi_u - \varphi_i$ est le déphasage de la tension sur le courant.
+      $R = \operatorname{Re}\underline{Z}$ est la résistance, $X = \operatorname{Im}\underline{Z}$ la réactance, toutes deux en
+      ohms. $\underline{Y}$ admittance en siemens ($\mathrm{S}$), $G$ conductance et $B$ susceptance, en siemens.
+      Hypothèses : dipôle linéaire, passif, régime permanent sinusoïdal, convention récepteur. Pour un dipôle passif,
+      $R \geq 0$, donc $-90^\circ \leq \varphi \leq +90^\circ$ : le point $\underline{Z}$ est toujours dans le demi-plan de
+      droite. $X > 0$ : dipôle inductif, courant en retard ; $X < 0$ : capacitif, courant en avance ; $X = 0$ : résistif.
+      Attention : $G = R/(R^2 + X^2)$ et $B = -X/(R^2 + X^2)$, si bien que $G$ n'est égal à $1/R$ que si $X = 0$.
+      Dimension : $\underline{U}/\underline{I}$ est en $\mathrm{V/A} = \Omega$. Cas limite : $\omega = 0$ redonne la loi d'Ohm du
+      continu pour une résistance.
+    </p>
+  </div>
+  <p>
+    Dérivation pour les trois composants, à partir de leurs lois temporelles et des propriétés du phaseur. Résistance :
+    $u = Ri$ est une relation linéaire à coefficient réel, donc $\underline{U} = R\,\underline{I}$. Inductance :
+    $u = L\,\mathrm{d}i/\mathrm{d}t$ et la dérivée devient $j\omega$, donc $\underline{U} = jL\omega\,\underline{I}$.
+    Condensateur : $i = C\,\mathrm{d}u/\mathrm{d}t$ devient $\underline{I} = jC\omega\,\underline{U}$, donc
+    $\underline{U} = \underline{I}/(jC\omega)$.
+  </p>
+  <div class="formule-cle">
+    $$\underline{Z}_R = R, \qquad \underline{Z}_L = jL\omega = L\omega\angle 90^\circ, \qquad \underline{Z}_C = \frac{1}{jC\omega} = -\frac{j}{C\omega} = \frac{1}{C\omega}\angle -90^\circ$$
+    $$X_L = L\omega, \qquad X_C = -\frac{1}{C\omega}, \qquad \underline{Y}_R = \frac{1}{R}, \qquad \underline{Y}_L = \frac{-j}{L\omega}, \qquad \underline{Y}_C = jC\omega$$
+    <p class="formule-cle-legende">
+      $L$ en henrys, $C$ en farads, $\omega = 2\pi f$ en $\mathrm{rad/s}$. Vérification dimensionnelle :
+      $L\omega$ est en $\mathrm{H \cdot s^{-1}} = (\mathrm{V \cdot s/A}) \cdot \mathrm{s^{-1}} = \Omega$ ; $1/(C\omega)$ est en
+      $1/(\mathrm{F \cdot s^{-1}}) = 1/((\mathrm{A \cdot s/V}) \cdot \mathrm{s^{-1}}) = \Omega$. Convention : le parcours note la
+      réactance avec son signe, $X_C < 0$ ; beaucoup d'ouvrages notent $X_C = 1/(C\omega) > 0$ et écrivent
+      $\underline{Z}_C = -jX_C$. Les deux écritures donnent le même nombre complexe ; il faut seulement savoir laquelle est
+      employée. Cas limites : pour $\omega \to 0$, $\underline{Z}_L \to 0$, l'inductance est un court-circuit, et
+      $|\underline{Z}_C| \to \infty$, le condensateur est un circuit ouvert, comme en continu ; pour $\omega \to \infty$, c'est
+      l'inverse. Ordres de grandeur à $50\ \mathrm{Hz}$ : $1\ \mathrm{mH}$ vaut $0{,}314\ \Omega$, $100\ \mu\mathrm{F}$ vaut
+      $31{,}8\ \Omega$.
+    </p>
+  </div>
+  <p>
+    Le triangle d'impédance donne une lecture géométrique : la partie réelle $R$ et la partie imaginaire $X$ sont les
+    côtés de l'angle droit, le module $Z$ l'hypoténuse et l'argument $\varphi$ l'angle à l'origine. Le schéma ci-dessous
+    compare un dipôle inductif et un dipôle capacitif de même résistance.
+  </p>
+  <figure id="e-triangle-figure">
+    <svg viewBox="0 0 760 330" role="img" aria-label="Deux triangles d'impédance. À gauche, dipôle RL série : R horizontal de 40 ohms, réactance X égale plus 30 ohms vers le haut, impédance Z de module 50 ohms et d'argument plus 36,87 degrés. À droite, dipôle RC série : R de 40 ohms, réactance moins 30 ohms vers le bas, impédance de module 50 ohms et d'argument moins 36,87 degrés">
+      <defs>
+        <marker id="fl-e-tri" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto-start-reverse">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="1.2" fill="none" opacity="0.7">
+        <path d="M40 250H350" marker-end="url(#fl-e-tri)"/>
+        <path d="M60 300V40" marker-end="url(#fl-e-tri)"/>
+        <path d="M410 90H720" marker-end="url(#fl-e-tri)"/>
+        <path d="M430 300V40" marker-end="url(#fl-e-tri)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M60 250H277" marker-end="url(#fl-e-tri)"/>
+        <path d="M280 250V103" marker-end="url(#fl-e-tri)"/>
+        <path d="M430 90H647" marker-end="url(#fl-e-tri)"/>
+        <path d="M650 90V237" marker-end="url(#fl-e-tri)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="3.2" fill="none" stroke-dasharray="12 6" stroke-linecap="round">
+        <path d="M60 250L277.6 101.8" marker-end="url(#fl-e-tri)"/>
+        <path d="M430 90L647.6 238.2" marker-end="url(#fl-e-tri)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.3" fill="none">
+        <path d="M110 250A50 50 0 0 0 100 220"/>
+        <path d="M480 90A50 50 0 0 1 470 120"/>
+        <path d="M270 250v-10h10M640 90v10h10"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="352" y="268" text-anchor="end">Re (Ω)</text>
+        <text x="68" y="50">Im (Ω)</text>
+        <text x="722" y="108" text-anchor="end">Re (Ω)</text>
+        <text x="438" y="50">Im (Ω)</text>
+        <text x="170" y="270" text-anchor="middle">R = 40 Ω</text>
+        <text x="290" y="180">X = +30 Ω</text>
+        <text x="120" y="160">Z = 50 Ω</text>
+        <text x="118" y="236">φ = +36,87°</text>
+        <text x="540" y="80" text-anchor="middle">R = 40 Ω</text>
+        <text x="660" y="170">X = -30 Ω</text>
+        <text x="500" y="190">Z = 50 Ω</text>
+        <text x="488" y="112">φ = -36,87°</text>
+        <text x="60" y="300" font-size="11.5">dipôle RL série : inductif,</text>
+        <text x="60" y="316" font-size="11.5">courant en retard sur la tension</text>
+        <text x="430" y="300" font-size="11.5">dipôle RC série : capacitif,</text>
+        <text x="430" y="316" font-size="11.5">courant en avance sur la tension</text>
+      </g>
+    </svg>
+    <figcaption>
+      Deux triangles d'impédance à la même échelle, un ohm pour $5{,}5$ unités du dessin. Les côtés de l'angle droit, en trait
+      plein, sont la résistance $R$, portée par l'axe réel, et la réactance $X$, portée par l'axe imaginaire, vers le haut si
+      elle est positive, vers le bas si elle est négative ; le petit carré marque l'angle droit. L'impédance $\underline{Z}$,
+      en tirets épais, relie l'origine à la pointe de la réactance ; l'arc près de l'origine est son argument $\varphi$, compté
+      positivement dans le sens trigonométrique. Les deux dipôles ont le même module, $\sqrt{40^2 + 30^2} = 50\ \Omega$, donc
+      le même courant efficace sous la même tension ; seul le signe du déphasage les distingue.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-associations">Lois d'association et diviseurs</h3>
+  <p>
+    Les lois de Kirchhoff restent vraies pour les phaseurs, et chaque dipôle vérifie $\underline{U} = \underline{Z}\,\underline{I}$ :
+    les démonstrations du cours <a href="#/cours/associations-de-resistances-et-diviseurs">Associations de résistances et
+    diviseurs</a> se recopient en remplaçant $R$ par $\underline{Z}$. En série, le même courant traverse les dipôles et les
+    tensions s'ajoutent : $\underline{U} = \underline{Z}_1\underline{I} + \underline{Z}_2\underline{I}$. En parallèle, la même
+    tension est appliquée et les courants s'ajoutent : $\underline{I} = \underline{Y}_1\underline{U} + \underline{Y}_2\underline{U}$.
+    Les schémas ci-dessous fixent les sens de fléchage, tous en convention récepteur.
+  </p>
+  <figure id="e-associations-figure">
+    <pre>
+Série : même courant I                    Parallèle : même tension U
+
+   I -->                                    I -->     A
+o-------[ Z1 ]-------[ Z2 ]-------o       o-----------+----------+
+        &lt;-- U1 --    &lt;-- U2 --                        |          |
+&lt;--------------- U ---------------        ^        I1 v       I2 v
+                                          |        [ Z1 ]     [ Z2 ]
+U = U1 + U2 = (Z1 + Z2) I                 U           |          |
+                                          |           |          |
+                                          o-----------+----------+
+                                                      B
+                                          I = I1 + I2 = (Y1 + Y2) U
+</pre>
+    <figcaption>
+      À gauche, deux impédances en série : la flèche du courant $\underline{I}$ va de gauche à droite, les flèches de tension
+      $\underline{U}_1$, $\underline{U}_2$ et $\underline{U}$ pointent en sens inverse, vers la borne de potentiel le plus élevé
+      quand les phaseurs sont réels positifs : c'est la convention récepteur. À droite, deux impédances en parallèle entre
+      les nœuds $A$ et $B$ : la tension $\underline{U}$, fléchée de $B$ vers $A$, est commune ; le courant $\underline{I}$
+      entre en $A$ et se partage en $\underline{I}_1$ et $\underline{I}_2$, fléchés vers $B$.
+    </figcaption>
+  </figure>
+  <div class="formule-cle">
+    $$\underline{Z}_{\text{série}} = \sum_k \underline{Z}_k, \qquad \underline{Y}_{\text{parallèle}} = \sum_k \underline{Y}_k, \qquad \underline{Z}_1 \parallel \underline{Z}_2 = \frac{\underline{Z}_1\underline{Z}_2}{\underline{Z}_1 + \underline{Z}_2}$$
+    $$\underline{U}_1 = \underline{U}\,\frac{\underline{Z}_1}{\underline{Z}_1 + \underline{Z}_2}\ \text{(diviseur de tension)}, \qquad \underline{I}_1 = \underline{I}\,\frac{\underline{Y}_1}{\underline{Y}_1 + \underline{Y}_2} = \underline{I}\,\frac{\underline{Z}_2}{\underline{Z}_1 + \underline{Z}_2}\ \text{(diviseur de courant)}$$
+    <p class="formule-cle-legende">
+      Hypothèses : dipôles linéaires, même fréquence, diviseur de tension non chargé, c'est-à-dire même courant dans
+      $\underline{Z}_1$ et $\underline{Z}_2$. Les sommes sont des sommes de complexes : les modules ne s'ajoutent pas. Deux
+      conséquences n'ont pas d'équivalent en continu. Une tension partielle peut dépasser la tension totale : avec
+      $\underline{Z}_1 = j20\ \Omega$ et $\underline{Z}_2 = -j15\ \Omega$ sous $10\ \mathrm{V}$, le courant vaut
+      $10/5 = 2\ \mathrm{A}$ et $U_1 = 40\ \mathrm{V}$. Un courant de branche peut dépasser le courant total, pour la même
+      raison en parallèle. Cas limites : $\underline{Z}_2 \to 0$ court-circuite $\underline{Z}_1$ dans le parallèle ;
+      $\underline{Z}_2 \to \infty$ l'ouvre. Dimension : chaque fraction est sans dimension.
+    </p>
+  </div>
+  <p>
+    Choisir entre impédances et admittances : en série, on additionne des impédances ; en parallèle, des admittances. Un
+    circuit mixte se réduit de proche en proche, en passant de l'une à l'autre selon le groupement traité. Un dipôle donné
+    peut aussi être représenté, à une fréquence fixée, soit par une résistance et une réactance en série, soit par une
+    résistance et une réactance en parallèle : de $\underline{Z} = R_s + jX_s$, on tire $\underline{Y} = 1/\underline{Z}$, puis
+    $R_p = 1/G = (R_s^2 + X_s^2)/R_s$ et $X_p = -1/B = (R_s^2 + X_s^2)/X_s$. Exemple : le modèle série $5{,}75 + j4{,}31\ \Omega$
+    équivaut, à $50\ \mathrm{Hz}$, à $8{,}98\ \Omega$ en parallèle avec $j11{,}98\ \Omega$. Mais à $25\ \mathrm{Hz}$, le modèle
+    série donne $6{,}14\angle 20{,}6^\circ\ \Omega$ et le modèle parallèle $4{,}98\angle 56{,}3^\circ\ \Omega$ : l'équivalence ne
+    vaut qu'à la fréquence où elle a été établie.
+  </p>
+
+  <h3 id="e-admittance-section">Animation : de l'impédance à l'admittance</h3>
+  <p>
+    L'animation montre ce que devient un point $\underline{Z} = R + jX$ quand on prend son inverse. La résistance $R$ est
+    réglable par le curseur ; la réactance $X$ se règle en déplaçant le point le long de la droite verticale
+    $\operatorname{Re}\underline{Z} = R$, ou en lançant le lecteur, qui la fait varier de $-60$ à $+60\ \Omega$. Avant de
+    lancer, prédisez : quand $X$ parcourt toute la droite, quelle courbe décrit $\underline{Y}$ ? Un dipôle inductif a-t-il
+    une susceptance positive ou négative ? Pour quelle valeur de $X$ la conductance $G$ est-elle maximale ?
+  </p>
+  <figure id="e-admittance-figure">
+    <div class="schema-vivant" id="e-admittance"></div>
+    <figcaption>
+      À gauche, le plan des impédances, en ohms : la droite verticale en pointillés est l'ensemble des points $R + jX$ pour
+      la valeur de $R$ choisie ; la flèche en trait plein épais va de l'origine au point courant, terminé par la poignée.
+      À droite, le plan des admittances, en millisiemens : le cercle en pointillés a pour diamètre $1/R$, sur l'axe réel ;
+      la flèche en tirets épais est $\underline{Y} = 1/\underline{Z}$, et la portion de cercle tracée en trait plein fin est
+      le chemin déjà parcouru par $\underline{Y}$ depuis le début du balayage.
+    </figcaption>
+  </figure>
+  <div id="e-admittance-curseurs"></div>
+  <div id="e-admittance-lecteur"></div>
+  <div id="e-admittance-valeurs"></div>
+  <p>
+    Interprétation : l'inverse d'une droite qui ne passe pas par l'origine est un cercle qui passe par l'origine. Quand
+    $X$ parcourt la droite, $\underline{Y}$ décrit le cercle de diamètre $1/R$ : le module est inversé, l'argument change de
+    signe. Un dipôle inductif, au-dessus de l'axe réel dans le plan des impédances, a une admittance sous l'axe réel, de
+    susceptance négative. La conductance est maximale, égale à $1/R$, pour $X = 0$ ; dès que $X \neq 0$, elle est plus petite
+    que $1/R$. C'est pourquoi on ne peut pas additionner en parallèle des inverses de parties réelles : on additionne des
+    admittances complètes.
+  </p>
+
+  <h3 id="e-frequence">Dépendance fréquentielle d'un circuit RLC série</h3>
+  <p>
+    Pour une résistance, une inductance et un condensateur en série, les impédances s'ajoutent :
+  </p>
+  <div class="formule-cle">
+    $$\underline{Z}(\omega) = R + j\left(L\omega - \frac{1}{C\omega}\right), \qquad Z(\omega) = \sqrt{R^2 + \left(L\omega - \frac{1}{C\omega}\right)^2}, \qquad \varphi(\omega) = \arctan\frac{L\omega - 1/(C\omega)}{R}$$
+    <p class="formule-cle-legende">
+      Ici l'arc tangente suffit, car $R > 0$ place toujours le point dans le demi-plan de droite. La réactance totale est
+      négative aux basses fréquences, où le condensateur domine : le circuit est capacitif. Elle est positive aux fréquences
+      élevées, où l'inductance domine : le circuit est inductif. Elle s'annule pour $L\omega_0 = 1/(C\omega_0)$, soit
+      $\omega_0 = 1/\sqrt{LC}$ : l'impédance est alors minimale et égale à $R$, le courant est en phase avec la tension. Cas
+      limites : $\omega \to 0$, $Z \to \infty$, le condensateur bloque ; $\omega \to \infty$, $Z \to \infty$, l'inductance
+      bloque. Dimension : $\sqrt{LC}$ est en secondes, car $L\omega \cdot C\omega$ est sans dimension. L'étude fine du
+      voisinage de $\omega_0$, sélectivité et surtensions, est l'objet du cours Résonance série et parallèle ; on a déjà
+      rencontré $\omega_0$ comme pulsation propre dans le cours <a href="#/cours/regime-transitoire-rlc">Régime transitoire
+      RLC</a>.
+    </p>
+  </div>
+
+  <h3 id="e-plan-section">Simulation interactive : le plan complexe des impédances</h3>
+  <p>
+    La simulation construit l'impédance d'un circuit RLC série dans le plan complexe, pointe à la suite de l'autre :
+    d'abord $R$ sur l'axe réel, puis $jL\omega$ vers le haut, puis $-j/(C\omega)$ vers le bas. Les curseurs règlent $R$,
+    $L$ et $C$ ; la fréquence se règle en déplaçant la poignée sur l'échelle placée sous le plan. Le tracé du dessous donne
+    les réactances et le module de l'impédance en fonction de la fréquence. Avant de manipuler, prédisez : avec les valeurs
+    initiales, $R = 10\ \Omega$, $L = 100\ \mathrm{mH}$ et $C = 220\ \mu\mathrm{F}$, le circuit est-il inductif ou capacitif à
+    $50\ \mathrm{Hz}$ ? En dessous de quelle fréquence change-t-il de nature ? Que devient cette fréquence si l'on double $C$ ?
+  </p>
+  <figure id="e-plan-figure">
+    <div class="schema-vivant" id="e-plan"></div>
+    <div id="e-plan-trace"></div>
+    <figcaption>
+      En haut, le plan complexe des impédances, à l'échelle indiquée en haut à droite. La flèche horizontale en trait plein
+      est $R$ ; la flèche verticale en trait plein montante est $jL\omega$, reportée à la pointe de $R$ ; la flèche verticale
+      en tirets descendante est $-j/(C\omega)$, reportée à la pointe de la précédente et décalée un peu à droite pour rester
+      lisible, les petits raccords en pointillés marquant ce décalage ; la flèche épaisse relie l'origine au
+      point final, c'est $\underline{Z}$, et l'arc marque son argument. Sous le plan, l'échelle des fréquences, de $5$ à
+      $200\ \mathrm{Hz}$, porte la poignée et le repère de $f_0$. En bas, en fonction de la fréquence, $L\omega$, $1/(C\omega)$
+      et $Z$ en ohms ; la légende sous le tracé nomme chaque courbe avec sa couleur réelle, et le trait vertical en tirets
+      marque la fréquence choisie.
+    </figcaption>
+  </figure>
+  <div id="e-plan-curseurs"></div>
+  <div id="e-plan-valeurs"></div>
+  <p>
+    Interprétation : à $50\ \mathrm{Hz}$, $L\omega = 31{,}4\ \Omega$ l'emporte sur $1/(C\omega) = 14{,}5\ \Omega$ ; le circuit
+    est inductif, $\underline{Z} = 10 + j16{,}9 = 19{,}7\angle 59{,}5^\circ\ \Omega$. En dessous de
+    $f_0 = 1/(2\pi\sqrt{LC}) = 33{,}9\ \mathrm{Hz}$, il devient capacitif. Doubler $C$ divise $f_0$ par $\sqrt{2}$, soit
+    $24{,}0\ \mathrm{Hz}$. Les deux réactances varient en sens contraires, l'une comme $f$, l'autre comme $1/f$ : leurs
+    courbes se croisent en $f_0$, où le module de $\underline{Z}$ touche son minimum, $R$. Un même circuit peut donc être
+    inductif pour le réseau à $50\ \mathrm{Hz}$ et capacitif pour une perturbation à basse fréquence, ou l'inverse : la nature
+    d'un dipôle n'a de sens qu'à une fréquence donnée.
+  </p>
+
+  <h3 id="e-methodes">Comparaison des méthodes</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Trois façons de traiter un circuit linéaire en régime sinusoïdal</caption>
+      <thead><tr><th>Méthode</th><th>Principe</th><th>Points forts</th><th>Limites</th><th>Quand la choisir</th></tr></thead>
+      <tbody>
+        <tr><td>Équation différentielle</td><td>écrire les lois temporelles, chercher la solution forcée $A\cos\omega t + B\sin\omega t$</td><td>aucun outil nouveau, donne aussi le transitoire</td><td>lourde dès deux éléments réactifs</td><td>mise sous tension, régime transitoire</td></tr>
+        <tr><td>Impédances complexes</td><td>remplacer chaque élément par $\underline{Z}$, chaque grandeur par son phaseur, appliquer les méthodes du continu</td><td>systématique, algébrique, se programme, toutes les méthodes du continu s'appliquent</td><td>régime permanent seulement, une fréquence à la fois</td><td>tout calcul de régime permanent sinusoïdal</td></tr>
+        <tr><td>Construction de Fresnel</td><td>tracer à l'échelle les phaseurs de tension et de courant</td><td>visuelle, montre avance, retard, surtensions partielles</td><td>précision graphique, pénible au-delà de quelques éléments</td><td>contrôle d'un calcul, raisonnement qualitatif, diagnostic</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="e-statut">Statut des énoncés</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Ce qui relève de la loi, de la convention, de l'approximation, de la conception et de la norme ou du constructeur</caption>
+      <thead><tr><th>Énoncé</th><th>Statut</th><th>Commentaire</th></tr></thead>
+      <tbody>
+        <tr><td>$u = Ri$, $u = L\,\mathrm{d}i/\mathrm{d}t$, $i = C\,\mathrm{d}u/\mathrm{d}t$ ; lois de Kirchhoff</td><td>Lois physiques et modèles idéaux de composants</td><td>Exactes pour les composants idéaux ; les composants réels s'en écartent.</td></tr>
+        <tr><td>$\underline{Z}_L = jL\omega$, $\underline{Z}_C = 1/(jC\omega)$, lois d'association</td><td>Conséquences mathématiques</td><td>Déduites des lois précédentes et des propriétés du phaseur.</td></tr>
+        <tr><td>Convention récepteur, réactance signée $X_C < 0$, référence des phases</td><td>Conventions</td><td>Vérifier celles d'un ouvrage ou d'un logiciel avant de comparer des signes.</td></tr>
+        <tr><td>Bobine réelle modélisée par $R + jL\omega$, moteur par une impédance fixe, câble par $R + jX$</td><td>Approximations de modélisation</td><td>Valables à une fréquence et un point de fonctionnement ; pertes fer, saturation et effet de peau sont négligés.</td></tr>
+        <tr><td>Contrôler un calcul par un bilan de puissance active et par une construction de Fresnel</td><td>Règle de conception</td><td>Bonne pratique de vérification.</td></tr>
+        <tr><td>Réactance linéique d'un câble, impédance relative d'une self de ligne, tolérance d'un condensateur</td><td>Données constructeur</td><td>À lire dans les catalogues et les notices ; les valeurs du cours sont des hypothèses d'étude.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, le plan complexe des impédances accompagné des diagrammes de
+    phase, l'organigramme de résolution d'un circuit en régime sinusoïdal, et un tableau qui compare les trois composants.
+    Le schéma principal rassemble ce qu'il faut voir d'un coup d'oeil : où se placent les impédances de $R$, $L$ et $C$,
+    comment elles se déplacent quand la fréquence augmente, et comment évolue le déphasage des dipôles RL et RC série.
+  </p>
+
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 900 470" role="img" aria-label="Schéma principal. À gauche, plan complexe des impédances : ZR sur l'axe réel, ZL sur l'axe imaginaire positif, s'éloignant de l'origine quand omega croît, ZC sur l'axe imaginaire négatif, se rapprochant de l'origine quand omega croît ; demi-droite verticale d'abscisse R, lieu des dipôles RL série au-dessus de l'axe et RC série au-dessous. À droite, diagramme de phase en fonction de la fréquence en échelle logarithmique : R à 0 degré, L à plus 90 degrés, C à moins 90 degrés, RL série passant de 0 à 90 degrés avec 45 degrés à la fréquence de coupure, RC série passant de moins 90 à 0 degré avec moins 45 degrés à la même fréquence">
+      <defs>
+        <marker id="fl-f-p" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto-start-reverse">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="1.3" fill="none" opacity="0.8">
+        <path d="M40 240H450" marker-end="url(#fl-f-p)"/>
+        <path d="M120 440V30" marker-end="url(#fl-f-p)"/>
+        <path d="M520 240H880" marker-end="url(#fl-f-p)"/>
+        <path d="M520 430V40" marker-end="url(#fl-f-p)"/>
+        <path d="M515 80h10M515 400h10M605 236v8M690 236v8M775 236v8"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.1" fill="none" stroke-dasharray="3 5" opacity="0.75">
+        <path d="M320 240V36"/>
+        <path d="M320 240V436"/>
+        <path d="M520 80H860M520 400H860"/>
+        <path d="M690 240V160M690 240V320"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round">
+        <path d="M120 240H317" marker-end="url(#fl-f-p)"/>
+        <path d="M120 240V113" marker-end="url(#fl-f-p)"/>
+        <path d="M120 240V337" marker-end="url(#fl-f-p)"/>
+      </g>
+      <path d="M120 240L318.4 112.3" stroke="currentColor" stroke-width="3.2" fill="none" stroke-dasharray="12 6" stroke-linecap="round" marker-end="url(#fl-f-p)"/>
+      <g stroke="currentColor" stroke-width="1.4" fill="none">
+        <path d="M95 125V60" marker-end="url(#fl-f-p)"/>
+        <path d="M95 330V270" marker-end="url(#fl-f-p)"/>
+        <path d="M175 240A55 55 0 0 0 166.3 210.3"/>
+      </g>
+      <path d="M520.0 239.0L528.5 238.7L537.0 238.4L545.5 238.0L554.0 237.4L562.5 236.8L571.0 235.9L579.5 234.9L588.0 233.6L596.5 231.9L605.0 229.8L613.5 227.2L622.0 224.0L630.5 219.9L639.0 214.9L647.5 208.8L656.0 201.4L664.5 192.7L673.0 182.7L681.5 171.6L690.0 160.0L698.5 148.4L707.0 137.3L715.5 127.3L724.0 118.6L732.5 111.2L741.0 105.1L749.5 100.1L758.0 96.0L766.5 92.8L775.0 90.2L783.5 88.1L792.0 86.4L800.5 85.1L809.0 84.1L817.5 83.2L826.0 82.6L834.5 82.0L843.0 81.6L851.5 81.3L860.0 81.0" stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+      <path d="M520.0 399.0L528.5 398.7L537.0 398.4L545.5 398.0L554.0 397.4L562.5 396.8L571.0 395.9L579.5 394.9L588.0 393.6L596.5 391.9L605.0 389.8L613.5 387.2L622.0 384.0L630.5 379.9L639.0 374.9L647.5 368.8L656.0 361.4L664.5 352.7L673.0 342.7L681.5 331.6L690.0 320.0L698.5 308.4L707.0 297.3L715.5 287.3L724.0 278.6L732.5 271.2L741.0 265.1L749.5 260.1L758.0 256.0L766.5 252.8L775.0 250.2L783.5 248.1L792.0 246.4L800.5 245.1L809.0 244.1L817.5 243.2L826.0 242.6L834.5 242.0L843.0 241.6L851.5 241.3L860.0 241.0" stroke="currentColor" stroke-width="2.6" fill="none" stroke-dasharray="9 5" stroke-linecap="round"/>
+      <path d="M520 240H860" stroke="currentColor" stroke-width="1.6" fill="none" opacity="0.9"/>
+      <g fill="currentColor" stroke="none">
+        <circle cx="320" cy="110" r="4.5"/><circle cx="690" cy="160" r="4.5"/><circle cx="690" cy="320" r="4.5"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="452" y="258" text-anchor="end">Re Z (Ω)</text>
+        <text x="128" y="40">Im Z (Ω)</text>
+        <text x="220" y="258" text-anchor="middle">ZR = R</text>
+        <text x="128" y="128">ZL = jLω</text>
+        <text x="128" y="352">ZC = -j/(Cω)</text>
+        <text x="20" y="96" font-size="11">ω croît</text>
+        <text x="20" y="306" font-size="11">ω croît</text>
+        <text x="328" y="104">Z = R + jLω</text>
+        <text x="180" y="226" font-size="11">φ</text>
+        <text x="328" y="60" font-size="11">lieu RL série</text>
+        <text x="328" y="76" font-size="11">quand ω varie</text>
+        <text x="328" y="410" font-size="11">lieu RC série</text>
+        <text x="328" y="426" font-size="11">quand ω varie</text>
+        <text x="40" y="460" font-size="11">inductif au-dessus de l'axe réel, capacitif au-dessous</text>
+        <text x="512" y="84" text-anchor="end" font-size="11">+90°</text>
+        <text x="512" y="244" text-anchor="end" font-size="11">0°</text>
+        <text x="512" y="404" text-anchor="end" font-size="11">-90°</text>
+        <text x="528" y="50">φ</text>
+        <text x="878" y="282" text-anchor="end">f (échelle log)</text>
+        <text x="605" y="262" text-anchor="middle" font-size="11">fc/10</text>
+        <text x="690" y="262" text-anchor="middle" font-size="11">fc</text>
+        <text x="775" y="262" text-anchor="middle" font-size="11">10 fc</text>
+        <text x="862" y="72" text-anchor="end" font-size="11">L seule</text>
+        <text x="862" y="232" text-anchor="end" font-size="11">R seule</text>
+        <text x="862" y="420" text-anchor="end" font-size="11">C seul</text>
+        <text x="540" y="116" font-size="11">45° en fc = R/(2πL)</text>
+        <text x="720" y="346" font-size="11">-45° en fc = 1/(2πRC)</text>
+        <text x="540" y="100" font-size="11">RL série : trait plein</text>
+        <text x="720" y="330" font-size="11">RC série : tirets</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal. À gauche, le plan complexe des impédances, convention récepteur. Les trois flèches en trait plein
+      sont les impédances élémentaires : $\underline{Z}_R$ sur l'axe réel, indépendante de la fréquence ; $\underline{Z}_L$ sur
+      l'axe imaginaire positif ; $\underline{Z}_C$ sur l'axe imaginaire négatif. Les petites flèches à gauche de l'axe vertical
+      indiquent leur déplacement quand $\omega$ croît : $\underline{Z}_L$ s'éloigne de l'origine, $\underline{Z}_C$ s'en
+      rapproche. La flèche en tirets épais est l'impédance d'un dipôle RL série à une fréquence donnée ; quand la fréquence
+      varie, son extrémité parcourt la demi-droite verticale en pointillés d'abscisse $R$, au-dessus de l'axe réel, et celle
+      d'un dipôle RC série la demi-droite au-dessous. À droite, le diagramme de phase, déphasage $\varphi$ de la tension sur
+      le courant en fonction de la fréquence, en échelle logarithmique : les droites horizontales donnent les cas purs,
+      $+90^\circ$ pour $L$, $0^\circ$ pour $R$, $-90^\circ$ pour $C$ ; la courbe en trait plein est le dipôle RL série, qui passe
+      de $0^\circ$ à $+90^\circ$ et vaut $45^\circ$ à $f_c = R/(2\pi L)$, quand $L\omega = R$ ; la courbe en tirets est le dipôle RC
+      série, de $-90^\circ$ à $0^\circ$, qui vaut $-45^\circ$ à $f_c = 1/(2\pi RC)$.
+    </figcaption>
+  </figure>
+
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Circuit en régime sinusoïdal"] --> B{"Linéaire, une fréquence,<br/>régime permanent ?"}
+  B -->|"non"| B2["Séparer les fréquences<br/>ou simuler en temporel"]
+  B -->|"oui"| C["Référence des phases,<br/>fléchage en convention récepteur"]
+  C --> D["Phaseurs des sources :<br/>U = U ∠ φ"]
+  D --> E["Impédances : R ; jLω ; 1/(jCω)"]
+  E --> F{"Structure<br/>du circuit ?"}
+  F -->|"série, parallèle"| G["Réduire : Z en série,<br/>Y en parallèle"]
+  F -->|"maillé"| H["Nœuds ou mailles<br/>en complexes"]
+  G --> I["Courants et tensions :<br/>U = Z I, diviseurs"]
+  H --> I
+  I --> J["Retour au temps si besoin :<br/>x(t) = X √2 cos(ωt + φ)"]
+  J --> K["Contrôles : Kirchhoff, valeur à t = 0,<br/>bilan de puissance active, Fresnel"]</pre>
+    <figcaption>
+      Organigramme de résolution. Les rectangles sont des étapes, les losanges des décisions, les libellés des flèches les
+      réponses. Le premier test vérifie les hypothèses de l'outil ; en cas d'échec, on change de méthode. Le tronc commun fixe
+      la référence et les conventions, puis remplace sources et composants par leurs phaseurs et impédances. Le second test
+      choisit entre la réduction par associations et une méthode systématique. La dernière étape regroupe les contrôles :
+      lois de Kirchhoff sur les phaseurs, valeur instantanée, puissance active fournie égale à la somme des $RI^2$, et
+      construction de Fresnel.
+    </figcaption>
+  </figure>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Les trois composants idéaux en régime sinusoïdal, convention récepteur</caption>
+      <thead><tr><th>Grandeur</th><th>Résistance $R$</th><th>Inductance $L$</th><th>Condensateur $C$</th></tr></thead>
+      <tbody>
+        <tr><td>Impédance $\underline{Z}$</td><td>$R$</td><td>$jL\omega$</td><td>$-j/(C\omega)$</td></tr>
+        <tr><td>Admittance $\underline{Y}$</td><td>$1/R$</td><td>$-j/(L\omega)$</td><td>$jC\omega$</td></tr>
+        <tr><td>Déphasage $\varphi = \varphi_u - \varphi_i$</td><td>$0^\circ$</td><td>$+90^\circ$, courant en retard</td><td>$-90^\circ$, courant en avance</td></tr>
+        <tr><td>Module en fonction de $f$</td><td>constant</td><td>proportionnel à $f$</td><td>inversement proportionnel à $f$</td></tr>
+        <tr><td>Fréquence nulle, continu</td><td>$R$</td><td>court-circuit</td><td>circuit ouvert</td></tr>
+        <tr><td>Fréquence très élevée</td><td>$R$, hors effet de peau</td><td>circuit ouvert</td><td>court-circuit</td></tr>
+        <tr><td>Énergie</td><td>dissipée</td><td>stockée puis rendue, $\tfrac{1}{2}Li^2$</td><td>stockée puis rendue, $\tfrac{1}{2}Cu^2$</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-composants-figure" data-renvoi="d-composants-figure">la simulation de la tension et du courant dans R, L et C</a>, section D ;</li>
+    <li><a href="#e-triangle-figure" data-renvoi="e-triangle-figure">les triangles d'impédance</a>, <a href="#e-associations-figure" data-renvoi="e-associations-figure">les associations série et parallèle</a>, <a href="#e-admittance-figure" data-renvoi="e-admittance-figure">l'animation de l'impédance à l'admittance</a> et <a href="#e-plan-figure" data-renvoi="e-plan-figure">la simulation du plan complexe des impédances</a>, section E ;</li>
+    <li><a href="#h-circuit-figure" data-renvoi="h-circuit-figure">le schéma du circuit de l'exemple</a> et <a href="#h-fresnel-figure" data-renvoi="h-fresnel-figure">l'animation de sa construction de Fresnel</a>, section H ;</li>
+    <li><a href="#i-depart-figure" data-renvoi="i-depart-figure">le schéma des départs compresseur et pompe</a> et <a href="#i-chute-figure" data-renvoi="i-chute-figure">la simulation de la chute de tension</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour calculer les courants et les tensions d'un circuit linéaire en régime sinusoïdal :</p>
+  <ol>
+    <li>Vérifier les hypothèses : composants linéaires, une seule fréquence, régime permanent. Sinon, traiter chaque fréquence séparément ou passer à une simulation temporelle.</li>
+    <li>Dessiner le schéma, flécher chaque courant et chaque tension, en convention récepteur pour les charges et générateur pour les sources ; choisir la référence de potentiel et la référence des phases, en général la tension de la source.</li>
+    <li>Calculer $\omega = 2\pi f$, puis l'impédance de chaque élément : $R$, $jL\omega$, $-j/(C\omega)$ ; écrire chaque source sous forme de phaseur efficace.</li>
+    <li>Réduire le circuit : impédances en série, admittances en parallèle, en partant des branches les plus éloignées de la source ; pour un circuit maillé, écrire les équations des nœuds ou des mailles en complexes, comme dans le cours <a href="#/cours/methodes-de-resolution-systematique">Méthodes de résolution systématique</a>.</li>
+    <li>Calculer le courant de la source, $\underline{I} = \underline{U}/\underline{Z}_{\text{éq}}$, puis remonter vers chaque élément par $\underline{U} = \underline{Z}\,\underline{I}$ et les diviseurs ; additions en cartésien, produits et quotients en polaire.</li>
+    <li>Exprimer les résultats utiles : valeurs efficaces, déphasages, et si besoin expressions temporelles.</li>
+    <li>Contrôler : loi des nœuds et loi des mailles sur les phaseurs ; valeur instantanée à $t = 0$ ; puissance active fournie par la source, $\operatorname{Re}(\underline{U}\,\underline{I}^*)$, égale à la somme des $R_kI_k^2$ ; construction de Fresnel à main levée ; ordres de grandeur et unités.</li>
+  </ol>
+  <p>
+    Choix de méthode : pour un circuit en échelle, une seule source et quelques éléments, la réduction est la plus rapide.
+    Pour un circuit maillé ou plusieurs sources de même fréquence, la méthode des nœuds en admittances se met directement sous
+    forme matricielle, $\mathbf{Y}\,\underline{\mathbf{V}} = \underline{\mathbf{I}}_s$, avec des coefficients complexes. Pour des
+    sources de fréquences différentes, la superposition du cours <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes
+    de Thévenin, Norton et superposition</a> s'impose : un calcul par fréquence, puis la somme des réponses temporelles.
+  </p>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Situation : un banc d'essai est alimenté entre phase et neutre du réseau $230\ \mathrm{V}$, $50\ \mathrm{Hz}$, par une
+    liaison dont la résistance totale vaut $R_1 = 2\ \Omega$. Au bout de la liaison, deux branches en parallèle : une bobine
+    réelle, modélisée par une résistance $R_2 = 20\ \Omega$ en série avec une inductance $L = 50\ \mathrm{mH}$, et un
+    condensateur $C = 100\ \mu\mathrm{F}$. On veut tous les courants et toutes les tensions, et comprendre l'effet du
+    condensateur sur le courant de ligne.
+  </p>
+  <figure id="h-circuit-figure">
+    <svg viewBox="0 0 860 400" role="img" aria-label="Circuit de l'exemple : source 230 volts 50 hertz entre phase et neutre ; résistance de liaison R1 de 2 ohms sur le fil de phase, parcourue par i ; au nœud A, deux branches vers le neutre B : R2 de 20 ohms en série avec L de 50 millihenrys, parcourue par i RL, et le condensateur C de 100 microfarads, parcouru par i C ; tension u R1 aux bornes de R1, tension u p aux bornes du groupement parallèle ; neutre pris comme référence de potentiel">
+      <defs>
+        <marker id="fl-h-c" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="90" cy="210" r="28"/>
+        <path d="M76 210C82 198 88 198 90 210S98 222 104 210"/>
+        <path d="M90 182V70H200M280 70H660V190M660 204V350H90V238"/>
+        <rect x="200" y="58" width="80" height="24"/>
+        <path d="M440 70V110"/>
+        <rect x="428" y="110" width="24" height="70"/>
+        <path d="M440 180V196"/>
+        <path d="M440 196a12 12 0 0 1 0 24a12 12 0 0 1 0 24a12 12 0 0 1 0 24a12 12 0 0 1 0 24"/>
+        <path d="M440 292V350"/>
+        <path d="M630 190H690M630 204H690" stroke-width="3"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="440" cy="70" r="5"/><circle cx="440" cy="350" r="5"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2" fill="none">
+        <path d="M118 70H178" marker-end="url(#fl-h-c)"/>
+        <path d="M296 44H186" marker-end="url(#fl-h-c)"/>
+        <path d="M425 84V100" marker-end="url(#fl-h-c)"/>
+        <path d="M675 84V170" marker-end="url(#fl-h-c)"/>
+        <path d="M790 340V84" marker-end="url(#fl-h-c)"/>
+        <path d="M36 330V96" marker-end="url(#fl-h-c)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="40" y="60">L, phase</text>
+        <text x="96" y="378">N, neutre : référence de potentiel</text>
+        <text x="126" y="206">230 V</text>
+        <text x="126" y="222">50 Hz</text>
+        <text x="146" y="60" text-anchor="middle">i</text>
+        <text x="240" y="100" text-anchor="middle">R1 = 2 Ω</text>
+        <text x="240" y="36" text-anchor="middle">uR1</text>
+        <text x="452" y="62">A</text>
+        <text x="452" y="372">B</text>
+        <text x="408" y="96" text-anchor="end">iRL</text>
+        <text x="462" y="150">R2 = 20 Ω</text>
+        <text x="462" y="250">L = 50 mH</text>
+        <text x="696" y="134">iC</text>
+        <text x="700" y="202">C = 100 µF</text>
+        <text x="798" y="216">up</text>
+        <text x="44" y="300">u</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma du circuit. La source, entre la phase $L$ et le neutre $N$, est fléchée en convention générateur : la tension $u$
+      pointe vers la phase et le courant $i$ sort de cette borne. Le neutre est la référence de potentiel. Le courant $i$
+      traverse $R_1$, fléchée en convention récepteur, avec $u_{R1}$ fléchée en sens inverse du courant, puis se partage au
+      nœud $A$ entre la branche bobine, $R_2$ en série avec $L$, parcourue par $i_{RL}$, et la branche condensateur, parcourue
+      par $i_C$, toutes deux fléchées de $A$ vers $B$. La tension $u_p$ du groupement parallèle est fléchée de $B$ vers $A$.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Données : $\underline{U} = 230\angle 0^\circ\ \mathrm{V}$, référence des phases ; $f = 50\ \mathrm{Hz}$ ; $R_1 = 2\ \Omega$,
+    $R_2 = 20\ \Omega$, $L = 50\ \mathrm{mH}$, $C = 100\ \mu\mathrm{F}$. Hypothèses : source idéale sinusoïdale, composants
+    linéaires, régime permanent ; la bobine réelle est résumée par son modèle série à $50\ \mathrm{Hz}$. Inconnues :
+    $\underline{I}$, $\underline{U}_{R1}$, $\underline{U}_p$, $\underline{I}_{RL}$, $\underline{I}_C$, puis $\underline{U}_{R2}$ et
+    $\underline{U}_L$. Stratégie : méthode de la section G ; impédance de la branche bobine, mise en parallèle avec le
+    condensateur par les admittances, mise en série avec $R_1$, puis remontée par la loi d'Ohm complexe.
+  </p>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li>Pulsation : $\omega = 2\pi \times 50 = 314{,}16\ \mathrm{rad/s}$.</li>
+    <li>Impédances : $L\omega = 0{,}05 \times 314{,}16 = 15{,}708\ \Omega$, donc $\underline{Z}_{RL} = 20 + j15{,}708 = 25{,}431\angle 38{,}15^\circ\ \Omega$ ; $1/(C\omega) = 1/(100 \times 10^{-6} \times 314{,}16) = 31{,}831\ \Omega$, donc $\underline{Z}_C = -j31{,}831\ \Omega$.</li>
+    <li>Admittances : $\underline{Y}_{RL} = 1/\underline{Z}_{RL} = 0{,}039322\angle -38{,}15^\circ = 0{,}030925 - j0{,}024288\ \mathrm{S}$ ; $\underline{Y}_C = jC\omega = j0{,}031416\ \mathrm{S}$.</li>
+    <li>Parallèle : $\underline{Y}_p = 0{,}030925 + j0{,}007128\ \mathrm{S} = 0{,}031736\angle 12{,}98^\circ\ \mathrm{S}$, donc $\underline{Z}_p = 1/\underline{Y}_p = 31{,}511\angle -12{,}98^\circ = 30{,}706 - j7{,}078\ \Omega$ : le groupement est légèrement capacitif. Contrôle par la formule du produit sur la somme : $\underline{Z}_{RL}\underline{Z}_C/(\underline{Z}_{RL} + \underline{Z}_C) = (809{,}50\angle -51{,}85^\circ)/(25{,}690\angle -38{,}87^\circ) = 31{,}511\angle -12{,}98^\circ\ \Omega$.</li>
+    <li>Série avec $R_1$ : $\underline{Z} = 2 + 30{,}706 - j7{,}078 = 32{,}706 - j7{,}078 = 33{,}463\angle -12{,}21^\circ\ \Omega$.</li>
+    <li>Courant de ligne : $\underline{I} = \underline{U}/\underline{Z} = 230/33{,}463\angle(0^\circ + 12{,}21^\circ) = 6{,}873\angle 12{,}21^\circ\ \mathrm{A}$, en avance sur la tension.</li>
+    <li>Tensions : $\underline{U}_{R1} = R_1\underline{I} = 13{,}75\angle 12{,}21^\circ\ \mathrm{V}$ ; $\underline{U}_p = \underline{Z}_p\underline{I} = 31{,}511 \times 6{,}873\angle(-12{,}98^\circ + 12{,}21^\circ) = 216{,}58\angle -0{,}77^\circ\ \mathrm{V}$.</li>
+    <li>Courants de branche : $\underline{I}_{RL} = \underline{U}_p/\underline{Z}_{RL} = 216{,}58/25{,}431\angle(-0{,}77^\circ - 38{,}15^\circ) = 8{,}517\angle -38{,}92^\circ\ \mathrm{A}$ ; $\underline{I}_C = \underline{U}_p/\underline{Z}_C = 216{,}58/31{,}831\angle(-0{,}77^\circ + 90^\circ) = 6{,}804\angle 89{,}23^\circ\ \mathrm{A}$.</li>
+    <li>Tensions dans la bobine : $\underline{U}_{R2} = 20 \times 8{,}517\angle -38{,}92^\circ = 170{,}33\angle -38{,}92^\circ\ \mathrm{V}$ ; $\underline{U}_L = j15{,}708 \times 8{,}517\angle -38{,}92^\circ = 133{,}78\angle 51{,}08^\circ\ \mathrm{V}$.</li>
+    <li>Expression temporelle du courant de ligne : $I_m = 6{,}873\sqrt{2} = 9{,}720\ \mathrm{A}$ et $12{,}21^\circ = 0{,}2131\ \mathrm{rad}$ : $i(t) = 9{,}720\cos(314{,}16\,t + 0{,}2131)$ en ampères.</li>
+  </ol>
+
+  <h3 id="h-fresnel-section">Animation : la construction de Fresnel de l'exemple</h3>
+  <p>
+    L'animation construit les phaseurs de l'exemple à l'échelle, en quatre étapes choisies par le curseur, puis les fait
+    tourner avec le lecteur pour vérifier les lois de Kirchhoff à chaque instant. Avant de lancer, prédisez : le courant de
+    ligne est-il plus grand ou plus petit que le courant de la bobine ? La tension $\underline{U}_p$ est-elle plus grande ou
+    plus petite que $230\ \mathrm{V}$ ?
+  </p>
+  <figure id="h-fresnel-figure">
+    <div class="schema-vivant" id="h-fresnel"></div>
+    <figcaption>
+      Le curseur d'étape ajoute les éléments un à un : étape 1, la tension $\underline{U}$ et le courant $\underline{I}$
+      seuls ; étape 2, la loi des mailles ; étape 3, la loi des nœuds ; étape 4, la décomposition de $\underline{U}_p$. À
+      gauche, les tensions, en volts : $\underline{U}_{R1}$ puis $\underline{U}_p$ mis pointe à la suite de l'autre, en trait
+      plein, et leur somme $\underline{U}$, en tirets épais ; à l'étape 4, $\underline{U}_p$ est décomposée en
+      $\underline{U}_{R2}$ et $\underline{U}_L$, en pointillés, perpendiculaires entre eux. À droite, les courants, en ampères :
+      $\underline{I}_{RL}$ puis $\underline{I}_C$, pointe à la suite de l'autre, en trait plein, et leur somme $\underline{I}$,
+      en tirets épais. Les deux diagrammes tournent ensemble de l'angle $\omega t$ choisi par le lecteur ; la projection de
+      chaque flèche sur l'axe réel horizontal, multipliée par $\sqrt{2}$, est la valeur instantanée affichée sous le schéma.
+    </figcaption>
+  </figure>
+  <div id="h-fresnel-curseurs"></div>
+  <div id="h-fresnel-lecteur"></div>
+  <div id="h-fresnel-valeurs"></div>
+  <p>
+    Interprétation : le courant de ligne, $6{,}87\ \mathrm{A}$, est plus petit que chacun des deux courants de branche,
+    $8{,}52$ et $6{,}80\ \mathrm{A}$ : le courant du condensateur, presque à $+90^\circ$, annule la composante en retard du
+    courant de la bobine, qui n'a donc plus à transiter par la liaison. Sans le condensateur, le courant de ligne vaudrait
+    $\underline{U}/(R_1 + \underline{Z}_{RL}) = 8{,}51\angle -35{,}5^\circ\ \mathrm{A}$. La tension $\underline{U}_p$,
+    $216{,}6\ \mathrm{V}$, est plus petite que $230\ \mathrm{V}$, mais les tensions partielles $U_{R2}$ et $U_L$ ne
+    s'ajoutent pas arithmétiquement : $170{,}3 + 133{,}8 = 304{,}1\ \mathrm{V}$, alors que leur somme vectorielle vaut
+    $216{,}6\ \mathrm{V}$.
+  </p>
+
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <p>
+    Loi des nœuds en $A$ : $\underline{I}_{RL} + \underline{I}_C = (6{,}627 - j5{,}350) + (0{,}091 + j6{,}804) = 6{,}718 + j1{,}454 = 6{,}873\angle 12{,}21^\circ\ \mathrm{A}$,
+    égal à $\underline{I}$. Loi des mailles : $\underline{U}_{R1} + \underline{U}_p = (13{,}44 + j2{,}91) + (216{,}56 - j2{,}91) = 230{,}00 + j0{,}00\ \mathrm{V}$.
+    Valeur instantanée à $t = 0$ : $i_{RL}(0) + i_C(0) = 8{,}517\sqrt{2}\cos 38{,}92^\circ + 6{,}804\sqrt{2}\cos 89{,}23^\circ = 9{,}371 + 0{,}129 = 9{,}500\ \mathrm{A}$,
+    égal à $i(0) = 9{,}720\cos 12{,}21^\circ = 9{,}500\ \mathrm{A}$. Bilan de puissance active : la source fournit
+    $\operatorname{Re}(\underline{U}\,\underline{I}^*) = 230 \times 6{,}873\cos 12{,}21^\circ = 1545{,}1\ \mathrm{W}$ ; les
+    résistances dissipent $R_1I^2 + R_2I_{RL}^2 = 2 \times 6{,}873^2 + 20 \times 8{,}517^2 = 94{,}5 + 1450{,}6 = 1545{,}1\ \mathrm{W}$ ;
+    l'inductance et le condensateur ne dissipent rien en moyenne. Encadrement : $|\underline{Z}| = 33{,}5\ \Omega$ est
+    compris entre $R_1$ et $R_1 + |\underline{Z}_p|$. Unités : ohms pour les impédances, siemens pour les admittances, volts et
+    ampères pour les phaseurs. Conclusion d'ingénierie : le condensateur réduit de $19\ \%$ le courant de la liaison et les
+    pertes dans $R_1$ de $35\ \%$, de $144{,}8$ à $94{,}5\ \mathrm{W}$ ; mais le courant passe en avance, signe que le
+    condensateur est un peu trop gros. Choisir sa valeur exacte est le sujet du cours Correction du facteur de puissance.
+  </p>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+
+  <h3 id="i-probleme">Le départ compresseur et la self de ligne du variateur</h3>
+  <p>
+    Dans le cours <a href="#/cours/nombres-complexes-et-phaseurs">Nombres complexes et phaseurs</a>, chaque départ du
+    tableau général a été décrit par un courant et un angle. Pour calculer une chute de tension, un courant de
+    court-circuit ou l'effet d'un changement de fréquence, il faut un modèle d'impédance par phase. Deux départs sont
+    traités ici : le compresseur, moteur asynchrone de $32\ \mathrm{A}$ à $\cos\varphi = 0{,}80$ alimenté par un câble que
+    l'on suppose de $30\ \mathrm{m}$ en cuivre de $10\ \mathrm{mm^2}$, et la pompe, dont le variateur est précédé d'une self
+    de ligne triphasée que l'on suppose de $3\ \%$. Le schéma situe les grandeurs.
+  </p>
+  <figure id="i-depart-figure">
+    <svg viewBox="0 0 860 360" role="img" aria-label="Schéma unifilaire, phase L1 : jeu de barres du tableau général à 230 volts entre phase et neutre ; à gauche, départ compresseur : câble de 30 mètres en 10 millimètres carrés représenté par Rc plus j Xc, courant I de 32 ampères, tension Ut en tête et Um aux bornes du moteur, moteur modélisé par Rm plus j Xm ; à droite, départ pompe : self de ligne de 0,46 millihenry, réactance 0,145 ohm à 50 hertz, puis variateur et moteur de pompe">
+      <defs>
+        <marker id="fl-i-d" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M80 40H780" stroke-width="6"/>
+        <path d="M220 40V90M220 150V190M220 250V280"/>
+        <rect x="190" y="90" width="60" height="60"/>
+        <rect x="190" y="190" width="60" height="60"/>
+        <circle cx="220" cy="306" r="26"/>
+        <path d="M620 40V90"/>
+        <path d="M620 90a12 12 0 0 1 0 24a12 12 0 0 1 0 24a12 12 0 0 1 0 24"/>
+        <path d="M620 162V200"/>
+        <rect x="585" y="200" width="70" height="44"/>
+        <path d="M620 244V280"/>
+        <circle cx="620" cy="306" r="26"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2" fill="none">
+        <path d="M200 52V80" marker-end="url(#fl-i-d)"/>
+        <path d="M120 290V60" marker-end="url(#fl-i-d)"/>
+        <path d="M150 290V196" marker-end="url(#fl-i-d)"/>
+        <path d="M600 52V80" marker-end="url(#fl-i-d)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="80" y="28">jeu de barres L1, référence de potentiel : neutre</text>
+        <text x="192" y="70" text-anchor="end">I</text>
+        <text x="220" y="116" text-anchor="middle" font-size="11">câble</text>
+        <text x="220" y="132" text-anchor="middle" font-size="11">Rc + jXc</text>
+        <text x="220" y="216" text-anchor="middle" font-size="11">moteur</text>
+        <text x="220" y="232" text-anchor="middle" font-size="11">Rm + jXm</text>
+        <text x="220" y="311" text-anchor="middle">M</text>
+        <text x="112" y="180" text-anchor="end">Ut</text>
+        <text x="146" y="250" text-anchor="end">Um</text>
+        <text x="270" y="110" font-size="11">30 m, 3 x 10 mm², cuivre à 70 °C</text>
+        <text x="270" y="126" font-size="11">Zc = 0,0619 + j0,0024 Ω</text>
+        <text x="270" y="210" font-size="11">compresseur : 32 A, cos φ = 0,80</text>
+        <text x="270" y="226" font-size="11">Zm = 5,75 + j4,31 Ω par phase</text>
+        <text x="592" y="70" text-anchor="end">Ip</text>
+        <text x="640" y="120" font-size="11">self de ligne 3 %</text>
+        <text x="640" y="136" font-size="11">0,46 mH ; 0,145 Ω à 50 Hz</text>
+        <text x="620" y="227" text-anchor="middle" font-size="11">variateur</text>
+        <text x="620" y="311" text-anchor="middle">M</text>
+        <text x="660" y="300" font-size="11">pompe</text>
+        <text x="40" y="350" font-size="11">tensions simples, phase vers neutre, fléchées vers la phase ; charges en convention récepteur</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma unifilaire de la phase $L_1$ ; les deux autres phases sont identiques, le système étant supposé équilibré. Le
+      trait épais est le jeu de barres. À gauche, le départ compresseur : le câble, représenté par son impédance série par
+      phase $\underline{Z}_c$, puis le moteur, représenté par son impédance équivalente $\underline{Z}_m$ ; le courant
+      $\underline{I}$ descend du jeu de barres vers le moteur ; $\underline{U}_t$ est la tension simple en tête du câble,
+      $\underline{U}_m$ celle aux bornes du moteur, toutes deux fléchées du neutre vers la phase. À droite, le départ pompe : la
+      self de ligne, dessinée comme une bobine, en série avec l'entrée du variateur, parcourue par le courant $I_p$.
+    </figcaption>
+  </figure>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Hypothèses du modèle</span>
+    <p>
+      Système triphasé équilibré : chaque phase se traite comme un circuit monophasé entre phase et neutre, sous
+      $230\ \mathrm{V}$, et le conducteur neutre ne porte aucun courant ; la chute de tension simple ne fait donc intervenir que
+      l'impédance d'un seul conducteur. Moteur représenté par une impédance fixe, déduite de son point de fonctionnement :
+      valable à ce point seulement, car l'impédance d'un moteur asynchrone dépend de sa charge et devient beaucoup plus petite
+      au démarrage. Câble : résistivité du cuivre à $70\ ^\circ\mathrm{C}$, $0{,}02063\ \Omega\cdot\mathrm{mm^2/m}$, reprise du
+      cours <a href="#/cours/loi-d-ohm-et-resistivite">Loi d'Ohm et résistivité</a> ; réactance linéique supposée de
+      $0{,}08\ \mathrm{m\Omega/m}$, ordre de grandeur courant des câbles multiconducteurs, à remplacer par la valeur du
+      constructeur. Self de ligne : impédance relative de $3\ \%$ rapportée au fondamental du courant de la pompe,
+      $47{,}7\ \mathrm{A}$ ; sa résistance est négligée.
+    </p>
+  </div>
+  <ol>
+    <li>Modèle du moteur : $Z_m = 230/32 = 7{,}1875\ \Omega$ et $\varphi = \arccos 0{,}80 = 36{,}87^\circ$, d'où $\underline{Z}_m = 7{,}1875\angle 36{,}87^\circ = 5{,}750 + j4{,}313\ \Omega$ ; inductance équivalente $4{,}313/314{,}16 = 13{,}7\ \mathrm{mH}$.</li>
+    <li>Câble : $R_c = 0{,}02063 \times 30/10 = 0{,}0619\ \Omega$ et $X_c = 0{,}08 \times 10^{-3} \times 30 = 0{,}0024\ \Omega$, soit $\underline{Z}_c = 0{,}0619 + j0{,}0024\ \Omega$, presque purement résistif pour cette section.</li>
+    <li>Chute de tension, tension du moteur prise comme référence, $\underline{U}_m = 230\angle 0^\circ\ \mathrm{V}$, et $\underline{I} = 32\angle -36{,}87^\circ = 25{,}60 - j19{,}20\ \mathrm{A}$ : $\underline{Z}_c\underline{I} = (0{,}0619 + j0{,}0024)(25{,}60 - j19{,}20) = 1{,}630 - j1{,}127\ \mathrm{V}$, donc $\underline{U}_t = 231{,}63 - j1{,}13 = 231{,}63\angle -0{,}28^\circ\ \mathrm{V}$.</li>
+    <li>Chute en module : $U_t - U_m = 1{,}63\ \mathrm{V}$, soit $0{,}71\ \%$. La formule approchée $\Delta U \approx (R_c\cos\varphi + X_c\sin\varphi)\,I = (0{,}0619 \times 0{,}8 + 0{,}0024 \times 0{,}6) \times 32 = 1{,}630\ \mathrm{V}$ donne le même résultat, car la composante en quadrature, $1{,}13\ \mathrm{V}$, ne modifie le module qu'au second ordre.</li>
+    <li>Self de ligne de la pompe : $X = 0{,}03 \times 230/47{,}75 = 0{,}1445\ \Omega$, soit $L = 0{,}46\ \mathrm{mH}$. Sa chute, $X\,I_p = 6{,}9\ \mathrm{V}$, est en quadrature avec la tension, puisque le fondamental du courant est en phase avec elle : le module aval vaut $\sqrt{230^2 - 6{,}9^2} = 229{,}90\ \mathrm{V}$, une perte de seulement $0{,}10\ \mathrm{V}$.</li>
+    <li>Dépendance fréquentielle : au rang $5$, $250\ \mathrm{Hz}$, la même self présente $5X = 0{,}72\ \Omega$, et au rang $7$, $1{,}01\ \Omega$. Une tension harmonique de $4{,}6\ \mathrm{V}$, $2\ \%$ de la tension simple, ne ferait circuler à travers la self que $6{,}4\ \mathrm{A}$ au rang $5$ et $4{,}5\ \mathrm{A}$ au rang $7$ : la self freine les courants harmoniques d'autant plus que leur rang est élevé.</li>
+  </ol>
+
+  <h3 id="i-chute-section">Simulation interactive : chute de tension du départ compresseur</h3>
+  <p>
+    La simulation reprend le départ compresseur. Les curseurs règlent le facteur de déplacement du moteur, la longueur et
+    la section du câble ; la puissance active du moteur est maintenue constante, si bien que son courant vaut
+    $32 \times 0{,}80/\cos\varphi$. Le diagramme de Fresnel montre $\underline{U}_t = \underline{U}_m + \underline{Z}_c\underline{I}$,
+    la chute étant agrandie pour être visible. Avant de manipuler, prédisez : en $10\ \mathrm{mm^2}$, la chute dépend-elle
+    davantage de la résistance ou de la réactance du câble ? Que devient la chute si le $\cos\varphi$ du moteur baisse ?
+    Pour quelle section la réactance commencerait-elle à compter ?
+  </p>
+  <figure id="i-chute-figure">
+    <div class="schema-vivant" id="i-chute"></div>
+    <figcaption>
+      Diagramme de Fresnel par phase, référence des phases sur $\underline{U}_m$, portée par l'axe réel. La flèche horizontale
+      épaisse est $\underline{U}_m$ ; à sa pointe, la flèche en trait plein est la chute résistive $R_c\underline{I}$,
+      parallèle au courant, puis la flèche en tirets la chute réactive $jX_c\underline{I}$, perpendiculaire au courant ; ces
+      deux flèches sont agrandies du facteur indiqué. La flèche en pointillés partant de l'origine donne la direction du
+      courant $\underline{I}$, en retard de $\varphi$ ; l'arc marque cet angle. Les valeurs exactes sont affichées sous le
+      schéma.
+    </figcaption>
+  </figure>
+  <div id="i-chute-curseurs"></div>
+  <div id="i-chute-valeurs"></div>
+  <p>
+    Interprétation : en $10\ \mathrm{mm^2}$, la résistance du câble, $0{,}0619\ \Omega$, est environ vingt-six fois plus grande que
+    sa réactance, $0{,}0024\ \Omega$ : la chute est presque entièrement résistive. À puissance constante, baisser le
+    $\cos\varphi$ augmente le courant, donc la chute : $1{,}68\ \mathrm{V}$ à $\cos\varphi = 0{,}60$ contre
+    $1{,}63\ \mathrm{V}$ à $0{,}80$ ; mais, comme la chute résistive dépend de $R_c I\cos\varphi$, c'est-à-dire de la puissance
+    active, elle varie peu. Pour les grosses sections, la résistance diminue alors que la réactance linéique reste à peu
+    près constante : la réactance rejoint la résistance vers $260\ \mathrm{mm^2}$, et un mauvais
+    $\cos\varphi$ pèse alors directement sur la chute par le terme $X_c I\sin\varphi$. C'est une raison de plus pour
+    compenser l'énergie réactive, comme le montrera le cours Correction du facteur de puissance.
+  </p>
+
+  <h3 id="i-compromis">Contraintes, risques et compromis</h3>
+  <ul>
+    <li><strong>Validité du modèle moteur.</strong> Une impédance fixe n'est juste qu'au point de fonctionnement où elle a été calculée. Au démarrage direct, l'impédance d'un moteur asynchrone chute fortement et son angle augmente : le courant d'appel et la chute de tension au démarrage demandent le modèle des machines, traité dans les cours Schéma équivalent du moteur asynchrone et Démarrage des moteurs asynchrones.</li>
+    <li><strong>Chute admissible.</strong> La limite de chute de tension relève des règles d'installation applicables au site et du constructeur du moteur ; elle se vérifie sur le départ complet, transformateur ou source compris. Les $0{,}71\ \%$ trouvés ici ne concernent que le câble du départ.</li>
+    <li><strong>Self de ligne.</strong> Elle réduit les courants harmoniques et protège le pont de diodes contre les surintensités de mise sous tension, mais elle coûte un peu de tension disponible, de la place et des pertes ; au-delà de quelques pour cent, la tension du bus continu baisse. Le taux de $3\ \%$ est une hypothèse d'étude, la valeur se choisit avec le constructeur du variateur.</li>
+    <li><strong>Fréquence variable.</strong> La réactance d'un moteur alimenté par variateur est proportionnelle à la fréquence. Pour conserver le même courant magnétisant à $25\ \mathrm{Hz}$, il faut donc diviser la tension par deux : c'est l'origine de la loi tension sur fréquence constante, étudiée dans le cours Variation de vitesse des moteurs asynchrones.</li>
+    <li><strong>Condensateurs et harmoniques.</strong> L'impédance d'un condensateur diminue avec la fréquence : une batterie de compensation ou un filtre antiparasite installé près de variateurs absorbe d'autant plus de courant harmonique que le rang est élevé. Ce point sera repris dans les cours Correction du facteur de puissance et Harmoniques et qualité de l'énergie.</li>
+  </ul>
+
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : modèles d'impédance par phase du départ compresseur et de la self de ligne de la pompe</span>
+    <p>
+      Nouvelle brique du petit site industriel. Le compresseur, $32\ \mathrm{A}$ à $\cos\varphi = 0{,}80$ sous
+      $230\ \mathrm{V}$ par phase, est représenté à son point nominal par $\underline{Z}_m = 7{,}19\angle 36{,}87^\circ = 5{,}75 + j4{,}31\ \Omega$,
+      soit $13{,}7\ \mathrm{mH}$ équivalents. Son câble, supposé de $30\ \mathrm{m}$ en $3 \times 10\ \mathrm{mm^2}$ cuivre à
+      $70\ ^\circ\mathrm{C}$, vaut $\underline{Z}_c = 0{,}0619 + j0{,}0024\ \Omega$ par phase : chute de $1{,}63\ \mathrm{V}$, soit
+      $0{,}71\ \%$, presque entièrement résistive, et peu sensible au $\cos\varphi$ à puissance constante. La self de ligne de
+      $3\ \%$ du variateur de la pompe, rapportée aux $47{,}7\ \mathrm{A}$ du fondamental, vaut $0{,}145\ \Omega$, soit
+      $0{,}46\ \mathrm{mH}$ : $6{,}9\ \mathrm{V}$ de chute en quadrature pour seulement $0{,}10\ \mathrm{V}$ de perte de module à
+      $50\ \mathrm{Hz}$, mais $0{,}72\ \Omega$ au rang $5$ et $1{,}01\ \Omega$ au rang $7$, ce qui freine les courants
+      harmoniques. Décision : ces impédances par phase sont retenues pour les calculs de chute de tension et serviront de
+      point de départ aux bilans de puissance, à la compensation et aux courants de court-circuit des cours suivants.
+      Longueur du câble, réactance linéique et taux de la self sont des hypothèses d'étude, à remplacer par le tracé réel,
+      les catalogues et la documentation du variateur retenu ; le modèle du moteur ne vaut pas au démarrage.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li>
+      <strong>Additionner les modules des impédances en série.</strong> $R = 40\ \Omega$ en série avec $X = 30\ \Omega$ ne fait pas $70\ \Omega$ mais $|40 + j30| = 50\ \Omega$. Les impédances s'ajoutent comme des complexes ; les modules ne s'ajoutent que si les arguments sont égaux.
+    </li>
+    <li>
+      <strong>Inverser la partie réelle pour obtenir la conductance.</strong> Pour $\underline{Z} = 3 + j4\ \Omega$, $G$ ne vaut pas $1/3\ \mathrm{S}$ mais $3/25 = 0{,}12\ \mathrm{S}$. On inverse le complexe entier : $\underline{Y} = 1/\underline{Z} = 0{,}12 - j0{,}16\ \mathrm{S}$.
+    </li>
+    <li>
+      <strong>Oublier le signe de la réactance capacitive.</strong> Écrire $\underline{Z}_C = +j/(C\omega)$ ou $jC\omega$ place le condensateur du côté inductif et inverse tous les déphasages. Vérification immédiate : $1/(jC\omega) = -j/(C\omega)$, car $1/j = -j$.
+    </li>
+    <li>
+      <strong>Calculer une réactance avec $f$ au lieu de $\omega$.</strong> $L f$ n'est pas une réactance : il manque le facteur $2\pi$. À $50\ \mathrm{Hz}$, $0{,}1\ \mathrm{H}$ vaut $31{,}4\ \Omega$, pas $5\ \Omega$. Les ordres de grandeur de référence, $1\ \mathrm{mH} \to 0{,}314\ \Omega$ et $100\ \mu\mathrm{F} \to 31{,}8\ \Omega$, détectent l'erreur.
+    </li>
+    <li>
+      <strong>Croire qu'une tension partielle ne peut pas dépasser la tension totale.</strong> Dans l'exercice de la bobine réelle, $U_R + U_L = 325\ \mathrm{V}$ sous $230\ \mathrm{V}$ ; dans un circuit RLC série proche de $\omega_0$, la tension du condensateur peut valoir plusieurs fois celle de la source. Les tensions partielles se combinent vectoriellement.
+    </li>
+    <li>
+      <strong>Utiliser une impédance hors de sa fréquence.</strong> Une impédance mesurée à $50\ \mathrm{Hz}$ ne vaut ni à $250\ \mathrm{Hz}$, ni à $25\ \mathrm{Hz}$ sous variateur. Il faut repartir de $R$, $L$ et $C$, puis recalculer ; et un modèle série-parallèle équivalent ne vaut qu'à sa fréquence d'établissement.
+    </li>
+    <li>
+      <strong>Utiliser l'impédance pendant un transitoire ou pour un composant non linéaire.</strong> Le courant d'appel d'un transformateur, la précharge d'un bus continu ou un noyau saturé ne se calculent pas avec $\underline{Z}$ : il faut l'équation différentielle ou une simulation temporelle.
+    </li>
+    <li>
+      <strong>Placer un dipôle passif dans le demi-plan de gauche.</strong> Un résultat avec $R &lt; 0$ pour une charge passive signale une erreur de signe, de quadrant ou de fléchage, pas un phénomène physique.
+    </li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain : un courant mesuré dans un dipôle qui varie fortement quand la fréquence change désigne un
+    élément réactif ; s'il augmente avec la fréquence, c'est un condensateur ou un comportement capacitif, s'il diminue, une
+    inductance. Un condensateur qui chauffe sans que la tension efficace ait changé suggère des harmoniques : son courant
+    croît comme le rang. Une pince ampèremétrique qui donne, sur une charge connue, un courant plus faible que
+    $U/R$ révèle une réactance non prise en compte. Enfin, une impédance mesurée par $U/I$ ne donne que le module : il faut
+    une mesure de phase, ou de puissance active, pour séparer $R$ et $X$, comme dans l'exercice avancé ci-dessous.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de
+    diagnostic industriel et une question conceptuelle. La correction de chacun reste masquée jusqu'à une tentative ou un
+    clic explicite sur "Voir la correction", puis se déroule étape par étape, accompagnée d'un diagramme de phaseurs, d'une
+    courbe ou d'un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma.</p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$\underline{Z} = \frac{\underline{U}}{\underline{I}} = R + jX = Z\angle\varphi, \qquad \underline{Y} = \frac{1}{\underline{Z}} = G + jB$$
+    $$\underline{Z}_R = R, \qquad \underline{Z}_L = jL\omega, \qquad \underline{Z}_C = \frac{1}{jC\omega} = -\frac{j}{C\omega}$$
+    $$\underline{Z}_{\text{série}} = \sum\underline{Z}_k, \qquad \underline{Y}_{\text{parallèle}} = \sum\underline{Y}_k, \qquad \underline{Z}_1 \parallel \underline{Z}_2 = \frac{\underline{Z}_1\underline{Z}_2}{\underline{Z}_1 + \underline{Z}_2}$$
+    $$\underline{Z}_{RLC} = R + j\left(L\omega - \frac{1}{C\omega}\right), \qquad \omega_0 = \frac{1}{\sqrt{LC}}$$
+    $$\Delta U \approx (R\cos\varphi + X\sin\varphi)\,I$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>Réactance avec $\omega = 2\pi f$, jamais avec $f$ seul.</li>
+      <li>$\underline{Z}_C = -j/(C\omega)$ : le signe moins place le condensateur sous l'axe réel.</li>
+      <li>Impédances en série, admittances en parallèle, et toujours des sommes complexes, jamais de modules.</li>
+      <li>Une impédance n'a de sens qu'à une fréquence donnée, en régime permanent, pour un circuit linéaire.</li>
+      <li>Contrôler par les lois de Kirchhoff, une valeur instantanée et le bilan de puissance active.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> L'impédance $\underline{Z} = \underline{U}/\underline{I}$ généralise la résistance au régime
+    sinusoïdal : son module est le rapport des valeurs efficaces, son argument le déphasage de la tension sur le courant.
+    Une résistance vaut $R$, une inductance $jL\omega$, un condensateur $-j/(C\omega)$ : la première est indépendante de la
+    fréquence, la deuxième croît avec elle, la troisième décroît. Les impédances s'additionnent en série, les admittances
+    en parallèle, comme des complexes ; tensions et courants partiels peuvent dépasser les totaux. Toutes les méthodes du
+    continu s'appliquent. Un circuit RLC série est capacitif sous $\omega_0 = 1/\sqrt{LC}$ et inductif au-dessus. On contrôle
+    par Kirchhoff, valeur instantanée et bilan de puissance active.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent,
+    <a href="#/cours/nombres-complexes-et-phaseurs">Nombres complexes et phaseurs</a> ; une sur le cours
+    <a href="#/cours/regime-transitoire-rc">Régime transitoire RC</a>, vieux d'une semaine exactement ; la question sur un
+    cours vieux d'un mois n'est pas encore applicable, et elle est remplacée par une question sur le cours
+    <a href="#/cours/loi-d-ohm-et-resistivite">Loi d'Ohm et résistivité</a>, dont l'impédance est la généralisation.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : programmer le calcul d'impédances en Python, vérifier l'exemple de la section H, tracer la réponse en
+    fréquence d'un circuit RLC série, puis retrouver une impédance dans LTspice. Prédictions à écrire avant de commencer :
+    dans le tracé de $|\underline{Z}|$ en fonction de $f$ pour $R = 10\ \Omega$, $L = 100\ \mathrm{mH}$ et
+    $C = 220\ \mu\mathrm{F}$, où se trouve le minimum et que vaut-il ? Dans LTspice, le courant sera-t-il en avance ou en retard
+    sur la tension de la source, pour le circuit de la section H ?
+  </p>
+  <ol>
+    <li>
+      En Python, écrire les fonctions <code>zr(R)</code>, <code>zl(L, f)</code> et <code>zc(C, f)</code> qui renvoient des
+      complexes, puis <code>serie(*z)</code> et <code>para(*z)</code>, cette dernière par la somme des admittances.
+      Contrôler : <code>zc(100e-6, 50)</code> doit valoir environ <code>-31.83j</code>.
+    </li>
+    <li>
+      Recalculer l'exemple de la section H : impédance équivalente, courant de ligne, tension $\underline{U}_p$, courants de
+      branche. Afficher modules et arguments avec <code>abs</code> et <code>cmath.phase</code>, puis vérifier la loi des nœuds
+      et le bilan de puissance active, $\operatorname{Re}(\underline{U}\,\underline{I}^*)$ contre $\sum R_kI_k^2$.
+    </li>
+    <li>
+      Avec numpy et matplotlib, tracer $|\underline{Z}|$ et $\varphi$ du circuit RLC série de la section E entre $5$ et
+      $200\ \mathrm{Hz}$, en échelle logarithmique pour la fréquence ; repérer le minimum et le passage de $\varphi$ par zéro.
+    </li>
+    <li>
+      Dans LTspice, saisir la netlist <code>V1 a 0 SINE(0 325.27 50 0 0 90)</code>, <code>R1 a p 2</code>,
+      <code>R2 p m 20</code>, <code>L1 m 0 50m</code>, <code>C1 p 0 100u</code>, <code>.tran 0 400m 300m 10u</code> et
+      <code>.end</code>. Mesurer l'amplitude de <code>I(R1)</code>, celles de <code>I(L1)</code> et <code>I(C1)</code>, et le
+      décalage temporel entre les maxima de <code>V(a)</code> et de <code>I(R1)</code>.
+    </li>
+    <li>
+      Facultatif : remplacer l'analyse temporelle par <code>.ac lin 200 5 200</code> sur le circuit RLC série de la
+      section E avec <code>V1 a 0 AC 1</code>, et tracer <code>1/I(V1)</code> pour obtenir l'impédance vue par la source,
+      en module et en phase.
+    </li>
+  </ol>
+  <p>
+    Résultats attendus : <code>para(zr(20) + zl(0.05, 50), zc(100e-6, 50))</code> donne $30{,}706 - j7{,}078\ \Omega$ ; le
+    courant de ligne vaut $6{,}873\angle 12{,}21^\circ\ \mathrm{A}$ et les deux bilans de puissance donnent $1545{,}1\ \mathrm{W}$.
+    Le minimum de $|\underline{Z}|$ vaut $10\ \Omega$ à $33{,}9\ \mathrm{Hz}$, où $\varphi$ passe de valeurs négatives à des
+    valeurs positives. Dans LTspice, <code>I(R1)</code> atteint $9{,}72\ \mathrm{A}$ crête, <code>I(L1)</code> $12{,}04\ \mathrm{A}$
+    et <code>I(C1)</code> $9{,}62\ \mathrm{A}$ ; le maximum du courant de ligne précède celui de la tension de
+    $0{,}68\ \mathrm{ms}$, soit $12{,}2^\circ$ : courant en avance. Anomalies à observer : un régime transitoire au début de la
+    simulation, qui mêle les modes propres de la bobine et du condensateur et s'éteint en quelques dizaines de
+    millisecondes, d'où l'enregistrement à partir de $300\ \mathrm{ms}$ ; un pas de calcul trop grand qui fausse le
+    décalage ; la phase de $90^\circ$ oubliée dans la source, qui décale tout de $90^\circ$ sans changer les déphasages
+    relatifs ; un signe inattendu sur <code>I(V1)</code>, que LTspice compte positivement en entrant par la borne positive de
+    la source, c'est-à-dire en convention récepteur.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est calculé
+    dans ce navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées
+    localement pour suivre votre progression. Cette séance prépare le jalon de fin du module Triphasé et qualité de
+    l'énergie : maîtriser les régimes sinusoïdaux monophasés et triphasés, les puissances, la compensation, les harmoniques
+    et les filtres élémentaires. Chacune de ces notions se calcule avec des impédances.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">L'impédance $\underline{Z} = \underline{U}/\underline{I}$ réunit le rapport des valeurs efficaces et le déphasage ; $R$, $jL\omega$ et $-j/(C\omega)$ suffisent à décrire les trois composants idéaux.</li>
+    <li data-rang="02">Toutes les méthodes du continu s'appliquent avec des complexes : impédances en série, admittances en parallèle, diviseurs, nœuds et mailles ; les grandeurs partielles peuvent dépasser les totaux.</li>
+    <li data-rang="03">Une impédance dépend de la fréquence et ne vaut qu'en régime permanent sinusoïdal : l'inductance freine les fréquences élevées, le condensateur les laisse passer.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> enchaîner sans erreur de signe les inversions $\underline{Y} = 1/\underline{Z}$
+    et les passages entre formes cartésienne et polaire dans un circuit mixte, en particulier pour le condensateur, et
+    accepter qu'une tension ou un courant partiel dépasse le total. L'animation de l'admittance de la section E et la
+    construction de Fresnel de la section H sont faites pour installer ces réflexes.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Puissances en courant alternatif, mesure ce que les
+    impédances font de l'énergie. Question à préparer : le compresseur est représenté par $\underline{Z}_m = 5{,}75 + j4{,}31\ \Omega$
+    sous $230\ \mathrm{V}$, parcouru par $32\ \mathrm{A}$. Le produit $230 \times 32 = 7360$ est-il la puissance qu'il
+    transforme en travail et en chaleur ? Calculez $R_mI^2$ et $X_mI^2$, puis vérifiez que
+    $\sqrt{(R_mI^2)^2 + (X_mI^2)^2}$ redonne le produit $UI$. Que représente, physiquement, le terme $X_mI^2$, alors qu'une
+    inductance ne dissipe rien en moyenne ?
+  </p>
+
+</article>
