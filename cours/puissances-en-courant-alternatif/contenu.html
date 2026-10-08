@@ -1,0 +1,1012 @@
+<article class="cours" data-slug="puissances-en-courant-alternatif">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/impedances-en-regime-sinusoidal">Impédances en régime sinusoïdal</a> s'est achevé sur une
+      question : le compresseur, modélisé par $\underline{Z}_m = 5{,}75 + j4{,}31\ \Omega$ sous $230\ \mathrm{V}$, est parcouru
+      par $32\ \mathrm{A}$ ; le produit $230 \times 32 = 7360$ est-il la puissance qu'il transforme ? Réponse : non.
+      $R_mI^2 = 5{,}75 \times 32^2 = 5888\ \mathrm{W}$ est la puissance réellement convertie en travail mécanique et en
+      chaleur ; $X_mI^2 = 4{,}3125 \times 32^2 = 4416$ est d'une autre nature, et $\sqrt{5888^2 + 4416^2} = 7360$ redonne bien le
+      produit $UI$. Le terme $X_mI^2$ mesure l'énergie que le champ magnétique du moteur emprunte à la source puis lui rend,
+      deux fois par période : en moyenne, rien n'est consommé, mais le courant correspondant circule bel et bien dans les
+      câbles. Cette séance donne un nom et une unité à chacune de ces trois grandeurs, puissance active, réactive et
+      apparente, et les relie par la puissance complexe. Elle s'appuie sur les conventions récepteur et générateur du cours
+      <a href="#/cours/tension-courant-charge-et-puissance">Tension, courant, charge et puissance</a>, sur la valeur efficace
+      du cours <a href="#/cours/signaux-periodiques-et-sinusoides">Signaux périodiques et sinusoïdes</a> et sur les phaseurs
+      du cours <a href="#/cours/nombres-complexes-et-phaseurs">Nombres complexes et phaseurs</a>.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    En continu, la puissance reçue par un dipôle se résume au produit $UI$. En régime sinusoïdal, ce produit ne dit plus
+    ce que la charge consomme : dès que le courant est déphasé par rapport à la tension, une partie de l'énergie transportée
+    fait des allers-retours entre la source et les champs magnétiques ou électriques de la charge. Elle ne produit ni
+    travail ni chaleur utile, mais elle charge les câbles, les transformateurs et les protections, et elle crée des pertes
+    Joule et des chutes de tension bien réelles. Distinguer la puissance active $P$, qui fait le travail, la puissance
+    réactive $Q$, qui fait circuler l'énergie d'échange, et la puissance apparente $S$, qui dimensionne le matériel, est donc
+    la base de tout bilan électrique.
+  </p>
+  <p>
+    L'ingénieur s'en sert à chaque étape d'un projet : bilan de puissance d'un tableau, choix de la puissance d'un
+    transformateur ou d'un groupe électrogène en kilovoltampères, section d'un câble fixée par le courant et donc par $S$,
+    calcul d'une facture d'énergie active et, selon le contrat de fourniture, d'énergie réactive, lecture d'un analyseur de
+    réseau, réglage d'un variateur ou d'un onduleur photovoltaïque qui fournit aussi du réactif. Le facteur de puissance,
+    rapport $P/S$, résume l'efficacité avec laquelle une installation utilise le courant qu'elle appelle ; son amélioration
+    est le sujet du cours Correction du facteur de puissance. Le travail central de cette séance est le calcul des
+    puissances d'une charge et de son facteur de puissance.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Établir l'expression de la puissance instantanée $p(t)$ d'un dipôle en régime sinusoïdal et en déduire la puissance active $P = UI\cos\varphi$.</li>
+    <li data-rang="02">Expliquer physiquement la puissance réactive comme l'amplitude d'un échange d'énergie à valeur moyenne nulle, et relier son signe au caractère inductif ou capacitif de la charge.</li>
+    <li data-rang="03">Calculer $P$, $Q$, $S$, la puissance complexe $\underline{S} = \underline{U}\,\underline{I}^*$ et le facteur de puissance d'une charge donnée par ses mesures ou par son impédance.</li>
+    <li data-rang="04">Appliquer le théorème de Boucherot pour faire le bilan de plusieurs charges, et expliquer pourquoi les puissances apparentes ne s'additionnent pas.</li>
+    <li data-rang="05">Comparer facteur de puissance et facteur de déplacement $\cos\varphi_1$ en présence de courants déformés, et interpréter la puissance déformante.</li>
+    <li data-rang="06">Dimensionner une source ou un départ en puissance apparente à partir d'un bilan de puissance, et estimer les pertes en ligne dues au courant réactif.</li>
+    <li data-rang="07">Diagnostiquer une incohérence de mesure entre wattmètre, ampèremètre et voltmètre, ou entre facteur de puissance et $\cos\varphi$ affichés par un analyseur.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois acquis suffisent. Le premier est la valeur efficace : pour une sinusoïde, $U = U_m/\sqrt{2}$, et la valeur moyenne
+    de $\cos^2(\omega t)$ vaut $1/2$, ce qui a servi à définir la valeur efficace par l'échauffement dans le cours
+    <a href="#/cours/signaux-periodiques-et-sinusoides">Signaux périodiques et sinusoïdes</a>. Le deuxième est le phaseur
+    efficace et le calcul complexe : $\underline{U} = U\angle\varphi_u$, conjugué $\underline{z}^* = a - jb$ de
+    $\underline{z} = a + jb$, et $\underline{z}\,\underline{z}^* = |\underline{z}|^2$. Le troisième est l'impédance
+    $\underline{Z} = R + jX = Z\angle\varphi$, avec $\varphi = \varphi_u - \varphi_i$ positif quand le courant est en retard. Une
+    identité trigonométrique sera utilisée : $\cos a\cos b = \tfrac{1}{2}[\cos(a - b) + \cos(a + b)]$. Le mini-test ci-dessous
+    n'est pas noté ; la correction de chaque question reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la
+    correction".
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-echange">Une énergie qui va et qui revient</h3>
+  <p>
+    À chaque instant, la puissance reçue par un dipôle fléché en convention récepteur vaut $p(t) = u(t)\,i(t)$. Pour une
+    résistance, $u$ et $i$ ont toujours le même signe : $p$ est toujours positive, l'énergie va toujours de la source vers la
+    charge, qui la transforme en chaleur. Pour une inductance idéale, le courant est en retard d'un quart de période : pendant
+    un quart de période, $u$ et $i$ ont le même signe et la bobine stocke de l'énergie magnétique, $\tfrac{1}{2}Li^2$ ; pendant
+    le quart suivant, ils sont de signes opposés et la bobine rend cette énergie à la source. La puissance oscille à deux fois
+    la fréquence du réseau, autour d'une moyenne nulle. Un condensateur fait de même avec son énergie électrique,
+    $\tfrac{1}{2}Cu^2$, mais en opposition de phase : quand la bobine stocke, le condensateur rend.
+  </p>
+  <p>
+    Une charge réelle, comme un moteur, combine les deux comportements : elle absorbe en moyenne une puissance $P$, qui
+    devient travail et chaleur, et elle échange en plus avec la source une énergie qui ne fait que transiter. Pour la source
+    et les câbles, ces allers-retours ne sont pas gratuits : ils demandent du courant, donc des pertes $RI^2$ dans les
+    conducteurs et de la capacité dans les transformateurs. La puissance réactive $Q$ mesure l'amplitude de cet échange.
+  </p>
+  <p>
+    Analogie contrôlée : une péniche qui remonte un canal à écluses. L'énergie dépensée pour pousser la péniche contre le
+    courant est l'énergie active, réellement consommée. L'eau qu'il faut faire entrer dans l'écluse pour monter, puis
+    ressortir pour redescendre, ne fait que transiter : elle est rendue au canal, mais il faut des vannes, des conduites et du
+    temps pour la faire circuler. Le canal doit être dimensionné pour les deux débits à la fois, comme un câble pour le
+    courant total.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie</span>
+    <p>
+      L'analogie rend compte de l'idée d'un flux qui transite sans être consommé, mais elle s'arrête là. L'eau d'une écluse
+      est de la matière, alors que la puissance réactive n'est pas une substance : c'est une grandeur de calcul, l'amplitude
+      d'une composante de $p(t)$ à valeur moyenne nulle, qui ne se conserve qu'au sens du bilan de Boucherot. L'analogie ne
+      dit rien de la compensation : un condensateur placé près d'un moteur échange avec lui l'énergie que la source aurait
+      dû fournir, ce qu'aucune écluse ne fait. Enfin, elle ne décrit pas la puissance déformante des courants non
+      sinusoïdaux. Tout ce qui suit suppose un régime permanent sinusoïdal, sauf mention contraire.
+    </p>
+  </div>
+
+  <h3 id="d-instant-section">Simulation interactive : puissance instantanée d'une charge</h3>
+  <p>
+    La simulation alimente une charge sous $230\ \mathrm{V}$ efficaces, $50\ \mathrm{Hz}$. Le curseur règle la valeur efficace
+    du courant ; l'orientation du phaseur du courant, donc le déphasage, se règle en faisant glisser la poignée sur le
+    demi-cercle, à la souris, au doigt ou au clavier après l'avoir sélectionnée ; le lecteur fait avancer l'instant étudié sur
+    deux périodes. Avant de manipuler, prédisez : avec un courant en retard de $90^\circ$, combien vaut la puissance moyenne ?
+    La puissance instantanée change-t-elle de signe pour une charge purement résistive ? Pour un courant en retard de
+    $36{,}87^\circ$, pendant quelle fraction de la période l'énergie revient-elle vers la source ?
+  </p>
+  <figure id="d-instant-figure">
+    <div class="schema-vivant" id="d-instant"></div>
+    <div id="d-instant-trace-ui"></div>
+    <div id="d-instant-trace-p"></div>
+    <figcaption>
+      En haut à gauche, le diagramme des phaseurs, référence des phases sur la tension : $\underline{U}$ est la flèche
+      horizontale en trait plein épais ; $\underline{I}$, en tirets, a pour longueur fixe et indique seulement la direction du
+      courant, sa valeur étant affichée ; l'arc marque le déphasage $\varphi = \varphi_u - \varphi_i$, positif quand le courant
+      est en retard, sous l'axe. En haut à droite, le triangle des puissances correspondant, à l'échelle indiquée : $P$ en trait
+      plein horizontal, $Q$ en trait plein vertical, vers le haut si la charge est inductive, et $S$ en tirets épais. Au
+      milieu, $u(t)$ et $i(t)$, le courant multiplié par $10$ ; en bas, $p(t) = u(t)\,i(t)$ en watts. Les légendes sous les
+      tracés nomment chaque courbe avec sa couleur réelle ; le trait vertical en tirets marque l'instant étudié, et les traits
+      horizontaux en tirets du tracé du bas marquent $P$, $P + S$ et $P - S$.
+    </figcaption>
+  </figure>
+  <div id="d-instant-curseurs"></div>
+  <div id="d-instant-lecteur"></div>
+  <div id="d-instant-valeurs"></div>
+  <p>
+    Interprétation : la puissance instantanée oscille à $100\ \mathrm{Hz}$, deux fois la fréquence du réseau, entre $P - S$
+    et $P + S$, autour de sa moyenne $P = UI\cos\varphi$. Pour une résistance, $\varphi = 0$, elle reste positive et touche
+    zéro deux fois par période. Pour $\varphi = 90^\circ$, la moyenne est nulle : l'énergie reçue pendant un quart de période
+    est rendue pendant le suivant. Entre les deux, $p(t)$ est négative pendant une fraction $\varphi/180^\circ$ de la période :
+    $20{,}5\ \%$ pour $\varphi = 36{,}87^\circ$. Le courant, lui, garde la même valeur efficace quel que soit le déphasage :
+    à $10\ \mathrm{A}$, le câble chauffe autant pour transporter $2300\ \mathrm{W}$ à $\varphi = 0$ que pour n'en transporter
+    aucun à $\varphi = 90^\circ$. C'est tout le problème industriel de la puissance réactive.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-instantanee">Puissance instantanée et puissance active</h3>
+  <p>
+    Soit un dipôle linéaire fléché en convention récepteur, en régime permanent sinusoïdal, soumis à
+    $u(t) = U\sqrt{2}\cos(\omega t + \varphi_u)$ et parcouru par $i(t) = I\sqrt{2}\cos(\omega t + \varphi_i)$, avec
+    $\varphi = \varphi_u - \varphi_i$. Le produit, transformé par l'identité $\cos a\cos b = \tfrac{1}{2}[\cos(a - b) + \cos(a + b)]$,
+    donne :
+  </p>
+  <div class="formule-cle">
+    $$p(t) = u(t)\,i(t) = 2UI\cos(\omega t + \varphi_u)\cos(\omega t + \varphi_i) = \underbrace{UI\cos\varphi}_{\text{constant}} + \underbrace{UI\cos(2\omega t + \varphi_u + \varphi_i)}_{\text{oscille à }2\omega}$$
+    $$P = \frac{1}{T}\int_0^T p(t)\,\mathrm{d}t = UI\cos\varphi$$
+    <p class="formule-cle-legende">
+      $p$ puissance instantanée reçue, en watts ; $U$ et $I$ valeurs efficaces, en volts et en ampères ; $\varphi$ déphasage de
+      la tension sur le courant, en degrés ou en radians ; $T = 2\pi/\omega$ la période. La moyenne du second terme sur une
+      période est nulle, car il oscille à $2\omega$ : il reste la puissance active $P$, en watts. Hypothèses : régime permanent
+      sinusoïdal, grandeurs de même fréquence, convention récepteur ; en convention générateur, la même expression donne la
+      puissance fournie. Cas limites : résistance, $\varphi = 0$, $P = UI$ ; inductance ou condensateur idéal,
+      $\varphi = \pm 90^\circ$, $P = 0$. Dimension : $\mathrm{V \cdot A} = \mathrm{W}$, car $\cos\varphi$ est sans dimension.
+      Piège : avec les amplitudes, $P = \tfrac{1}{2}U_mI_m\cos\varphi$ ; le facteur $\tfrac{1}{2}$ disparaît avec les valeurs
+      efficaces, et c'est la raison même de leur définition.
+    </p>
+  </div>
+  <p>
+    En posant $\theta = \omega t + \varphi_u$ et $\varphi_i = \varphi_u - \varphi$, le terme oscillant se développe :
+    $\cos(2\theta - \varphi) = \cos 2\theta\cos\varphi + \sin 2\theta\sin\varphi$. On obtient une décomposition qui sépare
+    nettement les deux rôles du courant :
+  </p>
+  <div class="formule-cle">
+    $$p(t) = \underbrace{UI\cos\varphi\,\bigl[1 + \cos 2\theta\bigr]}_{p_a(t)\ \geq\ 0,\ \text{moyenne } P} + \underbrace{UI\sin\varphi\,\sin 2\theta}_{p_r(t),\ \text{moyenne nulle, amplitude } Q}$$
+    <p class="formule-cle-legende">
+      Le premier terme est la puissance portée par la composante du courant en phase avec la tension,
+      $I_a = I\cos\varphi$ : il ne change jamais de signe, l'énergie va toujours vers la charge. Le second est porté par la
+      composante en quadrature, $I_r = I\sin\varphi$ : il alterne, l'énergie va et revient, et son amplitude est la puissance
+      réactive. C'est la justification physique de la définition $Q = UI\sin\varphi$. Cas limite : pour une charge résistive,
+      $p_r = 0$ ; pour une inductance pure, $p_a = 0$.
+    </p>
+  </div>
+
+  <h3 id="e-reactive">Puissance réactive, puissance apparente et triangle des puissances</h3>
+  <div class="formule-cle">
+    $$Q = UI\sin\varphi, \qquad S = UI, \qquad S^2 = P^2 + Q^2, \qquad \tan\varphi = \frac{Q}{P}$$
+    <p class="formule-cle-legende">
+      $Q$ puissance réactive, en voltampères réactifs ($\mathrm{var}$) ; $S$ puissance apparente, en voltampères
+      ($\mathrm{VA}$). Les trois grandeurs ont la même dimension, $\mathrm{V \cdot A}$ ; les noms d'unité différents rappellent
+      seulement leur nature. Convention de signe, en récepteur : $Q &gt; 0$ pour une charge inductive, courant en retard, qui
+      absorbe du réactif ; $Q &lt; 0$ pour une charge capacitive, courant en avance, qui en fournit. Cas limites :
+      $\varphi = 0$ donne $Q = 0$ et $S = P$ ; $\varphi = 90^\circ$ donne $P = 0$ et $S = Q$. La relation $S^2 = P^2 + Q^2$
+      découle de $\cos^2\varphi + \sin^2\varphi = 1$ : $P$, $Q$ et $S$ forment un triangle rectangle d'angle $\varphi$, le
+      triangle des puissances.
+    </p>
+  </div>
+  <p>
+    Interprétation énergétique de $Q$. Pour une inductance, $Q_L = UI = L\omega I^2$ ; l'énergie magnétique moyenne vaut
+    $\overline{W_m} = \tfrac{1}{2}LI^2$, avec $I$ efficace, d'où $Q_L = 2\omega\,\overline{W_m}$. Pour un condensateur,
+    $Q_C = -C\omega U^2 = -2\omega\,\overline{W_e}$. Pour un circuit quelconque, $Q = 2\omega(\overline{W_m} - \overline{W_e})$ :
+    la puissance réactive est proportionnelle à l'écart entre les énergies magnétique et électrique moyennes stockées. Pour le
+    compresseur, $4416\ \mathrm{var}$ correspondent à $\overline{W_m} = 4416/(2 \times 314{,}16) = 7{,}03\ \mathrm{J}$, à peine
+    l'énergie d'un livre de $1\ \mathrm{kg}$ soulevé de $72\ \mathrm{cm}$, mais échangée cent fois par seconde.
+  </p>
+
+  <h3 id="e-complexe">Puissance complexe</h3>
+  <p>
+    Les trois puissances tiennent dans un seul nombre complexe, construit avec les phaseurs efficaces. Le produit
+    $\underline{U}\,\underline{I}$ donnerait un argument $\varphi_u + \varphi_i$, qui dépend de la référence des phases et n'a
+    pas de sens physique. Le produit par le conjugué du courant donne au contraire l'argument $\varphi_u - \varphi_i = \varphi$,
+    indépendant de la référence :
+  </p>
+  <div class="formule-cle">
+    $$\underline{S} = \underline{U}\,\underline{I}^* = UI\angle(\varphi_u - \varphi_i) = UI\cos\varphi + jUI\sin\varphi = P + jQ, \qquad |\underline{S}| = S$$
+    $$\underline{S} = \underline{Z}\,\underline{I}\,\underline{I}^* = \underline{Z}\,I^2 = RI^2 + jXI^2, \qquad \underline{S} = \underline{U}\,\frac{\underline{U}^*}{\underline{Z}^*} = \frac{U^2}{\underline{Z}^*}$$
+    <p class="formule-cle-legende">
+      $\underline{S}$ puissance complexe, en voltampères ; $\underline{I}^*$ conjugué du phaseur du courant. Hypothèses : phaseurs
+      efficaces, convention récepteur. Conséquences : $P = RI^2$, ce qui confirme que seule la partie résistive consomme, et
+      $Q = XI^2$, ce qui confirme le signe : $X &gt; 0$, inductif, $Q &gt; 0$. Avec des phaseurs d'amplitude, il faudrait écrire
+      $\underline{S} = \tfrac{1}{2}\underline{U}_m\underline{I}_m^*$. Cas limites : $\underline{Z} = R$ donne $\underline{S} = U^2/R$,
+      la formule du continu ; $\underline{Z}_C = -j/(C\omega)$ donne $\underline{S} = U^2/(+j/(C\omega)) = -jC\omega U^2$. Dimension :
+      $\Omega \cdot \mathrm{A}^2 = \mathrm{V \cdot A}$.
+    </p>
+  </div>
+  <p>
+    Géométriquement, conjuguer le courant revient à le réfléchir par rapport à l'axe réel. Un courant inductif, en retard,
+    sous l'axe dans le diagramme de Fresnel, donne une puissance complexe au-dessus de l'axe, avec $Q &gt; 0$. L'animation
+    ci-dessous fait apparaître ce passage.
+  </p>
+
+  <h3 id="e-passage-section">Animation : du diagramme de Fresnel au triangle des puissances</h3>
+  <p>
+    L'animation part du diagramme de Fresnel d'une charge : la tension $\underline{U}$ sur l'axe réel, le courant
+    $\underline{I}$ décomposé en composante active et composante réactive. Le lecteur transforme pas à pas le phaseur du courant
+    en puissance complexe : il le conjugue, c'est-à-dire le réfléchit sur l'axe réel, puis le multiplie par $U$. Le curseur
+    règle le déphasage $\varphi$ de la charge, de $-90^\circ$, capacitive, à $+90^\circ$, inductive. Avant de lancer, prédisez :
+    pour un moteur, courant en retard, la puissance complexe sera-t-elle au-dessus ou au-dessous de l'axe réel ? Que devient
+    la composante active du courant dans le triangle des puissances ?
+  </p>
+  <figure id="e-passage-figure">
+    <div class="schema-vivant" id="e-passage"></div>
+    <figcaption>
+      Plan complexe unique, à double échelle : à l'étape de départ, les flèches sont des courants, à l'échelle indiquée en haut
+      à gauche ; à l'arrivée, des puissances, à l'échelle indiquée en dessous. La flèche horizontale en trait plein épais est la
+      tension $\underline{U}$, référence des phases. La flèche en tirets épais est la grandeur transformée : d'abord
+      $\underline{I}$, puis $\underline{I}^*$, puis $\underline{S} = \underline{U}\,\underline{I}^*$. Ses deux projections en trait
+      plein sont, au départ, la composante active $I\cos\varphi$, tracée le long de l'axe réel, juste en dessous pour rester
+      visible, et la composante réactive, verticale ; à l'arrivée, $P$ et $Q$. L'arc marque l'angle entre la flèche et l'axe réel, et le texte en haut à droite indique l'étape
+      en cours.
+    </figcaption>
+  </figure>
+  <div id="e-passage-curseurs"></div>
+  <div id="e-passage-lecteur"></div>
+  <div id="e-passage-valeurs"></div>
+  <p>
+    Interprétation : la composante active du courant, $I\cos\varphi$, devient la puissance active $P = UI\cos\varphi$ ; la
+    composante réactive devient $Q$, mais avec un changement de côté. Un courant inductif est sous l'axe réel ; après
+    conjugaison, la puissance complexe est au-dessus : $Q &gt; 0$, la charge absorbe du réactif. Un courant capacitif, au-dessus
+    de l'axe, donne $Q &lt; 0$ : la charge fournit du réactif. L'angle est conservé en valeur absolue, si bien que le
+    triangle des puissances est le triangle des courants réfléchi et agrandi $U$ fois. Sans le conjugué, l'argument
+    dépendrait de l'origine des temps choisie, ce qui n'a pas de sens pour une puissance.
+  </p>
+
+  <h3 id="e-facteur">Facteur de puissance, facteur de déplacement et puissance déformante</h3>
+  <div class="formule-cle">
+    $$\lambda = \frac{P}{S} \qquad \text{en régime sinusoïdal : } \lambda = \cos\varphi$$
+    $$\text{courant déformé : } S^2 = P^2 + Q^2 + D^2, \qquad \lambda = \frac{I_1}{I}\cos\varphi_1$$
+    <p class="formule-cle-legende">
+      $\lambda$ facteur de puissance, sans dimension, compris entre $0$ et $1$ ; il dit quelle fraction de la puissance
+      apparente est utile. En régime sinusoïdal, il se confond avec $\cos\varphi$. Si la tension reste sinusoïdale mais que le
+      courant est déformé, seul le fondamental du courant, de valeur efficace $I_1$ et de déphasage $\varphi_1$, échange de la
+      puissance moyenne avec la tension : $P = UI_1\cos\varphi_1$ et $Q = UI_1\sin\varphi_1$. Mais la puissance apparente
+      $S = UI$ utilise la valeur efficace vraie $I = \sqrt{I_1^2 + I_h^2}$, qui inclut les harmoniques. L'écart est la puissance
+      déformante $D = UI_h$, souvent exprimée en voltampères. $\cos\varphi_1$ s'appelle le facteur de déplacement ; $I_1/I$ le
+      facteur de distorsion. Cas limite : sans harmoniques, $I_1 = I$ et $\lambda = \cos\varphi$. Exemple du cours
+      <a href="#/cours/nombres-complexes-et-phaseurs">Nombres complexes et phaseurs</a> : le fondamental du courant de la pompe,
+      $47{,}7\ \mathrm{A}$, est en phase avec la tension, $\cos\varphi_1 = 1$, mais ses $14{,}8\ \mathrm{A}$ d'harmoniques
+      portent la valeur efficace vraie à $49{,}9\ \mathrm{A}$ : $\lambda = 0{,}955$.
+    </p>
+  </div>
+
+  <h3 id="e-boucherot">Théorème de Boucherot : bilan de plusieurs charges</h3>
+  <p>
+    Dans un réseau linéaire en régime sinusoïdal, la somme des puissances complexes reçues par tous les dipôles, fléchés en
+    convention récepteur, est nulle. C'est le théorème de Tellegen, conséquence des seules lois de Kirchhoff : elle se
+    démontre en écrivant chaque tension de branche comme une différence de potentiels de nœuds, puis en regroupant les
+    courants conjugués par nœud, dont la somme est nulle. Pour une source qui alimente plusieurs charges, la puissance
+    complexe fournie par la source égale la somme des puissances complexes reçues par les charges, quelle que soit leur
+    disposition, série, parallèle ou mixte :
+  </p>
+  <div class="formule-cle">
+    $$\underline{S}_{\text{fournie}} = \sum_k \underline{S}_k \quad\Longrightarrow\quad P = \sum_k P_k, \qquad Q = \sum_k Q_k, \qquad S = \sqrt{P^2 + Q^2} \leq \sum_k S_k$$
+    <p class="formule-cle-legende">
+      Hypothèses : réseau linéaire, une seule fréquence, régime permanent, toutes les charges fléchées en convention
+      récepteur. Les puissances actives s'additionnent, ce qui traduit la conservation de l'énergie. Les puissances réactives
+      s'additionnent avec leur signe : un condensateur, $Q_k &lt; 0$, compense une partie du réactif d'un moteur. Les puissances
+      apparentes ne s'additionnent pas : la somme arithmétique $\sum S_k$ n'est égale à $S$ que si toutes les charges ont le
+      même $\varphi$. Cas limite : charges toutes résistives, $S = \sum P_k$. En présence de courants déformés, le bilan reste
+      vrai pour $P$ et pour $Q$ au fondamental, mais pas pour la puissance déformante, qui ne se conserve pas.
+    </p>
+  </div>
+
+  <h3 id="e-boucherot-section">Simulation interactive : le bilan de Boucherot d'un atelier</h3>
+  <p>
+    La simulation reprend les trois charges de l'exemple de la section H, toutes sous $230\ \mathrm{V}$ : un moteur
+    monophasé, un four résistif et un condensateur. Le point du moteur se déplace dans le plan des puissances avec la poignée,
+    ce qui règle sa puissance active et sa puissance réactive ; les curseurs règlent la puissance du four et la capacité du
+    condensateur. Les vecteurs des trois charges sont mis pointe à la suite de l'autre, et la flèche épaisse qui ferme la
+    chaîne est la puissance complexe totale. Avant de manipuler, prédisez : augmenter la capacité du condensateur change-t-il
+    la puissance active totale ? le courant de ligne ? La puissance apparente totale peut-elle être égale à la somme des
+    puissances apparentes des charges ?
+  </p>
+  <figure id="e-boucherot-figure">
+    <div class="schema-vivant" id="e-boucherot-plan"></div>
+    <figcaption>
+      Plan des puissances, $P$ en abscisse et $Q$ en ordonnée, en kilowatts et kilovars, graduations tous les
+      $1\ \mathrm{kW}$ et $1\ \mathrm{kvar}$. Les trois vecteurs des charges sont mis bout à bout : le moteur en trait plein,
+      partant de l'origine et terminé par la poignée ; le four en trait plein, horizontal, car il ne consomme pas de réactif ;
+      le condensateur en tirets, vertical vers le bas, car il fournit du réactif. La flèche en tirets épais, de l'origine à
+      l'extrémité de la chaîne, est la puissance complexe $\underline{S}$ fournie par la source ; l'arc marque son angle
+      $\varphi$. La zone dans laquelle la poignée peut se déplacer est délimitée par le cadre en pointillés.
+    </figcaption>
+  </figure>
+  <div id="e-boucherot-curseurs"></div>
+  <div id="e-boucherot-valeurs"></div>
+  <p>
+    Interprétation : le condensateur ne modifie pas la puissance active totale, qui reste la somme des puissances du moteur
+    et du four ; il ne fait que retrancher sa puissance réactive de celle du moteur. Avec $40\ \mu\mathrm{F}$, $Q$ passe de
+    $2116$ à $1451\ \mathrm{var}$, le courant de ligne de $22{,}89$ à $21{,}89\ \mathrm{A}$, et les pertes dans la ligne de
+    $0{,}3\ \Omega$ de $157{,}2$ à $143{,}8\ \mathrm{W}$. Vers $127\ \mu\mathrm{F}$, la puissance réactive totale s'annule et
+    le courant est minimal ; au-delà, l'installation devient capacitive et le courant remonte : c'est la surcompensation, que
+    traitera le cours Correction du facteur de puissance. La somme des puissances apparentes des charges dépasse toujours
+    $S$, sauf si tous les vecteurs sont alignés : pour un four seul et un moteur à $\cos\varphi = 1$, par exemple.
+  </p>
+
+  <h3 id="e-mesure">Mesurer les puissances</h3>
+  <p>
+    Un wattmètre multiplie la tension et le courant à chaque instant et affiche la valeur moyenne du produit : il mesure $P$
+    directement, quelle que soit la forme d'onde. Il comporte un circuit courant, inséré en série dans le conducteur, et un
+    circuit tension, branché en dérivation entre ce conducteur et la référence ; le sens de branchement de chacun fixe la
+    convention. Un voltmètre et un ampèremètre efficaces vrais donnent $S = UI$ ; on en déduit $Q = \sqrt{S^2 - P^2}$, mais
+    sans son signe, qu'il faut connaître par ailleurs ou mesurer avec un varmètre. Un analyseur de réseau calcule $P$, $Q$,
+    $S$, $\lambda$ et $\cos\varphi_1$ à partir des signaux échantillonnés ; ses définitions de $Q$ et de $S$ en régime déformé
+    dépendent du constructeur et doivent être lues dans sa notice. Le schéma fixe le branchement et les conventions.
+  </p>
+  <figure id="e-mesure-figure">
+    <svg viewBox="0 0 760 320" role="img" aria-label="Mesure de la puissance active d'une charge alimentée entre phase et neutre : source en convention générateur, wattmètre dont le circuit courant est en série sur la phase et le circuit tension en dérivation entre phase et neutre, charge Z en convention récepteur, courant i de la phase vers la charge, tension u fléchée du neutre vers la phase">
+      <defs>
+        <marker id="fl-e-m" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="100" cy="165" r="28"/>
+        <path d="M86 165C92 153 98 153 100 165S108 177 114 165"/>
+        <path d="M100 137V70H250M370 70H620V125M620 205V270H100V193"/>
+        <rect x="250" y="40" width="120" height="70" rx="6"/>
+        <path d="M270 70H350" stroke-width="3.2"/>
+        <path d="M310 110V270"/>
+        <rect x="600" y="125" width="40" height="80"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="310" cy="270" r="4.5"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2" fill="none">
+        <path d="M430 56H500" marker-end="url(#fl-e-m)"/>
+        <path d="M700 255V90" marker-end="url(#fl-e-m)"/>
+        <path d="M40 255V90" marker-end="url(#fl-e-m)"/>
+        <path d="M150 56H210" marker-end="url(#fl-e-m)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="100" y="30">L, phase</text>
+        <text x="380" y="296">N, neutre : référence de potentiel</text>
+        <text x="136" y="160">230 V</text>
+        <text x="136" y="176">50 Hz</text>
+        <text x="28" y="80" text-anchor="middle">u</text>
+        <text x="180" y="46" text-anchor="middle">i</text>
+        <text x="310" y="30" text-anchor="middle" font-weight="600">W</text>
+        <text x="310" y="96" text-anchor="middle" font-size="11">circuit courant</text>
+        <text x="302" y="200" text-anchor="end" font-size="11">circuit tension</text>
+        <text x="302" y="216" text-anchor="end" font-size="11">en dérivation</text>
+        <text x="465" y="46" text-anchor="middle">i</text>
+        <text x="620" y="170" text-anchor="middle">Z</text>
+        <text x="712" y="176">u</text>
+        <text x="368" y="150" font-size="11">charge en convention récepteur :</text>
+        <text x="368" y="166" font-size="11">p = u i &gt; 0 si elle reçoit</text>
+        <text x="368" y="196" font-size="11">W affiche P, moyenne de u i</text>
+      </g>
+    </svg>
+    <figcaption>
+      Branchement d'un wattmètre sur une charge alimentée entre phase et neutre. La source, à gauche, est fléchée en
+      convention générateur : la tension $u$ pointe vers la phase et le courant $i$ sort de cette borne. Le wattmètre $W$ a son
+      circuit courant, le trait épais, en série sur la phase, et son circuit tension en dérivation entre la phase et le neutre,
+      référence de potentiel. La charge $Z$ est fléchée en convention récepteur : $i$ y entre par la borne de la phase et $u$,
+      à droite, pointe vers cette même borne. Avec ce branchement, le wattmètre affiche la puissance moyenne reçue par la
+      charge ; inverser le circuit courant inverserait le signe affiché.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-methodes">Comparaison des méthodes</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Quatre façons de calculer les puissances d'une charge ou d'une installation</caption>
+      <thead><tr><th>Méthode</th><th>Principe</th><th>Points forts</th><th>Limites</th><th>Quand la choisir</th></tr></thead>
+      <tbody>
+        <tr><td>Mesures $U$, $I$, $\cos\varphi$</td><td>$P = UI\cos\varphi$, $Q = UI\sin\varphi$, $S = UI$</td><td>immédiate, directement à partir des plaques ou des relevés</td><td>suppose un régime sinusoïdal ; $\cos\varphi$ souvent approché</td><td>estimation rapide d'un départ, lecture d'une plaque</td></tr>
+        <tr><td>Impédance</td><td>$\underline{S} = \underline{Z}I^2 = U^2/\underline{Z}^*$</td><td>donne $P$ et $Q$ avec leurs signes, sans trigonométrie</td><td>il faut connaître le modèle de la charge, valable à un point de fonctionnement</td><td>charge modélisée, circuit calculé par impédances</td></tr>
+        <tr><td>Phaseurs</td><td>$\underline{S} = \underline{U}\,\underline{I}^*$</td><td>systématique, se programme, aucun signe à deviner</td><td>demande les phaseurs de $u$ et de $i$ ; oubli du conjugué fréquent</td><td>calcul complet d'un circuit, vérification d'un résultat</td></tr>
+        <tr><td>Bilan de Boucherot</td><td>sommer les $P_k$ et les $Q_k$, puis $S = \sqrt{P^2 + Q^2}$</td><td>ne demande ni les tensions ni les courants intermédiaires, se fait au tableur</td><td>donne le total, pas la répartition des courants ; pas de bilan de $S$ ni de $D$</td><td>bilan d'un tableau, choix d'une source, compensation</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="e-statut">Statut des énoncés</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Ce qui relève de la loi, de la convention, de l'approximation, de la conception et de la norme ou du constructeur</caption>
+      <thead><tr><th>Énoncé</th><th>Statut</th><th>Commentaire</th></tr></thead>
+      <tbody>
+        <tr><td>$p = ui$ ; conservation de la puissance active ; théorème de Tellegen</td><td>Lois physiques</td><td>Conservation de l'énergie et lois de Kirchhoff.</td></tr>
+        <tr><td>$P = UI\cos\varphi$, $\underline{S} = \underline{U}\,\underline{I}^*$, Boucherot pour $P$ et $Q$</td><td>Conséquences mathématiques</td><td>Exactes en régime permanent sinusoïdal, pour des phaseurs efficaces.</td></tr>
+        <tr><td>$Q &gt; 0$ pour une charge inductive en convention récepteur ; conjugué porté par le courant</td><td>Conventions</td><td>Certains ouvrages conjuguent la tension, ce qui inverse le signe de $Q$ ; vérifier avant de comparer.</td></tr>
+        <tr><td>$\lambda = \cos\varphi$ ; charge résumée par $P$ et $\cos\varphi$ de plaque</td><td>Approximations</td><td>Faux dès que le courant est déformé ; un moteur à charge partielle a un $\cos\varphi$ plus faible que sa plaque.</td></tr>
+        <tr><td>Dimensionner sources, câbles et protections sur $S$ et sur le courant efficace vrai</td><td>Règle de conception</td><td>Ce sont eux qui fixent l'échauffement, pas $P$.</td></tr>
+        <tr><td>Seuils de facturation de l'énergie réactive, définitions de $Q$ et $S$ en régime déformé dans un analyseur</td><td>Contrat de fourniture et données constructeur</td><td>Dépendent du distributeur et du constructeur ; aucune valeur n'est donnée ici comme référence.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, le diagramme de phaseurs tension et courant d'une charge mis en
+    regard de son triangle des puissances, l'organigramme de résolution d'un problème de puissances, et un tableau qui compare
+    les grandeurs utilisées.
+  </p>
+
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 900 380" role="img" aria-label="Schéma principal. À gauche, diagramme de phaseurs du compresseur : tension U de 230 volts sur l'axe réel, courant I de 32 ampères en retard de 36,87 degrés, décomposé en composante active I cos phi de 25,6 ampères sur l'axe réel et composante réactive I sin phi de 19,2 ampères vers le bas. Au centre, une flèche indique la multiplication par U et la conjugaison. À droite, triangle des puissances : P de 5888 watts horizontal, Q de 4416 var vertical vers le haut, S de 7360 voltampères en hypoténuse, angle phi de 36,87 degrés">
+      <defs>
+        <marker id="fl-f-p" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto-start-reverse">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="1.2" fill="none" opacity="0.7">
+        <path d="M30 130H400" marker-end="url(#fl-f-p)"/>
+        <path d="M60 350V40" marker-end="url(#fl-f-p)"/>
+        <path d="M500 300H880" marker-end="url(#fl-f-p)"/>
+        <path d="M520 350V40" marker-end="url(#fl-f-p)"/>
+      </g>
+      <path d="M60 130H367" stroke="currentColor" stroke-width="3.2" fill="none" stroke-linecap="round" marker-end="url(#fl-f-p)"/>
+      <path d="M60 138H232" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      <path d="M233.6 130V257" stroke="currentColor" stroke-width="2.4" fill="none" marker-end="url(#fl-f-p)"/>
+      <path d="M60 130L233.6 260.2" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="11 6" stroke-linecap="round" marker-end="url(#fl-f-p)"/>
+      <path d="M100 130A40 40 0 0 1 92 154" stroke="currentColor" stroke-width="1.3" fill="none"/>
+      <path d="M520 300H754" stroke="currentColor" stroke-width="2.4" fill="none" marker-end="url(#fl-f-p)"/>
+      <path d="M756.8 300V125.4" stroke="currentColor" stroke-width="2.4" fill="none" marker-end="url(#fl-f-p)"/>
+      <path d="M520 300L754.4 124.2" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="11 6" stroke-linecap="round" marker-end="url(#fl-f-p)"/>
+      <path d="M590 300A70 70 0 0 0 576 258" stroke="currentColor" stroke-width="1.3" fill="none"/>
+      <path d="M746.8 300v-10h10" stroke="currentColor" stroke-width="1.2" fill="none"/>
+      <path d="M400 200H470" stroke="currentColor" stroke-width="2" fill="none" marker-end="url(#fl-f-p)"/>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="398" y="148" text-anchor="end">Re</text>
+        <text x="68" y="50">Im</text>
+        <text x="300" y="120" text-anchor="middle" font-weight="600">U = 230 V</text>
+        <text x="228" y="156" text-anchor="end" font-size="11">I cos φ = 25,6 A</text>
+        <text x="246" y="210" font-size="11">I sin φ</text>
+        <text x="246" y="226" font-size="11">= 19,2 A</text>
+        <text x="150" y="262" font-weight="600">I = 32 A</text>
+        <text x="97" y="150" font-size="11">φ</text>
+        <text x="60" y="330" font-size="11">courant en retard : inductif</text>
+        <text x="435" y="188" text-anchor="middle" font-size="11">x U</text>
+        <text x="435" y="222" text-anchor="middle" font-size="11">conjugué</text>
+        <text x="878" y="320" text-anchor="end">P (W)</text>
+        <text x="528" y="50">Q (var)</text>
+        <text x="640" y="322" text-anchor="middle">P = 5888 W</text>
+        <text x="770" y="216">Q = 4416 var</text>
+        <text x="560" y="190" font-weight="600">S = 7360 VA</text>
+        <text x="598" y="286" font-size="11">φ = 36,87°</text>
+        <text x="530" y="350" font-size="11">Q &gt; 0 : réactif absorbé par la charge</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal, sur l'exemple du compresseur, $32\ \mathrm{A}$ à $\cos\varphi = 0{,}80$ sous $230\ \mathrm{V}$. À gauche, le
+      diagramme de phaseurs tension et courant, référence des phases sur la tension $\underline{U}$, flèche horizontale en trait
+      plein épais. Le courant $\underline{I}$, en tirets épais, est en retard de $\varphi = 36{,}87^\circ$, sous l'axe réel. Ses deux
+      composantes sont en trait plein : la composante active $I\cos\varphi$, le long de l'axe réel, tracée juste sous la flèche de
+      tension pour rester visible, et la composante réactive $I\sin\varphi$, verticale vers le bas. Au centre, la flèche rappelle
+      l'opération qui fait passer d'un diagramme à l'autre : multiplier par $U$ et conjuguer. À droite, le triangle des
+      puissances : $P$ horizontal, $Q$ vertical vers le haut, positif pour une charge inductive, et $S$ en tirets épais ; le
+      petit carré marque l'angle droit et l'arc l'angle $\varphi$, le même qu'à gauche. Échelles : $32\ \mathrm{A}$ pour
+      $217$ unités du dessin à gauche, $7360\ \mathrm{VA}$ pour $296$ unités à droite.
+    </figcaption>
+  </figure>
+
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Charge ou installation<br/>en régime sinusoïdal"] --> B{"Données disponibles ?"}
+  B -->|"U, I et φ"| C["P = U I cos φ<br/>Q = U I sin φ"]
+  B -->|"impédance Z = R + jX"| D["I = U / Z<br/>P = R I², Q = X I²"]
+  B -->|"phaseurs U et I"| E["S = U I* = P + jQ"]
+  B -->|"plusieurs charges"| F["Boucherot :<br/>P = Σ Pk, Q = Σ Qk"]
+  C --> G["S = √(P² + Q²)<br/>I = S / U"]
+  D --> G
+  E --> G
+  F --> G
+  G --> H{"Courant déformé ?"}
+  H -->|"non"| K["λ = cos φ = P / S"]
+  H -->|"oui"| L["S² = P² + Q² + D²<br/>λ = (I1 / I) cos φ1"]
+  K --> M["Contrôles : signe de Q, P = Σ R I²,<br/>S ≤ Σ Sk, unités W, var, VA"]
+  L --> M</pre>
+    <figcaption>
+      Organigramme de résolution. Les rectangles sont des étapes de calcul, les losanges des décisions, les libellés des flèches
+      les réponses. Le premier test oriente selon les données : mesures, modèle d'impédance, phaseurs ou liste de charges ;
+      toutes les branches convergent vers $P$ et $Q$, puis vers $S$ et le courant. Le second test vérifie l'hypothèse
+      sinusoïdale : si le courant est déformé, le facteur de puissance n'est plus le $\cos\varphi$. La dernière étape regroupe
+      les contrôles : signe de $Q$ cohérent avec la nature de la charge, puissance active égale à la somme des pertes
+      résistives, puissance apparente totale inférieure ou égale à la somme des puissances apparentes, unités.
+    </figcaption>
+  </figure>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Les grandeurs de puissance en régime sinusoïdal, convention récepteur</caption>
+      <thead><tr><th>Grandeur</th><th>Définition</th><th>Unité</th><th>Bilan de Boucherot</th><th>Instrument</th><th>Ce qu'elle fixe</th></tr></thead>
+      <tbody>
+        <tr><td>Puissance active $P$</td><td>moyenne de $p(t)$, $UI\cos\varphi$</td><td>$\mathrm{W}$</td><td>s'additionne</td><td>wattmètre</td><td>énergie consommée, travail, chaleur</td></tr>
+        <tr><td>Puissance réactive $Q$</td><td>$UI\sin\varphi$, amplitude de l'échange</td><td>$\mathrm{var}$</td><td>s'additionne avec son signe</td><td>varmètre, analyseur</td><td>compensation, part du courant sans travail</td></tr>
+        <tr><td>Puissance apparente $S$</td><td>$UI$</td><td>$\mathrm{VA}$</td><td>ne s'additionne pas</td><td>voltmètre et ampèremètre</td><td>dimensionnement des sources, câbles, protections</td></tr>
+        <tr><td>Puissance complexe $\underline{S}$</td><td>$\underline{U}\,\underline{I}^* = P + jQ$</td><td>$\mathrm{VA}$</td><td>s'additionne comme un complexe</td><td>analyseur</td><td>calcul, bilan complet</td></tr>
+        <tr><td>Puissance déformante $D$</td><td>$\sqrt{S^2 - P^2 - Q^2}$</td><td>$\mathrm{VA}$</td><td>ne se conserve pas</td><td>analyseur</td><td>effet des harmoniques sur le courant</td></tr>
+        <tr><td>Facteur de puissance $\lambda$</td><td>$P/S$</td><td>sans unité</td><td>ne s'additionne pas</td><td>analyseur</td><td>efficacité d'utilisation du courant</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-instant-figure" data-renvoi="d-instant-figure">la simulation de la puissance instantanée</a>, section D ;</li>
+    <li><a href="#e-passage-figure" data-renvoi="e-passage-figure">l'animation du diagramme de Fresnel au triangle des puissances</a>, <a href="#e-boucherot-figure" data-renvoi="e-boucherot-figure">la simulation du bilan de Boucherot</a> et <a href="#e-mesure-figure" data-renvoi="e-mesure-figure">le branchement du wattmètre</a>, section E ;</li>
+    <li><a href="#h-circuit-figure" data-renvoi="h-circuit-figure">le schéma de l'atelier de l'exemple</a> et <a href="#h-chaine-figure" data-renvoi="h-chaine-figure">l'animation des chaînes de courants et de puissances</a>, section H ;</li>
+    <li><a href="#i-tableau-figure" data-renvoi="i-tableau-figure">le schéma unifilaire du tableau général</a> et <a href="#i-bilan-figure" data-renvoi="i-bilan-figure">la simulation du bilan de puissance du site</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour calculer les puissances d'une charge ou d'un ensemble de charges et leur facteur de puissance :</p>
+  <ol>
+    <li>Vérifier les hypothèses : régime permanent, tension sinusoïdale ; si le courant est déformé, séparer le fondamental et les harmoniques.</li>
+    <li>Flécher chaque charge en convention récepteur, chaque source en convention générateur, et choisir la référence des phases, en général la tension commune.</li>
+    <li>Pour chaque charge, obtenir $P_k$ et $Q_k$ avec leur signe : à partir de $U$, $I$, $\varphi$ ; ou de $\underline{S}_k = \underline{Z}_kI_k^2 = U^2/\underline{Z}_k^*$ ; ou de $\underline{U}\,\underline{I}_k^*$. Une charge capacitive a $Q_k &lt; 0$.</li>
+    <li>Faire le bilan de Boucherot : $P = \sum P_k$, $Q = \sum Q_k$, en ajoutant les pertes des lignes, $R_\ell I^2$, et leur réactif, $X_\ell I^2$, si elles sont dans le périmètre.</li>
+    <li>En déduire $S = \sqrt{P^2 + Q^2}$, $\tan\varphi = Q/P$, $\cos\varphi = P/S$, puis le courant $I = S/U$ ; en régime déformé, $S = UI$ avec le courant efficace vrai et $\lambda = P/S$.</li>
+    <li>Exploiter : dimensionner la source et les câbles sur $S$ et $I$, estimer les pertes en ligne, repérer les charges qui portent le réactif.</li>
+    <li>Contrôler : $P = \sum R_kI_k^2$ ; signe de $Q$ cohérent avec la nature des charges ; $S \leq \sum S_k$ ; somme vectorielle des courants égale au courant total ; unités $\mathrm{W}$, $\mathrm{var}$, $\mathrm{VA}$ ; ordres de grandeur.</li>
+  </ol>
+  <p>
+    Choix de méthode : pour une seule charge connue par ses mesures, la formule directe suffit. Pour un circuit déjà calculé
+    par impédances, $\underline{U}\,\underline{I}^*$ évite toute erreur de signe. Pour un bilan de tableau ou le choix d'une
+    source, le bilan de Boucherot est le plus rapide et se tient dans un tableur ; il ne dit rien, en revanche, de la
+    répartition des courants entre les départs, qui demande le calcul par phaseurs du cours
+    <a href="#/cours/nombres-complexes-et-phaseurs">Nombres complexes et phaseurs</a>.
+  </p>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Situation : un atelier est alimenté entre phase et neutre par une ligne dont la résistance totale, aller et retour, vaut
+    $R_\ell = 0{,}3\ \Omega$. Au bout de la ligne, la tension mesurée aux bornes des charges vaut $230\ \mathrm{V}$,
+    $50\ \mathrm{Hz}$. Trois charges sont en parallèle : un moteur monophasé, modélisé à son point de fonctionnement par
+    $\underline{Z}_M = 12 + j9\ \Omega$ ; un four résistif de $2\ \mathrm{kW}$ sous $230\ \mathrm{V}$ ; un condensateur de
+    $40\ \mu\mathrm{F}$. On veut les puissances de chaque charge et de l'ensemble, le facteur de puissance, le courant de ligne,
+    les pertes dans la ligne et la tension au départ.
+  </p>
+  <figure id="h-circuit-figure">
+    <svg viewBox="0 0 860 390" role="img" aria-label="Schéma de l'atelier : source entre phase et neutre, résistance de ligne de 0,3 ohm sur la phase parcourue par le courant i, puis au nœud A trois branches en parallèle vers le neutre : moteur M d'impédance 12 plus j9 ohms parcouru par iM, four de 26,45 ohms parcouru par iF, condensateur de 40 microfarads parcouru par iC ; tension u de 230 volts aux bornes des charges, tension us au départ de la ligne ; neutre pris comme référence">
+      <defs>
+        <marker id="fl-h-c" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="90" cy="200" r="28"/>
+        <path d="M76 200C82 188 88 188 90 200S98 212 104 200"/>
+        <path d="M90 172V70H160M230 70H720V186M720 200V330H90V228"/>
+        <rect x="160" y="58" width="70" height="24"/>
+        <path d="M400 70V167M400 223V330"/>
+        <circle cx="400" cy="195" r="28"/>
+        <path d="M560 70V150M560 240V330"/>
+        <rect x="548" y="150" width="24" height="90"/>
+        <path d="M696 186H744M696 200H744" stroke-width="3"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="400" cy="70" r="5"/><circle cx="560" cy="70" r="5"/>
+        <circle cx="400" cy="330" r="5"/><circle cx="560" cy="330" r="5"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2" fill="none">
+        <path d="M260 56H320" marker-end="url(#fl-h-c)"/>
+        <path d="M384 86V140" marker-end="url(#fl-h-c)"/>
+        <path d="M544 86V136" marker-end="url(#fl-h-c)"/>
+        <path d="M704 86V170" marker-end="url(#fl-h-c)"/>
+        <path d="M810 316V86" marker-end="url(#fl-h-c)"/>
+        <path d="M36 316V86" marker-end="url(#fl-h-c)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="96" y="58">L, phase</text>
+        <text x="100" y="364">N, neutre : référence de potentiel</text>
+        <text x="126" y="196">source</text>
+        <text x="126" y="212">50 Hz</text>
+        <text x="195" y="104" text-anchor="middle">Rℓ = 0,3 Ω</text>
+        <text x="290" y="46" text-anchor="middle">i</text>
+        <text x="410" y="62">A</text>
+        <text x="376" y="118" text-anchor="end">iM</text>
+        <text x="400" y="200" text-anchor="middle">M</text>
+        <text x="436" y="190">ZM =</text>
+        <text x="436" y="206">12 + j9 Ω</text>
+        <text x="536" y="114" text-anchor="end">iF</text>
+        <text x="584" y="190">four</text>
+        <text x="584" y="206">2 kW</text>
+        <text x="696" y="132" text-anchor="end">iC</text>
+        <text x="752" y="230">C = 40 µF</text>
+        <text x="818" y="200">u</text>
+        <text x="818" y="216">230 V</text>
+        <text x="20" y="74">us</text>
+        <text x="430" y="384" text-anchor="middle" font-size="11">charges en convention récepteur, source en convention générateur</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma de l'atelier. La source, entre la phase $L$ et le neutre $N$, est fléchée en convention générateur : la tension
+      $u_s$ pointe vers la phase et le courant $i$ sort de cette borne. Le neutre est la référence de potentiel. Le courant $i$
+      traverse la résistance de ligne $R_\ell$, puis se partage au nœud $A$ entre le moteur, parcouru par $i_M$, le four,
+      parcouru par $i_F$, et le condensateur, parcouru par $i_C$, tous fléchés de la phase vers le neutre en convention
+      récepteur. La tension $u$ des charges, commune aux trois branches, est fléchée du neutre vers la phase.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Données : $\underline{U} = 230\angle 0^\circ\ \mathrm{V}$ aux bornes des charges, référence des phases ;
+    $\omega = 2\pi \times 50 = 314{,}16\ \mathrm{rad/s}$ ; $\underline{Z}_M = 12 + j9\ \Omega$ ; four de $2000\ \mathrm{W}$ sous
+    $230\ \mathrm{V}$ ; $C = 40\ \mu\mathrm{F}$ ; $R_\ell = 0{,}3\ \Omega$, réactance de la ligne négligée. Hypothèses : régime
+    permanent sinusoïdal, charges linéaires représentées par leur impédance au point de fonctionnement. Inconnues : $P_k$,
+    $Q_k$, $S_k$ de chaque charge ; $P$, $Q$, $S$, $\cos\varphi$ de l'ensemble ; $\underline{I}$ ; pertes $P_\ell$ ;
+    $\underline{U}_s$. Stratégie : méthode de la section G ; puissances de chaque charge par $\underline{S}_k = U^2/\underline{Z}_k^*$
+    ou $\underline{Z}_kI_k^2$, bilan de Boucherot, courant par $I = S/U$, contrôle par la somme des phaseurs de courant.
+  </p>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li>Moteur : $Z_M = \sqrt{12^2 + 9^2} = 15\ \Omega$, $I_M = 230/15 = 15{,}333\ \mathrm{A}$ ; $P_M = R_MI_M^2 = 12 \times 235{,}11 = 2821{,}3\ \mathrm{W}$ ; $Q_M = X_MI_M^2 = 9 \times 235{,}11 = 2116{,}0\ \mathrm{var}$ ; $S_M = UI_M = 3526{,}7\ \mathrm{VA}$ ; $\cos\varphi_M = 12/15 = 0{,}80$. Contrôle : $\sqrt{2821{,}3^2 + 2116{,}0^2} = 3526{,}7\ \mathrm{VA}$.</li>
+    <li>Four : $P_F = 2000\ \mathrm{W}$, $Q_F = 0$, $S_F = 2000\ \mathrm{VA}$, $R_F = U^2/P_F = 26{,}45\ \Omega$, $I_F = 2000/230 = 8{,}696\ \mathrm{A}$.</li>
+    <li>Condensateur : $\underline{S}_C = U^2/\underline{Z}_C^* = -jC\omega U^2$, d'où $Q_C = -40 \times 10^{-6} \times 314{,}16 \times 230^2 = -664{,}8\ \mathrm{var}$ ; $P_C = 0$ ; $I_C = C\omega U = 2{,}890\ \mathrm{A}$.</li>
+    <li>Bilan de Boucherot : $P = 2821{,}3 + 2000 + 0 = 4821{,}3\ \mathrm{W}$ ; $Q = 2116{,}0 + 0 - 664{,}8 = 1451{,}2\ \mathrm{var}$.</li>
+    <li>Puissance apparente : $S = \sqrt{4821{,}3^2 + 1451{,}2^2} = 5035{,}0\ \mathrm{VA}$ ; $\tan\varphi = 1451{,}2/4821{,}3 = 0{,}301$, $\varphi = 16{,}75^\circ$ ; $\cos\varphi = 4821{,}3/5035{,}0 = 0{,}958$, inductif.</li>
+    <li>Courant de ligne : $I = S/U = 5035{,}0/230 = 21{,}891\ \mathrm{A}$, en retard de $16{,}75^\circ$ : $\underline{I} = 21{,}891\angle -16{,}75^\circ = 20{,}962 - j6{,}310\ \mathrm{A}$.</li>
+    <li>Pertes dans la ligne : $P_\ell = R_\ell I^2 = 0{,}3 \times 21{,}891^2 = 143{,}8\ \mathrm{W}$.</li>
+    <li>Tension au départ : $\underline{U}_s = \underline{U} + R_\ell\underline{I} = 230 + 6{,}289 - j1{,}893 = 236{,}30\angle -0{,}46^\circ\ \mathrm{V}$ ; la source fournit $\underline{U}_s\underline{I}^* = 4965{,}1 + j1451{,}2\ \mathrm{VA}$.</li>
+    <li>Sans le condensateur : $Q = 2116{,}0\ \mathrm{var}$, $S = 5265{,}2\ \mathrm{VA}$, $\cos\varphi = 0{,}916$, $I = 22{,}892\ \mathrm{A}$ et $P_\ell = 157{,}2\ \mathrm{W}$.</li>
+  </ol>
+
+  <h3 id="h-chaine-section">Animation : les chaînes de courants et de puissances de l'exemple</h3>
+  <p>
+    L'animation construit, charge après charge, les deux bilans de l'exemple : à gauche la loi des nœuds sur les phaseurs de
+    courant, à droite le bilan de Boucherot dans le plan des puissances. Le lecteur ajoute les charges l'une après l'autre ;
+    la pause et la remise à zéro permettent de s'arrêter sur chaque étape. Avant de lancer, prédisez : le courant de ligne
+    sera-t-il plus grand ou plus petit que la somme arithmétique $15{,}33 + 8{,}70 + 2{,}89 = 26{,}92\ \mathrm{A}$ ? Pourquoi
+    le vecteur du condensateur monte-t-il dans un diagramme et descend-il dans l'autre ?
+  </p>
+  <figure id="h-chaine-figure">
+    <div class="schema-vivant" id="h-chaine"></div>
+    <figcaption>
+      À gauche, les courants, référence des phases sur $\underline{U}$, flèche horizontale fine : $\underline{I}_M$, $\underline{I}_F$ et
+      $\underline{I}_C$ sont mis pointe à la suite de l'autre en trait plein, et leur somme $\underline{I}$ est la flèche en tirets
+      épais, tracée quand la chaîne est complète. À droite, les puissances : $\underline{S}_M$, $\underline{S}_F$ et
+      $\underline{S}_C$ bout à bout en trait plein, et leur somme $\underline{S}$ en tirets épais. Les deux diagrammes sont
+      l'image l'un de l'autre par conjugaison et changement d'échelle : $\underline{S}_k = \underline{U}\,\underline{I}_k^*$. Les
+      échelles sont indiquées au-dessus de chaque diagramme.
+    </figcaption>
+  </figure>
+  <div id="h-chaine-lecteur"></div>
+  <div id="h-chaine-valeurs"></div>
+  <p>
+    Interprétation : le courant de ligne, $21{,}89\ \mathrm{A}$, est nettement plus petit que la somme arithmétique des
+    courants, $26{,}92\ \mathrm{A}$, parce que les courants ne sont pas en phase : celui du condensateur, à $+90^\circ$, annule
+    une partie de la composante en retard du courant du moteur. Dans le plan des puissances, le même condensateur fait
+    descendre la chaîne, car un courant en avance correspond à une puissance réactive négative. La somme des puissances
+    apparentes, $3526{,}7 + 2000 + 664{,}8 = 6191{,}4\ \mathrm{VA}$, dépasse la puissance apparente réelle,
+    $5035{,}0\ \mathrm{VA}$, de $23\ \%$ : dimensionner la source sur la somme des $S_k$ la surdimensionnerait.
+  </p>
+
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <p>
+    Loi des nœuds : $\underline{I}_M = 230/(12 + j9) = 12{,}267 - j9{,}200\ \mathrm{A}$, $\underline{I}_F = 8{,}696\ \mathrm{A}$,
+    $\underline{I}_C = j2{,}890\ \mathrm{A}$ ; leur somme vaut $20{,}962 - j6{,}310\ \mathrm{A}$, soit $21{,}891\angle -16{,}75^\circ\ \mathrm{A}$,
+    égale au courant déduit de $S$. Puissance complexe directe : $\underline{U}\,\underline{I}^* = 230 \times (20{,}962 + j6{,}310) = 4821{,}3 + j1451{,}2\ \mathrm{VA}$.
+    Puissance active par les résistances : $R_MI_M^2 + R_FI_F^2 = 2821{,}3 + 26{,}45 \times 8{,}696^2 = 2821{,}3 + 2000{,}0 = 4821{,}3\ \mathrm{W}$.
+    Puissance fournie par la source : $4821{,}3 + 143{,}8 = 4965{,}1\ \mathrm{W}$, égale à $\operatorname{Re}(\underline{U}_s\underline{I}^*)$ ;
+    la ligne, purement résistive, ne modifie pas $Q$. Encadrement : $S = 5035\ \mathrm{VA}$ est compris entre $P = 4821\ \mathrm{W}$
+    et $\sum S_k = 6191\ \mathrm{VA}$. Unités : watts, vars et voltampères, toutes en $\mathrm{V \cdot A}$. Conclusion d'ingénierie :
+    le condensateur de $40\ \mu\mathrm{F}$ fait gagner $1{,}00\ \mathrm{A}$ sur le courant de ligne et $13{,}4\ \mathrm{W}$ de pertes, sans
+    changer la puissance utile ; il ne compense que $31\ \%$ du réactif du moteur. Choisir la capacité qui atteint un
+    $\cos\varphi$ visé est l'objet du cours Correction du facteur de puissance.
+  </p>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+
+  <h3 id="i-probleme">Le bilan de puissance du tableau général</h3>
+  <p>
+    Dans le cours <a href="#/cours/nombres-complexes-et-phaseurs">Nombres complexes et phaseurs</a>, le courant d'arrivée du
+    tableau général du site a été calculé par phaseurs : $97{,}7\ \mathrm{A}$ au fondamental par phase, $98{,}8\ \mathrm{A}$
+    efficaces vrais avec les harmoniques de la pompe. Le même bilan se fait plus directement en puissances, et c'est sous
+    cette forme qu'il sert à choisir la source, à anticiper la facture et à préparer la compensation. Les quatre départs, par
+    phase et sous $230\ \mathrm{V}$, sont repris tels quels : pompe à variateur, $47{,}7\ \mathrm{A}$ au fondamental en phase avec la
+    tension et $14{,}8\ \mathrm{A}$ d'harmoniques ; compresseur, $32\ \mathrm{A}$ à $\cos\varphi = 0{,}80$ ; éclairage et prises,
+    $16\ \mathrm{A}$ à $0{,}95$ ; armoire automate, $6\ \mathrm{A}$ à $0{,}90$. Le schéma situe les grandeurs.
+  </p>
+  <figure id="i-tableau-figure">
+    <svg viewBox="0 0 880 380" role="img" aria-label="Schéma unifilaire du tableau général, phase L1 : arrivée en haut vers le jeu de barres, 98,8 ampères efficaces vrais ; quatre départs vers le bas : pompe à variateur 10,97 kilowatts, 0 kilovar, 3,40 kilovoltampères de puissance déformante ; compresseur 5,89 kilowatts et 4,42 kilovars ; éclairage et prises 3,50 kilowatts et 1,15 kilovar ; armoire automate 1,24 kilowatt et 0,60 kilovar">
+      <defs>
+        <marker id="fl-i-t" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M80 130H820" stroke-width="6"/>
+        <path d="M450 30V130"/>
+        <path d="M170 130V210M350 130V210M530 130V210M710 130V210"/>
+        <rect x="100" y="210" width="140" height="44" rx="6"/>
+        <rect x="280" y="210" width="140" height="44" rx="6"/>
+        <rect x="460" y="210" width="140" height="44" rx="6"/>
+        <rect x="640" y="210" width="140" height="44" rx="6"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2" fill="none">
+        <path d="M470 44V110" marker-end="url(#fl-i-t)"/>
+        <path d="M184 146V194" marker-end="url(#fl-i-t)"/>
+        <path d="M364 146V194" marker-end="url(#fl-i-t)"/>
+        <path d="M544 146V194" marker-end="url(#fl-i-t)"/>
+        <path d="M724 146V194" marker-end="url(#fl-i-t)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="80" y="118">jeu de barres L1, 230 V, référence : neutre</text>
+        <text x="482" y="62">arrivée : 98,8 A efficaces vrais</text>
+        <text x="482" y="80">P = 21,6 kW ; Q = 6,17 kvar ; S = 22,7 kVA</text>
+        <text x="482" y="98">λ = 0,951 ; cos φ1 = 0,962</text>
+        <text x="170" y="237" text-anchor="middle">pompe</text>
+        <text x="350" y="237" text-anchor="middle">compresseur</text>
+        <text x="530" y="237" text-anchor="middle">éclairage, prises</text>
+        <text x="710" y="237" text-anchor="middle">armoire automate</text>
+        <text x="100" y="278" font-size="11">P = 10,97 kW</text>
+        <text x="100" y="294" font-size="11">Q = 0</text>
+        <text x="100" y="310" font-size="11">D = 3,40 kVA</text>
+        <text x="280" y="278" font-size="11">P = 5,89 kW</text>
+        <text x="280" y="294" font-size="11">Q = 4,42 kvar</text>
+        <text x="280" y="310" font-size="11">cos φ = 0,80</text>
+        <text x="460" y="278" font-size="11">P = 3,50 kW</text>
+        <text x="460" y="294" font-size="11">Q = 1,15 kvar</text>
+        <text x="460" y="310" font-size="11">cos φ = 0,95</text>
+        <text x="640" y="278" font-size="11">P = 1,24 kW</text>
+        <text x="640" y="294" font-size="11">Q = 0,60 kvar</text>
+        <text x="640" y="310" font-size="11">cos φ = 0,90</text>
+        <text x="80" y="356" font-size="11">valeurs par phase ; les trois phases sont supposées identiques ; flèches : sens du transit de P</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma unifilaire de la phase $L_1$ du tableau général. Le trait épais est le jeu de barres, à $230\ \mathrm{V}$ entre phase et
+      neutre, le neutre étant la référence de potentiel. L'arrivée descend du haut ; chaque départ descend vers sa charge,
+      représentée par un rectangle. Les flèches indiquent le sens de transit de la puissance active, de la source vers les
+      charges, chacune fléchée en convention récepteur. Sous chaque charge, ses puissances par phase ; à côté de l'arrivée, le
+      bilan total calculé ci-dessous.
+    </figcaption>
+  </figure>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Hypothèses du bilan</span>
+    <p>
+      Système triphasé équilibré : chaque phase se traite comme un circuit monophasé de $230\ \mathrm{V}$, et les puissances du
+      site sont trois fois celles d'une phase ; la justification et les mesures propres au triphasé viendront dans les cours
+      Systèmes triphasés équilibrés et Puissance en triphasé. Tension sinusoïdale ; le courant de la pompe est déformé, les
+      autres charges sont supposées sinusoïdales. Facteurs de puissance supposés, à remplacer par les plaques et par une mesure
+      à l'analyseur de réseau ; ils supposent des charges à leur point nominal, simultanément en service.
+    </p>
+  </div>
+  <ol>
+    <li>Puissances par départ, $P = UI\cos\varphi$ et $Q = UI\sin\varphi$ : pompe, $230 \times 47{,}7 = 10\,971\ \mathrm{W}$ et $Q = 0$ au fondamental ; compresseur, $5888\ \mathrm{W}$ et $4416\ \mathrm{var}$ ; éclairage et prises, $3680 \times 0{,}95 = 3496\ \mathrm{W}$ et $3680 \times 0{,}3122 = 1149\ \mathrm{var}$ ; armoire, $1380 \times 0{,}90 = 1242\ \mathrm{W}$ et $1380 \times 0{,}4359 = 601{,}5\ \mathrm{var}$.</li>
+    <li>Bilan de Boucherot par phase : $P = 21\,597\ \mathrm{W}$ ; $Q = 6166{,}6\ \mathrm{var}$ ; $S_1 = \sqrt{P^2 + Q^2} = 22\,460\ \mathrm{VA}$ ; $\cos\varphi_1 = 0{,}962$ et $\tan\varphi_1 = 0{,}286$. Le courant fondamental, $S_1/U = 97{,}65\ \mathrm{A}$, redonne le résultat obtenu par phaseurs.</li>
+    <li>Harmoniques : le courant efficace vrai vaut $\sqrt{97{,}65^2 + 14{,}8^2} = 98{,}77\ \mathrm{A}$, d'où $S = 230 \times 98{,}77 = 22\,717\ \mathrm{VA}$, $D = \sqrt{S^2 - P^2 - Q^2} = 230 \times 14{,}8 = 3404\ \mathrm{VA}$ et $\lambda = P/S = 0{,}951$.</li>
+    <li>Site complet, trois phases : $P = 64{,}8\ \mathrm{kW}$, $Q = 18{,}5\ \mathrm{kvar}$, $S = 68{,}1\ \mathrm{kVA}$. La source, transformateur ou groupe, se choisit en kilovoltampères, sur $S$ et non sur $P$, avec une marge d'extension.</li>
+    <li>Origine du réactif : le compresseur en porte $4416/6167 = 72\ \%$ ; c'est lui que viserait d'abord une compensation.</li>
+    <li>Sensibilité : à puissance active constante, un compresseur à $\cos\varphi = 0{,}60$ absorberait $7851\ \mathrm{var}$ ; $Q$ passerait à $9601\ \mathrm{var}$, le courant fondamental à $102{,}8\ \mathrm{A}$, $\lambda$ à $0{,}904$ et $S$ du site à $71{,}6\ \mathrm{kVA}$, pour la même puissance utile.</li>
+  </ol>
+
+  <h3 id="i-bilan-section">Simulation interactive : bilan de puissance du site</h3>
+  <p>
+    La simulation reprend ce bilan. Les curseurs règlent le facteur de déplacement du compresseur, à puissance active
+    constante, et le courant harmonique de la pompe, qu'une self de ligne ou un filtre réduirait. Avant de manipuler, prédisez :
+    si le $\cos\varphi$ du compresseur baisse, la puissance active du site change-t-elle ? Si l'on supprime tous les harmoniques
+    de la pompe, quel facteur de puissance obtient-on, et le facteur de déplacement change-t-il ? Lequel des deux leviers fait
+    le plus gagner sur le courant d'arrivée ?
+  </p>
+  <figure id="i-bilan-figure">
+    <div class="schema-vivant" id="i-bilan"></div>
+    <figcaption>
+      À gauche, la chaîne de Boucherot par phase dans le plan des puissances, en kilowatts et kilovars : les quatre départs
+      bout à bout en trait plein, dans l'ordre pompe, compresseur, éclairage et prises, armoire ; leur somme $\underline{S}_1$ en
+      tirets épais. À droite, quatre barres horizontales à la même échelle, en kilovoltampères par phase : $P$, $S_1$, $S$ avec
+      les harmoniques et la somme arithmétique $U\sum I_k$ ; la barre de $S$ est remplie et bordée d'un trait épais, les autres sont vides.
+      Les valeurs exactes, par phase et pour le site, sont affichées sous le schéma.
+    </figcaption>
+  </figure>
+  <div id="i-bilan-curseurs"></div>
+  <div id="i-bilan-valeurs"></div>
+  <p>
+    Interprétation : le $\cos\varphi$ du compresseur ne change pas la puissance active du site, qui reste $21{,}6\ \mathrm{kW}$ par
+    phase, mais il fait varier $Q$, donc $S$ et le courant : de $1{,}00$ à $0{,}60$, le courant fondamental passe de $94{,}2$ à
+    $102{,}8\ \mathrm{A}$. Supprimer les harmoniques ramène $\lambda$ sur $\cos\varphi_1 = 0{,}962$, sans changer ce dernier ;
+    le gain sur le courant est faible, $98{,}8$ à $97{,}7\ \mathrm{A}$, car les harmoniques s'ajoutent en quadrature. Le levier
+    le plus efficace ici est donc le réactif du compresseur ; mais les harmoniques comptent pour d'autres raisons,
+    l'échauffement des condensateurs et du neutre, traitées dans le cours Harmoniques et qualité de l'énergie.
+  </p>
+
+  <h3 id="i-compromis">Contraintes, risques et compromis</h3>
+  <ul>
+    <li><strong>Dimensionner en kVA.</strong> Un transformateur, un groupe électrogène ou un onduleur est limité par son courant, donc par $S$ : une source de $65\ \mathrm{kVA}$ ne peut pas alimenter $64{,}8\ \mathrm{kW}$ à $\lambda = 0{,}951$, qui demandent $68{,}1\ \mathrm{kVA}$. Le choix réel intègre aussi la simultanéité des charges, le démarrage des moteurs et les extensions prévues.</li>
+    <li><strong>Pertes et chutes de tension.</strong> Les pertes dans les câbles et le transformateur sont proportionnelles à $I^2$, donc à $S^2$ : à puissance utile égale, passer de $\lambda = 0{,}951$ à $0{,}904$ les augmente de $(0{,}951/0{,}904)^2 - 1 = 10{,}7\ \%$.</li>
+    <li><strong>Facturation.</strong> Selon le contrat de fourniture, l'énergie réactive consommée au-delà d'un certain rapport à l'énergie active, souvent exprimé par $\tan\varphi$, peut être facturée. Les seuils et les périodes dépendent du distributeur : ils se lisent dans le contrat, aucune valeur n'est retenue ici.</li>
+    <li><strong>Charge partielle.</strong> Un moteur asynchrone peu chargé garde presque tout son courant magnétisant : son $\cos\varphi$ chute nettement sous la valeur de plaque. Un bilan établi aux points nominaux sous-estime alors le réactif réel ; seule une campagne de mesure le confirme.</li>
+    <li><strong>Courants déformés.</strong> Un variateur à pont de diodes a un excellent facteur de déplacement mais un facteur de puissance dégradé par les harmoniques. Des condensateurs de compensation n'y changent rien et risquent même de résonner avec le réseau : la compensation d'un site équipé de variateurs se conçoit avec les harmoniques, ce que reprendront les cours Correction du facteur de puissance et Résonance série et parallèle.</li>
+  </ul>
+
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : bilan de puissance du tableau général</span>
+    <p>
+      Nouvelle brique du petit site industriel. Par phase, sous $230\ \mathrm{V}$ : pompe $10{,}97\ \mathrm{kW}$, $0\ \mathrm{kvar}$ au
+      fondamental et $3{,}40\ \mathrm{kVA}$ de puissance déformante ; compresseur $5{,}89\ \mathrm{kW}$ et $4{,}42\ \mathrm{kvar}$ ;
+      éclairage et prises $3{,}50\ \mathrm{kW}$ et $1{,}15\ \mathrm{kvar}$ ; armoire automate $1{,}24\ \mathrm{kW}$ et $0{,}60\ \mathrm{kvar}$.
+      Bilan de Boucherot : $P = 21{,}6\ \mathrm{kW}$, $Q = 6{,}17\ \mathrm{kvar}$, $S_1 = 22{,}5\ \mathrm{kVA}$, $\cos\varphi_1 = 0{,}962$,
+      $\tan\varphi_1 = 0{,}286$ ; avec les harmoniques, $S = 22{,}7\ \mathrm{kVA}$ et $\lambda = 0{,}951$, cohérents avec les
+      $98{,}8\ \mathrm{A}$ efficaces vrais déjà calculés par phaseurs. Site complet : $64{,}8\ \mathrm{kW}$, $18{,}5\ \mathrm{kvar}$,
+      $68{,}1\ \mathrm{kVA}$. Décisions : la source du site sera dimensionnée en kilovoltampères sur au moins $68{,}1\ \mathrm{kVA}$,
+      avant marges de simultanéité, de démarrage et d'extension ; le compresseur, qui porte $72\ \%$ du réactif, est la cible
+      prioritaire de la compensation étudiée dans le cours suivant ; un compresseur dégradé à $\cos\varphi = 0{,}60$ porterait
+      $S$ à $71{,}6\ \mathrm{kVA}$ pour la même puissance utile. Facteurs de puissance supposés, à remplacer par les plaques et par
+      une campagne de mesure à l'analyseur de réseau ; règles de facturation du réactif à lire dans le contrat de fourniture.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li>
+      <strong>Confondre $UI$ et $P$.</strong> Le produit des valeurs efficaces est la puissance apparente. Pour le compresseur, $230 \times 32 = 7360\ \mathrm{VA}$, alors que la puissance active vaut $5888\ \mathrm{W}$. $P = UI$ n'est vrai que pour une charge résistive.
+    </li>
+    <li>
+      <strong>Additionner les puissances apparentes.</strong> Dans l'exemple, $\sum S_k = 6191\ \mathrm{VA}$ au lieu de $5035\ \mathrm{VA}$. On additionne les $P_k$ et les $Q_k$ avec leur signe, puis on recalcule $S$. De même, les courants de départ ne s'additionnent pas arithmétiquement.
+    </li>
+    <li>
+      <strong>Oublier le conjugué.</strong> $\underline{U}\,\underline{I}$ donne l'argument $\varphi_u + \varphi_i$ : avec $\underline{U} = 230\angle 0^\circ$ et $\underline{I} = 32\angle -36{,}87^\circ$, on trouverait $Q = -4416\ \mathrm{var}$, comme si le moteur était capacitif. Il faut $\underline{U}\,\underline{I}^*$.
+    </li>
+    <li>
+      <strong>Utiliser les amplitudes sans le facteur un demi.</strong> Avec $U_m = 325{,}3\ \mathrm{V}$ et $I_m = 45{,}25\ \mathrm{A}$, $U_mI_m\cos\varphi = 11\,776\ \mathrm{W}$, le double de la vraie valeur. Avec les amplitudes, $P = \tfrac{1}{2}U_mI_m\cos\varphi$.
+    </li>
+    <li>
+      <strong>Se tromper de signe sur le condensateur.</strong> En convention récepteur, un condensateur a $Q &lt; 0$ : il fournit du réactif. L'ajouter avec un signe positif double l'erreur au lieu de compenser.
+    </li>
+    <li>
+      <strong>Confondre facteur de puissance et $\cos\varphi$.</strong> Sur la pompe, l'analyseur affiche $\cos\varphi_1 = 1{,}00$ mais $\lambda = 0{,}955$. L'écart vient des harmoniques, que des condensateurs ne corrigent pas.
+    </li>
+    <li>
+      <strong>Croire que la puissance réactive est perdue.</strong> $Q$ n'est pas consommée : elle est échangée. Ce qui est perdu, ce sont les pertes Joule supplémentaires $RI^2$ que son courant provoque dans les conducteurs, une puissance active bien réelle.
+    </li>
+    <li>
+      <strong>Déduire le signe de $Q$ de $\sqrt{S^2 - P^2}$.</strong> La racine est toujours positive : voltmètre, ampèremètre et wattmètre ne disent pas si la charge est inductive ou capacitive. Il faut connaître la nature de la charge ou mesurer la phase.
+    </li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain : un wattmètre qui affiche une valeur négative sur une charge passive signale un circuit courant
+    branché à l'envers, pas une charge qui produit. Un rapport $P/(UI)$ calculé avec des appareils non efficaces vrais sur une
+    charge déformée est faux, comme l'a montré le cours <a href="#/cours/signaux-periodiques-et-sinusoides">Signaux périodiques
+    et sinusoïdes</a>. Un analyseur qui affiche $\cos\varphi_1$ élevé et $\lambda$ faible désigne des harmoniques ; un
+    $\cos\varphi_1$ faible désigne des moteurs peu chargés, des transformateurs à vide ou des selfs. Un départ dont le courant
+    dépasse ce que justifie sa puissance active, $I &gt; P/U$ nettement, porte du réactif ou des harmoniques ; on les sépare en
+    comparant $\lambda$ et $\cos\varphi_1$.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de
+    diagnostic industriel et une question conceptuelle. La correction de chacun reste masquée jusqu'à une tentative ou un
+    clic explicite sur "Voir la correction", puis se déroule étape par étape, accompagnée d'un triangle des puissances, d'une
+    courbe ou d'un diagramme de phaseurs.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma.</p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$p(t) = UI\cos\varphi + UI\cos(2\omega t + \varphi_u + \varphi_i), \qquad P = UI\cos\varphi$$
+    $$Q = UI\sin\varphi, \qquad S = UI, \qquad S^2 = P^2 + Q^2$$
+    $$\underline{S} = \underline{U}\,\underline{I}^* = P + jQ = \underline{Z}I^2 = \frac{U^2}{\underline{Z}^*}$$
+    $$P = \sum_k P_k, \qquad Q = \sum_k Q_k, \qquad S \leq \sum_k S_k$$
+    $$\lambda = \frac{P}{S} = \frac{I_1}{I}\cos\varphi_1$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>$UI$ est une puissance apparente, en voltampères ; la puissance active demande le $\cos\varphi$.</li>
+      <li>Puissance complexe avec le conjugué du courant : $\underline{U}\,\underline{I}^*$, jamais $\underline{U}\,\underline{I}$.</li>
+      <li>En convention récepteur, $Q &gt; 0$ pour une charge inductive, $Q &lt; 0$ pour un condensateur.</li>
+      <li>On additionne les $P$ et les $Q$, jamais les $S$ ni les courants en valeur efficace.</li>
+      <li>Facteur de puissance et $\cos\varphi$ ne coïncident qu'en régime sinusoïdal.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> En régime sinusoïdal, la puissance instantanée oscille à deux fois la fréquence du réseau autour
+    de sa moyenne, la puissance active $P = UI\cos\varphi$, en watts, seule à produire travail et chaleur. La puissance réactive
+    $Q = UI\sin\varphi$, en vars, est l'amplitude de l'énergie échangée avec les champs magnétiques et électriques : positive pour
+    une charge inductive, négative pour un condensateur. La puissance apparente $S = UI$, en voltampères, fixe le courant,
+    donc le dimensionnement des sources et des câbles. La puissance complexe $\underline{S} = \underline{U}\,\underline{I}^* = P + jQ$
+    les réunit. Le théorème de Boucherot additionne les $P$ et les $Q$, jamais les $S$. Le facteur de puissance $\lambda = P/S$
+    égale $\cos\varphi$ seulement sans harmoniques.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent,
+    <a href="#/cours/impedances-en-regime-sinusoidal">Impédances en régime sinusoïdal</a> ; une sur le cours
+    <a href="#/cours/regime-transitoire-rl">Régime transitoire RL</a>, vieux d'une semaine exactement ; la question sur un
+    cours vieux d'un mois n'est pas encore applicable, et elle est remplacée par une question sur le cours
+    <a href="#/cours/tension-courant-charge-et-puissance">Tension, courant, charge et puissance</a>, dont les conventions de
+    signe sont celles de cette séance.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : retrouver par le calcul numérique, puis par simulation temporelle, les puissances de l'exemple de la section H,
+    et vérifier que la moyenne de $u(t)\,i(t)$ donne bien la puissance active. Prédictions à écrire avant de commencer : la
+    puissance instantanée de l'atelier devient-elle négative à certains instants ? La moyenne de $u(t)\,i(t)$ sur une période
+    dépend-elle de l'instant de départ de la fenêtre de calcul ? Le courant efficace mesuré par le simulateur sera-t-il plus
+    proche de $21{,}9$ ou de $26{,}9\ \mathrm{A}$ ?
+  </p>
+  <ol>
+    <li>
+      En Python, avec <code>cmath</code>, écrire une fonction <code>puissance(U, I)</code> qui renvoie <code>U * I.conjugate()</code>,
+      puis calculer les puissances complexes des trois charges de la section H et leur somme. Afficher $P$, $Q$, $S$ et
+      $\cos\varphi$.
+    </li>
+    <li>
+      Avec numpy, échantillonner $u(t)$ et $i(t)$ sur une période avec $1000$ points, calculer
+      <code>np.mean(u * i)</code>, <code>np.sqrt(np.mean(u**2))</code> et <code>np.sqrt(np.mean(i**2))</code>, puis le rapport
+      $P/(UI)$. Comparer au calcul complexe.
+    </li>
+    <li>
+      Tracer $p(t)$ avec matplotlib, repérer son minimum et son maximum, et vérifier qu'ils valent $P - S$ et $P + S$.
+    </li>
+    <li>
+      Dans LTspice, saisir la netlist <code>V1 s 0 SINE(0 334.17 50 0 0 89.54)</code>, <code>R1 s a 0.3</code>,
+      <code>RM a m 12</code>, <code>LM m 0 28.648m</code>, <code>RF a 0 26.45</code>, <code>C1 a 0 40u</code>,
+      <code>.tran 0 200m 100m 10u</code>, puis les directives
+      <code>.meas tran P AVG V(a)*I(R1) FROM 100m TO 200m</code>, <code>.meas tran Ieff RMS I(R1) FROM 100m TO 200m</code>
+      et <code>.meas tran Ueff RMS V(a) FROM 100m TO 200m</code>, et <code>.end</code>. Lire les résultats dans le journal
+      d'erreurs, menu View, SPICE Error Log.
+    </li>
+    <li>
+      Facultatif : supprimer <code>C1</code>, relancer, et comparer $I_{\text{eff}}$ et la puissance perdue dans <code>R1</code>,
+      mesurée par <code>.meas tran PL AVG V(s,a)*I(R1) FROM 100m TO 200m</code>.
+    </li>
+  </ol>
+  <p>
+    Résultats attendus : en Python, $\underline{S} = 4821{,}3 + j1451{,}2\ \mathrm{VA}$ et $\cos\varphi = 0{,}958$ ; la moyenne
+    numérique de $u\,i$ redonne $4821{,}3\ \mathrm{W}$ à mieux que $0{,}1\ \%$, quel que soit l'instant de départ, pourvu que la
+    fenêtre couvre un nombre entier de périodes ; $p(t)$ varie entre $-213{,}7$ et $9856\ \mathrm{W}$, donc devient négative
+    pendant une courte fraction de chaque demi-période. Dans LTspice, la source a été réglée pour donner $230\ \mathrm{V}$
+    efficaces en phase nulle sur le nœud <code>a</code> : $P \approx 4821\ \mathrm{W}$, $I_{\text{eff}} \approx 21{,}9\ \mathrm{A}$,
+    $U_{\text{eff}} \approx 230\ \mathrm{V}$ ; sans le condensateur, $I_{\text{eff}} \approx 22{,}9\ \mathrm{A}$ et les pertes de
+    ligne passent d'environ $144$ à $157\ \mathrm{W}$, la tension des charges baissant légèrement puisque la source est alors
+    inchangée. Anomalies à observer : une fenêtre de mesure qui ne couvre pas un nombre entier de périodes, ce qui fausse la
+    moyenne ; un régime transitoire au début de la simulation, d'où la mesure à partir de $100\ \mathrm{ms}$ ; un signe négatif
+    pour $P$ si le courant est mesuré dans le sens contraire de la convention récepteur ; un pas de calcul trop grand qui
+    arrondit les crêtes.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est calculé
+    dans ce navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées
+    localement pour suivre votre progression. Cette séance prépare le jalon de fin du module Triphasé et qualité de
+    l'énergie : maîtriser les régimes sinusoïdaux monophasés et triphasés, les puissances, la compensation, les harmoniques
+    et les filtres élémentaires.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Seule la puissance active $P = UI\cos\varphi$, moyenne de $p(t)$, produit travail et chaleur ; la puissance réactive $Q = UI\sin\varphi$ est l'amplitude d'un échange à moyenne nulle, mais son courant charge bien les conducteurs.</li>
+    <li data-rang="02">La puissance complexe $\underline{S} = \underline{U}\,\underline{I}^* = P + jQ$ réunit tout, avec les signes : $Q &gt; 0$ pour une charge inductive, $Q &lt; 0$ pour un condensateur.</li>
+    <li data-rang="03">On additionne les $P$ et les $Q$, pas les $S$ ; on dimensionne sur $S$ et sur le courant efficace vrai ; le facteur de puissance n'égale $\cos\varphi$ qu'en l'absence d'harmoniques.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> tenir les signes de bout en bout, c'est-à-dire la convention récepteur,
+    le conjugué du courant et le signe de $Q$ pour un condensateur, et résister au réflexe d'additionner des puissances
+    apparentes ou des courants efficaces. L'animation du passage de Fresnel au triangle des puissances et celle des chaînes de
+    l'exemple sont faites pour installer ces réflexes.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Correction du facteur de puissance, cherche à réduire le
+    réactif fourni par le réseau. Question à préparer : le compresseur absorbe $5888\ \mathrm{W}$ et $4416\ \mathrm{var}$ par phase
+    sous $230\ \mathrm{V}$. Quelle puissance réactive un condensateur placé en parallèle doit-il fournir pour que le $\cos\varphi$
+    de l'ensemble atteigne $0{,}95$ ? Quelle capacité cela représente-t-il, et de combien le courant du départ diminue-t-il ?
+    Que se passerait-il si l'on choisissait une capacité deux fois trop grande ?
+  </p>
+
+</article>
