@@ -1,0 +1,1151 @@
+<article class="cours" data-slug="resonance-serie-et-parallele">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/correction-du-facteur-de-puissance">Correction du facteur de puissance</a> s'est achevé sur une
+      question : la batterie de $499{,}3\ \mu\mathrm{F}$ de l'exemple, alimentée à travers une inductance de source de
+      $0{,}67\ \mathrm{mH}$, à quelle fréquence résonne-t-elle, l'impédance vue du jeu de barres y est-elle grande ou petite, et
+      pourquoi un variateur qui injecte du courant de rang $5$ serait-il alors une mauvaise nouvelle ? Réponse, établie dans
+      cette séance : $f_r = 1/(2\pi\sqrt{L_sC}) = 1/(2\pi\sqrt{0{,}67 \times 10^{-3} \times 499{,}3 \times 10^{-6}}) = 275\ \mathrm{Hz}$,
+      soit le rang $5{,}5$. Vue d'une source de courant harmonique, l'inductance et le condensateur sont en parallèle : à cette
+      fréquence leurs courants se compensent, l'impédance devient très grande, et un courant harmonique de rang $5$ y produit une
+      tension harmonique fortement amplifiée. Cette séance généralise ce résultat : résonance série et parallèle, facteur de
+      qualité, bande passante et sélectivité. Elle s'appuie sur les impédances du cours
+      <a href="#/cours/impedances-en-regime-sinusoidal">Impédances en régime sinusoïdal</a>, sur l'énergie stockée des cours
+      <a href="#/cours/condensateurs-et-champ-electrique">Condensateurs et champ électrique</a> et
+      <a href="#/cours/inductances-et-champ-magnetique">Inductances et champ magnétique</a>, et sur la pulsation propre et
+      l'amortissement du cours <a href="#/cours/regime-transitoire-rlc">Régime transitoire RLC</a>.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Dès qu'un circuit contient une inductance et une capacité, il existe une fréquence à laquelle leurs réactances s'annulent
+    mutuellement. À cette fréquence, l'énergie oscille entre le champ magnétique de la bobine et le champ électrique du
+    condensateur sans passer par la source, et le circuit ne se comporte plus comme la somme de ses composants : un circuit
+    série présente une impédance minimale et des tensions partielles bien plus grandes que la tension appliquée ; un circuit
+    parallèle présente une impédance maximale et des courants internes bien plus grands que le courant fourni. C'est la
+    résonance.
+  </p>
+  <p>
+    L'ingénieur la rencontre sous deux visages. Comme outil, elle sert à sélectionner une fréquence : filtre accordé qui
+    absorbe un harmonique, circuit d'un capteur inductif, chargeur sans contact, convertisseur résonant, signal de
+    télécommande superposé au réseau. Comme danger, elle amplifie ce qu'on ne voulait pas : une batterie de condensateurs qui
+    résonne avec le transformateur au rang d'un harmonique produit par un variateur, un câble long qui résonne avec le filtre
+    d'un onduleur, un enclenchement de condensateurs qui fait osciller la tension d'un jeu de barres. Dans les deux cas, il
+    faut savoir calculer la fréquence de résonance, le facteur de qualité, la bande passante et les surtensions ou
+    surintensités qui en résultent. C'est le travail central de cette séance.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Expliquer physiquement la résonance comme un échange d'énergie entre bobine et condensateur, et dire ce que la source fournit encore à la résonance.</li>
+    <li data-rang="02">Calculer la fréquence de résonance $f_0 = 1/(2\pi\sqrt{LC})$ d'un circuit série, parallèle idéal ou parallèle réel.</li>
+    <li data-rang="03">Calculer le facteur de qualité $Q$ et en déduire la surtension $U_C = QU$ d'un circuit série ou la surintensité $I_C = QI$ d'un circuit parallèle.</li>
+    <li data-rang="04">Établir et utiliser la bande passante à $-3\ \mathrm{dB}$, $\Delta f = f_0/Q$, et ses deux fréquences de coupure.</li>
+    <li data-rang="05">Comparer résonance série et résonance parallèle, et interpréter leur sélectivité sur une courbe de gain ou d'impédance.</li>
+    <li data-rang="06">Dimensionner une self anti-harmonique et vérifier qu'elle déplace la résonance d'une batterie sous le rang $5$.</li>
+    <li data-rang="07">Diagnostiquer une résonance à partir de symptômes : échauffement, surtension, déclenchement, tension déformée.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois acquis suffisent. Le premier est l'impédance des composants : $\underline{Z}_R = R$, $\underline{Z}_L = jL\omega$ et
+    $\underline{Z}_C = 1/(jC\omega) = -j/(C\omega)$, avec des réactances $X_L = L\omega$ qui croît avec la fréquence et
+    $X_C = 1/(C\omega)$ qui décroît. Le deuxième est l'addition des impédances en série et des admittances en parallèle, puis le
+    module $|\underline{Z}| = \sqrt{R^2 + X^2}$ et l'argument $\varphi = \arctan(X/R)$ pour $R &gt; 0$. Le troisième vient du cours
+    <a href="#/cours/regime-transitoire-rlc">Régime transitoire RLC</a> : la pulsation propre $\omega_0 = 1/\sqrt{LC}$ et le
+    coefficient d'amortissement $\zeta = (R/2)\sqrt{C/L}$ d'un circuit série. Le mini-test ci-dessous n'est pas noté ; la
+    correction de chaque question reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la correction".
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-echange">Deux réservoirs d'énergie qui se passent la main</h3>
+  <p>
+    Une bobine stocke de l'énergie quand le courant qui la traverse est grand, $w_L = \tfrac{1}{2}Li^2$ ; un condensateur en
+    stocke quand la tension à ses bornes est grande, $w_C = \tfrac{1}{2}Cu_C^2$. Dans un circuit série, le courant est commun,
+    et la tension du condensateur est en quadrature retard sur lui : quand le courant passe par zéro, $u_C$ est extrême, et
+    inversement. L'énergie quitte donc la bobine au moment où elle entre dans le condensateur. Ces deux échanges ne
+    s'équilibrent exactement qu'à une seule fréquence : celle où l'énergie que la bobine rend pendant un quart de période est
+    précisément celle que le condensateur réclame. À cette fréquence, la somme $w_L + w_C$ reste constante, la bobine et le
+    condensateur se suffisent l'un à l'autre, et la source n'a plus à fournir que les pertes de la résistance.
+  </p>
+  <p>
+    Ailleurs, l'un des deux réservoirs est trop grand pour l'autre : l'excédent fait l'aller-retour avec la source, ce qui
+    se traduit par une puissance réactive et une réactance nette. Sous la fréquence de résonance, c'est le condensateur qui
+    domine, et le circuit série est capacitif ; au-dessus, c'est la bobine, et il est inductif. À la résonance, la réactance
+    nette s'annule : il ne reste que la résistance, qui limite seule le courant. Si elle est petite, le courant est grand, et les
+    tensions aux bornes de la bobine et du condensateur, qui sont en opposition et se compensent vues de la source, peuvent
+    chacune dépasser de loin la tension appliquée.
+  </p>
+  <p>
+    Analogie contrôlée : une balançoire. La masse joue le rôle de l'inductance, qui s'oppose aux variations de vitesse ; la
+    corde et la pesanteur jouent le rôle du condensateur, qui rappelle vers l'équilibre ; les frottements jouent le rôle de la
+    résistance. Pousser à la fréquence propre, au bon moment de chaque aller, fait monter l'amplitude jusqu'à ce que les
+    frottements absorbent exactement ce que l'on apporte. Pousser à une autre fréquence contrarie le mouvement une fois sur
+    deux et l'amplitude reste faible.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie</span>
+    <p>
+      La balançoire rend compte de l'échange d'énergie, de l'existence d'une fréquence propre et du rôle limitant des pertes.
+      Elle échoue sur trois points. Elle est un pendule non linéaire, dont la fréquence dépend de l'amplitude, alors que le
+      circuit RLC idéal est linéaire : sa fréquence de résonance ne dépend pas de la tension appliquée. Elle ne distingue pas
+      les deux montages, alors que le circuit série et le circuit parallèle ont des comportements duaux, l'un en tension, l'autre
+      en courant. Enfin, elle ne montre pas que la résonance électrique se lit en régime permanent sinusoïdal, où toutes les
+      grandeurs sont à la fréquence de la source : la balançoire évoque plutôt le régime transitoire d'établissement, étudié
+      plus loin. Sauf mention contraire, la séance suppose des composants linéaires, idéaux et un régime sinusoïdal établi.
+    </p>
+  </div>
+
+  <h3 id="d-balayage-section">Simulation interactive : balayer la fréquence d'un circuit RLC série</h3>
+  <p>
+    La simulation alimente un circuit RLC série sous $10\ \mathrm{V}$ efficaces de fréquence réglable. La poignée, sur l'axe des
+    fréquences du graphique de droite, fixe la fréquence de la source ; elle se déplace à la souris, au doigt ou au clavier
+    après l'avoir sélectionnée. Les curseurs règlent $R$, $L$ et $C$. Avant de manipuler, prédisez : à basse fréquence, quel
+    composant impose le courant ? À la résonance, la tension aux bornes du condensateur peut-elle dépasser $10\ \mathrm{V}$ ? Si
+    l'on double $R$, la fréquence de résonance change-t-elle, et la courbe devient-elle plus pointue ou plus large ?
+  </p>
+  <figure id="d-balayage-figure">
+    <div class="schema-vivant" id="d-balayage"></div>
+    <div id="d-balayage-trace"></div>
+    <figcaption>
+      À gauche, le diagramme de Fresnel des tensions, référence des phases sur le courant $\underline{I}$, flèche horizontale en
+      trait fin. $\underline{U}_R$, en trait plein épais, est en phase avec le courant ; $\underline{U}_L$, en trait plein, part
+      du bout de $\underline{U}_R$ vers le haut, en avance de $90^\circ$ ; $\underline{U}_C$, en tirets, part du bout de
+      $\underline{U}_L$ vers le bas, en retard de $90^\circ$ ; la somme, la tension de la source $\underline{U}$, est la flèche en
+      tirets épais issue de l'origine, marquée U à sa pointe. L'échelle s'adapte et reste indiquée en haut. À droite, le courant efficace en fonction de
+      la fréquence, en trait plein ; le trait horizontal en tirets marque $I_0/\sqrt{2}$, le trait vertical $f_0$, et le point la
+      fréquence choisie avec la poignée sur l'axe. Sous le schéma, les trois tensions efficaces en fonction de la fréquence,
+      chacune nommée dans la légende avec sa couleur réelle ; le trait vertical en tirets y marque $f_0$, le trait vertical en
+      pointillés courts la fréquence choisie, et le trait horizontal la tension de la source.
+    </figcaption>
+  </figure>
+  <div id="d-balayage-curseurs"></div>
+  <div id="d-balayage-valeurs"></div>
+  <p>
+    Interprétation : à basse fréquence, le condensateur impose sa grande réactance, le courant est faible et en avance ; à
+    haute fréquence, c'est la bobine. Entre les deux, $\underline{U}_L$ et $\underline{U}_C$ deviennent égales et opposées :
+    le diagramme se referme sur $\underline{U}_R = \underline{U}$, le courant est en phase avec la tension et vaut $U/R$. Avec les
+    valeurs de départ, $R = 20\ \Omega$, $L = 50\ \mathrm{mH}$, $C = 2{,}2\ \mu\mathrm{F}$, la résonance tombe à $479{,}9\ \mathrm{Hz}$,
+    le courant y vaut $0{,}5\ \mathrm{A}$ et chaque tension réactive $75{,}4\ \mathrm{V}$, plus de sept fois la tension de la source.
+    Doubler $R$ ne déplace pas la résonance, qui ne dépend que de $L$ et $C$, mais divise par deux le courant maximal et les
+    surtensions, et double la largeur de la courbe : c'est le facteur de qualité qui change, et lui seul.
+  </p>
+
+  <h3 id="d-energie-section">Animation : l'énergie qui passe de la bobine au condensateur</h3>
+  <p>
+    L'animation suit, instant par instant, les énergies stockées dans la bobine et dans le condensateur du même circuit. Le
+    lecteur fait avancer le temps sur deux périodes, avec pause, vitesse et remise à zéro ; le curseur règle le rapport
+    $x = f/f_0$ entre la fréquence de la source et la fréquence de résonance. Avant de lancer, prédisez : à la résonance,
+    l'énergie totale stockée varie-t-elle au cours de la période ? Hors résonance, d'où vient l'énergie qui manque à un
+    réservoir quand l'autre se vide ?
+  </p>
+  <figure id="d-energie-figure">
+    <div class="schema-vivant" id="d-energie"></div>
+    <div id="d-energie-trace"></div>
+    <figcaption>
+      En haut, trois jauges à l'instant étudié : énergie de la bobine $w_L$, énergie du condensateur $w_C$ et leur somme, en
+      millijoules, sur la même échelle ; la flèche de droite indique le sens de l'échange avec la source, et son épaisseur la
+      puissance réactive instantanée échangée. En bas, les trois énergies en fonction du temps, en périodes, chacune nommée dans
+      la légende avec sa couleur réelle ; le trait vertical en tirets marque l'instant étudié.
+    </figcaption>
+  </figure>
+  <div id="d-energie-curseurs"></div>
+  <div id="d-energie-lecteur"></div>
+  <div id="d-energie-valeurs"></div>
+  <p>
+    Interprétation : à $x = 1$, $w_L$ et $w_C$ oscillent en opposition entre $0$ et $12{,}5\ \mathrm{mJ}$ et leur somme reste
+    constante, égale à $12{,}5\ \mathrm{mJ}$ : la bobine et le condensateur s'échangent l'énergie sans la source, qui ne fournit que
+    les $5\ \mathrm{W}$ de la résistance. À $x = 0{,}8$, le condensateur porte plus d'énergie que la bobine n'en peut reprendre :
+    la somme oscille, l'excédent part vers la source puis en revient, c'est la puissance réactive, ici capacitive. À $x = 1{,}2$,
+    c'est l'inverse. Le rapport entre l'énergie stockée et l'énergie dissipée par période, multiplié par $2\pi$, vaut le facteur
+    de qualité : $2\pi \times 12{,}5/10{,}42 = 7{,}54$.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-serie">Résonance série : impédance minimale</h3>
+  <p>
+    Hypothèses : composants linéaires et idéaux, source sinusoïdale de valeur efficace $U$ et de pulsation $\omega$ réglable,
+    régime établi. Le schéma fixe les conventions.
+  </p>
+  <figure id="e-serie-figure">
+    <svg viewBox="0 0 820 330" role="img" aria-label="Circuit RLC série : source sinusoïdale u en convention générateur, courant i, résistance R, bobine L et condensateur C en série, tensions uR, uL et uC fléchées en convention récepteur, masse en référence de potentiel">
+      <defs>
+        <marker id="fl-e-se" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="90" cy="170" r="28"/>
+        <path d="M76 170C82 158 88 158 90 170S98 182 104 170"/>
+        <path d="M90 142V60H200M300 60H380M480 60H620V150M620 164V280H90V198"/>
+        <rect x="200" y="48" width="100" height="24" rx="3"/>
+        <path d="M380 60a12.5 12.5 0 0 1 25 0a12.5 12.5 0 0 1 25 0a12.5 12.5 0 0 1 25 0a12.5 12.5 0 0 1 25 0"/>
+        <path d="M596 150H644M596 164H644" stroke-width="3"/>
+        <path d="M70 296H110M78 304H102M86 312H94"/>
+        <path d="M90 280V296"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2" fill="none">
+        <path d="M120 44H175" marker-end="url(#fl-e-se)"/>
+        <path d="M296 100H206" marker-end="url(#fl-e-se)"/>
+        <path d="M476 100H386" marker-end="url(#fl-e-se)"/>
+        <path d="M680 266V76" marker-end="url(#fl-e-se)"/>
+        <path d="M36 266V76" marker-end="url(#fl-e-se)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="146" y="34" text-anchor="middle">i(t)</text>
+        <text x="250" y="40" text-anchor="middle">R</text>
+        <text x="430" y="36" text-anchor="middle">L</text>
+        <text x="652" y="162">C</text>
+        <text x="250" y="120" text-anchor="middle">uR</text>
+        <text x="430" y="120" text-anchor="middle">uL</text>
+        <text x="692" y="176">uC</text>
+        <text x="20" y="66">u(t)</text>
+        <text x="126" y="166">source</text>
+        <text x="126" y="182">U, ω réglable</text>
+        <text x="118" y="312">masse : référence de potentiel</text>
+        <text x="300" y="200">même courant i dans les trois éléments</text>
+        <text x="300" y="218">u = uR + uL + uC</text>
+      </g>
+    </svg>
+    <figcaption>
+      Circuit RLC série. La source, en convention générateur, impose $u(t) = U\sqrt{2}\sin\omega t$ : sa flèche de tension et le
+      courant $i$ qui sort de sa borne haute ont le même sens. Les trois éléments sont parcourus par le même courant $i$, fléché
+      de gauche à droite, et leurs tensions $u_R$, $u_L$ et $u_C$ sont fléchées en convention récepteur, en sens inverse du
+      courant. La masse, en bas, fixe la référence de potentiel. La loi des mailles donne $u = u_R + u_L + u_C$.
+    </figcaption>
+  </figure>
+  <p>
+    En notation complexe, la loi des mailles s'écrit $\underline{U} = \underline{Z}\,\underline{I}$ avec une impédance qui
+    réunit les trois éléments :
+  </p>
+  <div class="formule-cle">
+    $$\underline{Z}(\omega) = R + j\left(L\omega - \frac{1}{C\omega}\right), \qquad I = \frac{U}{\sqrt{R^2 + \left(L\omega - \dfrac{1}{C\omega}\right)^2}}, \qquad \varphi = \arctan\frac{L\omega - 1/(C\omega)}{R}$$
+    <p class="formule-cle-legende">
+      $R$ en ohms, $L$ en henrys, $C$ en farads, $\omega$ en radians par seconde, $I$ et $U$ en valeurs efficaces, $\varphi$
+      avance de la tension sur le courant. Interprétation : la partie réelle est fixe ; la partie imaginaire, la réactance
+      nette $X = L\omega - 1/(C\omega)$, est négative à basse fréquence, positive à haute fréquence, et s'annule une seule fois.
+      Cas limites : $\omega \to 0$ donne $|\underline{Z}| \to \infty$, le condensateur bloque le continu ; $\omega \to \infty$ donne
+      $|\underline{Z}| \to \infty$, la bobine bloque les fréquences élevées. Dimension : $L\omega$ et $1/(C\omega)$ sont des ohms,
+      puisque $\mathrm{H \cdot s^{-1}} = \mathrm{V \cdot s/A \cdot s^{-1}} = \Omega$ et $1/(\mathrm{F \cdot s^{-1}}) = \mathrm{V/(A \cdot s) \cdot s} = \Omega$.
+    </p>
+  </div>
+  <p>
+    La résonance est définie par l'annulation de la réactance nette, donc par un courant en phase avec la tension :
+  </p>
+  <div class="formule-cle">
+    $$L\omega_0 = \frac{1}{C\omega_0} \quad\Longrightarrow\quad \omega_0 = \frac{1}{\sqrt{LC}}, \qquad f_0 = \frac{1}{2\pi\sqrt{LC}}, \qquad \underline{Z}(\omega_0) = R, \qquad I_0 = \frac{U}{R}$$
+    <p class="formule-cle-legende">
+      $\omega_0$ pulsation de résonance, en radians par seconde ; $f_0$ fréquence de résonance, en hertz ; $I_0$ courant maximal.
+      Hypothèse : composants idéaux, la résistance éventuelle de la bobine étant comptée dans $R$. Interprétation : c'est la
+      pulsation propre du cours Régime transitoire RLC ; elle ne dépend ni de $R$ ni de la tension. Cas limite : $R \to 0$
+      donnerait un courant infini à la résonance, ce qu'aucun circuit réel n'atteint. Dimension : $\mathrm{H \cdot F} =
+      (\Omega \cdot \mathrm{s})(\mathrm{s}/\Omega) = \mathrm{s^2}$, donc $1/\sqrt{LC}$ est bien en $\mathrm{s^{-1}}$.
+    </p>
+  </div>
+
+  <h3 id="e-qualite">Facteur de qualité et surtensions</h3>
+  <p>
+    À la résonance, le courant vaut $I_0 = U/R$ ; la tension de la bobine vaut donc $U_L = L\omega_0 U/R$ et celle du
+    condensateur $U_C = U/(RC\omega_0)$, égales puisque $L\omega_0 = 1/(C\omega_0)$. Leur rapport à $U$ définit le facteur de
+    qualité du circuit série :
+  </p>
+  <div class="formule-cle">
+    $$Q = \frac{L\omega_0}{R} = \frac{1}{RC\omega_0} = \frac{1}{R}\sqrt{\frac{L}{C}} = \frac{Z_0}{R}, \qquad U_L(\omega_0) = U_C(\omega_0) = Q\,U$$
+    <p class="formule-cle-legende">
+      $Q$ facteur de qualité, sans dimension ; $Z_0 = \sqrt{L/C}$ impédance caractéristique, en ohms, réactance commune de $L$ et
+      $C$ à la résonance. Hypothèses : circuit série, régime établi à $\omega_0$. Interprétation : $Q$ est le rapport entre la
+      réactance de chaque élément et la résistance ; si $Q &gt; 1$, il y a surtension aux bornes de $L$ et de $C$. Cas limites :
+      $Q \to \infty$ pour $R \to 0$ ; $Q &lt; 1$, circuit très amorti, pas de surtension. Dimension : $\Omega/\Omega$. Lien avec le
+      transitoire : $\zeta = 1/(2Q)$, la précharge du variateur à $Q = 6{,}74$ du cours Régime transitoire RLC avait
+      $\zeta = 0{,}074$.
+    </p>
+  </div>
+  <p>
+    Le facteur de qualité a une seconde définition, énergétique, valable pour tout résonateur. À la résonance, l'énergie
+    stockée est constante et égale au maximum de l'énergie de la bobine, $W = \tfrac{1}{2}L(I_0\sqrt{2})^2 = LI_0^2$ ; l'énergie
+    dissipée pendant une période vaut $RI_0^2 \cdot 2\pi/\omega_0$. Leur rapport donne :
+  </p>
+  <div class="formule-cle">
+    $$Q = 2\pi\,\frac{\text{énergie stockée}}{\text{énergie dissipée par période}} = 2\pi\,\frac{LI_0^2}{RI_0^2\,(2\pi/\omega_0)} = \frac{L\omega_0}{R}$$
+    <p class="formule-cle-legende">
+      Hypothèses : régime établi à la résonance, pertes concentrées dans $R$. Interprétation : un circuit de grand $Q$ stocke
+      beaucoup d'énergie par rapport à ce qu'il perd ; il met donc longtemps à se charger et à se décharger. Cette définition
+      s'applique aussi au circuit parallèle, à un filtre mécanique ou à une cavité.
+    </p>
+  </div>
+  <p>
+    Une précision utile : le maximum de $U_C$ n'est pas exactement à $\omega_0$. Comme $U_C = I/(C\omega)$ et que $1/\omega$
+    décroît, il est atteint un peu plus bas, à $\omega_0\sqrt{1 - 1/(2Q^2)}$, et vaut $QU/\sqrt{1 - 1/(4Q^2)}$ ; celui de $U_L$
+    est un peu plus haut. Pour $Q = 7{,}54$, l'écart est de $0{,}4\ \%$ en fréquence et de $0{,}2\ \%$ en tension : on retient
+    $U_C \approx QU$ dès que $Q$ dépasse quelques unités, mais l'approximation devient fausse pour $Q &lt; 2$.
+  </p>
+
+  <h3 id="e-bande">Bande passante et sélectivité</h3>
+  <p>
+    Rapporté au courant maximal, le courant s'écrit, avec $x = \omega/\omega_0$ et en divisant numérateur et dénominateur par
+    $R$ :
+  </p>
+  <div class="formule-cle">
+    $$\frac{I}{I_0} = \frac{1}{\sqrt{1 + Q^2\left(x - \dfrac{1}{x}\right)^2}}$$
+    <p class="formule-cle-legende">
+      Dérivation : $L\omega - 1/(C\omega) = L\omega_0\,(x - 1/x)$, puisque $1/(C\omega) = L\omega_0^2/\omega$ ; on divise par $R$ et
+      on fait apparaître $Q = L\omega_0/R$. Interprétation : tous les circuits RLC série ont la même courbe de résonance, à deux
+      paramètres près, $\omega_0$ qui la situe et $Q$ qui fixe sa largeur. La courbe est symétrique en échelle logarithmique
+      puisque $x$ et $1/x$ donnent la même valeur. Cas limites : $x = 1$ donne $1$ ; $x \to 0$ ou $\infty$ donne $0$.
+    </p>
+  </div>
+  <p>
+    La bande passante est l'intervalle où la puissance dissipée dépasse la moitié de sa valeur maximale, donc où
+    $I \geq I_0/\sqrt{2}$, soit un gain supérieur à $-3\ \mathrm{dB}$. La condition $Q^2(x - 1/x)^2 = 1$ donne
+    $x - 1/x = \pm 1/Q$, deux équations du second degré dont les racines positives sont :
+  </p>
+  <div class="formule-cle">
+    $$\omega_{1,2} = \sqrt{\left(\frac{R}{2L}\right)^2 + \omega_0^2} \mp \frac{R}{2L}, \qquad \Delta\omega = \omega_2 - \omega_1 = \frac{R}{L} = \frac{\omega_0}{Q}, \qquad \Delta f = \frac{f_0}{Q}, \qquad \omega_1\omega_2 = \omega_0^2$$
+    <p class="formule-cle-legende">
+      $\omega_1$ et $\omega_2$ pulsations de coupure basse et haute ; $\Delta f$ bande passante, en hertz. Hypothèse : circuit
+      série alimenté en tension. Interprétation : la bande passante est exactement $R/(2\pi L)$, indépendante de $C$ ; $f_0$ est
+      la moyenne géométrique de $f_1$ et $f_2$, non leur moyenne arithmétique, bien que les deux soient très proches pour
+      $Q$ grand. Aux deux fréquences de coupure, $|X| = R$ : le déphasage vaut $\pm 45^\circ$ et l'impédance $R\sqrt{2}$. Cas
+      limite : $Q$ grand donne $f_{1,2} \approx f_0 \mp \Delta f/2$. Dimension : $\Omega/\mathrm{H} = \mathrm{s^{-1}}$.
+    </p>
+  </div>
+  <p>
+    La sélectivité est l'aptitude à distinguer deux fréquences voisines. Pour une fréquence éloignée de $f_0$ d'un écart
+    relatif $\delta$ petit, $x - 1/x \approx 2\delta$ et l'atténuation vaut $1/\sqrt{1 + 4Q^2\delta^2}$ : à $5\ \%$ de $f_0$, un
+    circuit de $Q = 2$ laisse passer $98\ \%$ du courant, un circuit de $Q = 50$ seulement $20\ \%$. Une grande sélectivité a un
+    prix : de fortes surtensions internes, une grande sensibilité aux tolérances de $L$ et $C$, et un temps d'établissement long.
+  </p>
+
+  <h3 id="e-etablissement-section">Animation : l'établissement de la résonance</h3>
+  <p>
+    Le régime établi n'apparaît pas instantanément : à la mise sous tension, l'amplitude croît en suivant une enveloppe
+    exponentielle. Pour un circuit série accordé, cette enveloppe vaut, pour $Q$ grand, $I_0\sqrt{2}\,(1 - e^{-t/\tau})$ avec
+    $\tau = 2L/R = 2Q/\omega_0$, soit environ $Q/\pi$ périodes. L'animation calcule le courant par intégration numérique de
+    l'équation du circuit, depuis un état initial au repos ; le lecteur fait avancer le temps, le premier curseur règle $R$, le
+    second le rapport $x$ entre la fréquence de la source et $f_0$. Avant de lancer, prédisez : combien de périodes faut-il pour
+    atteindre $63\ \%$ de l'amplitude finale avec $R = 20\ \Omega$ ? Que se passe-t-il si la source n'est pas exactement accordée ?
+  </p>
+  <figure id="e-etablissement-figure">
+    <div id="e-etablissement-trace"></div>
+    <figcaption>
+      Courant $i(t)$, en ampères, depuis la fermeture à $t = 0$, tracé jusqu'à l'instant atteint par le lecteur ; la courbe
+      nommée dans la légende avec sa couleur réelle est le courant calculé. Les deux traits en tirets sont l'enveloppe théorique
+      $\pm I_0\sqrt{2}(1 - e^{-t/\tau})$, affichée seulement quand la source est accordée ; le trait vertical en tirets marque
+      $t = \tau$.
+    </figcaption>
+  </figure>
+  <div id="e-etablissement-curseurs"></div>
+  <div id="e-etablissement-lecteur"></div>
+  <div id="e-etablissement-valeurs"></div>
+  <p>
+    Interprétation : avec $R = 20\ \Omega$, $\tau = 2L/R = 5\ \mathrm{ms}$, soit $2{,}4$ périodes à $479{,}9\ \mathrm{Hz}$ ; il faut
+    environ $5\tau$, une douzaine de périodes, pour atteindre le régime établi. Un circuit sélectif est lent : diviser $R$ par
+    quatre multiplie $Q$ et $\tau$ par quatre. Désaccordée, la source produit des battements : l'oscillation propre du circuit,
+    à $f_0$, et la réponse forcée, à $f$, se renforcent puis s'opposent alternativement, jusqu'à extinction de la première.
+    C'est le lien direct avec le cours Régime transitoire RLC : le transitoire est la réponse propre, pseudo-périodique de
+    pseudo-pulsation proche de $\omega_0$, amortie avec la constante $2L/R$ ; le régime établi est la réponse forcée étudiée
+    ici.
+  </p>
+
+  <h3 id="e-parallele">Résonance parallèle : impédance maximale</h3>
+  <p>
+    Le circuit parallèle idéal est le dual du circuit série : on échange tensions et courants, impédances et admittances,
+    $R$ et $G = 1/R$, $L$ et $C$. Il est naturellement alimenté par une source de courant, image d'une charge non linéaire qui
+    injecte un courant harmonique dans un réseau.
+  </p>
+  <figure id="e-parallele-figure">
+    <svg viewBox="0 0 820 356" role="img" aria-label="Circuit RLC parallèle : source de courant i entre le nœud A et la masse, résistance R, bobine L et condensateur C entre A et la masse, courants iR, iL et iC fléchés vers la masse, tension u fléchée de la masse vers A">
+      <defs>
+        <marker id="fl-e-pa" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="90" cy="170" r="28"/>
+        <path d="M90 190V150"/>
+        <path d="M84 158 90 148 96 158"/>
+        <path d="M90 142V60H600V163M600 177V280H90V198"/>
+        <path d="M280 60V130M280 210V280"/>
+        <rect x="266" y="130" width="28" height="80" rx="3"/>
+        <path d="M440 60V120"/>
+        <path d="M440 120a12.5 12.5 0 0 1 0 25a12.5 12.5 0 0 1 0 25a12.5 12.5 0 0 1 0 25a12.5 12.5 0 0 1 0 25"/>
+        <path d="M440 220V280"/>
+        <path d="M576 163H624M576 177H624" stroke-width="3"/>
+        <path d="M70 296H110M78 304H102M86 312H94"/>
+        <path d="M90 280V296"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="280" cy="60" r="5"/><circle cx="440" cy="60" r="5"/>
+        <circle cx="280" cy="280" r="5"/><circle cx="440" cy="280" r="5"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2" fill="none">
+        <path d="M130 44H200" marker-end="url(#fl-e-pa)"/>
+        <path d="M262 76V120" marker-end="url(#fl-e-pa)"/>
+        <path d="M422 76V112" marker-end="url(#fl-e-pa)"/>
+        <path d="M582 76V150" marker-end="url(#fl-e-pa)"/>
+        <path d="M700 266V76" marker-end="url(#fl-e-pa)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="165" y="34" text-anchor="middle">i(t)</text>
+        <text x="290" y="48">A</text>
+        <text x="254" y="104" text-anchor="end">iR</text>
+        <text x="414" y="100" text-anchor="end">iL</text>
+        <text x="574" y="118" text-anchor="end">iC</text>
+        <text x="306" y="176">R</text>
+        <text x="462" y="176">L</text>
+        <text x="634" y="176">C</text>
+        <text x="712" y="176">u</text>
+        <text x="20" y="232">source de</text>
+        <text x="20" y="248">courant</text>
+        <text x="118" y="312">masse : référence de potentiel</text>
+        <text x="420" y="314" font-size="11.5">même tension u aux bornes des trois éléments</text>
+        <text x="420" y="332" font-size="11.5">i = iR + iL + iC</text>
+      </g>
+    </svg>
+    <figcaption>
+      Circuit RLC parallèle idéal. La source de courant, dont la flèche intérieure donne le sens du courant $i$, débite vers le
+      nœud $A$ ; la masse fixe la référence de potentiel. Les trois éléments sont soumis à la même tension $u$, fléchée de la
+      masse vers $A$, et parcourus par $i_R$, $i_L$ et $i_C$, fléchés de $A$ vers la masse, en convention récepteur. La loi des
+      nœuds en $A$ donne $i = i_R + i_L + i_C$.
+    </figcaption>
+  </figure>
+  <p>
+    L'admittance du montage est la somme des admittances, et la tension vaut $\underline{U} = \underline{I}/\underline{Y}$ :
+  </p>
+  <div class="formule-cle">
+    $$\underline{Y}(\omega) = \frac{1}{R} + j\left(C\omega - \frac{1}{L\omega}\right), \qquad \omega_0 = \frac{1}{\sqrt{LC}}, \qquad \underline{Z}(\omega_0) = R, \qquad Q_p = \frac{R}{L\omega_0} = RC\omega_0 = R\sqrt{\frac{C}{L}} = \frac{R}{Z_0}$$
+    <p class="formule-cle-legende">
+      $\underline{Y}$ admittance, en siemens ; $Q_p$ facteur de qualité du circuit parallèle. Hypothèses : composants idéaux,
+      pertes représentées par la seule résistance parallèle $R$. Interprétation : à la résonance, les susceptances de $L$ et $C$
+      s'annulent, l'admittance est minimale et l'impédance maximale, égale à $R$. Le facteur de qualité est inversé par rapport au
+      cas série : une grande résistance parallèle, c'est-à-dire peu de pertes, donne un grand $Q_p$. Cas limite : $R \to \infty$
+      donne une impédance infinie à $\omega_0$, le circuit bouchon idéal. Dimension : $\Omega \cdot \mathrm{F \cdot s^{-1}}$ est
+      sans dimension.
+    </p>
+  </div>
+  <div class="formule-cle">
+    $$I_L(\omega_0) = I_C(\omega_0) = Q_p\,I, \qquad \Delta\omega = \frac{1}{RC} = \frac{\omega_0}{Q_p}, \qquad \frac{|\underline{Z}|}{R} = \frac{1}{\sqrt{1 + Q_p^2\left(x - \dfrac{1}{x}\right)^2}}$$
+    <p class="formule-cle-legende">
+      À la résonance, la tension vaut $RI$ ; le courant de la bobine vaut $RI/(L\omega_0) = Q_pI$, celui du condensateur
+      $RIC\omega_0 = Q_pI$ : c'est la surintensité, duale de la surtension série. Les deux courants sont en opposition et se
+      compensent vus de la source. La bande passante est l'intervalle où $|\underline{Z}| \geq R/\sqrt{2}$, et la courbe normalisée
+      est exactement la même que celle du courant d'un circuit série. Attention au sens des déphasages : sous $f_0$, la bobine
+      dérive le plus de courant et le circuit parallèle est inductif ; au-dessus, il est capacitif, l'inverse du circuit série.
+    </p>
+  </div>
+
+  <h3 id="e-reel">Circuit bouchon réel : bobine résistive en parallèle sur un condensateur</h3>
+  <p>
+    Dans la pratique, les pertes d'une bobine sont en série avec elle : son fil a une résistance $r$. Le circuit bouchon réel
+    est donc une branche $r + jL\omega$ en parallèle sur $C$, schématisée ci-dessous en ASCII.
+  </p>
+  <figure id="e-reel-figure">
+    <pre class="ascii">        A  o-----------+-----------------+
+                       |                 |
+                       |  i_b            |  i_C
+                       v                 v
+                      [r]               ===  C
+                       |                 |
+                      (L)                |
+                       |                 |
+        B  o-----------+-----------------+   B : référence de potentiel
+
+        tension u fléchée de B vers A, courants fléchés de A vers B
+        Y = jCω + 1 / (r + jLω)</pre>
+    <figcaption>
+      Circuit bouchon réel. Entre les bornes $A$ et $B$, la branche de la bobine, résistance $r$ et inductance $L$ en série,
+      est parcourue par $i_b$ ; le condensateur $C$ est parcouru par $i_C$. Les deux courants sont fléchés de $A$ vers $B$, en
+      convention récepteur, et la tension $u$ est fléchée de $B$, référence de potentiel, vers $A$.
+    </figcaption>
+  </figure>
+  <p>
+    En annulant la partie imaginaire de l'admittance $\underline{Y} = jC\omega + (r - jL\omega)/(r^2 + L^2\omega^2)$, on obtient la
+    pulsation où le courant fourni est en phase avec la tension, et l'impédance à cette pulsation :
+  </p>
+  <div class="formule-cle">
+    $$\omega_r = \sqrt{\frac{1}{LC} - \frac{r^2}{L^2}} = \omega_0\sqrt{1 - \frac{1}{Q^2}}, \qquad Z(\omega_r) = \frac{L}{rC}, \qquad R_p \approx Q^2 r \text{ pour } Q = \frac{L\omega_0}{r} \gg 1$$
+    <p class="formule-cle-legende">
+      $\omega_r$ pulsation de résonance de phase ; $L/(rC)$ résistance dynamique, en ohms ; $R_p$ résistance parallèle équivalente.
+      Dérivation : $C = L/(r^2 + L^2\omega_r^2)$ donne $\omega_r$, puis $\operatorname{Re}\underline{Y} = r/(r^2 + L^2\omega_r^2) = rC/L$.
+      Hypothèse : condensateur sans pertes. Interprétation : une petite résistance série se comporte, près de la résonance, comme
+      une grande résistance parallèle $Q^2r$ ; c'est la transformation série-parallèle qui permet d'utiliser les formules du
+      circuit idéal. Cas limites : $r \to 0$ donne $\omega_r = \omega_0$ et une impédance infinie ; $r \geq \sqrt{L/C}$ supprime
+      toute résonance de phase. Dimension : $\mathrm{H}/(\Omega \cdot \mathrm{F}) = \Omega \cdot \mathrm{s}/(\Omega \cdot \mathrm{s}/\Omega) = \Omega$.
+    </p>
+  </div>
+
+  <h3 id="e-bouchon-section">Simulation interactive : impédance d'un circuit bouchon</h3>
+  <p>
+    La simulation calcule l'impédance du circuit $R \parallel (r + jL\omega) \parallel C$ en fonction de la fréquence. Les curseurs
+    règlent la résistance parallèle $R$, la résistance série de la bobine $r$, $L$ et $C$ ; avec $r = 0$, on retrouve le circuit
+    parallèle idéal, avec $R$ au maximum, le circuit bouchon réel seul. Avant de manipuler, prédisez : quand $r$ augmente,
+    l'impédance maximale monte-t-elle ou baisse-t-elle, et la fréquence de résonance se déplace-t-elle ? Le courant du condensateur
+    à la résonance est-il plus grand ou plus petit que le courant fourni par la source ?
+  </p>
+  <figure id="e-bouchon-figure">
+    <div id="e-bouchon-trace"></div>
+    <figcaption>
+      Module de l'impédance $|\underline{Z}|$, en ohms, en fonction de la fréquence, en trait plein, nommé dans la légende avec sa
+      couleur réelle. Le trait horizontal en tirets marque $Z_{\max}/\sqrt{2}$, et ses intersections avec la courbe délimitent la
+      bande passante ; le trait vertical en tirets marque la fréquence propre $f_0 = 1/(2\pi\sqrt{LC})$. Les grandeurs calculées,
+      dont la nature inductive ou capacitive de part et d'autre de $f_0$, sont affichées sous le tracé.
+    </figcaption>
+  </figure>
+  <div id="e-bouchon-curseurs"></div>
+  <div id="e-bouchon-valeurs"></div>
+  <p>
+    Interprétation : avec $L = 50\ \mathrm{mH}$, $C = 2{,}2\ \mu\mathrm{F}$, $R = 2\ \mathrm{k\Omega}$ et $r = 0$, l'impédance culmine à
+    $2\ \mathrm{k\Omega}$ à $479{,}9\ \mathrm{Hz}$, avec $Q_p = 2000/150{,}8 = 13{,}3$ et une bande passante de $36{,}2\ \mathrm{Hz}$ ; le
+    condensateur et la bobine y sont parcourus par $13{,}3$ fois le courant de la source. Une résistance série de bobine fait
+    baisser le maximum, élargit la courbe et abaisse légèrement la fréquence de phase nulle : $r = 5\ \Omega$ équivaut à une
+    résistance parallèle de $Q^2r \approx 4{,}5\ \mathrm{k\Omega}$. Sous $f_0$ le déphasage est positif, le circuit est inductif ;
+    au-dessus, il est capacitif.
+  </p>
+
+  <h3 id="e-reseau">Résonances dans un réseau industriel</h3>
+  <p>
+    Vu d'un jeu de barres, le réseau amont se réduit, par phase, à une inductance $L_s$ fixée par la puissance de court-circuit,
+    $S_{cc} = U_{c}^2/(L_s\omega)$ avec $U_c$ la tension composée. Deux résonances sont alors possibles, selon la source qui les
+    excite.
+  </p>
+  <figure id="e-reseau-figure">
+    <pre class="ascii">   résonance parallèle                     résonance série
+   (source de courant harmonique)          (tension harmonique du réseau amont)
+
+     Ls          jeu de barres               réseau amont       jeu de barres
+   --(L)--+-----------+---------+          --u_h~--(Ls)--+---------+
+          |           |         |                        |         |
+         ===  C      (Ih) ^     |                       (L) self   |
+          |   batterie |  charge |                        |        ...
+   -------+-----------+---------+                       ===  C
+     neutre : référence                                   |
+                                                  -------+------ neutre
+
+   Ls // C : impédance maximale à                 L + C : impédance minimale à
+   fp = 1 / (2π √(Ls C))                          fs = 1 / (2π √(L C))</pre>
+    <figcaption>
+      À gauche, le courant harmonique $I_h$ injecté par une charge non linéaire, flèche vers le haut, voit en parallèle
+      l'inductance de source $L_s$ et la batterie $C$ : résonance parallèle, impédance maximale, tension harmonique amplifiée au
+      jeu de barres. À droite, une tension harmonique $u_h$ présente sur le réseau amont voit en série une self $L$ et un
+      condensateur $C$ : résonance série, impédance minimale, courant harmonique attiré dans la branche. Le neutre est la
+      référence de potentiel ; les grandeurs sont par phase.
+    </figcaption>
+  </figure>
+  <p>
+    La résonance parallèle est celle du cours précédent : $n_r = f_p/f = \sqrt{S_{cc}/Q_C}$. La résonance série est utilisée
+    volontairement dans deux dispositifs. Le filtre accordé place une branche $L + C$ exactement sur un rang harmonique, qu'elle
+    absorbe. La self anti-harmonique, ou self de désaccord, place l'accord série sous le rang $5$, typiquement au rang $3{,}8$
+    pour un taux $p = X_L/X_C = 7\ \%$ à $50\ \mathrm{Hz}$ : la branche reste capacitive à $50\ \mathrm{Hz}$ et compense, mais
+    elle devient inductive à partir du rang $5$, et la résonance parallèle avec $L_s$, désormais à
+    $f_p = 1/(2\pi\sqrt{(L_s + L)C})$, tombe un peu sous l'accord série, loin des rangs présents.
+  </p>
+  <div class="formule-cle">
+    $$n_s = \frac{1}{\sqrt{p}}, \qquad U_C = \frac{U}{1 - p}, \qquad Q_{\text{fournie}} = \frac{U^2}{X_C - X_L} = \frac{U^2}{X_C\,(1 - p)}, \qquad f_p = \frac{1}{2\pi\sqrt{(L_s + L)\,C}} &lt; f_s$$
+    <p class="formule-cle-legende">
+      $p = X_L/X_C$ à la fréquence du réseau, sans dimension ; $n_s$ rang d'accord série ; $U_C$ tension aux bornes du
+      condensateur, plus grande que la tension du réseau puisque $U_L$ et $U_C$ sont en opposition ; $Q_{\text{fournie}}$ réactif
+      fourni par la branche. Hypothèses : composants idéaux, réseau sinusoïdal à $50\ \mathrm{Hz}$ pour les deux dernières. Cas
+      limites : $p = 0$, batterie nue ; $p \to 1$, accord sur le fondamental, court-circuit du réseau. Pour $p = 7\ \%$, le
+      condensateur supporte $7{,}5\ \%$ de tension en plus, ce qui impose une tension assignée supérieure.
+    </p>
+  </div>
+  <p>
+    Une troisième situation est transitoire : à l'enclenchement d'une batterie, $L_s$ et $C$ forment un circuit série excité par
+    un échelon de tension, qui oscille à $f_p$ avec une amplitude qui peut approcher deux fois la crête du réseau, sans
+    amortissement. Un variateur voisin peut alors déclencher en surtension de son bus continu.
+  </p>
+
+  <h3 id="e-dualite">Comparaison des deux résonances</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Résonance série et résonance parallèle idéales</caption>
+      <thead><tr><th>Grandeur</th><th>Série R, L, C</th><th>Parallèle R, L, C</th></tr></thead>
+      <tbody>
+        <tr><td>Source naturelle</td><td>tension imposée</td><td>courant imposé</td></tr>
+        <tr><td>Condition</td><td>$L\omega_0 = 1/(C\omega_0)$</td><td>$C\omega_0 = 1/(L\omega_0)$</td></tr>
+        <tr><td>Fréquence</td><td>$f_0 = 1/(2\pi\sqrt{LC})$</td><td>$f_0 = 1/(2\pi\sqrt{LC})$, et $f_r &lt; f_0$ pour un bouchon réel</td></tr>
+        <tr><td>Impédance à $f_0$</td><td>minimale, égale à $R$</td><td>maximale, égale à $R$</td></tr>
+        <tr><td>Facteur de qualité</td><td>$Q = L\omega_0/R = Z_0/R$</td><td>$Q_p = R/(L\omega_0) = R/Z_0$</td></tr>
+        <tr><td>Grandeur amplifiée</td><td>tensions $U_L = U_C = QU$</td><td>courants $I_L = I_C = Q_pI$</td></tr>
+        <tr><td>Bande passante</td><td>$\Delta\omega = R/L$</td><td>$\Delta\omega = 1/(RC)$</td></tr>
+        <tr><td>Sous $f_0$</td><td>capacitif</td><td>inductif</td></tr>
+        <tr><td>Au-dessus de $f_0$</td><td>inductif</td><td>capacitif</td></tr>
+        <tr><td>Usage industriel</td><td>filtre accordé, self anti-harmonique, convertisseur résonant</td><td>circuit bouchon, oscillateur, résonance batterie et réseau à éviter</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="e-methodes">Choisir une méthode</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Quatre façons d'étudier une résonance</caption>
+      <thead><tr><th>Méthode</th><th>Principe</th><th>Points forts</th><th>Limites</th><th>Quand la choisir</th></tr></thead>
+      <tbody>
+        <tr><td>Formules fermées</td><td>$f_0$, $Q$, $\Delta f$, $QU$</td><td>immédiates, montrent les leviers</td><td>valables pour les montages types seulement</td><td>prédimensionnement, contrôle d'ordre de grandeur</td></tr>
+        <tr><td>Courbe universelle</td><td>$1/\sqrt{1 + Q^2(x - 1/x)^2}$</td><td>donne l'atténuation à toute fréquence</td><td>suppose un circuit réductible à R, L, C</td><td>sélectivité, réjection d'une fréquence voisine</td></tr>
+        <tr><td>Calcul complexe complet</td><td>$\underline{Z}(\omega)$ exact, phaseurs</td><td>traite les bouchons réels et les réseaux</td><td>plus long, demande le modèle complet</td><td>circuit non standard, résonance d'un réseau</td></tr>
+        <tr><td>Simulation fréquentielle</td><td>balayage en fréquence, analyse AC</td><td>traite des dizaines d'éléments et les pertes</td><td>ne remplace pas l'analyse ; dépend des modèles</td><td>étude harmonique d'un site, vérification finale</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="e-statut">Statut des énoncés</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Ce qui relève de la loi, de la convention, de l'approximation, de la conception et de la norme ou du constructeur</caption>
+      <thead><tr><th>Énoncé</th><th>Statut</th><th>Commentaire</th></tr></thead>
+      <tbody>
+        <tr><td>$\omega_0 = 1/\sqrt{LC}$ ; $U_L = U_C = QU$ ; $\Delta\omega = R/L$ ; conservation de l'énergie à la résonance</td><td>Lois physiques et conséquences exactes</td><td>Kirchhoff et impédances, pour des composants linéaires.</td></tr>
+        <tr><td>Bande passante définie à $-3\ \mathrm{dB}$, soit à mi-puissance ; facteur de qualité défini par $2\pi W/W_{\text{dissipée}}$</td><td>Conventions</td><td>D'autres seuils existent, à $-6$ ou $-1\ \mathrm{dB}$ ; préciser toujours le seuil.</td></tr>
+        <tr><td>$U_C \approx QU$ au maximum ; $f_{1,2} \approx f_0 \mp \Delta f/2$ ; $R_p \approx Q^2r$ ; réseau amont purement inductif</td><td>Approximations</td><td>Bonnes pour $Q$ grand ; fausses pour $Q &lt; 2$ ou un réseau très résistif.</td></tr>
+        <tr><td>Placer une résonance loin des rangs présents ; self anti-harmonique à $p = 7\ \%$ ; marge de tension sur les condensateurs</td><td>Règles de conception</td><td>Compromis entre coût, encombrement et risque, à justifier.</td></tr>
+        <tr><td>Taux d'accord catalogués, tenue en tension et en courant harmonique des condensateurs, niveaux d'harmoniques admissibles</td><td>Norme et constructeur</td><td>À lire dans la norme applicable et les catalogues ; aucune valeur n'est retenue ici comme référence.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, les courbes de gain et d'impédance autour de la résonance,
+    l'organigramme de résolution et un rappel des repères numériques.
+  </p>
+
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 900 400" role="img" aria-label="Schéma principal. À gauche, courant d'un circuit RLC série rapporté à son maximum en fonction de f sur f0, pour Q égal à 2, 5 et 10, avec le seuil 0,707 et la bande passante de la courbe Q égal à 5 entre 0,905 et 1,105. À droite, impédance d'un circuit RLC parallèle rapportée à R en fonction de f sur f0, mêmes courbes, zone inductive sous f0 et capacitive au-dessus">
+      <defs>
+        <marker id="fl-f-p" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto-start-reverse">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="1.2" fill="none" opacity="0.7">
+        <path d="M50 330H436" marker-end="url(#fl-f-p)"/>
+        <path d="M60 340V50" marker-end="url(#fl-f-p)"/>
+        <path d="M490 330H876" marker-end="url(#fl-f-p)"/>
+        <path d="M500 340V50" marker-end="url(#fl-f-p)"/>
+        <path d="M240 326v8M150 326v8M330 326v8M680 326v8M590 326v8M770 326v8M56 70h8M496 70h8"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1" fill="none" stroke-dasharray="3 4" opacity="0.8">
+        <path d="M60 146.2H420M500 146.2H860M240 70V330M680 70V330"/>
+      </g>
+      <path d="M60.0 312.7L64.0 312.3L68.0 311.8L72.0 311.3L76.0 310.8L80.0 310.2L84.0 309.7L88.0 309.1L92.0 308.5L96.0 307.8L100.0 307.1L104.0 306.4L108.0 305.6L112.0 304.8L116.0 303.9L120.0 303.0L124.0 302.0L128.0 301.0L132.0 299.8L136.0 298.6L140.0 297.3L144.0 295.9L148.0 294.4L152.0 292.8L156.0 291.0L160.0 289.0L164.0 286.8L168.0 284.4L172.0 281.8L176.0 278.8L180.0 275.5L184.0 271.7L188.0 267.4L192.0 262.5L196.0 256.7L200.0 250.0L204.0 242.0L208.0 232.5L212.0 220.8L216.0 206.4L220.0 188.5L224.0 166.2L228.0 139.1L232.0 108.7L236.0 81.5L240.0 70.0L244.0 81.5L248.0 108.7L252.0 139.1L256.0 166.2L260.0 188.5L264.0 206.4L268.0 220.8L272.0 232.5L276.0 242.0L280.0 250.0L284.0 256.7L288.0 262.5L292.0 267.4L296.0 271.7L300.0 275.5L304.0 278.8L308.0 281.8L312.0 284.4L316.0 286.8L320.0 289.0L324.0 291.0L328.0 292.8L332.0 294.4L336.0 295.9L340.0 297.3L344.0 298.6L348.0 299.8L352.0 301.0L356.0 302.0L360.0 303.0L364.0 303.9L368.0 304.8L372.0 305.6L376.0 306.4L380.0 307.1L384.0 307.8L388.0 308.5L392.0 309.1L396.0 309.7L400.0 310.2L404.0 310.8L408.0 311.3L412.0 311.8L416.0 312.3L420.0 312.7" stroke="currentColor" stroke-width="1.8" fill="none" stroke-dasharray="9 5"/>
+      <path d="M60.0 295.6L64.0 294.8L68.0 293.8L72.0 292.9L76.0 291.9L80.0 290.8L84.0 289.7L88.0 288.6L92.0 287.3L96.0 286.1L100.0 284.7L104.0 283.3L108.0 281.8L112.0 280.3L116.0 278.6L120.0 276.8L124.0 275.0L128.0 273.0L132.0 270.8L136.0 268.6L140.0 266.1L144.0 263.5L148.0 260.7L152.0 257.7L156.0 254.4L160.0 250.9L164.0 247.0L168.0 242.8L172.0 238.2L176.0 233.1L180.0 227.5L184.0 221.3L188.0 214.5L192.0 206.8L196.0 198.3L200.0 188.8L204.0 178.2L208.0 166.4L212.0 153.4L216.0 139.2L220.0 124.1L224.0 108.7L228.0 94.0L232.0 81.5L236.0 73.0L240.0 70.0L244.0 73.0L248.0 81.5L252.0 94.0L256.0 108.7L260.0 124.1L264.0 139.2L268.0 153.4L272.0 166.4L276.0 178.2L280.0 188.8L284.0 198.3L288.0 206.8L292.0 214.5L296.0 221.3L300.0 227.5L304.0 233.1L308.0 238.2L312.0 242.8L316.0 247.0L320.0 250.9L324.0 254.4L328.0 257.7L332.0 260.7L336.0 263.5L340.0 266.1L344.0 268.6L348.0 270.8L352.0 273.0L356.0 275.0L360.0 276.8L364.0 278.6L368.0 280.3L372.0 281.8L376.0 283.3L380.0 284.7L384.0 286.1L388.0 287.3L392.0 288.6L396.0 289.7L400.0 290.8L404.0 291.9L408.0 292.9L412.0 293.8L416.0 294.8L420.0 295.6" stroke="currentColor" stroke-width="3" fill="none"/>
+      <path d="M60.0 247.8L64.0 245.8L68.0 243.8L72.0 241.8L76.0 239.6L80.0 237.4L84.0 235.1L88.0 232.7L92.0 230.2L96.0 227.6L100.0 224.9L104.0 222.1L108.0 219.2L112.0 216.1L116.0 212.9L120.0 209.6L124.0 206.2L128.0 202.6L132.0 198.9L136.0 194.9L140.0 190.9L144.0 186.6L148.0 182.2L152.0 177.6L156.0 172.7L160.0 167.7L164.0 162.5L168.0 157.1L172.0 151.5L176.0 145.8L180.0 139.8L184.0 133.8L188.0 127.6L192.0 121.4L196.0 115.1L200.0 108.9L204.0 102.8L208.0 96.9L212.0 91.3L216.0 86.2L220.0 81.5L224.0 77.6L228.0 74.3L232.0 72.0L236.0 70.5L240.0 70.0L244.0 70.5L248.0 72.0L252.0 74.3L256.0 77.6L260.0 81.5L264.0 86.2L268.0 91.3L272.0 96.9L276.0 102.8L280.0 108.9L284.0 115.1L288.0 121.4L292.0 127.6L296.0 133.8L300.0 139.8L304.0 145.8L308.0 151.5L312.0 157.1L316.0 162.5L320.0 167.7L324.0 172.7L328.0 177.6L332.0 182.2L336.0 186.6L340.0 190.9L344.0 194.9L348.0 198.9L352.0 202.6L356.0 206.2L360.0 209.6L364.0 212.9L368.0 216.1L372.0 219.2L376.0 222.1L380.0 224.9L384.0 227.6L388.0 230.2L392.0 232.7L396.0 235.1L400.0 237.4L404.0 239.6L408.0 241.8L412.0 243.8L416.0 245.8L420.0 247.8" stroke="currentColor" stroke-width="1.6" fill="none" stroke-dasharray="2 4"/>
+      <path d="M500.0 312.7L504.0 312.3L508.0 311.8L512.0 311.3L516.0 310.8L520.0 310.2L524.0 309.7L528.0 309.1L532.0 308.5L536.0 307.8L540.0 307.1L544.0 306.4L548.0 305.6L552.0 304.8L556.0 303.9L560.0 303.0L564.0 302.0L568.0 301.0L572.0 299.8L576.0 298.6L580.0 297.3L584.0 295.9L588.0 294.4L592.0 292.8L596.0 291.0L600.0 289.0L604.0 286.8L608.0 284.4L612.0 281.8L616.0 278.8L620.0 275.5L624.0 271.7L628.0 267.4L632.0 262.5L636.0 256.7L640.0 250.0L644.0 242.0L648.0 232.5L652.0 220.8L656.0 206.4L660.0 188.5L664.0 166.2L668.0 139.1L672.0 108.7L676.0 81.5L680.0 70.0L684.0 81.5L688.0 108.7L692.0 139.1L696.0 166.2L700.0 188.5L704.0 206.4L708.0 220.8L712.0 232.5L716.0 242.0L720.0 250.0L724.0 256.7L728.0 262.5L732.0 267.4L736.0 271.7L740.0 275.5L744.0 278.8L748.0 281.8L752.0 284.4L756.0 286.8L760.0 289.0L764.0 291.0L768.0 292.8L772.0 294.4L776.0 295.9L780.0 297.3L784.0 298.6L788.0 299.8L792.0 301.0L796.0 302.0L800.0 303.0L804.0 303.9L808.0 304.8L812.0 305.6L816.0 306.4L820.0 307.1L824.0 307.8L828.0 308.5L832.0 309.1L836.0 309.7L840.0 310.2L844.0 310.8L848.0 311.3L852.0 311.8L856.0 312.3L860.0 312.7" stroke="currentColor" stroke-width="1.8" fill="none" stroke-dasharray="9 5"/>
+      <path d="M500.0 295.6L504.0 294.8L508.0 293.8L512.0 292.9L516.0 291.9L520.0 290.8L524.0 289.7L528.0 288.6L532.0 287.3L536.0 286.1L540.0 284.7L544.0 283.3L548.0 281.8L552.0 280.3L556.0 278.6L560.0 276.8L564.0 275.0L568.0 273.0L572.0 270.8L576.0 268.6L580.0 266.1L584.0 263.5L588.0 260.7L592.0 257.7L596.0 254.4L600.0 250.9L604.0 247.0L608.0 242.8L612.0 238.2L616.0 233.1L620.0 227.5L624.0 221.3L628.0 214.5L632.0 206.8L636.0 198.3L640.0 188.8L644.0 178.2L648.0 166.4L652.0 153.4L656.0 139.2L660.0 124.1L664.0 108.7L668.0 94.0L672.0 81.5L676.0 73.0L680.0 70.0L684.0 73.0L688.0 81.5L692.0 94.0L696.0 108.7L700.0 124.1L704.0 139.2L708.0 153.4L712.0 166.4L716.0 178.2L720.0 188.8L724.0 198.3L728.0 206.8L732.0 214.5L736.0 221.3L740.0 227.5L744.0 233.1L748.0 238.2L752.0 242.8L756.0 247.0L760.0 250.9L764.0 254.4L768.0 257.7L772.0 260.7L776.0 263.5L780.0 266.1L784.0 268.6L788.0 270.8L792.0 273.0L796.0 275.0L800.0 276.8L804.0 278.6L808.0 280.3L812.0 281.8L816.0 283.3L820.0 284.7L824.0 286.1L828.0 287.3L832.0 288.6L836.0 289.7L840.0 290.8L844.0 291.9L848.0 292.9L852.0 293.8L856.0 294.8L860.0 295.6" stroke="currentColor" stroke-width="3" fill="none"/>
+      <path d="M500.0 247.8L504.0 245.8L508.0 243.8L512.0 241.8L516.0 239.6L520.0 237.4L524.0 235.1L528.0 232.7L532.0 230.2L536.0 227.6L540.0 224.9L544.0 222.1L548.0 219.2L552.0 216.1L556.0 212.9L560.0 209.6L564.0 206.2L568.0 202.6L572.0 198.9L576.0 194.9L580.0 190.9L584.0 186.6L588.0 182.2L592.0 177.6L596.0 172.7L600.0 167.7L604.0 162.5L608.0 157.1L612.0 151.5L616.0 145.8L620.0 139.8L624.0 133.8L628.0 127.6L632.0 121.4L636.0 115.1L640.0 108.9L644.0 102.8L648.0 96.9L652.0 91.3L656.0 86.2L660.0 81.5L664.0 77.6L668.0 74.3L672.0 72.0L676.0 70.5L680.0 70.0L684.0 70.5L688.0 72.0L692.0 74.3L696.0 77.6L700.0 81.5L704.0 86.2L708.0 91.3L712.0 96.9L716.0 102.8L720.0 108.9L724.0 115.1L728.0 121.4L732.0 127.6L736.0 133.8L740.0 139.8L744.0 145.8L748.0 151.5L752.0 157.1L756.0 162.5L760.0 167.7L764.0 172.7L768.0 177.6L772.0 182.2L776.0 186.6L780.0 190.9L784.0 194.9L788.0 198.9L792.0 202.6L796.0 206.2L800.0 209.6L804.0 212.9L808.0 216.1L812.0 219.2L816.0 222.1L820.0 224.9L824.0 227.6L828.0 230.2L832.0 232.7L836.0 235.1L840.0 237.4L844.0 239.6L848.0 241.8L852.0 243.8L856.0 245.8L860.0 247.8" stroke="currentColor" stroke-width="1.6" fill="none" stroke-dasharray="2 4"/>
+      <g stroke="currentColor" stroke-width="1.6" fill="none">
+        <path d="M216 146.2H264" marker-start="url(#fl-f-p)" marker-end="url(#fl-f-p)"/>
+        <path d="M296 102L262 140"/>
+        <path d="M656 146.2H704" marker-start="url(#fl-f-p)" marker-end="url(#fl-f-p)"/>
+        <path d="M736 102L702 140"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="60" y="34" font-weight="600">Série : courant I / I0</text>
+        <text x="500" y="34" font-weight="600">Parallèle : impédance |Z| / R</text>
+        <text x="436" y="366" text-anchor="end">f / f0</text>
+        <text x="876" y="366" text-anchor="end">f / f0</text>
+        <text x="60" y="352" text-anchor="middle">0,5</text>
+        <text x="240" y="352" text-anchor="middle">1</text>
+        <text x="420" y="352" text-anchor="middle">2</text>
+        <text x="500" y="352" text-anchor="middle">0,5</text>
+        <text x="680" y="352" text-anchor="middle">1</text>
+        <text x="860" y="352" text-anchor="middle">2</text>
+        <text x="52" y="74" text-anchor="end">1</text>
+        <text x="52" y="150" text-anchor="end" font-size="11">0,707</text>
+        <text x="492" y="74" text-anchor="end">1</text>
+        <text x="492" y="150" text-anchor="end" font-size="11">0,707</text>
+        <text x="300" y="98" font-size="11">Δf = f0 / Q, à 0,707</text>
+        <text x="740" y="98" font-size="11">Δf = f0 / Q, à 0,707</text>
+        <text x="96" y="325" font-size="10.5">capacitif</text>
+        <text x="384" y="325" text-anchor="end" font-size="10.5">inductif</text>
+        <text x="536" y="325" font-size="10.5">inductif</text>
+        <text x="824" y="325" text-anchor="end" font-size="10.5">capacitif</text>
+        <text x="60" y="382" font-size="11">Q = 2 : pointillés fins ; Q = 5 : trait plein épais ; Q = 10 : tirets</text>
+        <text x="60" y="397" font-size="11">abscisse logarithmique : la courbe est symétrique autour de f0 ; seuil à -3 dB, soit 0,707</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal : courbes de gain et d'impédance autour de la résonance. À gauche, le courant d'un circuit série rapporté
+      à sa valeur maximale $I_0 = U/R$ ; à droite, l'impédance d'un circuit parallèle rapportée à sa valeur maximale $R$. Les
+      deux graphiques ont la même abscisse logarithmique, $f/f_0$ de $0{,}5$ à $2$, et portent les mêmes trois courbes : $Q = 2$
+      en pointillés fins, $Q = 5$ en trait plein épais, $Q = 10$ en tirets. Le trait horizontal en pointillés marque le seuil
+      $1/\sqrt{2} = 0{,}707$, soit $-3\ \mathrm{dB}$ ; la double flèche, posée sur ce seuil et désignée par un trait de rappel, montre la bande passante de la courbe $Q = 5$, de $0{,}905$ à
+      $1{,}105\ f_0$, soit $\Delta f = f_0/5$. Les deux familles sont identiques, c'est la dualité ; seules changent la grandeur
+      lue et la nature du circuit de part et d'autre de $f_0$, capacitif puis inductif pour le série, inductif puis capacitif pour
+      le parallèle.
+    </figcaption>
+  </figure>
+
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Circuit contenant L et C"] --> B{"Comment est-il excité ?"}
+  B -->|"tension imposée, éléments en série"| C["Résonance série<br/>impédance minimale"]
+  B -->|"courant imposé, éléments en parallèle"| D["Résonance parallèle<br/>impédance maximale"]
+  C --> E["f0 = 1 / (2π √(LC))"]
+  D --> E
+  E --> F{"Pertes en série<br/>dans la bobine ?"}
+  F -->|"oui"| G["Bouchon réel : fr = f0 √(1 - 1/Q²)<br/>Rp ≈ Q² r"]
+  F -->|"non"| H["Q = Z0 / R en série<br/>Q = R / Z0 en parallèle"]
+  G --> H
+  H --> I["Bande passante Δf = f0 / Q<br/>f1 et f2 à -3 dB"]
+  I --> J["Surtension QU ou surintensité QI<br/>tenue des composants"]
+  J --> K["Contrôles : unités, cas limites,<br/>énergie, simulation fréquentielle"]</pre>
+    <figcaption>
+      Organigramme de résolution. Les rectangles sont des étapes, les losanges des décisions, les libellés des flèches les
+      réponses. La première décision identifie la nature de la résonance par la façon dont le circuit est excité ; la seconde
+      traite les pertes série d'une bobine réelle par la transformation série-parallèle. Toutes les branches convergent vers le
+      calcul du facteur de qualité, qui donne la bande passante et les contraintes sur les composants.
+    </figcaption>
+  </figure>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Repères numériques pour les ordres de grandeur</caption>
+      <thead><tr><th>Facteur de qualité</th><th>Bande passante relative</th><th>Surtension série ou surintensité parallèle</th><th>Atténuation à 5 % de f0</th><th>Périodes pour 63 % de l'établissement</th></tr></thead>
+      <tbody>
+        <tr><td>$Q = 1$</td><td>$100\ \%$</td><td>$1$, pas d'amplification</td><td>$0{,}995$</td><td>$0{,}3$</td></tr>
+        <tr><td>$Q = 5$</td><td>$20\ \%$</td><td>$5$</td><td>$0{,}90$</td><td>$1{,}6$</td></tr>
+        <tr><td>$Q = 10$</td><td>$10\ \%$</td><td>$10$</td><td>$0{,}72$</td><td>$3{,}2$</td></tr>
+        <tr><td>$Q = 50$</td><td>$2\ \%$</td><td>$50$</td><td>$0{,}20$</td><td>$15{,}9$</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-balayage-figure" data-renvoi="d-balayage-figure">la simulation du balayage en fréquence d'un circuit série</a> et <a href="#d-energie-figure" data-renvoi="d-energie-figure">l'animation des échanges d'énergie</a>, section D ;</li>
+    <li><a href="#e-serie-figure" data-renvoi="e-serie-figure">le circuit RLC série et ses conventions</a>, <a href="#e-etablissement-figure" data-renvoi="e-etablissement-figure">l'animation de l'établissement de la résonance</a>, <a href="#e-parallele-figure" data-renvoi="e-parallele-figure">le circuit RLC parallèle</a>, <a href="#e-reel-figure" data-renvoi="e-reel-figure">le circuit bouchon réel</a>, <a href="#e-bouchon-figure" data-renvoi="e-bouchon-figure">la simulation de l'impédance d'un circuit bouchon</a> et <a href="#e-reseau-figure" data-renvoi="e-reseau-figure">les deux résonances d'un réseau</a>, section E ;</li>
+    <li><a href="#h-circuit-figure" data-renvoi="h-circuit-figure">le circuit de l'exemple</a> et <a href="#h-construction-figure" data-renvoi="h-construction-figure">l'animation des diagrammes de Fresnel à f1, f0 et f2</a>, section H ;</li>
+    <li><a href="#i-unifilaire-figure" data-renvoi="i-unifilaire-figure">le schéma du jeu de barres du site</a> et <a href="#i-jeu-figure" data-renvoi="i-jeu-figure">la simulation de l'impédance harmonique du jeu de barres</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour étudier un circuit susceptible de résonner :</p>
+  <ol>
+    <li>Identifier les éléments réactifs et la façon dont le circuit est excité : tension imposée sur une branche série, ou courant imposé sur des branches en parallèle. Une même paire $L$, $C$ peut être en série pour une source et en parallèle pour une autre.</li>
+    <li>Réduire le circuit à un modèle type : série $R$, $L$, $C$ ; parallèle $R$, $L$, $C$ ; ou bouchon réel, en ramenant les pertes série d'une bobine en parallèle par $R_p \approx Q^2r$ si $Q$ est grand.</li>
+    <li>Calculer $f_0 = 1/(2\pi\sqrt{LC})$, l'impédance caractéristique $Z_0 = \sqrt{L/C}$, puis le facteur de qualité : $Q = Z_0/R$ en série, $Q_p = R/Z_0$ en parallèle.</li>
+    <li>En déduire la bande passante $\Delta f = f_0/Q$ et les fréquences de coupure, exactes par $\sqrt{(\Delta f/2)^2 + f_0^2} \mp \Delta f/2$.</li>
+    <li>Calculer les grandeurs extrêmes à la résonance : courant $U/R$ et tensions $QU$ en série ; tension $RI$ et courants $Q_pI$ en parallèle. Les comparer aux tenues des composants, en valeur crête.</li>
+    <li>Si la question porte sur une fréquence particulière, harmonique ou perturbation, calculer l'atténuation ou l'amplification par la courbe universelle ou par l'impédance complexe exacte.</li>
+    <li>Vérifier : dimensions, cas limites $\omega \to 0$ et $\omega \to \infty$, nature capacitive ou inductive de part et d'autre de $f_0$, bilan d'énergie $Q = 2\pi W/W_d$, ordre de grandeur, et si possible simulation fréquentielle.</li>
+  </ol>
+  <p>
+    Choix de méthode : les formules fermées suffisent pour un montage type ; dès que la bobine a des pertes notables, que
+    plusieurs résonateurs interagissent ou que l'on veut l'impédance exacte d'un réseau à chaque rang harmonique, le calcul
+    complexe complet ou la simulation fréquentielle s'imposent.
+  </p>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Situation : un banc d'essai de composants alimente, par un générateur de fréquence réglable de $10\ \mathrm{V}$ efficaces, un
+    circuit RLC série formé d'une résistance de $20\ \Omega$, résistance du fil de la bobine comprise, d'une bobine de
+    $50\ \mathrm{mH}$ et d'un condensateur de $2{,}2\ \mu\mathrm{F}$. On demande la fréquence de résonance, le facteur de qualité, la
+    bande passante et ses deux fréquences de coupure, le courant et les tensions à la résonance, la tension crête que doit
+    tenir le condensateur, et l'état du circuit aux fréquences de coupure.
+  </p>
+  <figure id="h-circuit-figure">
+    <svg viewBox="0 0 820 320" role="img" aria-label="Circuit de l'exemple : générateur 10 volts de fréquence réglable en convention générateur, courant i, résistance 20 ohms, bobine 50 millihenrys, condensateur 2,2 microfarads, voltmètre aux bornes du condensateur, masse en référence">
+      <defs>
+        <marker id="fl-h-c" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="90" cy="170" r="28"/>
+        <path d="M76 170C82 158 88 158 90 170S98 182 104 170"/>
+        <path d="M90 142V60H200M300 60H380M480 60H600V150M600 164V270H90V198"/>
+        <rect x="200" y="48" width="100" height="24" rx="3"/>
+        <path d="M380 60a12.5 12.5 0 0 1 25 0a12.5 12.5 0 0 1 25 0a12.5 12.5 0 0 1 25 0a12.5 12.5 0 0 1 25 0"/>
+        <path d="M576 150H624M576 164H624" stroke-width="3"/>
+        <path d="M600 100H720V140M600 230H720V190"/>
+        <circle cx="720" cy="165" r="25"/>
+        <path d="M70 286H110M78 294H102M86 302H94"/>
+        <path d="M90 270V286"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="600" cy="100" r="4.5"/><circle cx="600" cy="230" r="4.5"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2" fill="none">
+        <path d="M120 44H175" marker-end="url(#fl-h-c)"/>
+        <path d="M36 256V76" marker-end="url(#fl-h-c)"/>
+        <path d="M660 220V112" marker-end="url(#fl-h-c)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="146" y="34" text-anchor="middle">i</text>
+        <text x="250" y="40" text-anchor="middle">R = 20 Ω</text>
+        <text x="430" y="36" text-anchor="middle">L = 50 mH</text>
+        <text x="540" y="182" text-anchor="end">C = 2,2 µF</text>
+        <text x="720" y="170" text-anchor="middle">V</text>
+        <text x="652" y="168" text-anchor="end">uC</text>
+        <text x="20" y="66">u</text>
+        <text x="126" y="166">générateur</text>
+        <text x="126" y="182">10 V, f réglable</text>
+        <text x="118" y="304">masse : référence de potentiel</text>
+        <text x="748" y="236" font-size="11">voltmètre</text>
+      </g>
+    </svg>
+    <figcaption>
+      Circuit de l'exemple. Le générateur, en convention générateur, impose $u$ de $10\ \mathrm{V}$ efficaces ; le courant $i$ sort
+      de sa borne haute et traverse successivement $R$, $L$ et $C$. Un voltmètre mesure $u_C$, fléchée de la masse vers la borne
+      haute du condensateur, en convention récepteur pour le condensateur. La masse fixe la référence de potentiel.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Données : $U = 10\ \mathrm{V}$ efficaces ; $R = 20\ \Omega$ ; $L = 50\ \mathrm{mH}$ ; $C = 2{,}2\ \mu\mathrm{F}$. Hypothèses :
+    composants linéaires, condensateur sans pertes, pertes de la bobine comprises dans $R$, générateur parfait, régime établi.
+    Inconnues : $f_0$, $Q$, $\Delta f$, $f_1$, $f_2$, $I_0$, $U_L$, $U_C$, tension crête du condensateur, état à $f_1$ et $f_2$.
+    Stratégie : méthode de la section G, modèle série, puis contrôles par le diagramme de Fresnel et l'énergie.
+  </p>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li>Fréquence de résonance : $LC = 0{,}05 \times 2{,}2 \times 10^{-6} = 1{,}1 \times 10^{-7}\ \mathrm{s^2}$ ; $\sqrt{LC} = 3{,}317 \times 10^{-4}\ \mathrm{s}$ ; $\omega_0 = 3015\ \mathrm{rad/s}$ ; $f_0 = 3015/(2\pi) = 479{,}9\ \mathrm{Hz}$.</li>
+    <li>Impédance caractéristique et facteur de qualité : $Z_0 = \sqrt{L/C} = \sqrt{0{,}05/2{,}2 \times 10^{-6}} = \sqrt{22\,727} = 150{,}8\ \Omega$ ; $Q = Z_0/R = 150{,}8/20 = 7{,}54$. Contrôle : $L\omega_0/R = 0{,}05 \times 3015/20 = 7{,}54$.</li>
+    <li>Bande passante : $\Delta f = R/(2\pi L) = 20/(2\pi \times 0{,}05) = 63{,}66\ \mathrm{Hz}$, égale à $f_0/Q = 479{,}9/7{,}54$.</li>
+    <li>Fréquences de coupure : $\sqrt{(\Delta f/2)^2 + f_0^2} = \sqrt{31{,}83^2 + 479{,}87^2} = 480{,}92\ \mathrm{Hz}$ ; $f_1 = 480{,}92 - 31{,}83 = 449{,}1\ \mathrm{Hz}$ et $f_2 = 480{,}92 + 31{,}83 = 512{,}8\ \mathrm{Hz}$. Contrôle : $\sqrt{f_1f_2} = \sqrt{449{,}1 \times 512{,}8} = 479{,}9\ \mathrm{Hz}$.</li>
+    <li>Courant à la résonance : $I_0 = U/R = 10/20 = 0{,}5\ \mathrm{A}$, en phase avec $u$ ; puissance $P_0 = RI_0^2 = 5\ \mathrm{W}$.</li>
+    <li>Tensions réactives : $U_L = L\omega_0I_0 = 0{,}05 \times 3015 \times 0{,}5 = 75{,}4\ \mathrm{V}$ ; $U_C = I_0/(C\omega_0) = 0{,}5/(2{,}2 \times 10^{-6} \times 3015) = 75{,}4\ \mathrm{V}$ ; toutes deux égales à $QU = 7{,}54 \times 10$.</li>
+    <li>Tenue du condensateur : crête $75{,}4\sqrt{2} = 106{,}6\ \mathrm{V}$, sept fois et demie la crête de la source ; le maximum exact de $U_C$, $75{,}5\ \mathrm{V}$, est atteint à $477{,}8\ \mathrm{Hz}$, à $0{,}4\ \%$ sous $f_0$. Il faut donc un condensateur dont la tension alternative assignée dépasse nettement $75\ \mathrm{V}$ efficaces, avec la marge que recommande son constructeur, et non un modèle choisi sur les $10\ \mathrm{V}$ de la source.</li>
+    <li>Aux coupures : $|\underline{Z}| = R\sqrt{2} = 28{,}28\ \Omega$, $I = 0{,}354\ \mathrm{A}$, $P = 2{,}5\ \mathrm{W}$, moitié de $P_0$. À $f_1$, le circuit est capacitif, $\varphi = -45^\circ$, $U_C = 57{,}0\ \mathrm{V}$ et $U_L = 49{,}9\ \mathrm{V}$ ; à $f_2$, il est inductif, $\varphi = +45^\circ$, et les deux valeurs s'échangent.</li>
+  </ol>
+
+  <h3 id="h-construction-section">Animation : les diagrammes de Fresnel à f1, f0 et f2</h3>
+  <p>
+    L'animation construit le diagramme de Fresnel des tensions de l'exemple, référence des phases sur le courant, d'abord à la
+    résonance, puis aux deux fréquences de coupure. Le lecteur avance d'une étape à l'autre ; la pause et la remise à zéro
+    permettent de s'arrêter sur chacune. Avant de lancer, prédisez : à la résonance, où se termine la flèche de
+    $\underline{U}_C$ ? À $f_1$, la tension de la source est-elle en avance ou en retard sur le courant ?
+  </p>
+  <figure id="h-construction-figure">
+    <div class="schema-vivant" id="h-construction"></div>
+    <figcaption>
+      Trois diagrammes à la même échelle, $1\ \mathrm{V}$ pour $2{,}5$ unités du dessin : $f_1$ à gauche, $f_0$ au centre, $f_2$ à
+      droite. Dans chacun, le trait fin horizontal donne la direction du courant ; $\underline{U}_R$ est en trait plein épais,
+      $\underline{U}_L$ en trait plein vers le haut, $\underline{U}_C$ en tirets vers le bas, et la tension de la source
+      $\underline{U}$ en tirets épais depuis l'origine. Le texte en haut à droite indique l'étape en cours.
+    </figcaption>
+  </figure>
+  <div id="h-construction-lecteur"></div>
+  <div id="h-construction-valeurs"></div>
+  <p>
+    Interprétation : à $f_0$, $\underline{U}_C$ ramène exactement l'extrémité de $\underline{U}_L$ sur l'axe ; la grande boucle
+    verticale de $75{,}4\ \mathrm{V}$ ne laisse que $\underline{U}_R = \underline{U}$, de $10\ \mathrm{V}$. À $f_1$, $\underline{U}_C$
+    l'emporte de $7{,}07\ \mathrm{V}$ : la tension est en retard de $45^\circ$ sur le courant, le circuit est capacitif ; à $f_2$,
+    c'est l'inverse. Dans les trois cas, la tension de la source a le même module, $10\ \mathrm{V}$, et la composante résistive
+    vaut $10$ puis $7{,}07\ \mathrm{V}$ : la puissance passe de $5$ à $2{,}5\ \mathrm{W}$.
+  </p>
+
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <p>
+    Dimensions : $L\omega_0$ en ohms, $Q$ sans dimension, $\Delta f = R/(2\pi L)$ en $\Omega/\mathrm{H} = \mathrm{s^{-1}}$. Énergie :
+    énergie stockée $LI_0^2 = 0{,}05 \times 0{,}25 = 12{,}5\ \mathrm{mJ}$, égale à $CU_C^2 = 2{,}2 \times 10^{-6} \times 75{,}4^2 = 12{,}5\ \mathrm{mJ}$ ;
+    énergie dissipée par période $P_0/f_0 = 5/479{,}9 = 10{,}42\ \mathrm{mJ}$ ; $2\pi \times 12{,}5/10{,}42 = 7{,}54 = Q$. Cas limites : à
+    $50\ \mathrm{Hz}$, $|\underline{Z}| = 1431\ \Omega$, courant $7\ \mathrm{mA}$ en avance de presque $90^\circ$, condensateur dominant ;
+    à $1\ \mathrm{kHz}$, $|\underline{Z}| = 243\ \Omega$, courant en retard de $85^\circ$, bobine dominante. Ordre de grandeur : une
+    surtension de quelques unités à quelques dizaines est typique d'un circuit à composants discrets. Conclusion d'ingénierie :
+    le circuit résonne à $480\ \mathrm{Hz}$ avec une bande de $64\ \mathrm{Hz}$ ; son condensateur doit tenir plus de $107\ \mathrm{V}$ crête
+    sous une source de $14\ \mathrm{V}$ crête, et toute mesure faite près de la résonance est très sensible aux tolérances : $5\ \%$ de
+    capacité en plus abaissent $f_0$ de $2{,}4\ \%$, soit $11{,}6\ \mathrm{Hz}$, un tiers de la demi-bande.
+  </p>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+
+  <h3 id="i-probleme">Résonance du jeu de barres du tableau général</h3>
+  <p>
+    Le cours <a href="#/cours/correction-du-facteur-de-puissance">Correction du facteur de puissance</a> a retenu une compensation
+    individuelle du compresseur et écarté une batterie globale nue, dont le rang de résonance, $11{,}6$, tombait entre les rangs
+    $11$ et $13$ produits par le variateur de la pompe. Cette séance quantifie ces résonances, et dimensionne la parade qui
+    permettrait, plus tard, d'installer une batterie globale : la self anti-harmonique. Le jeu de barres est étudié par phase,
+    vu d'un courant harmonique injecté par la pompe.
+  </p>
+  <figure id="i-unifilaire-figure">
+    <svg viewBox="0 0 900 430" role="img" aria-label="Schéma du jeu de barres du site : source équivalente inductance Ls de 0,204 millihenry par phase pour 2,5 mégavoltampères, jeu de barres 400 volts, départ pompe à variateur source de courants harmoniques, départ compresseur avec condensateurs de 149,3 microfarads par phase, batterie globale future avec self anti-harmonique de 2,06 millihenrys et condensateurs de 345 microfarads par phase, charges linéaires">
+      <defs>
+        <marker id="fl-i-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="120" cy="50" r="22"/>
+        <path d="M108 50C112 42 116 42 120 50S128 58 132 50"/>
+        <path d="M120 72V90"/>
+        <path d="M120 90a10 10 0 0 1 0 20a10 10 0 0 1 0 20a10 10 0 0 1 0 20"/>
+        <path d="M120 150V170"/>
+        <path d="M60 170H860" stroke-width="6"/>
+        <path d="M220 170V250"/>
+        <circle cx="220" cy="280" r="30"/>
+        <path d="M220 296V264M214 272 220 262 226 272"/>
+        <path d="M420 170V260"/>
+        <circle cx="420" cy="300" r="30"/>
+        <path d="M420 210H490V250M490 264V290"/>
+        <path d="M466 250H514M466 264H514" stroke-width="3"/>
+        <path d="M620 170V200"/>
+        <path d="M620 200a10 10 0 0 1 0 20a10 10 0 0 1 0 20a10 10 0 0 1 0 20"/>
+        <path d="M620 260V290"/>
+        <path d="M596 290H644M596 304H644" stroke-width="3"/>
+        <path d="M620 304V330"/>
+        <path d="M780 170V240"/>
+        <rect x="766" y="240" width="28" height="60" rx="3"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.6" fill="none" stroke-dasharray="6 5">
+        <rect x="560" y="186" width="190" height="160" rx="10"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2" fill="none">
+        <path d="M250 240V190" marker-end="url(#fl-i-u)"/>
+        <path d="M88 160V100" marker-end="url(#fl-i-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="150" y="40">réseau amont et transformateur 100 kVA, ucc 4 %</text>
+        <text x="150" y="56">équivalent : Scc = 2,5 MVA</text>
+        <text x="140" y="124">Ls = 0,204 mH par phase</text>
+        <text x="140" y="140">Xs = 0,064 Ω à 50 Hz</text>
+        <text x="60" y="194" font-size="11">jeu de barres 400 V</text>
+        <text x="262" y="222">Ih</text>
+        <text x="180" y="330" text-anchor="middle">pompe, variateur</text>
+        <text x="180" y="346" text-anchor="middle">injecte I5 = 9,5 A,</text>
+        <text x="180" y="362" text-anchor="middle">I7 = 6,8 A, I11 = 4,3 A,</text>
+        <text x="180" y="378" text-anchor="middle">I13 = 3,7 A</text>
+        <text x="420" y="305" text-anchor="middle">M 3~</text>
+        <text x="420" y="350" text-anchor="middle">compresseur</text>
+        <text x="500" y="236">149,3 µF</text>
+        <text x="420" y="366" text-anchor="middle">résonance : rang 18,3</text>
+        <text x="642" y="232">L = 2,06 mH</text>
+        <text x="652" y="302">C = 345 µF</text>
+        <text x="570" y="364" font-size="11">batterie globale future,</text>
+        <text x="570" y="380" font-size="11">p = 7 %, accord rang 3,78</text>
+        <text x="808" y="268">charges</text>
+        <text x="808" y="284">linéaires</text>
+        <text x="60" y="412" font-size="11">unifilaire : un trait pour trois phases ; valeurs par phase en étoile équivalente ; tirets : équipement non installé</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma unifilaire du jeu de barres, un trait pour trois phases, valeurs par phase en étoile équivalente. En haut, la source :
+      réseau amont et transformateur, résumés par l'inductance $L_s$. Sur le jeu de barres, de gauche à droite : la pompe à
+      variateur, modélisée comme une source de courants harmoniques dont la flèche indique le sens d'injection vers le jeu de
+      barres ; le compresseur avec ses condensateurs individuels ; la batterie globale future, encadrée de tirets car non
+      installée, formée d'une self anti-harmonique en série avec des condensateurs ; les charges linéaires, éclairage et armoire,
+      qui amortissent. La flèche verticale à gauche de $L_s$ rappelle que le courant harmonique se referme principalement par la
+      source. Les courants harmoniques indiqués supposent des créneaux idéaux de $120^\circ$, $I_h = I_1/h$ avec
+      $I_1 = 47{,}7\ \mathrm{A}$.
+    </figcaption>
+  </figure>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Hypothèses de l'étude</span>
+    <p>
+      Réseau équilibré traité par phase sous $230\ \mathrm{V}$ ; source supposée purement inductive, transformateur de
+      $100\ \mathrm{kVA}$ et $u_{cc} = 4\ \%$, réseau amont infini : $S_{cc} = 2{,}5\ \mathrm{MVA}$, $X_s = U_c^2/S_{cc} = 400^2/2{,}5 \times 10^6 =
+      0{,}064\ \Omega$, $L_s = 0{,}204\ \mathrm{mH}$, réactance proportionnelle au rang. Courants harmoniques de la pompe en créneaux
+      idéaux de $120^\circ$, dont la somme quadratique, $14{,}7\ \mathrm{A}$, concorde avec les $14{,}8\ \mathrm{A}$ des cours précédents.
+      Condensateurs idéaux. Amortissement par les charges linéaires inconnu, étudié par la simulation. Ces valeurs sont des
+      hypothèses d'étude, à remplacer par la documentation du transformateur retenu, les catalogues et une campagne de mesure.
+    </p>
+  </div>
+  <ol>
+    <li>Compensation individuelle du compresseur, $C = 149{,}3\ \mu\mathrm{F}$ par phase : $f_p = 1/(2\pi\sqrt{0{,}204 \times 10^{-3} \times 149{,}3 \times 10^{-6}}) = 912{,}6\ \mathrm{Hz}$, rang $18{,}3$, conforme à $\sqrt{S_{cc}/Q_C}$ ; $Z_0 = \sqrt{L_s/C} = 1{,}17\ \Omega$. Les rangs $17$ et $19$ d'un pont muni d'une self sont faibles : situation acceptable.</li>
+    <li>Batterie globale nue de $18{,}5\ \mathrm{kvar}$, $6{,}17\ \mathrm{kvar}$ par phase, $C = 371{,}1\ \mu\mathrm{F}$ : $f_p = 578{,}9\ \mathrm{Hz}$, rang $11{,}6$. Au rang $11$, $X_s = 0{,}704\ \Omega$ et $X_C = 0{,}780\ \Omega$ ; leur mise en parallèle donne $|Z| = 0{,}704 \times 0{,}780/0{,}076 = 7{,}24\ \Omega$, $10{,}3$ fois l'impédance de la source seule. Sans amortissement, les $4{,}34\ \mathrm{A}$ de rang $11$ produiraient $31\ \mathrm{V}$, $13{,}6\ \%$ de la tension simple, au lieu de $3{,}1\ \mathrm{V}$.</li>
+    <li>Même batterie munie d'une self à $p = 7\ \%$ : il faut $X_C(1 - p) = 230^2/6167 = 8{,}578\ \Omega$, donc $X_C = 9{,}224\ \Omega$, $C = 345{,}1\ \mu\mathrm{F}$, $X_L = 0{,}646\ \Omega$, $L = 2{,}06\ \mathrm{mH}$. Accord série à $50/\sqrt{0{,}07} = 189\ \mathrm{Hz}$, rang $3{,}78$.</li>
+    <li>Tension des condensateurs : $230/(1 - 0{,}07) = 247{,}3\ \mathrm{V}$, soit $7{,}5\ \%$ de plus ; courant de la branche au fondamental $26{,}8\ \mathrm{A}$.</li>
+    <li>Résonance parallèle avec la source : $f_p = 1/(2\pi\sqrt{(0{,}204 + 2{,}055) \times 10^{-3} \times 345{,}1 \times 10^{-6}}) = 180{,}3\ \mathrm{Hz}$, rang $3{,}6$, sous le rang $5$ et loin de tout rang produit par un pont à six diodes équilibré.</li>
+    <li>Au rang $5$, la branche est inductive, $5 \times 0{,}646 - 9{,}224/5 = 1{,}384\ \Omega$ ; elle partage le courant de rang $5$ avec la source, $0{,}32\ \Omega$ : elle n'en absorbe que $0{,}32/(0{,}32 + 1{,}384) = 18{,}8\ \%$, soit $1{,}8\ \mathrm{A}$, et l'impédance du jeu de barres baisse de $19\ \%$ au lieu de monter.</li>
+  </ol>
+
+  <h3 id="i-jeu-section">Simulation interactive : impédance harmonique du jeu de barres</h3>
+  <p>
+    La simulation calcule, par phase, l'impédance vue du jeu de barres en fonction du rang : source $L_s$, batterie globale avec
+    ou sans self, et une résistance d'amortissement équivalente aux charges linéaires. Les curseurs règlent le réactif de la
+    batterie par phase, le taux de self $p$, nul pour une batterie nue, la puissance de court-circuit et l'amortissement. Avant de
+    manipuler, prédisez : avec une batterie nue, l'impédance au rang $11$ est-elle plus grande ou plus petite que sans batterie ?
+    Avec $p = 7\ \%$, où se trouve le pic, et que devient l'impédance au rang $5$ ? Un amortissement plus faible, c'est-à-dire une
+    résistance plus grande, aggrave-t-il le pic ?
+  </p>
+  <figure id="i-jeu-figure">
+    <div id="i-jeu-trace"></div>
+    <figcaption>
+      Module de l'impédance harmonique du jeu de barres, en ohms, en fonction du rang $h$, avec la batterie réglée, et la même
+      impédance sans batterie, $hX_s$ amortie de la même façon ; les deux courbes sont nommées dans la légende avec leur couleur
+      réelle. Les traits verticaux en tirets repèrent les rangs $5$, $7$, $11$ et $13$ ; le trait vertical épais en tirets marque
+      le rang de résonance parallèle $n_p$, et le trait en pointillés courts, quand une self est présente, le rang d'accord
+      série $n_s$.
+    </figcaption>
+  </figure>
+  <div id="i-jeu-curseurs"></div>
+  <div id="i-jeu-valeurs"></div>
+  <p>
+    Interprétation : la batterie nue de $6{,}17\ \mathrm{kvar}$ par phase crée un pic entre les rangs $11$ et $13$ ; avec une
+    résistance d'amortissement de $10\ \Omega$, l'impédance au rang $11$ vaut $6{,}4$ fois celle de la source seule, et les
+    $4{,}34\ \mathrm{A}$ de rang $11$ y produisent $19{,}6\ \mathrm{V}$, $8{,}5\ \%$ de la tension simple ; avec $100\ \Omega$, site
+    peu chargé, le rapport monte à $8{,}7$ et la tension à $11{,}6\ \%$. Avec $p = 7\ \%$, le pic descend au rang $3{,}6$, la branche devient un
+    creux d'impédance au rang $3{,}78$, et aux rangs $5$ à $13$ l'impédance du jeu de barres reste inférieure à celle de la source
+    seule. Augmenter la puissance de court-circuit repousse le pic d'une batterie nue vers le haut, mais ne garantit rien ; seule
+    la self place la résonance là où aucun courant harmonique n'est injecté.
+  </p>
+
+  <h3 id="i-compromis">Contraintes, risques et compromis</h3>
+  <ul>
+    <li><strong>Amortissement incertain.</strong> L'amplitude du pic dépend des charges résistives en service ; la nuit, faiblement chargé, le site est le plus exposé. On dimensionne donc sur le cas peu amorti.</li>
+    <li><strong>Tenue des condensateurs.</strong> Avec une self, la tension permanente monte de $7{,}5\ \%$ ; il faut des condensateurs de tension assignée supérieure, et vérifier leur courant efficace, harmoniques compris.</li>
+    <li><strong>Taux de self.</strong> Un accord trop près du rang $5$ ferait absorber à la branche une grande part du courant de rang $5$ du site et du réseau amont ; un accord trop bas augmente la tension des condensateurs et le coût. Le choix se fait parmi les taux proposés par les constructeurs.</li>
+    <li><strong>Évolution du site.</strong> Un groupe électrogène de secours, de puissance de court-circuit bien plus faible, abaisse toutes les résonances parallèles : une batterie nue sans danger sur le transformateur peut devenir dangereuse sur le groupe.</li>
+    <li><strong>Enclenchement.</strong> Une batterie nue enclenchée sur la source oscille à $f_p$ ; la self limite aussi l'appel de courant et la surtension transitoire, protégeant le variateur voisin.</li>
+    <li><strong>Pertes et encombrement.</strong> La self dissipe quelques watts par kilovar et occupe de la place ; c'est le prix de la robustesse face aux harmoniques.</li>
+  </ul>
+
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : étude de résonance du jeu de barres</span>
+    <p>
+      Nouvelle brique du petit site industriel. Source supposée de $2{,}5\ \mathrm{MVA}$, $L_s = 0{,}204\ \mathrm{mH}$ par phase. La
+      compensation individuelle du compresseur, $149{,}3\ \mu\mathrm{F}$ par phase, résonne en parallèle avec la source à
+      $913\ \mathrm{Hz}$, rang $18{,}3$, $Z_0 = 1{,}17\ \Omega$ : acceptée. Une batterie globale nue de $18{,}5\ \mathrm{kvar}$,
+      $371\ \mu\mathrm{F}$ par phase, résonnerait au rang $11{,}6$ et multiplierait par $10{,}3$ l'impédance vue au rang $11$, soit
+      $31\ \mathrm{V}$ harmoniques sans amortissement pour les $4{,}3\ \mathrm{A}$ de la pompe. Règle retenue : toute batterie globale
+      future sera munie de selfs anti-harmoniques à $p = 7\ \%$, accord série à $189\ \mathrm{Hz}$, rang $3{,}78$ ; pour
+      $6{,}17\ \mathrm{kvar}$ par phase, $345\ \mu\mathrm{F}$ et $2{,}06\ \mathrm{mH}$, condensateurs sous $247\ \mathrm{V}$, $+7{,}5\ \%$,
+      résonance parallèle déplacée à $180\ \mathrm{Hz}$, rang $3{,}6$, branche inductive au rang $5$ qui ne détourne que $19\ \%$
+      du courant de rang $5$. Hypothèses d'étude à remplacer par la documentation du transformateur retenu, les catalogues de
+      selfs et de condensateurs et une campagne de mesure harmonique.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Oublier le $2\pi$.</strong> $1/\sqrt{LC}$ est une pulsation en radians par seconde, pas une fréquence : pour l'exemple, $3015$ au lieu de $479{,}9\ \mathrm{Hz}$, un facteur $6{,}28$ d'erreur.</li>
+    <li><strong>Croire que $R$ déplace la résonance série.</strong> $f_0$ ne dépend que de $L$ et $C$ ; $R$ fixe le facteur de qualité, la hauteur et la largeur de la courbe. Seule la fréquence de phase nulle d'un bouchon réel dépend de $r$.</li>
+    <li><strong>Utiliser le même $Q$ en série et en parallèle.</strong> En série, $Q = Z_0/R$ : une grande résistance amortit ; en parallèle, $Q_p = R/Z_0$ : une grande résistance rend le circuit plus sélectif. Inverser les deux donne des surtensions fausses d'un facteur $Q^2$.</li>
+    <li><strong>Penser qu'une surtension viole la conservation de l'énergie.</strong> $U_L$ et $U_C$ valent $QU$ mais sont en opposition : leur somme est nulle et la source ne fournit que $RI^2$. L'énergie stockée est constante, elle a été accumulée pendant l'établissement.</li>
+    <li><strong>Dimensionner le condensateur d'un circuit série sur la tension de la source.</strong> Il doit tenir $QU$, en crête. Le même piège existe pour le courant d'une bobine de circuit parallèle, qui porte $Q_pI$.</li>
+    <li><strong>Confondre la nature du circuit de part et d'autre de $f_0$.</strong> Le série est capacitif en dessous, le parallèle inductif en dessous. Pour un filtre à self anti-harmonique, la branche est capacitive au fondamental et inductive aux rangs harmoniques.</li>
+    <li><strong>Prendre la moyenne arithmétique de $f_1$ et $f_2$ pour $f_0$.</strong> C'est leur moyenne géométrique ; l'écart, faible pour $Q$ grand, devient notable pour $Q &lt; 3$.</li>
+    <li><strong>Ignorer la source dans une étude harmonique.</strong> Une batterie seule n'a pas de résonance ; c'est avec l'inductance du réseau qu'elle en forme une. Changer de source, groupe électrogène ou transformateur plus petit, change le rang de résonance.</li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain : des condensateurs qui chauffent ou dont les fusibles fondent alors que le $\cos\varphi$ est bon,
+    une tension déformée qui s'aggrave quand la batterie est enclenchée et s'améliore quand on la retire, ou des déclenchements
+    de variateurs en surtension au moment de l'enclenchement d'un gradin, désignent une résonance parallèle. Un filtre accordé
+    qui surchauffe signale souvent qu'il absorbe aussi les harmoniques du réseau voisin. La mesure décisive est un relevé du
+    spectre de la tension du jeu de barres et du courant de la batterie, batterie enclenchée puis déclenchée, en efficace vrai.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de
+    diagnostic industriel et une question conceptuelle. La correction de chacun reste masquée jusqu'à une tentative ou un
+    clic explicite sur "Voir la correction", puis se déroule étape par étape, accompagnée d'une courbe de résonance ou d'un
+    diagramme de phaseurs.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma.</p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$f_0 = \frac{1}{2\pi\sqrt{LC}}, \qquad Z_0 = \sqrt{\frac{L}{C}}$$
+    $$Q_{\text{série}} = \frac{Z_0}{R} = \frac{L\omega_0}{R}, \qquad Q_{\text{parallèle}} = \frac{R}{Z_0}$$
+    $$U_L = U_C = QU \ \text{(série)}, \qquad I_L = I_C = Q_pI \ \text{(parallèle)}$$
+    $$\Delta f = \frac{f_0}{Q}, \qquad f_1f_2 = f_0^2$$
+    $$\frac{I}{I_0} = \frac{1}{\sqrt{1 + Q^2\left(x - 1/x\right)^2}}, \qquad n_s = \frac{1}{\sqrt{p}}$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>$1/\sqrt{LC}$ est une pulsation ; diviser par $2\pi$ pour une fréquence.</li>
+      <li>Le facteur de qualité s'inverse entre série et parallèle : vérifier qu'un circuit peu amorti a bien un grand $Q$.</li>
+      <li>Les composants d'un circuit résonant tiennent $Q$ fois la tension ou le courant de la source, en crête.</li>
+      <li>Une résonance de réseau se calcule avec la source : batterie nue et inductance amont forment une résonance parallèle.</li>
+      <li>Une self anti-harmonique augmente la tension des condensateurs de $1/(1 - p)$.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Un circuit qui contient une inductance et une capacité résonne à $f_0 = 1/(2\pi\sqrt{LC})$, quand
+    leurs réactances s'annulent et que l'énergie s'échange entre elles sans passer par la source. En série, l'impédance est
+    minimale, égale à $R$, et les tensions de $L$ et $C$ valent $Q$ fois celle de la source ; en parallèle, l'impédance est
+    maximale et les courants internes valent $Q$ fois le courant fourni. Le facteur de qualité, rapport de l'impédance
+    caractéristique $\sqrt{L/C}$ à la résistance en série ou l'inverse en parallèle, fixe à la fois les surtensions, la bande
+    passante $\Delta f = f_0/Q$, la sélectivité et la durée d'établissement. Dans un réseau, une batterie et l'inductance de la
+    source forment une résonance parallèle qu'une self anti-harmonique repousse sous le rang $5$.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent,
+    <a href="#/cours/correction-du-facteur-de-puissance">Correction du facteur de puissance</a> ; une sur le cours
+    <a href="#/cours/methodes-de-resolution-systematique">Méthodes de résolution systématique</a>, vieux d'une semaine ; la
+    question sur un cours vieux d'un mois n'est pas encore applicable, et elle est remplacée par une question sur le cours
+    <a href="#/cours/regime-transitoire-rlc">Régime transitoire RLC</a>, dont l'amortissement est l'autre face du facteur de
+    qualité.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : vérifier par le calcul numérique, puis par une analyse fréquentielle, les résultats de l'exemple de la section H
+    et la dualité série-parallèle. Prédictions à écrire avant de commencer : la tension maximale du condensateur sera-t-elle
+    lue exactement à $479{,}9\ \mathrm{Hz}$ ? En alimentant les mêmes $L$ et $C$ en parallèle avec $2\ \mathrm{k\Omega}$ par une source de
+    courant de $1\ \mathrm{A}$, la bande passante sera-t-elle plus large ou plus étroite que celle du circuit série ?
+  </p>
+  <ol>
+    <li>En Python, avec numpy, calculer $\underline{Z}(f) = R + j(2\pi fL - 1/(2\pi fC))$ pour $f$ de $100$ à $1000\ \mathrm{Hz}$ par pas de $0{,}1\ \mathrm{Hz}$, puis $I(f)$, $U_C(f)$ et $U_L(f)$. Repérer numériquement $f_0$, les deux fréquences où $I = I_0/\sqrt{2}$, et le maximum de $U_C$. Tracer les trois courbes avec matplotlib.</li>
+    <li>Dans LTspice, saisir la netlist <code>V1 in 0 AC 10</code>, <code>R1 in a 20</code>, <code>L1 a b 50m Rser=0</code>, <code>C1 b 0 2.2u</code>, <code>.ac lin 4001 300 700</code>, puis <code>.meas AC Imax MAX mag(I(R1))</code>, <code>.meas AC UCmax MAX mag(V(b))</code>, <code>.meas AC f1 WHEN mag(I(R1))=0.35355 RISE=1</code>, <code>.meas AC f2 WHEN mag(I(R1))=0.35355 FALL=1</code> et <code>.end</code>.</li>
+    <li>Circuit parallèle : remplacer par <code>I1 0 p AC 1</code>, <code>R2 p 0 2k</code>, <code>L2 p 0 50m Rser=0</code>, <code>C2 p 0 2.2u</code>, même analyse, et mesurer <code>MAX mag(V(p))</code>, puis le courant <code>mag(I(C2))</code> à la résonance.</li>
+    <li>Facultatif : rendre à la bobine une résistance série, <code>Rser=5</code>, et relever le déplacement de la fréquence de phase nulle et la baisse de l'impédance maximale ; puis lancer une analyse temporelle <code>.tran 0 40m 0 2u</code> du circuit série alimenté par <code>SINE(0 14.142 479.87)</code> pour observer l'établissement.</li>
+  </ol>
+  <p>
+    Résultats attendus : en Python et dans LTspice, $I_{\max} = 0{,}5\ \mathrm{A}$ à $479{,}9\ \mathrm{Hz}$, $f_1 = 449{,}1\ \mathrm{Hz}$,
+    $f_2 = 512{,}8\ \mathrm{Hz}$, $\Delta f = 63{,}7\ \mathrm{Hz}$, et $U_{C,\max} = 75{,}5\ \mathrm{V}$ à $477{,}8\ \mathrm{Hz}$, légèrement sous $f_0$.
+    En parallèle, $|V(p)|_{\max} = 2000\ \mathrm{V}$ pour $1\ \mathrm{A}$, soit $2\ \mathrm{k\Omega}$, à $479{,}9\ \mathrm{Hz}$, $Q_p = 13{,}3$, courant du
+    condensateur $13{,}3\ \mathrm{A}$ et bande passante $36{,}2\ \mathrm{Hz}$, plus étroite que celle du circuit série. Avec $r = 5\ \Omega$,
+    le maximum d'impédance baisse vers $1{,}4\ \mathrm{k\Omega}$, puisque $2\ \mathrm{k\Omega}$ et environ $4{,}5\ \mathrm{k\Omega}$ se mettent en
+    parallèle. En temporel, l'amplitude atteint $63\ \%$ de sa valeur finale vers $5\ \mathrm{ms}$. Anomalies à observer : une
+    résistance série implicite de la bobine si l'on omet <code>Rser=0</code>, qui abaisse légèrement $Q$ ; une résolution
+    insuffisante du balayage, qui manque le sommet d'une courbe étroite ; des grandeurs affichées en décibels par défaut,
+    à convertir ; un pic trop haut ou mal placé si le condensateur est saisi en <code>2.2</code> au lieu de <code>2.2u</code>.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est calculé
+    dans ce navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées
+    localement pour suivre votre progression. Cette séance prépare le jalon de fin du module Triphasé et qualité de
+    l'énergie : maîtriser les régimes sinusoïdaux monophasés et triphasés, les puissances, la compensation, les harmoniques
+    et les filtres élémentaires.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">À $f_0 = 1/(2\pi\sqrt{LC})$, les réactances de $L$ et $C$ s'annulent et l'énergie s'échange entre elles : la source ne fournit plus que les pertes.</li>
+    <li data-rang="02">Le facteur de qualité, $Z_0/R$ en série et $R/Z_0$ en parallèle, fixe à la fois la surtension ou la surintensité, la bande passante $f_0/Q$ et la durée d'établissement.</li>
+    <li data-rang="03">Dans un réseau, batterie et inductance de source forment une résonance parallèle ; on la calcule avec la source, et une self anti-harmonique la place sous le rang $5$.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> reconnaître, dans un circuit réel, si une paire $L$, $C$ est vue en série ou
+    en parallèle par la source qui l'excite, puis appliquer le bon facteur de qualité. La même batterie est en parallèle avec
+    le réseau pour un courant harmonique et en série avec lui pour l'enclenchement. Les deux simulations et l'exercice
+    avancé sont faits pour installer ce réflexe.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Révision 3 et analyse d'une charge AC, réunit tout le régime
+    sinusoïdal monophasé sur une installation à plusieurs charges. Question à préparer : un atelier alimenté en $230\ \mathrm{V}$,
+    $50\ \mathrm{Hz}$, comprend un moteur de $3\ \mathrm{kW}$ à $\cos\varphi = 0{,}75$, un four résistif de $2\ \mathrm{kW}$ et un
+    condensateur de $100\ \mu\mathrm{F}$. Quels sont la puissance apparente, le facteur de puissance et le courant de l'ensemble ?
+    Et si la ligne d'alimentation a une inductance de $1\ \mathrm{mH}$, à quel rang harmonique ce condensateur résonne-t-il avec
+    elle ?
+  </p>
+
+</article>
