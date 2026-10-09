@@ -1,0 +1,968 @@
+<article class="cours" data-slug="correction-du-facteur-de-puissance">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/puissances-en-courant-alternatif">Puissances en courant alternatif</a> s'est achevé sur une
+      question : le compresseur absorbe, par phase, $P = 5888\ \mathrm{W}$ et $Q = 4416\ \mathrm{var}$ sous $230\ \mathrm{V}$ ;
+      quelle puissance réactive un condensateur placé en parallèle doit-il fournir pour que le $\cos\varphi$ de l'ensemble
+      atteigne $0{,}95$, quelle capacité cela représente-t-il, de combien le courant diminue-t-il, et que se passerait-il avec
+      une capacité deux fois trop grande ? Réponse, établie dans cette séance : le condensateur doit fournir
+      $Q_C = P(\tan\varphi_1 - \tan\varphi_2) = 5888 \times (0{,}75 - 0{,}3287) = 2481\ \mathrm{var}$, soit
+      $C = Q_C/(U^2\omega) = 149{,}3\ \mu\mathrm{F}$ ; le courant passe de $32$ à $26{,}95\ \mathrm{A}$. Avec $298{,}5\ \mu\mathrm{F}$,
+      l'ensemble devient capacitif, $Q = -545\ \mathrm{var}$, mais le courant, $25{,}71\ \mathrm{A}$, reste plus faible qu'avant
+      compensation : la surcompensation n'est pas un désastre immédiat, c'est un mauvais réglage dont les effets nuisibles
+      apparaissent ailleurs, sur la tension, sur les moteurs et sur les harmoniques. Cette séance s'appuie sur le théorème de
+      Boucherot et sur la puissance complexe du cours précédent, sur l'impédance du condensateur du cours
+      <a href="#/cours/impedances-en-regime-sinusoidal">Impédances en régime sinusoïdal</a> et sur l'énergie stockée du cours
+      <a href="#/cours/condensateurs-et-champ-electrique">Condensateurs et champ électrique</a>.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Un moteur asynchrone, un transformateur, une self de ballast ou un poste de soudage absorbent de la puissance réactive :
+    leur champ magnétique emprunte de l'énergie au réseau et la lui rend deux fois par période. Cette énergie ne fait aucun
+    travail, mais le courant qui la transporte circule dans tous les conducteurs entre la source et la charge. Il échauffe les
+    câbles, occupe une partie de la capacité des transformateurs et des groupes, augmente les chutes de tension et, selon le
+    contrat de fourniture, peut être facturé. Corriger le facteur de puissance consiste à produire ce réactif sur place, avec
+    des condensateurs qui échangent leur énergie avec la charge au lieu de la faire venir de la source.
+  </p>
+  <p>
+    C'est une opération d'ingénierie courante et rentable, mais elle n'est pas sans risque : une batterie mal dimensionnée
+    peut rendre l'installation capacitive aux heures creuses, faire monter la tension, auto-exciter un moteur ou entrer en
+    résonance avec le réseau aux fréquences harmoniques. L'ingénieur doit donc savoir calculer la puissance réactive à
+    installer, la traduire en capacité, choisir l'emplacement et le mode de commande, et vérifier les effets secondaires. Le
+    travail central de cette séance est le dimensionnement d'une batterie de condensateurs pour une charge industrielle.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Expliquer physiquement pourquoi un condensateur placé en parallèle réduit le courant fourni par le réseau sans modifier la puissance active ni le courant de la charge.</li>
+    <li data-rang="02">Établir et appliquer $Q_C = P(\tan\varphi_1 - \tan\varphi_2)$ puis $C = Q_C/(U^2\omega)$ pour dimensionner une batterie de condensateurs.</li>
+    <li data-rang="03">Calculer les gains d'une compensation : courant, pertes Joule, chute de tension et puissance apparente libérée.</li>
+    <li data-rang="04">Interpréter la surcompensation à l'aide du courant de ligne en fonction de $Q_C$, et en déduire les limites d'une batterie fixe.</li>
+    <li data-rang="05">Comparer compensation individuelle, par groupe et globale, fixe ou automatique, et choisir selon le profil de charge.</li>
+    <li data-rang="06">Estimer le rang de résonance parallèle $n_r = \sqrt{S_{cc}/Q_C}$ d'une batterie et diagnostiquer un risque harmonique.</li>
+    <li data-rang="07">Diagnostiquer une batterie défaillante ou mal réglée à partir de symptômes mesurés.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois acquis suffisent. Le premier est le triangle des puissances : $S^2 = P^2 + Q^2$, $\cos\varphi = P/S$ et
+    $\tan\varphi = Q/P$, avec la conversion utile $\tan\varphi = \sqrt{1 - \cos^2\varphi}/\cos\varphi$. Le deuxième est le
+    théorème de Boucherot : les puissances réactives s'additionnent avec leur signe, et un condensateur, fléché en convention
+    récepteur, a une puissance réactive négative, $Q_C = -C\omega U^2$. Le troisième est le lien entre courant et puissance à
+    tension donnée : $I = S/U = P/(U\cos\varphi)$. Le mini-test ci-dessous n'est pas noté ; la correction de chaque question
+    reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la correction".
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-echange">Produire le réactif là où il est consommé</h3>
+  <p>
+    Le courant d'un moteur se décompose en deux parts. La composante active, en phase avec la tension, apporte l'énergie
+    transformée en travail. La composante réactive, en quadrature retard, entretient le champ magnétique : pendant un quart de
+    période, le moteur emprunte de l'énergie, pendant le suivant il la rend. Sans compensation, cet aller-retour se fait avec
+    la source, à travers tout le réseau. Un condensateur placé près du moteur a un comportement opposé : son courant est en
+    quadrature avance, il rend de l'énergie quand le moteur en demande et en reprend quand le moteur en rend. Les deux
+    échanges se font alors entre le moteur et le condensateur, sur quelques mètres de câble, et la source n'a plus à fournir
+    que la composante active, plus le réactif résiduel.
+  </p>
+  <p>
+    Rien ne change pour le moteur : il est toujours soumis à la même tension, il absorbe le même courant et la même puissance
+    active. Ce qui change, c'est le courant en amont du point de raccordement du condensateur, donc les pertes, les chutes de
+    tension et la puissance apparente demandée à la source. C'est pourquoi l'emplacement de la batterie compte autant que sa
+    taille : seuls les conducteurs situés en amont du condensateur sont soulagés.
+  </p>
+  <p>
+    Analogie contrôlée : un vérin hydraulique qui va et vient en permanence, alimenté par une pompe éloignée. À chaque cycle,
+    l'huile part vers le vérin puis revient, et la tuyauterie doit faire circuler ce débit alternatif sur toute sa longueur. Un
+    accumulateur hydraulique placé au pied du vérin fournit et reprend ce débit localement : la longue tuyauterie ne
+    transporte plus que le débit qui fait réellement du travail.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie</span>
+    <p>
+      L'analogie rend compte de l'échange local et du soulagement des conducteurs en amont, mais elle s'arrête là. L'huile est
+      de la matière qui se conserve, alors que la puissance réactive n'est qu'une grandeur de bilan, l'amplitude d'une
+      composante de $p(t)$ à valeur moyenne nulle. Un accumulateur trop gros ne renvoie pas de débit nuisible dans la pompe,
+      alors qu'un condensateur surdimensionné rend l'installation capacitive et fait monter la tension. L'analogie ignore aussi
+      la fréquence : la puissance réactive d'un condensateur croît avec $\omega$, et il présente une impédance faible aux
+      harmoniques, ce qu'aucun accumulateur ne fait. Tout ce qui suit suppose un régime permanent sinusoïdal à $50\ \mathrm{Hz}$
+      et une tension de réseau imposée, sauf mention contraire.
+    </p>
+  </div>
+
+  <h3 id="d-phaseurs-section">Simulation interactive : les courants avant et après compensation</h3>
+  <p>
+    La simulation reprend la charge de l'exemple de la section H : $12\ \mathrm{kW}$ sous $230\ \mathrm{V}$, $50\ \mathrm{Hz}$, de
+    facteur de puissance réglable par le curseur. La poignée, sur l'axe imaginaire, règle le courant du condensateur, donc sa
+    capacité ; elle se déplace à la souris, au doigt ou au clavier après l'avoir sélectionnée. Avant de manipuler, prédisez :
+    quand le courant du condensateur augmente, le courant de la charge change-t-il ? Le courant de ligne diminue-t-il
+    indéfiniment ? Pour quelle valeur du courant du condensateur est-il minimal, et que vaut-il alors ?
+  </p>
+  <figure id="d-phaseurs-figure">
+    <div class="schema-vivant" id="d-phaseurs"></div>
+    <div id="d-phaseurs-trace"></div>
+    <figcaption>
+      À gauche, le diagramme des courants, référence des phases sur la tension $\underline{U}$, flèche horizontale en trait plein
+      épais. Le courant de la charge $\underline{I}_L$, en trait plein, est en retard, sous l'axe réel. Le courant du condensateur
+      $\underline{I}_C$, en quadrature avance, est la flèche verticale partant de l'origine, terminée par la poignée ; sa copie en
+      tirets fins, mise au bout de $\underline{I}_L$, construit la somme. Le courant de ligne $\underline{I} = \underline{I}_L +
+      \underline{I}_C$ est la flèche en tirets épais. À droite, le triangle des puissances : $P$ horizontal, $Q_L$ de la charge en
+      tirets fins vers le haut, $Q_C$ du condensateur en trait plein vers le bas, et la puissance apparente fournie par le
+      réseau en tirets épais. Sous le schéma, la courbe du courant de ligne en fonction de la capacité ; le point marque le
+      réglage courant.
+    </figcaption>
+  </figure>
+  <div id="d-phaseurs-curseurs"></div>
+  <div id="d-phaseurs-valeurs"></div>
+  <p>
+    Interprétation : le courant de la charge ne bouge pas, ni en module ni en phase ; seul le courant de ligne change. Sa
+    composante active, $P/U = 52{,}17\ \mathrm{A}$, est fixe ; le condensateur ne fait que réduire sa composante réactive. Le
+    courant de ligne est minimal quand $I_C$ égale la composante réactive de $I_L$ : à $\cos\varphi = 0{,}70$, pour
+    $I_C = 53{,}23\ \mathrm{A}$, soit $C = 736{,}7\ \mu\mathrm{F}$, il vaut $52{,}17\ \mathrm{A}$ au lieu de $74{,}53\ \mathrm{A}$. Au-delà,
+    le courant de ligne passe au-dessus de l'axe réel, l'installation devient capacitive et le courant remonte : la courbe
+    du bas est symétrique autour de son minimum. Le gain le plus rapide s'obtient sur les premiers kilovars ; les derniers,
+    entre $\cos\varphi = 0{,}95$ et $1$, coûtent beaucoup de capacité pour peu de courant gagné.
+  </p>
+
+  <h3 id="d-energie-section">Animation : l'énergie échangée entre la charge et le condensateur</h3>
+  <p>
+    L'animation montre, instant par instant, la puissance reçue par la charge, celle reçue par le condensateur et celle
+    fournie par la source, pour la même charge de $12\ \mathrm{kW}$ à $\cos\varphi = 0{,}70$. Le curseur règle le taux de
+    compensation, rapport entre la puissance réactive du condensateur et celle de la charge ; le lecteur fait avancer l'instant
+    étudié sur deux périodes, avec pause, vitesse et remise à zéro. Avant de lancer, prédisez : sans compensation, la source
+    reçoit-elle de l'énergie en retour à certains instants ? Avec un taux de $100\ \%$, la puissance fournie par la source
+    peut-elle encore devenir négative ? Que fait le condensateur quand la charge rend de l'énergie ?
+  </p>
+  <figure id="d-energie-figure">
+    <div class="schema-vivant" id="d-energie"></div>
+    <div id="d-energie-trace"></div>
+    <figcaption>
+      En haut, les échanges à l'instant étudié : la source à gauche, la charge et le condensateur à droite, reliés à un même
+      nœud. L'épaisseur de chaque flèche est proportionnelle à la puissance instantanée transportée, et son sens indique le
+      sens réel du transfert ; une branche sans flèche ne transporte rien à cet instant. En bas, les trois puissances
+      instantanées en kilowatts, chacune nommée dans la légende avec sa couleur réelle ; le trait vertical en tirets marque
+      l'instant étudié et le trait horizontal en tirets la puissance active $P$, moyenne commune de la charge et de la source.
+    </figcaption>
+  </figure>
+  <div id="d-energie-curseurs"></div>
+  <div id="d-energie-lecteur"></div>
+  <div id="d-energie-valeurs"></div>
+  <p>
+    Interprétation : sans compensation, la puissance fournie par la source oscille entre $P - S$ et $P + S$, soit de $-5{,}14$
+    à $29{,}14\ \mathrm{kW}$, et devient négative pendant $25{,}3\ \%$ de la période, $\varphi/180^\circ$ avec $\varphi = 45{,}57^\circ$ :
+    la charge rend de l'énergie au réseau. Avec un taux de $100\ \%$, la puissance réactive du condensateur est l'exacte opposée
+    de celle de la charge : quand la charge rend son énergie magnétique, le condensateur la stocke sous forme électrique, et
+    inversement. La source ne fournit plus que $P(1 + \cos 2\omega t)$, toujours positive, entre $0$ et $24\ \mathrm{kW}$. La
+    moyenne fournie, $12\ \mathrm{kW}$, ne dépend pas du taux : un condensateur idéal ne consomme rien.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-montage">Le montage : un condensateur en parallèle sur la charge</h3>
+  <p>
+    La compensation se fait toujours en parallèle : un condensateur en série modifierait la tension appliquée à la charge et
+    serait parcouru par tout son courant, y compris en cas de court-circuit. En parallèle, la charge reste soumise à la
+    tension du réseau, supposée imposée, et le condensateur ajoute simplement son courant au nœud de raccordement. Le schéma
+    fixe les conventions utilisées dans toute la séance.
+  </p>
+  <figure id="e-montage-figure">
+    <svg viewBox="0 0 820 340" role="img" aria-label="Montage de compensation : source entre phase et neutre en convention générateur, ligne parcourue par le courant i, nœud A, charge inductive Z parcourue par iL et condensateur C parcouru par iC, tous deux en convention récepteur, tension u aux bornes de la charge, neutre pris comme référence">
+      <defs>
+        <marker id="fl-e-mo" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="90" cy="180" r="28"/>
+        <path d="M76 180C82 168 88 168 90 180S98 192 104 180"/>
+        <path d="M90 152V60H180M300 60H620V145M620 159V290H90V208"/>
+        <rect x="180" y="48" width="120" height="24" rx="3"/>
+        <path d="M440 60V140M440 220V290"/>
+        <rect x="420" y="140" width="40" height="80"/>
+        <path d="M596 145H644M596 159H644" stroke-width="3"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="440" cy="60" r="5"/><circle cx="440" cy="290" r="5"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2" fill="none">
+        <path d="M330 44H400" marker-end="url(#fl-e-mo)"/>
+        <path d="M424 76V128" marker-end="url(#fl-e-mo)"/>
+        <path d="M604 76V130" marker-end="url(#fl-e-mo)"/>
+        <path d="M710 276V76" marker-end="url(#fl-e-mo)"/>
+        <path d="M36 276V76" marker-end="url(#fl-e-mo)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="96" y="46">L, phase</text>
+        <text x="100" y="322">N, neutre : référence de potentiel</text>
+        <text x="126" y="176">réseau</text>
+        <text x="126" y="192">50 Hz</text>
+        <text x="240" y="98" text-anchor="middle">ligne amont</text>
+        <text x="365" y="34" text-anchor="middle">i = iL + iC</text>
+        <text x="450" y="52">A</text>
+        <text x="416" y="106" text-anchor="end">iL</text>
+        <text x="440" y="185" text-anchor="middle">Z</text>
+        <text x="472" y="176">charge</text>
+        <text x="472" y="192">inductive</text>
+        <text x="596" y="106" text-anchor="end">iC</text>
+        <text x="652" y="196">C</text>
+        <text x="722" y="170">u</text>
+        <text x="20" y="66">us</text>
+        <text x="440" y="250" font-size="11">courant soulagé : en amont de A seulement</text>
+      </g>
+    </svg>
+    <figcaption>
+      Montage de compensation. La source, entre la phase $L$ et le neutre $N$, référence de potentiel, est fléchée en convention
+      générateur : $u_s$ pointe vers la phase et le courant $i$ sort de cette borne. Au nœud $A$, le courant de ligne se partage
+      entre la charge inductive $Z$, parcourue par $i_L$, et le condensateur $C$, parcouru par $i_C$, tous deux fléchés en
+      convention récepteur, de la phase vers le neutre. La tension $u$, commune à la charge et au condensateur, est fléchée du
+      neutre vers la phase. Loi des nœuds : $\underline{I} = \underline{I}_L + \underline{I}_C$. Seule la ligne amont, entre la
+      source et $A$, voit son courant modifié par le condensateur.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-dimension">Puissance réactive à installer</h3>
+  <p>
+    Hypothèses : tension $U$ imposée au nœud $A$ ; charge linéaire de puissance active $P$ et de facteur de puissance
+    $\cos\varphi_1$ inductif ; condensateur idéal, sans pertes. Le condensateur ne consomme pas de puissance active : d'après
+    Boucherot, la puissance active vue du réseau reste $P$. Il fournit une puissance réactive $Q_C$, qui se retranche de celle
+    de la charge, $Q_1 = P\tan\varphi_1$. Pour atteindre un facteur de puissance $\cos\varphi_2$, il faut
+    $Q_2 = P\tan\varphi_2 = Q_1 - Q_C$, d'où :
+  </p>
+  <div class="formule-cle">
+    $$Q_C = Q_1 - Q_2 = P\,(\tan\varphi_1 - \tan\varphi_2)$$
+    <p class="formule-cle-legende">
+      $Q_C$ puissance réactive fournie par la batterie, en vars, comptée positivement ici comme une fourniture ; $P$ puissance
+      active de la charge, en watts ; $\varphi_1$ et $\varphi_2$ déphasages avant et après compensation, $\tan\varphi$ sans
+      dimension. Hypothèses : régime sinusoïdal, $P$ inchangée, tension imposée. Interprétation : on retire du triangle des
+      puissances la hauteur $Q_C$ sans toucher à sa base $P$. Cas limites : $\varphi_2 = \varphi_1$ donne $Q_C = 0$ ;
+      $\varphi_2 = 0$, compensation totale, donne $Q_C = Q_1$ ; $\varphi_2 &lt; 0$, objectif capacitif, donnerait $Q_C &gt; Q_1$,
+      c'est la surcompensation. Dimension : $\mathrm{W}$ multiplié par un nombre sans dimension, la même que celle des
+      $\mathrm{var}$, $\mathrm{V \cdot A}$. Le coefficient $k = \tan\varphi_1 - \tan\varphi_2$, en kilovars par kilowatt, est
+      celui des tableaux des constructeurs.
+    </p>
+  </div>
+
+  <h3 id="e-capacite">Capacité correspondante</h3>
+  <p>
+    Un condensateur idéal sous la tension efficace $U$ est parcouru par $I_C = C\omega U$, en avance de $90^\circ$. Sa puissance
+    complexe, en convention récepteur, vaut $\underline{S}_C = \underline{U}\,\underline{I}_C^* = U \times (-jC\omega U) = -jC\omega U^2$ :
+    il fournit $Q_C = C\omega U^2$. On en tire la capacité :
+  </p>
+  <div class="formule-cle">
+    $$C = \frac{Q_C}{U^2\,\omega} = \frac{P\,(\tan\varphi_1 - \tan\varphi_2)}{2\pi f\,U^2}, \qquad I_C = \frac{Q_C}{U} = C\omega U$$
+    <p class="formule-cle-legende">
+      $C$ capacité en farads ; $U$ tension efficace aux bornes du condensateur, en volts ; $\omega = 2\pi f$ pulsation, en
+      radians par seconde ; $I_C$ courant du condensateur, en ampères. Hypothèses : condensateur idéal, tension sinusoïdale.
+      Interprétation : à $230\ \mathrm{V}$, $50\ \mathrm{Hz}$, $U^2\omega = 16{,}62 \times 10^6$, donc $1\ \mathrm{kvar}$ demande
+      $60{,}2\ \mu\mathrm{F}$. Cas limites et sensibilités : $Q_C$ varie comme $U^2$, donc une tension supérieure de $10\ \%$
+      donne $21\ \%$ de réactif en plus, et comme $f$, donc le même condensateur fournit $20\ \%$ de plus à $60\ \mathrm{Hz}$.
+      Dimension : $\mathrm{var}/(\mathrm{V^2 \cdot s^{-1}}) = \mathrm{A \cdot s/V} = \mathrm{C/V} = \mathrm{F}$. En triphasé, le
+      même calcul se fait par phase ; un condensateur branché entre deux phases voit la tension composée, $\sqrt{3}$ fois la
+      tension simple, et fournit donc trois fois plus de réactif pour la même capacité : en couplage triangle,
+      $C_\Delta = C_Y/3$. Les couplages seront étudiés dans le cours Systèmes triphasés équilibrés.
+    </p>
+  </div>
+
+  <h3 id="e-effets">Effets sur le courant, les pertes et la tension</h3>
+  <p>
+    À puissance active et tension données, le courant de ligne vaut $I = P/(U\cos\varphi)$. Le rapport des courants après et
+    avant compensation, et le rapport des pertes dans une ligne de résistance $R$, s'en déduisent :
+  </p>
+  <div class="formule-cle">
+    $$\frac{I_2}{I_1} = \frac{\cos\varphi_1}{\cos\varphi_2}, \qquad \frac{P_{J2}}{P_{J1}} = \left(\frac{\cos\varphi_1}{\cos\varphi_2}\right)^2, \qquad \Delta S = \frac{P}{\cos\varphi_1} - \frac{P}{\cos\varphi_2}$$
+    <p class="formule-cle-legende">
+      $I_1$ et $I_2$ courants de ligne avant et après compensation ; $P_{J}$ pertes Joule $RI^2$ dans la ligne amont ; $\Delta S$
+      puissance apparente libérée sur la source, en voltampères. Hypothèses : même $P$, même $U$, ligne amont seulement.
+      Exemple : de $0{,}70$ à $0{,}95$, le courant est multiplié par $0{,}737$ et les pertes par $0{,}543$, soit $46\ \%$ de
+      pertes en moins. Cas limite : $\cos\varphi_1 = \cos\varphi_2$ donne des rapports égaux à $1$. Ces rapports sont sans
+      dimension.
+    </p>
+  </div>
+  <p>
+    Pour la tension, prenons $\underline{U}$ réel au nœud de la charge et une ligne amont d'impédance $R + jX$. Le courant
+    s'écrit $\underline{I} = (P - jQ)/U$, conjugué de $\underline{S}/\underline{U}$ ; la tension au départ vaut alors
+    $\underline{U}_s = U + (R + jX)(P - jQ)/U = U + (RP + XQ)/U + j(XP - RQ)/U$. Quand la partie imaginaire est petite devant
+    $U$, ce qui est le cas courant :
+  </p>
+  <div class="formule-cle">
+    $$\Delta U = U_s - U \approx \frac{RP + XQ}{U}$$
+    <p class="formule-cle-legende">
+      $\Delta U$ chute de tension, en volts ; $R$ et $X$ résistance et réactance de la ligne amont, en ohms ; $P$ et $Q$ vus du
+      nœud. Hypothèses : chute faible devant $U$, régime sinusoïdal. Interprétation : réduire $Q$ réduit la chute à proportion
+      de $X$. Sur un câble basse tension de petite section, presque résistif comme celui du compresseur dans le cours
+      <a href="#/cours/impedances-en-regime-sinusoidal">Impédances en régime sinusoïdal</a>, le gain est faible ; derrière un
+      transformateur, dont la réactance domine, il est sensible. Cas limite : $Q &lt; 0$, installation surcompensée, peut
+      rendre $\Delta U$ négatif : la tension en bout de ligne dépasse celle du départ. Dimension :
+      $\Omega \cdot \mathrm{W}/\mathrm{V} = \mathrm{V}$.
+    </p>
+  </div>
+
+  <h3 id="e-surcompensation">Surcompensation</h3>
+  <p>
+    Le courant de ligne en fonction de la puissance réactive installée s'écrit $I(Q_C) = \sqrt{P^2 + (Q_1 - Q_C)^2}/U$. C'est une
+    fonction paire de $Q_1 - Q_C$ : elle est minimale, égale à $P/U$, pour $Q_C = Q_1$, et elle prend la même valeur pour
+    $Q_C = Q_1 - \Delta$ et $Q_C = Q_1 + \Delta$. Une installation surcompensée de $\Delta$ consomme donc le même courant qu'une
+    installation sous-compensée de $\Delta$ ; mais elle est capacitive, et cela a des conséquences propres :
+  </p>
+  <ul>
+    <li>la tension monte en bout de ligne, d'autant plus que la réactance amont est grande, puisque $XQ$ devient négatif ;</li>
+    <li>un moteur compensé individuellement, déconnecté du réseau mais encore relié à ses condensateurs, peut s'auto-exciter en génératrice asynchrone pendant son ralentissement si le réactif des condensateurs dépasse son réactif à vide : surtensions à ses bornes ;</li>
+    <li>certains contrats de fourniture comptent ou pénalisent le réactif fourni au réseau, et des régulateurs de tension ou des protections peuvent réagir à une installation capacitive.</li>
+  </ul>
+  <p>
+    La surcompensation apparaît surtout aux faibles charges : une batterie fixe dimensionnée pour la pleine charge devient
+    excessive la nuit, quand ne restent en service que des moteurs à vide ou des transformateurs. D'où la compensation
+    automatique, par gradins commutés selon la mesure de $Q$.
+  </p>
+
+  <h3 id="e-modes">Emplacement et mode de commande</h3>
+  <p>
+    Compensation individuelle : un condensateur aux bornes de chaque gros récepteur, commuté avec lui par le même contacteur.
+    Elle soulage tout le réseau jusqu'au récepteur et suit automatiquement sa marche, mais elle multiplie les condensateurs.
+    Compensation par groupe : une batterie par tableau divisionnaire ou par atelier. Compensation globale : une batterie au
+    tableau général, la plus économique en kilovars installés grâce au foisonnement des charges, mais qui ne soulage que
+    l'amont du tableau, transformateur et liaison réseau. Une batterie fixe convient à une charge stable ; une batterie
+    automatique, faite de gradins enclenchés par un régulateur varmétrique, suit une charge variable.
+  </p>
+
+  <h3 id="e-profil-section">Simulation interactive : batterie fixe ou automatique sur une journée</h3>
+  <p>
+    La simulation applique une batterie au profil de charge journalier d'un atelier dont la pointe est la charge de la section
+    H, $12\ \mathrm{kW}$ à $\cos\varphi = 0{,}70$ ; la nuit, il ne reste que $3\ \mathrm{kW}$ à $\cos\varphi = 0{,}50$. Les curseurs
+    règlent la puissance réactive totale de la batterie, le mode, fixe ou automatique, le nombre de gradins et le facteur de
+    puissance visé par le régulateur. En mode automatique, le régulateur enclenche le plus petit nombre de gradins qui atteint
+    l'objectif, sans jamais rendre l'installation capacitive. Avant de manipuler, prédisez : une batterie fixe de
+    $8{,}3\ \mathrm{kvar}$, juste suffisante à la pointe, est-elle acceptable la nuit ? Avec une batterie automatique, combien de
+    gradins faut-il pour suivre correctement le profil ?
+  </p>
+  <figure id="e-profil-figure">
+    <div id="e-profil-trace"></div>
+    <figcaption>
+      Puissances réactives sur vingt-quatre heures, en kilovars : celle de la charge, celle demandée au réseau après
+      compensation, et l'objectif $P\tan\varphi_{\text{cible}}$ que vise le régulateur, chacune nommée dans la légende avec sa
+      couleur réelle. Le trait horizontal en tirets marque $Q = 0$ : sous ce trait, l'installation est capacitive. Les bilans
+      journaliers sont affichés sous le tracé.
+    </figcaption>
+  </figure>
+  <div id="e-profil-curseurs"></div>
+  <div id="e-profil-valeurs"></div>
+  <p>
+    Interprétation : la batterie fixe de $8{,}3\ \mathrm{kvar}$ atteint $\cos\varphi = 0{,}95$ aux heures de pointe, mais la nuit
+    elle fournit $3{,}1\ \mathrm{kvar}$ de trop : l'installation est capacitive pendant dix heures. Une batterie fixe plus petite
+    évite ce défaut mais laisse le facteur de puissance trop bas à la pointe : c'est l'objet de l'exercice avancé. La batterie
+    automatique supprime le dilemme ; avec quatre gradins de $2{,}07\ \mathrm{kvar}$, elle approche l'objectif sans jamais
+    surcompenser. Plus il y a de gradins, plus le suivi est fin, mais chaque gradin coûte un contacteur, et chaque
+    enclenchement un appel de courant. La puissance réactive journalière demandée au réseau, et le rapport $\tan\varphi$
+    moyen qui en découle, résument la qualité du réglage.
+  </p>
+
+  <h3 id="e-harmoniques">Limites : harmoniques, résonance, décharge et enclenchement</h3>
+  <p>
+    Un condensateur a une impédance $1/(C h\omega)$ qui diminue avec le rang $h$ de l'harmonique : il attire les courants
+    harmoniques produits par les variateurs et les redresseurs. Pire, vu du jeu de barres, il forme avec l'inductance de la
+    source, $L_s$, un circuit parallèle résonant. La puissance de court-circuit de la source, $S_{cc} = U^2/(L_s\omega)$, et la
+    puissance de la batterie, $Q_C = U^2C\omega$, donnent directement le rang de cette résonance :
+  </p>
+  <div class="formule-cle">
+    $$\omega_r = \frac{1}{\sqrt{L_sC}} \quad\Longrightarrow\quad n_r = \frac{\omega_r}{\omega} = \frac{1}{\omega\sqrt{L_sC}} = \sqrt{\frac{S_{cc}}{Q_C}}$$
+    <p class="formule-cle-legende">
+      $n_r$ rang de résonance, sans dimension ; $S_{cc}$ puissance de court-circuit au point de raccordement, en voltampères ;
+      $Q_C$ puissance réactive de la batterie sous la même tension, en vars. Dérivation : $S_{cc}/Q_C = 1/(L_sC\omega^2)$, et
+      $\omega_r^2 = 1/(L_sC)$. Hypothèses : source purement inductive, charges résistives négligées, ce qui surestime
+      l'amplification. Interprétation : si $n_r$ tombe près d'un rang harmonique présent, $5$, $7$, $11$ ou $13$ pour un pont à
+      six diodes, la tension harmonique est amplifiée et les condensateurs surchauffent. Cas limites : $Q_C \to 0$ repousse la
+      résonance à l'infini ; augmenter la batterie fait descendre $n_r$. La parade usuelle est la self anti-harmonique en série
+      avec chaque gradin, qui place la résonance sous le rang $5$ ; elle sera reprise dans les cours Résonance série et
+      parallèle et Harmoniques et qualité de l'énergie.
+    </p>
+  </div>
+  <p>
+    Deux contraintes viennent de l'énergie stockée, étudiée dans le cours
+    <a href="#/cours/condensateurs-et-champ-electrique">Condensateurs et champ électrique</a>. À l'ouverture, le condensateur
+    reste chargé, jusqu'à la crête de la tension, $U\sqrt{2}$ : chaque élément doit avoir une résistance de décharge, de façon
+    à descendre sous une tension sans danger dans un délai que fixent la norme applicable et le constructeur. À la fermeture,
+    un condensateur déchargé se comporte d'abord comme un court-circuit : l'appel de courant n'est limité que par
+    l'inductance du circuit, et il est plus sévère quand un gradin s'enclenche à côté de gradins déjà chargés. Un gradin ne
+    doit pas être réenclenché tant qu'il n'est pas déchargé, et les contacteurs utilisés sont des modèles prévus pour les
+    condensateurs.
+  </p>
+
+  <h3 id="e-methodes">Comparaison des méthodes de calcul</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Quatre façons de déterminer la batterie à installer</caption>
+      <thead><tr><th>Méthode</th><th>Principe</th><th>Points forts</th><th>Limites</th><th>Quand la choisir</th></tr></thead>
+      <tbody>
+        <tr><td>Formule des tangentes</td><td>$Q_C = P(\tan\varphi_1 - \tan\varphi_2)$</td><td>directe, une seule ligne de calcul</td><td>demande $P$ et $\cos\varphi_1$ représentatifs ; ne dit rien du courant ni de la tension</td><td>dimensionnement courant d'une charge ou d'un tableau</td></tr>
+        <tr><td>Triangle des puissances</td><td>tracer $P$, $Q_1$, retrancher $Q_C$</td><td>visuelle, montre la surcompensation</td><td>précision graphique limitée</td><td>vérification, explication à un client</td></tr>
+        <tr><td>Phaseurs de courant</td><td>$\underline{I} = \underline{I}_L + jC\omega\underline{U}$</td><td>donne le courant de ligne et les chutes de tension par le calcul complexe</td><td>plus long ; il faut le modèle de la charge</td><td>étude d'un départ avec ligne, contrôle d'un résultat</td></tr>
+        <tr><td>Bilan énergétique mesuré</td><td>$\tan\varphi = E_r/E_a$ sur une période de relevés</td><td>tient compte du profil réel et du foisonnement</td><td>demande des relevés d'énergie active et réactive</td><td>installation existante, choix d'une batterie automatique</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="e-statut">Statut des énoncés</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Ce qui relève de la loi, de la convention, de l'approximation, de la conception et de la norme ou du constructeur</caption>
+      <thead><tr><th>Énoncé</th><th>Statut</th><th>Commentaire</th></tr></thead>
+      <tbody>
+        <tr><td>Conservation de la puissance active ; Boucherot pour $P$ et $Q$ ; $Q_C = C\omega U^2$</td><td>Lois physiques et conséquences</td><td>Conservation de l'énergie, lois de Kirchhoff, impédance du condensateur.</td></tr>
+        <tr><td>$Q_C &gt; 0$ compté comme fourni par la batterie ; $Q &lt; 0$ en convention récepteur</td><td>Conventions</td><td>Les deux écritures coexistent : vérifier le sens avant de soustraire.</td></tr>
+        <tr><td>$P$ inchangée, tension imposée, $\Delta U \approx (RP + XQ)/U$, $n_r = \sqrt{S_{cc}/Q_C}$</td><td>Approximations</td><td>Valables pour une source puissante, une chute faible, une source purement inductive.</td></tr>
+        <tr><td>Objectif de $\cos\varphi$, compensation individuelle des gros moteurs, batterie automatique pour une charge variable, réactif inférieur au réactif à vide d'un moteur</td><td>Règles de conception</td><td>Compromis entre coût, gains et risques, à justifier au cas par cas.</td></tr>
+        <tr><td>Seuils de facturation du réactif, délai et tension de décharge, tenue en tension et en courant des condensateurs, rang d'accord des selfs</td><td>Contrat, norme et constructeur</td><td>À lire dans le contrat de fourniture, la norme applicable et les catalogues ; aucune valeur n'est retenue ici comme référence.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, le triangle des puissances avant et après compensation mis en regard
+    des phaseurs de courant, l'organigramme de dimensionnement d'une batterie et un tableau comparatif des modes de
+    compensation.
+  </p>
+
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 900 380" role="img" aria-label="Schéma principal sur l'exemple du compresseur. À gauche, triangle des puissances avant et après compensation : P de 5888 watts horizontal, Q1 de 4416 var avant compensation, Qc de 2481 var retranché vers le bas, Q2 de 1935 var après, S1 de 7360 voltampères en tirets fins, S2 de 6198 voltampères en tirets épais, angles phi1 de 36,87 degrés et phi2 de 18,19 degrés. À droite, phaseurs de courant : U sur l'axe réel, I1 de 32 ampères en retard, IC de 10,79 ampères vertical vers le haut ajouté au bout de I1, I2 de 26,95 ampères résultant">
+      <defs>
+        <marker id="fl-f-p" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto-start-reverse">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="1.2" fill="none" opacity="0.7">
+        <path d="M50 330H430" marker-end="url(#fl-f-p)"/>
+        <path d="M80 360V40" marker-end="url(#fl-f-p)"/>
+        <path d="M470 120H880" marker-end="url(#fl-f-p)"/>
+        <path d="M500 330V40" marker-end="url(#fl-f-p)"/>
+      </g>
+      <path d="M80 330H342" stroke="currentColor" stroke-width="2.6" fill="none" marker-end="url(#fl-f-p)"/>
+      <path d="M345 330V134" stroke="currentColor" stroke-width="1.6" fill="none" stroke-dasharray="6 5" marker-end="url(#fl-f-p)"/>
+      <path d="M368 131.3V240" stroke="currentColor" stroke-width="2.6" fill="none" marker-end="url(#fl-f-p)"/>
+      <path d="M345 131.3H372M345 242.9H372" stroke="currentColor" stroke-width="1" fill="none" stroke-dasharray="2 3"/>
+      <path d="M345 330V246" stroke="currentColor" stroke-width="3.2" fill="none" marker-end="url(#fl-f-p)"/>
+      <path d="M80 330L342.6 133.1" stroke="currentColor" stroke-width="1.6" fill="none" stroke-dasharray="6 5" marker-end="url(#fl-f-p)"/>
+      <path d="M80 330L342.1 243.7" stroke="currentColor" stroke-width="3.2" fill="none" stroke-dasharray="12 6" marker-end="url(#fl-f-p)"/>
+      <path d="M150 330A70 70 0 0 0 136 288" stroke="currentColor" stroke-width="1.3" fill="none"/>
+      <path d="M190 330A110 110 0 0 0 184.5 295.7" stroke="currentColor" stroke-width="1.3" fill="none"/>
+      <path d="M335 330v-10h10" stroke="currentColor" stroke-width="1.2" fill="none"/>
+      <path d="M500 120H840" stroke="currentColor" stroke-width="3.2" fill="none" stroke-linecap="round" marker-end="url(#fl-f-p)"/>
+      <path d="M500 120L625.7 214.3" stroke="currentColor" stroke-width="2.6" fill="none" marker-end="url(#fl-f-p)"/>
+      <path d="M628 216V165" stroke="currentColor" stroke-width="2.6" fill="none" marker-end="url(#fl-f-p)"/>
+      <path d="M500 120L625.2 161.1" stroke="currentColor" stroke-width="3.2" fill="none" stroke-dasharray="12 6" marker-end="url(#fl-f-p)"/>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="428" y="348" text-anchor="end">P (W)</text>
+        <text x="88" y="50">Q (var)</text>
+        <text x="210" y="352" text-anchor="middle">P = 5888 W</text>
+        <text x="338" y="200" text-anchor="end" font-size="11">Q1 = 4416</text>
+        <text x="378" y="186" font-size="11">QC = 2481</text>
+        <text x="378" y="202" font-size="11">fourni par C</text>
+        <text x="338" y="292" text-anchor="end" font-size="11">Q2 = 1935</text>
+        <text x="150" y="196" font-size="11">S1 = 7360 VA</text>
+        <text x="226" y="304" font-weight="600" font-size="11">S2 = 6198 VA</text>
+        <text x="152" y="300" font-size="11">φ1</text>
+        <text x="194" y="322" font-size="11">φ2</text>
+        <text x="60" y="30" font-size="11">avant : tirets fins ; après : trait épais</text>
+        <text x="878" y="138" text-anchor="end">Re</text>
+        <text x="508" y="50">Im</text>
+        <text x="740" y="110" text-anchor="middle" font-weight="600">U = 230 V, référence</text>
+        <text x="540" y="236" font-size="11">I1 = IL = 32 A</text>
+        <text x="636" y="196" font-size="11">IC = 10,79 A</text>
+        <text x="640" y="160" font-size="11" font-weight="600">I2 = 26,95 A</text>
+        <text x="510" y="290" font-size="11">IC, en avance de 90°, ajouté</text>
+        <text x="510" y="306" font-size="11">au bout de I1 : I2 = I1 + IC</text>
+        <text x="480" y="356" font-size="11">courant de la charge inchangé ; courant de ligne réduit</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal, sur l'exemple du compresseur, $P = 5888\ \mathrm{W}$ et $\cos\varphi_1 = 0{,}80$ sous $230\ \mathrm{V}$, compensé à
+      $\cos\varphi_2 = 0{,}95$. À gauche, le triangle des puissances en convention récepteur. La base $P$, en trait plein, ne change
+      pas. Avant compensation, $Q_1$ et $S_1$ sont en tirets fins, d'angle $\varphi_1 = 36{,}87^\circ$. La batterie fournit
+      $Q_C$, la flèche en trait plein dirigée vers le bas, tracée à côté du triangle pour rester lisible et bornée par les deux
+      repères en pointillés. Après compensation, $Q_2 = Q_1 - Q_C$ en trait épais et $S_2$ en tirets épais, d'angle
+      $\varphi_2 = 18{,}19^\circ$ ; le petit carré marque l'angle droit. Échelle : $1000\ \mathrm{VA}$ pour $45$ unités du dessin. À droite,
+      les phaseurs de courant, référence des phases sur la tension $\underline{U}$, flèche horizontale épaisse. Le courant de la
+      charge $\underline{I}_1 = \underline{I}_L$, en trait plein, est en retard sous l'axe ; le courant du condensateur
+      $\underline{I}_C$, en avance de $90^\circ$, est la flèche verticale en trait plein placée au bout de $\underline{I}_L$ ; leur somme, le courant de ligne $\underline{I}_2$, est en tirets épais. Échelle : $1\ \mathrm{A}$ pour $5$
+      unités.
+    </figcaption>
+  </figure>
+
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Charge ou installation à compenser"] --> B["Relever ou calculer P et cos φ1<br/>(pointe et creux)"]
+  B --> C["Choisir l'objectif cos φ2<br/>(contrat, pertes, capacité libérée)"]
+  C --> D["QC = P (tan φ1 - tan φ2)"]
+  D --> E{"Charge stable ?"}
+  E -->|"oui"| F["Batterie fixe<br/>QC ≤ réactif au creux"]
+  E -->|"non"| G["Batterie automatique<br/>gradins et régulateur"]
+  F --> H["C = QC / (U² ω) par élément<br/>couplage étoile ou triangle"]
+  G --> H
+  H --> I{"Harmoniques présents ?"}
+  I -->|"oui"| J["Rang nr = √(Scc / QC)<br/>loin de 5, 7, 11, 13 ?"]
+  I -->|"non"| K["Contrôles"]
+  J -->|"non"| L["Self anti-harmonique<br/>ou filtre"]
+  J -->|"oui"| K
+  L --> K
+  K["Contrôles : courant, pertes, tension,<br/>pas de surcompensation, décharge"]</pre>
+    <figcaption>
+      Organigramme de dimensionnement d'une batterie. Les rectangles sont des étapes, les losanges des décisions, les libellés
+      des flèches les réponses. On part de mesures ou d'un bilan, aux heures de pointe et aux heures creuses ; l'objectif de
+      facteur de puissance est un choix de conception. Le premier test choisit entre batterie fixe et automatique selon la
+      variabilité de la charge ; le second vérifie le risque de résonance quand des charges non linéaires sont présentes. La
+      dernière étape regroupe les contrôles : courant et pertes recalculés, tension, absence de surcompensation au creux,
+      résistances de décharge.
+    </figcaption>
+  </figure>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Modes de compensation comparés</caption>
+      <thead><tr><th>Mode</th><th>Emplacement</th><th>Ce qui est soulagé</th><th>Avantages</th><th>Inconvénients</th><th>Cas typique</th></tr></thead>
+      <tbody>
+        <tr><td>Individuelle fixe</td><td>aux bornes du récepteur, après son contacteur</td><td>tout le réseau jusqu'au récepteur</td><td>suit la marche du récepteur sans régulateur ; gains maximaux sur les câbles</td><td>nombreux condensateurs ; risque d'auto-excitation si le réactif dépasse le réactif à vide</td><td>gros moteur à fonctionnement long</td></tr>
+        <tr><td>Par groupe</td><td>tableau divisionnaire</td><td>amont du tableau divisionnaire</td><td>bon compromis coût et gains</td><td>câbles aval non soulagés ; demande souvent une régulation</td><td>atelier homogène</td></tr>
+        <tr><td>Globale automatique</td><td>tableau général</td><td>transformateur et liaison réseau</td><td>moins de kilovars grâce au foisonnement ; suit le profil</td><td>câbles internes non soulagés ; régulateur et gradins à entretenir ; résonance à vérifier</td><td>site à charges multiples et variables</td></tr>
+        <tr><td>Globale fixe</td><td>tableau général</td><td>transformateur et liaison réseau</td><td>simple et bon marché</td><td>surcompensation aux faibles charges</td><td>réactif de base, par exemple transformateur à vide</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-phaseurs-figure" data-renvoi="d-phaseurs-figure">la simulation des courants avant et après compensation</a> et <a href="#d-energie-figure" data-renvoi="d-energie-figure">l'animation des échanges d'énergie</a>, section D ;</li>
+    <li><a href="#e-montage-figure" data-renvoi="e-montage-figure">le montage de compensation et ses conventions</a> et <a href="#e-profil-figure" data-renvoi="e-profil-figure">la simulation de la batterie fixe ou automatique sur une journée</a>, section E ;</li>
+    <li><a href="#h-circuit-figure" data-renvoi="h-circuit-figure">le schéma de l'atelier de l'exemple</a> et <a href="#h-construction-figure" data-renvoi="h-construction-figure">l'animation de la construction du triangle avant et après</a>, section H ;</li>
+    <li><a href="#i-unifilaire-figure" data-renvoi="i-unifilaire-figure">le schéma du départ compresseur compensé</a> et <a href="#i-site-figure" data-renvoi="i-site-figure">la simulation de la compensation du site et de sa résonance</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour dimensionner la compensation d'une charge ou d'une installation :</p>
+  <ol>
+    <li>Délimiter le périmètre : charge seule, départ ou tableau ; repérer les conducteurs que l'on veut soulager, ce qui fixe l'emplacement.</li>
+    <li>Obtenir $P$ et $\cos\varphi_1$ au point de raccordement, à la pointe et au creux : plaques, bilan de Boucherot ou mesures d'énergie active et réactive. Vérifier l'hypothèse sinusoïdale : en présence d'harmoniques, travailler sur le facteur de déplacement $\cos\varphi_1$ au fondamental.</li>
+    <li>Fixer l'objectif $\cos\varphi_2$ et le justifier : contrat de fourniture, réduction des pertes, capacité à libérer, sans dépasser l'unité.</li>
+    <li>Calculer $Q_C = P(\tan\varphi_1 - \tan\varphi_2)$ à la pointe ; vérifier au creux que $Q_C$ ne dépasse pas le réactif de la charge, sinon passer en batterie automatique ou réduire $Q_C$.</li>
+    <li>Traduire en capacité par élément, $C = Q_C/(U^2\omega)$, avec la tension réellement appliquée à l'élément et sa tolérance haute.</li>
+    <li>Calculer les gains : $I_2 = P/(U\cos\varphi_2)$, pertes $R(I_1^2 - I_2^2)$, chute de tension, puissance apparente libérée.</li>
+    <li>Contrôler les risques : rang $n_r = \sqrt{S_{cc}/Q_C}$ éloigné des rangs harmoniques présents, réactif inférieur au réactif à vide d'un moteur compensé individuellement, résistances de décharge, appareillage prévu pour les condensateurs.</li>
+    <li>Vérifier les résultats : $P$ inchangée ; somme vectorielle des courants ; unités $\mathrm{W}$, $\mathrm{var}$, $\mathrm{F}$ ; ordre de grandeur de $60\ \mu\mathrm{F}$ par kilovar sous $230\ \mathrm{V}$, $50\ \mathrm{Hz}$.</li>
+  </ol>
+  <p>
+    Choix de méthode : pour une charge isolée, la formule des tangentes suffit ; pour évaluer la chute de tension ou le courant
+    d'un départ, le calcul par phaseurs s'impose ; pour une installation existante à charge variable, seuls des relevés
+    d'énergie sur une période représentative permettent de choisir la puissance totale et le découpage en gradins.
+  </p>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Situation : un atelier est alimenté entre phase et neutre sous $230\ \mathrm{V}$, $50\ \mathrm{Hz}$, par une ligne de résistance
+    totale $R_\ell = 0{,}15\ \Omega$, réactance négligée. Sa charge, essentiellement des moteurs, absorbe $P = 12\ \mathrm{kW}$ à
+    $\cos\varphi_1 = 0{,}70$ inductif. On veut une batterie qui amène le facteur de puissance à $0{,}95$ ; on demande sa puissance
+    réactive, sa capacité, son courant, les courants et pertes avant et après, et l'effet d'une capacité doublée par erreur.
+  </p>
+  <figure id="h-circuit-figure">
+    <svg viewBox="0 0 860 330" role="img" aria-label="Schéma de l'atelier : réseau 230 volts entre phase et neutre, ligne de 0,15 ohm parcourue par i, nœud A, charge de 12 kilowatts à cos phi 0,70 parcourue par iL, batterie C de 499 microfarads parcourue par iC, tension u aux bornes des charges, neutre en référence">
+      <defs>
+        <marker id="fl-h-c" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="90" cy="170" r="28"/>
+        <path d="M76 170C82 158 88 158 90 170S98 182 104 170"/>
+        <path d="M90 142V60H170M250 60H660V135M660 149V280H90V198"/>
+        <rect x="170" y="48" width="80" height="24"/>
+        <path d="M450 60V125M450 215V280"/>
+        <circle cx="450" cy="170" r="45"/>
+        <path d="M636 135H684M636 149H684" stroke-width="3"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="450" cy="60" r="5"/><circle cx="450" cy="280" r="5"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2" fill="none">
+        <path d="M290 44H360" marker-end="url(#fl-h-c)"/>
+        <path d="M434 74V116" marker-end="url(#fl-h-c)"/>
+        <path d="M644 74V122" marker-end="url(#fl-h-c)"/>
+        <path d="M770 266V74" marker-end="url(#fl-h-c)"/>
+        <path d="M36 266V74" marker-end="url(#fl-h-c)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="96" y="46">L, phase</text>
+        <text x="100" y="312">N, neutre : référence de potentiel</text>
+        <text x="126" y="166">réseau</text>
+        <text x="126" y="182">50 Hz</text>
+        <text x="210" y="96" text-anchor="middle">Rℓ = 0,15 Ω</text>
+        <text x="325" y="34" text-anchor="middle">i</text>
+        <text x="460" y="52">A</text>
+        <text x="426" y="100" text-anchor="end">iL</text>
+        <text x="450" y="166" text-anchor="middle">charge</text>
+        <text x="450" y="182" text-anchor="middle">12 kW</text>
+        <text x="504" y="166">cos φ1 = 0,70</text>
+        <text x="504" y="182">inductif</text>
+        <text x="636" y="100" text-anchor="end">iC</text>
+        <text x="692" y="180">C</text>
+        <text x="692" y="196">batterie</text>
+        <text x="782" y="164">u</text>
+        <text x="782" y="180">230 V</text>
+        <text x="20" y="66">us</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma de l'atelier. Le réseau, fléché en convention générateur, impose $u_s$ au départ de la ligne ; le neutre est la
+      référence de potentiel. Le courant de ligne $i$ traverse $R_\ell$ puis se partage au nœud $A$ entre la charge, parcourue
+      par $i_L$, et la batterie $C$, parcourue par $i_C$, toutes deux fléchées en convention récepteur. La tension $u$ aux bornes
+      des charges, fléchée du neutre vers la phase, vaut $230\ \mathrm{V}$.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Données : $U = 230\ \mathrm{V}$ au nœud $A$, référence des phases ; $\omega = 314{,}16\ \mathrm{rad/s}$ ; $P = 12\,000\ \mathrm{W}$ ;
+    $\cos\varphi_1 = 0{,}70$ inductif ; objectif $\cos\varphi_2 = 0{,}95$ inductif ; $R_\ell = 0{,}15\ \Omega$. Hypothèses : régime
+    permanent sinusoïdal, tension $U$ maintenue au nœud $A$, condensateur sans pertes, charge inchangée par la compensation.
+    Inconnues : $Q_C$, $C$, $I_C$, $I_1$, $I_2$, pertes avant et après. Stratégie : méthode de la section G, formule des
+    tangentes, puis contrôle par les phaseurs de courant.
+  </p>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li>Tangentes : $\tan\varphi_1 = \sqrt{1 - 0{,}49}/0{,}70 = 1{,}0202$ ; $\tan\varphi_2 = \sqrt{1 - 0{,}9025}/0{,}95 = 0{,}3287$.</li>
+    <li>Réactif avant : $Q_1 = P\tan\varphi_1 = 12\,000 \times 1{,}0202 = 12\,242\ \mathrm{var}$ ; $S_1 = P/\cos\varphi_1 = 17\,143\ \mathrm{VA}$.</li>
+    <li>Réactif à installer : $Q_C = 12\,000 \times (1{,}0202 - 0{,}3287) = 8298\ \mathrm{var}$ ; il reste $Q_2 = 3944\ \mathrm{var}$ et $S_2 = 12\,000/0{,}95 = 12\,632\ \mathrm{VA}$.</li>
+    <li>Capacité : $C = Q_C/(U^2\omega) = 8298/(52\,900 \times 314{,}16) = 8298/(16{,}619 \times 10^6) = 499{,}3\ \mu\mathrm{F}$.</li>
+    <li>Courant du condensateur : $I_C = Q_C/U = 8298/230 = 36{,}08\ \mathrm{A}$ ; contrôle $C\omega U = 499{,}3 \times 10^{-6} \times 314{,}16 \times 230 = 36{,}08\ \mathrm{A}$.</li>
+    <li>Courants de ligne : $I_1 = S_1/U = 74{,}53\ \mathrm{A}$ ; $I_2 = S_2/U = 54{,}92\ \mathrm{A}$, soit $-26{,}3\ \%$, rapport $0{,}70/0{,}95 = 0{,}737$.</li>
+    <li>Pertes dans la ligne : avant, $0{,}15 \times 74{,}53^2 = 833{,}3\ \mathrm{W}$ ; après, $0{,}15 \times 54{,}92^2 = 452{,}4\ \mathrm{W}$ ; gain $380{,}9\ \mathrm{W}$, soit environ $1520\ \mathrm{kWh}$ sur $4000\ \mathrm{h}$ de fonctionnement à pleine charge.</li>
+    <li>Capacité doublée par erreur, $998{,}6\ \mu\mathrm{F}$ : $Q_C = 16\,596\ \mathrm{var}$, $Q = 12\,242 - 16\,596 = -4354\ \mathrm{var}$, capacitif ; $\cos\varphi = 12\,000/\sqrt{12\,000^2 + 4354^2} = 0{,}940$ et $I = 55{,}50\ \mathrm{A}$, à peine plus que $I_2$, mais l'installation est désormais capacitive.</li>
+  </ol>
+
+  <h3 id="h-construction-section">Animation : construction du triangle avant et après compensation</h3>
+  <p>
+    L'animation reconstruit les étapes de l'exemple dans le plan des puissances : la base $P$, le réactif $Q_1$ de la charge, la
+    puissance apparente $S_1$, puis le réactif $Q_C$ de la batterie retranché, et enfin $S_2$. Le lecteur avance d'une étape à
+    l'autre ; la pause et la remise à zéro permettent de s'arrêter sur chacune. Avant de lancer, prédisez : la base du triangle
+    change-t-elle quand on ajoute la batterie ? L'angle $\varphi_2$ sera-t-il environ la moitié, le tiers ou le quart de
+    $\varphi_1$ ?
+  </p>
+  <figure id="h-construction-figure">
+    <div class="schema-vivant" id="h-construction"></div>
+    <figcaption>
+      Plan des puissances, $P$ en abscisse et $Q$ en ordonnée, en kilowatts et kilovars, graduations tous les $2\ \mathrm{kW}$ et
+      $2\ \mathrm{kvar}$. La base $P$ est en trait plein ; $Q_1$ et $S_1$, avant compensation, en tirets fins ; $Q_C$, fourni par la
+      batterie, en trait plein vers le bas, à côté du triangle ; $Q_2$ en trait épais et $S_2$ en tirets épais. Les arcs marquent
+      $\varphi_1$ puis $\varphi_2$, et le texte en haut à droite indique l'étape en cours.
+    </figcaption>
+  </figure>
+  <div id="h-construction-lecteur"></div>
+  <div id="h-construction-valeurs"></div>
+  <p>
+    Interprétation : la base $P$ ne bouge jamais, ce qui traduit la conservation de la puissance active. Seule la hauteur du
+    triangle diminue, et l'hypoténuse, qui fixe le courant, passe de $17{,}14$ à $12{,}63\ \mathrm{kVA}$. L'angle passe de
+    $45{,}57^\circ$ à $18{,}19^\circ$, à peu près les deux cinquièmes ; le réactif a été divisé par $3{,}1$, mais le courant
+    seulement par $1{,}36$, parce que $P$ reste entière dans l'hypoténuse.
+  </p>
+
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <p>
+    Phaseurs : $\underline{I}_L = (P - jQ_1)/U = 52{,}17 - j53{,}23\ \mathrm{A}$, de module $74{,}53\ \mathrm{A}$ ;
+    $\underline{I}_C = j36{,}08\ \mathrm{A}$ ; $\underline{I} = 52{,}17 - j17{,}15\ \mathrm{A}$, de module $54{,}92\ \mathrm{A}$ et
+    d'argument $-18{,}19^\circ$, dont le cosinus vaut bien $0{,}95$. Puissance active : $\operatorname{Re}(\underline{U}\,\underline{I}^*) =
+    230 \times 52{,}17 = 12\,000\ \mathrm{W}$, inchangée. Ordre de grandeur : $8{,}3\ \mathrm{kvar} \times 60{,}2\ \mu\mathrm{F/kvar} = 499\ \mu\mathrm{F}$.
+    Dimension de $C$ : $\mathrm{var}/(\mathrm{V^2 \cdot rad/s}) = \mathrm{F}$. Tension au départ : $U_s = |230 + 0{,}15\,\underline{I}|$ passe de
+    $237{,}96$ à $237{,}84\ \mathrm{V}$ ; la ligne étant résistive, $\Delta U \approx R_\ell P/U$ ne dépend presque pas de $Q$, comme
+    le prévoit la formule de la section E. Sensibilité : à $253\ \mathrm{V}$, la même batterie fournirait
+    $8298 \times (253/230)^2 = 10\,041\ \mathrm{var}$, ce qu'il faut vérifier au creux de charge. Conclusion d'ingénierie : une batterie
+    de $8{,}3\ \mathrm{kvar}$ par phase, soit $499\ \mu\mathrm{F}$ sous $230\ \mathrm{V}$, réduit le courant d'un quart et les pertes de
+    $46\ \%$ ; il faudra choisir la valeur normalisée du catalogue retenu, la tenue en tension et, si la charge varie, un
+    découpage en gradins.
+  </p>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+
+  <h3 id="i-probleme">Compenser le compresseur du site</h3>
+  <p>
+    Le bilan du cours <a href="#/cours/puissances-en-courant-alternatif">Puissances en courant alternatif</a> a montré que le
+    compresseur porte $72\ \%$ du réactif du tableau général : $5888\ \mathrm{W}$ et $4416\ \mathrm{var}$ par phase, à
+    $\cos\varphi = 0{,}80$. Le tableau, lui, est déjà à $\cos\varphi_1 = 0{,}962$, grâce à la pompe à variateur, dont le
+    fondamental est en phase avec la tension. La question n'est donc pas de corriger un site médiocre, mais de choisir où et
+    comment produire le réactif restant sans créer de nouveau problème avec les harmoniques de la pompe. Deux options sont
+    comparées : une compensation individuelle du compresseur à $\cos\varphi = 0{,}95$, ou une batterie globale au tableau
+    général qui annulerait tout le réactif du site.
+  </p>
+  <figure id="i-unifilaire-figure">
+    <svg viewBox="0 0 880 400" role="img" aria-label="Schéma du départ compresseur compensé : jeu de barres 400 volts, disjoncteur Q2, contacteur KM3, batterie de trois condensateurs de 49,8 microfarads en triangle avec résistances de décharge raccordée entre le contacteur et le relais thermique F3, puis moteur triphasé M du compresseur ; courants 32 ampères côté moteur et 26,95 ampères en amont">
+      <defs>
+        <marker id="fl-i-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M60 50H520" stroke-width="6"/>
+        <path d="M200 50V90M200 120V160M200 196V250M200 290V318"/>
+        <path d="M188 90L212 120"/>
+        <rect x="180" y="160" width="40" height="36"/>
+        <rect x="180" y="250" width="40" height="40"/>
+        <circle cx="200" cy="350" r="32"/>
+        <path d="M200 222H420"/>
+        <path d="M420 222V262M420 274V300"/>
+        <path d="M396 262H444M396 274H444" stroke-width="3"/>
+        <path d="M420 240H470V255M470 281V292H420"/>
+        <rect x="463" y="255" width="14" height="26"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="200" cy="222" r="5"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2" fill="none">
+        <path d="M228 70V140" marker-end="url(#fl-i-u)"/>
+        <path d="M228 296V316" marker-end="url(#fl-i-u)"/>
+        <path d="M300 210H370" marker-end="url(#fl-i-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="60" y="38">jeu de barres du tableau général, 3 phases, 400 V entre phases</text>
+        <text x="174" y="110" text-anchor="end">Q2</text>
+        <text x="174" y="182" text-anchor="end">KM3</text>
+        <text x="174" y="275" text-anchor="end">F3</text>
+        <text x="200" y="356" text-anchor="middle">M 3~</text>
+        <text x="244" y="358">compresseur, P = 3 x 5888 W</text>
+        <text x="244" y="374">cos φ = 0,80 seul</text>
+        <text x="240" y="100">26,95 A par phase</text>
+        <text x="240" y="116">cos φ = 0,95 vu du réseau</text>
+        <text x="240" y="312">32 A</text>
+        <text x="306" y="200">10,79 A</text>
+        <text x="410" y="322" text-anchor="end">batterie Δ</text>
+        <text x="496" y="250">3 x 49,8 µF en triangle</text>
+        <text x="496" y="266">soit 3 x 2,48 kvar</text>
+        <text x="496" y="290">résistances de décharge</text>
+        <text x="496" y="306">sur chaque élément</text>
+        <text x="60" y="394" font-size="11">schéma unifilaire : un trait représente les trois phases ; flèches : sens de transit de la puissance active</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma unifilaire du départ compresseur compensé ; un trait représente les trois phases. Du jeu de barres, alimenté sous
+      $400\ \mathrm{V}$ entre phases, soit $230\ \mathrm{V}$ entre phase et neutre, descendent le disjoncteur $Q_2$, le contacteur
+      $KM_3$ du compresseur, puis le relais thermique $F_3$ et le moteur. La batterie, triangle de trois condensateurs avec
+      leurs résistances de décharge, est raccordée entre le contacteur et le relais thermique : elle est mise sous tension et
+      hors tension avec le moteur, et le relais continue de voir le courant du moteur, $32\ \mathrm{A}$, ce qui garde son réglage
+      inchangé. Les flèches indiquent le sens de transit de la puissance active et les courants efficaces par phase : $26{,}95\ \mathrm{A}$
+      en amont du point de raccordement, $10{,}79\ \mathrm{A}$ dans la batterie, $32\ \mathrm{A}$ dans le moteur. Les repères $Q_2$,
+      $KM_3$ et $F_3$ sont des repères d'étude.
+    </figcaption>
+  </figure>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Hypothèses de l'étude</span>
+    <p>
+      Système triphasé équilibré traité par phase sous $230\ \mathrm{V}$. Facteurs de puissance supposés, ceux du bilan du cours
+      précédent. Réactif à vide du compresseur estimé avec un courant magnétisant de $40\ \%$ du courant nominal, presque
+      purement réactif : $Q_0 \approx 230 \times 12{,}8 = 2944\ \mathrm{var}$ par phase. Source du site supposée être un
+      transformateur de $100\ \mathrm{kVA}$ de tension de court-circuit $4\ \%$, réseau amont infini : $S_{cc} \approx 100/0{,}04 =
+      2{,}5\ \mathrm{MVA}$. Courant harmonique de la pompe, $14{,}8\ \mathrm{A}$ par phase, inchangé. Ces valeurs sont des hypothèses
+      d'étude, à remplacer par la plaque et l'essai du moteur, la documentation du transformateur retenu et une campagne de
+      mesure.
+    </p>
+  </div>
+  <ol>
+    <li>Compensation individuelle à $0{,}95$ : $Q_C = 5888 \times (0{,}75 - 0{,}3287) = 2481\ \mathrm{var}$ par phase, soit $7{,}44\ \mathrm{kvar}$ au total ; $C_Y = 149{,}3\ \mu\mathrm{F}$ entre phase et neutre, ou $C_\Delta = C_Y/3 = 49{,}8\ \mu\mathrm{F}$ par branche en triangle.</li>
+    <li>Auto-excitation : $Q_C = 2481\ \mathrm{var}$ reste sous $0{,}9\,Q_0 = 2650\ \mathrm{var}$ ; la marge de $7\ \%$ est faible, d'où l'importance de mesurer le courant à vide réel avant de commander la batterie.</li>
+    <li>Départ compresseur : courant de $32$ à $26{,}95\ \mathrm{A}$ ; pertes du câble de $30\ \mathrm{m}$ en $10\ \mathrm{mm^2}$, $0{,}0619\ \Omega$ par phase, de $63{,}4$ à $44{,}9\ \mathrm{W}$ par phase, soit $55{,}3\ \mathrm{W}$ gagnés sur les trois phases.</li>
+    <li>Tableau général : $Q = 6167 - 2481 = 3686\ \mathrm{var}$ par phase ; $S_1 = \sqrt{21\,597^2 + 3686^2} = 21\,909\ \mathrm{VA}$ ; $\cos\varphi_1 = 0{,}986$ ; courant fondamental $95{,}26\ \mathrm{A}$, efficace vrai $\sqrt{95{,}26^2 + 14{,}8^2} = 96{,}40\ \mathrm{A}$ au lieu de $98{,}77\ \mathrm{A}$ ; $\lambda = 0{,}974$ ; $S$ du site $66{,}5\ \mathrm{kVA}$ au lieu de $68{,}1\ \mathrm{kVA}$.</li>
+    <li>Résonance : $n_r = \sqrt{2500/7{,}44} = 18{,}3$, loin des rangs $5$, $7$, $11$ et $13$, entre $17$ et $19$, rangs faibles pour un pont à six diodes muni d'une self.</li>
+    <li>Option globale, $Q_C = 18{,}5\ \mathrm{kvar}$ au tableau pour $\cos\varphi_1 = 1$ : $n_r = \sqrt{2500/18{,}5} = 11{,}6$, entre les rangs $11$ et $13$, précisément ceux que produit la pompe ; une telle batterie demanderait des selfs anti-harmoniques.</li>
+  </ol>
+
+  <h3 id="i-site-section">Simulation interactive : compensation du site et rang de résonance</h3>
+  <p>
+    La simulation reprend ce bilan. Les curseurs règlent le réactif de la compensation individuelle du compresseur, celui d'une
+    batterie globale au tableau, tous deux par phase, et la puissance de court-circuit de la source. Avant de manipuler,
+    prédisez : faut-il compenser tout le réactif du site pour gagner l'essentiel du courant ? Que devient le rang de
+    résonance si la source est plus puissante ? Quelle puissance de batterie globale place la résonance sur le rang $13$ ?
+  </p>
+  <figure id="i-site-figure">
+    <div id="i-site-trace"></div>
+    <figcaption>
+      Facteur d'amplification de la tension harmonique au jeu de barres, rapport entre la tension harmonique avec et sans la
+      batterie pour un même courant harmonique injecté, en fonction du rang $h$. La courbe est calculée avec un amortissement
+      arbitraire, choisi pour la lisibilité, qui limite le pic à $10$ ; en l'absence de batterie, elle vaut $1$ partout. Les
+      traits verticaux en tirets repèrent les rangs $5$, $7$, $11$ et $13$, et le trait vertical épais en tirets le rang de
+      résonance $n_r$. La légende nomme la courbe avec sa couleur réelle.
+    </figcaption>
+  </figure>
+  <div id="i-site-curseurs"></div>
+  <div id="i-site-valeurs"></div>
+  <p>
+    Interprétation : la compensation individuelle du compresseur suffit à gagner l'essentiel du courant accessible, de
+    $98{,}8$ à $96{,}4\ \mathrm{A}$ sur les $95{,}1\ \mathrm{A}$ atteignables en annulant tout le réactif, car le facteur de
+    puissance du site était déjà élevé et les harmoniques s'ajoutent en quadrature. La batterie globale qui compenserait le
+    reste ferait descendre la résonance dans la zone des rangs $11$ et $13$. Une source plus puissante repousse la résonance
+    vers les rangs élevés ; une source faible, un groupe électrogène par exemple, l'abaisse dangereusement. La résonance tombe
+    sur le rang $13$ pour $Q_C = S_{cc}/169 = 14{,}8\ \mathrm{kvar}$ au total avec $2{,}5\ \mathrm{MVA}$ : une compensation
+    individuelle de $2{,}48\ \mathrm{kvar}$ par phase et une batterie globale d'environ $2{,}45\ \mathrm{kvar}$ par phase y suffisent.
+  </p>
+
+  <h3 id="i-compromis">Contraintes, risques et compromis</h3>
+  <ul>
+    <li><strong>Emplacement.</strong> La compensation individuelle soulage le câble du compresseur et le transformateur, et suit la marche du moteur sans régulateur ; une batterie globale ne soulagerait que le transformateur et demanderait un régulateur.</li>
+    <li><strong>Auto-excitation.</strong> Un moteur compensé individuellement ne doit pas recevoir plus de réactif que son réactif à vide ; la marge de l'étude est faible et repose sur une hypothèse à vérifier par mesure.</li>
+    <li><strong>Relais thermique.</strong> Placée en aval du relais, la batterie lui ferait voir un courant réduit, et son réglage devrait être abaissé ; placée entre le contacteur et le relais, elle laisse le réglage au courant du moteur.</li>
+    <li><strong>Harmoniques.</strong> Les condensateurs absorbent une part des courants harmoniques de la pompe ; leur courant efficace réel et leur échauffement sont à vérifier sur mesure, et des condensateurs renforcés ou une self anti-harmonique peuvent devenir nécessaires.</li>
+    <li><strong>Démarrages répétés.</strong> Le compresseur démarre et s'arrête souvent ; chaque mise sous tension de la batterie s'accompagne d'un appel de courant, et chaque arrêt d'une décharge par les résistances : la cadence admissible est une donnée du constructeur.</li>
+    <li><strong>Charge partielle.</strong> Compresseur en marche à vide entre deux cycles, son $\cos\varphi$ chute, et une partie du réactif reste à fournir par le réseau ; c'est acceptable, puisque le tableau est déjà à $0{,}986$.</li>
+  </ul>
+
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : compensation de l'énergie réactive du site</span>
+    <p>
+      Nouvelle brique du petit site industriel. Compensation individuelle du compresseur retenue : $2{,}48\ \mathrm{kvar}$ par phase,
+      $7{,}44\ \mathrm{kvar}$ au total, pour $\cos\varphi = 0{,}95$, soit $149{,}3\ \mu\mathrm{F}$ par phase en étoile ou $49{,}8\ \mu\mathrm{F}$ par
+      branche en triangle sous $400\ \mathrm{V}$ ; batterie commutée avec le moteur par son contacteur, raccordée en amont du relais
+      thermique, munie de résistances de décharge, et limitée sous $90\ \%$ du réactif à vide supposé, $2{,}65\ \mathrm{kvar}$ par
+      phase. Effets : courant du départ $32$ à $26{,}95\ \mathrm{A}$, pertes du câble $-29\ \%$ ; tableau général à
+      $Q = 3{,}69\ \mathrm{kvar}$ par phase, $\cos\varphi_1$ de $0{,}962$ à $0{,}986$, courant efficace vrai de $98{,}8$ à $96{,}4\ \mathrm{A}$,
+      $S$ du site de $68{,}1$ à $66{,}5\ \mathrm{kVA}$. Résonance estimée au rang $18{,}3$ avec $2{,}5\ \mathrm{MVA}$ de puissance de
+      court-circuit supposée ; une batterie globale de $18{,}5\ \mathrm{kvar}$ la placerait au rang $11{,}6$, entre les rangs $11$ et
+      $13$ de la pompe : écartée sans self anti-harmonique. Hypothèses d'étude à remplacer par la plaque et l'essai à vide du
+      compresseur, la documentation du transformateur retenu, les catalogues de condensateurs et une campagne de mesure.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Calculer $Q_C$ avec les cosinus.</strong> $P(\cos\varphi_2 - \cos\varphi_1)$ n'a aucun sens physique : ce sont les hauteurs du triangle, donc les tangentes multipliées par $P$, qui se soustraient. Pour l'exemple, l'erreur donnerait $3000$ au lieu de $8298\ \mathrm{var}$.</li>
+    <li><strong>Oublier le carré de la tension.</strong> $C = Q_C/(U\omega)$ n'a pas la bonne dimension ; avec $U^2$, $C = 499\ \mu\mathrm{F}$. Prendre la tension simple pour un condensateur branché entre phases conduit à une capacité trois fois trop grande.</li>
+    <li><strong>Croire que la compensation réduit l'énergie consommée par la charge.</strong> La puissance active de la charge ne change pas ; seules les pertes en amont diminuent. Un wattmètre placé sur la charge affiche la même valeur avant et après.</li>
+    <li><strong>Viser $\cos\varphi = 1$ par principe.</strong> Les derniers kilovars coûtent cher pour peu de courant gagné, et une compensation totale à la pointe devient une surcompensation au creux.</li>
+    <li><strong>Placer la batterie au mauvais endroit.</strong> Une batterie au tableau général ne soulage pas le câble d'un départ ; une batterie individuelle en aval du relais thermique fausse son réglage.</li>
+    <li><strong>Ignorer les harmoniques.</strong> Sur un réseau chargé de variateurs, une batterie peut entrer en résonance ; des condensateurs qui chauffent, des fusibles de gradins qui fondent ou une tension déformée en sont les signes.</li>
+    <li><strong>Confondre facteur de puissance et facteur de déplacement.</strong> Les condensateurs corrigent $\cos\varphi_1$, au fondamental ; ils ne corrigent pas la part du facteur de puissance perdue à cause des harmoniques.</li>
+    <li><strong>Réenclencher un gradin encore chargé.</strong> La tension du condensateur s'ajoute alors à celle du réseau à l'instant de fermeture, et l'appel de courant est plus violent.</li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain : un courant de départ qui ne baisse pas après installation signale une batterie hors service,
+    un fusible fondu ou un gradin non enclenché ; une mesure du courant de chaque élément, comparée à $C\omega U$, révèle un
+    condensateur dont la capacité a chuté. Un $\cos\varphi$ capacitif la nuit désigne une batterie fixe trop grosse ou un
+    régulateur mal paramétré. Une tension qui monte quand les machines s'arrêtent, des lampes qui vieillissent vite ou des
+    moteurs qui grognent à l'arrêt évoquent la surcompensation ou l'auto-excitation. Un échauffement anormal des condensateurs
+    avec un $\cos\varphi$ correct évoque les harmoniques : il faut alors mesurer le spectre du courant de la batterie.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de
+    diagnostic industriel et une question conceptuelle. La correction de chacun reste masquée jusqu'à une tentative ou un
+    clic explicite sur "Voir la correction", puis se déroule étape par étape, accompagnée d'un triangle des puissances, d'une
+    courbe ou d'un diagramme de phaseurs.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma.</p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$Q_C = P\,(\tan\varphi_1 - \tan\varphi_2)$$
+    $$C = \frac{Q_C}{U^2\omega}, \qquad I_C = C\omega U$$
+    $$\frac{I_2}{I_1} = \frac{\cos\varphi_1}{\cos\varphi_2}, \qquad \frac{P_{J2}}{P_{J1}} = \left(\frac{\cos\varphi_1}{\cos\varphi_2}\right)^2$$
+    $$\Delta U \approx \frac{RP + XQ}{U}$$
+    $$n_r = \sqrt{\frac{S_{cc}}{Q_C}}$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>On soustrait des tangentes multipliées par $P$, jamais des cosinus.</li>
+      <li>$Q_C$ varie comme le carré de la tension réellement appliquée à l'élément : étoile ou triangle change tout.</li>
+      <li>Vérifier la batterie au creux de charge : pas de surcompensation, pas plus que le réactif à vide d'un moteur.</li>
+      <li>Seuls les conducteurs en amont du point de raccordement sont soulagés.</li>
+      <li>Avec des harmoniques, calculer $n_r$ avant de commander la batterie ; décharge et réenclenchement à prévoir.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Un condensateur placé en parallèle sur une charge inductive fournit sur place le réactif que la
+    source aurait dû transporter. La puissance active et le courant de la charge ne changent pas ; le courant en amont, les
+    pertes, la chute de tension et la puissance apparente diminuent. La puissance à installer vaut
+    $Q_C = P(\tan\varphi_1 - \tan\varphi_2)$ et la capacité $C = Q_C/(U^2\omega)$, environ $60\ \mu\mathrm{F}$ par kilovar sous
+    $230\ \mathrm{V}$. Au-delà de $Q_C = Q_1$, l'installation devient capacitive : la surcompensation menace aux faibles
+    charges, d'où les batteries automatiques à gradins. L'emplacement fixe les conducteurs soulagés. Avec des harmoniques, le
+    rang de résonance $n_r = \sqrt{S_{cc}/Q_C}$ doit rester loin des rangs présents.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent,
+    <a href="#/cours/puissances-en-courant-alternatif">Puissances en courant alternatif</a> ; une sur le cours
+    <a href="#/cours/regime-transitoire-rlc">Régime transitoire RLC</a>, vieux d'une semaine, dont la pulsation propre annonce
+    la résonance ; la question sur un cours vieux d'un mois n'est pas encore applicable, et elle est remplacée par une
+    question sur le cours <a href="#/cours/condensateurs-et-champ-electrique">Condensateurs et champ électrique</a>, dont
+    l'énergie stockée fixe ici la décharge des batteries.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : vérifier par le calcul numérique, puis par simulation temporelle, le dimensionnement de l'exemple de la section
+    H et la surcompensation. Prédictions à écrire avant de commencer : le courant efficace de la source, mesuré par le
+    simulateur, sera-t-il plus proche de $55$ ou de $75\ \mathrm{A}$ avec la batterie ? La puissance active mesurée sur la charge
+    change-t-elle quand on retire la batterie ? Avec une capacité doublée, le courant de ligne sera-t-il plus grand qu'avec
+    la bonne capacité, et de combien ?
+  </p>
+  <ol>
+    <li>En Python, écrire une fonction <code>batterie(P, cos1, cos2, U, f)</code> qui renvoie $Q_C$, $C$ et $I_C$, puis l'appliquer à l'exemple. Tracer avec matplotlib le courant de ligne $I(C)$ pour $C$ de $0$ à $1500\ \mu\mathrm{F}$, et repérer le minimum.</li>
+    <li>Dans LTspice, modéliser la charge par une résistance et une inductance en parallèle, qui absorbent $12\ \mathrm{kW}$ et $12{,}24\ \mathrm{kvar}$ sous $230\ \mathrm{V}$ : $R = 230^2/12\,000 = 4{,}408\ \Omega$ et $L = 230^2/(\omega \times 12\,242) = 13{,}76\ \mathrm{mH}$. Saisir la netlist <code>V1 s 0 SINE(0 325.27 50)</code>, <code>RL s a 1u</code>, <code>R1 a 0 4.408</code>, <code>L1 a 0 13.76m</code>, <code>C1 a 0 499.3u</code>, <code>.tran 0 200m 100m 10u</code>, puis <code>.meas tran Ieff RMS I(RL) FROM 100m TO 200m</code>, <code>.meas tran P AVG V(a)*I(RL) FROM 100m TO 200m</code> et <code>.end</code>.</li>
+    <li>Relancer avec <code>C1</code> à <code>1p</code>, puis à <code>998.6u</code>, et relever $I_{\text{eff}}$ et $P$ à chaque fois.</li>
+    <li>Facultatif : ajouter une inductance de source, <code>Ls s s2 0.67m</code>, alimenter la charge depuis <code>s2</code>, et injecter un courant harmonique de rang $11$ avec une source de courant <code>I1 0 a SINE(0 5 550)</code> ; comparer la tension harmonique au nœud <code>a</code> avec et sans <code>C1</code>, par une analyse FFT de <code>V(a)</code>.</li>
+  </ol>
+  <p>
+    Résultats attendus : en Python, $Q_C = 8298\ \mathrm{var}$, $C = 499{,}3\ \mu\mathrm{F}$, $I_C = 36{,}08\ \mathrm{A}$, et un minimum de
+    $I(C)$ à $52{,}17\ \mathrm{A}$ pour $736{,}7\ \mu\mathrm{F}$. Dans LTspice, le modèle parallèle étant choisi pour donner $P$ et $Q$
+    sous $230\ \mathrm{V}$, on lit $I_{\text{eff}} \approx 54{,}9\ \mathrm{A}$ avec la batterie, $\approx 74{,}5\ \mathrm{A}$ sans, et
+    $\approx 55{,}5\ \mathrm{A}$ avec la capacité doublée, et $P \approx 12\ \mathrm{kW}$ dans les trois cas. Avec l'inductance de source de
+    $0{,}67\ \mathrm{mH}$, la résonance de $0{,}67\ \mathrm{mH}$ et $499{,}3\ \mu\mathrm{F}$ tombe vers $275\ \mathrm{Hz}$, rang $5{,}5$ : la tension
+    harmonique de rang $11$ est atténuée, mais un courant harmonique de rang $5$ ou $7$ serait amplifié, ce qu'un second essai
+    à $250$ ou $350\ \mathrm{Hz}$ permet de constater. Anomalies à observer : un régime transitoire au démarrage, d'où la mesure à
+    partir de $100\ \mathrm{ms}$ ; un pic de courant à l'instant initial si la source démarre à sa crête sur le condensateur
+    déchargé, image de l'appel de courant à l'enclenchement ; une puissance négative si le courant est mesuré à contresens ;
+    une FFT faussée par une fenêtre qui ne couvre pas un nombre entier de périodes.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est calculé
+    dans ce navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées
+    localement pour suivre votre progression. Cette séance prépare le jalon de fin du module Triphasé et qualité de
+    l'énergie : maîtriser les régimes sinusoïdaux monophasés et triphasés, les puissances, la compensation, les harmoniques
+    et les filtres élémentaires.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Un condensateur en parallèle fournit sur place le réactif de la charge : $P$ et le courant de la charge ne changent pas, le courant en amont diminue, avec les pertes et la puissance apparente.</li>
+    <li data-rang="02">$Q_C = P(\tan\varphi_1 - \tan\varphi_2)$ et $C = Q_C/(U^2\omega)$, avec la tension réellement appliquée à l'élément ; environ $60\ \mu\mathrm{F}$ par kilovar sous $230\ \mathrm{V}$, $50\ \mathrm{Hz}$.</li>
+    <li data-rang="03">Une batterie se vérifie au creux de charge et vis-à-vis des harmoniques : surcompensation, auto-excitation et résonance $n_r = \sqrt{S_{cc}/Q_C}$ sont les trois pièges.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> raisonner en même temps sur le triangle des puissances et sur le profil
+    de charge, c'est-à-dire ne pas s'arrêter à une batterie juste à la pointe, et garder le bon signe et la bonne tension pour
+    chaque élément. La simulation de la batterie sur une journée et le rang de résonance du site sont faits pour installer ces
+    réflexes.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Résonance série et parallèle, étudie ce qui se passe quand une
+    inductance et une capacité échangent leur énergie à leur fréquence propre. Question à préparer : la batterie de l'exemple,
+    $499{,}3\ \mu\mathrm{F}$, est alimentée à travers une inductance de source de $0{,}67\ \mathrm{mH}$. À quelle fréquence ce couple
+    résonne-t-il ? Vu du jeu de barres, l'impédance y est-elle très grande ou très petite, et pourquoi un variateur qui injecte
+    du courant de rang $5$ serait-il alors une mauvaise nouvelle ?
+  </p>
+
+</article>
