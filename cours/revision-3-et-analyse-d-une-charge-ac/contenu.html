@@ -1,0 +1,1083 @@
+<article class="cours" data-slug="revision-3-et-analyse-d-une-charge-ac">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/resonance-serie-et-parallele">Résonance série et parallèle</a> s'est achevé sur une question :
+      un atelier alimenté en $230\ \mathrm{V}$, $50\ \mathrm{Hz}$, comprend un moteur de $3\ \mathrm{kW}$ à $\cos\varphi = 0{,}75$,
+      un four résistif de $2\ \mathrm{kW}$ et un condensateur de $100\ \mu\mathrm{F}$ ; quels sont la puissance apparente, le
+      facteur de puissance et le courant de l'ensemble, et à quel rang harmonique ce condensateur résonne-t-il avec une
+      inductance de ligne de $1\ \mathrm{mH}$ ? Réponse, que cette séance généralise : le moteur absorbe
+      $Q_M = 3000 \times \tan(\arccos 0{,}75) = 2645{,}8\ \mathrm{var}$, le condensateur fournit
+      $U^2C\omega = 230^2 \times 100 \times 10^{-6} \times 314{,}16 = 1661{,}9\ \mathrm{var}$ ; d'où $P = 5000\ \mathrm{W}$,
+      $Q = 983{,}8\ \mathrm{var}$, $S = 5095{,}9\ \mathrm{VA}$, $\lambda = 0{,}981$ et $I = 22{,}16\ \mathrm{A}$. Avec $1\ \mathrm{mH}$,
+      $f_r = 1/(2\pi\sqrt{10^{-3} \times 10^{-4}}) = 503{,}3\ \mathrm{Hz}$, soit le rang $10{,}07$ : entre les rangs $9$ et $11$,
+      assez près des deux pour mériter une vérification. Cette séance de révision réunit tout le régime sinusoïdal
+      monophasé : grandeurs du cours <a href="#/cours/signaux-periodiques-et-sinusoides">Signaux périodiques et sinusoïdes</a>,
+      phaseurs du cours <a href="#/cours/nombres-complexes-et-phaseurs">Nombres complexes et phaseurs</a>, impédances du cours
+      <a href="#/cours/impedances-en-regime-sinusoidal">Impédances en régime sinusoïdal</a>, bilans du cours
+      <a href="#/cours/puissances-en-courant-alternatif">Puissances en courant alternatif</a>, compensation du cours
+      <a href="#/cours/correction-du-facteur-de-puissance">Correction du facteur de puissance</a> et résonance du cours
+      précédent.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Dans une installation réelle, on ne rencontre presque jamais un dipôle isolé : un tableau alimente simultanément des
+    moteurs, des résistances chauffantes, de l'éclairage, des prises et parfois des condensateurs, le tout à travers une ligne
+    qui a sa propre impédance. La question de l'exploitant est toujours la même : quel courant circule dans le câble, quelle
+    tension reste-t-il aux bornes des récepteurs, combien de puissance faut-il souscrire et transporter, faut-il compenser, et la
+    compensation crée-t-elle un nouveau risque ? Pour y répondre, il faut combiner en un seul raisonnement les outils vus
+    séparément dans les six cours précédents : valeurs efficaces, phaseurs, impédances, puissances, compensation et résonance.
+  </p>
+  <p>
+    C'est aussi le passage obligé vers le triphasé. Une installation triphasée équilibrée s'étudie phase par phase, exactement
+    comme une installation monophasée ; ce qui n'est pas solide ici devient fragile dès qu'on multiplie par trois. Le travail
+    central de cette séance est l'analyse complète d'une installation monophasée à plusieurs charges : bilan de puissance,
+    courant de ligne, chute de tension, décision de compensation et vérification de la résonance, avec contrôle de chaque
+    résultat par une deuxième méthode.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Calculer, pour une installation monophasée à plusieurs charges, les puissances active, réactive et apparente, le facteur de puissance et le courant de ligne par le théorème de Boucherot.</li>
+    <li data-rang="02">Vérifier le même courant par la somme des phaseurs des courants et par l'impédance équivalente, et expliquer pourquoi la somme arithmétique des courants est fausse.</li>
+    <li data-rang="03">Calculer la chute de tension d'une ligne, exactement par $\underline{E} = \underline{U} + \underline{Z}_l\underline{I}$ et approximativement par $(RP + XQ)/U$, ainsi que ses pertes.</li>
+    <li data-rang="04">Dimensionner une compensation capacitive pour un facteur de puissance cible et chiffrer ses effets sur le courant, les pertes et la tension.</li>
+    <li data-rang="05">Vérifier le rang de résonance du condensateur avec l'inductance de la ligne et interpréter le risque harmonique.</li>
+    <li data-rang="06">Choisir la méthode de résolution adaptée à un problème AC et contrôler le résultat par une seconde méthode, un bilan et un ordre de grandeur.</li>
+    <li data-rang="07">Diagnostiquer une anomalie d'exploitation, surcompensation, surtension ou échauffement, à partir de mesures de tension, de courant et de facteur de puissance.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Cette séance est une révision : les prérequis sont les résultats essentiels des six cours du module, rappelés ici sous
+    forme condensée. Une grandeur sinusoïdale $x(t) = X\sqrt{2}\cos(\omega t + \theta)$ est représentée par son phaseur
+    $\underline{X} = X e^{j\theta}$, de module égal à la valeur efficace. Dériver revient à multiplier par $j\omega$, d'où les
+    impédances $\underline{Z}_R = R$, $\underline{Z}_L = jL\omega$, $\underline{Z}_C = 1/(jC\omega)$, et la loi d'Ohm complexe
+    $\underline{U} = \underline{Z}\,\underline{I}$. La puissance complexe reçue par un dipôle est
+    $\underline{S} = \underline{U}\,\underline{I}^* = P + jQ$, avec $P = UI\cos\varphi$, $Q = UI\sin\varphi$ et $S = UI$ ;
+    $\varphi$ est l'avance de la tension sur le courant, positive pour un récepteur inductif. Un condensateur sous la tension
+    $U$ fournit $U^2C\omega$ vars. Une capacité $C$ et une inductance amont $L$ résonnent à $f_r = 1/(2\pi\sqrt{LC})$. Le
+    mini-test ci-dessous n'est pas noté ; la correction de chaque question reste masquée jusqu'à une tentative ou un clic
+    explicite sur "Voir la correction".
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-somme">Pourquoi les courants ne s'additionnent pas, mais les puissances actives si</h3>
+  <p>
+    Des récepteurs branchés en parallèle sur un même tableau voient la même tension. Chacun appelle un courant sinusoïdal à
+    la même fréquence, mais pas au même instant : le courant d'un four est maximal quand la tension l'est, celui d'un moteur
+    atteint son maximum un peu plus tard, celui d'un condensateur un quart de période plus tôt. La loi des nœuds s'applique à
+    chaque instant, donc aux valeurs instantanées et à leurs phaseurs ; elle ne s'applique pas aux valeurs efficaces, qui ne
+    disent rien du moment où chaque courant culmine. Additionner les intensités efficaces revient à supposer que tous les
+    maxima coïncident : c'est un majorant, juste seulement si tous les courants sont en phase.
+  </p>
+  <p>
+    Les puissances actives, elles, s'additionnent toujours : ce sont des moyennes d'énergie par unité de temps, et l'énergie se
+    conserve. Les puissances réactives s'additionnent aussi, mais avec leur signe : quand la bobine d'un moteur se charge en
+    énergie magnétique, un condensateur voisin se décharge, et l'énergie passe de l'un à l'autre sans revenir jusqu'à la
+    source. La puissance apparente, produit de deux valeurs efficaces, ne s'additionne pas : elle mesure la sollicitation des
+    conducteurs, pas un flux d'énergie conservé.
+  </p>
+  <p>
+    Analogie contrôlée : une péniche halée par plusieurs chevaux depuis les deux rives. Chaque corde tire avec une certaine
+    tension et un certain angle. Les composantes dans l'axe du canal s'ajoutent et font avancer la péniche : c'est la puissance
+    active. Les composantes transversales se compensent en partie si des chevaux tirent depuis des rives opposées : c'est la
+    puissance réactive, inductive d'un côté et capacitive de l'autre. Ce que doit supporter le timon commun est la résultante
+    des efforts, plus petite que la somme des tensions de cordes dès que les angles diffèrent : c'est le courant de ligne.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie</span>
+    <p>
+      Les forces de halage sont des vecteurs fixes ; les phaseurs représentent des grandeurs qui oscillent à $50\ \mathrm{Hz}$,
+      et leur angle est un décalage dans le temps, pas une direction dans l'espace. L'analogie ne rend pas compte du fait que la
+      puissance réactive est un échange d'énergie qui va et vient deux fois par période, avec une moyenne nulle : une force
+      transversale ne s'annule pas en moyenne. Elle suppose enfin des charges linéaires : en présence d'harmoniques, des
+      courants de fréquences différentes ne se composent plus comme des vecteurs d'un même plan, et une puissance déformante
+      apparaît, comme l'a montré le cours <a href="#/cours/puissances-en-courant-alternatif">Puissances en courant alternatif</a>.
+      Sauf mention contraire, la séance suppose des charges linéaires, une tension sinusoïdale et un régime établi.
+    </p>
+  </div>
+
+  <h3 id="d-installation-section">Simulation interactive : trois charges, un condensateur et le courant de ligne</h3>
+  <p>
+    La simulation représente un atelier alimenté sous $230\ \mathrm{V}$ : un moteur dont on règle la puissance et le facteur de
+    puissance, un four résistif de puissance réglable, un éclairage à LED de $1\ \mathrm{kW}$ légèrement capacitif, et un
+    condensateur de compensation. La capacité se règle avec la poignée, sur la règle graduée en bas du schéma ; elle se déplace
+    à la souris, au doigt ou au clavier après l'avoir sélectionnée. Avant de manipuler, prédisez : le courant de ligne est-il
+    plus grand ou plus petit que la somme des trois courants ? En augmentant la capacité depuis zéro, le courant de ligne
+    décroît-il indéfiniment ? Si l'on double la puissance du four, le facteur de puissance de l'ensemble monte-t-il ou
+    baisse-t-il ?
+  </p>
+  <figure id="d-installation-figure">
+    <div class="schema-vivant" id="d-installation"></div>
+    <div id="d-installation-trace"></div>
+    <figcaption>
+      À gauche, les phaseurs des courants, référence des phases sur la tension $\underline{U}$, flèche horizontale en trait fin
+      vers la droite. Les courants des charges sont mis bout à bout : $\underline{I}_M$ du moteur en trait plein épais, vers le
+      bas car en retard ; $\underline{I}_F$ du four en trait plein, horizontal ; $\underline{I}_E$ de l'éclairage en trait fin,
+      légèrement vers le haut car en avance ; $\underline{I}_C$ du condensateur en pointillés courts, vertical vers le haut. Le
+      courant de ligne $\underline{I}$, somme vectorielle, est la flèche en tirets épais issue de l'origine. À droite, le
+      triangle des puissances : $P$ horizontal, $Q$ vertical, compté vers le haut quand il est inductif, et $S$ en tirets épais ;
+      l'arc marque l'angle $\varphi$. En bas, la règle de la poignée, de $0$ à $250\ \mu\mathrm{F}$. Sous le schéma, le courant
+      de ligne en fonction de la capacité, nommé dans la légende avec sa couleur réelle ; le trait vertical en tirets marque la
+      capacité choisie, le trait vertical en pointillés courts la capacité qui annule $Q$.
+    </figcaption>
+  </figure>
+  <div id="d-installation-curseurs"></div>
+  <div id="d-installation-valeurs"></div>
+  <p>
+    Interprétation : avec les valeurs de départ, moteur de $4\ \mathrm{kW}$ à $0{,}72$, four de $2\ \mathrm{kW}$ et éclairage de
+    $1\ \mathrm{kW}$ à $0{,}95$ capacitif, les trois courants valent $24{,}15$, $8{,}70$ et $4{,}58\ \mathrm{A}$, soit
+    $37{,}43\ \mathrm{A}$ en somme arithmétique, alors que le courant de ligne n'est que de $34{,}08\ \mathrm{A}$ : la
+    composante réactive de l'éclairage retranche un peu de celle du moteur, et les composantes actives s'ajoutent. En
+    augmentant $C$, le courant de ligne baisse jusqu'à $30{,}43\ \mathrm{A}$, sa valeur active pure $P/U$, atteinte vers
+    $212\ \mu\mathrm{F}$ quand $Q = 0$ ; au-delà, l'installation devient capacitive et le courant remonte : c'est la courbe en V
+    de la surcompensation. Doubler le four augmente $P$ sans changer $Q$ : le facteur de puissance monte, alors qu'aucun
+    réactif n'a été compensé.
+  </p>
+
+  <h3 id="d-puissance-section">Animation : la puissance instantanée de l'atelier</h3>
+  <p>
+    L'animation trace, pour le même atelier, la tension, le courant de ligne et leur produit, la puissance instantanée
+    $p(t) = u(t)\,i(t)$. Le lecteur fait avancer le temps sur deux périodes, avec pause, vitesse et remise à zéro ; le curseur
+    règle la capacité de compensation. Avant de lancer, prédisez : la puissance instantanée devient-elle négative à certains
+    instants, et que signifie alors ce signe ? Que deviennent sa valeur moyenne et l'amplitude de son oscillation quand on
+    compense ?
+  </p>
+  <figure id="d-puissance-figure">
+    <div id="d-puissance-trace"></div>
+    <div id="d-puissance-p"></div>
+    <figcaption>
+      En haut, la tension et le courant de ligne, chacun rapporté à sa propre valeur crête pour être lisible sur un même axe
+      sans dimension ; les deux courbes sont nommées dans la légende avec leur couleur réelle. En bas, la puissance instantanée
+      en kilowatts, également nommée dans la légende ; le trait horizontal en tirets marque sa valeur moyenne $P$, et le trait
+      horizontal en pointillés courts la valeur nulle. Dans les deux tracés, le trait vertical en tirets marque l'instant
+      atteint par le lecteur.
+    </figcaption>
+  </figure>
+  <div id="d-puissance-curseurs"></div>
+  <div id="d-puissance-lecteur"></div>
+  <div id="d-puissance-valeurs"></div>
+  <p>
+    Interprétation : $p(t) = P + S\cos(2\omega t - \varphi)$, pour $u = U\sqrt{2}\cos\omega t$, oscille à $100\ \mathrm{Hz}$ autour de $P = 7\ \mathrm{kW}$ avec une
+    amplitude $S$. Sans compensation, $S = 7{,}84\ \mathrm{kVA}$ et $p$ descend à $-0{,}84\ \mathrm{kW}$ : pendant une fraction
+    $\varphi/180^\circ = 14{,}9\ \%$ du temps, l'atelier rend de l'énergie à la source, celle que le champ magnétique du moteur restitue.
+    Avec $126{,}7\ \mu\mathrm{F}$, $S$ tombe à $7{,}14\ \mathrm{kVA}$, le minimum remonte à $-0{,}14\ \mathrm{kW}$ et la valeur
+    moyenne reste $7\ \mathrm{kW}$ : la compensation ne change pas ce que l'atelier consomme, elle réduit l'énergie qui fait
+    l'aller-retour dans la ligne. Avec $212\ \mu\mathrm{F}$, $S = P$ et la puissance ne s'annule plus qu'aux instants où
+    tension et courant s'annulent ensemble.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-modele">Le modèle d'une installation monophasée</h3>
+  <p>
+    Hypothèses de toute la séance : récepteurs linéaires, réseau à une seule fréquence $f = 50\ \mathrm{Hz}$, régime établi,
+    conducteurs représentés par des impédances localisées. Le réseau amont, vu des bornes de l'installation, est remplacé par
+    son équivalent de Thévenin du cours
+    <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes de Thévenin, Norton et superposition</a> : une
+    force électromotrice $\underline{E}$ en série avec une impédance $\underline{Z}_l = R_l + jX_l$, qui regroupe la ligne, aller
+    et retour, et la source. Le schéma fixe les conventions.
+  </p>
+  <figure id="e-installation-figure">
+    <svg viewBox="0 0 880 370" role="img" aria-label="Installation monophasée : source E en convention générateur, impédance de ligne Zl, nœud A, quatre récepteurs en parallèle entre A et le neutre, moteur, four, éclairage et condensateur commandé avec le moteur, courants fléchés vers le neutre, tension U fléchée du neutre vers A, neutre en référence de potentiel">
+      <defs>
+        <marker id="fl-e-in" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="90" cy="190" r="28"/>
+        <path d="M76 190C82 178 88 178 90 190S98 202 104 190"/>
+        <path d="M90 162V70H160M270 70H800V110"/>
+        <rect x="160" y="58" width="110" height="24" rx="3"/>
+        <path d="M90 218V300H800V192"/>
+        <path d="M380 70V160M380 212V300"/>
+        <circle cx="380" cy="186" r="26"/>
+        <path d="M520 70V146M520 226V300"/>
+        <rect x="506" y="146" width="28" height="80" rx="3"/>
+        <path d="M650 70V150M650 222V300"/>
+        <rect x="626" y="150" width="48" height="72" rx="4"/>
+        <path d="M800 110L818 140"/>
+        <path d="M800 146V178"/>
+        <path d="M776 178H824M776 192H824" stroke-width="3"/>
+        <path d="M70 318H110M78 326H102M86 334H94"/>
+        <path d="M90 300V318"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.4" fill="none" stroke-dasharray="5 4">
+        <path d="M406 186H440V264H740V130H806"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="380" cy="70" r="4.5"/><circle cx="520" cy="70" r="4.5"/><circle cx="650" cy="70" r="4.5"/>
+        <circle cx="380" cy="300" r="4.5"/><circle cx="520" cy="300" r="4.5"/><circle cx="650" cy="300" r="4.5"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2" fill="none">
+        <path d="M100 52H150" marker-end="url(#fl-e-in)"/>
+        <path d="M396 92V140" marker-end="url(#fl-e-in)"/>
+        <path d="M536 92V134" marker-end="url(#fl-e-in)"/>
+        <path d="M666 92V138" marker-end="url(#fl-e-in)"/>
+        <path d="M784 214V270" marker-end="url(#fl-e-in)"/>
+        <path d="M856 286V84" marker-end="url(#fl-e-in)"/>
+        <path d="M36 286V84" marker-end="url(#fl-e-in)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="125" y="44" text-anchor="middle">I</text>
+        <text x="215" y="50" text-anchor="middle">Zl = Rl + jXl</text>
+        <text x="390" y="62">A</text>
+        <text x="380" y="191" text-anchor="middle">M</text>
+        <text x="650" y="190" text-anchor="middle" font-size="11.5">LED</text>
+        <text x="404" y="120">IM</text>
+        <text x="544" y="118">IF</text>
+        <text x="674" y="120">IE</text>
+        <text x="804" y="250">IC</text>
+        <text x="836" y="190">C</text>
+        <text x="866" y="66" text-anchor="end">U</text>
+        <text x="20" y="66">E</text>
+        <text x="126" y="186">source</text>
+        <text x="126" y="202">idéale</text>
+        <text x="380" y="318" text-anchor="middle" font-size="11">moteur</text>
+        <text x="520" y="318" text-anchor="middle" font-size="11">four</text>
+        <text x="650" y="318" text-anchor="middle" font-size="11">éclairage</text>
+        <text x="800" y="318" text-anchor="middle" font-size="11">condensateur</text>
+        <text x="530" y="282" font-size="10.5">commande commune</text>
+        <text x="836" y="134" font-size="10.5">K</text>
+        <text x="118" y="334">neutre N : référence de potentiel</text>
+        <text x="420" y="334" font-size="11.5">I = IM + IF + IE + IC (phaseurs)</text>
+        <text x="420" y="352" font-size="11.5">E = U + Zl I</text>
+      </g>
+    </svg>
+    <figcaption>
+      Installation monophasée étudiée. La source idéale, en convention générateur, impose la force électromotrice
+      $\underline{E}$, fléchée du neutre vers sa borne haute, dans le même sens que le courant de ligne $\underline{I}$ qui en sort.
+      L'impédance $\underline{Z}_l$ regroupe la ligne, aller et retour, et l'impédance interne de la source. Au nœud $A$, quatre
+      récepteurs en parallèle, en convention récepteur : moteur, four, éclairage et condensateur. Le contact $K$ du condensateur
+      est commandé avec le moteur, liaison en tirets. Les courants $\underline{I}_M$, $\underline{I}_F$, $\underline{I}_E$ et
+      $\underline{I}_C$ sont fléchés de $A$ vers le neutre ; la tension $\underline{U}$, commune aux quatre récepteurs, est fléchée
+      du neutre, référence de potentiel, vers $A$. La loi des nœuds en $A$ et la loi des mailles donnent les deux relations
+      inscrites en bas.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-phaseurs">De la sinusoïde au phaseur</h3>
+  <p>
+    Toutes les grandeurs ont la même pulsation $\omega$ : seules leurs valeurs efficaces et leurs phases les distinguent. La
+    représentation complexe exploite cette propriété :
+  </p>
+  <div class="formule-cle">
+    $$x(t) = X\sqrt{2}\cos(\omega t + \theta) = \operatorname{Re}\left(\sqrt{2}\,\underline{X}\,e^{j\omega t}\right), \qquad \underline{X} = Xe^{j\theta}, \qquad \frac{dx}{dt} \longleftrightarrow j\omega\,\underline{X}$$
+    <p class="formule-cle-legende">
+      $X$ valeur efficace, dans l'unité de la grandeur ; $\theta$ phase à l'origine, en radians ; $\omega = 2\pi f$ en radians
+      par seconde. Hypothèses : régime sinusoïdal établi, fréquence unique, système linéaire. Dérivation : la dérivée de
+      $e^{j\omega t}$ est $j\omega e^{j\omega t}$, et la partie réelle commute avec la dérivation. Interprétation : le phaseur est
+      la photographie, à $t = 0$, d'un vecteur qui tourne à la vitesse $\omega$ ; sa projection donne la valeur instantanée.
+      Cas limite : $\omega \to 0$ ramène au continu, où $j\omega\underline{X} \to 0$. Dimension : $j\omega$ est en
+      $\mathrm{s^{-1}}$, comme une dérivée temporelle.
+    </p>
+  </div>
+
+  <h3 id="e-chaine-section">Animation : le vecteur tournant et sa projection</h3>
+  <p>
+    L'animation montre les phaseurs de la tension et du courant d'un récepteur tournant ensemble, et leurs projections qui
+    construisent les sinusoïdes. Le lecteur fait avancer l'angle $\omega t$ sur une période, avec pause, vitesse et remise à
+    zéro ; le curseur règle le déphasage $\varphi$ de la tension sur le courant. Avant de lancer, prédisez : pour un
+    récepteur inductif, le courant passe-t-il par son maximum avant ou après la tension ? Le déphasage entre les deux
+    vecteurs change-t-il pendant la rotation ?
+  </p>
+  <figure id="e-chaine-figure">
+    <div class="schema-vivant" id="e-chaine"></div>
+    <figcaption>
+      À gauche, le cercle des phaseurs : $\underline{U}$ en trait plein épais et $\underline{I}$ en tirets, tournant dans le
+      sens trigonométrique ; leur projection sur l'axe vertical donne la valeur instantanée, rapportée à la crête. À droite,
+      les deux sinusoïdes en fonction de l'angle $\omega t$, de $0$ à $360^\circ$, dans les mêmes styles ; les points mobiles
+      marquent l'instant atteint par le lecteur, et les traits horizontaux en pointillés relient chaque extrémité de vecteur à
+      son point sur la courbe.
+    </figcaption>
+  </figure>
+  <div id="e-chaine-curseurs"></div>
+  <div id="e-chaine-lecteur"></div>
+  <div id="e-chaine-valeurs"></div>
+  <p>
+    Interprétation : l'angle entre les deux vecteurs reste constant pendant toute la rotation, c'est pourquoi on peut figer le
+    diagramme à $t = 0$ et raisonner sur des nombres complexes fixes. Pour un récepteur inductif, $\varphi &gt; 0$ : le vecteur
+    courant suit le vecteur tension, et la sinusoïde du courant passe par son maximum $\varphi/360^\circ$ de période plus tard,
+    soit $1{,}49\ \mathrm{ms}$ pour $\varphi = 26{,}74^\circ$ à $50\ \mathrm{Hz}$. Pour $\varphi = 90^\circ$, quand la tension est
+    maximale le courant est nul : c'est le comportement d'une inductance pure.
+  </p>
+
+  <h3 id="e-impedances">Impédances, admittances et associations</h3>
+  <p>
+    La loi d'Ohm complexe relie les phaseurs de chaque récepteur. En parallèle, on ajoute les admittances, puisque les
+    courants s'ajoutent sous une même tension ; en série, les impédances, puisque les tensions s'ajoutent sous un même
+    courant :
+  </p>
+  <div class="formule-cle">
+    $$\underline{U} = \underline{Z}\,\underline{I}, \qquad \underline{Z} = R + jX, \qquad \underline{Y} = \frac{1}{\underline{Z}} = G + jB, \qquad \underline{Y}_{\text{éq}} = \sum_k \underline{Y}_k \ \text{(parallèle)}, \qquad \underline{Z}_{\text{éq}} = \sum_k \underline{Z}_k \ \text{(série)}$$
+    <p class="formule-cle-legende">
+      $R$ résistance et $X$ réactance, en ohms ; $G$ conductance et $B$ susceptance, en siemens. Convention : $X &gt; 0$ pour
+      un récepteur inductif, $X &lt; 0$ pour un récepteur capacitif ; $B$ a le signe opposé de $X$. Interprétation : un
+      récepteur décrit par ses puissances $P$ et $Q$ sous la tension $U$ équivaut à une conductance $G = P/U^2$ en parallèle
+      avec une susceptance $B = -Q/U^2$. Attention : $G \neq 1/R$ dès que $X \neq 0$. Cas limites : $X = 0$ donne
+      $G = 1/R$ ; $R = 0$ donne $G = 0$. Dimension : $\mathrm{W/V^2} = \mathrm{A/V} = \mathrm{S}$.
+    </p>
+  </div>
+
+  <h3 id="e-puissances">Puissance complexe et théorème de Boucherot</h3>
+  <p>
+    Pour une tension $u = U\sqrt{2}\cos\omega t$ et un courant $i = I\sqrt{2}\cos(\omega t - \varphi)$, le produit vaut
+    $p(t) = UI\cos\varphi + UI\cos(2\omega t - \varphi)$, que l'on peut aussi écrire
+    $UI\cos\varphi\,(1 + \cos 2\omega t) + UI\sin\varphi\,\sin 2\omega t$. Le premier terme ne change jamais de signe : c'est
+    l'énergie consommée. Le second a une moyenne nulle et une amplitude $UI\sin\varphi$ : c'est l'énergie échangée. D'où les
+    définitions, et leur forme complexe :
+  </p>
+  <div class="formule-cle">
+    $$P = UI\cos\varphi, \qquad Q = UI\sin\varphi, \qquad S = UI = \sqrt{P^2 + Q^2}, \qquad \underline{S} = \underline{U}\,\underline{I}^* = P + jQ, \qquad \lambda = \frac{P}{S}$$
+    <p class="formule-cle-legende">
+      $P$ en watts, $Q$ en voltampères réactifs, $S$ en voltampères ; $\underline{I}^*$ conjugué du phaseur du courant ;
+      $\lambda$ facteur de puissance, égal à $\cos\varphi$ en régime sinusoïdal. Convention récepteur : $Q &gt; 0$ pour un
+      récepteur inductif. Dérivation de la forme complexe : $\underline{U}\,\underline{I}^* = Ue^{j\theta_u}Ie^{-j\theta_i} = UIe^{j\varphi}$.
+      Cas limites : résistance, $Q = 0$ ; inductance ou capacité pure, $P = 0$. Dimension : $\mathrm{V \cdot A}$ pour les trois,
+      les noms d'unités différents signalant seulement la nature de la grandeur.
+    </p>
+  </div>
+  <p>
+    Théorème de Boucherot : dans un réseau quelconque fonctionnant à une seule fréquence, la puissance active fournie est la
+    somme des puissances actives reçues, et de même pour la puissance réactive. Démonstration pour des récepteurs en
+    parallèle : $\underline{S} = \underline{U}\,\underline{I}^* = \underline{U}\left(\sum_k\underline{I}_k\right)^* = \sum_k\underline{U}\,\underline{I}_k^* = \sum_k\underline{S}_k$ ;
+    en série, on factorise le courant commun de la même façon. Par récurrence, le résultat s'étend à tout réseau.
+  </p>
+  <div class="formule-cle">
+    $$P = \sum_k P_k, \qquad Q = \sum_k Q_k \ \text{(avec leur signe)}, \qquad S = \sqrt{P^2 + Q^2} \neq \sum_k S_k, \qquad I = \frac{S}{U}$$
+    <p class="formule-cle-legende">
+      Hypothèses : fréquence unique, puissances de chaque récepteur connues sous la tension réelle qui lui est appliquée.
+      Interprétation : $P$ traduit la conservation de l'énergie consommée, $Q$ celle de l'énergie échangée ; $S$ ne se conserve
+      pas, l'égalité $S = \sum S_k$ n'étant vraie que si tous les récepteurs ont le même $\varphi$. Cas limite : un ensemble de
+      récepteurs tous résistifs donne $S = \sum P_k$. Dimension : homogène, en voltampères.
+    </p>
+  </div>
+
+  <h3 id="e-ligne">Chute de tension et pertes dans la ligne</h3>
+  <p>
+    La loi des mailles du schéma donne $\underline{E} = \underline{U} + \underline{Z}_l\underline{I}$. Le schéma ASCII
+    ci-dessous rappelle le modèle et ses flèches.
+  </p>
+  <figure id="e-ligne-figure">
+    <pre class="ascii">     E (f.é.m.)        Rl            jXl
+   +---( ~ )--->---[====]------(mmmm)-----+ A
+   |             I     R_l I ->   jX_l I ->   |
+   |                                       [charges]   U  (fléchée de N vers A)
+   |                                          |
+   +--------------------------------------+ N  neutre : référence
+   convention générateur pour E, récepteur pour les charges
+   E = U + (Rl + jXl) I</pre>
+    <figcaption>
+      Modèle de la ligne. La f.é.m. $\underline{E}$, à gauche, débite le courant $\underline{I}$, fléché de gauche à droite ; la
+      résistance $R_l$ et la réactance $X_l$ de la boucle, aller et retour, sont en série ; leurs tensions $R_l\underline{I}$ et
+      $jX_l\underline{I}$ sont fléchées dans le sens du courant, en convention récepteur. Les charges, regroupées entre $A$ et
+      le neutre $N$, reçoivent $\underline{U}$ ; le neutre est la référence de potentiel.
+    </figcaption>
+  </figure>
+  <p>
+    Prenons $\underline{U}$ comme référence des phases, $\underline{U} = U$ réel. Le courant se déduit de la puissance des
+    charges : $\underline{S} = U\underline{I}^*$ donne $\underline{I} = (P - jQ)/U$. En développant :
+  </p>
+  <div class="formule-cle">
+    $$\underline{E} = U + (R_l + jX_l)\frac{P - jQ}{U} = U + \frac{R_lP + X_lQ}{U} + j\,\frac{X_lP - R_lQ}{U}, \qquad \Delta U = E - U \approx \frac{R_lP + X_lQ}{U}$$
+    <p class="formule-cle-legende">
+      $\Delta U$ chute de tension en volts ; $R_l$, $X_l$ résistance et réactance de boucle, en ohms ; $P$, $Q$ puissances reçues
+      par les charges. Hypothèse de l'approximation : la partie imaginaire, $(X_lP - R_lQ)/U$, est petite devant $U$, ce qui
+      est le cas pour une chute de quelques pour cent ; l'erreur commise sur le module est alors du second ordre. Interprétation :
+      la chute dépend de la puissance active par la résistance, et de la puissance réactive par la réactance ; compenser réduit
+      le terme $X_lQ$ et, si $Q$ devient négatif, peut faire monter la tension en bout de ligne. Cas limites : $Q = 0$ donne
+      $R_lP/U = R_lI$ ; une ligne purement réactive avec $P = 0$ donne $X_lQ/U$. Dimension :
+      $\Omega \cdot \mathrm{W}/\mathrm{V} = \Omega \cdot \mathrm{A} = \mathrm{V}$.
+    </p>
+  </div>
+  <div class="formule-cle">
+    $$P_l = R_lI^2, \qquad Q_l = X_lI^2, \qquad P_E = P + P_l, \qquad Q_E = Q + Q_l, \qquad \eta = \frac{P}{P + P_l}$$
+    <p class="formule-cle-legende">
+      Pertes active et réactive de la ligne, puis puissances fournies par la source, par Boucherot appliqué au circuit
+      entier, et rendement de la distribution. Contrôle : $\sqrt{P_E^2 + Q_E^2}$ doit être égal à $EI$. Interprétation : à
+      puissance active constante, $I = P/(U\lambda)$ ; les pertes varient donc comme $1/\lambda^2$.
+    </p>
+  </div>
+
+  <h3 id="e-compensation">Compensation et résonance</h3>
+  <p>
+    Un condensateur en parallèle ne modifie pas $P$ et retranche $Q_C = U^2C\omega$ à la puissance réactive. Pour passer de
+    $\varphi_1$ à $\varphi_2$ à puissance active constante, il faut, comme l'a établi le cours
+    <a href="#/cours/correction-du-facteur-de-puissance">Correction du facteur de puissance</a> :
+  </p>
+  <div class="formule-cle">
+    $$Q_C = P\,(\tan\varphi_1 - \tan\varphi_2), \qquad C = \frac{Q_C}{U^2\omega}, \qquad f_r = \frac{1}{2\pi\sqrt{L_lC}}, \qquad n_r = \frac{f_r}{f} = \sqrt{\frac{S_{cc}}{Q_C}}, \qquad S_{cc} = \frac{U^2}{X_l}$$
+    <p class="formule-cle-legende">
+      $Q_C$ en vars ; $C$ en farads ; $L_l = X_l/\omega$ inductance de boucle en henrys ; $f_r$ fréquence de résonance parallèle
+      vue d'un courant harmonique injecté au nœud $A$ ; $n_r$ rang correspondant ; $S_{cc}$ puissance de court-circuit au nœud
+      $A$, en voltampères. Hypothèses : condensateur idéal, ligne inductive, résistances négligées pour la fréquence de
+      résonance. Dérivation du rang : $n_r^2 = \omega_r^2/\omega^2 = 1/(L_lC\omega^2) = (U^2/X_l)/(U^2C\omega)$. Interprétation : plus
+      la source est puissante et le condensateur petit, plus la résonance est haute et loin des rangs harmoniques usuels.
+      Cas limite : $C \to 0$ repousse $n_r$ à l'infini. Dimension : $\sqrt{\mathrm{VA}/\mathrm{var}}$ sans dimension.
+    </p>
+  </div>
+  <p>
+    Deux règles de conception complètent ces formules. D'abord, ne pas viser $\cos\varphi = 1$ : la moindre baisse de charge
+    rendrait l'installation capacitive, et l'on retient en général une cible entre $0{,}93$ et $0{,}98$. Ensuite, commuter le
+    condensateur avec le récepteur qu'il compense, ou le confier à une batterie automatique, pour éviter la surcompensation
+    quand ce récepteur s'arrête.
+  </p>
+
+  <h3 id="e-methodes">Choisir une méthode</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Quatre façons de résoudre un problème AC à plusieurs charges</caption>
+      <thead><tr><th>Méthode</th><th>Principe</th><th>Points forts</th><th>Limites</th><th>Quand la choisir</th></tr></thead>
+      <tbody>
+        <tr><td>Boucherot</td><td>sommes de $P$ et de $Q$, puis $S$ et $I = S/U$</td><td>rapide, travaille sur les données de plaque, aucun angle à manipuler</td><td>donne le module de $I$, pas sa phase ; suppose la tension connue</td><td>bilan de puissance, courant de ligne, dimensionnement</td></tr>
+        <tr><td>Phaseurs des courants</td><td>$\underline{I} = \sum\underline{I}_k$ en cartésien</td><td>donne la phase de chaque courant, se dessine</td><td>calcul de chaque angle, risque d'erreur de signe</td><td>diagramme de Fresnel, contrôle visuel, protection</td></tr>
+        <tr><td>Impédance équivalente</td><td>$\underline{Y}_{\text{éq}} = \sum\underline{Y}_k$, puis $\underline{I} = \underline{Y}_{\text{éq}}\underline{U}$</td><td>traite une tension inconnue, des lignes, des résonances</td><td>exige des modèles d'impédance des récepteurs</td><td>chute de tension exacte, comportement en fréquence</td></tr>
+        <tr><td>Simulation</td><td>analyse AC ou temporelle d'un modèle</td><td>traite de nombreux éléments, harmoniques et transitoires</td><td>dépend des modèles ; ne remplace pas l'analyse</td><td>vérification finale, étude harmonique</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    En pratique, Boucherot donne le résultat principal, les phaseurs ou les admittances le vérifient, et la simulation sert de
+    dernier contrôle. Une remarque sur les modèles de charge : Boucherot utilise des puissances, ce qui revient à supposer des
+    charges à puissance constante ; l'impédance équivalente suppose des charges à impédance constante, dont la puissance varie
+    comme $U^2$. Les deux coïncident à la tension nominale. Un moteur asynchrone chargé se rapproche plutôt d'une charge à
+    puissance constante, un four d'une charge à impédance constante.
+  </p>
+
+  <h3 id="e-statut">Statut des énoncés</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Ce qui relève de la loi, de la convention, de l'approximation, de la conception et de la norme ou du constructeur</caption>
+      <thead><tr><th>Énoncé</th><th>Statut</th><th>Commentaire</th></tr></thead>
+      <tbody>
+        <tr><td>Lois des nœuds et des mailles en phaseurs ; conservation de $P$ et de $Q$ ; $\underline{E} = \underline{U} + \underline{Z}_l\underline{I}$ ; $f_r = 1/(2\pi\sqrt{LC})$</td><td>Lois physiques et conséquences exactes</td><td>Valables pour des éléments linéaires à une seule fréquence.</td></tr>
+        <tr><td>Valeur efficace pour le module du phaseur ; $\varphi$ avance de $u$ sur $i$ ; $Q &gt; 0$ inductif en convention récepteur</td><td>Conventions</td><td>Un autre choix est possible, à condition de l'annoncer et de s'y tenir.</td></tr>
+        <tr><td>$\Delta U \approx (R_lP + X_lQ)/U$ ; charges à puissance constante ; ligne à constantes localisées</td><td>Approximations</td><td>Bonnes pour une chute de quelques pour cent et une ligne courte.</td></tr>
+        <tr><td>Cible de $\cos\varphi$ entre $0{,}93$ et $0{,}98$ ; condensateur commuté avec le récepteur ; résonance loin des rangs présents</td><td>Règles de conception</td><td>Compromis entre gain, coût et risque, à justifier pour chaque site.</td></tr>
+        <tr><td>Chute de tension admissible, seuil de facturation du réactif, courant admissible d'un câble</td><td>Norme, contrat ou constructeur</td><td>À lire dans la norme applicable, le contrat de fourniture et les catalogues ; les valeurs de cette séance sont des hypothèses d'étude.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, la carte de résolution d'un problème AC complet, puis les
+    triangles des puissances avant et après compensation, l'organigramme de la décision de compensation et un rappel des
+    renvois vers les schémas placés au fil du cours.
+  </p>
+
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 900 560" role="img" aria-label="Carte de résolution d'un problème AC complet : sept étapes, données, modèle, bilan de Boucherot, ligne, compensation, résonance, contrôles, avec les cours de rattachement et deux boucles de retour">
+      <defs>
+        <marker id="fl-f-c" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2" fill="none">
+        <rect x="20" y="20" width="250" height="96" rx="10"/>
+        <rect x="325" y="20" width="250" height="96" rx="10"/>
+        <rect x="630" y="20" width="250" height="96" rx="10"/>
+        <rect x="630" y="196" width="250" height="110" rx="10"/>
+        <rect x="325" y="196" width="250" height="110" rx="10"/>
+        <rect x="20" y="196" width="250" height="110" rx="10"/>
+        <rect x="20" y="392" width="860" height="84" rx="10"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2" fill="none">
+        <path d="M270 68H318" marker-end="url(#fl-f-c)"/>
+        <path d="M575 68H623" marker-end="url(#fl-f-c)"/>
+        <path d="M755 116V189" marker-end="url(#fl-f-c)"/>
+        <path d="M630 251H582" marker-end="url(#fl-f-c)"/>
+        <path d="M325 251H277" marker-end="url(#fl-f-c)"/>
+        <path d="M145 306V385" marker-end="url(#fl-f-c)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.6" fill="none" stroke-dasharray="6 5">
+        <path d="M80 196V160H400V189" marker-end="url(#fl-f-c)"/>
+        <path d="M500 196V160H700V123" marker-end="url(#fl-f-c)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="34" y="42" font-weight="600">1. Données</text>
+        <text x="34" y="62">U, f, P et cos φ de chaque</text>
+        <text x="34" y="78">récepteur, nature L ou C,</text>
+        <text x="34" y="94">ligne : longueur, section, X</text>
+        <text x="339" y="42" font-weight="600">2. Modèle</text>
+        <text x="339" y="62">conventions, référence U,</text>
+        <text x="339" y="78">phaseurs, Z ou Y par charge,</text>
+        <text x="339" y="94">Thévenin du réseau amont</text>
+        <text x="644" y="42" font-weight="600">3. Bilan de Boucherot</text>
+        <text x="644" y="62">P = Σ Pk, Q = Σ Qk signés</text>
+        <text x="644" y="78">S = √(P² + Q²), λ = P / S</text>
+        <text x="644" y="94">I = S / U ; contrôle par Σ Ik</text>
+        <text x="644" y="218" font-weight="600">4. Ligne</text>
+        <text x="644" y="238">ΔU ≈ (Rl P + Xl Q) / U</text>
+        <text x="644" y="254">exact : E = U + Zl I</text>
+        <text x="644" y="270">pertes Rl I², Xl I²</text>
+        <text x="644" y="286">puissances fournies par E</text>
+        <text x="339" y="218" font-weight="600">5. Compensation ?</text>
+        <text x="339" y="238">QC = P (tan φ1 - tan φ2)</text>
+        <text x="339" y="254">C = QC / (U² ω)</text>
+        <text x="339" y="270">cible 0,93 à 0,98, commutée</text>
+        <text x="339" y="286">gains : I, pertes, ΔU</text>
+        <text x="34" y="218" font-weight="600">6. Résonance</text>
+        <text x="34" y="238">fr = 1 / (2π √(Ll C))</text>
+        <text x="34" y="254">nr = √(Scc / QC)</text>
+        <text x="34" y="270">loin des rangs injectés ?</text>
+        <text x="34" y="286">sinon self ou autre C</text>
+        <text x="34" y="414" font-weight="600">7. Contrôles</text>
+        <text x="34" y="434">dimensions ; cas limites ; second calcul par une autre méthode ; Σ P et Σ Q à la source égales à E I ;</text>
+        <text x="34" y="450">ordre de grandeur : I ≈ P / (U λ) ; tension en bout de ligne dans la tolérance ; simulation si doute</text>
+        <text x="34" y="466" font-size="11">tout résultat non contrôlé est provisoire</text>
+        <text x="108" y="152" font-size="11">rang trop proche : revoir C</text>
+        <text x="512" y="152" font-size="11">chute trop forte : section</text>
+        <text x="20" y="508" font-size="11">cours mobilisés : 1 Signaux périodiques et sinusoïdes ; 2 Nombres complexes et phaseurs, Impédances en régime</text>
+        <text x="20" y="524" font-size="11">sinusoïdal ; 3 et 4 Puissances en courant alternatif ; 5 Correction du facteur de puissance ;</text>
+        <text x="20" y="540" font-size="11">6 Résonance série et parallèle. Flèches pleines : ordre de résolution ; tirets : retours de conception.</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal : carte de résolution d'un problème AC complet. Les sept cadres sont les étapes, parcourues dans l'ordre
+      des flèches en trait plein : données, modèle avec ses conventions, bilan de puissance, ligne, décision de compensation,
+      vérification de la résonance, puis contrôles. Les flèches en tirets sont les boucles de conception : un rang de résonance
+      trop proche d'un harmonique renvoie au choix de la capacité, une chute de tension excessive renvoie aux données de la
+      ligne, section ou longueur. En bas, le cours dans lequel chaque étape a été établie.
+    </figcaption>
+  </figure>
+
+  <figure id="f-triangles">
+    <svg viewBox="0 0 760 390" role="img" aria-label="Triangles des puissances de l'exemple avant et après compensation : P égal à 7 kilowatts horizontal, Q égal à 3,53 kilovars avant, 1,42 kilovar après, la puissance fournie par le condensateur 2,11 kilovars, S égal à 7,84 puis 7,14 kilovoltampères, angles 26,7 et 11,5 degrés">
+      <defs>
+        <marker id="fl-f-t" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto-start-reverse">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.6" fill="none">
+        <path d="M80 330H637" marker-end="url(#fl-f-t)"/>
+        <path d="M640 330V51" marker-end="url(#fl-f-t)"/>
+        <path d="M80 330L637.3 49.3" stroke-dasharray="12 6" marker-end="url(#fl-f-t)"/>
+        <path d="M80 330L637 217" stroke-dasharray="3 4" marker-end="url(#fl-f-t)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.8" fill="none">
+        <path d="M672 50V213" marker-start="url(#fl-f-t)" marker-end="url(#fl-f-t)"/>
+        <path d="M640 48H680M640 216H680" stroke-dasharray="2 3"/>
+        <path d="M200 330A120 120 0 0 0 187.2 276"/>
+        <path d="M250 330A170 170 0 0 0 246.6 296.3"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="360" y="352" text-anchor="middle">P = 7 kW, inchangée</text>
+        <text x="626" y="140" text-anchor="end">Q = 3,53 kvar</text>
+        <text x="626" y="270" text-anchor="end">Q' = 1,42 kvar</text>
+        <text x="684" y="136">QC =</text>
+        <text x="684" y="152">2,11 kvar</text>
+        <text x="300" y="166" text-anchor="end">S = 7,84 kVA</text>
+        <text x="430" y="290">S' = 7,14 kVA</text>
+        <text x="206" y="296">φ = 26,7°</text>
+        <text x="258" y="318" font-size="11">φ' = 11,5°</text>
+        <text x="80" y="380" font-size="11">tirets épais : avant compensation ; pointillés : après ; Q compté vers le haut, inductif</text>
+      </g>
+    </svg>
+    <figcaption>
+      Triangles des puissances de l'exemple de la section H, à la même échelle. La puissance active $P$, horizontale, est la
+      même avant et après. Avant compensation, la puissance réactive $Q$, verticale, compte vers le haut puisqu'elle est
+      inductive, et l'hypoténuse en tirets épais est $S$. Le condensateur retranche $Q_C$, cote à double flèche à droite ;
+      l'hypoténuse en pointillés est la nouvelle puissance apparente $S'$, et l'angle passe de $\varphi$ à $\varphi'$. Le
+      courant de ligne, proportionnel à $S$ sous tension constante, baisse dans le rapport $7{,}14/7{,}84$.
+    </figcaption>
+  </figure>
+
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Bilan de Boucherot : P, Q, λ"] --> B{"λ sous la cible ?"}
+  B -->|"non"| Z["Pas de compensation :<br/>contrôler la tension et les pertes"]
+  B -->|"oui"| C["QC = P (tan φ1 - tan φ2)<br/>C = QC / (U² ω)"]
+  C --> D{"Le réactif varie-t-il<br/>avec un récepteur ?"}
+  D -->|"oui"| E["Compensation individuelle<br/>commutée avec ce récepteur"]
+  D -->|"non, charge stable"| F["Compensation fixe<br/>au tableau"]
+  E --> G["Rang de résonance<br/>nr = √(Scc / QC)"]
+  F --> G
+  G --> H{"nr à plus de 10 %<br/>de tout rang injecté ?"}
+  H -->|"oui"| I["Chiffrer les gains :<br/>courant, pertes, chute de tension"]
+  H -->|"non"| J["Self anti-harmonique<br/>ou autre capacité"]
+  J --> G
+  I --> K["Contrôles et décision<br/>coût, gain, risque"]</pre>
+    <figcaption>
+      Organigramme de la décision de compensation. Les rectangles sont des étapes, les losanges des décisions, les libellés des
+      flèches les réponses. La première décision compare le facteur de puissance à la cible ; la deuxième choisit entre
+      compensation individuelle et fixe selon la stabilité du réactif ; la troisième vérifie la résonance avec une marge de
+      $10\ \%$, règle de conception retenue pour cette séance, et renvoie au choix de la capacité si elle n'est pas respectée.
+    </figcaption>
+  </figure>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Repères d'ordre de grandeur sous 230 V, 50 Hz</caption>
+      <thead><tr><th>Grandeur</th><th>Repère</th><th>Usage</th></tr></thead>
+      <tbody>
+        <tr><td>Courant actif</td><td>$P/U$ : $4{,}35\ \mathrm{A}$ par kilowatt</td><td>borne basse du courant de ligne</td></tr>
+        <tr><td>Réactif d'un condensateur</td><td>$U^2\omega = 16{,}6\ \mathrm{var}$ par microfarad</td><td>passer de $Q_C$ à $C$ de tête</td></tr>
+        <tr><td>Gain de courant par compensation</td><td>$I_2/I_1 = \lambda_1/\lambda_2$</td><td>$0{,}80 \to 0{,}95$ : $-16\ \%$ ; $0{,}93 \to 0{,}98$ : $-5\ \%$</td></tr>
+        <tr><td>Gain de pertes</td><td>$(\lambda_1/\lambda_2)^2$</td><td>$0{,}80 \to 0{,}95$ : $-29\ \%$</td></tr>
+        <tr><td>Chute de tension</td><td>$(R_lP + X_lQ)/U$</td><td>quelques pour cent en bout de ligne</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-installation-figure" data-renvoi="d-installation-figure">la simulation des courants, du triangle des puissances et de la courbe en V</a> et <a href="#d-puissance-figure" data-renvoi="d-puissance-figure">l'animation de la puissance instantanée</a>, section D ;</li>
+    <li><a href="#e-installation-figure" data-renvoi="e-installation-figure">le schéma de l'installation et ses conventions</a>, <a href="#e-chaine-figure" data-renvoi="e-chaine-figure">l'animation du vecteur tournant</a> et <a href="#e-ligne-figure" data-renvoi="e-ligne-figure">le modèle de la ligne</a>, section E ;</li>
+    <li><a href="#h-circuit-figure" data-renvoi="h-circuit-figure">le circuit chiffré de l'exemple</a> et <a href="#h-construction-figure" data-renvoi="h-construction-figure">l'animation de la construction des diagrammes de Fresnel</a>, section H ;</li>
+    <li><a href="#i-unifilaire-figure" data-renvoi="i-unifilaire-figure">le schéma unifilaire de l'atelier de maintenance</a> et <a href="#i-atelier-figure" data-renvoi="i-atelier-figure">la simulation de la chute de tension du départ</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour analyser une installation monophasée à plusieurs charges :</p>
+  <ol>
+    <li>Rassembler les données et fixer les conventions : tension de référence, convention récepteur pour les charges, signe de $Q$, valeurs efficaces. Noter pour chaque récepteur $P_k$ et $\cos\varphi_k$, et sa nature inductive ou capacitive.</li>
+    <li>Calculer $Q_k = P_k\tan\varphi_k$, signé, pour chaque récepteur ; vérifier qu'aucun $P_k$ n'est une puissance utile mécanique au lieu d'une puissance absorbée.</li>
+    <li>Faire le bilan de Boucherot : $P$, $Q$, $S$, $\lambda = P/S$ et $I = S/U$ ; comparer à la somme arithmétique des courants pour mesurer l'erreur évitée.</li>
+    <li>Contrôler $I$ par une seconde méthode : somme des phaseurs $\underline{I}_k = (P_k - jQ_k)/U$, ou admittance équivalente.</li>
+    <li>Traiter la ligne : $\underline{E} = \underline{U} + \underline{Z}_l\underline{I}$, chute $\Delta U \approx (R_lP + X_lQ)/U$, pertes $R_lI^2$ ; comparer la chute à l'objectif de conception.</li>
+    <li>Décider de la compensation : cible, $Q_C$, $C$, emplacement et commande ; recalculer $I$, les pertes et la chute.</li>
+    <li>Vérifier la résonance : $n_r = \sqrt{S_{cc}/Q_C}$, à comparer aux rangs injectés par les charges non linéaires ; revoir $C$ ou ajouter une self si nécessaire.</li>
+    <li>Contrôler : dimensions, bilan à la source $\sqrt{P_E^2 + Q_E^2} = EI$, cas limites, ordre de grandeur $I \approx P/(U\lambda)$, puis conclure par une décision d'ingénierie chiffrée.</li>
+  </ol>
+  <p>
+    Choix de méthode : Boucherot pour le bilan et le dimensionnement ; phaseurs pour les angles et le dessin ; admittances
+    quand la tension des charges dépend du courant ou quand on étudie le comportement en fréquence ; simulation pour la
+    vérification finale.
+  </p>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Situation : un atelier de conditionnement est alimenté en monophasé. Il comprend un moteur de convoyeur et de ventilation
+    absorbant $4\ \mathrm{kW}$ à $\cos\varphi = 0{,}72$, un four de rétraction résistif de $2\ \mathrm{kW}$, et un éclairage à
+    LED de $1\ \mathrm{kW}$ dont le facteur de déplacement vaut $0{,}95$, capacitif. Le réseau amont, vu de l'atelier, est un
+    équivalent de Thévenin d'impédance $\underline{Z}_l = 0{,}20 + j0{,}10\ \Omega$, ligne aérienne et transformateur compris.
+    On veut $230\ \mathrm{V}$ aux bornes des récepteurs. On demande le bilan de puissance, le courant de ligne, la f.é.m.
+    nécessaire et la chute de tension, les pertes, la compensation qui amène l'atelier à $\cos\varphi = 0{,}98$ et ses effets,
+    puis le rang de résonance du condensateur.
+  </p>
+  <figure id="h-circuit-figure">
+    <svg viewBox="0 0 880 370" role="img" aria-label="Circuit de l'exemple : source E, impédance 0,20 plus j 0,10 ohm, nœud A à 230 volts, moteur 4 kilowatts cos phi 0,72, four 2 kilowatts, éclairage 1 kilowatt cos phi 0,95 capacitif, condensateur C commandé avec le moteur, neutre en référence">
+      <defs>
+        <marker id="fl-h-c" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="90" cy="180" r="28"/>
+        <path d="M76 180C82 168 88 168 90 180S98 192 104 180"/>
+        <path d="M90 152V70H160M290 70H800V110"/>
+        <rect x="160" y="58" width="130" height="24" rx="3"/>
+        <path d="M90 208V280H800V192"/>
+        <path d="M380 70V150M380 202V280"/>
+        <circle cx="380" cy="176" r="26"/>
+        <path d="M520 70V136M520 216V280"/>
+        <rect x="506" y="136" width="28" height="80" rx="3"/>
+        <path d="M650 70V140M650 212V280"/>
+        <rect x="626" y="140" width="48" height="72" rx="4"/>
+        <path d="M800 110L818 140"/>
+        <path d="M800 146V178"/>
+        <path d="M776 178H824M776 192H824" stroke-width="3"/>
+        <path d="M70 298H110M78 306H102M86 314H94"/>
+        <path d="M90 280V298"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="380" cy="70" r="4.5"/><circle cx="520" cy="70" r="4.5"/><circle cx="650" cy="70" r="4.5"/>
+        <circle cx="380" cy="280" r="4.5"/><circle cx="520" cy="280" r="4.5"/><circle cx="650" cy="280" r="4.5"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2" fill="none">
+        <path d="M100 52H150" marker-end="url(#fl-h-c)"/>
+        <path d="M856 266V84" marker-end="url(#fl-h-c)"/>
+        <path d="M36 266V84" marker-end="url(#fl-h-c)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="125" y="44" text-anchor="middle">I</text>
+        <text x="225" y="50" text-anchor="middle">0,20 + j0,10 Ω</text>
+        <text x="390" y="62">A</text>
+        <text x="380" y="181" text-anchor="middle">M</text>
+        <text x="650" y="180" text-anchor="middle" font-size="11.5">LED</text>
+        <text x="836" y="190">C</text>
+        <text x="836" y="134" font-size="10.5">K</text>
+        <text x="866" y="66" text-anchor="end">U = 230 V</text>
+        <text x="20" y="66">E</text>
+        <text x="380" y="300" text-anchor="middle" font-size="11">4 kW, cos φ = 0,72</text>
+        <text x="520" y="300" text-anchor="middle" font-size="11">2 kW, résistif</text>
+        <text x="650" y="300" text-anchor="middle" font-size="11">1 kW, 0,95 capacitif</text>
+        <text x="800" y="300" text-anchor="middle" font-size="11">C à calculer</text>
+        <text x="118" y="340">neutre N : référence de potentiel</text>
+        <text x="460" y="340" font-size="11">courants fléchés de A vers N, convention récepteur</text>
+      </g>
+    </svg>
+    <figcaption>
+      Circuit chiffré de l'exemple, mêmes conventions que le schéma de la section E : la source $\underline{E}$ en convention
+      générateur, fléchée du neutre vers sa borne haute, débite $\underline{I}$ à travers $\underline{Z}_l$ ; les quatre
+      récepteurs, en convention récepteur, sont soumis à $\underline{U} = 230\ \mathrm{V}$, fléchée du neutre, référence de
+      potentiel, vers le nœud $A$. Le condensateur, commandé par le contact $K$ du moteur, est à dimensionner.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Données : $U = 230\ \mathrm{V}$ aux récepteurs, prise comme référence des phases ; $f = 50\ \mathrm{Hz}$,
+    $\omega = 314{,}16\ \mathrm{rad/s}$ ; $P_M = 4000\ \mathrm{W}$, $\cos\varphi_M = 0{,}72$ inductif ; $P_F = 2000\ \mathrm{W}$ ;
+    $P_E = 1000\ \mathrm{W}$, $\cos\varphi_E = 0{,}95$ capacitif ; $\underline{Z}_l = 0{,}20 + j0{,}10\ \Omega$. Hypothèses : charges
+    linéaires, puissances données sous $230\ \mathrm{V}$, facteur de déplacement de l'éclairage supposé, harmoniques négligés
+    pour le bilan. Inconnues : $P$, $Q$, $S$, $\lambda$, $I$, $\underline{E}$, $\Delta U$, pertes, $Q_C$, $C$, effets de la
+    compensation, rang de résonance. Stratégie : méthode de la section G ; Boucherot pour le bilan, phaseurs pour le contrôle et
+    pour $\underline{E}$, formule des tangentes pour $C$.
+  </p>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li>Puissances réactives : $\tan(\arccos 0{,}72) = 0{,}9639$, $Q_M = 4000 \times 0{,}9639 = 3855{,}4\ \mathrm{var}$ ; $Q_F = 0$ ; $\tan(\arccos 0{,}95) = 0{,}3287$, $Q_E = -1000 \times 0{,}3287 = -328{,}7\ \mathrm{var}$, négative car capacitive.</li>
+    <li>Bilan de Boucherot : $P = 4000 + 2000 + 1000 = 7000\ \mathrm{W}$ ; $Q = 3855{,}4 + 0 - 328{,}7 = 3526{,}7\ \mathrm{var}$ ; $S = \sqrt{7000^2 + 3526{,}7^2} = 7838{,}2\ \mathrm{VA}$ ; $\lambda = 7000/7838{,}2 = 0{,}8931$, $\varphi = 26{,}74^\circ$.</li>
+    <li>Courant de ligne : $I = S/U = 7838{,}2/230 = 34{,}08\ \mathrm{A}$. Somme arithmétique des courants : $I_M = 4000/(0{,}72 \times 230) = 24{,}15\ \mathrm{A}$, $I_F = 8{,}70\ \mathrm{A}$, $I_E = 1000/(0{,}95 \times 230) = 4{,}58\ \mathrm{A}$, soit $37{,}43\ \mathrm{A}$, $9{,}8\ \%$ de trop.</li>
+    <li>Contrôle par les phaseurs : $\underline{I} = (P - jQ)/U = (7000 - j3526{,}7)/230 = 30{,}43 - j15{,}33\ \mathrm{A}$, de module $\sqrt{30{,}43^2 + 15{,}33^2} = 34{,}08\ \mathrm{A}$, en retard de $26{,}74^\circ$ sur $\underline{U}$.</li>
+    <li>F.é.m. nécessaire : $\underline{Z}_l\underline{I} = (0{,}20 + j0{,}10)(30{,}43 - j15{,}33) = (6{,}087 + 1{,}533) + j(3{,}043 - 3{,}067) = 7{,}620 - j0{,}023\ \mathrm{V}$ ; $\underline{E} = 237{,}62 - j0{,}02\ \mathrm{V}$, $E = 237{,}62\ \mathrm{V}$. Chute : $\Delta U = 7{,}62\ \mathrm{V}$, soit $3{,}31\ \%$ de $230\ \mathrm{V}$. Formule approchée : $(0{,}20 \times 7000 + 0{,}10 \times 3526{,}7)/230 = (1400 + 352{,}7)/230 = 7{,}62\ \mathrm{V}$, identique au centième.</li>
+    <li>Pertes et bilan à la source : $P_l = 0{,}20 \times 34{,}08^2 = 232{,}3\ \mathrm{W}$ ; $Q_l = 0{,}10 \times 34{,}08^2 = 116{,}1\ \mathrm{var}$ ; la source fournit $7232{,}3\ \mathrm{W}$ et $3642{,}9\ \mathrm{var}$, soit $\sqrt{7232{,}3^2 + 3642{,}9^2} = 8097{,}9\ \mathrm{VA}$, égal à $EI = 237{,}62 \times 34{,}08$. Rendement de la distribution : $7000/7232{,}3 = 96{,}8\ \%$.</li>
+    <li>Compensation : $\tan\varphi_1 = 3526{,}7/7000 = 0{,}5038$ ; $\tan(\arccos 0{,}98) = 0{,}2031$ ; $Q_C = 7000 \times (0{,}5038 - 0{,}2031) = 2105{,}3\ \mathrm{var}$ ; $C = 2105{,}3/(230^2 \times 314{,}16) = 126{,}7\ \mu\mathrm{F}$, parcourue par $U C\omega = 9{,}15\ \mathrm{A}$.</li>
+    <li>Effets : $Q' = 3526{,}7 - 2105{,}3 = 1421{,}4\ \mathrm{var}$ ; $S' = 7000/0{,}98 = 7142{,}9\ \mathrm{VA}$ ; $I' = 31{,}06\ \mathrm{A}$, soit $-8{,}9\ \%$ ; pertes $0{,}20 \times 31{,}06^2 = 192{,}9\ \mathrm{W}$, soit $-17{,}0\ \%$ ; chute $(1400 + 0{,}10 \times 1421{,}4)/230 = 6{,}71\ \mathrm{V}$, soit $2{,}92\ \%$.</li>
+    <li>Commande : moteur seul en marche avec son condensateur, $Q = 3855{,}4 - 2105{,}3 = 1750{,}1\ \mathrm{var}$, $\lambda = 0{,}916$ inductif ; si le condensateur restait en service moteur arrêté, l'atelier recevrait $Q = -328{,}7 - 2105{,}3 = -2434\ \mathrm{var}$, $\lambda = 0{,}777$ capacitif et $16{,}8\ \mathrm{A}$ : d'où la commande par le contact du moteur.</li>
+    <li>Résonance : $L_l = 0{,}10/314{,}16 = 0{,}318\ \mathrm{mH}$ ; $f_r = 1/(2\pi\sqrt{0{,}318 \times 10^{-3} \times 126{,}7 \times 10^{-6}}) = 792{,}6\ \mathrm{Hz}$, rang $15{,}85$ ; contrôle : $S_{cc} = 230^2/0{,}10 = 529\ \mathrm{kVA}$ et $\sqrt{529\,000/2105{,}3} = 15{,}85$.</li>
+  </ol>
+
+  <h3 id="h-construction-section">Animation : construction des diagrammes de Fresnel de l'exemple</h3>
+  <p>
+    L'animation construit, étape par étape, les deux diagrammes de l'exemple : à gauche la somme des courants, à droite la
+    relation $\underline{E} = \underline{U} + R_l\underline{I} + jX_l\underline{I}$. Le lecteur avance d'une étape à l'autre, avec
+    pause, vitesse et remise à zéro. Avant de lancer, prédisez : le courant de l'éclairage est-il tourné vers le haut ou vers le
+    bas ? La chute $R_l\underline{I}$ est-elle parallèle à $\underline{U}$ ou au courant ?
+  </p>
+  <figure id="h-construction-figure">
+    <div class="schema-vivant" id="h-construction"></div>
+    <figcaption>
+      À gauche, échelle $7$ unités du dessin par ampère : le trait fin horizontal donne la direction de $\underline{U}$ ;
+      $\underline{I}_M$ en trait plein épais, $\underline{I}_F$ en trait plein, $\underline{I}_E$ en trait fin, mis bout à bout ;
+      $\underline{I}$ en tirets épais depuis l'origine ; puis $\underline{I}_C$ en pointillés courts vers le haut et le courant
+      compensé $\underline{I}'$ en tirets fins. À droite, échelle $12$ unités par volt pour les chutes : $\underline{U}$ en trait
+      plein, raccourci par une coupure car il vaut $230\ \mathrm{V}$ ; $R_l\underline{I}$ en trait plein épais, parallèle au
+      courant ; $jX_l\underline{I}$ en trait plein, en avance de $90^\circ$ sur lui ; $\underline{E}$ en tirets épais, reportée
+      sous l'axe comme une cote. Le texte en haut indique l'étape en cours.
+    </figcaption>
+  </figure>
+  <div id="h-construction-lecteur"></div>
+  <div id="h-construction-valeurs"></div>
+  <p>
+    Interprétation : le courant de l'éclairage, en avance, remonte légèrement l'extrémité de la somme, et le courant du
+    condensateur la remonte franchement, sans changer sa composante horizontale $P/U = 30{,}43\ \mathrm{A}$. Dans le diagramme
+    des tensions, $R_l\underline{I}$ est parallèle au courant et $jX_l\underline{I}$ lui est perpendiculaire ; leurs projections
+    sur $\underline{U}$, $R_lI\cos\varphi = 6{,}09\ \mathrm{V}$ et $X_lI\sin\varphi = 1{,}53\ \mathrm{V}$, donnent les deux termes de
+    la formule approchée. Leurs composantes perpendiculaires se compensent presque, ce qui explique que $\underline{E}$ soit
+    quasiment en phase avec $\underline{U}$.
+  </p>
+
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <p>
+    Dimensions : $Q_k$ en vars, $\Delta U$ en $\Omega \cdot \mathrm{W}/\mathrm{V} = \mathrm{V}$, $C$ en
+    $\mathrm{var}/(\mathrm{V^2 \cdot s^{-1}}) = \mathrm{F}$. Bilan : la puissance apparente à la source, $8097{,}9\ \mathrm{VA}$,
+    est égale au produit $EI$, ce qui valide ensemble le courant, la f.é.m. et les pertes. Seconde méthode : le courant obtenu
+    par phaseurs est identique à celui de Boucherot. Ordre de grandeur : $7\ \mathrm{kW}$ sous $230\ \mathrm{V}$ représentent
+    $30{,}4\ \mathrm{A}$ actifs, et un $\lambda$ de $0{,}89$ en ajoute $12\ \%$ : $34\ \mathrm{A}$ est plausible ; un condensateur
+    de quelque $16{,}6\ \mathrm{var}$ par microfarad donne bien $127\ \mu\mathrm{F}$ pour $2{,}1\ \mathrm{kvar}$. Cas limites : sans
+    moteur, $Q &lt; 0$ et la formule de chute donnerait $\Delta U = (0{,}20 \times 3000 - 0{,}10 \times 328{,}7)/230 = 2{,}47\ \mathrm{V}$ pour le four et
+    l'éclairage seuls, le terme réactif devenant négatif ; sans résistance de ligne, la chute ne viendrait que de $X_lQ$. Conclusion d'ingénierie : l'atelier
+    appelle $34{,}1\ \mathrm{A}$ et perd $3{,}3\ \%$ de tension ; un condensateur de $127\ \mu\mathrm{F}$, commuté avec le moteur,
+    ramène le courant à $31{,}1\ \mathrm{A}$, les pertes de $232$ à $193\ \mathrm{W}$ et la chute à $2{,}9\ \%$, et sa résonance
+    au rang $15{,}85$ reste à surveiller, comme le montre l'application industrielle.
+  </p>
+  <div class="encadre attention">
+    <span class="encadre-titre">Résonance au rang 15,85 : faut-il s'inquiéter ?</span>
+    <p>
+      Les alimentations des LED et les petits redresseurs monophasés injectent des harmoniques impairs, dont le rang $15$. En
+      ne comptant comme amortissement que le four, $26{,}45\ \Omega$, l'impédance vue du nœud $A$ au rang $15$ passe de
+      $1{,}50\ \Omega$ sans condensateur à $7{,}25\ \Omega$ avec, soit un facteur $4{,}8$ ; sans aucun amortissement, le facteur
+      serait $6{,}3$. Avec un courant de rang $15$ de $0{,}2\ \mathrm{A}$, hypothèse pour $1\ \mathrm{kW}$ de LED, la tension de
+      rang $15$ serait de $1{,}45\ \mathrm{V}$, soit $0{,}63\ \%$ : acceptable. Le risque deviendrait réel si l'on ajoutait des
+      charges non linéaires ; une mesure du spectre de tension, condensateur enclenché puis déclenché, tranchera.
+    </p>
+  </div>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+
+  <h3 id="i-probleme">Tableau divisionnaire de l'atelier de maintenance du site</h3>
+  <p>
+    Le petit site industriel du projet fil rouge reçoit un nouvel élément : l'atelier de maintenance et les locaux sociaux,
+    alimentés en monophasé, entre la phase $L_1$ et le neutre du tableau général, par un câble de $30\ \mathrm{m}$. Il faut
+    établir le bilan de puissance du départ, choisir la section du câble sur le critère de chute de tension et de pertes,
+    décider s'il faut compenser localement, et mesurer l'effet de ce départ monophasé sur la phase $L_1$ du tableau général,
+    dont le cours <a href="#/cours/correction-du-facteur-de-puissance">Correction du facteur de puissance</a> a fixé le bilan.
+  </p>
+  <figure id="i-unifilaire-figure">
+    <svg viewBox="0 0 900 420" role="img" aria-label="Schéma unifilaire : tableau général 230/400 volts avec phases L1, L2, L3 et neutre, départ monophasé L1 et neutre protégé, câble 30 mètres deux conducteurs 10 millimètres carrés, tableau divisionnaire de l'atelier, trois départs : chauffe-eau 3 kilowatts, machines 2,4 kilowatts cos phi 0,75, éclairage LED 0,6 kilowatt cos phi 0,95 capacitif, condensateur local étudié non retenu en tirets">
+      <defs>
+        <marker id="fl-i-u" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto">
+          <path d="M0 0 8 4 0 8Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M40 60H860" stroke-width="6"/>
+        <path d="M120 60V100"/>
+        <rect x="104" y="100" width="32" height="40" rx="3"/>
+        <path d="M120 140V250"/>
+        <path d="M60 250H820" stroke-width="5"/>
+        <path d="M160 250V300"/>
+        <rect x="146" y="300" width="28" height="70" rx="3"/>
+        <path d="M380 250V290"/>
+        <circle cx="380" cy="316" r="26"/>
+        <path d="M600 250V292"/>
+        <rect x="576" y="292" width="48" height="60" rx="4"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="6 5">
+        <path d="M780 250V290"/>
+        <path d="M756 290H804M756 304H804" stroke-width="3"/>
+        <path d="M780 304V340"/>
+        <rect x="704" y="270" width="152" height="110" rx="8" stroke-width="1.4"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.8" fill="none">
+        <path d="M120 150L132 140M120 160L132 150"/>
+        <path d="M100 190V236" marker-end="url(#fl-i-u)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="40" y="40">tableau général 230/400 V, 50 Hz : L1, L2, L3, N</text>
+        <text x="480" y="40" font-size="11">transformateur 100 kVA supposé, Ls = 0,204 mH</text>
+        <text x="146" y="124">Q12, protection du départ L1 + N</text>
+        <text x="146" y="176">câble 30 m, 2 x 10 mm² cuivre</text>
+        <text x="146" y="192">Rc = 0,124 Ω, Xc = 0,005 Ω en boucle</text>
+        <text x="146" y="208">deux traits obliques : deux conducteurs</text>
+        <text x="74" y="216" text-anchor="end">I</text>
+        <text x="60" y="274" font-size="11">tableau divisionnaire, 230 V</text>
+        <text x="160" y="392" text-anchor="middle">chauffe-eau</text>
+        <text x="160" y="408" text-anchor="middle">3 kW, résistif</text>
+        <text x="380" y="321" text-anchor="middle">M</text>
+        <text x="380" y="366" text-anchor="middle">machines d'atelier</text>
+        <text x="380" y="382" text-anchor="middle">2,4 kW, cos φ = 0,75</text>
+        <text x="600" y="326" text-anchor="middle" font-size="11">LED</text>
+        <text x="600" y="372" text-anchor="middle">éclairage</text>
+        <text x="600" y="388" text-anchor="middle">0,6 kW, 0,95 cap.</text>
+        <text x="814" y="300" font-size="11">C</text>
+        <text x="780" y="358" text-anchor="middle" font-size="11">condensateur</text>
+        <text x="780" y="372" text-anchor="middle" font-size="11">étudié, non retenu</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma unifilaire du départ. En haut, le jeu de barres du tableau général, trait épais, portant les trois phases et le
+      neutre. Le départ $Q_{12}$ prélève la phase $L_1$ et le neutre ; les deux traits obliques sur le câble indiquent ses deux
+      conducteurs, et la flèche le sens du courant $I$ vers l'atelier. Le tableau divisionnaire alimente, en convention
+      récepteur, le chauffe-eau, les machines d'atelier, regroupées en un moteur équivalent, et l'éclairage. Le condensateur
+      encadré de tirets a été étudié mais n'est pas installé. Le neutre est la référence de potentiel de chaque départ.
+    </figcaption>
+  </figure>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Hypothèses de l'étude</span>
+    <p>
+      Tension de $230\ \mathrm{V}$ supposée au tableau divisionnaire pour le bilan ; machines d'atelier regroupées en une charge
+      de $2{,}4\ \mathrm{kW}$ à $\cos\varphi = 0{,}75$, puissance foisonnée estimée ; chauffe-eau de $3\ \mathrm{kW}$ résistif ;
+      éclairage à LED de $0{,}6\ \mathrm{kW}$, facteur de déplacement $0{,}95$ capacitif supposé. Câble cuivre à $70\ ^\circ\mathrm{C}$,
+      résistivité $0{,}0206\ \Omega \cdot \mathrm{mm^2/m}$ comme dans les cours précédents, réactance linéique
+      $0{,}08\ \mathrm{m\Omega/m}$ par conducteur. Objectif de conception retenu pour ce départ : chute de tension sous $3\ \%$,
+      choix interne au projet et non valeur normative. Ces valeurs sont des hypothèses d'étude, à remplacer par les plaques des
+      équipements, le tracé réel et les catalogues.
+    </p>
+  </div>
+  <ol>
+    <li>Bilan : machines $Q = 2400 \times 0{,}8819 = 2116{,}6\ \mathrm{var}$ ; éclairage $Q = -600 \times 0{,}3287 = -197{,}2\ \mathrm{var}$ ; $P = 3000 + 2400 + 600 = 6000\ \mathrm{W}$, $Q = 1919{,}4\ \mathrm{var}$, $S = 6299{,}5\ \mathrm{VA}$, $\lambda = 0{,}952$, $I = 27{,}39\ \mathrm{A}$, contre $29{,}70\ \mathrm{A}$ en somme arithmétique.</li>
+    <li>Câble $2 \times 10\ \mathrm{mm^2}$ : $R_c = 2 \times 30 \times 0{,}0206/10 = 0{,}124\ \Omega$, $X_c = 2 \times 30 \times 0{,}08 \times 10^{-3} = 0{,}0048\ \Omega$ ; $\Delta U = (0{,}124 \times 6000 + 0{,}0048 \times 1919{,}4)/230 = 3{,}26\ \mathrm{V}$, soit $1{,}42\ \%$ ; pertes $0{,}124 \times 27{,}39^2 = 92{,}7\ \mathrm{W}$. En $6\ \mathrm{mm^2}$ : $2{,}35\ \%$ et $154{,}5\ \mathrm{W}$ ; en $16\ \mathrm{mm^2}$ : $0{,}89\ \%$ et $58{,}0\ \mathrm{W}$.</li>
+    <li>Compensation locale à $0{,}98$ : $Q_C = 6000 \times (0{,}3199 - 0{,}2031) = 701\ \mathrm{var}$, $C = 42{,}2\ \mu\mathrm{F}$ ; courant $26{,}62\ \mathrm{A}$, $-2{,}8\ \%$ ; pertes du câble $87{,}6\ \mathrm{W}$, $5\ \mathrm{W}$ gagnés. La résonance avec la source et le câble, $0{,}219\ \mathrm{mH}$, tomberait au rang $33$, sans danger : la compensation n'est écartée que parce qu'elle ne rapporte presque rien.</li>
+    <li>Effet sur le tableau général : la phase $L_1$ portait, au fondamental, $21{,}6\ \mathrm{kW}$ et $3{,}69\ \mathrm{kvar}$, soit $95{,}3\ \mathrm{A}$ ; elle passe à $27{,}6\ \mathrm{kW}$ et $5{,}61\ \mathrm{kvar}$, soit $122{,}5\ \mathrm{A}$ et $28{,}2\ \mathrm{kVA}$, $84{,}5\ \%$ du tiers de $100\ \mathrm{kVA}$, quand $L_2$ et $L_3$ restent à $21{,}9\ \mathrm{kVA}$, $65{,}7\ \%$. Si les autres phases restent équilibrées, le neutre du tableau général porte environ $27{,}4\ \mathrm{A}$ au fondamental.</li>
+  </ol>
+
+  <h3 id="i-atelier-section">Simulation interactive : chute de tension et courant du départ</h3>
+  <p>
+    La simulation reprend le départ de l'atelier. Les curseurs règlent la longueur du câble, sa section, la puissance du
+    chauffe-eau, la puissance et le facteur de puissance des machines, et une capacité de compensation locale. Avant de
+    manipuler, prédisez : à longueur égale, passer de $10$ à $6\ \mathrm{mm^2}$ augmente-t-il la chute de tension dans le rapport
+    des sections ? Compenser localement réduit-il beaucoup la chute de tension de ce départ, et pourquoi ? Couper le chauffe-eau
+    améliore-t-il ou dégrade-t-il le facteur de puissance ?
+  </p>
+  <figure id="i-atelier-figure">
+    <div id="i-atelier-trace"></div>
+    <figcaption>
+      Chute de tension en pour cent de $230\ \mathrm{V}$ en fonction de la longueur du câble, pour les quatre sections
+      $6$, $10$, $16$ et $25\ \mathrm{mm^2}$, chacune nommée dans la légende avec sa couleur réelle, avec les charges réglées par
+      les curseurs. Le trait horizontal en tirets marque l'objectif de conception de $3\ \%$ ; le trait vertical en tirets
+      marque la longueur choisie, et le point la chute obtenue avec la section choisie.
+    </figcaption>
+  </figure>
+  <div id="i-atelier-curseurs"></div>
+  <div id="i-atelier-valeurs"></div>
+  <p>
+    Interprétation : la chute est presque proportionnelle à $R_c$, donc à la longueur et à l'inverse de la section, car la
+    réactance d'un câble de faible section est négligeable devant sa résistance : $6\ \mathrm{mm^2}$ donne $10/6 = 1{,}67$ fois la
+    chute du $10\ \mathrm{mm^2}$. Pour la même raison, la compensation, qui n'agit que sur le terme $X_cQ$, change à peine la
+    chute de ce départ ; elle réduit seulement le courant, donc les pertes, de quelques pour cent. Couper le chauffe-eau retire
+    $3\ \mathrm{kW}$ actifs sans toucher au réactif : le facteur de puissance baisse à $0{,}84$ alors que le courant diminue de $27{,}4$ à $15{,}5\ \mathrm{A}$. Un
+    facteur de puissance bas n'est donc pas toujours le signe d'un problème : il faut regarder le réactif en vars, pas seulement
+    le rapport.
+  </p>
+
+  <h3 id="i-compromis">Contraintes, risques et compromis</h3>
+  <ul>
+    <li><strong>Section du câble.</strong> Le $6\ \mathrm{mm^2}$ respecterait l'objectif de chute avec $2{,}35\ \%$, mais laisserait peu de marge pour l'extension de l'atelier et la chute amont ; le $16\ \mathrm{mm^2}$ ne gagne que $35\ \mathrm{W}$ de pertes. Le $10\ \mathrm{mm^2}$ est retenu sous réserve de la vérification du courant admissible selon le mode de pose, et des conditions de protection, traitées dans les cours Dimensionnement des câbles et Appareillage de protection.</li>
+    <li><strong>Compensation locale.</strong> Écartée : $5\ \mathrm{W}$ gagnés pour un équipement à entretenir ; le réactif du site est déjà traité au compresseur.</li>
+    <li><strong>Déséquilibre.</strong> Un départ monophasé de $27\ \mathrm{A}$ charge la phase $L_1$ à $85\ \%$ de sa part du transformateur supposé et fait circuler un courant de neutre. Une répartition sur deux phases, chauffe-eau sur $L_2$ par exemple, sera étudiée dans le cours Charges triphasées déséquilibrées.</li>
+    <li><strong>Charges non linéaires.</strong> L'éclairage et les chargeurs d'outillage injectent des harmoniques de rang $3$ qui s'ajoutent dans le neutre ; leur mesure sera abordée dans le cours Harmoniques et qualité de l'énergie.</li>
+    <li><strong>Exploitation.</strong> Le chauffe-eau domine la puissance active : le programmer en heures creuses réduit la pointe du départ de $43\ \%$, de $27{,}4$ à $15{,}5\ \mathrm{A}$.</li>
+  </ul>
+
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : départ monophasé de l'atelier de maintenance</span>
+    <p>
+      Nouvelle brique du petit site industriel. Atelier de maintenance et locaux sociaux alimentés entre $L_1$ et le neutre du
+      tableau général par $30\ \mathrm{m}$ de câble $2 \times 10\ \mathrm{mm^2}$ cuivre : chauffe-eau $3\ \mathrm{kW}$, machines
+      $2{,}4\ \mathrm{kW}$ à $\cos\varphi = 0{,}75$, éclairage à LED $0{,}6\ \mathrm{kW}$ à $0{,}95$ capacitif ; $P = 6\ \mathrm{kW}$,
+      $Q = 1{,}92\ \mathrm{kvar}$, $S = 6{,}30\ \mathrm{kVA}$, $\lambda = 0{,}952$, $I = 27{,}4\ \mathrm{A}$ ; chute de $3{,}26\ \mathrm{V}$,
+      $1{,}42\ \%$, et $93\ \mathrm{W}$ de pertes ; compensation locale écartée, $42\ \mu\mathrm{F}$ pour $-2{,}8\ \%$ de courant ; la phase
+      $L_1$ du tableau général passe de $95{,}3$ à $122{,}5\ \mathrm{A}$ au fondamental et à $84{,}5\ \%$ de sa part du transformateur
+      supposé de $100\ \mathrm{kVA}$, déséquilibre à traiter. Hypothèses d'étude à remplacer par les plaques des équipements, le
+      tracé réel et les catalogues de câbles.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Additionner les courants efficaces.</strong> La loi des nœuds porte sur les valeurs instantanées et les phaseurs. Dans l'exemple, $37{,}43\ \mathrm{A}$ au lieu de $34{,}08\ \mathrm{A}$ ; l'erreur est d'autant plus grande que les déphasages diffèrent.</li>
+    <li><strong>Additionner les puissances apparentes.</strong> $S$ n'est pas conservée : $5555{,}6 + 2000 + 1052{,}6 = 8608{,}2\ \mathrm{VA}$ au lieu de $7838{,}2\ \mathrm{VA}$. Seules $P$ et $Q$ s'additionnent.</li>
+    <li><strong>Oublier le signe de $Q$ d'une charge capacitive.</strong> Compter l'éclairage en $+328{,}7\ \mathrm{var}$ donne $Q = 4184{,}1\ \mathrm{var}$ et un courant de $35{,}46\ \mathrm{A}$ au lieu de $34{,}08\ \mathrm{A}$, et conduit à surdimensionner la compensation.</li>
+    <li><strong>Confondre puissance utile et puissance absorbée d'un moteur.</strong> La plaque d'un moteur indique la puissance mécanique utile ; la puissance absorbée vaut $P_u/\eta$. Utiliser $P_u$ sous-estime $P$, $Q$ et le courant.</li>
+    <li><strong>Calculer la chute de tension avec $Z_lI$.</strong> $|\underline{Z}_l|I = 0{,}2236 \times 34{,}08 = 7{,}62\ \mathrm{V}$ ici par coïncidence d'angles, mais en général c'est la projection $R_lI\cos\varphi + X_lI\sin\varphi$ qui compte : avec une charge capacitive, $Z_lI$ resterait positif alors que la chute peut devenir négative.</li>
+    <li><strong>Viser $\cos\varphi = 1$ avec une capacité fixe.</strong> Dès qu'un récepteur inductif s'arrête, l'installation devient capacitive, la tension monte en bout de ligne et le courant remonte : la courbe en V a deux branches.</li>
+    <li><strong>Oublier la résonance.</strong> Un condensateur n'a pas de résonance seul ; avec l'inductance de la ligne et de la source, il en forme une, dont le rang $\sqrt{S_{cc}/Q_C}$ baisse quand la source est plus faible, groupe électrogène par exemple.</li>
+    <li><strong>Mélanger crête et efficace.</strong> Les phaseurs de cette séance ont pour module la valeur efficace ; utiliser $325\ \mathrm{V}$ dans $S = UI$ double la puissance.</li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain : un facteur de puissance capacitif mesuré le soir ou le week-end, une tension plus haute en bout
+    de ligne qu'au départ, des lampes qui vieillissent vite ou un contacteur de condensateur qui reste fermé désignent une
+    surcompensation. Un courant mesuré plus grand que celui du bilan, à facteur de puissance normal, désigne une charge oubliée
+    ou une puissance de plaque prise pour une puissance absorbée. Un courant plus grand que $S/U$ avec une pince en efficace
+    vrai signale des harmoniques. La mesure décisive est un enregistrement simultané de $U$, $I$, $P$ et $Q$ en efficace vrai
+    pendant un cycle d'exploitation complet.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic
+    industriel et une question conceptuelle. La correction de chacun reste masquée jusqu'à une tentative ou un clic explicite
+    sur "Voir la correction", puis se déroule étape par étape, accompagnée d'un triangle des puissances, d'un diagramme de
+    phaseurs ou d'une courbe.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma.</p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$\underline{S} = \underline{U}\,\underline{I}^* = P + jQ, \qquad S = \sqrt{P^2 + Q^2} = UI$$
+    $$P = \sum_k P_k, \qquad Q = \sum_k Q_k \ \text{(signées)}, \qquad \underline{I} = \sum_k \underline{I}_k$$
+    $$\underline{E} = \underline{U} + \underline{Z}_l\underline{I}, \qquad \Delta U \approx \frac{R_lP + X_lQ}{U}$$
+    $$Q_C = P\,(\tan\varphi_1 - \tan\varphi_2) = U^2C\omega$$
+    $$n_r = \sqrt{\frac{S_{cc}}{Q_C}}, \qquad f_r = \frac{1}{2\pi\sqrt{L_lC}}$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>Additionner $P$ et $Q$ avec leur signe, jamais $S$ ni les courants efficaces.</li>
+      <li>Fixer une référence de phase et une convention avant tout calcul, et s'y tenir jusqu'au bout.</li>
+      <li>La chute de tension dépend de $Q$ par la réactance de la ligne : une surcompensation peut faire monter la tension.</li>
+      <li>Commuter un condensateur avec le récepteur qu'il compense, et ne pas viser $\cos\varphi = 1$.</li>
+      <li>Tout condensateur forme une résonance avec la source : calculer son rang avant de l'installer.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Une installation monophasée à plusieurs charges s'analyse en régime sinusoïdal par les phaseurs :
+    les charges en parallèle partagent la tension, leurs courants s'ajoutent vectoriellement. Le théorème de Boucherot permet
+    d'additionner les puissances actives et réactives, avec leur signe, puis d'en déduire $S$, le facteur de puissance et le
+    courant ; la puissance apparente et les courants efficaces ne s'additionnent pas. La ligne fait chuter la tension d'environ
+    $(R_lP + X_lQ)/U$ et dissipe $R_lI^2$. Un condensateur réduit $Q$, donc le courant, les pertes et la chute, mais il doit être
+    commuté avec le récepteur compensé et il forme avec l'inductance amont une résonance de rang $\sqrt{S_{cc}/Q_C}$ à
+    éloigner des harmoniques. Chaque résultat se contrôle par une seconde méthode et par le bilan à la source.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent,
+    <a href="#/cours/resonance-serie-et-parallele">Résonance série et parallèle</a> ; une sur le cours
+    <a href="#/cours/revision-2-et-mini-projet-capteur">Révision 2 et mini-projet capteur</a>, vieux d'une semaine ; la question
+    sur un cours vieux d'un mois n'est pas encore applicable, et elle est remplacée par une question sur le cours
+    <a href="#/cours/lois-de-kirchhoff">Lois de Kirchhoff</a>, dont la loi des nœuds fonde l'addition des phaseurs.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : vérifier par le calcul numérique, puis par une simulation de circuit, les résultats de l'exemple de la section H,
+    et observer ce que l'approximation à puissance constante cache. Prédictions à écrire avant de commencer : si l'on fixe la
+    f.é.m. à $237{,}62\ \mathrm{V}$ puis qu'on enclenche le condensateur, la tension des récepteurs montera-t-elle ou
+    baissera-t-elle, et de combien environ ? Le four, à impédance constante, absorbera-t-il alors plus ou moins de
+    $2\ \mathrm{kW}$ ?
+  </p>
+  <ol>
+    <li>En Python, représenter chaque récepteur par sa puissance complexe sous $230\ \mathrm{V}$, calculer $\underline{I}$, $\underline{E}$, les pertes et le bilan à la source ; vérifier $|\underline{S}_E| = EI$. Calculer ensuite les admittances équivalentes $G_k = P_k/U^2$ et $B_k = -Q_k/U^2$.</li>
+    <li>Toujours en Python, fixer $E = 237{,}62\ \mathrm{V}$ et résoudre le circuit à impédances constantes, avec puis sans le condensateur de $126{,}7\ \mu\mathrm{F}$ ; relever $U$ et la puissance de chaque récepteur. Tracer $I$ en fonction de $C$ de $0$ à $300\ \mu\mathrm{F}$ pour retrouver la courbe en V.</li>
+    <li>Dans LTspice, saisir le modèle parallèle des récepteurs : <code>V1 e 0 AC 237.62</code>, <code>Rl e x 0.2</code>, <code>Ll x a {0.1/(2*pi*50)}</code>, moteur <code>RM a 0 13.225</code> et <code>LM a 0 43.68m</code>, four <code>RF a 0 26.45</code>, éclairage <code>RE a 0 52.9</code> et <code>CE a 0 19.78u</code>, puis <code>.ac list 50</code> ; lire <code>V(a)</code> et <code>I(Rl)</code>. Ajouter <code>C1 a 0 126.7u</code> et recommencer.</li>
+    <li>Facultatif : lancer <code>.ac dec 200 50 5k</code> avec une source de courant <code>I1 0 a AC 1</code> à la place de la source de tension, <code>V1</code> remplacée par un court-circuit, pour tracer l'impédance vue du nœud $a$ et repérer la résonance.</li>
+  </ol>
+  <p>
+    Résultats attendus : en Python, $\underline{I} = 30{,}43 - j15{,}33\ \mathrm{A}$, $E = 237{,}62\ \mathrm{V}$, $P_l = 232{,}3\ \mathrm{W}$ et
+    $8097{,}9\ \mathrm{VA}$ à la source. Les modèles parallèles valent $R_M = 13{,}225\ \Omega$, $L_M = 43{,}68\ \mathrm{mH}$,
+    $R_F = 26{,}45\ \Omega$, $R_E = 52{,}9\ \Omega$, $C_E = 19{,}78\ \mu\mathrm{F}$. Dans LTspice sans condensateur,
+    $|V(a)| = 230{,}0\ \mathrm{V}$ et $|I(R_l)| = 34{,}08\ \mathrm{A}$ ; avec, la tension monte d'environ $0{,}9\ \mathrm{V}$, le
+    quotient de $(X_lQ_C)/U$, et toutes les puissances à impédance constante augmentent d'environ $0{,}8\ \%$. L'impédance vue
+    du nœud culmine vers $750\ \mathrm{Hz}$, un peu sous les $792{,}6\ \mathrm{Hz}$ de la section H : le modèle parallèle de l'éclairage,
+    $19{,}78\ \mu\mathrm{F}$, s'ajoute à la capacité du condensateur, ce qui est une limite du modèle à $50\ \mathrm{Hz}$ étendu aux harmoniques. Anomalies à observer : des tensions affichées en décibels par défaut, à passer en
+    linéaire ; une amplitude $AC$ interprétée comme une crête, sans effet ici puisque tout le calcul est linéaire, mais à
+    ne pas confondre avec la valeur efficace en lisant les puissances ; une résistance série implicite des inductances si
+    l'on n'indique pas <code>Rser=0</code>, qui amortit légèrement la résonance.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est calculé
+    dans ce navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées
+    localement pour suivre votre progression. Cette séance clôt le module Régime sinusoïdal monophasé et prépare le jalon de
+    fin du module Triphasé et qualité de l'énergie : maîtriser les régimes sinusoïdaux monophasés et triphasés, les
+    puissances, la compensation, les harmoniques et les filtres élémentaires. Une note inférieure à $2$ sur la maîtrise des
+    calculs ou la lecture de schémas justifie de reprendre l'exemple de la section H avant d'aborder le triphasé.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Les courants s'ajoutent en phaseurs, les puissances actives et réactives en nombres signés : Boucherot donne le courant de ligne en trois lignes, les phaseurs le vérifient.</li>
+    <li data-rang="02">La ligne fait chuter la tension d'environ $(R_lP + X_lQ)/U$ : c'est la puissance active par la résistance, la réactive par la réactance.</li>
+    <li data-rang="03">Compenser réduit courant, pertes et chute, à condition de commuter le condensateur avec la charge et de placer sa résonance $\sqrt{S_{cc}/Q_C}$ loin des harmoniques.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> tenir une convention de signe cohérente du début à la fin, en particulier
+    pour une charge capacitive, et savoir quand une approximation, chute de tension ou charge à puissance constante, cesse
+    d'être valable. Les deux simulations, l'animation de construction et l'exercice avancé sont faits pour installer ces
+    réflexes.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Systèmes triphasés équilibrés, généralise cette analyse à trois
+    phases. Question à préparer : si l'on alimentait trois ateliers identiques à celui de l'exemple, chacun entre une phase et
+    le neutre d'un réseau $230/400\ \mathrm{V}$, quel courant circulerait dans le neutre commun, sachant que les trois tensions
+    simples sont décalées de $120^\circ$ ? Et pourquoi la même puissance totale, $21\ \mathrm{kW}$, transportée en triphasé,
+    demande-t-elle moins de cuivre que trois lignes monophasées ?
+  </p>
+
+</article>
