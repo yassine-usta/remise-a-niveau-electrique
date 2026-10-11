@@ -1,0 +1,1217 @@
+<article class="cours" data-slug="systemes-triphases-equilibres">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/revision-3-et-analyse-d-une-charge-ac">Révision 3 et analyse d'une charge AC</a> s'est achevé sur
+      une question : trois ateliers identiques à celui de l'exemple, $7\ \mathrm{kW}$ et $34{,}08\ \mathrm{A}$ en retard de
+      $26{,}74^\circ$ chacun, sont branchés entre une phase et le neutre d'un réseau $230/400\ \mathrm{V}$, dont les trois
+      tensions simples sont décalées de $120^\circ$. Quel courant circule dans le neutre commun, et pourquoi le transport
+      triphasé demande-t-il moins de cuivre ? Réponse, établie dans cette séance : les trois courants ont le même module et le
+      même retard sur leur propre tension, ils sont donc eux aussi décalés de $120^\circ$, et leur somme vectorielle est
+      exactement nulle. Le neutre ne transporte rien. Trois lignes monophasées séparées demanderaient six conducteurs parcourus
+      chacun par $34{,}08\ \mathrm{A}$ ; le triphasé n'en demande que trois parcourus par le même courant, plus un neutre qui,
+      en régime équilibré, ne porte aucun courant. À section égale, les pertes Joule sont divisées par deux et le cuivre aussi,
+      sans neutre ; avec un neutre de pleine section, le cuivre n'est réduit que d'un tiers, mais les pertes restent divisées
+      par deux. La séance s'appuie sur les phaseurs du cours
+      <a href="#/cours/nombres-complexes-et-phaseurs">Nombres complexes et phaseurs</a>, sur les impédances du cours
+      <a href="#/cours/impedances-en-regime-sinusoidal">Impédances en régime sinusoïdal</a>, sur les puissances du cours
+      <a href="#/cours/puissances-en-courant-alternatif">Puissances en courant alternatif</a> et sur la loi des nœuds du cours
+      <a href="#/cours/lois-de-kirchhoff">Lois de Kirchhoff</a>.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Presque toute l'énergie électrique est produite, transportée et distribuée en triphasé. Les alternateurs des centrales,
+    les lignes de transport, les transformateurs de distribution et les tableaux généraux des sites industriels fonctionnent
+    avec trois tensions sinusoïdales de même amplitude, décalées d'un tiers de période. Le monophasé domestique n'est qu'une
+    phase prélevée sur ce système, entre un conducteur de phase et le neutre. L'ingénieur qui intervient sur une installation
+    industrielle manipule donc en permanence deux tensions, la tension simple de $230\ \mathrm{V}$ et la tension composée de
+    $400\ \mathrm{V}$, deux couplages, étoile et triangle, et deux courants, le courant de ligne et le courant de phase. Les
+    confondre conduit à des erreurs d'un facteur $\sqrt{3}$ ou $3$ : un moteur raccordé dans le mauvais couplage, une
+    batterie de condensateurs surdimensionnée, un câble mal choisi, une protection mal réglée.
+  </p>
+  <p>
+    Le triphasé n'a pas été retenu par habitude. Il présente trois propriétés que le monophasé n'a pas. La puissance
+    instantanée totale fournie à une charge équilibrée est constante, alors qu'elle pulse à deux fois la fréquence du réseau
+    en monophasé : un moteur triphasé développe un couple sans battement. Trois bobines décalées de $120^\circ$ et parcourues
+    par des courants triphasés créent un champ magnétique tournant, ce qui rend possibles les moteurs asynchrones et
+    synchrones sans collecteur. Enfin, à puissance et pertes égales, il demande nettement moins de cuivre. Cette séance pose
+    les bases : comment le système est produit, comment se lisent ses tensions, comment se raccordent les récepteurs et
+    comment se relient tensions simples, composées, courants de ligne et de phase. C'est le travail central de la séance.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Expliquer comment un alternateur à trois enroulements produit trois f.é.m. décalées de $120^\circ$, et définir l'ordre des phases direct ou inverse.</li>
+    <li data-rang="02">Écrire les tensions simples en temporel et en phaseurs, puis démontrer que la tension composée vaut $U = \sqrt{3}\,V$ et qu'elle est en avance de $30^\circ$ sur la tension simple de même indice.</li>
+    <li data-rang="03">Calculer les courants de ligne et de phase d'une charge équilibrée couplée en étoile ou en triangle, et le courant du neutre.</li>
+    <li data-rang="04">Transformer une charge triangle en étoile équivalente, $\underline{Z}_Y = \underline{Z}_\Delta/3$, et ramener un système équilibré à son schéma monophasé équivalent.</li>
+    <li data-rang="05">Calculer la puissance active totale d'une charge équilibrée, $P = 3VI\cos\varphi = \sqrt{3}\,UI\cos\varphi$, en identifiant correctement l'angle $\varphi$.</li>
+    <li data-rang="06">Choisir le couplage d'un moteur à partir de sa plaque signalétique et de la tension du réseau.</li>
+    <li data-rang="07">Diagnostiquer une erreur de couplage, une inversion de phases ou une phase manquante à partir de symptômes mesurés.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois acquis suffisent. Le premier est la représentation d'une grandeur sinusoïdale $x(t) = X\sqrt{2}\cos(\omega t + \alpha)$
+    par son phaseur $\underline{X} = X e^{j\alpha}$, dont le module est la valeur efficace et l'argument la phase à l'origine,
+    et l'addition des grandeurs de même fréquence par l'addition de leurs phaseurs. Le deuxième est la loi d'Ohm complexe,
+    $\underline{U} = \underline{Z}\,\underline{I}$, avec $|\underline{Z}| = \sqrt{R^2 + X^2}$ et $\varphi = \arg \underline{Z}$. Le
+    troisième est la loi des nœuds, qui s'applique aux valeurs instantanées, donc aux phaseurs, mais pas aux valeurs efficaces.
+    Un outil nouveau sera introduit au fil du texte : l'opérateur de rotation $a = e^{j2\pi/3}$. Le mini-test ci-dessous n'est pas
+    noté ; la correction de chaque question reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la correction".
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-trois">Trois enroulements, un seul aimant tournant</h3>
+  <p>
+    Faites tourner un aimant devant une bobine : le flux qui traverse la bobine varie périodiquement et y induit une f.é.m.
+    sinusoïdale, c'est la loi de Faraday vue dans le cours
+    <a href="#/cours/inductances-et-champ-magnetique">Inductances et champ magnétique</a>. Placez maintenant trois bobines
+    identiques autour du même aimant, décalées d'un tiers de tour. L'aimant passe devant la première, puis devant la deuxième
+    un tiers de tour plus tard, puis devant la troisième. Chaque bobine produit la même sinusoïde, mais avec un retard d'un
+    tiers de période sur la précédente : $120^\circ$ électriques, soit $6{,}67\ \mathrm{ms}$ à $50\ \mathrm{Hz}$. C'est un
+    système triphasé. L'ordre dans lequel les maxima se succèdent, $1$, $2$, $3$, s'appelle l'ordre des phases ; il dépend du
+    sens de rotation de l'aimant. Tourner dans l'autre sens donne l'ordre $1$, $3$, $2$, dit inverse.
+  </p>
+  <p>
+    Une conséquence remarquable apparaît dès que l'on additionne les trois f.é.m. à un instant quelconque : quand l'une est
+    maximale, les deux autres valent chacune moins la moitié de ce maximum ; quand l'une s'annule, les deux autres sont égales
+    et opposées. La somme est toujours nulle. Si les trois bobines alimentent trois charges identiques, les trois courants de
+    retour se compensent de la même façon dans un conducteur commun : ce conducteur, le neutre, ne transporte rien.
+  </p>
+  <p>
+    Analogie contrôlée : trois cyclistes sur un tandem à trois places dont les pédaliers seraient calés à $120^\circ$ l'un de
+    l'autre. Chacun pousse fort pendant une partie du tour et peu pendant le reste, mais leurs efforts se relaient si bien que
+    la poussée totale sur la chaîne est presque constante, et la machine avance sans à-coups. Un cycliste seul, lui, transmet
+    une poussée qui pulse deux fois par tour.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie</span>
+    <p>
+      Le tandem rend compte du relais des efforts et de la régularité de la puissance totale. Il échoue sur trois points. Un
+      pédalier ne pousse jamais en arrière, alors qu'une tension sinusoïdale change de signe : chaque phase reçoit de l'énergie
+      pendant une partie de la période et en rend pendant une autre si la charge est réactive. Pour des cyclistes, la poussée
+      totale n'est qu'à peu près constante ; pour trois sinusoïdes parfaites et une charge équilibrée, la puissance instantanée
+      totale est rigoureusement constante. Enfin, l'analogie ne dit rien de la compensation des courants dans le neutre, qui
+      tient à l'addition vectorielle et non à un relais dans le temps. Sauf mention contraire, la séance suppose une source
+      sinusoïdale équilibrée et parfaite, des charges linéaires identiques sur les trois phases et un régime établi.
+    </p>
+  </div>
+
+  <h3 id="d-alternateur-section">Simulation interactive : l'alternateur et ses trois f.é.m.</h3>
+  <p>
+    La simulation représente, à gauche, un alternateur élémentaire vu en coupe : le rotor, aimant à deux pôles, et les trois
+    repères où la f.é.m. de chaque enroulement est maximale. La poignée au bout du rotor règle sa position angulaire ; elle se
+    déplace à la souris, au doigt, ou au clavier après l'avoir sélectionnée. Le lecteur fait tourner le rotor, avec pause,
+    vitesse et remise à zéro ; les curseurs règlent la valeur efficace des f.é.m. et le sens de rotation. Avant de manipuler,
+    prédisez : quand $e_1$ est maximale, que valent $e_2$ et $e_3$ ? Existe-t-il une position du rotor où la somme des trois
+    f.é.m. n'est pas nulle ? En inversant le sens de rotation, laquelle des f.é.m. atteint son maximum juste après $e_1$ ?
+  </p>
+  <figure id="d-alternateur-figure">
+    <div class="schema-vivant" id="d-alternateur"></div>
+    <div id="d-alternateur-trace"></div>
+    <figcaption>
+      À gauche, le stator vu en coupe, le rotor en trait plein épais avec ses pôles N et S, la poignée ronde à son extrémité N,
+      et les trois repères fixes marqués 1, 2 et 3, positions du pôle N pour lesquelles $e_1$, $e_2$ et $e_3$ sont maximales. La
+      flèche courbe indique le sens de rotation choisi. À droite, les trois f.é.m. instantanées sous forme de barres verticales
+      orientées, la hauteur au-dessus du trait médian étant positive, et leur somme dans la dernière barre. Sous le schéma, les
+      trois f.é.m. en fonction du temps sur une période, chacune nommée dans la légende avec sa couleur réelle ; le trait
+      vertical en tirets marque l'instant correspondant à la position du rotor.
+    </figcaption>
+  </figure>
+  <div id="d-alternateur-curseurs"></div>
+  <div id="d-alternateur-lecteur"></div>
+  <div id="d-alternateur-valeurs"></div>
+  <p>
+    Interprétation : à la position de départ, $e_1$ est maximale, $325{,}3\ \mathrm{V}$ pour $230\ \mathrm{V}$ efficaces, et
+    $e_2 = e_3 = -162{,}6\ \mathrm{V}$, la moitié en valeur absolue. Quelle que soit la position, la dernière barre reste à zéro :
+    $e_1 + e_2 + e_3 = 0$ à chaque instant, ce qui n'est pas une coïncidence mais une identité trigonométrique, démontrée en
+    section E. Dans le sens direct, la f.é.m. qui atteint son maximum un tiers de tour après $e_1$ est $e_2$ ; dans le sens
+    inverse, c'est $e_3$. Inverser le sens de rotation ne change ni les amplitudes ni le décalage de $120^\circ$, seulement
+    l'ordre : c'est exactement ce que produit, sur un réseau, la permutation de deux conducteurs de phase.
+  </p>
+
+  <h3 id="d-puissance-section">Animation : la puissance instantanée totale est constante</h3>
+  <p>
+    L'animation trace les puissances instantanées $p_1$, $p_2$, $p_3$ reçues par trois impédances identiques alimentées sous
+    $230\ \mathrm{V}$ et parcourues par $10\ \mathrm{A}$ efficaces, ainsi que leur somme $p$. Le lecteur fait avancer l'instant
+    étudié sur deux périodes, avec pause, vitesse et remise à zéro. Le premier curseur règle le déphasage $\varphi$ de chaque
+    charge, le second la charge de la phase 3 en pour cent de celle des deux autres. Avant de lancer, prédisez : chaque
+    $p_k$ pulse-t-elle, et à quelle fréquence ? La somme pulse-t-elle aussi ? Que devient-elle si la phase 3 n'est chargée qu'à
+    moitié ?
+  </p>
+  <figure id="d-puissance-figure">
+    <div id="d-puissance-trace"></div>
+    <figcaption>
+      Puissances instantanées en kilowatts en fonction du temps, en millisecondes, sur deux périodes. Les trois puissances de
+      phase et leur somme sont chacune nommées dans la légende avec leur couleur réelle ; le trait horizontal en tirets marque la
+      puissance active totale $P = 3VI\cos\varphi$ calculée, et le trait vertical en tirets l'instant étudié.
+    </figcaption>
+  </figure>
+  <div id="d-puissance-curseurs"></div>
+  <div id="d-puissance-lecteur"></div>
+  <div id="d-puissance-valeurs"></div>
+  <p>
+    Interprétation : chaque puissance de phase oscille à $100\ \mathrm{Hz}$ autour de $VI\cos\varphi$, avec une amplitude
+    $VI = 2{,}3\ \mathrm{kVA}$, exactement comme en monophasé. Les trois oscillations sont décalées de $240^\circ$ entre elles,
+    c'est-à-dire de $120^\circ$ dans l'autre sens, et leur somme s'annule : la puissance totale reste collée à
+    $3VI\cos\varphi = 5{,}52\ \mathrm{kW}$ pour $\varphi = 36{,}87^\circ$, sans aucune ondulation. C'est pourquoi un moteur
+    triphasé tourne sans vibration de couple à $100\ \mathrm{Hz}$. Dès que la phase 3 est moins chargée, la compensation est
+    imparfaite et une ondulation réapparaît : la régularité de la puissance est une propriété du système équilibré, pas du
+    triphasé en soi. Le cours Charges triphasées déséquilibrées reviendra sur cette situation.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-production">Production et écriture d'un système triphasé équilibré</h3>
+  <p>
+    Un générateur triphasé comporte trois sources de tension sinusoïdale de même fréquence et de même valeur efficace $V$,
+    décalées de $2\pi/3$, soit $120^\circ$. Dans un alternateur, ce sont les trois enroulements du stator ; dans un
+    transformateur de distribution, les trois enroulements secondaires. Leurs extrémités communes sont reliées en un point,
+    le point neutre $N$, d'où part le conducteur de neutre ; les trois autres extrémités alimentent les conducteurs de phase
+    $L_1$, $L_2$ et $L_3$. On appelle tension simple $v_k$ la tension entre la phase $L_k$ et le neutre, fléchée du neutre vers
+    la phase : $v_k = V_{L_k} - V_N$. Le système est dit équilibré direct quand :
+  </p>
+  <div class="formule-cle">
+    $$v_1(t) = V\sqrt{2}\cos(\omega t), \qquad v_2(t) = V\sqrt{2}\cos\!\left(\omega t - \frac{2\pi}{3}\right), \qquad v_3(t) = V\sqrt{2}\cos\!\left(\omega t - \frac{4\pi}{3}\right)$$
+    <p class="formule-cle-legende">
+      $V$ en volts, valeur efficace commune ; $\omega = 2\pi f$ en radians par seconde ; $t$ en secondes. Hypothèses : source
+      parfaite, sinusoïdale, symétrique. Convention : l'origine des phases est prise sur $v_1$, et l'ordre direct signifie que
+      $v_2$ est en retard de $120^\circ$ sur $v_1$, et $v_3$ en retard de $120^\circ$ sur $v_2$. En ordre inverse, $v_2$ et
+      $v_3$ échangent leurs rôles.
+    </p>
+  </div>
+  <p>
+    En phaseurs, on introduit l'opérateur de rotation $a = e^{j2\pi/3} = -\tfrac{1}{2} + j\tfrac{\sqrt{3}}{2}$. Multiplier un
+    phaseur par $a$ le fait tourner de $+120^\circ$ sans changer son module ; multiplier par $a^2 = e^{j4\pi/3} = e^{-j2\pi/3}$
+    le fait tourner de $-120^\circ$. Comme $a^3 = e^{j2\pi} = 1$, on a aussi $a^2 = \overline{a} = 1/a$. Les trois tensions
+    simples s'écrivent alors :
+  </p>
+  <div class="formule-cle">
+    $$\underline{V}_1 = V, \qquad \underline{V}_2 = a^2\,V = V e^{-j2\pi/3}, \qquad \underline{V}_3 = a\,V = V e^{+j2\pi/3}, \qquad 1 + a + a^2 = 0$$
+    <p class="formule-cle-legende">
+      Dérivation de l'identité : $1 + a + a^2 = 1 + \left(-\tfrac{1}{2} + j\tfrac{\sqrt{3}}{2}\right) + \left(-\tfrac{1}{2} - j\tfrac{\sqrt{3}}{2}\right) = 0$,
+      ou encore, $a$ étant différent de $1$, $1 + a + a^2 = \dfrac{1 - a^3}{1 - a} = 0$. Conséquence :
+      $\underline{V}_1 + \underline{V}_2 + \underline{V}_3 = V(1 + a^2 + a) = 0$, donc $v_1 + v_2 + v_3 = 0$ à chaque instant,
+      puisque chaque valeur instantanée est la partie réelle de $\sqrt{2}\,\underline{V}_k e^{j\omega t}$.
+    </p>
+  </div>
+  <p>
+    Le schéma ci-dessous fixe les conventions utilisées dans toute la séance. Chaque source est dessinée en convention
+    générateur : la tension $v_k$ est fléchée du neutre vers la phase, pointe du côté du signe $+$, et le courant de ligne
+    $i_k$ sort par la borne $+$ vers les récepteurs. Le courant du neutre $i_N$ est fléché du récepteur vers la source, si bien
+    que la loi des nœuds au point neutre s'écrit $i_N = i_1 + i_2 + i_3$.
+  </p>
+  <figure id="e-source-figure">
+    <svg viewBox="0 0 760 300" role="img" aria-label="Générateur triphasé en étoile : trois sources sinusoïdales reliées au point neutre N, tensions simples v1, v2 et v3 fléchées du neutre vers les phases, courants de ligne i1, i2, i3 vers les récepteurs, courant de neutre iN vers la source, tensions composées u12, u23 et u31 entre conducteurs de phase">
+      <defs>
+        <marker id="fl-e-s" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse">
+          <path d="M0 0 11 5 0 10Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M120 250V187M120 143V50H700"/>
+        <path d="M220 250V187M220 143V85H700"/>
+        <path d="M320 250V187M320 143V120H700"/>
+        <path d="M120 250H700"/>
+        <circle cx="120" cy="165" r="22"/>
+        <circle cx="220" cy="165" r="22"/>
+        <circle cx="320" cy="165" r="22"/>
+        <path d="M108 165c4-9 8-9 12 0s8 9 12 0M208 165c4-9 8-9 12 0s8 9 12 0M308 165c4-9 8-9 12 0s8 9 12 0" stroke-width="1.6"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="220" cy="250" r="4"/><circle cx="320" cy="250" r="4"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.6" fill="none">
+        <path d="M156 200V136" marker-end="url(#fl-e-s)"/>
+        <path d="M256 200V136" marker-end="url(#fl-e-s)"/>
+        <path d="M356 200V136" marker-end="url(#fl-e-s)"/>
+        <path d="M440 50H486" marker-end="url(#fl-e-s)"/>
+        <path d="M440 85H486" marker-end="url(#fl-e-s)"/>
+        <path d="M440 120H486" marker-end="url(#fl-e-s)"/>
+        <path d="M486 250H440" marker-end="url(#fl-e-s)"/>
+        <path d="M600 83V54" marker-end="url(#fl-e-s)"/>
+        <path d="M640 118V89" marker-end="url(#fl-e-s)"/>
+        <path d="M680 54V116" marker-end="url(#fl-e-s)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="164" y="172">v1</text><text x="264" y="172">v2</text><text x="364" y="172">v3</text>
+        <text x="112" y="138">+</text><text x="212" y="138">+</text><text x="312" y="138">+</text>
+        <text x="456" y="42">i1</text><text x="456" y="77">i2</text><text x="456" y="112">i3</text><text x="456" y="242">iN</text>
+        <text x="572" y="72">u12</text><text x="612" y="107">u23</text><text x="688" y="90">u31</text>
+        <text x="710" y="54">L1</text><text x="710" y="89">L2</text><text x="710" y="124">L3</text><text x="710" y="254">N</text>
+        <text x="96" y="272">point neutre N, référence des potentiels</text>
+        <text x="96" y="22">générateur en étoile, convention générateur</text>
+        <text x="520" y="22" text-anchor="middle">vers les récepteurs</text>
+      </g>
+    </svg>
+    <figcaption>
+      Générateur triphasé couplé en étoile. Les trois sources ont une borne commune, le point neutre $N$, pris comme référence
+      des potentiels. Les flèches verticales à côté des sources sont les tensions simples $v_1$, $v_2$, $v_3$, pointe vers la
+      phase ; les flèches horizontales sur les conducteurs sont les courants de ligne, orientés vers les récepteurs ; la flèche
+      sur le neutre est $i_N$, orientée vers la source. Les trois flèches courtes à droite sont les tensions composées :
+      $u_{12}$ pointe vers $L_1$, $u_{23}$ vers $L_2$, $u_{31}$ vers $L_3$, la pointe désignant toujours le premier indice.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-composees">Tensions composées : le facteur racine de trois</h3>
+  <p>
+    La tension entre deux conducteurs de phase s'appelle tension composée. Par la loi des mailles, $u_{12} = v_1 - v_2$,
+    $u_{23} = v_2 - v_3$ et $u_{31} = v_3 - v_1$. Leur somme est identiquement nulle, quelle que soit la source, puisque chaque
+    tension simple y apparaît une fois avec chaque signe. Pour un système équilibré direct, le calcul en phaseurs donne :
+  </p>
+  <div class="formule-cle">
+    $$\underline{U}_{12} = \underline{V}_1 - \underline{V}_2 = V\left(1 - a^2\right) = V\left(\frac{3}{2} + j\frac{\sqrt{3}}{2}\right) = \sqrt{3}\,V\,e^{j\pi/6}, \qquad U = \sqrt{3}\,V$$
+    <p class="formule-cle-legende">
+      $U$ et $V$ en volts, valeurs efficaces. Le module vaut $\sqrt{9/4 + 3/4}\,V = \sqrt{3}\,V$ et l'argument
+      $\arctan\left((\sqrt{3}/2)/(3/2)\right) = 30^\circ$ : la tension composée $\underline{U}_{12}$ est en avance de $30^\circ$ sur la
+      tension simple $\underline{V}_1$. De même $\underline{U}_{23} = a^2\underline{U}_{12}$ et $\underline{U}_{31} = a\,\underline{U}_{12}$ :
+      les tensions composées forment elles aussi un système équilibré direct. Vérification dimensionnelle : une différence de
+      deux tensions est une tension. Cas limites : deux tensions en phase donneraient $U = 0$, deux tensions en opposition
+      $U = 2V$ ; le décalage de $120^\circ$ donne la valeur intermédiaire $\sqrt{3}\,V$.
+    </p>
+  </div>
+  <p>
+    Lecture géométrique : les extrémités des trois phaseurs $\underline{V}_k$ forment un triangle équilatéral dont les côtés
+    sont les tensions composées. Le triangle formé par l'origine et les extrémités de $\underline{V}_1$ et $\underline{V}_2$ est
+    isocèle, d'angle au sommet $120^\circ$ : sa base vaut $2V\sin 60^\circ = 2V\cos 30^\circ = \sqrt{3}\,V$. Pour
+    $V = 230\ \mathrm{V}$, $U = 398{,}4\ \mathrm{V}$ ; pour $U = 400\ \mathrm{V}$, $V = 230{,}9\ \mathrm{V}$. La désignation
+    normalisée $230/400\ \mathrm{V}$ est un couple arrondi : l'écart de $0{,}4\ \%$ est inférieur aux tolérances de tension
+    d'un réseau et sans conséquence pratique, mais un calcul doit choisir l'une des deux valeurs et s'y tenir.
+  </p>
+  <figure id="e-etoile-tensions-figure">
+    <svg viewBox="0 0 760 360" role="img" aria-label="Étoile des tensions simples V1 à 0 degré, V2 à moins 120 degrés et V3 à plus 120 degrés, triangle équilatéral des tensions composées U12, U23 et U31 joignant leurs extrémités, copie de U12 issue de l'origine en avance de 30 degrés sur V1, hauteur du triangle isocèle et sens de rotation des phaseurs">
+      <defs>
+        <marker id="fl-e-t" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse">
+          <path d="M0 0 11 5 0 10Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="1" fill="none" opacity="0.5">
+        <path d="M100 190H460M250 50V330"/>
+      </g>
+      <g stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round">
+        <path d="M250 190H366" marker-end="url(#fl-e-t)"/>
+        <path d="M250 190L192 290.4" marker-end="url(#fl-e-t)"/>
+        <path d="M250 190L192 89.6" marker-end="url(#fl-e-t)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="9 5" stroke-linecap="round">
+        <path d="M190 293.9L366.5 192" marker-end="url(#fl-e-t)"/>
+        <path d="M190 86.1V289.9" marker-end="url(#fl-e-t)"/>
+        <path d="M370 190L193.5 88" marker-end="url(#fl-e-t)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.4" fill="none" stroke-dasharray="2 4">
+        <path d="M250 190L426.5 88.1" marker-end="url(#fl-e-t)"/>
+        <path d="M250 190L280 242"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.4" fill="none">
+        <path d="M310 190A60 60 0 0 0 302 160"/>
+        <path d="M200 72A130 130 0 0 0 150 150" marker-end="url(#fl-e-t)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13">
+        <text x="374" y="206">V1</text>
+        <text x="166" y="312">V2</text>
+        <text x="166" y="82">V3</text>
+        <text x="300" y="262">U12</text>
+        <text x="150" y="196">U23</text>
+        <text x="282" y="124">U31</text>
+        <text x="432" y="86">U12 reportée</text>
+        <text x="318" y="178">30°</text>
+        <text x="286" y="230" font-size="11.5">V cos 60°</text>
+        <text x="120" y="130" font-size="11.5">ω</text>
+        <text x="254" y="64" font-size="11.5">Im</text>
+        <text x="448" y="206" font-size="11.5">Re</text>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="490" y="120">V = 230 V, U = √3 V = 398,4 V</text>
+        <text x="490" y="146">U12 = V1 - V2 en avance de 30° sur V1</text>
+        <text x="490" y="172">U23 en avance de 30° sur V2</text>
+        <text x="490" y="198">U31 en avance de 30° sur V3</text>
+        <text x="490" y="224">rotation à ω, sens trigonométrique</text>
+        <text x="490" y="250">ordre direct : V1, V2, V3 passent</text>
+        <text x="490" y="268">dans cet ordre sur l'axe Re</text>
+      </g>
+    </svg>
+    <figcaption>
+      Étoile des tensions et triangle des tensions composées, système équilibré direct, référence des phases sur $\underline{V}_1$
+      posée sur l'axe réel. Les trois flèches en trait plein épais issues de l'origine sont les tensions simples ; les trois
+      flèches en tirets qui joignent leurs extrémités sont les tensions composées, chacune allant de l'extrémité du second indice
+      vers celle du premier, puisque $\underline{U}_{12} = \underline{V}_1 - \underline{V}_2$. La flèche en pointillés issue de
+      l'origine est $\underline{U}_{12}$ reportée au même point de départ que $\underline{V}_1$ : l'arc marque l'avance de
+      $30^\circ$. Le segment en pointillés court est la hauteur du triangle isocèle formé par l'origine, $\underline{V}_1$ et
+      $\underline{V}_2$, de longueur $V\cos 60^\circ$ ; la demi-base vaut $V\sin 60^\circ$. La flèche courbe rappelle le sens de
+      rotation des phaseurs.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-composee-section">Animation : construire la tension composée</h3>
+  <p>
+    L'animation construit pas à pas $\underline{U}_{12} = \underline{V}_1 + (-\underline{V}_2)$, puis le triangle des tensions
+    composées. Le lecteur fait avancer la construction, avec pause, vitesse et remise à zéro ; le curseur règle le décalage
+    entre $\underline{V}_1$ et $\underline{V}_2$, $120^\circ$ en réseau triphasé. Avant de lancer, prédisez : le vecteur
+    $-\underline{V}_2$ pointe-t-il vers le haut ou vers le bas ? Si le décalage passait de $120^\circ$ à $180^\circ$, la tension
+    composée vaudrait-elle plus ou moins que $\sqrt{3}\,V$ ?
+  </p>
+  <figure id="e-composee-figure">
+    <div class="schema-vivant" id="e-composee"></div>
+    <figcaption>
+      Construction graphique. Les tensions simples sont en trait plein épais, $-\underline{V}_2$ en trait plein fin, placée à
+      l'extrémité de $\underline{V}_1$, et la tension composée $\underline{U}_{12}$ en tirets épais issue de l'origine. À la fin
+      de la construction, $\underline{U}_{12}$ est reportée entre les extrémités de $\underline{V}_2$ et $\underline{V}_1$, puis
+      $\underline{U}_{23}$ et $\underline{U}_{31}$ complètent le triangle, en tirets fins. L'arc indique l'angle entre
+      $\underline{V}_1$ et $\underline{U}_{12}$ ; l'étape en cours est écrite en haut à droite.
+    </figcaption>
+  </figure>
+  <div id="e-composee-curseurs"></div>
+  <div id="e-composee-lecteur"></div>
+  <div id="e-composee-valeurs"></div>
+  <p>
+    Interprétation : $\underline{V}_2$ pointe vers le bas à gauche, donc $-\underline{V}_2$ pointe vers le haut à droite, et
+    l'addition donne un vecteur plus long que chacun des deux, incliné de $30^\circ$ au-dessus de $\underline{V}_1$ :
+    $U_{12} = 398{,}4\ \mathrm{V}$ pour $V = 230\ \mathrm{V}$. Le module de la différence vaut $2V\sin(\delta/2)$ pour un décalage
+    $\delta$ : $\sqrt{3}\,V$ à $120^\circ$, $2V = 460\ \mathrm{V}$ à $180^\circ$, $V$ à $60^\circ$. Le facteur $\sqrt{3}$ n'est
+    donc pas une constante universelle du triphasé, mais la conséquence directe du décalage de $120^\circ$ entre deux phases
+    voisines.
+  </p>
+
+  <h3 id="e-etoile">Couplage étoile : courant de ligne égal au courant de phase</h3>
+  <p>
+    Un récepteur triphasé comprend trois dipôles, appelés phases du récepteur. En couplage étoile, noté $Y$, chaque dipôle est
+    branché entre un conducteur de phase et un point commun $N'$, le point neutre du récepteur, éventuellement relié au neutre
+    $N$ du réseau. Chaque dipôle est alors soumis à une tension simple et traversé par le courant de sa ligne : courant de ligne
+    et courant de phase sont confondus. Pour trois impédances identiques $\underline{Z} = Z e^{j\varphi}$, convention récepteur :
+  </p>
+  <div class="formule-cle">
+    $$\underline{I}_k = \frac{\underline{V}_k}{\underline{Z}}, \qquad I = \frac{V}{Z} = \frac{U}{\sqrt{3}\,Z}, \qquad \underline{I}_N = \underline{I}_1 + \underline{I}_2 + \underline{I}_3 = \frac{\underline{V}_1 + \underline{V}_2 + \underline{V}_3}{\underline{Z}} = 0$$
+    <p class="formule-cle-legende">
+      $I$ en ampères, $Z$ en ohms. Chaque courant est en retard de $\varphi$ sur sa tension simple : les trois courants forment un
+      système équilibré de même ordre que les tensions. Hypothèses : charges identiques, source équilibrée, neutres $N$ et $N'$
+      au même potentiel. Ce dernier point se démontre par le théorème de Millman, vu avec le cours
+      <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes de Thévenin, Norton et superposition</a> :
+      $\underline{V}_{N'N} = \dfrac{(\underline{V}_1 + \underline{V}_2 + \underline{V}_3)/\underline{Z}}{3/\underline{Z} + \underline{Y}_N} = 0$, que le neutre soit relié
+      ou non. Cas limite : avec $\underline{Z} \to \infty$, plus aucun courant ; avec une seule phase chargée, $\underline{I}_N = \underline{I}_1$.
+    </p>
+  </div>
+  <figure id="e-etoile-figure">
+    <svg viewBox="0 0 760 330" role="img" aria-label="Récepteur couplé en étoile : trois impédances Z reliées chacune entre un conducteur de phase et le point neutre N' du récepteur, lui-même relié au neutre N ; courants de ligne I1, I2, I3 vers le récepteur, courant de neutre IN vers la source, tension simple V1 aux bornes de Z1 et tension composée U12 entre L1 et L2">
+      <defs>
+        <marker id="fl-e-y" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse">
+          <path d="M0 0 11 5 0 10Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M60 50H620V170"/>
+        <path d="M60 100H520V170"/>
+        <path d="M60 150H420V170"/>
+        <path d="M620 230V260M520 230V260M420 230V260M420 260H620"/>
+        <path d="M60 305H420V260"/>
+        <rect x="408" y="170" width="24" height="60" rx="3"/>
+        <rect x="508" y="170" width="24" height="60" rx="3"/>
+        <rect x="608" y="170" width="24" height="60" rx="3"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="520" cy="260" r="4"/><circle cx="420" cy="260" r="4"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.6" fill="none">
+        <path d="M250 50H300" marker-end="url(#fl-e-y)"/>
+        <path d="M250 100H300" marker-end="url(#fl-e-y)"/>
+        <path d="M250 150H300" marker-end="url(#fl-e-y)"/>
+        <path d="M300 305H250" marker-end="url(#fl-e-y)"/>
+        <path d="M652 236V166" marker-end="url(#fl-e-y)"/>
+        <path d="M130 97V54" marker-end="url(#fl-e-y)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="30" y="54">L1</text><text x="30" y="104">L2</text><text x="30" y="154">L3</text><text x="30" y="309">N</text>
+        <text x="266" y="42">I1</text><text x="266" y="92">I2</text><text x="266" y="142">I3</text><text x="264" y="297">IN</text>
+        <text x="140" y="80">U12</text>
+        <text x="660" y="206">V1</text>
+        <text x="372" y="204">Z3</text><text x="472" y="204">Z2</text><text x="572" y="204">Z1</text>
+        <text x="530" y="282">N'</text>
+        <text x="430" y="324" font-size="11.5">point neutre du récepteur</text>
+        <text x="620" y="30" text-anchor="middle" font-size="11.5">convention récepteur</text>
+      </g>
+    </svg>
+    <figcaption>
+      Récepteur en étoile, quatre conducteurs. Chaque impédance $\underline{Z}_k = \underline{Z}$ relie la phase $L_k$ au point
+      $N'$. Les flèches sur les conducteurs de phase sont les courants de ligne, orientés vers le récepteur, et la flèche sur le
+      neutre, orientée vers la source, est $\underline{I}_N$. La tension simple $\underline{V}_1$, fléchée de $N'$ vers $L_1$ le
+      long de $\underline{Z}_1$, et le courant $\underline{I}_1$, qui entre par la borne fléchée, sont en convention récepteur. La
+      tension composée $\underline{U}_{12}$ est fléchée vers $L_1$. Les impédances sont rangées dans l'ordre $3$, $2$, $1$ de
+      gauche à droite pour que les conducteurs ne se croisent pas.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-neutre-section">Simulation interactive : le courant du neutre</h3>
+  <p>
+    La simulation alimente trois récepteurs monophasés, un par phase, entre phase et neutre d'un réseau $230/400\ \mathrm{V}$.
+    Les curseurs règlent la puissance active de chaque phase et le facteur de puissance commun. Le diagramme met les trois
+    courants bout à bout : la flèche qui ferme la chaîne est le courant du neutre. Avant de manipuler, prédisez : avec
+    $7\ \mathrm{kW}$ sur chaque phase, quel est le courant du neutre ? Si la phase 3 est coupée, le courant du neutre
+    devient-il plus grand ou plus petit que celui d'une phase ? Le facteur de puissance commun change-t-il la réponse dans le
+    cas équilibré ?
+  </p>
+  <figure id="e-neutre-figure">
+    <div class="schema-vivant" id="e-neutre"></div>
+    <figcaption>
+      À gauche, les tensions simples en trait fin, référence des phases sur $\underline{V}_1$ posée sur l'axe horizontal, et les
+      courants de phase issus de l'origine en trait plein épais, chacun repéré par son nom. À droite, les mêmes courants mis
+      bout à bout dans l'ordre $\underline{I}_1$, $\underline{I}_2$, $\underline{I}_3$ ; la flèche en tirets épais qui va de
+      l'origine de la chaîne à son extrémité est $\underline{I}_N = \underline{I}_1 + \underline{I}_2 + \underline{I}_3$. Quand
+      la chaîne se referme, le neutre ne porte rien. L'échelle des courants s'adapte et reste indiquée en bas.
+    </figcaption>
+  </figure>
+  <div id="e-neutre-curseurs"></div>
+  <div id="e-neutre-valeurs"></div>
+  <p>
+    Interprétation : avec $7\ \mathrm{kW}$ par phase à $\cos\varphi = 0{,}89$, chaque courant vaut $34{,}2\ \mathrm{A}$ et la
+    chaîne se referme exactement : $I_N = 0$, quel que soit le facteur de puissance, pourvu qu'il soit le même sur les trois
+    phases. Phase 3 coupée, $\underline{I}_N = \underline{I}_1 + \underline{I}_2$, deux courants égaux décalés de $120^\circ$ :
+    leur somme a le même module, $34{,}2\ \mathrm{A}$, ni plus ni moins. Avec une seule phase chargée, le neutre porte tout son
+    courant. Le neutre n'est donc inutile qu'en régime parfaitement équilibré ; dans un bâtiment où les récepteurs
+    monophasés sont nombreux, il reste indispensable, et l'équilibrage des départs entre phases réduit son courant.
+  </p>
+
+  <h3 id="e-triangle">Couplage triangle : le facteur racine de trois change de côté</h3>
+  <p>
+    En couplage triangle, noté $\Delta$, chaque dipôle est branché entre deux conducteurs de phase ; il n'y a pas de point neutre
+    et le neutre du réseau n'est pas utilisé. Chaque dipôle est soumis à une tension composée et parcouru par un courant de
+    phase, noté $\underline{J}_{12}$, $\underline{J}_{23}$, $\underline{J}_{31}$, orienté comme la tension de même indice en
+    convention récepteur. La loi des nœuds en $L_1$, où $\underline{I}_1$ et $\underline{J}_{31}$ entrent et d'où
+    $\underline{J}_{12}$ sort, donne $\underline{I}_1 = \underline{J}_{12} - \underline{J}_{31}$. Avec
+    $\underline{U}_{31} = a\,\underline{U}_{12}$, on a $\underline{J}_{31} = a\,\underline{J}_{12}$, d'où :
+  </p>
+  <div class="formule-cle">
+    $$\underline{J}_{12} = \frac{\underline{U}_{12}}{\underline{Z}}, \qquad \underline{I}_1 = \underline{J}_{12}\,(1 - a) = \sqrt{3}\,\underline{J}_{12}\,e^{-j\pi/6}, \qquad I = \sqrt{3}\,J = \frac{\sqrt{3}\,U}{Z}$$
+    <p class="formule-cle-legende">
+      $J$ et $I$ en ampères. $1 - a = \tfrac{3}{2} - j\tfrac{\sqrt{3}}{2}$, de module $\sqrt{3}$ et d'argument $-30^\circ$ : le
+      courant de ligne vaut $\sqrt{3}$ fois le courant de phase et il est en retard de $30^\circ$ sur $\underline{J}_{12}$. La
+      somme $\underline{I}_1 + \underline{I}_2 + \underline{I}_3$ est nulle par construction, puisque chaque courant de phase entre
+      dans un nœud et sort d'un autre. Hypothèses : source et charges équilibrées. Cas limite : si une impédance est coupée, les
+      deux lignes qui l'encadrent ne portent plus que le courant d'une seule phase, et la troisième en porte $\sqrt{3}$ fois plus.
+    </p>
+  </div>
+  <figure id="e-triangle-figure">
+    <svg viewBox="0 0 760 340" role="img" aria-label="Récepteur couplé en triangle : impédances Z12 entre L1 et L2, Z23 entre L2 et L3, Z31 entre L3 et L1 ; courants de phase J12, J23, J31 orientés dans le sens L1 vers L2 vers L3 vers L1 ; courants de ligne I1, I2, I3 vers le récepteur ; tension composée U12 fléchée vers L1">
+      <defs>
+        <marker id="fl-e-d" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse">
+          <path d="M0 0 11 5 0 10Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M60 70H560"/>
+        <path d="M60 260H460"/>
+        <path d="M60 310H660V260"/>
+        <path d="M560 70L524 138.4M496 191.6L460 260"/>
+        <path d="M460 260H530M590 260H660"/>
+        <path d="M660 260L624 191.6M596 138.4L560 70"/>
+        <rect x="480" y="154" width="60" height="22" rx="3" transform="rotate(-62.24 510 165)"/>
+        <rect x="530" y="249" width="60" height="22" rx="3"/>
+        <rect x="580" y="154" width="60" height="22" rx="3" transform="rotate(62.24 610 165)"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="560" cy="70" r="4.5"/><circle cx="460" cy="260" r="4.5"/><circle cx="660" cy="260" r="4.5"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.6" fill="none">
+        <path d="M250 70H300" marker-end="url(#fl-e-d)"/>
+        <path d="M250 260H300" marker-end="url(#fl-e-d)"/>
+        <path d="M250 310H300" marker-end="url(#fl-e-d)"/>
+        <path d="M527 98L506 138" marker-end="url(#fl-e-d)"/>
+        <path d="M478 278H522" marker-end="url(#fl-e-d)"/>
+        <path d="M656 217L635 177" marker-end="url(#fl-e-d)"/>
+        <path d="M130 256V74" marker-end="url(#fl-e-d)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="30" y="74">L1</text><text x="30" y="264">L2</text><text x="30" y="314">L3</text>
+        <text x="266" y="62">I1</text><text x="266" y="252">I2</text><text x="266" y="302">I3</text>
+        <text x="140" y="170">U12</text>
+        <text x="466" y="116">J12</text><text x="484" y="298">J23</text><text x="664" y="194">J31</text>
+        <text x="438" y="182">Z12</text><text x="546" y="242">Z23</text><text x="640" y="160">Z31</text>
+        <text x="568" y="60">nœud L1</text>
+        <text x="560" y="30" text-anchor="middle" font-size="11.5">convention récepteur, pas de neutre</text>
+      </g>
+    </svg>
+    <figcaption>
+      Récepteur en triangle, trois conducteurs. Les trois nœuds marqués d'un point sont les bornes du récepteur reliées à
+      $L_1$, $L_2$ et $L_3$. Les flèches courtes parallèles aux côtés sont les courants de phase, orientés dans le sens
+      $L_1 \to L_2 \to L_3 \to L_1$ ; chaque impédance $\underline{Z}_{kl}$ est soumise à $\underline{U}_{kl}$, fléchée vers la
+      borne $k$, en convention récepteur. Au nœud $L_1$, la loi des nœuds donne $\underline{I}_1 = \underline{J}_{12} - \underline{J}_{31}$.
+      Le conducteur $L_3$ contourne le triangle par le bas pour ne croiser aucun autre conducteur.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-equivalence">Équivalence triangle-étoile et schéma monophasé équivalent</h3>
+  <p>
+    Deux récepteurs équilibrés sont équivalents vus du réseau s'ils absorbent les mêmes courants de ligne sous les mêmes
+    tensions. En étoile, $I = V/Z_Y$ ; en triangle, $I = \sqrt{3}\,U/Z_\Delta = \sqrt{3}\cdot\sqrt{3}\,V/Z_\Delta = 3V/Z_\Delta$. Le
+    déphasage entre $\underline{V}_1$ et $\underline{I}_1$ vaut $\varphi$ dans les deux cas : en triangle, $\underline{J}_{12}$
+    est en retard de $\varphi$ sur $\underline{U}_{12}$, lui-même en avance de $30^\circ$ sur $\underline{V}_1$, et
+    $\underline{I}_1$ est en retard de $30^\circ$ sur $\underline{J}_{12}$. L'égalité des courants impose donc :
+  </p>
+  <div class="formule-cle">
+    $$\underline{Z}_Y = \frac{\underline{Z}_\Delta}{3}, \qquad \text{et pour une même impédance} \quad \frac{P_\Delta}{P_Y} = \frac{I_\Delta}{I_Y} = 3$$
+    <p class="formule-cle-legende">
+      Relation complexe : même argument, module divisé par $3$, et non par $\sqrt{3}$. Elle vaut pour des charges équilibrées ;
+      pour des charges quelconques, la transformation de Kennelly donne des formules plus générales. Conséquence pratique : une
+      même impédance branchée en triangle absorbe trois fois plus de courant de ligne et de puissance qu'en étoile, puisqu'elle
+      reçoit $\sqrt{3}$ fois plus de tension et que la puissance varie comme le carré de la tension. C'est le principe du
+      démarrage étoile-triangle, étudié dans le cours Démarrage des moteurs asynchrones.
+    </p>
+  </div>
+  <p>
+    Il en découle la méthode la plus utilisée pour un système équilibré : remplacer toute charge triangle par son étoile
+    équivalente, puis raisonner sur une seule phase, entre un conducteur de phase et un neutre, réel ou fictif, qui ne porte
+    aucun courant. Le schéma monophasé équivalent comprend la tension simple $\underline{V}_1$, l'impédance d'un conducteur de
+    ligne et l'impédance étoile de chaque récepteur. On le résout comme un circuit monophasé ; les grandeurs des phases 2 et 3
+    s'en déduisent par rotation de $-120^\circ$ et $+120^\circ$, les puissances totales en multipliant par $3$, et les courants
+    dans les branches d'un triangle en divisant le courant de ligne par $\sqrt{3}$.
+  </p>
+
+  <h3 id="e-couplage-section">Simulation interactive : la même charge en étoile puis en triangle</h3>
+  <p>
+    La simulation branche trois impédances identiques sur un réseau triphasé. Les curseurs règlent la tension composée du
+    réseau, le module de l'impédance et le couplage ; la poignée, à l'extrémité du courant de phase sur le diagramme, règle le
+    déphasage $\varphi$ de l'impédance entre $-90^\circ$ et $+90^\circ$. Avant de manipuler, prédisez : en passant de l'étoile au
+    triangle, le courant dans chaque impédance est-il multiplié par $\sqrt{3}$ ou par $3$ ? Et le courant de ligne ? Et la
+    puissance active totale ?
+  </p>
+  <figure id="e-couplage-figure">
+    <div class="schema-vivant" id="e-couplage"></div>
+    <figcaption>
+      À gauche, le couplage choisi, avec la tension appliquée à une impédance et les deux courants nommés. À droite, le
+      diagramme de Fresnel de la phase 1, référence sur $\underline{V}_1$ posée sur l'axe horizontal : la tension aux bornes de
+      l'impédance en trait plein fin, $\underline{V}_1$ en étoile et $\underline{U}_{12}$ en triangle ; le courant de phase en trait
+      plein épais, terminé par la poignée ; le courant de ligne $\underline{I}_1$ en tirets épais, confondu avec le courant de
+      phase en étoile. Les deux échelles, tension et courant, s'adaptent et restent indiquées en bas.
+    </figcaption>
+  </figure>
+  <div id="e-couplage-curseurs"></div>
+  <div id="e-couplage-valeurs"></div>
+  <p>
+    Interprétation : sous $400\ \mathrm{V}$ avec $Z = 30\ \Omega$, l'étoile donne $230{,}9\ \mathrm{V}$ et $7{,}70\ \mathrm{A}$
+    par impédance, $7{,}70\ \mathrm{A}$ en ligne ; le triangle donne $400\ \mathrm{V}$ et $13{,}33\ \mathrm{A}$ par impédance,
+    soit $\sqrt{3}$ fois plus, et $23{,}09\ \mathrm{A}$ en ligne, soit $3$ fois plus. La puissance totale suit le courant de
+    ligne, à tension de réseau égale : $4{,}27$ puis $12{,}8\ \mathrm{kW}$ à $\cos\varphi = 0{,}8$. Le déphasage entre
+    $\underline{V}_1$ et $\underline{I}_1$ reste $\varphi$ dans les deux couplages, et l'angle entre $\underline{U}_{12}$ et
+    $\underline{I}_1$ vaut toujours $\varphi + 30^\circ$. Ne jamais confondre ce dernier angle avec celui qui figure dans
+    $\cos\varphi$.
+  </p>
+
+  <h3 id="e-puissance">Puissance d'un récepteur équilibré</h3>
+  <p>
+    La puissance instantanée reçue par la phase $k$ d'un récepteur en étoile vaut $p_k = v_k i_k$. Avec
+    $v_k = V\sqrt{2}\cos(\omega t - \theta_k)$ et $i_k = I\sqrt{2}\cos(\omega t - \theta_k - \varphi)$, où $\theta_k = (k-1)\,2\pi/3$,
+    l'identité $2\cos x\cos y = \cos(x - y) + \cos(x + y)$ donne $p_k = VI\cos\varphi + VI\cos(2\omega t - 2\theta_k - \varphi)$.
+    Les trois termes oscillants ont des phases $-2\theta_k$, soit $0$, $-240^\circ$ et $-480^\circ$, qui forment elles aussi un
+    système équilibré : leur somme est nulle. D'où :
+  </p>
+  <div class="formule-cle">
+    $$p(t) = p_1 + p_2 + p_3 = 3VI\cos\varphi = P = \sqrt{3}\,UI\cos\varphi, \qquad Q = \sqrt{3}\,UI\sin\varphi, \qquad S = \sqrt{3}\,UI$$
+    <p class="formule-cle-legende">
+      $P$ en watts, $Q$ en vars, $S$ en voltampères ; $U$ tension composée, $I$ courant de ligne, $\varphi$ argument de
+      l'impédance d'une phase du récepteur, c'est-à-dire déphasage entre la tension aux bornes d'un dipôle et le courant qui le
+      traverse. Le même résultat vaut en triangle : $3UJ\cos\varphi = 3U\dfrac{I}{\sqrt{3}}\cos\varphi = \sqrt{3}\,UI\cos\varphi$.
+      Vérification dimensionnelle : volt fois ampère, des watts. La puissance instantanée est constante : c'est une propriété du
+      système équilibré. Le cours suivant, Puissance en triphasé, traitera les mesures, dont la méthode des deux wattmètres.
+    </p>
+  </div>
+
+  <h3 id="e-plaques">Tensions de réseau et plaques signalétiques</h3>
+  <p>
+    Un réseau triphasé se désigne par le couple $V/U$ : $230/400\ \mathrm{V}$ pour la basse tension usuelle, $400/690\ \mathrm{V}$
+    pour certains réseaux industriels de forte puissance. Un récepteur triphasé, lui, porte sur sa plaque deux tensions, par
+    exemple $230/400\ \mathrm{V}$ ou $400/690\ \mathrm{V}$. La plus petite est la tension que supporte chacun de ses dipôles ; il
+    peut donc être couplé en triangle sur un réseau dont la tension composée vaut cette plus petite valeur, ou en étoile sur
+    un réseau dont la tension composée vaut la plus grande, puisque $400 = \sqrt{3} \times 230$ et $690 = \sqrt{3} \times 400$.
+    Règle de choix : chaque enroulement doit recevoir sa tension assignée. Sur un réseau $230/400\ \mathrm{V}$, un moteur
+    $230/400\ \mathrm{V}$ se couple en étoile, un moteur $400/690\ \mathrm{V}$ en triangle ; seul ce dernier peut démarrer en
+    étoile-triangle sur ce réseau.
+  </p>
+
+  <h3 id="e-methodes">Choisir une méthode</h3>
+  <p>
+    Trois méthodes coexistent. Les formules en modules, $U = \sqrt{3}\,V$, $I = \sqrt{3}\,J$ en triangle,
+    $P = \sqrt{3}\,UI\cos\varphi$, suffisent quand la charge est directement alimentée par une source connue, sans impédance de
+    ligne : c'est le cas d'une plaque signalétique à interpréter. Le schéma monophasé équivalent, avec les impédances
+    complexes, s'impose dès qu'une ligne ou un transformateur s'interpose, parce qu'il faut alors composer des chutes de
+    tension déphasées : c'est la méthode de l'exemple de la section H. L'écriture complète des trois phases, par les mailles
+    ou les nœuds du cours <a href="#/cours/methodes-de-resolution-systematique">Méthodes de résolution systématique</a>, n'est
+    nécessaire que si le système est déséquilibré ; elle reste utile pour vérifier un résultat équilibré sur un logiciel.
+  </p>
+
+  <h3 id="e-statut">Statut des énoncés</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Ce qui relève de la loi, de la convention, de l'approximation, de la conception et du constructeur</caption>
+      <thead><tr><th>Énoncé</th><th>Statut</th></tr></thead>
+      <tbody>
+        <tr><td>$1 + a + a^2 = 0$, $U = \sqrt{3}\,V$ et $I = \sqrt{3}\,J$ pour un système équilibré</td><td>Conséquence mathématique des lois de Kirchhoff</td></tr>
+        <tr><td>Loi des nœuds au point neutre et aux sommets du triangle</td><td>Loi physique, conservation de la charge</td></tr>
+        <tr><td>Origine des phases sur $v_1$, flèche de tension vers le premier indice, nom des phases $L_1$, $L_2$, $L_3$</td><td>Conventions</td></tr>
+        <tr><td>Ordre direct ou inverse</td><td>Propriété physique du réseau ; son nom dépend du repérage choisi</td></tr>
+        <tr><td>Source parfaitement équilibrée, charges identiques, sinusoïdes pures</td><td>Approximations, à vérifier par la mesure</td></tr>
+        <tr><td>Couplage selon la plaque, équilibrage des départs monophasés entre phases</td><td>Règles de conception</td></tr>
+        <tr><td>Tensions $230/400\ \mathrm{V}$, tolérances de tension, repérage des bornes U1, V1, W1</td><td>Valeurs normalisées et pratiques des constructeurs, à lire dans les documents applicables</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, du générateur aux deux couplages de récepteurs, le chronogramme
+    des tensions simples et composées, l'organigramme de résolution et un tableau comparatif des deux couplages.
+  </p>
+
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 920 440" role="img" aria-label="Schéma principal : générateur triphasé en étoile avec neutre, réseau à quatre conducteurs L1, L2, L3 et N, récepteur couplé en étoile relié au neutre et récepteur couplé en triangle relié aux trois phases seulement, avec tensions, courants et conventions">
+      <defs>
+        <marker id="fl-f-p" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse">
+          <path d="M0 0 11 5 0 10Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M90 390V290M90 250V60H760V220"/>
+        <path d="M170 390V290M170 250V110H690V340"/>
+        <path d="M250 390V290M250 250V160H860V340H830"/>
+        <path d="M90 390H490V320"/>
+        <circle cx="90" cy="270" r="20"/><circle cx="170" cy="270" r="20"/><circle cx="250" cy="270" r="20"/>
+        <path d="M79 270c4-8 7-8 11 0s7 8 11 0M159 270c4-8 7-8 11 0s7 8 11 0M239 270c4-8 7-8 11 0s7 8 11 0" stroke-width="1.5"/>
+        <path d="M430 60V240M430 290V320M490 110V240M490 290V320M550 160V240M550 290V320M430 320H550"/>
+        <rect x="420" y="240" width="20" height="50" rx="3"/>
+        <rect x="480" y="240" width="20" height="50" rx="3"/>
+        <rect x="540" y="240" width="20" height="50" rx="3"/>
+        <path d="M760 220L736.1 261M713.9 299L690 340"/>
+        <path d="M690 340H738M782 340H830"/>
+        <path d="M830 340L806.1 299M783.9 261L760 220"/>
+        <rect x="703" y="271" width="44" height="18" rx="3" transform="rotate(-59.74 725 280)"/>
+        <rect x="738" y="331" width="44" height="18" rx="3"/>
+        <rect x="773" y="271" width="44" height="18" rx="3" transform="rotate(59.74 795 280)"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="170" cy="390" r="4"/><circle cx="250" cy="390" r="4"/>
+        <circle cx="430" cy="60" r="4"/><circle cx="490" cy="110" r="4"/><circle cx="550" cy="160" r="4"/><circle cx="490" cy="320" r="4"/>
+        <circle cx="760" cy="220" r="4.5"/><circle cx="690" cy="340" r="4.5"/><circle cx="830" cy="340" r="4.5"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.6" fill="none">
+        <path d="M116 300V240" marker-end="url(#fl-f-p)"/>
+        <path d="M196 300V240" marker-end="url(#fl-f-p)"/>
+        <path d="M276 300V240" marker-end="url(#fl-f-p)"/>
+        <path d="M320 60H362" marker-end="url(#fl-f-p)"/>
+        <path d="M320 110H362" marker-end="url(#fl-f-p)"/>
+        <path d="M320 160H362" marker-end="url(#fl-f-p)"/>
+        <path d="M362 390H320" marker-end="url(#fl-f-p)"/>
+        <path d="M410 292V238" marker-end="url(#fl-f-p)"/>
+        <path d="M610 108V64" marker-end="url(#fl-f-p)"/>
+        <path d="M742.9 221.6L727.7 247.5" marker-end="url(#fl-f-p)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="122" y="262">v1</text><text x="202" y="262">v2</text><text x="282" y="262">v3</text>
+        <text x="276" y="54">L1</text><text x="276" y="104">L2</text><text x="276" y="154">L3</text><text x="276" y="384">N</text>
+        <text x="332" y="52">I1</text><text x="332" y="102">I2</text><text x="332" y="152">I3</text><text x="332" y="382">IN</text>
+        <text x="380" y="270">V1</text>
+        <text x="618" y="92">U12</text>
+        <text x="700" y="234">J12</text>
+        <text x="742" y="368">ZΔ</text>
+        <text x="500" y="338">N'</text>
+        <text x="60" y="30">générateur en étoile</text>
+        <text x="60" y="425">N, référence des potentiels</text>
+        <text x="420" y="425">récepteur en étoile, ZY, 4 fils</text>
+        <text x="670" y="425">récepteur en triangle, 3 fils</text>
+        <text x="600" y="30" font-size="11">croisement sans point : pas de connexion</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal : un générateur triphasé en étoile alimente, par un réseau à quatre conducteurs, un récepteur en étoile
+      relié au neutre et un récepteur en triangle qui n'utilise que les trois phases. Le point neutre $N$ du générateur est la
+      référence des potentiels. Les flèches verticales près des sources sont les tensions simples, pointe vers la phase ; les
+      flèches horizontales sont les courants de ligne, orientés vers les récepteurs, et le courant du neutre, orienté vers la
+      source. Côté étoile, $\underline{V}_1$ est fléchée le long de l'impédance reliée à $L_1$ ; côté triangle, $\underline{J}_{12}$
+      parcourt l'impédance placée entre $L_1$ et $L_2$, soumise à $\underline{U}_{12}$. Un point marque une connexion ; deux
+      conducteurs qui se croisent sans point ne sont pas reliés. Récepteurs équilibrés : $I_N = 0$, et le triangle équivaut à
+      une étoile d'impédance $\underline{Z}_\Delta/3$.
+    </figcaption>
+  </figure>
+
+  <figure id="f-chronogramme">
+    <svg viewBox="0 0 900 330" role="img" aria-label="Chronogramme sur une période de 20 millisecondes des tensions simples v1, v2, v3 de 230 volts efficaces, décalées de 6,67 millisecondes, et de la tension composée u12 de 398,4 volts efficaces, en avance de 30 degrés sur v1">
+      <defs>
+        <marker id="fl-f-c" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse">
+          <path d="M0 0 11 5 0 10Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="1.2" fill="none" opacity="0.7">
+        <path d="M70 165H874" marker-end="url(#fl-f-c)"/>
+        <path d="M70 318V14" marker-end="url(#fl-f-c)"/>
+        <path d="M265 161v8M460 161v8M655 161v8M850 161v8M66 86.9h8M66 243.1h8M66 29.8h8M66 300.2h8"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1" fill="none" stroke-dasharray="3 4" opacity="0.8">
+        <path d="M330 86.9V165M590 86.9V165M785.2 29.8V165"/>
+      </g>
+      <path d="M70.0 86.9L76.5 87.0L83.0 87.4L89.5 87.9L96.0 88.6L102.5 89.6L109.0 90.8L115.5 92.1L122.0 93.7L128.5 95.4L135.0 97.4L141.5 99.5L148.0 101.8L154.5 104.3L161.0 107.0L167.5 109.8L174.0 112.8L180.5 115.9L187.0 119.1L193.5 122.5L200.0 126.0L206.5 129.6L213.0 133.2L219.5 137.0L226.0 140.9L232.5 144.8L239.0 148.8L245.5 152.8L252.0 156.8L258.5 160.9L265.0 165.0L271.5 169.1L278.0 173.2L284.5 177.2L291.0 181.2L297.5 185.2L304.0 189.1L310.5 193.0L317.0 196.8L323.5 200.4L330.0 204.0L336.5 207.5L343.0 210.9L349.5 214.1L356.0 217.2L362.5 220.2L369.0 223.0L375.5 225.7L382.0 228.2L388.5 230.5L395.0 232.6L401.5 234.6L408.0 236.3L414.5 237.9L421.0 239.2L427.5 240.4L434.0 241.4L440.5 242.1L447.0 242.6L453.5 243.0L460.0 243.1L466.5 243.0L473.0 242.6L479.5 242.1L486.0 241.4L492.5 240.4L499.0 239.2L505.5 237.9L512.0 236.3L518.5 234.6L525.0 232.6L531.5 230.5L538.0 228.2L544.5 225.7L551.0 223.0L557.5 220.2L564.0 217.2L570.5 214.1L577.0 210.9L583.5 207.5L590.0 204.0L596.5 200.4L603.0 196.8L609.5 193.0L616.0 189.1L622.5 185.2L629.0 181.2L635.5 177.2L642.0 173.2L648.5 169.1L655.0 165.0L661.5 160.9L668.0 156.8L674.5 152.8L681.0 148.8L687.5 144.8L694.0 140.9L700.5 137.0L707.0 133.2L713.5 129.6L720.0 126.0L726.5 122.5L733.0 119.1L739.5 115.9L746.0 112.8L752.5 109.8L759.0 107.0L765.5 104.3L772.0 101.8L778.5 99.5L785.0 97.4L791.5 95.4L798.0 93.7L804.5 92.1L811.0 90.8L817.5 89.6L824.0 88.6L830.5 87.9L837.0 87.4L843.5 87.0L850.0 86.9" stroke="currentColor" stroke-width="2.8" fill="none"/>
+      <path d="M70.0 204.0L76.5 200.4L83.0 196.8L89.5 193.0L96.0 189.1L102.5 185.2L109.0 181.2L115.5 177.2L122.0 173.2L128.5 169.1L135.0 165.0L141.5 160.9L148.0 156.8L154.5 152.8L161.0 148.8L167.5 144.8L174.0 140.9L180.5 137.0L187.0 133.2L193.5 129.6L200.0 126.0L206.5 122.5L213.0 119.1L219.5 115.9L226.0 112.8L232.5 109.8L239.0 107.0L245.5 104.3L252.0 101.8L258.5 99.5L265.0 97.4L271.5 95.4L278.0 93.7L284.5 92.1L291.0 90.8L297.5 89.6L304.0 88.6L310.5 87.9L317.0 87.4L323.5 87.0L330.0 86.9L336.5 87.0L343.0 87.4L349.5 87.9L356.0 88.6L362.5 89.6L369.0 90.8L375.5 92.1L382.0 93.7L388.5 95.4L395.0 97.4L401.5 99.5L408.0 101.8L414.5 104.3L421.0 107.0L427.5 109.8L434.0 112.8L440.5 115.9L447.0 119.1L453.5 122.5L460.0 126.0L466.5 129.6L473.0 133.2L479.5 137.0L486.0 140.9L492.5 144.8L499.0 148.8L505.5 152.8L512.0 156.8L518.5 160.9L525.0 165.0L531.5 169.1L538.0 173.2L544.5 177.2L551.0 181.2L557.5 185.2L564.0 189.1L570.5 193.0L577.0 196.8L583.5 200.4L590.0 204.0L596.5 207.5L603.0 210.9L609.5 214.1L616.0 217.2L622.5 220.2L629.0 223.0L635.5 225.7L642.0 228.2L648.5 230.5L655.0 232.6L661.5 234.6L668.0 236.3L674.5 237.9L681.0 239.2L687.5 240.4L694.0 241.4L700.5 242.1L707.0 242.6L713.5 243.0L720.0 243.1L726.5 243.0L733.0 242.6L739.5 242.1L746.0 241.4L752.5 240.4L759.0 239.2L765.5 237.9L772.0 236.3L778.5 234.6L785.0 232.6L791.5 230.5L798.0 228.2L804.5 225.7L811.0 223.0L817.5 220.2L824.0 217.2L830.5 214.1L837.0 210.9L843.5 207.5L850.0 204.0" stroke="currentColor" stroke-width="2.2" fill="none" stroke-dasharray="9 5"/>
+      <path d="M70.0 204.0L76.5 207.5L83.0 210.9L89.5 214.1L96.0 217.2L102.5 220.2L109.0 223.0L115.5 225.7L122.0 228.2L128.5 230.5L135.0 232.6L141.5 234.6L148.0 236.3L154.5 237.9L161.0 239.2L167.5 240.4L174.0 241.4L180.5 242.1L187.0 242.6L193.5 243.0L200.0 243.1L206.5 243.0L213.0 242.6L219.5 242.1L226.0 241.4L232.5 240.4L239.0 239.2L245.5 237.9L252.0 236.3L258.5 234.6L265.0 232.6L271.5 230.5L278.0 228.2L284.5 225.7L291.0 223.0L297.5 220.2L304.0 217.2L310.5 214.1L317.0 210.9L323.5 207.5L330.0 204.0L336.5 200.4L343.0 196.8L349.5 193.0L356.0 189.1L362.5 185.2L369.0 181.2L375.5 177.2L382.0 173.2L388.5 169.1L395.0 165.0L401.5 160.9L408.0 156.8L414.5 152.8L421.0 148.8L427.5 144.8L434.0 140.9L440.5 137.0L447.0 133.2L453.5 129.6L460.0 126.0L466.5 122.5L473.0 119.1L479.5 115.9L486.0 112.8L492.5 109.8L499.0 107.0L505.5 104.3L512.0 101.8L518.5 99.5L525.0 97.4L531.5 95.4L538.0 93.7L544.5 92.1L551.0 90.8L557.5 89.6L564.0 88.6L570.5 87.9L577.0 87.4L583.5 87.0L590.0 86.9L596.5 87.0L603.0 87.4L609.5 87.9L616.0 88.6L622.5 89.6L629.0 90.8L635.5 92.1L642.0 93.7L648.5 95.4L655.0 97.4L661.5 99.5L668.0 101.8L674.5 104.3L681.0 107.0L687.5 109.8L694.0 112.8L700.5 115.9L707.0 119.1L713.5 122.5L720.0 126.0L726.5 129.6L733.0 133.2L739.5 137.0L746.0 140.9L752.5 144.8L759.0 148.8L765.5 152.8L772.0 156.8L778.5 160.9L785.0 165.0L791.5 169.1L798.0 173.2L804.5 177.2L811.0 181.2L817.5 185.2L824.0 189.1L830.5 193.0L837.0 196.8L843.5 200.4L850.0 204.0" stroke="currentColor" stroke-width="2.2" fill="none" stroke-dasharray="2 4"/>
+      <path d="M70.0 47.9L76.5 51.6L83.0 55.6L89.5 59.9L96.0 64.5L102.5 69.4L109.0 74.5L115.5 79.9L122.0 85.5L128.5 91.4L135.0 97.4L141.5 103.6L148.0 110.0L154.5 116.5L161.0 123.2L167.5 130.0L174.0 136.9L180.5 143.8L187.0 150.9L193.5 157.9L200.0 165.0L206.5 172.1L213.0 179.1L219.5 186.2L226.0 193.1L232.5 200.0L239.0 206.8L245.5 213.5L252.0 220.0L258.5 226.4L265.0 232.6L271.5 238.6L278.0 244.5L284.5 250.1L291.0 255.5L297.5 260.6L304.0 265.5L310.5 270.1L317.0 274.4L323.5 278.4L330.0 282.1L336.5 285.5L343.0 288.5L349.5 291.2L356.0 293.6L362.5 295.6L369.0 297.3L375.5 298.5L382.0 299.5L388.5 300.0L395.0 300.2L401.5 300.0L408.0 299.5L414.5 298.5L421.0 297.3L427.5 295.6L434.0 293.6L440.5 291.2L447.0 288.5L453.5 285.5L460.0 282.1L466.5 278.4L473.0 274.4L479.5 270.1L486.0 265.5L492.5 260.6L499.0 255.5L505.5 250.1L512.0 244.5L518.5 238.6L525.0 232.6L531.5 226.4L538.0 220.0L544.5 213.5L551.0 206.8L557.5 200.0L564.0 193.1L570.5 186.2L577.0 179.1L583.5 172.1L590.0 165.0L596.5 157.9L603.0 150.9L609.5 143.8L616.0 136.9L622.5 130.0L629.0 123.2L635.5 116.5L642.0 110.0L648.5 103.6L655.0 97.4L661.5 91.4L668.0 85.5L674.5 79.9L681.0 74.5L687.5 69.4L694.0 64.5L700.5 59.9L707.0 55.6L713.5 51.6L720.0 47.9L726.5 44.5L733.0 41.5L739.5 38.8L746.0 36.4L752.5 34.4L759.0 32.7L765.5 31.5L772.0 30.5L778.5 30.0L785.0 29.8L791.5 30.0L798.0 30.5L804.5 31.5L811.0 32.7L817.5 34.4L824.0 36.4L830.5 38.8L837.0 41.5L843.5 44.5L850.0 47.9" stroke="currentColor" stroke-width="1.4" fill="none" stroke-dasharray="14 4 2 4"/>
+      <g stroke="currentColor" stroke-width="1.4" fill="none">
+        <path d="M74 64H326" marker-start="url(#fl-f-c)" marker-end="url(#fl-f-c)"/>
+        <path d="M334 64H586" marker-start="url(#fl-f-c)" marker-end="url(#fl-f-c)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11.5">
+        <text x="200" y="56" text-anchor="middle">T/3 = 6,67 ms</text>
+        <text x="460" y="56" text-anchor="middle">T/3</text>
+        <text x="265" y="184" text-anchor="middle">5</text><text x="460" y="184" text-anchor="middle">10</text>
+        <text x="655" y="184" text-anchor="middle">15</text><text x="850" y="184" text-anchor="middle">20</text>
+        <text x="874" y="152" text-anchor="end">t (ms)</text>
+        <text x="62" y="90" text-anchor="end">325</text><text x="62" y="247" text-anchor="end">-325</text>
+        <text x="62" y="33" text-anchor="end">563</text><text x="62" y="304" text-anchor="end">-563</text>
+        <text x="78" y="16">tension (V)</text>
+        <text x="792" y="24">max de u12</text>
+        <text x="336" y="100">max de v2</text><text x="596" y="100">max de v3</text>
+        <text x="540" y="318">v1 : trait plein épais ; v2 : tirets ; v3 : pointillés ; u12 : trait mixte fin</text>
+      </g>
+    </svg>
+    <figcaption>
+      Chronogramme sur une période, $T = 20\ \mathrm{ms}$. Les trois tensions simples, $230\ \mathrm{V}$ efficaces et
+      $325\ \mathrm{V}$ crête, atteignent leur maximum à $0$, $6{,}67$ et $13{,}33\ \mathrm{ms}$ : chacune est en retard d'un
+      tiers de période sur la précédente, ordre direct. La tension composée $u_{12} = v_1 - v_2$, de crête
+      $563\ \mathrm{V}$, atteint son maximum à $18{,}33\ \mathrm{ms}$, soit $T/12$ avant le maximum suivant de $v_1$ : c'est l'avance
+      de $30^\circ$. À chaque instant, la somme des trois tensions simples est nulle ; le lecteur peut le vérifier aux trois
+      repères verticaux, où une tension est maximale et les deux autres valent chacune moins la moitié de ce maximum.
+    </figcaption>
+  </figure>
+
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Système triphasé à étudier"] --> B{"Source et charges<br/>équilibrées ?"}
+  B -->|"non"| Z["Écrire les trois phases<br/>mailles, nœuds ou Millman<br/>(cours Charges triphasées déséquilibrées)"]
+  B -->|"oui"| C["Relever U et V = U / √3<br/>et l'ordre des phases"]
+  C --> D{"Couplage de chaque récepteur ?"}
+  D -->|"étoile"| E["Dipôle sous V, I ligne = I phase"]
+  D -->|"triangle"| F["Dipôle sous U, I ligne = √3 J<br/>ou étoile équivalente Z / 3"]
+  E --> G{"Impédance de ligne<br/>ou de source ?"}
+  F --> G
+  G -->|"non"| H["Formules en modules<br/>P = √3 U I cos φ"]
+  G -->|"oui"| I["Schéma monophasé équivalent<br/>phase 1 et neutre, calcul complexe"]
+  I --> J["Phases 2 et 3 par rotation de -120° et +120°<br/>puissances totales × 3"]
+  H --> K["Contrôles : U = √3 V, IN = 0,<br/>bilan P et Q, ordre de grandeur"]
+  J --> K</pre>
+    <figcaption>
+      Organigramme de résolution. Les rectangles sont des étapes, les losanges des décisions, les libellés des flèches les
+      réponses. La première décision écarte le cas déséquilibré, qui demande l'écriture des trois phases. Pour un système
+      équilibré, le couplage de chaque récepteur fixe la tension de ses dipôles et le lien entre courant de ligne et courant de
+      phase ; la présence d'une impédance de ligne décide ensuite entre formules en modules et schéma monophasé équivalent.
+      Toutes les branches finissent par les mêmes contrôles.
+    </figcaption>
+  </figure>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Comparaison des couplages étoile et triangle pour trois dipôles identiques d'impédance Z</caption>
+      <thead><tr><th>Grandeur</th><th>Étoile Y</th><th>Triangle Δ</th></tr></thead>
+      <tbody>
+        <tr><td>Tension aux bornes d'un dipôle</td><td>$V = U/\sqrt{3}$</td><td>$U$</td></tr>
+        <tr><td>Courant dans un dipôle</td><td>$I = V/Z$</td><td>$J = U/Z$</td></tr>
+        <tr><td>Courant de ligne</td><td>$I$, égal au courant de phase</td><td>$I = \sqrt{3}\,J$, en retard de $30^\circ$ sur $\underline{J}_{12}$</td></tr>
+        <tr><td>Neutre</td><td>possible, sans courant en équilibré</td><td>pas de neutre</td></tr>
+        <tr><td>Puissance active totale</td><td>$3V^2\cos\varphi/Z = U^2\cos\varphi/Z$</td><td>$3U^2\cos\varphi/Z$, trois fois plus</td></tr>
+        <tr><td>Étoile équivalente</td><td>$\underline{Z}$</td><td>$\underline{Z}/3$</td></tr>
+        <tr><td>Usage typique en $230/400\ \mathrm{V}$</td><td>moteur $230/400\ \mathrm{V}$, charges avec neutre, résistances chauffantes sous $230\ \mathrm{V}$</td><td>moteur $400/690\ \mathrm{V}$, condensateurs de compensation, résistances sous $400\ \mathrm{V}$</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-alternateur-figure" data-renvoi="d-alternateur-figure">la simulation de l'alternateur et de ses trois f.é.m.</a> et <a href="#d-puissance-figure" data-renvoi="d-puissance-figure">l'animation de la puissance instantanée totale</a>, section D ;</li>
+    <li><a href="#e-source-figure" data-renvoi="e-source-figure">le générateur en étoile et ses conventions</a>, <a href="#e-etoile-tensions-figure" data-renvoi="e-etoile-tensions-figure">l'étoile des tensions et le triangle des tensions composées</a>, <a href="#e-composee-figure" data-renvoi="e-composee-figure">l'animation de la construction de la tension composée</a>, <a href="#e-etoile-figure" data-renvoi="e-etoile-figure">le récepteur en étoile</a>, <a href="#e-neutre-figure" data-renvoi="e-neutre-figure">la simulation du courant du neutre</a>, <a href="#e-triangle-figure" data-renvoi="e-triangle-figure">le récepteur en triangle</a> et <a href="#e-couplage-figure" data-renvoi="e-couplage-figure">la simulation de la même charge en étoile puis en triangle</a>, section E ;</li>
+    <li><a href="#h-circuit-figure" data-renvoi="h-circuit-figure">le schéma monophasé équivalent de l'exemple</a>, section H ;</li>
+    <li><a href="#i-plaque-figure" data-renvoi="i-plaque-figure">la plaque à bornes du compresseur en étoile et en triangle</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour étudier un système triphasé supposé équilibré :</p>
+  <ol>
+    <li>Relever la tension du réseau et l'écrire sous la forme $V/U$ ; choisir une seule des deux valeurs comme donnée, l'autre s'en déduisant par $U = \sqrt{3}\,V$. Prendre $\underline{V}_1$ comme référence des phases et noter l'ordre des phases.</li>
+    <li>Vérifier l'hypothèse d'équilibre : trois dipôles identiques par récepteur, source symétrique. Si elle n'est pas satisfaite, quitter cette méthode et écrire les trois phases.</li>
+    <li>Pour chaque récepteur, identifier le couplage et la tension que reçoit chaque dipôle : $V$ en étoile, $U$ en triangle. Pour un moteur, comparer cette tension à la plus petite tension de la plaque.</li>
+    <li>Si une impédance de ligne, de câble ou de source intervient, remplacer chaque triangle par son étoile équivalente $\underline{Z}_\Delta/3$, puis tracer le schéma monophasé équivalent entre la phase 1 et le neutre.</li>
+    <li>Résoudre la phase 1 en complexe : courant de ligne, tensions aux bornes des récepteurs, puis tensions composées par $\sqrt{3}$ et $+30^\circ$, courants des branches des triangles par $1/\sqrt{3}$ et $+30^\circ$.</li>
+    <li>En déduire les phases 2 et 3 par rotation de $-120^\circ$ et $+120^\circ$ en ordre direct, puis les puissances totales : $P = 3 \times P_{\text{phase}} = \sqrt{3}\,UI\cos\varphi$.</li>
+    <li>Contrôler : $I_N = 0$, $U = \sqrt{3}\,V$ en tout point, bilan $P$ et $Q$ de la source égal à la somme des récepteurs et des lignes, ordre de grandeur du courant, environ $1{,}45\ \mathrm{A}$ par kilovoltampère sous $400\ \mathrm{V}$.</li>
+  </ol>
+  <p>
+    Le repère du dernier point vient de $I = S/(\sqrt{3}\,U) = 1000/(1{,}732 \times 400) = 1{,}443\ \mathrm{A}$ par kilovoltampère ;
+    sous $230\ \mathrm{V}$ en monophasé, ce serait $4{,}35\ \mathrm{A}$. Il permet de repérer en quelques secondes une erreur d'un
+    facteur $\sqrt{3}$ ou $3$.
+  </p>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Situation : le groupe de ventilation d'un bâtiment de stockage est alimenté depuis un tableau divisionnaire par un câble
+    triphasé long. À son point de fonctionnement, le moteur est modélisé par trois impédances identiques couplées en
+    triangle, $\underline{Z}_\Delta = 24 + j18\ \Omega$ par branche. Chaque conducteur du câble présente l'impédance
+    $\underline{Z}_l = 0{,}5 + j0{,}3\ \Omega$. Le tableau impose un système équilibré direct de $400\ \mathrm{V}$ entre phases.
+    On demande le courant de ligne, le courant dans chaque branche du triangle, la tension composée aux bornes du moteur et la
+    chute de tension, les puissances reçues par le moteur, les pertes dans le câble et le bilan de la source, puis une
+    comparaison avec un raccordement sans câble.
+  </p>
+  <figure id="h-circuit-figure">
+    <svg viewBox="0 0 880 300" role="img" aria-label="Schéma monophasé équivalent de l'exemple : source V1 de 230,9 volts, impédance de ligne 0,5 plus j 0,3 ohm, point A' aux bornes du moteur, impédance étoile équivalente 8 plus j 6 ohms, retour par le neutre fictif sans courant">
+      <defs>
+        <marker id="fl-h-c" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse">
+          <path d="M0 0 11 5 0 10Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M100 250V184M100 136V60H200M290 60H520V110M520 190V250H100"/>
+        <circle cx="100" cy="160" r="24"/>
+        <path d="M86 160c4-9 8-9 12 0s8 9 12 0" stroke-width="1.6"/>
+        <rect x="200" y="48" width="90" height="24" rx="3"/>
+        <rect x="506" y="110" width="28" height="80" rx="3"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.6" fill="none">
+        <path d="M136 204V118" marker-end="url(#fl-h-c)"/>
+        <path d="M360 60H410" marker-end="url(#fl-h-c)"/>
+        <path d="M484 196V104" marker-end="url(#fl-h-c)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1" fill="none" stroke-dasharray="4 4">
+        <path d="M100 250H520"/>
+      </g>
+      <g fill="currentColor" stroke="none"><circle cx="520" cy="60" r="4"/></g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="146" y="164">V1</text>
+        <text x="92" y="132">+</text>
+        <text x="245" y="38" text-anchor="middle">Zl = 0,5 + j0,3 Ω</text>
+        <text x="374" y="50">I1</text>
+        <text x="528" y="50">A'</text>
+        <text x="436" y="154">VA'</text>
+        <text x="546" y="146">ZY = ZΔ / 3</text>
+        <text x="546" y="164">= 8 + j6 Ω</text>
+        <text x="160" y="276">neutre N, fictif : aucun courant en régime équilibré</text>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11.5">
+        <text x="650" y="60">données</text>
+        <text x="650" y="80">U = 400 V, ordre direct</text>
+        <text x="650" y="98">V1 = 230,9 V à 0°</text>
+        <text x="650" y="116">ZΔ = 24 + j18 Ω</text>
+        <text x="650" y="150">résultats</text>
+        <text x="650" y="170">I = 21,83 A à -36,54°</text>
+        <text x="650" y="188">VA' = 218,3 V à +0,32°</text>
+        <text x="650" y="206">UA' = 378,1 V</text>
+        <text x="650" y="224">J = 12,60 A</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma monophasé équivalent de l'exemple, phase 1. La source $\underline{V}_1$, tension simple du tableau, est en convention
+      générateur, fléchée du neutre vers la phase ; le courant $\underline{I}_1$ traverse l'impédance d'un conducteur de ligne
+      puis l'étoile équivalente du moteur, en convention récepteur, sous la tension simple $\underline{V}_{A'}$ fléchée du neutre
+      vers le point $A'$, borne du moteur. Le retour, en tirets, est le neutre fictif : il relie des points au même potentiel et
+      ne porte aucun courant, car le système est équilibré. Le câble réel ne comporte pas de neutre et le moteur est en
+      triangle ; le schéma ne représente que leur équivalent par phase.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Données : $U = 400\ \mathrm{V}$ au tableau, ordre direct ; $\underline{V}_1 = 400/\sqrt{3} = 230{,}94\ \mathrm{V}$, pris comme
+    référence des phases ; $\underline{Z}_l = 0{,}5 + j0{,}3\ \Omega$ par conducteur ; $\underline{Z}_\Delta = 24 + j18\ \Omega$,
+    soit $30\ \Omega$ à $36{,}87^\circ$, $\cos\varphi = 0{,}80$. Hypothèses : système équilibré, moteur représenté par une
+    impédance constante à son point de fonctionnement, câble sans capacité ni couplage entre conducteurs. Inconnues :
+    $I$, $J$, $U_{A'}$, $\Delta U$, $P$, $Q$, pertes, bilan de la source. Stratégie : méthode de la section G ; étoile
+    équivalente, schéma monophasé équivalent, retour aux grandeurs du triangle, puis bilan de puissance comme contrôle.
+  </p>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li>Étoile équivalente : $\underline{Z}_Y = \underline{Z}_\Delta/3 = 8 + j6\ \Omega$, soit $10\ \Omega$ à $36{,}87^\circ$.</li>
+    <li>Impédance totale de la phase : $\underline{Z}_l + \underline{Z}_Y = 8{,}5 + j6{,}3\ \Omega$, de module $\sqrt{8{,}5^2 + 6{,}3^2} = \sqrt{111{,}94} = 10{,}580\ \Omega$ et d'argument $\arctan(6{,}3/8{,}5) = 36{,}54^\circ$.</li>
+    <li>Courant de ligne : $\underline{I}_1 = \underline{V}_1/(\underline{Z}_l + \underline{Z}_Y) = 230{,}94/10{,}580 = 21{,}83\ \mathrm{A}$, en retard de $36{,}54^\circ$ sur $\underline{V}_1$. Phases 2 et 3 : $21{,}83\ \mathrm{A}$ à $-156{,}54^\circ$ et à $+83{,}46^\circ$.</li>
+    <li>Tension simple au moteur : $\underline{V}_{A'} = \underline{Z}_Y\underline{I}_1 = 10 \times 21{,}83 = 218{,}28\ \mathrm{V}$, d'argument $36{,}87 - 36{,}54 = +0{,}32^\circ$.</li>
+    <li>Tension composée au moteur : $U_{A'} = \sqrt{3} \times 218{,}28 = 378{,}07\ \mathrm{V}$, en avance de $30{,}32^\circ$ sur $\underline{V}_1$. Chute : $400 - 378{,}07 = 21{,}93\ \mathrm{V}$, soit $5{,}48\ \%$.</li>
+    <li>Courant dans chaque branche du triangle : $J = I/\sqrt{3} = 21{,}83/1{,}732 = 12{,}60\ \mathrm{A}$ ; contrôle direct, $J = U_{A'}/Z_\Delta = 378{,}07/30 = 12{,}60\ \mathrm{A}$. $\underline{J}_{12}$ est à $30{,}32 - 36{,}87 = -6{,}54^\circ$, et $\underline{I}_1$ en retard de $30^\circ$ sur lui, à $-36{,}54^\circ$ : cohérent.</li>
+    <li>Puissances du moteur : $P = 3R_\Delta J^2 = 3 \times 24 \times 12{,}60^2 = 11\,435\ \mathrm{W}$ ; $Q = 3 \times 18 \times 12{,}60^2 = 8576\ \mathrm{var}$ ; $S = 14\,293\ \mathrm{VA}$. Contrôle : $\sqrt{3}\,U_{A'}I\cos\varphi = 1{,}732 \times 378{,}07 \times 21{,}83 \times 0{,}80 = 11\,435\ \mathrm{W}$.</li>
+    <li>Pertes dans le câble : $P_l = 3 \times 0{,}5 \times 21{,}83^2 = 714{,}7\ \mathrm{W}$ ; $Q_l = 3 \times 0{,}3 \times 21{,}83^2 = 428{,}8\ \mathrm{var}$.</li>
+    <li>Bilan de la source : $\underline{S} = 3\underline{V}_1\underline{I}_1^{*} = 12\,149\ \mathrm{W} + j\,9005\ \mathrm{var}$, égal à $11\,435 + 714{,}7$ et $8576 + 428{,}8$ ; $|\underline{S}| = 15\,123\ \mathrm{VA} = \sqrt{3} \times 400 \times 21{,}83$. Rendement de la distribution : $11\,435/12\,149 = 94{,}1\ \%$.</li>
+    <li>Sans câble : $J = 400/30 = 13{,}33\ \mathrm{A}$, $I = 23{,}09\ \mathrm{A}$, $P = 3 \times 24 \times 13{,}33^2 = 12\,800\ \mathrm{W}$. Le câble réduit la puissance reçue dans le rapport $(378{,}07/400)^2 = 0{,}893$, puisque le modèle à impédance constante absorbe une puissance proportionnelle au carré de sa tension.</li>
+  </ol>
+
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li>Dimensions : des volts divisés par des ohms donnent des ampères ; des ohms multipliés par des ampères au carré donnent des watts.</li>
+    <li>Formule approchée de la chute par phase, vue dans le cours <a href="#/cours/revision-3-et-analyse-d-une-charge-ac">Révision 3 et analyse d'une charge AC</a> : $\Delta V \approx (R_lP_1 + X_lQ_1)/V_{A'} = (0{,}5 \times 3811{,}6 + 0{,}3 \times 2858{,}7)/218{,}28 = 12{,}66\ \mathrm{V}$ par phase, soit $\sqrt{3} \times 12{,}66 = 21{,}93\ \mathrm{V}$ entre phases : identique au calcul exact.</li>
+    <li>Ordre de grandeur : $15{,}1\ \mathrm{kVA}$ sous $400\ \mathrm{V}$ donnent $15{,}1 \times 1{,}443 = 21{,}8\ \mathrm{A}$.</li>
+    <li>Cas limite : avec $\underline{Z}_l = 0$, on retrouve $400\ \mathrm{V}$ aux bornes et $23{,}09\ \mathrm{A}$.</li>
+    <li>Jugement d'ingénieur : $5{,}5\ \%$ de chute et $715\ \mathrm{W}$ de pertes, $5{,}9\ \%$ de la puissance transportée, désignent un câble sous-dimensionné pour un moteur ; une section supérieure s'impose. Un vrai moteur asynchrone ne se comporte d'ailleurs pas comme une impédance constante : sous tension réduite, il glisse davantage et appelle plus de courant pour fournir le même couple, ce qui aggrave la chute.</li>
+  </ul>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+
+  <h3 id="i-probleme">Couplage du compresseur et ordre des phases du site</h3>
+  <p>
+    Le projet fil rouge alimente son site depuis un réseau $230/400\ \mathrm{V}$, $50\ \mathrm{Hz}$, issu d'un transformateur
+    supposé de $100\ \mathrm{kVA}$. Le compresseur, déjà étudié dans les cours
+    <a href="#/cours/impedances-en-regime-sinusoidal">Impédances en régime sinusoïdal</a> et
+    <a href="#/cours/correction-du-facteur-de-puissance">Correction du facteur de puissance</a>, appelle $32\ \mathrm{A}$ par
+    phase à $\cos\varphi = 0{,}80$. Sa plaque, supposée, indique $400/690\ \mathrm{V}$, $\Delta/Y$, $32/18{,}5\ \mathrm{A}$. Trois
+    décisions restent à prendre : le couplage de ses enroulements, la protection contre une inversion de l'ordre des phases et
+    la place de la charge du site par rapport au transformateur.
+  </p>
+  <p>
+    Couplage. La plus petite tension de la plaque, $400\ \mathrm{V}$, est celle que supporte chaque enroulement. Sur un réseau
+    $230/400\ \mathrm{V}$, il faut donc le triangle, qui applique $400\ \mathrm{V}$ à chaque enroulement. Le schéma ci-dessous
+    montre comment trois barrettes, posées sur la plaque à bornes, réalisent l'un ou l'autre couplage.
+  </p>
+  <figure id="i-plaque-figure">
+    <svg viewBox="0 0 860 400" role="img" aria-label="Plaque à bornes d'un moteur triphasé : rangée haute W2, U2, V2 et rangée basse U1, V1, W1 reliée à L1, L2, L3 ; à gauche couplage étoile avec une barrette horizontale reliant W2, U2 et V2 ; à droite couplage triangle avec trois barrettes verticales U1-W2, V1-U2 et W1-V2 ; enroulements en pointillés">
+      <g stroke="currentColor" stroke-width="1.6" fill="none">
+        <rect x="130" y="10" width="600" height="34" rx="6"/>
+        <rect x="60" y="80" width="300" height="170" rx="10"/>
+        <rect x="500" y="80" width="300" height="170" rx="10"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2" fill="none">
+        <circle cx="130" cy="120" r="11"/><circle cx="210" cy="120" r="11"/><circle cx="290" cy="120" r="11"/>
+        <circle cx="130" cy="200" r="11"/><circle cx="210" cy="200" r="11"/><circle cx="290" cy="200" r="11"/>
+        <circle cx="570" cy="120" r="11"/><circle cx="650" cy="120" r="11"/><circle cx="730" cy="120" r="11"/>
+        <circle cx="570" cy="200" r="11"/><circle cx="650" cy="200" r="11"/><circle cx="730" cy="200" r="11"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.3" fill="none" stroke-dasharray="3 4" opacity="0.85">
+        <path d="M138 192L202 128M218 192L282 128M282 194L138 126"/>
+        <path d="M578 192L642 128M658 192L722 128M722 194L578 126"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M130 330V211M210 330V211M290 330V211"/>
+        <path d="M570 330V211M650 330V211M730 330V211"/>
+      </g>
+      <g stroke="currentColor" stroke-width="3" fill="none">
+        <rect x="116" y="112" width="188" height="16" rx="4"/>
+        <rect x="562" y="114" width="16" height="92" rx="4"/>
+        <rect x="642" y="114" width="16" height="92" rx="4"/>
+        <rect x="722" y="114" width="16" height="92" rx="4"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11.5">
+        <text x="430" y="32" text-anchor="middle">plaque supposée : 3 ~ 50 Hz, 400/690 V, Δ/Y, 32/18,5 A, cos φ 0,80</text>
+        <text x="210" y="70" text-anchor="middle" font-size="12.5">couplage étoile Y</text>
+        <text x="650" y="70" text-anchor="middle" font-size="12.5">couplage triangle Δ</text>
+        <text x="118" y="104">W2</text><text x="198" y="104">U2</text><text x="278" y="104">V2</text>
+        <text x="96" y="228">U1</text><text x="176" y="228">V1</text><text x="256" y="228">W1</text>
+        <text x="538" y="104">W2</text><text x="618" y="104">U2</text><text x="698" y="104">V2</text>
+        <text x="536" y="228">U1</text><text x="616" y="228">V1</text><text x="696" y="228">W1</text>
+        <text x="130" y="348" text-anchor="middle">L1</text><text x="210" y="348" text-anchor="middle">L2</text><text x="290" y="348" text-anchor="middle">L3</text>
+        <text x="570" y="348" text-anchor="middle">L1</text><text x="650" y="348" text-anchor="middle">L2</text><text x="730" y="348" text-anchor="middle">L3</text>
+        <text x="210" y="376" text-anchor="middle">sur 400 V : 230,9 V par enroulement</text>
+        <text x="210" y="392" text-anchor="middle">correct pour 690 V, couple divisé par 3 ici</text>
+        <text x="650" y="376" text-anchor="middle">sur 400 V : 400 V par enroulement</text>
+        <text x="650" y="392" text-anchor="middle">couplage correct pour cette plaque</text>
+      </g>
+    </svg>
+    <figcaption>
+      Plaque à bornes normalisée d'un moteur triphasé, vue de face. Les trois enroulements, en pointillés, relient U1 à U2, V1
+      à V2 et W1 à W2 ; la rangée haute est décalée, W2, U2, V2, pour que les mêmes trois barrettes, en trait épais, réalisent
+      les deux couplages. À gauche, une barrette horizontale relie W2, U2 et V2 : c'est le point neutre de l'étoile, et chaque
+      enroulement reçoit une tension simple. À droite, trois barrettes verticales relient U1 à W2, V1 à U2 et W1 à V2 : chaque
+      enroulement est placé entre deux phases et reçoit une tension composée. Les conducteurs $L_1$, $L_2$, $L_3$ arrivent par le
+      bas sur U1, V1, W1. Repérage conforme à l'usage courant des constructeurs, à vérifier sur la documentation du moteur
+      retenu.
+    </figcaption>
+  </figure>
+  <p>
+    Calculs. Pour rester cohérent avec les bilans déjà établis pour le site, on garde $V = 230\ \mathrm{V}$, donc
+    $U = 398{,}4\ \mathrm{V}$. Courant dans chaque enroulement : $J = 32/\sqrt{3} = 18{,}48\ \mathrm{A}$, ce que confirme la plaque
+    en étoile sous $690\ \mathrm{V}$, $18{,}5\ \mathrm{A}$. Impédance d'une branche : $Z_\Delta = 398{,}4/18{,}48 = 21{,}56\ \Omega$
+    à $36{,}87^\circ$, soit exactement $3 \times 7{,}19\ \Omega$, l'étoile équivalente retenue dans le cours
+    <a href="#/cours/impedances-en-regime-sinusoidal">Impédances en régime sinusoïdal</a>. Puissance :
+    $P = \sqrt{3} \times 398{,}4 \times 32 \times 0{,}80 = 17{,}66\ \mathrm{kW}$, soit $3 \times 5{,}89\ \mathrm{kW}$, la part par
+    phase du bilan du cours <a href="#/cours/puissances-en-courant-alternatif">Puissances en courant alternatif</a>. La même
+    équivalence relie les deux montages possibles des condensateurs de compensation choisis pour ce moteur : $149{,}3\ \mu\mathrm{F}$
+    par phase en étoile ou $49{,}8\ \mu\mathrm{F}$ par branche en triangle, puisque l'impédance d'un condensateur est inversement
+    proportionnelle à sa capacité et que $\underline{Z}_Y = \underline{Z}_\Delta/3$ impose $C_Y = 3C_\Delta$. En triangle, chaque
+    condensateur supporte $400\ \mathrm{V}$ : sa tension assignée doit être choisie au-dessus, avec la marge fixée par le
+    constructeur.
+  </p>
+  <p>
+    Erreur de couplage. Couplé en étoile par erreur, chaque enroulement ne recevrait que $230{,}9\ \mathrm{V}$, $1/\sqrt{3}$ de sa
+    tension assignée. Le couple d'un moteur asynchrone variant à peu près comme le carré de la tension à glissement donné, il
+    ne disposerait que du tiers de son couple : le compresseur démarrerait mal ou pas du tout en charge, glisserait davantage,
+    et son courant dépasserait le courant attendu pour la puissance fournie, d'où un échauffement et, si le relais thermique
+    est bien réglé, un déclenchement. L'erreur inverse, un moteur $230/400\ \mathrm{V}$ couplé en triangle sur $400\ \mathrm{V}$,
+    est plus grave : $400\ \mathrm{V}$ au lieu de $230\ \mathrm{V}$ par enroulement sature le circuit magnétique, le courant
+    magnétisant explose et le bobinage est détruit en quelques minutes si la protection n'agit pas.
+  </p>
+  <p>
+    Ordre des phases. Un moteur asynchrone alimenté directement tourne dans le sens imposé par l'ordre des phases : permuter
+    deux conducteurs inverse le sens de rotation. Pour un compresseur à vis, une rotation inverse empêche la compression et
+    peut endommager l'étage de compression en peu de temps. L'ordre direct $L_1$, $L_2$, $L_3$ doit donc être contrôlé à la mise
+    en service avec un indicateur d'ordre des phases, puis surveillé en permanence par un relais de contrôle d'ordre et de
+    présence des phases sur le départ du compresseur. Son contact est câblé en série dans la commande du contacteur et signalé
+    à l'automate, pour interdire le démarrage et afficher la cause. La pompe, elle, est alimentée par son variateur : le pont
+    de diodes d'entrée est insensible à l'ordre des phases du réseau, et c'est l'onduleur qui fixe le sens de rotation ; seule
+    une permutation des câbles entre variateur et moteur l'inverserait.
+  </p>
+  <p>
+    Transformateur. Son courant assigné vaut $I_n = S_n/(\sqrt{3}\,U) = 100\,000/(1{,}732 \times 400) = 144{,}3\ \mathrm{A}$, ou
+    $144{,}9\ \mathrm{A}$ avec $230\ \mathrm{V}$ par phase, l'écart de $0{,}4\ \%$ venant de l'arrondi du couple $230/400\ \mathrm{V}$.
+    La charge du site compensé, $66{,}5\ \mathrm{kVA}$, occupe $66{,}5\ \%$ de sa puissance assignée si elle est répartie
+    également sur les trois phases. Le cours <a href="#/cours/revision-3-et-analyse-d-une-charge-ac">Révision 3 et analyse d'une charge AC</a>
+    a montré que le départ monophasé de l'atelier de maintenance, entièrement sur $L_1$, rompt cet équilibre : environ
+    $27\ \mathrm{A}$ circulent alors dans le neutre. Cette séance établit la référence, neutre sans courant et puissance
+    instantanée constante ; le cours Charges triphasées déséquilibrées chiffrera l'écart et les moyens de le réduire.
+  </p>
+
+  <h3 id="i-compromis">Contraintes, risques et compromis</h3>
+  <ul>
+    <li>Le triangle permet, pour un moteur $400/690\ \mathrm{V}$ sur un réseau $230/400\ \mathrm{V}$, un démarrage étoile-triangle qui divise par trois le courant d'appel, au prix d'un couple de démarrage lui aussi divisé par trois. Pour un compresseur démarré à vide, ce compromis est souvent acceptable ; il sera évalué dans le cours Démarrage des moteurs asynchrones.</li>
+    <li>Le relais de contrôle de phases ajoute un composant et un point de défaillance, mais il transforme une erreur de raccordement, coûteuse et silencieuse, en un refus de démarrage signalé. Le compromis est favorable pour toute machine qui ne supporte pas la rotation inverse.</li>
+    <li>Le neutre ne sert à rien pour les récepteurs triphasés équilibrés du site, mais il reste nécessaire pour les départs monophasés. Sa section et sa protection dépendent du déséquilibre et des harmoniques de rang $3$, qui s'additionnent dans le neutre au lieu de s'y compenser ; ce point sera repris dans le cours Harmoniques et qualité de l'énergie.</li>
+    <li>Toutes les grandeurs de plaque utilisées ici sont des hypothèses d'étude : seules la plaque réelle du compresseur, la documentation du transformateur retenu et une mesure de l'ordre des phases sur site permettent de conclure.</li>
+  </ul>
+
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : ce que cette séance ajoute</span>
+    <p>
+      Grandeurs triphasées et couplages du site : réseau $230/400\ \mathrm{V}$, $50\ \mathrm{Hz}$, ordre direct $L_1$, $L_2$, $L_3$ ;
+      compresseur à plaque supposée $400/690\ \mathrm{V}$ couplé en triangle, $32\ \mathrm{A}$ en ligne et $18{,}48\ \mathrm{A}$ par
+      enroulement, $21{,}56\ \Omega$ par branche, soit $3 \times 7{,}19\ \Omega$, $17{,}66\ \mathrm{kW}$ ; un couplage étoile par
+      erreur ne lui laisserait que le tiers de son couple. Relais de contrôle d'ordre et de présence des phases sur son départ,
+      câblé dans la commande du contacteur et signalé à l'automate. Transformateur supposé de $100\ \mathrm{kVA}$ :
+      $144{,}3\ \mathrm{A}$ assignés sous $400\ \mathrm{V}$, charge équilibrée du site compensé à $66{,}5\ \%$ ; neutre sans courant
+      tant que les phases restent équilibrées. Hypothèses d'étude à remplacer par les plaques et la documentation du
+      transformateur retenu.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Confondre tension simple et tension composée.</strong> $400\ \mathrm{V}$ se mesure entre deux phases, $230\ \mathrm{V}$ entre une phase et le neutre. Lire $400\ \mathrm{V}$ entre une phase et le neutre signale une rupture du neutre ou une erreur de raccordement, pas un réseau normal.</li>
+    <li><strong>Mettre un $\sqrt{3}$ sur le courant d'une étoile.</strong> En étoile, courant de ligne et courant de phase sont identiques ; le facteur $\sqrt{3}$ entre courants n'existe qu'en triangle. En étoile, il est entre les tensions.</li>
+    <li><strong>Diviser par $\sqrt{3}$ au lieu de $3$ dans l'équivalence triangle-étoile.</strong> $\underline{Z}_Y = \underline{Z}_\Delta/3$ : le $\sqrt{3}$ des tensions et le $\sqrt{3}$ des courants se multiplient. Avec $\sqrt{3}$, le courant calculé serait faux d'un facteur $1{,}73$.</li>
+    <li><strong>Prendre pour $\varphi$ l'angle entre $\underline{U}_{12}$ et $\underline{I}_1$.</strong> Dans $P = \sqrt{3}\,UI\cos\varphi$, $\varphi$ est l'argument de l'impédance d'une phase du récepteur. L'angle entre $\underline{U}_{12}$ et $\underline{I}_1$ vaut $\varphi + 30^\circ$ : l'utiliser donnerait, pour $\cos\varphi = 0{,}8$, une puissance sous-estimée de $51\ \%$.</li>
+    <li><strong>Coupler un moteur d'après la tension du réseau sans lire la plaque.</strong> Le couplage dépend du rapport entre la tension du réseau et la tension des enroulements : un même réseau $400\ \mathrm{V}$ demande l'étoile pour un moteur $230/400\ \mathrm{V}$ et le triangle pour un moteur $400/690\ \mathrm{V}$.</li>
+    <li><strong>Croire que le neutre ne porte jamais de courant.</strong> Il est nul seulement si les trois phases sont également chargées et si les courants sont sinusoïdaux. Un déséquilibre ou des harmoniques de rang multiple de $3$ le chargent, parfois au-delà du courant des phases.</li>
+    <li><strong>Croire qu'inverser deux phases change les tensions.</strong> Modules et décalages restent identiques ; seul l'ordre change, ce qui inverse le sens de rotation des moteurs directs et fausse les compteurs et relais sensibles à l'ordre.</li>
+    <li><strong>Additionner arithmétiquement les courants de récepteurs différents.</strong> Comme en monophasé, on additionne les puissances actives et réactives, par le théorème de Boucherot, ou les phaseurs des courants d'une même phase, jamais leurs valeurs efficaces.</li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain : un moteur qui démarre lentement et chauffe avec un courant raisonnable sur ses trois phases
+    évoque un couplage étoile au lieu de triangle ou une tension trop basse ; un moteur qui ronfle sans démarrer, avec un courant
+    nul sur une phase et élevé sur les deux autres, évoque une phase manquante, fusible fondu ou contact défaillant ; un moteur
+    qui tourne à l'envers désigne l'ordre des phases ; une tension phase-neutre qui varie fortement avec la charge d'une phase
+    désigne un neutre interrompu. Les mesures décisives sont les trois tensions composées, les trois tensions simples, les trois
+    courants de ligne et le courant du neutre, relevés en efficace vrai, et l'ordre des phases.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic
+    industriel et une question conceptuelle. La correction de chacun reste masquée jusqu'à une tentative ou un clic explicite
+    sur "Voir la correction", puis se déroule étape par étape, accompagnée d'un diagramme de phaseurs ou d'une courbe.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma.</p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$\underline{V}_1 = V,\quad \underline{V}_2 = a^2V,\quad \underline{V}_3 = aV,\quad a = e^{j2\pi/3},\quad 1 + a + a^2 = 0$$
+    $$U = \sqrt{3}\,V, \qquad \underline{U}_{12} = \sqrt{3}\,\underline{V}_1\,e^{j\pi/6}$$
+    $$\text{étoile : } I = \frac{V}{Z}, \qquad \text{triangle : } J = \frac{U}{Z},\ \ I = \sqrt{3}\,J$$
+    $$\underline{Z}_Y = \frac{\underline{Z}_\Delta}{3}$$
+    $$P = 3VI\cos\varphi = \sqrt{3}\,UI\cos\varphi, \qquad Q = \sqrt{3}\,UI\sin\varphi, \qquad S = \sqrt{3}\,UI$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>Choisir $U$ ou $V$ comme donnée et s'y tenir : $230/400\ \mathrm{V}$ est un couple arrondi.</li>
+      <li>Le $\sqrt{3}$ est entre les tensions en étoile, entre les courants en triangle.</li>
+      <li>L'équivalence triangle-étoile divise l'impédance par $3$, pas par $\sqrt{3}$.</li>
+      <li>Dans $\cos\varphi$, $\varphi$ est l'argument de l'impédance d'une phase, pas l'angle entre $\underline{U}_{12}$ et $\underline{I}_1$.</li>
+      <li>Coupler un moteur d'après sa plaque : chaque enroulement doit recevoir la plus petite des deux tensions indiquées.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Un système triphasé équilibré comprend trois tensions de même valeur efficace décalées de
+    $120^\circ$, produites par trois enroulements d'alternateur ou de transformateur ; l'ordre de passage de leurs maxima est
+    l'ordre des phases. Leur somme est nulle à chaque instant. Entre deux phases, la tension composée vaut $\sqrt{3}$ fois la
+    tension simple et la devance de $30^\circ$. Un récepteur en étoile soumet chaque dipôle à la tension simple et son courant
+    de ligne est son courant de phase ; en triangle, chaque dipôle reçoit la tension composée et le courant de ligne vaut
+    $\sqrt{3}$ fois le courant de phase. Un triangle équivaut à une étoile d'impédance trois fois plus faible, ce qui ramène
+    tout système équilibré à un schéma monophasé équivalent. Le neutre ne porte rien et la puissance totale,
+    $\sqrt{3}\,UI\cos\varphi$, est constante.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent,
+    <a href="#/cours/revision-3-et-analyse-d-une-charge-ac">Révision 3 et analyse d'une charge AC</a> ; une sur le cours
+    <a href="#/cours/signaux-periodiques-et-sinusoides">Signaux périodiques et sinusoïdes</a>, vieux d'une semaine ; la question
+    sur un cours vieux d'un mois n'est pas encore applicable, et elle est remplacée par une question sur le cours
+    <a href="#/cours/lois-de-kirchhoff">Lois de Kirchhoff</a>, dont la loi des nœuds explique le courant du neutre.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : vérifier par le calcul, puis par une simulation temporelle, les résultats de l'exemple de la section H et le
+    rapport $3$ entre étoile et triangle. Prédictions à écrire avant de commencer : en simulation temporelle, le point commun
+    d'une étoile sans neutre restera-t-il au potentiel de la masse ? Le courant efficace mesuré dans une branche du triangle
+    sera-t-il exactement $I/\sqrt{3}$ ?
+  </p>
+  <ol>
+    <li>En Python, avec numpy, définir <code>a = np.exp(2j*np.pi/3)</code>, les tensions simples <code>V = 400/np.sqrt(3)*np.array([1, a**2, a])</code>, puis calculer les courants de ligne de l'exemple, <code>I = V/((0.5+0.3j) + (24+18j)/3)</code>, les tensions aux bornes du moteur et les courants des branches du triangle <code>J12 = (VA[0]-VA[1])/(24+18j)</code>. Vérifier <code>abs(I.sum())</code>, <code>abs(I[0])/abs(J12)</code> et l'angle entre eux.</li>
+    <li>Tracer avec matplotlib $v_1$, $v_2$, $v_3$ et $u_{12}$ sur une période, puis la somme $v_1 + v_2 + v_3$, et vérifier qu'elle reste nulle aux erreurs d'arrondi près.</li>
+    <li>Dans LTspice, saisir les trois sources <code>V1 s1 0 SINE(0 326.6 50 0 0 0)</code>, <code>V2 s2 0 SINE(0 326.6 50 0 0 -120)</code>, <code>V3 s3 0 SINE(0 326.6 50 0 0 120)</code>, les trois conducteurs <code>R1 s1 x1 0.5</code> puis <code>L1 x1 a 0.955m</code>, et de même pour <code>b</code> et <code>c</code>. Charge en triangle : <code>Rab a y1 24</code>, <code>Lab y1 b 57.3m</code>, et de même entre <code>b</code> et <code>c</code>, puis entre <code>c</code> et <code>a</code>. Lancer <code>.tran 0 200m 0 20u</code>, puis mesurer <code>.meas TRAN Iligne RMS I(R1) FROM 100m TO 200m</code>, <code>.meas TRAN Jab RMS I(Rab) FROM 100m TO 200m</code> et <code>.meas TRAN Uab RMS V(a,b) FROM 100m TO 200m</code>.</li>
+    <li>Remplacer le triangle par une étoile de trois branches <code>8 Ω</code> et <code>19.1m</code> reliées à un nœud <code>n</code>, ajouter <code>Rfuite n 0 1G</code> pour que le nœud ne soit pas flottant, et mesurer à nouveau ; puis remettre les impédances du triangle, $24\ \Omega$ et $57{,}3\ \mathrm{mH}$, en étoile, sans câble, pour retrouver le rapport $3$.</li>
+  </ol>
+  <p>
+    Résultats attendus : en Python, $I = 21{,}83\ \mathrm{A}$ à $-36{,}54^\circ$, $|\sum \underline{I}_k| \approx 10^{-14}\ \mathrm{A}$,
+    $I/J = 1{,}732$ avec un retard de $30^\circ$ de $\underline{I}_1$ sur $\underline{J}_{12}$. Dans LTspice, après extinction du
+    transitoire d'enclenchement, de constante de temps $(19{,}1 + 0{,}955)/8{,}5 \approx 2{,}4\ \mathrm{ms}$ : courant de ligne
+    $21{,}8\ \mathrm{A}$, courant de branche $12{,}6\ \mathrm{A}$, tension aux bornes $378\ \mathrm{V}$ ; mêmes courants de ligne avec
+    l'étoile équivalente, et un potentiel du nœud $n$ qui reste pratiquement nul. Sans câble, le triangle appelle
+    $23{,}09\ \mathrm{A}$ et l'étoile des mêmes impédances $7{,}70\ \mathrm{A}$. Anomalies à observer : une amplitude saisie à
+    $230$ au lieu de $326{,}6$, qui divise tout par $\sqrt{2}$ ; une mesure démarrée trop tôt, qui inclut le transitoire ; une
+    erreur de nœud flottant si l'étoile sans neutre n'a pas de résistance de fuite ; des courants inchangés en module mais une
+    succession $1$, $3$, $2$ des maxima si les phases $-120$ et $120$ sont permutées.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est calculé dans
+    ce navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées
+    localement pour suivre votre progression. Cette séance ouvre le module Triphasé et qualité de l'énergie, dont le jalon de
+    fin demande de maîtriser les régimes sinusoïdaux monophasés et triphasés, les puissances, la compensation, les harmoniques
+    et les filtres élémentaires.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Trois tensions de même valeur décalées de $120^\circ$ ont une somme nulle à chaque instant ; la tension entre deux phases vaut $\sqrt{3}$ fois la tension simple et la devance de $30^\circ$.</li>
+    <li data-rang="02">En étoile, le $\sqrt{3}$ est entre les tensions ; en triangle, entre les courants ; un triangle équivaut à une étoile d'impédance $\underline{Z}_\Delta/3$, ce qui ramène tout système équilibré à une seule phase.</li>
+    <li data-rang="03">Un récepteur équilibré reçoit une puissance totale constante, $\sqrt{3}\,UI\cos\varphi$, et le neutre ne porte aucun courant ; un moteur se couple d'après sa plaque, et l'ordre des phases fixe son sens de rotation.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> placer le facteur $\sqrt{3}$ au bon endroit, sur les tensions en étoile et
+    sur les courants en triangle, sans le confondre avec le facteur $3$ de l'équivalence triangle-étoile ni avec l'angle de
+    $30^\circ$ entre tension composée et tension simple. La simulation de la même charge en étoile puis en triangle et le
+    premier exercice intermédiaire sont faits pour installer ce réflexe.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Puissance en triphasé, traite des puissances active, réactive et
+    apparente et de leur mesure. Question à préparer : le moteur de l'exemple de la section H absorbe $11{,}4\ \mathrm{kW}$ sous
+    $378\ \mathrm{V}$. On ne dispose que de wattmètres monophasés et le moteur, couplé en triangle, n'a pas de neutre accessible.
+    Combien de wattmètres faut-il au minimum pour mesurer sa puissance active totale, et comment les brancher ? Et pourquoi
+    un seul wattmètre, branché entre une phase et un neutre artificiel, suffirait-il si l'on est sûr que la charge est
+    équilibrée ?
+  </p>
+
+</article>
