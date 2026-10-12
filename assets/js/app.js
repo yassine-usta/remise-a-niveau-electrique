@@ -1785,9 +1785,47 @@ function suivreLecture(article, infosPlan) {
   };
 }
 
+/**
+ * Regroupe chaque figure manipulable avec les curseurs et le lecteur placés juste
+ * après elle, pour que ces commandes restent collées en bas de l'écran tant que la
+ * figure est visible. Les identifiants ne changent pas : cours.js monte ses
+ * composants comme avant. Une commande sans figure juste avant reste à sa place.
+ */
+function grouperSimulations(article) {
+  const motif = /^(.+)-(curseurs|lecteur)$/;
+  for (const element of Array.from(article.children)) {
+    const trouve = element.id ? element.id.match(motif) : null;
+    if (!trouve || element.parentElement !== article) continue;
+    const base = trouve[1];
+    const estCommande = (noeud) => Boolean(noeud) && (noeud.id === base + "-curseurs" || noeud.id === base + "-lecteur");
+
+    const commandes = [element];
+    while (estCommande(commandes[commandes.length - 1].nextElementSibling)) {
+      commandes.push(commandes[commandes.length - 1].nextElementSibling);
+    }
+
+    const visuels = [];
+    let precedent = element.previousElementSibling;
+    while (precedent && (precedent.tagName === "FIGURE" || precedent.id.startsWith(base + "-"))) {
+      visuels.unshift(precedent);
+      if (precedent.tagName === "FIGURE") break;
+      precedent = precedent.previousElementSibling;
+    }
+    if (!visuels.length) continue;
+
+    const groupe = document.createElement("div");
+    groupe.className = "sim-groupe";
+    const barre = document.createElement("div");
+    barre.className = "sim-commandes";
+    article.insertBefore(groupe, visuels[0]);
+    groupe.append(...visuels, barre);
+    barre.append(...commandes);
+  }
+}
+
 function revelerBlocsCours(article, api) {
   const selecteur =
-    ":scope > h2, :scope > h3, :scope > figure, :scope > pre, :scope > table, :scope > .cadre-tableau," +
+    ":scope > h2, :scope > h3, :scope > figure, :scope > .sim-groupe, :scope > pre, :scope > table, :scope > .cadre-tableau," +
     ":scope > .encadre, :scope > .formule-cle, :scope > .m-bloc, :scope > .grille-2, :scope > ul, :scope > ol," +
     ":scope > blockquote, :scope > .liste-objectifs";
   let blocs = [];
@@ -1865,6 +1903,7 @@ async function ouvrirCours(slug, forcer) {
   }
   if (!article.dataset.slug) article.dataset.slug = slug;
   corps.appendChild(article);
+  grouperSimulations(article);
 
   rendreMaths(article);
   await rendreMermaid(article);
