@@ -1,0 +1,1181 @@
+<article class="cours" data-slug="charges-triphasees-desequilibrees">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/puissance-en-triphase">Puissance en triphasé</a> s'est achevé sur une question : un four formé de
+      trois résistances de $26{,}45\ \Omega$, $2\ \mathrm{kW}$ chacune sous $230\ \mathrm{V}$, est couplé en étoile avec le neutre
+      relié ; la résistance de la phase 1 est coupée. Réponse, établie dans cette séance : chaque résistance restante garde ses
+      $230\ \mathrm{V}$, le four reçoit $4\ \mathrm{kW}$ et le neutre porte $8{,}70\ \mathrm{A}$, la somme de deux courants égaux
+      décalés de $120^\circ$. Une méthode à deux wattmètres référencée à $L_3$ lirait $W_1 = 0$ et $W_2 = 3\ \mathrm{kW}$, soit
+      $1\ \mathrm{kW}$ de moins que la réalité, exactement $-\mathrm{Re}\left(\underline{V}_3\,\underline{I}_N^*\right)$. Si le neutre se
+      rompt ensuite, les deux résistances restantes se retrouvent en série sous la tension composée $U_{23} = 398{,}4\ \mathrm{V}$ :
+      chacune ne reçoit plus que $199{,}2\ \mathrm{V}$, le four ne fournit plus que $3\ \mathrm{kW}$, et la méthode des deux
+      wattmètres redevient exacte puisque la somme des courants est de nouveau nulle. Le point commun des résistances s'est
+      déplacé de $115\ \mathrm{V}$ par rapport au neutre de la source : c'est ce déplacement du point étoile que la séance
+      apprend à calculer. Elle s'appuie sur la loi des nœuds du cours <a href="#/cours/lois-de-kirchhoff">Lois de Kirchhoff</a>,
+      sur le théorème de Millman du cours <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes de Thévenin,
+      Norton et superposition</a>, sur les admittances du cours <a href="#/cours/impedances-en-regime-sinusoidal">Impédances en
+      régime sinusoïdal</a> et sur les couplages du cours <a href="#/cours/systemes-triphases-equilibres">Systèmes triphasés
+      équilibrés</a>.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Les cours précédents ont supposé trois phases identiques. Une installation réelle ne l'est jamais tout à fait : éclairage,
+    prises, chauffe-eau, postes de soudage, alimentations électroniques et bureaux sont des récepteurs monophasés, répartis à la
+    main entre les trois phases, et qui ne fonctionnent pas tous en même temps. Un moteur dont un enroulement présente un défaut,
+    un four dont une résistance est coupée, un condensateur de compensation qui a perdu un élément sont autant de charges
+    triphasées devenues déséquilibrées. Le schéma monophasé équivalent ne s'applique plus : il faut résoudre chaque phase, et
+    savoir ce que deviennent le neutre et le point commun des récepteurs.
+  </p>
+  <p>
+    Les enjeux sont concrets. Le conducteur neutre peut porter un courant important, qu'il faut prévoir pour le choix de sa section
+    et de sa protection. Le transformateur et les câbles sont dimensionnés par la phase la plus chargée, pas par la moyenne. Les
+    moteurs triphasés supportent mal une tension déséquilibrée. Surtout, la rupture d'un neutre, par une connexion desserrée ou
+    corrodée, déplace le point étoile des récepteurs monophasés : certaines prises montent bien au-dessus de $230\ \mathrm{V}$ et
+    détruisent les appareils qui y sont branchés, pendant que d'autres s'effondrent. C'est l'un des incidents les plus coûteux
+    et les plus mal diagnostiqués des installations basse tension. Le travail central de la séance est de résoudre un réseau
+    triphasé déséquilibré simple, avec et sans neutre.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Calculer les courants de ligne et le courant du neutre d'une charge étoile déséquilibrée dont le neutre est relié, phase par phase.</li>
+    <li data-rang="02">Établir par la loi des nœuds, puis appliquer, la formule de Millman du déplacement du point étoile, avec un neutre absent, rompu ou résistant.</li>
+    <li data-rang="03">Calculer les tensions réellement appliquées à chaque récepteur après une rupture du neutre, et expliquer pourquoi la phase la moins chargée subit la surtension.</li>
+    <li data-rang="04">Calculer les courants de branche et de ligne d'une charge triangle déséquilibrée.</li>
+    <li data-rang="05">Dimensionner la résistance maximale admissible d'un neutre et répartir des charges monophasées entre les phases pour limiter le courant du neutre.</li>
+    <li data-rang="06">Diagnostiquer une rupture de neutre à partir de symptômes de terrain, et comparer les risques d'un réseau avec et sans neutre.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois acquis suffisent. Le premier est l'addition des phaseurs : trois phaseurs de même module décalés de $120^\circ$ ont une
+    somme nulle, $1 + a + a^2 = 0$ avec $a = e^{j120^\circ}$, et c'est la seule raison pour laquelle le neutre d'un système
+    équilibré ne porte rien. Le deuxième est le théorème de Millman : le potentiel d'un nœud relié par des admittances
+    $\underline{Y}_k$ à des points de potentiels $\underline{V}_k$ vaut $\sum \underline{Y}_k\underline{V}_k / \sum \underline{Y}_k$,
+    ce n'est que la loi des nœuds réécrite. Le troisième est l'admittance $\underline{Y} = 1/\underline{Z} = G + jB$, qui se prête à
+    l'addition des branches en parallèle. Le mini-test ci-dessous n'est pas noté ; la correction de chaque question reste masquée
+    jusqu'à une tentative ou un clic explicite sur "Voir la correction".
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-retour">Le neutre ramène ce que les phases ne se rendent pas</h3>
+  <p>
+    Dans un système équilibré, les trois courants de ligne ont même valeur efficace et sont décalés de $120^\circ$ : à chaque
+    instant, ce qui arrive par une phase repart par les deux autres, et le neutre ne porte rien. Dès que les courants diffèrent,
+    en module ou en déphasage, les phases ne se compensent plus exactement. Le reste, à chaque instant $i_N = i_1 + i_2 + i_3$,
+    doit revenir à la source par un autre chemin : c'est le rôle du neutre. Il ne porte donc pas la somme des valeurs efficaces,
+    mais la somme instantanée, c'est-à-dire, en régime sinusoïdal, la somme des phaseurs.
+  </p>
+  <p>
+    Analogie contrôlée : trois équipes poussent une meule autour d'un axe, chacune un tiers de tour après la précédente. Si les
+    trois poussent également, les efforts sur l'axe s'annulent et le palier ne travaille pas. Si l'une pousse plus fort, ou en
+    retard, il reste un effort résultant qui tourne avec la meule, et que le palier, ici le neutre, doit reprendre. La force
+    résultante est la somme vectorielle des trois poussées, pas la somme de leurs intensités.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie</span>
+    <p>
+      L'analogie rend compte de la somme vectorielle et du fait qu'un déséquilibre de déphasage suffit, sans déséquilibre
+      d'intensité, à charger le neutre. Elle échoue sur deux points. Une force sur un palier ne change pas la vitesse imposée à la
+      meule, alors qu'un neutre d'impédance non nulle, ou rompu, modifie les tensions appliquées aux récepteurs : c'est le
+      déplacement du point étoile, qui n'a pas d'équivalent dans l'image. Ensuite, des courants déformés ajoutent des composantes
+      de fréquences multiples que la meule ne connaît pas, et qui s'additionnent parfois dans le neutre au lieu de s'y annuler ;
+      le cours Harmoniques et qualité de l'énergie le montrera. Sauf mention contraire, la séance suppose un réseau sinusoïdal
+      $230/400\ \mathrm{V}$, $50\ \mathrm{Hz}$, d'ordre direct, une source parfaite, des conducteurs de phase d'impédance
+      négligeable et des récepteurs modélisés par des impédances constantes.
+    </p>
+  </div>
+
+  <h3 id="d-somme-section">Animation : les courants instantanés et leur somme</h3>
+  <p>
+    L'animation trace les trois courants de ligne d'une charge étoile dont le neutre est relié, et leur somme instantanée, qui
+    est le courant du neutre. Les curseurs règlent la puissance de chaque phase sous $230\ \mathrm{V}$ et le facteur de
+    puissance, inductif, de la phase 2 ; les phases 1 et 3 sont résistives. Le lecteur fait avancer le temps sur deux périodes,
+    avec pause, vitesse et remise à zéro. Avant de lancer, prédisez : avec $2\ \mathrm{kW}$ sur chaque phase et
+    $\cos\varphi_2 = 1$, que vaut $i_N$ à chaque instant ? Si l'on garde $2\ \mathrm{kW}$ partout mais $\cos\varphi_2 = 0{,}8$,
+    le neutre reste-t-il vide ? La valeur efficace du courant du neutre peut-elle dépasser celle de la phase la plus chargée ?
+  </p>
+  <figure id="d-somme-figure">
+    <div id="d-somme-trace"></div>
+    <figcaption>
+      Les trois courants de ligne $i_1$, $i_2$, $i_3$ et le courant du neutre $i_N = i_1 + i_2 + i_3$, en ampères, en fonction du
+      temps en millisecondes, chacun nommé dans la légende avec sa couleur réelle ; $i_N$ est la courbe la plus épaisse. Les
+      courbes sont tracées jusqu'à l'instant atteint, marqué par le trait vertical en tirets ; le trait pointillé est le zéro.
+      Convention : courants de ligne comptés de la source vers la charge, courant du neutre compté de la charge vers la source.
+    </figcaption>
+  </figure>
+  <div id="d-somme-curseurs"></div>
+  <div id="d-somme-lecteur"></div>
+  <div id="d-somme-valeurs"></div>
+  <p>
+    Interprétation : avec trois charges identiques et résistives, la courbe de $i_N$ reste collée au zéro, quel que soit
+    l'instant. Avec $\cos\varphi_2 = 0{,}8$ et $2\ \mathrm{kW}$ partout, le courant de la phase 2 grandit, à $10{,}87\ \mathrm{A}$,
+    et prend du retard : la somme n'est plus nulle, $I_N = 6{,}52\ \mathrm{A}$, sans que l'on ait changé une seule puissance
+    active. Avec les réglages initiaux, $4{,}6$, $2{,}3$ et $1{,}15\ \mathrm{kW}$, le neutre porte $6{,}03\ \mathrm{A}$, moins que la
+    phase la plus chargée. Ce n'est pas une règle : une phase chargée seule, les deux autres vides, donne $I_N = I_1$, et des
+    charges déphasées de manière défavorable peuvent porter $I_N$ au-delà du plus grand courant de phase, l'exercice sur le
+    courant du neutre et la simulation de la section E le montrent.
+  </p>
+
+  <h3 id="d-ressorts">Sans neutre, le point commun cherche l'équilibre</h3>
+  <p>
+    Supprimons le neutre. Les trois récepteurs restent reliés entre eux par leur point commun $N'$, mais plus rien ne le relie à
+    la source. Comme aucun courant ne peut sortir de ce point, la somme des trois courants y est nulle : le potentiel de $N'$
+    s'ajuste de lui-même jusqu'à ce que ce soit vrai. Pour trois résistances, l'image est mécanique : trois ressorts accrochés
+    aux sommets d'un triangle, de raideurs proportionnelles aux conductances $G_k = 1/R_k$, tirent un anneau commun. L'anneau
+    s'immobilise au barycentre des sommets pondérés par les raideurs. Une résistance faible, donc une phase très chargée, est un
+    ressort raide : il attire le point commun vers son sommet. Les deux autres récepteurs se retrouvent alors loin de $N'$, sous
+    une tension supérieure à $230\ \mathrm{V}$, alors que le récepteur le plus chargé voit sa tension baisser.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie</span>
+    <p>
+      L'image du barycentre est exacte pour des récepteurs résistifs, dont les poids sont réels et positifs : le point commun reste
+      alors à l'intérieur du triangle des tensions. Avec des récepteurs inductifs ou capacitifs, les poids deviennent complexes et
+      le point $N'$ peut sortir du triangle, ce que des ressorts ne savent pas faire ; c'est le principe des indicateurs d'ordre
+      des phases à condensateur. L'analogie suggère aussi un équilibre atteint après des oscillations, alors qu'en régime
+      sinusoïdal établi le point $N'$ est fixe dans le plan des phaseurs.
+    </p>
+  </div>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-avec-neutre">Charge étoile avec neutre parfait : trois problèmes monophasés</h3>
+  <p>
+    Considérons trois récepteurs d'impédances $\underline{Z}_1$, $\underline{Z}_2$, $\underline{Z}_3$ couplés en étoile, point commun
+    $N'$ relié au neutre $N$ de la source par un conducteur d'impédance nulle. Prenons $N$ comme référence des potentiels.
+    Alors $\underline{V}_{N'} = 0$ : chaque récepteur reçoit exactement la tension simple de sa phase, quelle que soit la charge
+    des autres. Chaque phase se résout comme un circuit monophasé, puis la loi des nœuds au point $N'$ donne le courant du
+    neutre, compté de la charge vers la source.
+  </p>
+  <div class="formule-cle">
+    $$\underline{I}_k = \frac{\underline{V}_k}{\underline{Z}_k} = \underline{Y}_k\,\underline{V}_k, \qquad \underline{I}_N = \underline{I}_1 + \underline{I}_2 + \underline{I}_3$$
+    <p class="formule-cle-legende">
+      $\underline{V}_k$ tension simple de la phase $k$ en volts, $\underline{Z}_k$ en ohms, $\underline{Y}_k$ en siemens,
+      $\underline{I}_k$ et $\underline{I}_N$ en ampères, tous en valeurs efficaces complexes. Hypothèses : régime sinusoïdal établi,
+      neutre et conducteurs de phase d'impédance nulle, source parfaite. Cas limite : charge équilibrée,
+      $\underline{I}_N = \underline{Y}\,V(1 + a^2 + a) = 0$. Cas limite opposé : une seule phase chargée, $\underline{I}_N = \underline{I}_1$ ;
+      le neutre porte alors autant que la phase. Vérification dimensionnelle : siemens fois volts donne des ampères.
+    </p>
+  </div>
+  <p>
+    Pour trois récepteurs résistifs, les courants sont en phase avec leurs tensions, donc décalés de $120^\circ$, et le module
+    du courant du neutre prend une forme simple, obtenue en développant $\left|I_1 + I_2 a^2 + I_3 a\right|^2$ avec
+    $\cos 120^\circ = -\tfrac12$ :
+  </p>
+  <div class="formule-cle">
+    $$I_N = \sqrt{I_1^2 + I_2^2 + I_3^2 - I_1 I_2 - I_2 I_3 - I_3 I_1}$$
+    <p class="formule-cle-legende">
+      Valable seulement si les trois courants sont en phase avec leurs tensions simples, ou ont tous le même déphasage $\varphi$.
+      Cas limites : $I_1 = I_2 = I_3$ donne $I_N = 0$ ; $I_2 = I_3 = 0$ donne $I_N = I_1$ ; $I_3 = 0$ et $I_1 = I_2 = I$ donne
+      $I_N = I$, ce qui répond à la première partie de la question du cours précédent. Avec des déphasages différents, il faut
+      revenir à la somme complexe.
+    </p>
+  </div>
+  <figure id="e-neutre-figure">
+    <svg viewBox="0 0 760 340" role="img" aria-label="Charge étoile déséquilibrée avec neutre relié : lignes L1, L2, L3 vers les impédances Z1, Z2, Z3, point commun N' relié au neutre N ; courants de ligne i1, i2, i3 vers la charge, courant iN vers la source, tensions V1, V2, V3 fléchées vers chaque phase">
+      <defs>
+        <marker id="fl-e-n" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse">
+          <path d="M0 0 11 5 0 10Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M40 60H380"/>
+        <path d="M40 120H370M390 120H500"/>
+        <path d="M40 180H370M390 180H490M510 180H620"/>
+        <path d="M380 60V110A10 10 0 0 1 380 130V170A10 10 0 0 1 380 190V200M380 250V270"/>
+        <path d="M500 120V170A10 10 0 0 1 500 190V200M500 250V270"/>
+        <path d="M620 180V200M620 250V270"/>
+        <path d="M380 270H700V300"/>
+        <path d="M40 300H700"/>
+        <rect x="368" y="200" width="24" height="50" rx="3"/>
+        <rect x="488" y="200" width="24" height="50" rx="3"/>
+        <rect x="608" y="200" width="24" height="50" rx="3"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="500" cy="270" r="4"/><circle cx="620" cy="270" r="4"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.6" fill="none">
+        <path d="M100 60H140" marker-end="url(#fl-e-n)"/>
+        <path d="M100 120H140" marker-end="url(#fl-e-n)"/>
+        <path d="M100 180H140" marker-end="url(#fl-e-n)"/>
+        <path d="M140 300H100" marker-end="url(#fl-e-n)"/>
+        <path d="M406 248V204" marker-end="url(#fl-e-n)"/>
+        <path d="M526 248V204" marker-end="url(#fl-e-n)"/>
+        <path d="M646 248V204" marker-end="url(#fl-e-n)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="12" y="64">L1</text><text x="12" y="124">L2</text><text x="12" y="184">L3</text><text x="12" y="304">N</text>
+        <text x="108" y="52">i1</text><text x="108" y="112">i2</text><text x="108" y="172">i3</text><text x="108" y="292">iN</text>
+        <text x="342" y="230">Z1</text><text x="462" y="230">Z2</text><text x="582" y="230">Z3</text>
+        <text x="412" y="230">V1</text><text x="532" y="230">V2</text><text x="652" y="230">V3</text>
+        <text x="708" y="266">N'</text>
+        <text x="160" y="30">source 230/400 V, ordre direct L1, L2, L3</text>
+        <text x="40" y="330">neutre relié : N' au potentiel de N ; iN = i1 + i2 + i3 ; référence des potentiels : N</text>
+      </g>
+    </svg>
+    <figcaption>
+      Charge étoile déséquilibrée avec neutre relié. Les trois lignes viennent de la source, à gauche ; chaque impédance, en
+      rectangle, relie sa phase au point commun $N'$, lui-même relié au neutre $N$. Les flèches horizontales sont les courants :
+      $i_1$, $i_2$, $i_3$ vers la charge, $i_N$ vers la source. Les flèches verticales sont les tensions simples, pointe vers la
+      phase : avec les courants entrant par la phase, c'est la convention récepteur. Les arcs sont des enjambements sans
+      connexion ; seuls les points marquent une connexion.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-neutre-sim-section">Simulation interactive : le courant du neutre comme somme de phaseurs</h3>
+  <p>
+    La simulation représente les trois courants de ligne d'une charge étoile dont le neutre est relié, puis les met bout à bout :
+    le vecteur qui ferme le polygone, de l'origine au bout du dernier courant, est le courant du neutre. La poignée au bout de
+    $\underline{I}_1$ règle le déphasage de la phase 1, de $-90^\circ$ à $+90^\circ$ ; elle se déplace à la souris, au doigt ou au
+    clavier après l'avoir sélectionnée. Les curseurs règlent les trois valeurs efficaces et les déphasages des phases 2 et 3.
+    Avant de manipuler, prédisez : trois courants de $10\ \mathrm{A}$, dont un seul en retard de $36{,}87^\circ$, le neutre
+    porte-t-il un courant, et de quel ordre ? Peut-on obtenir un courant du neutre plus grand que chacun des trois courants de
+    ligne ?
+  </p>
+  <figure id="e-neutre-sim-figure">
+    <div class="schema-vivant" id="e-neutre-sim"></div>
+    <figcaption>
+      À gauche, les tensions simples en trait fin, de longueur fixe, et les trois courants de ligne en trait plein épais, partant
+      de l'origine, chacun repéré par son nom ; poignée ronde au bout de $\underline{I}_1$. À droite, les trois mêmes courants mis
+      bout à bout, à une échelle ajustée pour tenir dans le cadre et indiquée en haut, en trait plein moyen, puis le courant du neutre $\underline{I}_N$, en tirets épais, de l'origine du polygone au
+      bout du dernier courant. Les échelles des tensions et des courants sont indépendantes ; angles comptés positivement dans le
+      sens trigonométrique, à partir de $\underline{V}_1$.
+    </figcaption>
+  </figure>
+  <div id="e-neutre-sim-curseurs"></div>
+  <div id="e-neutre-sim-valeurs"></div>
+  <p>
+    Interprétation : avec trois courants de $10\ \mathrm{A}$ et un seul retard de $36{,}87^\circ$, le polygone ne se ferme plus et
+    le neutre porte $2 \times 10 \times \sin(36{,}87^\circ/2) = 6{,}32\ \mathrm{A}$ : un déséquilibre de déphasage suffit. Le
+    neutre peut dépasser chacun des courants de ligne : avec $10\ \mathrm{A}$ sur les trois phases, la phase 1 résistive, la
+    phase 2 capacitive à $\varphi_2 = -60^\circ$ et la phase 3 inductive à $\varphi_3 = +60^\circ$, les trois courants se
+    regroupent autour de l'axe de $\underline{V}_1$, à $0^\circ$, $-60^\circ$ et $+60^\circ$, et $I_N = 20\ \mathrm{A}$. Ce cas extrême est rare au fondamental, mais il
+    montre que la section du neutre ne se choisit pas en supposant $I_N \leq \max I_k$ sans l'avoir vérifié.
+  </p>
+
+  <h3 id="e-sans-neutre">Charge étoile sans neutre : le déplacement du point étoile</h3>
+  <p>
+    Supprimons maintenant le conducteur neutre, ou supposons-le rompu. Le point commun $N'$ n'est plus relié à la source, son
+    potentiel $\underline{V}_{N'}$, compté depuis le neutre $N$ de la source, est une inconnue. La loi des nœuds en $N'$ impose que
+    la somme des courants qui en sortent vers la source soit nulle. Chaque récepteur est soumis à $\underline{V}_k - \underline{V}_{N'}$
+    et parcouru par $\underline{Y}_k(\underline{V}_k - \underline{V}_{N'})$ :
+  </p>
+  <p>
+    $$\sum_{k=1}^{3} \underline{Y}_k\left(\underline{V}_k - \underline{V}_{N'}\right) = 0 \quad\Longrightarrow\quad \underline{V}_{N'} = \frac{\underline{Y}_1\underline{V}_1 + \underline{Y}_2\underline{V}_2 + \underline{Y}_3\underline{V}_3}{\underline{Y}_1 + \underline{Y}_2 + \underline{Y}_3}$$
+  </p>
+  <p>
+    Si le neutre existe mais présente une impédance $\underline{Z}_N$, connexion oxydée, conducteur long ou de faible section, il
+    s'ajoute simplement une quatrième branche, d'admittance $\underline{Y}_N = 1/\underline{Z}_N$, reliée au potentiel nul de $N$.
+    C'est le théorème de Millman, vu dans le cours <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes de
+    Thévenin, Norton et superposition</a>, appliqué au point étoile :
+  </p>
+  <div class="formule-cle">
+    $$\underline{V}_{N'} = \frac{\underline{Y}_1\underline{V}_1 + \underline{Y}_2\underline{V}_2 + \underline{Y}_3\underline{V}_3}{\underline{Y}_1 + \underline{Y}_2 + \underline{Y}_3 + \underline{Y}_N}, \qquad \underline{V}_{kN'} = \underline{V}_k - \underline{V}_{N'}, \qquad \underline{I}_k = \underline{Y}_k\,\underline{V}_{kN'}, \qquad \underline{I}_N = \underline{Y}_N\,\underline{V}_{N'}$$
+    <p class="formule-cle-legende">
+      $\underline{V}_{N'}$ tension du point commun par rapport au neutre de la source, en volts ; $\underline{V}_{kN'}$ tension
+      réellement appliquée au récepteur $k$. Hypothèses : source parfaite, impédances des conducteurs de phase incluses dans
+      $\underline{Z}_k$ ou négligées, récepteurs linéaires. Cas limites : $\underline{Y}_N \to \infty$, neutre parfait,
+      $\underline{V}_{N'} = 0$ ; $\underline{Y}_N = 0$, neutre absent ou rompu ; charge équilibrée, numérateur nul et
+      $\underline{V}_{N'} = 0$ même sans neutre, ce qui justifie a posteriori le schéma monophasé équivalent. Vérification
+      dimensionnelle : siemens fois volts sur siemens donne des volts.
+    </p>
+  </div>
+  <p>
+    Pour trois récepteurs résistifs sans neutre, les poids $G_k / \sum G_k$ sont réels, positifs et de somme $1$ :
+    $\underline{V}_{N'}$ est le barycentre des sommets $\underline{V}_1$, $\underline{V}_2$, $\underline{V}_3$ du triangle des tensions,
+    pondérés par les conductances. C'est l'image des ressorts de la section D. Le schéma ci-dessous montre le montage, puis le
+    triangle des tensions pour un cas où la phase 1 est trois fois plus chargée que les deux autres.
+  </p>
+  <figure id="e-sans-neutre-figure">
+    <svg viewBox="0 0 760 340" role="img" aria-label="Charge étoile déséquilibrée sans neutre : lignes L1, L2, L3 vers Z1, Z2, Z3, point commun N' isolé, neutre de la source interrompu ; tension VN'N mesurée entre le neutre N de la source et le point N'">
+      <defs>
+        <marker id="fl-e-s" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse">
+          <path d="M0 0 11 5 0 10Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M40 60H380"/>
+        <path d="M40 120H370M390 120H500"/>
+        <path d="M40 180H370M390 180H490M510 180H620"/>
+        <path d="M380 60V110A10 10 0 0 1 380 130V170A10 10 0 0 1 380 190V200M380 250V270"/>
+        <path d="M500 120V170A10 10 0 0 1 500 190V200M500 250V270"/>
+        <path d="M620 180V200M620 250V270"/>
+        <path d="M380 270H660"/>
+        <path d="M40 300H360"/>
+        <rect x="368" y="200" width="24" height="50" rx="3"/>
+        <rect x="488" y="200" width="24" height="50" rx="3"/>
+        <rect x="608" y="200" width="24" height="50" rx="3"/>
+        <circle cx="366" cy="300" r="6"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="500" cy="270" r="4"/><circle cx="620" cy="270" r="4"/><circle cx="660" cy="270" r="4"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.2" fill="none" stroke-dasharray="4 4">
+        <path d="M372 300H700V276"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.6" fill="none">
+        <path d="M100 60H140" marker-end="url(#fl-e-s)"/>
+        <path d="M100 120H140" marker-end="url(#fl-e-s)"/>
+        <path d="M100 180H140" marker-end="url(#fl-e-s)"/>
+        <path d="M406 248V204" marker-end="url(#fl-e-s)"/>
+        <path d="M526 248V204" marker-end="url(#fl-e-s)"/>
+        <path d="M646 248V204" marker-end="url(#fl-e-s)"/>
+        <path d="M724 298V274" marker-end="url(#fl-e-s)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="12" y="64">L1</text><text x="12" y="124">L2</text><text x="12" y="184">L3</text><text x="12" y="304">N</text>
+        <text x="108" y="52">i1</text><text x="108" y="112">i2</text><text x="108" y="172">i3</text>
+        <text x="342" y="230">Z1</text><text x="462" y="230">Z2</text><text x="582" y="230">Z3</text>
+        <text x="412" y="230">V1N'</text><text x="532" y="230">V2N'</text><text x="652" y="230">V3N'</text>
+        <text x="652" y="292">N'</text>
+        <text x="730" y="290">VN'N</text>
+        <text x="160" y="30">source 230/400 V, ordre direct L1, L2, L3</text>
+        <text x="130" y="292">neutre absent ou rompu</text>
+        <text x="40" y="330">i1 + i2 + i3 = 0 ; N' prend le potentiel VN'N donné par Millman ; référence : N</text>
+      </g>
+    </svg>
+    <figcaption>
+      Même charge sans neutre. Le neutre de la source s'arrête sur une borne ouverte, le cercle vide ; le point commun $N'$ est
+      isolé. Chaque récepteur reçoit $\underline{V}_{kN'}$, fléchée vers sa phase, et non plus la tension simple du réseau. Le trait
+      en tirets ne représente pas un conducteur : il indique entre quels points se mesure la tension $\underline{V}_{N'N}$, notée
+      plus simplement $\underline{V}_{N'}$, fléchée vers $N'$. Les trois courants de ligne ont une somme nulle.
+    </figcaption>
+  </figure>
+  <figure id="e-barycentre-figure">
+    <svg viewBox="0 0 760 400" role="img" aria-label="Triangle des tensions pour trois résistances sans neutre, phase 1 trois fois plus chargée : N au centre, N' déplacé vers V1 de 92 volts, tensions appliquées V1N' de 138 volts, V2N' et V3N' de 287 volts">
+      <defs>
+        <marker id="fl-e-b" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse">
+          <path d="M0 0 11 5 0 10Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="1" fill="none" opacity="0.45">
+        <path d="M60 200H440M260 40V380"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.2" fill="none" stroke-dasharray="6 5">
+        <path d="M398 200L191 319.5L191 80.5Z"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.4" fill="none">
+        <path d="M260 200L398 200" marker-end="url(#fl-e-b)"/>
+        <path d="M260 200L191 319.5" marker-end="url(#fl-e-b)"/>
+        <path d="M260 200L191 80.5" marker-end="url(#fl-e-b)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round">
+        <path d="M315.2 206L398 206" marker-end="url(#fl-e-b)"/>
+        <path d="M315.2 200L191 319.5" marker-end="url(#fl-e-b)"/>
+        <path d="M315.2 200L191 80.5" marker-end="url(#fl-e-b)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="7 4">
+        <path d="M260 194L315.2 194" marker-end="url(#fl-e-b)"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="260" cy="200" r="4"/><circle cx="315.2" cy="200" r="5"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="406" y="196">V1</text><text x="168" y="338">V2</text><text x="168" y="76">V3</text>
+        <text x="240" y="222">N</text><text x="300" y="226">N'</text>
+        <text x="350" y="228">V1N'</text><text x="218" y="276">V2N'</text><text x="218" y="134">V3N'</text>
+        <text x="262" y="184" font-size="11.5">VN'</text>
+        <text x="398" y="232" font-size="11.5">poids 0,6</text>
+        <text x="130" y="358" font-size="11.5">poids 0,2</text>
+        <text x="130" y="60" font-size="11.5">poids 0,2</text>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="480" y="90">trois résistances, sans neutre</text>
+        <text x="480" y="114">P1 = 6 kW, P2 = P3 = 2 kW sous 230 V</text>
+        <text x="480" y="138">G1 = 3 G2 = 3 G3</text>
+        <text x="480" y="162">poids G1 / ΣG = 0,6 ; 0,2 ; 0,2</text>
+        <text x="480" y="186">VN' = 0,6 V1 + 0,2 V2 + 0,2 V3</text>
+        <text x="480" y="210">VN' = 0,4 x 230 = 92 V, vers V1</text>
+        <text x="480" y="244">V1N' = 230 - 92 = 138 V</text>
+        <text x="480" y="268">V2N' = V3N' = 287 V</text>
+        <text x="480" y="302">la phase la plus chargée attire N'</text>
+        <text x="480" y="326">les deux autres subissent la surtension</text>
+      </g>
+    </svg>
+    <figcaption>
+      Triangle des tensions, référence des phases sur $\underline{V}_1$, posée sur l'axe réel, ordre direct. Les sommets du
+      triangle en tirets fins sont les extrémités des tensions simples, tracées en trait fin depuis le neutre $N$ de la source.
+      Le point commun $N'$, gros point, se place au barycentre des sommets pondérés par les conductances ; la flèche en tirets
+      épais, de $N$ vers $N'$, est $\underline{V}_{N'}$. Les flèches en trait plein épais, de $N'$ vers chaque sommet, sont les
+      tensions réellement appliquées aux récepteurs ; celle de la phase 1 est légèrement décalée vers le bas pour ne pas masquer
+      la tension simple $\underline{V}_1$, qu'elle prolonge.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-millman-section">Animation : construire le point étoile par la formule de Millman</h3>
+  <p>
+    L'animation construit le point $N'$ pour trois récepteurs résistifs sans neutre. Elle calcule les poids
+    $w_k = G_k / \sum G_k$, trace le vecteur $w_1\underline{V}_1$ depuis $N$, lui ajoute bout à bout $w_2\underline{V}_2$ puis
+    $w_3\underline{V}_3$, et obtient $\underline{V}_{N'}$ ; elle trace enfin les tensions $\underline{V}_{kN'}$ appliquées aux
+    récepteurs. Le lecteur fait avancer la construction, avec pause, vitesse et remise à zéro ; les curseurs règlent la
+    puissance nominale de chaque récepteur sous $230\ \mathrm{V}$. Avant de lancer, prédisez : si la phase 3 est débranchée,
+    $P_3 = 0$, sur quelle droite se trouve $N'$ ? Si les trois puissances sont égales, où arrive la somme des trois vecteurs ?
+  </p>
+  <figure id="e-millman-figure">
+    <div class="schema-vivant" id="e-millman"></div>
+    <figcaption>
+      Construction de Millman dans le plan des phaseurs. Les tensions simples sont en trait fin depuis $N$, le triangle des
+      tensions en tirets fins. Les vecteurs pondérés $w_k\underline{V}_k$ sont en trait plein moyen, mis bout à bout ; leur somme,
+      $\underline{V}_{N'}$, est la flèche en tirets épais de $N$ vers $N'$. Les tensions appliquées aux récepteurs, de $N'$ vers
+      chaque sommet, sont en trait plein épais. L'étape en cours et les poids sont écrits à droite.
+    </figcaption>
+  </figure>
+  <div id="e-millman-curseurs"></div>
+  <div id="e-millman-lecteur"></div>
+  <p>
+    Interprétation : si $P_3 = 0$, le poids $w_3$ est nul et $N'$ se trouve sur le côté du triangle qui joint $\underline{V}_1$ et
+    $\underline{V}_2$ : les deux récepteurs restants sont en série sous $U_{12}$ et se partagent cette tension en raison inverse
+    de leurs conductances, comme un diviseur de tension du cours <a href="#/cours/associations-de-resistances-et-diviseurs">Associations
+    de résistances et diviseurs</a>. Si les trois puissances sont égales, les trois vecteurs pondérés valent chacun le tiers d'une
+    tension simple, leur somme est nulle et $N'$ retombe sur $N$ : le neutre devient inutile. Entre ces cas, $N'$ glisse vers le
+    sommet de la phase la plus chargée.
+  </p>
+
+  <h3 id="e-deplacement-section">Simulation interactive : trouver le point étoile</h3>
+  <p>
+    La simulation propose de trouver soi-même la position du point commun. Les curseurs règlent trois récepteurs résistifs et la
+    résistance du neutre, de $0{,}01\ \Omega$ à la rupture complète, en bout de course. La poignée est un point candidat $M$ : pour
+    chaque position, la figure trace les tensions qu'appliquerait ce point aux récepteurs et la flèche du courant résiduel
+    $\sum G_k(\underline{V}_k - \underline{V}_M) - G_N\underline{V}_M$, qui devrait être nul si $M$ était le vrai point commun. Un
+    dernier curseur affiche ou masque la solution de Millman. Avant de manipuler, prédisez, solution masquée : avec
+    $4{,}6$, $2{,}3$ et $1{,}15\ \mathrm{kW}$ et le neutre rompu, vers quel sommet faut-il déplacer $M$ pour annuler le résidu ? Que
+    devient la position du point quand la résistance du neutre descend sous $0{,}1\ \Omega$ ?
+  </p>
+  <figure id="e-deplacement-figure">
+    <div class="schema-vivant" id="e-deplacement"></div>
+    <figcaption>
+      Triangle des tensions, sommets $\underline{V}_1$, $\underline{V}_2$, $\underline{V}_3$, neutre $N$ de la source au centre. La
+      poignée ronde est le point candidat $M$ ; les trois traits pleins fins, de $M$ vers les sommets, sont les tensions qu'il
+      appliquerait aux récepteurs. La flèche épaisse issue de $M$ représente le courant résiduel, à l'échelle indiquée ; elle
+      s'annule au vrai point commun. Solution affichée, ce point est marqué d'une croix entourée d'un cercle, notée $N'$.
+    </figcaption>
+  </figure>
+  <div id="e-deplacement-curseurs"></div>
+  <div id="e-deplacement-valeurs"></div>
+  <p>
+    Interprétation : le résidu pointe toujours vers la position d'équilibre, comme la force de rappel des ressorts de la section
+    D ; il faut déplacer $M$ vers le sommet de la phase 1, la plus chargée, en glissant un peu du côté de la phase 2, jusqu'à
+    $86{,}9\ \mathrm{V}$ de $N$ pour ces réglages résistifs. Une fois $M$ placé sur $N'$, les tensions affichées sont celles que
+    subissent les récepteurs : $150{,}6$, $260{,}8$ et $301{,}1\ \mathrm{V}$. Le déplacement est plus fort que dans l'exemple de la
+    section H, où la phase 2 est inductive : à puissance active égale, les poids complexes changent la position du point.
+    Quand la résistance du neutre diminue, la branche du neutre devient un ressort très raide accroché au centre : à
+    $0{,}1\ \Omega$, $N'$ n'est plus qu'à $1{,}3\ \mathrm{V}$ de $N$, et le neutre porte presque
+    tout le courant de déséquilibre. La qualité du neutre, et non sa seule existence, fixe la stabilité des tensions.
+  </p>
+
+  <h3 id="e-triangle">Charge triangle déséquilibrée</h3>
+  <p>
+    Un récepteur couplé en triangle n'a pas de point commun : chaque branche est branchée directement entre deux phases et reçoit
+    sa tension composée, imposée par la source, quel que soit le déséquilibre. Le calcul est donc direct : un courant par
+    branche, puis la loi des nœuds à chaque sommet du triangle donne les courants de ligne. Le facteur $\sqrt{3}$ entre courant
+    de ligne et courant de branche disparaît, puisqu'il ne résultait que de la symétrie.
+  </p>
+  <div class="formule-cle">
+    $$\underline{J}_{12} = \frac{\underline{U}_{12}}{\underline{Z}_{12}}, \quad \underline{J}_{23} = \frac{\underline{U}_{23}}{\underline{Z}_{23}}, \quad \underline{J}_{31} = \frac{\underline{U}_{31}}{\underline{Z}_{31}}, \qquad \underline{I}_1 = \underline{J}_{12} - \underline{J}_{31}, \quad \underline{I}_2 = \underline{J}_{23} - \underline{J}_{12}, \quad \underline{I}_3 = \underline{J}_{31} - \underline{J}_{23}$$
+    <p class="formule-cle-legende">
+      $\underline{U}_{kl} = \underline{V}_k - \underline{V}_l$ en volts, $\underline{J}_{kl}$ courant de la branche fléché de $k$ vers
+      $l$, en ampères. Hypothèses : source et lignes parfaites. Conséquence : $\underline{I}_1 + \underline{I}_2 + \underline{I}_3 = 0$
+      quoi qu'il arrive, il n'y a pas de neutre. Cas limite : charge équilibrée, $I = \sqrt{3}\,J$. Cas limite opposé : une seule
+      branche, entre $L_1$ et $L_2$, $I_1 = I_2 = J_{12}$ et $I_3 = 0$. La transformation triangle-étoile du cours
+      <a href="#/cours/systemes-triphases-equilibres">Systèmes triphasés équilibrés</a> se généralise par
+      $\underline{Z}_1 = \underline{Z}_{12}\underline{Z}_{31} / (\underline{Z}_{12} + \underline{Z}_{23} + \underline{Z}_{31})$ et
+      permutations, mais l'étoile équivalente d'un triangle déséquilibré n'a pas son point commun au potentiel du neutre.
+    </p>
+  </div>
+  <figure id="e-triangle-figure">
+    <svg viewBox="0 0 760 380" role="img" aria-label="Charge triangle déséquilibrée : L1 au sommet A, L2 au sommet B, L3 au sommet C ; branches Z12 entre A et B, Z23 entre B et C, Z31 entre C et A ; courants de branche J12, J23, J31 et courants de ligne i1, i2, i3 ; tension U12 fléchée vers L1">
+      <defs>
+        <marker id="fl-e-t" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse">
+          <path d="M0 0 11 5 0 10Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M40 70H560"/>
+        <path d="M40 160H470V250"/>
+        <path d="M40 300H650V250"/>
+        <path d="M560 70L527.5 135M502.5 185L470 250"/>
+        <path d="M560 70L592.5 135M617.5 185L650 250"/>
+        <path d="M470 250H532M588 250H650"/>
+        <rect x="-12" y="-28" width="24" height="56" rx="3" transform="translate(515 160) rotate(26.57)"/>
+        <rect x="-12" y="-28" width="24" height="56" rx="3" transform="translate(605 160) rotate(-26.57)"/>
+        <rect x="532" y="238" width="56" height="24" rx="3"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="560" cy="70" r="4"/><circle cx="470" cy="250" r="4"/><circle cx="650" cy="250" r="4"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.6" fill="none">
+        <path d="M100 70H140" marker-end="url(#fl-e-t)"/>
+        <path d="M100 160H140" marker-end="url(#fl-e-t)"/>
+        <path d="M100 300H140" marker-end="url(#fl-e-t)"/>
+        <path d="M540.8 77.1L525.1 108.4" marker-end="url(#fl-e-t)"/>
+        <path d="M655.8 230.3L640.1 199" marker-end="url(#fl-e-t)"/>
+        <path d="M482 268H518" marker-end="url(#fl-e-t)"/>
+        <path d="M518.5 193L543.5 143" marker-end="url(#fl-e-t)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="12" y="74">L1</text><text x="12" y="164">L2</text><text x="12" y="304">L3</text>
+        <text x="108" y="62">i1</text><text x="108" y="152">i2</text><text x="108" y="292">i3</text>
+        <text x="566" y="62">A</text><text x="452" y="268">B</text><text x="660" y="268">C</text>
+        <text x="462" y="120">Z12</text><text x="630" y="150">Z31</text><text x="548" y="230">Z23</text>
+        <text x="492" y="96">J12</text><text x="664" y="212">J31</text><text x="486" y="286">J23</text>
+        <text x="540" y="178">U12</text>
+        <text x="160" y="30">source 230/400 V, ordre direct L1, L2, L3</text>
+        <text x="40" y="340">i1 = J12 - J31 ; i2 = J23 - J12 ; i3 = J31 - J23</text>
+        <text x="40" y="362">chaque branche reçoit sa tension composée : J12 = U12 / Z12, sans point étoile</text>
+      </g>
+    </svg>
+    <figcaption>
+      Charge triangle déséquilibrée. Chaque sommet du triangle est relié à une ligne : $A$ à $L_1$, $B$ à $L_2$, $C$ à $L_3$ ; les
+      points marquent ces connexions. Les rectangles sont les impédances de branche. Les petites flèches parallèles aux branches
+      sont les courants de branche, orientés de $L_1$ vers $L_2$, de $L_2$ vers $L_3$ et de $L_3$ vers $L_1$ ; les flèches
+      horizontales sont les courants de ligne, orientés vers la charge. La flèche $U_{12}$, posée le long de $Z_{12}$, pointe vers
+      $L_1$ : avec $J_{12}$ entrant par $L_1$, c'est la convention récepteur.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-neutre-reel">Neutre réel : chute de tension et partage du conducteur</h3>
+  <p>
+    Un neutre réel a une résistance, celle du conducteur et de ses connexions. Le courant de déséquilibre qui le parcourt y crée
+    une chute de tension $\underline{Z}_N\underline{I}_N$ qui déplace légèrement le point commun, et qui s'ajoute à la chute de
+    chaque phase. Pour un départ à quatre fils de même section, d'impédance $\underline{Z}_c$ par conducteur, la tension reçue par
+    le récepteur de la phase $k$ vaut $\underline{V}_k - \underline{Z}_c\underline{I}_k - \underline{Z}_c\underline{I}_N$. Un départ
+    monophasé est le cas extrême : $\underline{I}_N = \underline{I}_1$ et la chute double, comme dans le cours
+    <a href="#/cours/revision-3-et-analyse-d-une-charge-ac">Révision 3 et analyse d'une charge AC</a>. Un départ triphasé bien
+    réparti, au contraire, ne fait presque rien circuler dans le neutre et divise la chute de chaque récepteur par plus de deux.
+  </p>
+  <p>
+    Le neutre étant commun aux trois phases, sa rupture concerne tous les récepteurs monophasés en aval. C'est pourquoi les règles
+    d'installation imposent en général de ne jamais couper le neutre sans couper les phases, de ne pas le protéger seul par un
+    fusible, et encadrent la réduction de sa section. Ces dispositions relèvent de la norme d'installation applicable au site,
+    qui précise aussi le cas des neutres chargés par des harmoniques ; il faut s'y reporter avant toute conception.
+  </p>
+
+  <h3 id="e-puissance">Puissance d'une charge déséquilibrée</h3>
+  <p>
+    Le théorème de Boucherot reste valable : $\underline{S} = \sum_k \underline{V}_{kN'}\,\underline{I}_k^*$, avec les tensions
+    réellement appliquées. Comme la somme des courants est nulle sans neutre, on peut écrire aussi
+    $\underline{S} = \sum_k \underline{V}_k\,\underline{I}_k^*$ avec les tensions simples de la source : le terme
+    $\underline{V}_{N'}\sum\underline{I}_k^*$ est nul. C'est la raison pour laquelle la méthode des deux wattmètres du cours
+    <a href="#/cours/puissance-en-triphase">Puissance en triphasé</a> reste exacte sur un récepteur déséquilibré sans neutre. Avec
+    un neutre parcouru par un courant, il faut trois wattmètres, et leur somme mesure aussi les pertes dans un neutre résistant
+    s'ils sont branchés en amont de celui-ci. La puissance absorbée par une charge résistive qui a perdu son neutre change,
+    puisque chaque tension change : elle augmente sur les phases en surtension, baisse sur les autres, et le total diminue en
+    général.
+  </p>
+
+  <h3 id="e-risques">Conséquences et indicateurs du déséquilibre</h3>
+  <ul>
+    <li><strong>Surtension des phases peu chargées après rupture du neutre :</strong> le point commun s'éloigne de leur sommet ; une prise sans charge sur une phase peu chargée peut approcher la tension composée. Les alimentations électroniques, les lampes et les appareils électroménagers ne la supportent pas.</li>
+    <li><strong>Sous-tension de la phase la plus chargée :</strong> chauffage qui ne chauffe plus, contacteurs qui retombent, moteurs monophasés qui calent.</li>
+    <li><strong>Courant du neutre :</strong> échauffement d'un conducteur qui n'est pas toujours protégé contre les surintensités ; il s'ajoute aux courants harmoniques de rang multiple de trois, étudiés dans le cours Harmoniques et qualité de l'énergie.</li>
+    <li><strong>Déséquilibre de tension vu par les moteurs triphasés :</strong> un déséquilibre de quelques pour cent des tensions produit dans un moteur asynchrone des courants nettement plus déséquilibrés et un échauffement supplémentaire ; le mécanisme, un champ tournant en sens inverse, sera expliqué dans le cours Moteur asynchrone triphasé, et les déclassements à appliquer sont des données de constructeur.</li>
+    <li><strong>Dimensionnement :</strong> le transformateur, les câbles et les protections sont choisis pour la phase la plus chargée ; une puissance totale correcte peut cacher une phase surchargée.</li>
+  </ul>
+  <p>
+    Pour chiffrer un déséquilibre, une convention simple et répandue rapporte l'écart maximal à la moyenne des trois valeurs
+    efficaces, courants ou tensions, à cette moyenne. Elle ignore les déphasages. La définition rigoureuse, fondée sur le rapport
+    des composantes inverse et directe, sera donnée dans le cours Défauts symétriques et composantes symétriques ; les seuils
+    admissibles relèvent des normes de qualité de la tension et des constructeurs.
+  </p>
+
+  <h3 id="e-methodes">Choisir une méthode</h3>
+  <p>
+    Avec neutre parfait, la résolution phase par phase est la plus simple et la seule utile. Sans neutre, ou avec un neutre
+    d'impédance connue, la formule de Millman donne d'abord $\underline{V}_{N'}$, puis tout le reste en une ligne par phase : c'est la
+    méthode de choix pour une étoile. On peut aussi transformer l'étoile en triangle équivalent, ou écrire les équations de
+    mailles, mais avec plus d'inconnues. Pour une charge triangle, le calcul branche par branche est immédiat ; une transformation
+    en étoile n'est utile que si le triangle est associé à une étoile en parallèle sur les mêmes lignes. Dès que le réseau
+    contient plusieurs nœuds et des impédances de ligne, la méthode nodale matricielle du cours
+    <a href="#/cours/methodes-de-resolution-systematique">Méthodes de résolution systématique</a> prend le relais, à raison d'une
+    équation complexe par nœud. Les composantes symétriques, enfin, conviennent aux réseaux équilibrés soumis à un défaut
+    localisé, cas que le cours Défauts symétriques et composantes symétriques traitera.
+  </p>
+
+  <h3 id="e-statut">Statut des énoncés</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Ce qui relève de la loi, de la convention, de l'approximation, de la conception et du constructeur</caption>
+      <thead><tr><th>Énoncé</th><th>Statut</th></tr></thead>
+      <tbody>
+        <tr><td>$\underline{I}_N = \underline{I}_1 + \underline{I}_2 + \underline{I}_3$ ; somme nulle au point commun d'une étoile sans neutre</td><td>Loi physique : loi des nœuds, conservation de la charge</td></tr>
+        <tr><td>Formule de Millman du point étoile</td><td>Conséquence mathématique de la loi des nœuds et de la loi d'Ohm complexe</td></tr>
+        <tr><td>Récepteurs à impédance constante, source parfaite, conducteurs de phase sans impédance</td><td>Approximations ; une alimentation électronique se comporte plutôt à puissance constante, et un moteur change d'impédance avec sa charge</td></tr>
+        <tr><td>Neutre comme référence des potentiels, courant du neutre compté vers la source, ordre direct</td><td>Conventions</td></tr>
+        <tr><td>Taux de déséquilibre par écart maximal à la moyenne</td><td>Convention parmi d'autres, à préciser avec chaque valeur</td></tr>
+        <tr><td>Répartir les charges monophasées entre les phases, surveiller les tensions simples des départs sensibles</td><td>Règles de conception</td></tr>
+        <tr><td>Section du neutre, interdiction de le couper seul, conditions de sa protection</td><td>Dispositions de la norme d'installation applicable, à vérifier</td></tr>
+        <tr><td>Tenue en surtension des appareils, déclassement des moteurs sous tension déséquilibrée</td><td>Données des constructeurs</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, la même charge étoile déséquilibrée avec et sans neutre, le
+    diagramme des tensions de l'exemple de la section H, l'organigramme de résolution et un tableau comparatif.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 900 390" role="img" aria-label="Schéma principal : à gauche, charge étoile déséquilibrée avec neutre relié, chaque récepteur sous 230 volts, courant du neutre de 6,03 ampères ; à droite, même charge avec neutre rompu, point commun N' déplacé de 38,8 volts, tensions appliquées de 191,5, 255,0 et 248,0 volts">
+      <defs>
+        <marker id="fl-f-p" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse">
+          <path d="M0 0 11 5 0 10Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="1.2" fill="none" opacity="0.5">
+        <path d="M450 20V370"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M30 70H200"/>
+        <path d="M30 120H190M210 120H280"/>
+        <path d="M30 170H190M210 170H270M290 170H360"/>
+        <path d="M200 70V110A10 10 0 0 1 200 130V160A10 10 0 0 1 200 180V200M200 245V265"/>
+        <path d="M280 120V160A10 10 0 0 1 280 180V200M280 245V265"/>
+        <path d="M360 170V200M360 245V265"/>
+        <path d="M200 265H420V300"/>
+        <path d="M30 300H420"/>
+        <rect x="188" y="200" width="24" height="45" rx="3"/>
+        <rect x="268" y="200" width="24" height="45" rx="3"/>
+        <rect x="348" y="200" width="24" height="45" rx="3"/>
+        <path d="M480 70H650"/>
+        <path d="M480 120H640M660 120H730"/>
+        <path d="M480 170H640M660 170H720M740 170H810"/>
+        <path d="M650 70V110A10 10 0 0 1 650 130V160A10 10 0 0 1 650 180V200M650 245V265"/>
+        <path d="M730 120V160A10 10 0 0 1 730 180V200M730 245V265"/>
+        <path d="M810 170V200M810 245V265"/>
+        <path d="M650 265H850"/>
+        <path d="M480 300H690"/>
+        <rect x="638" y="200" width="24" height="45" rx="3"/>
+        <rect x="718" y="200" width="24" height="45" rx="3"/>
+        <rect x="798" y="200" width="24" height="45" rx="3"/>
+        <circle cx="696" cy="300" r="6"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="280" cy="265" r="4"/><circle cx="360" cy="265" r="4"/>
+        <circle cx="730" cy="265" r="4"/><circle cx="810" cy="265" r="4"/><circle cx="850" cy="265" r="4"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.2" fill="none" stroke-dasharray="4 4">
+        <path d="M702 300H870V271"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.6" fill="none">
+        <path d="M70 70H105" marker-end="url(#fl-f-p)"/>
+        <path d="M70 120H105" marker-end="url(#fl-f-p)"/>
+        <path d="M70 170H105" marker-end="url(#fl-f-p)"/>
+        <path d="M105 300H70" marker-end="url(#fl-f-p)"/>
+        <path d="M226 243V204" marker-end="url(#fl-f-p)"/>
+        <path d="M306 243V204" marker-end="url(#fl-f-p)"/>
+        <path d="M386 243V204" marker-end="url(#fl-f-p)"/>
+        <path d="M520 70H555" marker-end="url(#fl-f-p)"/>
+        <path d="M520 120H555" marker-end="url(#fl-f-p)"/>
+        <path d="M520 170H555" marker-end="url(#fl-f-p)"/>
+        <path d="M676 243V204" marker-end="url(#fl-f-p)"/>
+        <path d="M756 243V204" marker-end="url(#fl-f-p)"/>
+        <path d="M836 243V204" marker-end="url(#fl-f-p)"/>
+        <path d="M886 298V270" marker-end="url(#fl-f-p)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="30" y="34" font-weight="600">avec neutre relié</text>
+        <text x="480" y="34" font-weight="600">neutre rompu</text>
+        <text x="6" y="74">L1</text><text x="6" y="124">L2</text><text x="6" y="174">L3</text><text x="6" y="304">N</text>
+        <text x="456" y="74">L1</text><text x="456" y="124">L2</text><text x="456" y="174">L3</text><text x="456" y="304">N</text>
+        <text x="76" y="62">i1</text><text x="76" y="112">i2</text><text x="76" y="162">i3</text><text x="76" y="292">iN</text>
+        <text x="526" y="62">i1</text><text x="526" y="112">i2</text><text x="526" y="162">i3</text>
+        <text x="170" y="228">Z1</text><text x="250" y="228">Z2</text><text x="330" y="228">Z3</text>
+        <text x="616" y="228">Z1</text><text x="696" y="228">Z2</text><text x="776" y="228">Z3</text>
+        <text x="218" y="196">V1</text><text x="298" y="196">V2</text><text x="378" y="196">V3</text>
+        <text x="680" y="196">V1N'</text><text x="760" y="196">V2N'</text><text x="840" y="196">V3N'</text>
+        <text x="428" y="260">N'</text><text x="842" y="256">N'</text>
+        <text x="836" y="320">VN'N</text>
+        <text x="30" y="338">V1 = V2 = V3 = 230 V</text>
+        <text x="30" y="358">IN = 6,03 A, vers la source</text>
+        <text x="480" y="338">VN'N = 38,8 V ; i1 + i2 + i3 = 0</text>
+        <text x="480" y="358">191,5 V ; 255,0 V ; 248,0 V</text>
+        <text x="30" y="382">exemple de la section H : 4,6 kW résistif ; 2,3 kW à cos φ 0,8 ; 1,15 kW résistif</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal : la même charge étoile déséquilibrée, celle de l'exemple de la section H, avec le neutre relié à gauche et
+      rompu à droite. À gauche, le point commun $N'$ est relié au neutre $N$ : chaque récepteur reçoit sa tension simple et le
+      neutre ramène $6{,}03\ \mathrm{A}$ vers la source. À droite, le neutre s'arrête sur une borne ouverte ; le point commun prend le
+      potentiel $\underline{V}_{N'N}$, mesuré entre les points reliés par le trait en tirets, et les récepteurs reçoivent
+      $191{,}5$, $255{,}0$ et $248{,}0\ \mathrm{V}$. Courants de ligne fléchés vers la charge, tensions fléchées vers la phase,
+      convention récepteur ; arcs : enjambements sans connexion ; points : connexions.
+    </figcaption>
+  </figure>
+
+  <figure id="f-triangle-tensions">
+    <svg viewBox="0 0 760 420" role="img" aria-label="Diagramme des tensions de l'exemple après rupture du neutre : tensions simples V1, V2, V3 de 230 volts depuis N, point N' déplacé de 38,8 volts à 6,6 degrés, tensions appliquées V1N' de 191,5 volts, V2N' de 255,0 volts et V3N' de 248,0 volts">
+      <defs>
+        <marker id="fl-f-t" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse">
+          <path d="M0 0 11 5 0 10Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="1" fill="none" opacity="0.45">
+        <path d="M80 210H520M300 30V400"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.2" fill="none" stroke-dasharray="6 5">
+        <path d="M472.5 210L213.8 359.4L213.8 60.6Z"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.4" fill="none">
+        <path d="M300 210L472.5 210" marker-end="url(#fl-f-t)"/>
+        <path d="M300 210L213.8 359.4" marker-end="url(#fl-f-t)"/>
+        <path d="M300 210L213.8 60.6" marker-end="url(#fl-f-t)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round">
+        <path d="M328.9 213.5L472.5 216" marker-end="url(#fl-f-t)"/>
+        <path d="M328.9 206.7L213.8 359.4" marker-end="url(#fl-f-t)"/>
+        <path d="M328.9 206.7L213.8 60.6" marker-end="url(#fl-f-t)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="6 3">
+        <path d="M300 203L328.9 199.7" marker-end="url(#fl-f-t)"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="300" cy="210" r="4"/><circle cx="328.9" cy="206.7" r="5"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="480" y="206">V1</text><text x="190" y="378">V2</text><text x="190" y="56">V3</text>
+        <text x="280" y="232">N</text><text x="320" y="236">N'</text>
+        <text x="390" y="236">V1N'</text><text x="236" y="300">V2N'</text><text x="236" y="128">V3N'</text>
+        <text x="296" y="190" font-size="11.5">VN'</text>
+        <text x="504" y="228" font-size="11.5">Re</text><text x="306" y="44" font-size="11.5">Im</text>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="540" y="80">neutre rompu, exemple H</text>
+        <text x="540" y="106">ΣY = 0,1522 - j0,0326 S</text>
+        <text x="540" y="130">ΣY V = 6,005 - j0,580 A</text>
+        <text x="540" y="154">VN' = 38,76 V à 6,58°</text>
+        <text x="540" y="190">V1N' = 191,5 V (-16,7 %)</text>
+        <text x="540" y="214">V2N' = 255,0 V (+10,9 %)</text>
+        <text x="540" y="238">V3N' = 248,0 V (+7,8 %)</text>
+        <text x="540" y="274">échelle : 0,75 px par volt</text>
+        <text x="540" y="298">angles positifs : sens</text>
+        <text x="540" y="316">trigonométrique</text>
+      </g>
+    </svg>
+    <figcaption>
+      Diagramme des tensions de l'exemple de la section H après rupture du neutre, à l'échelle. Les tensions simples de la source,
+      en trait fin, partent du neutre $N$ ; le triangle en tirets fins joint leurs extrémités. Le point commun $N'$, gros point, est
+      déplacé de $38{,}8\ \mathrm{V}$ vers le sommet de la phase 1, la plus chargée, et un peu au-dessus de l'axe réel à cause de la
+      charge inductive de la phase 2. La flèche courte en tirets épais est $\underline{V}_{N'}$. Les flèches en trait plein épais,
+      de $N'$ vers les sommets, sont les tensions réellement appliquées ; celle de la phase 1 est légèrement décalée vers le bas
+      pour ne pas masquer $\underline{V}_1$.
+    </figcaption>
+  </figure>
+
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Réseau triphasé<br/>avec récepteurs inégaux"] --> B{"Couplage<br/>du récepteur ?"}
+  B -->|"triangle"| C["Courants de branche<br/>J = U / Z, puis lignes<br/>I1 = J12 - J31"]
+  B -->|"étoile"| D{"Neutre relié ?<br/>impédance ZN"}
+  D -->|"oui, ZN négligeable"| E["Phase par phase<br/>Ik = Vk / Zk"]
+  D -->|"non, ou ZN non négligeable"| F["Millman<br/>VN' = ΣYk Vk / (ΣYk + YN)"]
+  E --> G["IN = I1 + I2 + I3<br/>somme de phaseurs"]
+  F --> H["VkN' = Vk - VN'<br/>Ik = Yk VkN'"]
+  C --> I["Puissances phase par phase<br/>S = Σ V I*"]
+  G --> I
+  H --> I
+  I --> J["Contrôles : somme des courants,<br/>bilan de puissance, phase la plus chargée,<br/>tensions hors plage après rupture du neutre"]</pre>
+    <figcaption>
+      Organigramme de résolution d'un réseau triphasé déséquilibré simple. Les rectangles sont des actions, les losanges des
+      décisions, les libellés des flèches les réponses. La première décision porte sur le couplage, la seconde sur l'existence et
+      la qualité du neutre, qui décide de la méthode : phase par phase si le neutre est parfait, Millman sinon. Toutes les
+      branches convergent vers le bilan de puissance et les mêmes contrôles.
+    </figcaption>
+  </figure>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Comparaison des situations de déséquilibre</caption>
+      <thead><tr><th>Situation</th><th>Tension aux récepteurs</th><th>Courant du neutre</th><th>Méthode</th><th>Risque principal</th></tr></thead>
+      <tbody>
+        <tr><td>Étoile, neutre parfait</td><td>tension simple, indépendante des autres phases</td><td>$\underline{I}_1 + \underline{I}_2 + \underline{I}_3$</td><td>phase par phase</td><td>neutre surchargé, phase la plus chargée</td></tr>
+        <tr><td>Étoile, neutre résistant</td><td>légèrement déplacée, de $\underline{Z}_N\underline{I}_N$</td><td>un peu inférieur au cas parfait</td><td>Millman avec $\underline{Y}_N$</td><td>chute de tension, échauffement des connexions</td></tr>
+        <tr><td>Étoile, neutre absent ou rompu</td><td>fortement déplacée, surtension des phases peu chargées</td><td>nul</td><td>Millman avec $\underline{Y}_N = 0$</td><td>destruction des appareils monophasés</td></tr>
+        <tr><td>Triangle</td><td>tension composée, indépendante des autres branches</td><td>pas de neutre</td><td>branche par branche</td><td>ligne la plus chargée, moteur à tension déséquilibrée</td></tr>
+        <tr><td>Étoile équilibrée, avec ou sans neutre</td><td>tension simple</td><td>nul</td><td>schéma monophasé équivalent</td><td>aucun propre au déséquilibre</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-somme-figure" data-renvoi="d-somme-figure">l'animation des courants instantanés et de leur somme</a>, section D ;</li>
+    <li><a href="#e-neutre-figure" data-renvoi="e-neutre-figure">la charge étoile avec neutre</a>, <a href="#e-neutre-sim-figure" data-renvoi="e-neutre-sim-figure">la simulation du courant du neutre comme somme de phaseurs</a>, <a href="#e-sans-neutre-figure" data-renvoi="e-sans-neutre-figure">la charge étoile sans neutre</a>, <a href="#e-barycentre-figure" data-renvoi="e-barycentre-figure">le triangle des tensions et le barycentre</a>, <a href="#e-millman-figure" data-renvoi="e-millman-figure">l'animation de la construction de Millman</a>, <a href="#e-deplacement-figure" data-renvoi="e-deplacement-figure">la simulation de recherche du point étoile</a> et <a href="#e-triangle-figure" data-renvoi="e-triangle-figure">la charge triangle déséquilibrée</a>, section E ;</li>
+    <li><a href="#h-rupture-figure" data-renvoi="h-rupture-figure">l'animation de la dégradation progressive du neutre</a>, section H ;</li>
+    <li><a href="#i-atelier-figure" data-renvoi="i-atelier-figure">le départ triphasé de l'atelier de maintenance</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour résoudre un réseau triphasé déséquilibré simple :</p>
+  <ol>
+    <li>Identifier la source : tension simple $V$ et composée $U = \sqrt{3}\,V$, ordre des phases ; écrire $\underline{V}_1 = V$, $\underline{V}_2 = a^2 V$, $\underline{V}_3 = a V$, référence sur $\underline{V}_1$.</li>
+    <li>Identifier chaque récepteur : couplage, impédance complexe $\underline{Z}_k$ à partir de $P$, $\cos\varphi$ et de la tension nominale, par $\underline{Z} = V_n^2 / \underline{S}^*$ ; noter l'hypothèse d'impédance constante.</li>
+    <li>Identifier le neutre : relié, d'impédance $\underline{Z}_N$, ou absent ; choisir la méthode par l'organigramme de la section F.</li>
+    <li>Étoile : si le neutre est parfait, calculer $\underline{I}_k = \underline{V}_k/\underline{Z}_k$ ; sinon calculer les admittances, $\underline{V}_{N'}$ par Millman, puis $\underline{V}_{kN'}$ et $\underline{I}_k$. Triangle : calculer $\underline{J}_{kl} = \underline{U}_{kl}/\underline{Z}_{kl}$, puis les courants de ligne par différences.</li>
+    <li>Calculer le courant du neutre, $\underline{I}_N = \sum\underline{I}_k$ ou $\underline{Y}_N\underline{V}_{N'}$, et les puissances phase par phase, $\underline{S}_k = \underline{V}_{kN'}\underline{I}_k^*$.</li>
+    <li>Contrôler : somme des courants nulle sans neutre ; $\sum \underline{S}_k = \sum \underline{V}_k\underline{I}_k^*$ ; puissances égales aux puissances nominales quand les tensions valent $230\ \mathrm{V}$ ; tension la plus haute et la plus basse comparées aux tolérances des appareils.</li>
+    <li>Conclure en ingénieur : phase la plus chargée pour le dimensionnement, section et protection du neutre, conséquences d'une rupture du neutre, répartition des charges à revoir si nécessaire.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Situation : un tableau divisionnaire de bureaux, alimenté en $230/400\ \mathrm{V}$ avec neutre, dessert trois circuits
+    monophasés : sur $L_1$, un chauffage électrique de $4{,}6\ \mathrm{kW}$, résistif ; sur $L_2$, un climatiseur de
+    $2{,}3\ \mathrm{kW}$ à $\cos\varphi = 0{,}8$ inductif ; sur $L_3$, un éclairage de $1{,}15\ \mathrm{kW}$, supposé résistif.
+    Puissances données sous $230\ \mathrm{V}$. On demande les courants et le courant du neutre en fonctionnement normal, les
+    tensions et puissances après rupture du neutre, puis l'effet d'une connexion de neutre dégradée à $1\ \Omega$.
+  </p>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Données : $\underline{V}_1 = 230\ \mathrm{V}$ à $0^\circ$, $\underline{V}_2$ à $-120^\circ$, $\underline{V}_3$ à $+120^\circ$ ;
+    $P_1 = 4600\ \mathrm{W}$, $P_2 = 2300\ \mathrm{W}$ à $\cos\varphi_2 = 0{,}8$, $P_3 = 1150\ \mathrm{W}$. Inconnues : $\underline{Z}_k$,
+    $\underline{I}_k$, $\underline{I}_N$, puis $\underline{V}_{N'}$, $\underline{V}_{kN'}$ et les puissances après rupture. Stratégie :
+    modéliser chaque appareil par une impédance constante, résoudre phase par phase avec le neutre, puis appliquer Millman sans
+    neutre et avec un neutre résistant. Hypothèse forte : un climatiseur réel n'est pas une impédance constante, et un éclairage
+    électronique encore moins ; le modèle donne l'ordre de grandeur des tensions, pas le comportement exact des appareils.
+  </p>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li>Impédances, par $\underline{Z} = V^2/\underline{S}^*$ : $Z_1 = 230^2/4600 = 11{,}5\ \Omega$ ; $S_2 = 2300/0{,}8 = 2875\ \mathrm{VA}$, $Z_2 = 230^2/2875 = 18{,}4\ \Omega$ à $36{,}87^\circ$, soit $\underline{Z}_2 = 14{,}72 + j11{,}04\ \Omega$ ; $Z_3 = 230^2/1150 = 46\ \Omega$.</li>
+    <li>Courants avec neutre : $\underline{I}_1 = 230/11{,}5 = 20\ \mathrm{A}$ à $0^\circ$ ; $\underline{I}_2 = 230/18{,}4 = 12{,}5\ \mathrm{A}$ à $-120^\circ - 36{,}87^\circ = -156{,}87^\circ$ ; $\underline{I}_3 = 230/46 = 5\ \mathrm{A}$ à $+120^\circ$.</li>
+    <li>Formes cartésiennes : $\underline{I}_1 = 20$ ; $\underline{I}_2 = 12{,}5\left[\cos(-156{,}87^\circ) + j\sin(-156{,}87^\circ)\right] = -11{,}495 - j4{,}910\ \mathrm{A}$ ; $\underline{I}_3 = -2{,}5 + j4{,}330\ \mathrm{A}$.</li>
+    <li>Courant du neutre : $\underline{I}_N = 20 - 11{,}495 - 2{,}5 + j(-4{,}910 + 4{,}330) = 6{,}005 - j0{,}580\ \mathrm{A}$, soit $I_N = 6{,}03\ \mathrm{A}$ à $-5{,}52^\circ$.</li>
+    <li>Puissances avec neutre : $P = 4600 + 2300 + 1150 = 8050\ \mathrm{W}$, $Q = 1725\ \mathrm{var}$, portés par la seule phase 2.</li>
+    <li>Rupture du neutre, admittances : $\underline{Y}_1 = 0{,}08696\ \mathrm{S}$ ; $\underline{Y}_2 = 1/\underline{Z}_2 = 0{,}04348 - j0{,}03261\ \mathrm{S}$ ; $\underline{Y}_3 = 0{,}02174\ \mathrm{S}$ ; $\sum\underline{Y} = 0{,}15217 - j0{,}03261\ \mathrm{S}$.</li>
+    <li>Numérateur : $\sum \underline{Y}_k\underline{V}_k = \sum \underline{I}_k$ calculé avec neutre, soit $6{,}005 - j0{,}580\ \mathrm{A}$. Remarque utile : le numérateur de Millman est toujours le courant du neutre qui circulerait avec un neutre parfait.</li>
+    <li>Point commun : $\underline{V}_{N'} = (6{,}005 - j0{,}580)/(0{,}15217 - j0{,}03261) = 38{,}51 + j4{,}44\ \mathrm{V}$, soit $38{,}76\ \mathrm{V}$ à $6{,}58^\circ$.</li>
+    <li>Tensions appliquées : $\underline{V}_{1N'} = 230 - 38{,}51 - j4{,}44 = 191{,}49 - j4{,}44$, soit $191{,}5\ \mathrm{V}$ ; $\underline{V}_{2N'} = -115 - j199{,}19 - 38{,}51 - j4{,}44 = -153{,}51 - j203{,}63$, soit $255{,}0\ \mathrm{V}$ ; $\underline{V}_{3N'} = -153{,}51 + j194{,}75$, soit $248{,}0\ \mathrm{V}$.</li>
+    <li>Courants et puissances après rupture : $I_1 = 191{,}5/11{,}5 = 16{,}66\ \mathrm{A}$, $P_1 = 3190\ \mathrm{W}$ ; $I_2 = 255{,}0/18{,}4 = 13{,}86\ \mathrm{A}$, $P_2 = 2827\ \mathrm{W}$ ; $I_3 = 248{,}0/46 = 5{,}39\ \mathrm{A}$, $P_3 = 1337\ \mathrm{W}$ ; total $7354\ \mathrm{W}$.</li>
+    <li>Neutre dégradé à $R_N = 1\ \Omega$ : $\underline{Y}_N = 1\ \mathrm{S}$, $\underline{V}_{N'} = (6{,}005 - j0{,}580)/(1{,}15217 - j0{,}03261) = 5{,}23\ \mathrm{V}$ à $-3{,}90^\circ$ ; tensions $224{,}8$, $232{,}4$ et $233{,}0\ \mathrm{V}$ ; $I_N = 5{,}23\ \mathrm{A}$ et $27\ \mathrm{W}$ dissipés dans la connexion.</li>
+  </ol>
+  <p>
+    Résultat : en fonctionnement normal, $20$, $12{,}5$ et $5\ \mathrm{A}$ sur les phases et $6{,}03\ \mathrm{A}$ dans le neutre, pour
+    $8{,}05\ \mathrm{kW}$. Neutre rompu, le chauffage tombe à $191{,}5\ \mathrm{V}$ et perd $31\ \%$ de sa puissance, le climatiseur
+    reçoit $255{,}0\ \mathrm{V}$, $+10{,}9\ \%$, et l'éclairage $248{,}0\ \mathrm{V}$, $+7{,}8\ \%$. Une connexion de neutre de
+    $1\ \Omega$, qui n'a rien d'extraordinaire pour une borne oxydée, suffit à créer $5\ \mathrm{V}$ de déplacement et une perte
+    concentrée de $27\ \mathrm{W}$ dans la borne, qui chauffe et se dégrade encore : la rupture progressive est un mécanisme
+    auto-entretenu.
+  </p>
+
+  <h3 id="h-rupture-section">Animation : la dégradation progressive du neutre</h3>
+  <p>
+    L'animation fait croître la résistance du neutre de l'exemple, de $0{,}01\ \Omega$, connexion saine, à $1000\ \Omega$,
+    pratiquement la rupture. Le triangle trace la trajectoire du point commun $N'$ au fil de la dégradation ; le graphique trace
+    les trois tensions appliquées en fonction du logarithme décimal de $R_N$. Le lecteur fait avancer la dégradation, avec
+    pause, vitesse et remise à zéro. Avant de lancer, prédisez : la trajectoire de $N'$ est-elle une droite ? À partir de quelle
+    résistance du neutre la tension du climatiseur dépasse-t-elle $240\ \mathrm{V}$, de l'ordre du dixième d'ohm, de l'ohm ou de
+    la dizaine d'ohms ?
+  </p>
+  <figure id="h-rupture-figure">
+    <div class="schema-vivant" id="h-rupture"></div>
+    <div id="h-rupture-trace"></div>
+    <figcaption>
+      En haut, le triangle des tensions de l'exemple : sommets $\underline{V}_1$, $\underline{V}_2$, $\underline{V}_3$, neutre $N$ au
+      centre ; la courbe en trait plein moyen est la trajectoire de $N'$ depuis $R_N = 0{,}01\ \Omega$ jusqu'à la valeur atteinte,
+      marquée par un gros point ; les trois traits épais relient ce point aux sommets. Le point en cercle vide marque la position
+      finale, neutre rompu. En bas, les tensions appliquées $V_{1N'}$, $V_{2N'}$, $V_{3N'}$ en fonction de $\lg(R_N/1\ \Omega)$ :
+      $-2$ correspond à $0{,}01\ \Omega$, $0$ à $1\ \Omega$ et $3$ à $1000\ \Omega$, chacune nommée dans la légende avec sa couleur
+      réelle ; le trait vertical en tirets suit la valeur atteinte et les traits horizontaux en pointillés marquent $230\ \mathrm{V}$
+      et $240\ \mathrm{V}$.
+    </figcaption>
+  </figure>
+  <div id="h-rupture-lecteur"></div>
+  <div id="h-rupture-valeurs"></div>
+  <p>
+    Interprétation : la trajectoire n'est pas une droite, parce que les poids sont complexes ; elle part de $N$ et rejoint la
+    position de rupture en s'incurvant légèrement. Rien de visible ne se passe sous $0{,}1\ \Omega$ ; les tensions divergent vers
+    l'ohm, et la tension du climatiseur franchit $240\ \mathrm{V}$ vers $R_N = 5{,}9\ \Omega$. Au-delà de $100\ \Omega$, on est
+    pratiquement à la rupture. Un neutre ne se rompt donc pas toujours d'un coup : il passe par une phase où les tensions
+    dérivent de quelques volts, où la connexion chauffe, et où une mesure des trois tensions simples aux bornes des récepteurs
+    permettrait de le détecter.
+  </p>
+
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li>Loi des nœuds sans neutre : $\underline{I}_1 + \underline{I}_2 + \underline{I}_3 = \underline{Y}_1\underline{V}_{1N'} + \underline{Y}_2\underline{V}_{2N'} + \underline{Y}_3\underline{V}_{3N'} = 0$ à l'arrondi près.</li>
+    <li>Puissances : $P_k = V_{kN'}^2/R_k$ pour les résistances, $3190 = 191{,}54^2/11{,}5$ ; pour le climatiseur, $P_2 = I_2^2 \times 14{,}72 = 2827\ \mathrm{W}$ et $Q_2 = I_2^2 \times 11{,}04 = 2120\ \mathrm{var}$, dans le rapport $0{,}75$ de $\tan\varphi_2$.</li>
+    <li>Bilan : sans neutre, $\sum\underline{V}_k\underline{I}_k^* = \sum\underline{V}_{kN'}\underline{I}_k^* = 7354 + j2120\ \mathrm{VA}$, puisque $\sum\underline{I}_k = 0$.</li>
+    <li>Sens physique : la phase la plus chargée voit sa tension baisser, les deux autres monter, conformément à l'image du barycentre.</li>
+    <li>Ordre de grandeur : $|\underline{V}_{N'}| = 38{,}8\ \mathrm{V}$ reste inférieur à la tension simple, puisque les poids sont proches de réels positifs.</li>
+    <li>Dimensions : $\mathrm{A}/\mathrm{S} = \mathrm{V}$ ; $\mathrm{V}^2/\Omega = \mathrm{W}$.</li>
+  </ul>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+
+  <h3 id="i-probleme">Rééquilibrer le départ de l'atelier de maintenance</h3>
+  <p>
+    Le projet fil rouge alimente son site depuis un transformateur supposé de $100\ \mathrm{kVA}$, soit $33{,}3\ \mathrm{kVA}$ par
+    phase. Le cours <a href="#/cours/revision-3-et-analyse-d-une-charge-ac">Révision 3 et analyse d'une charge AC</a> y a raccordé
+    l'atelier de maintenance et les locaux sociaux par un départ monophasé entre $L_1$ et le neutre : chauffe-eau de
+    $3\ \mathrm{kW}$, machines d'atelier de $2{,}4\ \mathrm{kW}$ à $\cos\varphi = 0{,}75$, éclairage à LED de $0{,}6\ \mathrm{kW}$ à
+    $0{,}95$ capacitif. Résultat : $27{,}4\ \mathrm{A}$ sur $L_1$ et dans le neutre, $L_1$ du tableau général portée à
+    $122{,}5\ \mathrm{A}$ contre $95{,}3\ \mathrm{A}$ pour $L_2$ et $L_3$, soit $84{,}5\ \%$ de sa part du transformateur, et un
+    déséquilibre que le cours <a href="#/cours/puissance-en-triphase">Puissance en triphasé</a> a obligé à mesurer en trois
+    éléments. Il faut décider d'une répartition et en évaluer le risque.
+  </p>
+  <p>
+    Proposition : remplacer le départ monophasé par un départ triphasé avec neutre, supposé en câble de $4 \times 10\ \mathrm{mm^2}$
+    plus le conducteur de protection, de même longueur, $30\ \mathrm{m}$, et répartir les trois usages sur les trois phases. Le
+    calcul des six affectations possibles, chacune des trois charges sur une phase distincte, montre que l'ordre compte, à
+    cause des déphasages : chauffe-eau sur $L_1$, machines sur $L_2$ et éclairage sur $L_3$ donnent
+    $\underline{I}_1 = 13{,}04\ \mathrm{A}$ à $0^\circ$, $\underline{I}_2 = 13{,}91\ \mathrm{A}$ à $-161{,}41^\circ$,
+    $\underline{I}_3 = 2{,}75\ \mathrm{A}$ à $138{,}19^\circ$, et seulement $I_N = 3{,}40\ \mathrm{A}$ ; échanger les machines et
+    l'éclairage porterait le neutre à $18{,}76\ \mathrm{A}$, parce que le courant en retard des machines se retrouverait presque
+    aligné sur celui du chauffe-eau au lieu de s'y opposer.
+  </p>
+  <figure id="i-atelier-figure">
+    <svg viewBox="0 0 900 400" role="img" aria-label="Départ triphasé avec neutre de l'atelier de maintenance : chauffe-eau entre L1 et N, machines entre L2 et N, éclairage à LED entre L3 et N ; courants 13,04, 13,91 et 2,75 ampères, courant du neutre 3,40 ampères ; relais de surveillance des tensions simples relié à l'automate">
+      <defs>
+        <marker id="fl-i-a" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse">
+          <path d="M0 0 11 5 0 10Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="1.4" fill="none" opacity="0.7">
+        <rect x="30" y="36" width="150" height="290" rx="8"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M60 70H600"/>
+        <path d="M60 110H590M610 110H700"/>
+        <path d="M60 150H590M610 150H690M710 150H800"/>
+        <path d="M60 300H800"/>
+        <path d="M600 70V100A10 10 0 0 1 600 120V140A10 10 0 0 1 600 160V190M600 250V300"/>
+        <path d="M700 110V140A10 10 0 0 1 700 160V190M700 250V300"/>
+        <path d="M800 150V190M800 250V300"/>
+        <rect x="588" y="190" width="24" height="60" rx="3"/>
+        <rect x="688" y="190" width="24" height="60" rx="3"/>
+        <rect x="788" y="190" width="24" height="60" rx="3"/>
+        <rect x="400" y="196" width="140" height="48" rx="6"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.2" fill="none" stroke-dasharray="4 4">
+        <path d="M420 70V196M450 110V196M480 150V196M510 300V244"/>
+        <path d="M470 244V274H360"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="600" cy="300" r="4"/><circle cx="700" cy="300" r="4"/>
+        <circle cx="420" cy="70" r="3.5"/><circle cx="450" cy="110" r="3.5"/><circle cx="480" cy="150" r="3.5"/><circle cx="510" cy="300" r="3.5"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.6" fill="none">
+        <path d="M230 70H270" marker-end="url(#fl-i-a)"/>
+        <path d="M230 110H270" marker-end="url(#fl-i-a)"/>
+        <path d="M230 150H270" marker-end="url(#fl-i-a)"/>
+        <path d="M270 300H230" marker-end="url(#fl-i-a)"/>
+        <path d="M626 248V194" marker-end="url(#fl-i-a)"/>
+        <path d="M726 248V194" marker-end="url(#fl-i-a)"/>
+        <path d="M826 248V194" marker-end="url(#fl-i-a)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="40" y="58" font-size="11.5">tableau général</text>
+        <text x="40" y="74">L1</text><text x="40" y="114">L2</text><text x="40" y="154">L3</text><text x="40" y="304">N</text>
+        <text x="200" y="62">i1 = 13,04 A</text><text x="200" y="102">i2 = 13,91 A</text><text x="200" y="142">i3 = 2,75 A</text>
+        <text x="200" y="322">iN = 3,40 A</text>
+        <text x="200" y="350">câble 4 x 10 mm² + PE, 30 m (hypothèse)</text>
+        <text x="470" y="216" text-anchor="middle" font-size="11">surveillance</text>
+        <text x="470" y="232" text-anchor="middle" font-size="11">des tensions simples</text>
+        <text x="352" y="278" text-anchor="end" font-size="11">vers l'automate</text>
+        <text x="632" y="226" font-size="11">V1</text><text x="732" y="226" font-size="11">V2</text><text x="832" y="226" font-size="11">V3</text>
+        <text x="600" y="330" text-anchor="middle" font-size="11">chauffe-eau</text>
+        <text x="600" y="346" text-anchor="middle" font-size="11">3 kW</text>
+        <text x="700" y="330" text-anchor="middle" font-size="11">machines</text>
+        <text x="700" y="346" text-anchor="middle" font-size="11">2,4 kW</text>
+        <text x="700" y="362" text-anchor="middle" font-size="11">cos φ 0,75</text>
+        <text x="800" y="330" text-anchor="middle" font-size="11">éclairage LED</text>
+        <text x="800" y="346" text-anchor="middle" font-size="11">0,6 kW</text>
+        <text x="800" y="362" text-anchor="middle" font-size="11">0,95 capacitif</text>
+        <text x="40" y="384">courants calculés sous 230 V, charges à leur point nominal ; convention récepteur ; référence : N</text>
+      </g>
+    </svg>
+    <figcaption>
+      Départ triphasé de l'atelier, en représentation multifilaire simplifiée. Les quatre traits horizontaux sont $L_1$, $L_2$, $L_3$
+      et le neutre, issus du tableau général à gauche. Chaque charge, en rectangle, relie sa phase au neutre ; les arcs sont des
+      enjambements sans connexion, les points des connexions. Les flèches horizontales donnent les courants de ligne, vers
+      l'atelier, et le courant du neutre, vers le tableau ; les flèches verticales sont les tensions simples aux bornes des
+      charges, pointe vers la phase. Le boîtier relié en tirets aux quatre conducteurs surveille les trois tensions simples et
+      signale tout écart à l'automate.
+    </figcaption>
+  </figure>
+  <p>
+    Effets sur le départ : avec $0{,}062\ \Omega$ et $0{,}0025\ \Omega$ par conducteur, la chute de chaque charge vaut
+    $\left|\underline{Z}_c(\underline{I}_k + \underline{I}_N)\right|$ en projection, soit $0{,}30\ \%$ pour le chauffe-eau, $0{,}38\ \%$
+    pour les machines et $0{,}03\ \%$ pour l'éclairage, contre $1{,}42\ \%$ en monophasé ; les pertes du câble tombent de
+    $93\ \mathrm{W}$ à $24\ \mathrm{W}$. Effets sur le tableau général : $108{,}2$, $107{,}4$ et $97{,}7\ \mathrm{A}$ au fondamental,
+    soit $74{,}6$, $74{,}1$ et $67{,}4\ \%$ de la part de chaque phase du transformateur ; l'écart maximal à la moyenne passe de
+    $17{,}4\ \%$ à $6{,}4\ \%$, et le neutre du tableau ne porte plus que $3{,}40\ \mathrm{A}$ au lieu de $27{,}4\ \mathrm{A}$.
+  </p>
+  <p>
+    Risque nouveau : un départ triphasé avec neutre est exposé à la rupture du neutre. Avec les trois charges en service et le
+    modèle à impédance constante, une rupture placerait le point commun à $28{,}6\ \mathrm{V}$ du neutre : $242{,}3\ \mathrm{V}$ au
+    chauffe-eau, $201{,}7\ \mathrm{V}$ aux machines et $248{,}5\ \mathrm{V}$ à l'éclairage. Le cas défavorable est celui où les
+    machines sont arrêtées, le soir par exemple : il ne reste que le chauffe-eau et l'éclairage, le point commun s'écarte de
+    $163{,}6\ \mathrm{V}$ vers $L_1$, l'éclairage reçoit $331{,}5\ \mathrm{V}$, $+44\ \%$, le chauffe-eau $69{,}8\ \mathrm{V}$, et une
+    prise libre de $L_2$ se trouverait à $352\ \mathrm{V}$ du point commun. Des pilotes de LED, conçus pour une plage étroite autour
+    de $230\ \mathrm{V}$, n'y survivraient pas ; le modèle à impédance constante n'est d'ailleurs plus valable pour eux à ce
+    niveau, mais l'ordre de grandeur suffit à la décision.
+  </p>
+
+  <h3 id="i-compromis">Contraintes, risques et compromis</h3>
+  <ul>
+    <li><strong>Affectation des phases :</strong> chauffe-eau sur $L_1$, machines sur $L_2$, éclairage sur $L_3$ ; l'affectation est repérée sur le schéma et sur les borniers, car une permutation lors d'une intervention ferait passer le neutre de $3{,}4$ à $18{,}8\ \mathrm{A}$.</li>
+    <li><strong>Neutre :</strong> même section que les phases, aucun dispositif ne le coupe sans couper les phases, serrage des connexions contrôlé à la mise en service et lors de la maintenance, par exemple par thermographie ; ces dispositions sont à confirmer dans la norme d'installation applicable.</li>
+    <li><strong>Surveillance :</strong> un relais de surveillance des tensions simples, réglé pour signaler à l'automate une tension hors d'une plage à définir, de l'ordre de $\pm 10\ \%$, et commander la coupure du départ ; il protège l'éclairage, le plus exposé.</li>
+    <li><strong>Évolution :</strong> toute nouvelle charge monophasée de l'atelier sera affectée par le calcul du courant du neutre, pas par la place libre dans le tableau.</li>
+    <li><strong>Limite du calcul :</strong> l'éclairage à LED et les machines électroniques produisent des courants harmoniques qui s'ajoutent dans le neutre au lieu de s'y compenser ; le cours Harmoniques et qualité de l'énergie dira si les $3{,}40\ \mathrm{A}$ au fondamental suffisent à décrire le neutre réel.</li>
+  </ul>
+
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : ce que cette séance ajoute</span>
+    <p>
+      Rééquilibrage du départ de l'atelier de maintenance : départ monophasé remplacé par un départ triphasé avec neutre, câble
+      supposé de $4 \times 10\ \mathrm{mm^2}$ plus le conducteur de protection sur $30\ \mathrm{m}$ ; chauffe-eau de $3\ \mathrm{kW}$
+      sur $L_1$, machines de $2{,}4\ \mathrm{kW}$ à $\cos\varphi = 0{,}75$ sur $L_2$, éclairage à LED de $0{,}6\ \mathrm{kW}$ capacitif
+      sur $L_3$ ; courants $13{,}04$, $13{,}91$ et $2{,}75\ \mathrm{A}$, neutre à $3{,}40\ \mathrm{A}$ au lieu de $27{,}4\ \mathrm{A}$,
+      $18{,}76\ \mathrm{A}$ si l'on permutait machines et éclairage ; chute de tension maximale $0{,}38\ \%$ contre $1{,}42\ \%$, pertes
+      du câble de $93$ à $24\ \mathrm{W}$ ; tableau général à $108{,}2$, $107{,}4$ et $97{,}7\ \mathrm{A}$, soit $74{,}6\ \%$ au plus de
+      la part d'une phase du transformateur, écart à la moyenne de $17{,}4$ à $6{,}4\ \%$. Risque de rupture du neutre chiffré :
+      $331{,}5\ \mathrm{V}$ sur l'éclairage machines arrêtées ; neutre de pleine section, jamais coupé seul, connexions contrôlées,
+      relais de surveillance des tensions simples relié à l'automate. Hypothèses d'étude à remplacer par les plaques des
+      équipements, le tracé réel, les catalogues de câbles et la norme d'installation applicable.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Additionner les valeurs efficaces pour obtenir le courant du neutre.</strong> Le neutre porte la somme des phaseurs : $20 + 12{,}5 + 5 = 37{,}5\ \mathrm{A}$ en somme arithmétique, mais $6{,}03\ \mathrm{A}$ en réalité dans l'exemple de la section H.</li>
+    <li><strong>Croire qu'à intensités égales le neutre est vide.</strong> Il faut aussi des déphasages égaux par rapport à chaque tension simple : trois courants de $10\ \mathrm{A}$ dont un seul déphasé de $36{,}87^\circ$ donnent $6{,}32\ \mathrm{A}$ dans le neutre.</li>
+    <li><strong>Appliquer la tension simple aux récepteurs d'une étoile sans neutre.</strong> Elle ne vaut $230\ \mathrm{V}$ que si la charge est équilibrée ; sinon, il faut d'abord calculer $\underline{V}_{N'}$.</li>
+    <li><strong>Penser que la phase la plus chargée subit la surtension.</strong> C'est l'inverse : elle attire le point commun et sa tension baisse ; ce sont les phases peu chargées qui montent.</li>
+    <li><strong>Utiliser le facteur $\sqrt{3}$ entre courants de ligne et de branche d'un triangle déséquilibré.</strong> Il ne vient que de la symétrie ; il faut calculer $\underline{I}_1 = \underline{J}_{12} - \underline{J}_{31}$.</li>
+    <li><strong>Oublier le signe dans la formule de Millman avec neutre.</strong> L'admittance du neutre s'ajoute au dénominateur seulement, puisque le neutre est au potentiel nul ; l'ajouter au numérateur n'a pas de sens.</li>
+    <li><strong>Dimensionner sur la puissance totale.</strong> Une puissance totale inférieure à celle du transformateur n'empêche pas une phase d'être surchargée, comme $L_1$ du site avant rééquilibrage.</li>
+    <li><strong>Couper ou protéger le neutre seul.</strong> Un fusible de neutre qui fond, ou un appareil qui ouvre le neutre avant les phases, crée exactement la rupture de neutre étudiée ici.</li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain : des lampes qui brillent trop sur certains circuits et faiblissent sur d'autres, des alimentations
+    qui grillent sur une même phase, des tensions phase-neutre très différentes alors que les tensions entre phases restent à
+    $400\ \mathrm{V}$, signent une rupture ou une dégradation du neutre. Une tension mesurable entre le neutre d'un tableau
+    divisionnaire et la terre, en charge, est un indice précoce. Les mesures décisives sont les trois tensions simples aux
+    bornes des récepteurs, les trois tensions composées, le courant du neutre et l'échauffement des connexions de neutre.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic
+    industriel et une question conceptuelle. La correction de chacun reste masquée jusqu'à une tentative ou un clic explicite
+    sur "Voir la correction", puis se déroule étape par étape, accompagnée d'un diagramme de phaseurs ou d'une courbe.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma.</p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$\underline{I}_N = \underline{I}_1 + \underline{I}_2 + \underline{I}_3, \qquad \underline{I}_k = \underline{Y}_k\,\underline{V}_k \ \text{(neutre parfait)}$$
+    $$I_N = \sqrt{I_1^2 + I_2^2 + I_3^2 - I_1 I_2 - I_2 I_3 - I_3 I_1} \ \text{(même déphasage sur les trois phases)}$$
+    $$\underline{V}_{N'} = \frac{\sum_k \underline{Y}_k\underline{V}_k}{\sum_k \underline{Y}_k + \underline{Y}_N}, \qquad \underline{V}_{kN'} = \underline{V}_k - \underline{V}_{N'}$$
+    $$\underline{I}_1 = \underline{J}_{12} - \underline{J}_{31}, \qquad \underline{J}_{kl} = \underline{U}_{kl}/\underline{Z}_{kl}$$
+    $$\underline{S} = \sum_k \underline{V}_{kN'}\,\underline{I}_k^{*} = \sum_k \underline{V}_k\,\underline{I}_k^{*} \ \text{si } \sum_k \underline{I}_k = 0$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>Le neutre porte la somme des phaseurs, jamais la somme des valeurs efficaces.</li>
+      <li>Sans neutre, la tension des récepteurs n'est $230\ \mathrm{V}$ que si la charge est équilibrée.</li>
+      <li>Après rupture du neutre, ce sont les phases les moins chargées qui subissent la surtension.</li>
+      <li>Dans un triangle déséquilibré, le facteur $\sqrt{3}$ entre courants de ligne et de branche disparaît.</li>
+      <li>On dimensionne sur la phase la plus chargée, et on ne coupe jamais le neutre sans les phases.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Une charge triphasée déséquilibrée se résout phase par phase. Avec un neutre parfait, chaque récepteur
+    reçoit sa tension simple et le neutre ramène la somme complexe des courants, nulle seulement si modules et déphasages sont
+    identiques. Sans neutre, la loi des nœuds au point commun fixe son potentiel par la formule de Millman : le point étoile se
+    déplace vers la phase la plus chargée, dont la tension baisse, pendant que les phases peu chargées montent, parfois vers
+    la tension composée. Un neutre résistant donne un déplacement intermédiaire. Un triangle déséquilibré garde ses tensions
+    composées, mais ses courants de ligne ne sont plus dans le rapport $\sqrt{3}$. On dimensionne sur la phase la plus chargée,
+    on répartit les charges monophasées par le calcul et on protège le neutre de toute rupture.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent,
+    <a href="#/cours/puissance-en-triphase">Puissance en triphasé</a> ; une sur le cours
+    <a href="#/cours/impedances-en-regime-sinusoidal">Impédances en régime sinusoïdal</a>, vieux d'une semaine ; la question sur
+    un cours vieux d'un mois n'est pas encore applicable, et elle est remplacée par une question sur le cours
+    <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes de Thévenin, Norton et superposition</a>, dont le
+    théorème de Millman est le cœur de cette séance.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : retrouver par le calcul, puis par une simulation temporelle, les tensions de l'exemple de la section H avec et
+    sans neutre, et observer le rôle de la résistance du neutre. Prédictions à écrire avant de commencer : en simulation, le
+    point commun des charges oscillera-t-il à $50\ \mathrm{Hz}$ par rapport à la masse quand le neutre est rompu ? La puissance
+    totale reçue après rupture sera-t-elle supérieure ou inférieure aux $8{,}05\ \mathrm{kW}$ du fonctionnement normal ?
+  </p>
+  <ol>
+    <li>En Python, sans bibliothèque, définir <code>a = cmath.exp(2j*cmath.pi/3)</code>, <code>V = [230, 230*a**2, 230*a]</code>, <code>Z = [11.5, 14.72+11.04j, 46]</code> et <code>Y = [1/z for z in Z]</code>. Calculer <code>VN = sum(y*v for y, v in zip(Y, V))/sum(Y)</code>, puis <code>abs(V[k]-VN)</code> pour chaque phase, et comparer aux valeurs de la section H.</li>
+    <li>Ajouter une admittance de neutre <code>YN = 1/RN</code> au dénominateur et tracer, avec matplotlib si disponible, les trois tensions en fonction de <code>RN</code> sur une échelle logarithmique de $0{,}01$ à $1000\ \Omega$ ; repérer la valeur de $R_N$ pour laquelle $V_{2N'}$ atteint $240\ \mathrm{V}$.</li>
+    <li>Dans LTspice, saisir trois sources <code>V1 s1 0 SINE(0 325.27 50 0 0 0)</code>, <code>V2 s2 0 SINE(0 325.27 50 0 0 -120)</code>, <code>V3 s3 0 SINE(0 325.27 50 0 0 120)</code>, puis <code>R1 s1 n 11.5</code>, <code>R2 s2 x 14.72</code> et <code>L2 x n 35.14m</code>, <code>R3 s3 n 46</code>, et enfin le neutre <code>RN n 0 1m</code>. Lancer <code>.tran 0 200m 0 20u</code>.</li>
+    <li>Mesurer <code>.meas TRAN V1N RMS V(s1,n) FROM 100m TO 200m</code>, de même pour <code>V(s2,n)</code>, <code>V(s3,n)</code>, et <code>.meas TRAN VNn RMS V(n) FROM 100m TO 200m</code> ; puis remplacer <code>1m</code> par <code>1</code>, puis par <code>1Meg</code>, et relancer.</li>
+  </ol>
+  <p>
+    Résultats attendus : en Python, $191{,}5$, $255{,}0$ et $248{,}0\ \mathrm{V}$ sans neutre, et $V_{2N'} = 240\ \mathrm{V}$ pour
+    $R_N \approx 5{,}9\ \Omega$. Dans LTspice, l'inductance de $35{,}14\ \mathrm{mH}$ donne $X_2 = 11{,}04\ \Omega$ à $50\ \mathrm{Hz}$ ;
+    avec $R_N = 1\ \mathrm{m}\Omega$, environ $230\ \mathrm{V}$ sur chaque charge ; avec $1\ \Omega$, $224{,}8$, $232{,}4$ et
+    $233{,}0\ \mathrm{V}$ et $5{,}2\ \mathrm{V}$ sur le neutre ; avec $1\ \mathrm{M}\Omega$, les valeurs de rupture et environ
+    $38{,}8\ \mathrm{V}$ efficaces entre $n$ et la masse : le point commun oscille bien à $50\ \mathrm{Hz}$. La puissance totale
+    tombe à $7{,}35\ \mathrm{kW}$. Anomalies à observer : une amplitude saisie à $230$ au lieu de $325{,}27$, qui divise les
+    tensions par $\sqrt{2}$ ; une mesure commencée avant $100\ \mathrm{ms}$, faussée par le transitoire de l'inductance, de
+    constante de temps $L/R$ de l'ordre de quelques millisecondes ; un neutre de $1\ \mathrm{M}\Omega$ remplacé par une
+    suppression pure et simple de <code>RN</code>, qui laisse le nœud <code>n</code> sans chemin continu vers la masse et provoque
+    une erreur de matrice singulière.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est calculé dans
+    ce navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées
+    localement pour suivre votre progression. Le jalon de fin du module Triphasé et qualité de l'énergie demande de maîtriser
+    les régimes sinusoïdaux monophasés et triphasés, les puissances, la compensation, les harmoniques et les filtres
+    élémentaires : cette séance en couvre les régimes triphasés déséquilibrés.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Le neutre porte la somme des phaseurs des courants de ligne ; elle n'est nulle que si les trois courants ont même module et même déphasage par rapport à leurs tensions.</li>
+    <li data-rang="02">Sans neutre, le point commun d'une étoile prend le potentiel de Millman $\sum\underline{Y}_k\underline{V}_k / \sum\underline{Y}_k$ : il se déplace vers la phase la plus chargée et met les phases peu chargées en surtension.</li>
+    <li data-rang="03">La qualité du neutre, sa section, ses connexions et l'interdiction de le couper seul fixent la stabilité des tensions de tous les récepteurs monophasés en aval.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> accepter que la phase la plus chargée voie sa tension baisser et que ce
+    soient les autres qui montent, et raisonner en phaseurs, déphasages compris, plutôt qu'en valeurs efficaces. L'image du
+    barycentre, la simulation de recherche du point étoile et le premier exercice intermédiaire sont faits pour installer ce
+    réflexe ; la question de diagnostic industriel le met à l'épreuve.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Harmoniques et qualité de l'énergie, étudie les courants
+    déformés. Question à préparer : trois éclairages à LED identiques, un par phase, absorbent chacun un courant de
+    $2{,}5\ \mathrm{A}$ efficaces au fondamental, parfaitement équilibré, auquel s'ajoute une composante de rang 3, à
+    $150\ \mathrm{Hz}$, de $1{,}5\ \mathrm{A}$ efficaces. D'après cette séance, le neutre devrait être vide. Que vaut réellement
+    le courant du neutre ? Indice : décalez de $120^\circ$ à $50\ \mathrm{Hz}$ trois sinusoïdes à $150\ \mathrm{Hz}$, et regardez de
+    combien elles sont décalées entre elles.
+  </p>
+
+</article>
