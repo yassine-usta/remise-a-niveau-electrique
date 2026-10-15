@@ -1,0 +1,1150 @@
+<article class="cours" data-slug="harmoniques-et-qualite-de-l-energie">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/charges-triphasees-desequilibrees">Charges triphasées déséquilibrées</a> s'est achevé sur une
+      question : trois éclairages à LED identiques, un par phase, absorbent chacun $2{,}5\ \mathrm{A}$ efficaces au fondamental,
+      parfaitement équilibrés, plus une composante de rang 3, à $150\ \mathrm{Hz}$, de $1{,}5\ \mathrm{A}$ efficaces. Réponse,
+      établie dans cette séance : les fondamentaux se compensent dans le neutre, mais les trois composantes de rang 3 y sont
+      exactement en phase, car un décalage de $120^\circ$ à $50\ \mathrm{Hz}$ devient $3 \times 120^\circ = 360^\circ$ à
+      $150\ \mathrm{Hz}$. Elles s'additionnent : le neutre porte $3 \times 1{,}5 = 4{,}5\ \mathrm{A}$, alors que chaque phase
+      porte $\sqrt{2{,}5^2 + 1{,}5^2} = 2{,}92\ \mathrm{A}$ efficaces vrais. Le neutre d'un réseau parfaitement équilibré porte
+      $1{,}54$ fois le courant d'une phase. Ce résultat rassemble trois outils déjà rencontrés : la valeur efficace d'un signal
+      composé, vue dans le cours <a href="#/cours/signaux-periodiques-et-sinusoides">Signaux périodiques et sinusoïdes</a> ; la
+      somme de phaseurs du cours <a href="#/cours/nombres-complexes-et-phaseurs">Nombres complexes et phaseurs</a> ; le courant
+      du neutre du cours précédent. La séance les organise autour d'une idée : un courant déformé est une somme de sinusoïdes de
+      fréquences multiples, et chacune se traite comme dans les cours précédents, à sa propre fréquence.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Jusqu'ici, tensions et courants étaient des sinusoïdes à $50\ \mathrm{Hz}$. Ce n'est plus le cas d'une grande partie des
+    courants d'une installation moderne. Variateurs de vitesse, alimentations à découpage des ordinateurs et des automates,
+    éclairage à LED, chargeurs de batteries, onduleurs, fours à arc et postes de soudage sont des charges non linéaires : leur
+    courant n'est pas proportionnel à la tension qui les alimente. Le courant qu'elles appellent est périodique, à
+    $50\ \mathrm{Hz}$, mais déformé : il contient, en plus du fondamental, des composantes de fréquences multiples, les
+    harmoniques. Le cours <a href="#/cours/signaux-periodiques-et-sinusoides">Signaux périodiques et sinusoïdes</a> en a déjà
+    montré une conséquence, l'erreur d'une pince à valeur moyenne face aux créneaux du variateur de la pompe.
+  </p>
+  <p>
+    Les conséquences pratiques sont nombreuses et coûteuses : neutres qui chauffent alors que les phases sont équilibrées,
+    transformateurs qui vieillissent plus vite que prévu à puissance égale, condensateurs de compensation qui gonflent ou
+    explosent, disjoncteurs qui déclenchent sans surcharge apparente, moteurs qui chauffent et vibrent, mesures fausses,
+    électronique sensible qui se dérègle. Les courants harmoniques, en traversant l'impédance du réseau, déforment aussi la
+    tension, et la pollution d'un utilisateur se propage à ses voisins. La qualité de l'énergie, au sens large, regroupe ces
+    défauts de forme d'onde avec les creux de tension, les surtensions, le papillotement, le déséquilibre et les coupures.
+    Cette séance traite surtout la distorsion harmonique : la mesurer par le taux de distorsion, le THD, comprendre d'où elle
+    vient et ce qu'elle fait aux équipements. Son travail central est de calculer un THD et d'en tirer les conséquences
+    pratiques, sur le site du projet fil rouge.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Calculer la valeur efficace vraie, le taux de distorsion harmonique, rapporté au fondamental ou à la valeur efficace, et le facteur de puissance d'un courant à partir de son spectre.</li>
+    <li data-rang="02">Expliquer pourquoi un redresseur à condensateur appelle un courant en impulsions, et interpréter le spectre qui en résulte.</li>
+    <li data-rang="03">Calculer le courant du neutre d'un réseau triphasé équilibré qui alimente des charges non linéaires monophasées, à partir de la séquence de chaque rang.</li>
+    <li data-rang="04">Estimer la distorsion de tension créée au jeu de barres par un courant harmonique, avec ou sans résonance d'une batterie de condensateurs.</li>
+    <li data-rang="05">Diagnostiquer, à partir de symptômes de terrain, une perturbation harmonique, et comparer les remèdes possibles.</li>
+    <li data-rang="06">Interpréter un spectre et un taux de distorsion en précisant la convention, les hypothèses du modèle et les limites de la mesure.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois acquis suffisent. Le premier : la valeur efficace d'une somme de sinusoïdes de fréquences différentes se calcule par
+    la racine de la somme des carrés des valeurs efficaces, parce que le produit de deux sinusoïdes de fréquences différentes a
+    une valeur moyenne nulle sur une période commune. Le deuxième : la réactance d'une inductance est proportionnelle à la
+    fréquence, $X_L = L\omega$, et celle d'un condensateur lui est inversement proportionnelle, $X_C = 1/(C\omega)$ ; au rang
+    $h$, la fréquence est multipliée par $h$. Le troisième : un déphasage d'un angle $\alpha$ à la fréquence fondamentale
+    devient $h\alpha$ pour la composante de rang $h$, puisque $\sin\left(h(\omega t - \alpha)\right) = \sin(h\omega t - h\alpha)$.
+    Le mini-test ci-dessous n'est pas noté ; la correction de chaque question reste masquée jusqu'à une tentative ou un clic
+    explicite sur "Voir la correction".
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-non-lineaire">Une charge non linéaire déforme le courant, pas la tension</h3>
+  <p>
+    Une résistance, une inductance ou un condensateur idéal, alimentés par une tension sinusoïdale, appellent un courant
+    sinusoïdal de même fréquence : ce sont des dipôles linéaires, le courant est relié à la tension par une équation
+    différentielle linéaire. Une diode ne l'est pas : elle conduit dans un seul sens, et seulement quand la tension à ses bornes
+    dépasse son seuil. Le cas le plus répandu est le redresseur à condensateur, à l'entrée de presque toutes les alimentations
+    électroniques sans correction du facteur de puissance : un pont de diodes charge un condensateur, qui alimente le
+    convertisseur. Le condensateur reste chargé près de la crête de la tension du réseau. Les diodes ne conduisent donc que
+    lorsque la tension du réseau, en valeur absolue, dépasse celle du condensateur, c'est-à-dire pendant un court intervalle
+    autour de chaque crête. Pendant ce bref instant, il faut rendre au condensateur toute la charge que la charge lui a prise
+    pendant le reste de la demi-période : le courant prend la forme d'une impulsion étroite et haute, positive à chaque crête
+    positive, négative à chaque crête négative.
+  </p>
+  <p>
+    Analogie contrôlée : un réservoir surélevé alimente un robinet ouvert en permanence ; il est rempli par une pompe dont la
+    pression varie périodiquement, à travers un clapet anti-retour. Le clapet ne s'ouvre que lorsque la pression de la pompe
+    dépasse celle du réservoir, donc près de chaque maximum. Le robinet débite régulièrement, mais la conduite de la pompe ne
+    voit passer l'eau que par gorgées brèves et violentes. Le débit moyen est le même que si l'eau coulait régulièrement, mais
+    les pointes, et les pertes par frottement qui croissent comme le carré du débit, sont bien plus fortes.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie</span>
+    <p>
+      L'analogie rend compte de la conduction par intervalles et du fait que la valeur efficace d'un courant en impulsions
+      dépasse largement celle d'un courant sinusoïdal qui transporterait la même puissance. Elle échoue sur deux points. Le
+      clapet ne s'ouvre que dans un sens, alors que le pont de diodes redresse les deux alternances : le courant du réseau est
+      alternatif, symétrique, sans composante continue, et c'est pourquoi il ne contient que des rangs impairs. Ensuite, la
+      pression de la pompe est imposée, alors que la tension du réseau est elle-même déformée par ces impulsions, qui
+      traversent l'impédance de la source : la section E le montre. Sauf mention contraire, la séance suppose des grandeurs
+      périodiques en régime établi, une tension de source sinusoïdale de $230/400\ \mathrm{V}$, $50\ \mathrm{Hz}$, et des
+      composantes harmoniques indépendantes les unes des autres.
+    </p>
+  </div>
+  <p>
+    Le schéma suivant fixe les conventions du redresseur monophasé à condensateur étudié dans la simulation qui le suit.
+  </p>
+  <figure id="d-redresseur-figure">
+    <svg viewBox="0 0 760 380" role="img" aria-label="Redresseur monophasé à condensateur : source sinusoïdale v(t) entre phase et neutre, inductance Ls et résistance Rs en série, pont de quatre diodes, condensateur C et convertisseur à puissance constante P côté continu ; courant de ligne iL, courant redressé iD, tension vC du condensateur">
+      <defs>
+        <marker id="fl-d-r" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse">
+          <path d="M0 0 11 5 0 10Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="60" cy="190" r="24"/>
+        <path d="M48 190c4 -8 8 -8 12 0s8 8 12 0"/>
+        <path d="M60 166V90H120"/>
+        <path d="M120 90a10 10 0 0 1 20 0a10 10 0 0 1 20 0a10 10 0 0 1 20 0"/>
+        <path d="M180 90H195"/>
+        <rect x="195" y="80" width="40" height="20" rx="3"/>
+        <path d="M235 90H300V190H320"/>
+        <path d="M60 214V340H480V300A10 10 0 0 1 480 280V190H440"/>
+        <path d="M320 190L380 130L440 190L380 250Z"/>
+        <path d="M380 130V70H680V160"/>
+        <path d="M380 250V290H680V220"/>
+        <path d="M580 70V172M580 188V290"/>
+        <path d="M560 172H600M560 188H600"/>
+        <rect x="655" y="160" width="50" height="60" rx="4"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2" fill="none" stroke-linejoin="round">
+        <g transform="translate(350 160) rotate(-45)"><path d="M-8 -8L8 0L-8 8Z"/><path d="M8 -9V9"/></g>
+        <g transform="translate(410 160) rotate(-135)"><path d="M-8 -8L8 0L-8 8Z"/><path d="M8 -9V9"/></g>
+        <g transform="translate(350 220) rotate(-135)"><path d="M-8 -8L8 0L-8 8Z"/><path d="M8 -9V9"/></g>
+        <g transform="translate(410 220) rotate(-45)"><path d="M-8 -8L8 0L-8 8Z"/><path d="M8 -9V9"/></g>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="580" cy="70" r="4"/><circle cx="580" cy="290" r="4"/>
+        <circle cx="320" cy="190" r="3.5"/><circle cx="440" cy="190" r="3.5"/><circle cx="380" cy="130" r="3.5"/><circle cx="380" cy="250" r="3.5"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.6" fill="none">
+        <path d="M75 60H110" marker-end="url(#fl-d-r)"/>
+        <path d="M450 56H500" marker-end="url(#fl-d-r)"/>
+        <path d="M620 272V110" marker-end="url(#fl-d-r)"/>
+        <path d="M24 226V156" marker-end="url(#fl-d-r)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="80" y="52">iL</text>
+        <text x="460" y="48">iD</text>
+        <text x="628" y="196">vC</text>
+        <text x="2" y="150">v(t)</text>
+        <text x="72" y="160">+</text>
+        <text x="138" y="72">Ls</text>
+        <text x="204" y="72">Rs</text>
+        <text x="560" y="164">+</text>
+        <text x="590" y="200">C</text>
+        <text x="660" y="194">P cste</text>
+        <text x="386" y="122">+</text>
+        <text x="386" y="270">-</text>
+        <text x="370" y="196">pont</text>
+        <text x="90" y="362">N : neutre, référence des potentiels ; v(t) = 325,3 sin(ωt) V</text>
+        <text x="500" y="320">convertisseur : puissance P</text>
+        <text x="500" y="336">appelée sous la tension vC</text>
+      </g>
+    </svg>
+    <figcaption>
+      Redresseur monophasé à condensateur, alimenté entre phase et neutre. La source $v(t)$, à gauche, a sa borne positive en
+      haut ; le neutre $N$, en bas, est la référence des potentiels. L'inductance $L_s$ et la résistance $R_s$ représentent la
+      ligne, la source et les pertes du pont. Les quatre diodes du losange conduisent deux par deux : vers le haut, la borne $+$
+      du côté continu, quand la phase est positive, et symétriquement. Le courant de ligne $i_L$ est compté de la source vers le
+      pont ; le courant redressé $i_D$, toujours positif, va du pont vers le condensateur $C$ et le convertisseur, modélisé par
+      une puissance constante $P$. La flèche $v_C$ pointe vers la borne $+$ du condensateur : pont et charge sont en convention
+      récepteur. Le seul croisement sans connexion est l'enjambement en arc, à droite du pont.
+    </figcaption>
+  </figure>
+
+  <h3 id="d-redresseur-section">Simulation interactive : le courant d'un redresseur à condensateur</h3>
+  <p>
+    La simulation résout pas à pas les équations du schéma sur quatorze périodes, puis affiche la dernière, en régime établi :
+    tension du réseau, tension du condensateur et courant de ligne. Elle décompose ensuite ce courant en harmoniques. Les
+    curseurs règlent la capacité, la puissance du convertisseur et l'inductance de ligne. Avant de manipuler, prédisez : en
+    doublant la capacité, le taux de distorsion augmente-t-il ou diminue-t-il ? Le taux de distorsion
+    est-il plutôt de $10\ \%$, de $50\ \%$ ou de plus de $100\ \%$ ? Une inductance de ligne plus forte améliore-t-elle ou
+    dégrade-t-elle la forme du courant ?
+  </p>
+  <figure id="d-redr-figure">
+    <div id="d-redr-trace"></div>
+    <div id="d-redr-spectre"></div>
+    <figcaption>
+      En haut, sur une période de $20\ \mathrm{ms}$ en régime établi : la tension du réseau $v$, la tension du condensateur
+      $v_C$, toutes deux en volts sur l'échelle de gauche, et le courant de ligne $i_L$, multiplié par $10$ pour être lisible
+      sur la même échelle, chacun nommé dans la légende avec sa couleur réelle. Le trait pointillé horizontal est le zéro. En
+      bas, le spectre du courant de ligne : valeur efficace de chaque rang impair, en pourcentage du fondamental, du rang 1 au
+      rang 15. Conventions du schéma précédent.
+    </figcaption>
+  </figure>
+  <div id="d-redr-curseurs"></div>
+  <div id="d-redr-valeurs"></div>
+  <p>
+    Interprétation : avec $330\ \mu\mathrm{F}$, $500\ \mathrm{W}$ et $0{,}5\ \mathrm{mH}$, le courant de ligne ne circule que
+    pendant environ un cinquième de chaque demi-période, en impulsions d'environ $14\ \mathrm{A}$ crête, alors qu'une sinusoïde
+    transportant la même puissance n'atteindrait que $3{,}2\ \mathrm{A}$ crête. Le spectre décroît lentement : rang 3 vers
+    $94\ \%$, rang 5 vers $83\ \%$, rang 7 vers $68\ \%$ du fondamental, et le taux de distorsion dépasse $150\ \%$. La
+    valeur efficace vraie, $4{,}2\ \mathrm{A}$, vaut presque le double du fondamental, $2{,}25\ \mathrm{A}$ : le facteur de
+    puissance tombe vers $0{,}53$ alors que le fondamental reste presque en phase avec la tension. Doubler la capacité réduit l'ondulation de $v_C$
+    de $40$ à environ $20\ \mathrm{V}$, mais change peu le courant : le taux baisse à peine, vers $151\ \%$, car c'est surtout
+    l'inductance de ligne qui fixe la durée de conduction. Réduire la capacité à $100\ \mu\mathrm{F}$ abaisse le taux vers
+    $124\ \%$, au prix d'une ondulation de plus de $130\ \mathrm{V}$, inacceptable pour le convertisseur. Une inductance de ligne
+    plus forte élargit et abaisse les impulsions : à $2\ \mathrm{mH}$, le taux tombe vers $125\ \%$ et le facteur de crête de
+    $3{,}4$ à $2{,}9$. C'est le principe des selfs de ligne des variateurs.
+  </p>
+
+  <h3 id="d-superposition">Un courant déformé est une somme de sinusoïdes</h3>
+  <p>
+    Tout courant périodique de période $T$, aussi déformé soit-il, peut s'écrire comme la somme d'une sinusoïde de même période,
+    le fondamental, et de sinusoïdes de fréquences $2f$, $3f$, $4f$, et ainsi de suite, les harmoniques de rangs 2, 3, 4. Ce
+    n'est pas une approximation commode : c'est un résultat mathématique, la décomposition en série de Fourier, que le cours
+    Introduction à Fourier établira. Physiquement, chaque harmonique se comporte, dans un réseau linéaire, comme un courant
+    sinusoïdal indépendant, auquel s'appliquent toutes les méthodes des cours précédents : phaseurs, impédances, puissances,
+    à sa propre fréquence.
+  </p>
+  <p>
+    L'animation suivante reconstruit le courant d'arrivée du variateur de la pompe, modélisé dans le cours
+    <a href="#/cours/signaux-periodiques-et-sinusoides">Signaux périodiques et sinusoïdes</a> par des créneaux de $120^\circ$
+    de $61{,}2\ \mathrm{A}$ crête, en ajoutant les rangs un par un. Le lecteur ajoute les harmoniques, avec pause, vitesse et
+    remise à zéro. Avant de lancer, prédisez : la valeur efficace de la somme partielle augmente-t-elle beaucoup quand on
+    ajoute les harmoniques, alors que la forme change beaucoup ? Pourquoi les rangs 2, 3 et 4 n'apparaissent-ils pas ?
+  </p>
+  <figure id="d-super-figure">
+    <div id="d-super-trace"></div>
+    <figcaption>
+      Le créneau de $120^\circ$, en trait fin, et la somme partielle de ses harmoniques jusqu'au rang atteint, en trait épais,
+      en ampères en fonction de l'angle $\omega t$ en degrés sur une période. La dernière sinusoïde ajoutée est tracée en trait
+      moyen ; chaque courbe est nommée dans la légende avec sa couleur réelle. Courant compté de la source vers le variateur.
+    </figcaption>
+  </figure>
+  <div id="d-super-lecteur"></div>
+  <div id="d-super-valeurs"></div>
+  <p>
+    Interprétation : le fondamental seul porte déjà $47{,}75\ \mathrm{A}$ des $50\ \mathrm{A}$ efficaces, soit $95{,}5\ \%$.
+    L'ajout des rangs 5 et 7 corrige l'essentiel de la forme, les rangs suivants raidissent les fronts, mais la valeur efficace
+    ne gagne qu'environ $2\ \mathrm{A}$ jusqu'au rang 25 : les harmoniques changent beaucoup la forme et peu la valeur efficace, parce qu'ils
+    s'ajoutent en carrés. Les rangs pairs manquent, parce que le courant a la symétrie de demi-onde, $i(t + T/2) = -i(t)$, que
+    possède tout courant d'un convertisseur symétrique. Les multiples de 3 manquent, parce que le créneau de $120^\circ$ est
+    la différence de deux courants de phase d'un pont triphasé, une propriété que le cours Redresseurs triphasés expliquera.
+    Il reste les rangs $6k \pm 1$ : 5, 7, 11, 13, d'amplitude $I_1/h$. Le petit dépassement près des fronts, qui ne disparaît
+    pas en ajoutant des rangs, est le phénomène de Gibbs, propre à toute somme partielle d'un signal discontinu.
+  </p>
+
+  <h3 id="d-sequence">Pourquoi certains rangs s'additionnent dans le neutre</h3>
+  <p>
+    Dans un réseau triphasé équilibré, la phase 2 est en retard de $120^\circ$ sur la phase 1, c'est-à-dire de $T/3$. Si les
+    trois charges sont identiques, le courant de la phase 2 est celui de la phase 1, retardé de $T/3$. Or retarder de $T/3$
+    une sinusoïde de fréquence $3f$, c'est la retarder d'une période entière de cette composante : les trois composantes de
+    rang 3 sont en phase. Elles ne se compensent plus dans le neutre, elles s'y additionnent. Pour le rang 5, le retard
+    devient $5 \times 120^\circ = 600^\circ$, soit $240^\circ$, ou $-120^\circ$ : les trois composantes forment un système
+    équilibré, mais d'ordre inverse. Pour le rang 7, $840^\circ$, soit $120^\circ$ : ordre direct.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'image</span>
+    <p>
+      Ce raisonnement suppose trois courants de forme identique, simplement décalés de $T/3$ : charges identiques sur les trois
+      phases et tensions équilibrées. Avec des charges différentes, chaque rang a ses propres modules et déphasages, et il faut
+      revenir à la somme des phaseurs rang par rang, comme dans le cours précédent. Il suppose aussi un neutre présent : sur un
+      réseau à trois fils, les composantes de rang 3 n'ont pas de chemin de retour et ne peuvent pas circuler en ligne, ce qui
+      modifie le courant appelé par la charge elle-même.
+    </p>
+  </div>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-decomposition">Décomposition harmonique et valeur efficace</h3>
+  <p>
+    Un courant périodique de pulsation fondamentale $\omega = 2\pi f$ s'écrit, en régime établi, comme une composante continue
+    et une somme de sinusoïdes de rangs entiers. On note $I_h$ la valeur efficace de la composante de rang $h$ et $\varphi_h$
+    son déphasage. La valeur efficace $I$ est la racine de la moyenne de $i^2$. En développant le carré, les termes croisés
+    $\sin(h\omega t + \varphi_h)\sin(k\omega t + \varphi_k)$ avec $h \neq k$ ont une valeur moyenne nulle sur une période :
+    ils s'écrivent comme une différence de deux cosinus de pulsations $(h - k)\omega$ et $(h + k)\omega$, non nulles. Il ne
+    reste que les carrés.
+  </p>
+  <div class="formule-cle">
+    $$i(t) = I_0 + \sum_{h \geq 1} \sqrt{2}\,I_h \sin(h\omega t + \varphi_h), \qquad I = \sqrt{I_0^2 + \sum_{h \geq 1} I_h^2}$$
+    <p class="formule-cle-legende">
+      $i$ en ampères, $I_0$ valeur moyenne, $I_h$ valeur efficace du rang $h$, en ampères ; $\varphi_h$ en radians ;
+      $\omega$ en $\mathrm{rad/s}$. Hypothèses : signal périodique, régime établi. Interprétation : chaque rang contribue à
+      l'échauffement indépendamment des autres et de son déphasage. Cas limite : un seul rang, $I = I_1$, la sinusoïde.
+      Vérification dimensionnelle : racine d'une somme de carrés d'ampères, des ampères. Pour les courants du réseau,
+      $I_0 = 0$ et, par symétrie de demi-onde, les rangs pairs sont nuls ou négligeables.
+    </p>
+  </div>
+
+  <h3 id="e-thd">Taux de distorsion harmonique : deux conventions</h3>
+  <p>
+    Le taux de distorsion harmonique, THD, compare la valeur efficace de l'ensemble des harmoniques à une valeur de
+    référence. La convention la plus répandue, notée ici $\mathrm{THD}_F$, prend pour référence le fondamental. Une autre,
+    $\mathrm{THD}_R$, prend la valeur efficace totale. Elles se déduisent l'une de l'autre en remplaçant
+    $\sum_{h \geq 2} I_h^2$ par $I^2 - I_1^2$.
+  </p>
+  <div class="formule-cle">
+    $$\mathrm{THD}_F = \frac{\sqrt{\sum_{h \geq 2} I_h^2}}{I_1}, \qquad \mathrm{THD}_R = \frac{\sqrt{\sum_{h \geq 2} I_h^2}}{I} = \frac{\mathrm{THD}_F}{\sqrt{1 + \mathrm{THD}_F^2}}, \qquad I = I_1\sqrt{1 + \mathrm{THD}_F^2}$$
+    <p class="formule-cle-legende">
+      Taux sans dimension, exprimés en pourcentage. Hypothèses : $I_0 = 0$, rangs pris en compte jusqu'à une limite qu'il faut
+      préciser, souvent 40 ou 50 sur les analyseurs. Interprétation : $\mathrm{THD}_F$ peut dépasser $100\ \%$, quand les
+      harmoniques pèsent plus que le fondamental ; $\mathrm{THD}_R$ reste toujours inférieur à $100\ \%$. Cas limites :
+      sinusoïde, les deux taux sont nuls ; distorsion faible, ils sont presque égaux, $10\ \%$ contre $9{,}95\ \%$. Ils
+      divergent fortement pour les courants très déformés : $150\ \%$ contre $83\ \%$. Le même calcul s'applique à la tension,
+      $\mathrm{THD}_V$. Sauf mention contraire, ce cours utilise $\mathrm{THD}_F$.
+    </p>
+  </div>
+  <p>
+    Une troisième convention, le taux de distorsion rapporté au courant de demande maximal de l'installation, est employée
+    par certains textes pour fixer des limites d'émission : un courant faible très déformé y pèse peu. Comme le choix de la
+    convention change la valeur d'un facteur qui peut dépasser deux, un taux de distorsion n'a de sens qu'accompagné de sa
+    référence et du nombre de rangs pris en compte.
+  </p>
+
+  <h3 id="e-crete">Facteur de crête : le THD ne fixe pas la forme</h3>
+  <p>
+    Le THD et la valeur efficace ne dépendent que des modules $I_h$. La forme du signal, et donc sa valeur de crête, dépend
+    aussi des déphasages $\varphi_h$. Deux courants de même spectre en module peuvent avoir des crêtes très différentes. Or
+    la crête compte : un redresseur à condensateur charge la source surtout à la crête, l'aplatissement de la tension à la
+    crête diminue la tension continue des alimentations, et certains appareils de protection ou de mesure réagissent à la
+    crête. On définit le facteur de crête $F_c = \hat{I}/I$, qui vaut $\sqrt{2} = 1{,}414$ pour une sinusoïde.
+  </p>
+  <div class="formule-cle">
+    $$F_c = \frac{\hat{I}}{I}, \qquad \text{sinusoïde : } F_c = \sqrt{2}, \qquad \text{créneau de } 120^\circ : F_c = \sqrt{3/2} = 1{,}225$$
+    <p class="formule-cle-legende">
+      $\hat{I}$ valeur de crête en ampères, $I$ valeur efficace vraie en ampères ; $F_c$ sans dimension. Il n'existe pas de
+      relation générale entre $F_c$ et le THD. Cas limites : un signal carré a $F_c = 1$ ; une impulsion de plus en plus
+      étroite fait croître $F_c$ sans limite. Le facteur de crête admissible d'un appareil de mesure, vu dans le cours
+      <a href="#/cours/signaux-periodiques-et-sinusoides">Signaux périodiques et sinusoïdes</a>, est une donnée du constructeur.
+    </p>
+  </div>
+
+  <h3 id="e-composer-section">Simulation interactive : composer un courant à partir de son spectre</h3>
+  <p>
+    La simulation construit un courant $i = \sqrt{2}\,I_1\left[\sin\theta + \tau_3\sin(3\theta + \varphi_3) + \tau_5\sin 5\theta + \tau_7\sin 7\theta\right]$,
+    avec $I_1 = 10\ \mathrm{A}$ et $\theta = \omega t$. La poignée du phaseur du rang 3, dans le cadre du haut, se déplace à
+    la souris, au doigt ou au clavier après l'avoir sélectionnée : elle fixe l'angle $\varphi_3$, compté positivement dans le sens
+    trigonométrique, et sa longueur est fixée par le taux $\tau_3$. Les curseurs règlent les taux $\tau_3$, $\tau_5$ et
+    $\tau_7$. Avant de manipuler, prédisez : avec $\tau_3 = 30\ \%$ seul, le facteur de crête change-t-il quand on fait tourner
+    le phaseur du rang 3 ? Pour quel angle la crête est-elle la plus forte, et quelle forme évoque alors le courant ?
+  </p>
+  <figure id="e-composer-figure">
+    <div class="schema-vivant" id="e-composer"></div>
+    <div id="e-composer-trace"></div>
+    <div id="e-composer-spectre"></div>
+    <figcaption>
+      Dans le cadre du haut, à gauche, le phaseur du fondamental, flèche fine fixe sur l'axe de référence, et le phaseur du rang
+      3, flèche épaisse dont la longueur suit $\tau_3$ et dont la direction est fixée par la poignée ronde posée sur le cercle en
+      tirets ; l'arc fin marque l'angle $\varphi_3$. À droite, la valeur de $\varphi_3$, la crête et le facteur de crête. Au-dessous, le courant composé, en trait épais, et le fondamental seul, en trait fin, en ampères sur une
+      période, chacun nommé dans la légende avec sa couleur réelle ; le trait pointillé est le zéro. En bas, le spectre en
+      pourcentage du fondamental, qui ne dépend pas de $\varphi_3$.
+    </figcaption>
+  </figure>
+  <div id="e-composer-curseurs"></div>
+  <div id="e-composer-valeurs"></div>
+  <p>
+    Interprétation : avec $\tau_3 = 30\ \%$ seul, le THD reste $30\ \%$ et la valeur efficace $10{,}44\ \mathrm{A}$ quel que
+    soit $\varphi_3$, mais la crête varie de $13{,}0$ à $18{,}4\ \mathrm{A}$. À $\varphi_3 = 0$, le rang 3 creuse la crête du
+    fondamental : le courant est aplati, $F_c = 1{,}25$. À $\varphi_3 = 180^\circ$, il la renforce : le courant est pointu,
+    $F_c = 1{,}76$, l'allure du courant d'un redresseur à condensateur. Un taux de distorsion ne suffit donc ni à reconstruire
+    un signal, ni à prévoir sa crête : il faut le spectre complet, modules et phases, ou une mesure de crête.
+  </p>
+
+  <h3 id="e-puissance">Puissances et facteur de puissance avec harmoniques</h3>
+  <p>
+    Supposons la tension sinusoïdale, de valeur efficace $V$, et le courant déformé. La puissance active est la valeur
+    moyenne de $v\,i$. Par le même argument d'orthogonalité, seul le produit de la tension par le fondamental du courant a une
+    moyenne non nulle : les harmoniques de courant ne transportent aucune puissance active quand la tension est sinusoïdale.
+    La puissance apparente, elle, utilise la valeur efficace vraie. Le facteur de puissance $\lambda = P/S$ se sépare alors
+    en deux facteurs : le facteur de déplacement $\cos\varphi_1$, dû au déphasage du fondamental, et le facteur de distorsion
+    $I_1/I$, dû à la déformation.
+  </p>
+  <div class="formule-cle">
+    $$P = V I_1 \cos\varphi_1, \qquad S = V I, \qquad \lambda = \frac{P}{S} = \frac{I_1}{I}\cos\varphi_1 = \frac{\cos\varphi_1}{\sqrt{1 + \mathrm{THD}_F^2}}, \qquad S^2 = P^2 + Q_1^2 + D^2$$
+    <p class="formule-cle-legende">
+      $P$ en watts, $S$ en voltampères, $Q_1 = V I_1\sin\varphi_1$ en voltampères réactifs, $D = V\sqrt{\sum_{h \geq 2} I_h^2}$,
+      puissance déformante, en voltampères. Hypothèse essentielle : tension sinusoïdale ; si la tension est elle-même déformée,
+      chaque rang de tension et de courant de même rang ajoute un terme $V_h I_h\cos\varphi_h$. Interprétation : compenser le
+      réactif relève $\cos\varphi_1$, mais ne touche pas au facteur de distorsion. Cas limites : courant sinusoïdal,
+      $\lambda = \cos\varphi_1$ ; créneau de $120^\circ$ en phase, $\lambda = 3/\pi = 0{,}955$. Vérification : $V$ fois $I$
+      donne des voltampères, et $\lambda$ est sans dimension. On retrouve la décomposition du cours
+      <a href="#/cours/puissances-en-courant-alternatif">Puissances en courant alternatif</a>.
+    </p>
+  </div>
+
+  <h3 id="e-sequences-titre">Séquence des rangs en triphasé équilibré</h3>
+  <p>
+    Soit un réseau triphasé équilibré qui alimente trois charges non linéaires identiques. Le courant de la phase $k$, pour
+    $k = 1, 2, 3$, est celui de la phase 1 retardé de $(k - 1)T/3$. Pour le rang $h$, le retard angulaire devient
+    $h(k - 1)\,120^\circ$. Trois cas se présentent, selon le reste de la division de $h$ par 3.
+  </p>
+  <div class="formule-cle">
+    $$\underline{I}_{k,h} = I_h\,e^{j\varphi_h}\,e^{-j\,h(k-1)\,120^\circ}, \qquad h = 3m + 1 : \text{direct}, \quad h = 3m + 2 : \text{inverse}, \quad h = 3m : \text{homopolaire}$$
+    <p class="formule-cle-legende">
+      $m$ entier. Rangs directs : 1, 7, 13, 19 ; rangs inverses : 5, 11, 17, 23 ; rangs homopolaires : 3, 9, 15, 21. Hypothèses :
+      trois charges identiques, tensions équilibrées d'ordre direct. Interprétation : un rang inverse crée dans un moteur un
+      champ qui tourne en sens contraire, donc un couple de freinage et des pertes ; un rang homopolaire ne crée aucun champ
+      tournant, mais ses trois composantes sont en phase. Cas limite : $h = 1$, on retrouve le système direct des cours
+      précédents.
+    </p>
+  </div>
+  <p>
+    L'animation suivante fait tourner les trois phaseurs de chaque rang, chacun à sa propre vitesse, pour montrer d'où vient
+    la séquence.
+  </p>
+  <figure id="e-sequences-figure">
+    <div class="schema-vivant" id="e-sequences"></div>
+    <figcaption>
+      Trois cadres, pour les rangs 1, 3 et 5. Dans chacun, les trois phaseurs tournants des phases 1, 2 et 3, de même longueur,
+      repérés par leur numéro ; la flèche de la phase 1 est la plus épaisse. L'angle $\theta = \omega t$ du fondamental se
+      règle avec la poignée ronde au bout du phaseur de la phase 1 du rang 1, ou avec le lecteur ; au rang $h$, chaque phaseur
+      a tourné de $h\theta$. Angles comptés dans le sens trigonométrique, axe de référence horizontal vers la droite. Le
+      segment en tirets, sous chaque cadre, représente la somme des trois phaseurs, c'est-à-dire la contribution du rang au
+      courant du neutre ; il est nul aux rangs 1 et 5.
+    </figcaption>
+  </figure>
+  <div id="e-sequences-lecteur"></div>
+  <div id="e-sequences-valeurs"></div>
+  <p>
+    Lecture : au rang 1, les phaseurs se suivent dans l'ordre 1, 2, 3 dans le sens horaire de leur numérotation, à
+    $120^\circ$ ; au rang 3, ils sont superposés et tournent ensemble trois fois plus vite ; au rang 5, ils sont de nouveau
+    à $120^\circ$, mais dans l'ordre 1, 3, 2 : la séquence est inversée. Aux rangs 1 et 5, la somme est nulle ; au rang 3,
+    elle vaut trois fois un phaseur.
+  </p>
+
+  <h3 id="e-neutre">Le courant du neutre avec des charges non linéaires</h3>
+  <p>
+    Appliquons la loi des nœuds au point commun, rang par rang. Pour les rangs directs et inverses, la somme des trois
+    phaseurs est nulle si les charges sont identiques. Pour les rangs homopolaires, elle vaut $3\,\underline{I}_h$. Le courant
+    du neutre ne contient donc que des rangs multiples de 3, et sa valeur efficace se calcule comme celle de tout signal
+    composé.
+  </p>
+  <div class="formule-cle">
+    $$I_N = 3\sqrt{I_3^2 + I_9^2 + I_{15}^2 + \cdots}, \qquad \frac{I_N}{I} = \frac{3\sqrt{\sum_m I_{3m}^2}}{\sqrt{\sum_h I_h^2}} \leq \sqrt{3}$$
+    <p class="formule-cle-legende">
+      $I_N$ et $I$ en ampères. Hypothèses : trois charges identiques, tensions équilibrées, neutre présent et d'impédance
+      faible. Le rapport atteint au plus $\sqrt{3} = 1{,}73$, valeur limite quand les impulsions des trois phases ne se
+      recouvrent pas, chaque impulsion revenant seule par le neutre. Cas limite : sans rang multiple de 3, cas du variateur
+      triphasé à pont de diodes, $I_N = 0$. Vérification dimensionnelle : des ampères. Avec des charges inégales, il faut
+      ajouter rang par rang les phaseurs, y compris pour le fondamental et les rangs 5 et 7, qui ne s'annulent plus.
+    </p>
+  </div>
+
+  <h3 id="e-neutre-section">Simulation interactive : le neutre face aux harmoniques</h3>
+  <p>
+    La simulation trace les trois courants de ligne d'un départ à charges électroniques monophasées, un groupe par phase, et
+    le courant du neutre. Chaque phase porte un fondamental de $10\ \mathrm{A}$, multiplié sur la phase 1 par un facteur de
+    déséquilibre, et des harmoniques de rangs 3, 5 et 9 dont les curseurs règlent les taux. Le lecteur fait avancer le temps
+    sur une période, avec pause, vitesse et remise à zéro. Avant de manipuler, prédisez : avec $\tau_3 = 40\ \%$ et des
+    charges équilibrées, le neutre porte-t-il plus ou moins que chaque phase ? Le rang 5 apparaît-il dans le neutre ? Et si
+    l'on charge davantage la phase 1 ?
+  </p>
+  <figure id="e-neutre-figure">
+    <div id="e-neutre-trace"></div>
+    <div id="e-neutre-spectre"></div>
+    <figcaption>
+      En haut, les courants de ligne $i_1$, $i_2$, $i_3$ et le courant du neutre $i_N = i_1 + i_2 + i_3$, en ampères sur une
+      période de $20\ \mathrm{ms}$, chacun nommé dans la légende avec sa couleur réelle ; $i_N$ est la courbe la plus épaisse.
+      Les courbes sont tracées jusqu'à l'instant atteint, marqué par le trait vertical en tirets ; le trait pointillé est le
+      zéro. Courants de ligne comptés de la source vers les charges, neutre compté des charges vers la source. En bas, le
+      spectre du courant du neutre, en ampères efficaces par rang.
+    </figcaption>
+  </figure>
+  <div id="e-neutre-curseurs"></div>
+  <div id="e-neutre-lecteur"></div>
+  <div id="e-neutre-valeurs"></div>
+  <p>
+    Interprétation : avec $\tau_3 = 40\ \%$, $\tau_5 = 20\ \%$, $\tau_9 = 5\ \%$ et des charges équilibrées, le courant du
+    neutre ne contient que les rangs 3 et 9 : $I_N = 3\sqrt{4^2 + 0{,}5^2} = 12{,}09\ \mathrm{A}$, à $150\ \mathrm{Hz}$ pour
+    l'essentiel, pour $10{,}97\ \mathrm{A}$ efficaces dans chaque phase : le neutre porte $1{,}10$ fois le courant de phase.
+    Le rang 5 en est absent, puisqu'il forme un système inverse. Un déséquilibre fait apparaître dans le neutre le
+    fondamental et le rang 5, comme dans le cours précédent, tandis que les rangs multiples de 3 suivent simplement la somme
+    des trois charges : avec la phase 1 chargée à $1{,}5$ fois les autres, $I_{N,3}$ passe de $12$ à $14\ \mathrm{A}$ et le
+    fondamental du neutre n'atteint que $5\ \mathrm{A}$. Le neutre d'un départ électronique se dimensionne donc sur les rangs homopolaires, pas sur le déséquilibre.
+  </p>
+
+  <h3 id="e-tension">De la distorsion du courant à la distorsion de la tension</h3>
+  <p>
+    La source n'est pas parfaite : elle présente une impédance, celle du transformateur et du réseau amont, essentiellement
+    inductive, $\underline{Z}_s \approx jL_s\omega$. Une charge non linéaire se modélise, pour ses harmoniques, comme une source
+    de courant de rang $h$ qui injecte $I_h$ dans le jeu de barres. Le réseau étant linéaire, le théorème de superposition du
+    cours <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes de Thévenin, Norton et superposition</a>
+    s'applique rang par rang : au rang $h$, la force électromotrice de la source, purement fondamentale, est éteinte, et le
+    courant $I_h$ se partage entre l'impédance de la source et les autres charges. Il crée au jeu de barres une tension
+    harmonique.
+  </p>
+  <figure id="e-equivalent-figure">
+    <svg viewBox="0 0 800 330" role="img" aria-label="Schéma équivalent harmonique : à gauche, source sinusoïdale e de 50 hertz, impédance de source Zs, jeu de barres B, charge linéaire ZL et charge non linéaire modélisée par une source de courant Ih ; à droite, au rang h, source e éteinte, la source de courant Ih débite dans l'impédance de source h fois Xs en parallèle avec ZL et les condensateurs, créant la tension Vh entre B et N">
+      <defs>
+        <marker id="fl-e-eq" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse">
+          <path d="M0 0 11 5 0 10Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="60" cy="160" r="22"/>
+        <path d="M49 160c4 -8 7 -8 11 0s7 8 11 0"/>
+        <path d="M60 138V70H90"/>
+        <path d="M90 70a9 9 0 0 1 18 0a9 9 0 0 1 18 0a9 9 0 0 1 18 0"/>
+        <path d="M144 70H260"/>
+        <path d="M200 70V125M200 195V250"/>
+        <rect x="188" y="125" width="24" height="70" rx="3"/>
+        <path d="M300 70V138M300 182V250"/>
+        <circle cx="300" cy="160" r="22"/>
+        <path d="M260 70H300"/>
+        <path d="M60 182V250H300"/>
+        <circle cx="480" cy="160" r="22"/>
+        <path d="M480 138V70H740V152M740 168V250H480V182"/>
+        <path d="M580 70V106a9 9 0 0 1 0 18a9 9 0 0 1 0 18a9 9 0 0 1 0 18V250"/>
+        <path d="M660 70V125M660 195V250"/>
+        <rect x="648" y="125" width="24" height="70" rx="3"/>
+        <path d="M722 152H758M722 168H758"/>
+      </g>
+      <g stroke="currentColor" stroke-width="2.4" fill="none">
+        <path d="M300 176V146" marker-end="url(#fl-e-eq)"/>
+        <path d="M480 176V146" marker-end="url(#fl-e-eq)"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.5" fill="none">
+        <path d="M260 238V84" marker-end="url(#fl-e-eq)"/>
+        <path d="M530 238V84" marker-end="url(#fl-e-eq)"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="200" cy="70" r="4"/><circle cx="200" cy="250" r="4"/><circle cx="580" cy="70" r="4"/><circle cx="580" cy="250" r="4"/>
+        <circle cx="660" cy="70" r="4"/><circle cx="660" cy="250" r="4"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="10" y="164">e</text><text x="74" y="130">+</text>
+        <text x="96" y="52">Zs = jLsω</text>
+        <text x="216" y="164">ZL</text>
+        <text x="328" y="164">Ih</text>
+        <text x="236" y="60">B</text>
+        <text x="238" y="160">V</text>
+        <text x="40" y="276">N, référence</text>
+        <text x="20" y="306">réseau réel : e à 50 Hz, Ih aux rangs h</text>
+        <text x="436" y="164">Ih</text>
+        <text x="596" y="164">h Xs</text>
+        <text x="678" y="164">ZL(h)</text>
+        <text x="766" y="164">C</text>
+        <text x="538" y="160">Vh</text>
+        <text x="612" y="60">B</text>
+        <text x="470" y="276">N, référence</text>
+        <text x="430" y="306">au rang h : e éteinte, Vh = Ih Zh</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma équivalent par phase, par rapport au neutre $N$ pris comme référence. À gauche, le réseau réel : force
+      électromotrice $e$ à $50\ \mathrm{Hz}$, borne $+$ en haut, impédance de source $\underline{Z}_s$, jeu de barres $B$,
+      charge linéaire $\underline{Z}_L$ et charge non linéaire représentée par une source de courant harmonique, rond barré
+      d'une flèche épaisse vers le haut : elle injecte $I_h$ dans le jeu de barres. À droite, le même circuit au rang $h$ :
+      $e$, sans composante de rang $h$, est remplacée par un court-circuit, si bien que la réactance de source $hX_s$ se
+      retrouve en parallèle avec la charge linéaire et d'éventuels condensateurs $C$, entre $B$ et $N$ ; $I_h$ se répartit
+      entre ces trois branches, et la flèche fine $V_h$, de $N$ vers $B$, est la tension harmonique créée. Sans condensateurs,
+      l'essentiel de $I_h$ remonte vers la source, branche de plus faible impédance.
+    </figcaption>
+  </figure>
+  <div class="formule-cle">
+    $$V_h = Z_h\,I_h, \qquad Z_h \approx h X_s \ \text{(source seule)}, \qquad \mathrm{THD}_V = \frac{\sqrt{\sum_{h \geq 2} V_h^2}}{V_1}$$
+    $$\underline{Z}_h = \left(\frac{1}{jhX_s} + jhC\omega + \frac{1}{R_d}\right)^{-1} \ \text{(avec condensateurs)}$$
+    <p class="formule-cle-legende">
+      $X_s = L_s\omega$ réactance de source à $50\ \mathrm{Hz}$ en ohms, $V_h$ en volts, $R_d$ résistance équivalente des
+      charges linéaires qui amortissent. Hypothèses : réseau linéaire, source purement inductive aux rangs harmoniques, chaque
+      rang traité séparément. Interprétation : la réactance croît avec le rang, si bien qu'un courant harmonique faible de rang
+      élevé déforme autant la tension qu'un courant plus fort de rang bas ; avec des condensateurs, $Z_h$ passe par un maximum
+      à la résonance parallèle, au rang $h_r = \sqrt{S_{cc}/Q_C}$, comme dans le cours
+      <a href="#/cours/resonance-serie-et-parallele">Résonance série et parallèle</a>. Cas limite : source infiniment
+      puissante, $X_s \to 0$, la tension reste sinusoïde quels que soient les courants. Vérification dimensionnelle : ohms fois
+      ampères, des volts.
+    </p>
+  </div>
+  <p>
+    Exemple d'ordre de grandeur : le spectre idéal de la pompe, $I_h = I_1/h$, traverse une source de réactance $X_s$. Alors
+    $V_h = hX_s \times I_1/h = X_s I_1$ : tous les rangs produisent la même tension harmonique, et c'est le nombre de rangs
+    retenus qui fixe $\mathrm{THD}_V$. Ce résultat montre aussi la limite du modèle idéal aux rangs élevés : les courants
+    réels y décroissent plus vite que $1/h$, grâce à l'inductance de ligne et à l'empiètement des commutations.
+  </p>
+
+  <h3 id="e-effets">Effets des harmoniques sur les équipements</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Mécanismes physiques des effets des harmoniques</caption>
+      <thead><tr><th>Équipement</th><th>Mécanisme</th><th>Grandeur à surveiller</th></tr></thead>
+      <tbody>
+        <tr><td>Conducteur neutre</td><td>les rangs homopolaires des trois phases s'additionnent</td><td>$I_N$ efficace vrai, jusqu'à $\sqrt{3}\,I$</td></tr>
+        <tr><td>Câbles</td><td>pertes Joule en $\sum I_h^2$, effet de peau croissant avec la fréquence</td><td>courant efficace vrai</td></tr>
+        <tr><td>Transformateurs</td><td>pertes par courants de Foucault dans les enroulements croissant à peu près comme $h^2 I_h^2$, rangs homopolaires piégés dans un enroulement en triangle</td><td>spectre du courant, déclassement selon le constructeur</td></tr>
+        <tr><td>Condensateurs</td><td>réactance en $1/h$ : le courant harmonique y est attiré, résonance parallèle avec la source</td><td>courant efficace vrai et tension crête des condensateurs</td></tr>
+        <tr><td>Moteurs asynchrones</td><td>rangs inverses : champ tournant inverse, couple de freinage ; pertes supplémentaires, vibrations</td><td>$\mathrm{THD}_V$ et rangs 5, 7 de la tension</td></tr>
+        <tr><td>Protections et mesures</td><td>appareils à valeur moyenne ou crête faussés, déclenchements intempestifs</td><td>principe de mesure, efficace vrai, facteur de crête admissible</td></tr>
+        <tr><td>Électronique sensible</td><td>tension aplatie, passages par zéro multiples, synchronisations perturbées</td><td>forme de la tension, $\mathrm{THD}_V$</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    La qualité de l'énergie ne se réduit pas aux harmoniques. Les autres familles de perturbations relèvent de mécanismes
+    différents : les creux de tension, dus aux courts-circuits et aux démarrages de gros moteurs, vus du côté de l'impédance de
+    source ; les surtensions transitoires, de manœuvre ou de foudre ; le papillotement, fluctuation rapide de tension due aux
+    charges variables, fours à arc et soudeuses ; le déséquilibre, étudié dans le cours précédent ; les interharmoniques, de
+    fréquences non multiples du fondamental ; les variations de fréquence et les coupures. Un analyseur de qualité de l'énergie
+    les enregistre toutes, et le cours Révision 4 et mini-projet qualité réseau en construira la stratégie de mesure.
+  </p>
+
+  <h3 id="e-remedes">Remèdes et comparaison des méthodes</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Comparaison des remèdes à la pollution harmonique</caption>
+      <thead><tr><th>Remède</th><th>Principe</th><th>Efficace sur</th><th>Limites</th><th>Préférable quand</th></tr></thead>
+      <tbody>
+        <tr><td>Self de ligne ou de bus continu</td><td>élargit les impulsions de courant</td><td>tous les rangs d'un redresseur</td><td>chute de tension, encombrement, gain limité</td><td>chaque variateur, solution de base peu coûteuse</td></tr>
+        <tr><td>Neutre renforcé, protection adaptée</td><td>accepte le courant homopolaire</td><td>rangs 3, 9, 15 dans le neutre</td><td>ne réduit pas la pollution</td><td>départs à charges électroniques monophasées</td></tr>
+        <tr><td>Transformateur à enroulement en triangle</td><td>piège les rangs homopolaires dans le triangle</td><td>rangs multiples de 3 vus du réseau amont</td><td>le neutre aval les porte toujours, pertes du transformateur</td><td>isoler l'amont d'un tableau de charges électroniques</td></tr>
+        <tr><td>Redresseur à 12 impulsions</td><td>deux ponts décalés de $30^\circ$ : les rangs 5 et 7 s'annulent</td><td>rangs 5, 7, 17, 19</td><td>transformateur spécial, coût</td><td>forte puissance, plusieurs centaines de kilowatts</td></tr>
+        <tr><td>Filtre passif accordé</td><td>branche $L + C$ série de faible impédance au rang visé</td><td>un ou deux rangs choisis</td><td>dépend du réseau, fournit du réactif, risque de résonance</td><td>pollution stable et connue, besoin de réactif</td></tr>
+        <tr><td>Filtre actif</td><td>injecte en opposition les courants harmoniques mesurés</td><td>large plage de rangs, s'adapte</td><td>coût, puissance limitée, électronique à entretenir</td><td>pollution variable, plusieurs sources</td></tr>
+        <tr><td>Redresseur actif, absorption sinusoïdale</td><td>convertisseur commandé qui prélève un courant sinusoïdal</td><td>la source elle-même</td><td>coût, pertes de commutation, émission à haute fréquence</td><td>conception neuve, freinage avec renvoi au réseau</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Le filtre passif sera dimensionné dans le cours Filtres passifs ; les redresseurs et les structures de variateurs dans les
+    cours Redresseurs triphasés et Convertisseurs et moteurs.
+  </p>
+
+  <h3 id="e-statut">Statut des énoncés</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Ce qui relève de la loi, de la convention, de l'approximation, de la conception et du constructeur</caption>
+      <thead><tr><th>Énoncé</th><th>Statut</th></tr></thead>
+      <tbody>
+        <tr><td>Décomposition d'un signal périodique en harmoniques ; $I^2 = \sum I_h^2$</td><td>Résultat mathématique, conséquence de l'orthogonalité des sinusoïdes</td></tr>
+        <tr><td>Rangs homopolaires additionnés dans le neutre ; $V_h = Z_h I_h$ rang par rang</td><td>Lois physiques : loi des nœuds, loi d'Ohm complexe, superposition dans un réseau linéaire</td></tr>
+        <tr><td>Définition du THD rapporté au fondamental, au total ou au courant de demande ; nombre de rangs pris en compte</td><td>Conventions, à préciser avec chaque valeur</td></tr>
+        <tr><td>Spectre idéal $I_h = I_1/h$ du pont triphasé ; source purement inductive ; charges non linéaires vues comme des sources de courant</td><td>Approximations : pessimistes aux rangs élevés, optimistes aux rangs 5 et 7 pour un pont sans self</td></tr>
+        <tr><td>Neutre de pleine section, voire renforcé, sur les départs de charges électroniques ; selfs sur les variateurs ; résonance placée loin des rangs présents</td><td>Règles de conception</td></tr>
+        <tr><td>Niveaux de compatibilité de la tension, limites d'émission des appareils et des installations, conditions de réduction du neutre</td><td>Normes et contrats de raccordement, à vérifier pour le pays et le niveau de tension ; aucune valeur n'est retenue ici comme référence</td></tr>
+        <tr><td>Déclassement d'un transformateur en courant déformé, surcharge admissible d'un condensateur, facteur de crête d'un appareil de mesure</td><td>Données des constructeurs</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, le spectre harmonique du courant déformé du variateur de la
+    pompe, l'organigramme de résolution et un tableau comparatif des spectres de charges courantes.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 840 420" role="img" aria-label="Spectre harmonique du courant d'arrivée du variateur de la pompe, modèle en créneaux de 120 degrés : fondamental 100 pour cent, rangs 5, 7, 11, 13, 17, 19, 23 et 25 à 20, 14,3, 9,1, 7,7, 5,9, 5,3, 4,3 et 4 pour cent ; rangs 3, 9, 15 et 21 absents ; séquence de chaque rang indiquée sous l'axe">
+      <g stroke="currentColor" stroke-width="1" fill="none" opacity="0.35">
+        <path d="M80 267.5H800M80 205H800M80 142.5H800M80 80H800"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.4" fill="none">
+        <path d="M80 70V330H800"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.8" fill="currentColor" fill-opacity="0.35">
+        <rect x="86.4" y="80.0" width="16" height="250.0" rx="2"/>
+        <rect x="201.6" y="280.0" width="16" height="50.0" rx="2"/>
+        <rect x="259.2" y="294.3" width="16" height="35.7" rx="2"/>
+        <rect x="374.4" y="307.3" width="16" height="22.7" rx="2"/>
+        <rect x="432.0" y="310.8" width="16" height="19.2" rx="2"/>
+        <rect x="547.2" y="315.3" width="16" height="14.7" rx="2"/>
+        <rect x="604.8" y="316.8" width="16" height="13.2" rx="2"/>
+        <rect x="720.0" y="319.1" width="16" height="10.9" rx="2"/>
+        <rect x="777.6" y="320.0" width="16" height="10.0" rx="2"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.6" fill="none">
+        <path d="M148.0 328.0l8 -8M148.0 320.0l8 8"/>
+        <path d="M320.8 328.0l8 -8M320.8 320.0l8 8"/>
+        <path d="M493.6 328.0l8 -8M493.6 320.0l8 8"/>
+        <path d="M666.4 328.0l8 -8M666.4 320.0l8 8"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.2" fill="none" stroke-dasharray="5 4">
+        <path d="M190 278V186H632V300"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="72" y="334" text-anchor="end">0</text>
+        <text x="72" y="271.5" text-anchor="end">25</text>
+        <text x="72" y="209" text-anchor="end">50</text>
+        <text x="72" y="146.5" text-anchor="end">75</text>
+        <text x="72" y="84" text-anchor="end">100</text>
+        <text x="20" y="44">Ih / I1 [%]</text>
+        <text x="94.4" y="72.0" text-anchor="middle">100,0</text>
+        <text x="209.6" y="272.0" text-anchor="middle">20,0</text>
+        <text x="267.2" y="286.3" text-anchor="middle">14,3</text>
+        <text x="382.4" y="299.3" text-anchor="middle">9,1</text>
+        <text x="440.0" y="302.8" text-anchor="middle">7,7</text>
+        <text x="555.2" y="307.3" text-anchor="middle">5,9</text>
+        <text x="612.8" y="308.8" text-anchor="middle">5,3</text>
+        <text x="728.0" y="311.1" text-anchor="middle">4,3</text>
+        <text x="785.6" y="312.0" text-anchor="middle">4,0</text>
+        <text x="94.4" y="348" text-anchor="middle">1</text>
+        <text x="152.0" y="348" text-anchor="middle">3</text>
+        <text x="209.6" y="348" text-anchor="middle">5</text>
+        <text x="267.2" y="348" text-anchor="middle">7</text>
+        <text x="324.8" y="348" text-anchor="middle">9</text>
+        <text x="382.4" y="348" text-anchor="middle">11</text>
+        <text x="440.0" y="348" text-anchor="middle">13</text>
+        <text x="497.6" y="348" text-anchor="middle">15</text>
+        <text x="555.2" y="348" text-anchor="middle">17</text>
+        <text x="612.8" y="348" text-anchor="middle">19</text>
+        <text x="670.4" y="348" text-anchor="middle">21</text>
+        <text x="728.0" y="348" text-anchor="middle">23</text>
+        <text x="785.6" y="348" text-anchor="middle">25</text>
+        <text x="20" y="348">rang</text>
+        <text x="20" y="368">séquence</text>
+        <text x="94.4" y="368" text-anchor="middle">+</text>
+        <text x="152.0" y="368" text-anchor="middle">0</text>
+        <text x="209.6" y="368" text-anchor="middle">-</text>
+        <text x="267.2" y="368" text-anchor="middle">+</text>
+        <text x="324.8" y="368" text-anchor="middle">0</text>
+        <text x="382.4" y="368" text-anchor="middle">-</text>
+        <text x="440.0" y="368" text-anchor="middle">+</text>
+        <text x="497.6" y="368" text-anchor="middle">0</text>
+        <text x="555.2" y="368" text-anchor="middle">-</text>
+        <text x="612.8" y="368" text-anchor="middle">+</text>
+        <text x="670.4" y="368" text-anchor="middle">0</text>
+        <text x="728.0" y="368" text-anchor="middle">-</text>
+        <text x="785.6" y="368" text-anchor="middle">+</text>
+        <text x="230" y="150">rangs 6k ± 1 : Ih = I1 / h</text>
+        <text x="230" y="170">THDi = 31,1 % (modèle idéal, tous rangs)</text>
+        <text x="430" y="70">I1 = 47,75 A ; I = 50,0 A efficaces vrais</text>
+        <text x="430" y="90">croix : rang absent (pairs et multiples de 3)</text>
+        <text x="430" y="110">+ direct, - inverse, 0 homopolaire</text>
+        <text x="80" y="400">courant d'arrivée du variateur de la pompe, créneaux de 120 degrés, 61,2 A crête, 50 Hz</text>
+      </g>
+    </svg>
+    <figcaption>
+      Spectre harmonique du courant d'arrivée du variateur de la pompe, dans le modèle idéal en créneaux de $120^\circ$. En
+      abscisse, le rang $h$, fréquence $h \times 50\ \mathrm{Hz}$, rangs impairs seulement ; en ordonnée, la valeur efficace de
+      chaque rang en pourcentage du fondamental. Les barres pleines sont les rangs présents, de hauteur $100/h$ ; les croix
+      marquent les rangs multiples de 3, absents ; les rangs pairs, absents aussi, ne sont pas représentés. Sous l'axe, la
+      séquence de chaque rang dans le réseau triphasé. Le cadre en tirets regroupe les rangs 5 à 19, qui portent l'essentiel de
+      la distorsion. Ce spectre est un modèle : un variateur réel muni d'une self présente un rang 5 plus fort et des rangs
+      élevés plus faibles.
+    </figcaption>
+  </figure>
+
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Courant ou tension<br/>déformé à analyser"] --> B{"Spectre<br/>disponible ?"}
+  B -->|"non"| C["Mesure efficace vraie<br/>et analyseur, ou modèle<br/>de la charge"]
+  C --> D
+  B -->|"oui"| D["Valeurs efficaces Ih<br/>rang par rang"]
+  D --> E["I = racine de la somme des Ih²<br/>THD : préciser la référence"]
+  E --> F{"Réseau<br/>triphasé ?"}
+  F -->|"oui"| G["Séquence de chaque rang :<br/>direct, inverse, homopolaire<br/>IN = 3 racine de la somme des I3m²"]
+  F -->|"non"| H["Un seul circuit"]
+  G --> I["Tension : Vh = Zh Ih<br/>avec Zh = h Xs ou résonance"]
+  H --> I
+  I --> J["THDv, facteur de puissance<br/>λ = cos φ1 / racine de 1 + THD²"]
+  J --> K["Conséquences : neutre, câbles,<br/>transformateur, condensateurs,<br/>moteurs, protections, mesures"]
+  K --> L{"Hors des limites<br/>admissibles ?"}
+  L -->|"oui"| M["Choisir un remède :<br/>self, neutre renforcé, filtre,<br/>redresseur à 12 impulsions"]
+  L -->|"non"| N["Documenter hypothèses<br/>et prévoir une mesure"]</pre>
+    <figcaption>
+      Organigramme de résolution d'un problème d'harmoniques. Les rectangles sont des actions, les losanges des décisions, les
+      libellés des flèches les réponses. La première décision porte sur la disponibilité du spectre ; la deuxième sur la
+      nature triphasée du réseau, qui impose de classer les rangs par séquence ; la dernière compare les résultats aux limites
+      admissibles, données par la norme applicable, le contrat de raccordement ou le constructeur, et décide d'un remède.
+    </figcaption>
+  </figure>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Spectres typiques de quelques charges, ordres de grandeur indicatifs</caption>
+      <thead><tr><th>Charge</th><th>Rangs dominants</th><th>$\mathrm{THD}_F$ du courant</th><th>Effet principal</th></tr></thead>
+      <tbody>
+        <tr><td>Alimentation monophasée à condensateur, sans correction</td><td>3, 5, 7, 9, décroissance lente</td><td>$80$ à $150\ \%$ et plus</td><td>neutre, facteur de puissance faible</td></tr>
+        <tr><td>Éclairage à LED, alimentations avec correction</td><td>3, 5 faibles</td><td>de $10$ à $30\ \%$ environ</td><td>faible par appareil, notable en nombre</td></tr>
+        <tr><td>Variateur triphasé à pont de diodes, avec self</td><td>5, 7, 11, 13</td><td>$30$ à $45\ \%$ environ</td><td>distorsion de tension, résonance</td></tr>
+        <tr><td>Variateur sans self, ou bus continu très capacitif</td><td>5, 7 forts</td><td>$70$ à $100\ \%$ et plus</td><td>distorsion de tension, câbles</td></tr>
+        <tr><td>Redresseur à 12 impulsions</td><td>11, 13, 23, 25</td><td>$10$ à $15\ \%$ environ</td><td>faible</td></tr>
+        <tr><td>Transformateur en surexcitation, à l'enclenchement</td><td>2, 3, 5 transitoires</td><td>variable</td><td>courant d'appel, faux déclenchements</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Ces fourchettes sont des ordres de grandeur, qui dépendent de la conception, de la charge et de l'impédance du réseau ; seule
+    la documentation de l'appareil ou une mesure fait foi.
+  </p>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-redresseur-figure" data-renvoi="d-redresseur-figure">le redresseur monophasé à condensateur</a>, <a href="#d-redr-figure" data-renvoi="d-redr-figure">la simulation de son courant</a> et <a href="#d-super-figure" data-renvoi="d-super-figure">l'animation de la reconstruction du courant de la pompe rang par rang</a>, section D ;</li>
+    <li><a href="#e-composer-figure" data-renvoi="e-composer-figure">la simulation de composition d'un courant</a>, <a href="#e-sequences-figure" data-renvoi="e-sequences-figure">l'animation des séquences des rangs</a>, <a href="#e-neutre-figure" data-renvoi="e-neutre-figure">la simulation du neutre face aux harmoniques</a> et <a href="#e-equivalent-figure" data-renvoi="e-equivalent-figure">le schéma équivalent harmonique</a>, section E ;</li>
+    <li><a href="#h-thd-figure" data-renvoi="h-thd-figure">l'animation du calcul du THD rang par rang</a>, section H ;</li>
+    <li><a href="#i-site-figure" data-renvoi="i-site-figure">le schéma unifilaire du site et ses sources d'harmoniques</a> et <a href="#i-jdb-figure" data-renvoi="i-jdb-figure">la simulation de la distorsion de tension du jeu de barres</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour analyser un problème d'harmoniques :</p>
+  <ol>
+    <li>Obtenir le spectre : valeurs efficaces $I_h$ par rang, mesurées par un analyseur efficace vrai ou calculées à partir d'un modèle de la charge ; noter le nombre de rangs et, si la crête importe, les déphasages.</li>
+    <li>Calculer la valeur efficace vraie $I = \sqrt{\sum I_h^2}$, puis le taux de distorsion, en indiquant sa référence, fondamental ou total ; convertir si nécessaire par $\mathrm{THD}_R = \mathrm{THD}_F/\sqrt{1 + \mathrm{THD}_F^2}$.</li>
+    <li>Calculer les puissances : $P = V I_1\cos\varphi_1$ si la tension est sinusoïdale, $S = V I$, $\lambda = P/S$, $D = V\sqrt{\sum_{h \geq 2} I_h^2}$.</li>
+    <li>En triphasé, classer les rangs par séquence ; pour des charges identiques, $I_N = 3\sqrt{\sum I_{3m}^2}$ ; pour des charges inégales, sommer les phaseurs rang par rang.</li>
+    <li>Calculer les tensions harmoniques au point de raccordement, $V_h = Z_h I_h$, avec $Z_h = hX_s$ ou l'impédance complète si des condensateurs sont présents ; repérer le rang de résonance $h_r = \sqrt{S_{cc}/Q_C}$ ; en déduire $\mathrm{THD}_V$.</li>
+    <li>Contrôler : $I \geq I_1$ ; $\mathrm{THD}_R < 100\ \%$ ; $I_N \leq \sqrt{3}\,I$ pour des charges identiques ; $P$ cohérente avec la puissance de la charge ; ordre de grandeur du $\mathrm{THD}_V$ comparé aux niveaux usuels de quelques pour cent.</li>
+    <li>Conclure en ingénieur : section et protection du neutre, déclassement des transformateurs et des câbles, courant des condensateurs, choix d'un remède, et mesure de validation sur site.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Situation : un départ triphasé avec neutre, $230/400\ \mathrm{V}$, alimente un plateau de bureaux : postes informatiques,
+    écrans, imprimantes et éclairage, répartis également entre les trois phases. Un analyseur efficace vrai relève sur chaque
+    phase, avec des valeurs presque identiques : $I_1 = 20\ \mathrm{A}$ à $\cos\varphi_1 = 0{,}98$ inductif,
+    $I_3 = 12\ \mathrm{A}$, $I_5 = 7\ \mathrm{A}$, $I_7 = 3{,}6\ \mathrm{A}$, $I_9 = 1{,}8\ \mathrm{A}$,
+    $I_{11} = 1{,}0\ \mathrm{A}$, les rangs supérieurs étant négligeables. La tension est supposée sinusoïdale, de
+    $230\ \mathrm{V}$. Le neutre du câble a la même section que les phases, et sa protection est réglée comme celle des phases.
+    On demande la valeur efficace vraie, les deux taux de distorsion, le courant du neutre, les puissances et le facteur de
+    puissance, puis un avis sur le neutre.
+  </p>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Données : spectre par phase ci-dessus, $V = 230\ \mathrm{V}$ sinusoïdale, charges identiques sur les trois phases.
+    Inconnues : $I$, $\mathrm{THD}_F$, $\mathrm{THD}_R$, $I_N$, $P$, $Q_1$, $D$, $S$, $\lambda$. Stratégie : valeur efficace par
+    la somme des carrés, taux par définition, courant du neutre par les seuls rangs homopolaires, puissances par le
+    fondamental et la puissance déformante, contrôle par $S^2 = P^2 + Q_1^2 + D^2$.
+  </p>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li>Somme des carrés : $I^2 = 20^2 + 12^2 + 7^2 + 3{,}6^2 + 1{,}8^2 + 1{,}0^2 = 400 + 144 + 49 + 12{,}96 + 3{,}24 + 1 = 610{,}2\ \mathrm{A^2}$, donc $I = 24{,}70\ \mathrm{A}$.</li>
+    <li>Harmoniques seuls : $\sum_{h \geq 2} I_h^2 = 610{,}2 - 400 = 210{,}2\ \mathrm{A^2}$, soit $\sqrt{210{,}2} = 14{,}50\ \mathrm{A}$.</li>
+    <li>Taux : $\mathrm{THD}_F = 14{,}50/20 = 72{,}5\ \%$ et $\mathrm{THD}_R = 14{,}50/24{,}70 = 58{,}7\ \%$. Contrôle : $0{,}725/\sqrt{1 + 0{,}725^2} = 0{,}587$.</li>
+    <li>Neutre : rangs homopolaires 3 et 9, en phase sur les trois phases ; $I_N = 3\sqrt{12^2 + 1{,}8^2} = 3 \times 12{,}13 = 36{,}40\ \mathrm{A}$, essentiellement à $150\ \mathrm{Hz}$. Les rangs 5, 7 et 11 et le fondamental s'annulent dans le neutre.</li>
+    <li>Rapport : $I_N/I = 36{,}40/24{,}70 = 1{,}47$ ; le neutre porte $47\ \%$ de plus que chaque phase, et $1{,}82$ fois le fondamental.</li>
+    <li>Puissances par phase : $P = 230 \times 20 \times 0{,}98 = 4508\ \mathrm{W}$ ; $Q_1 = 230 \times 20 \times \sin(\arccos 0{,}98) = 915\ \mathrm{var}$ ; $D = 230 \times 14{,}50 = 3335\ \mathrm{VA}$ ; $S = 230 \times 24{,}70 = 5682\ \mathrm{VA}$.</li>
+    <li>Facteur de puissance : $\lambda = 4508/5682 = 0{,}793$, à comparer à $\cos\varphi_1 = 0{,}98$ : c'est la distorsion qui le dégrade, $0{,}98/\sqrt{1 + 0{,}725^2} = 0{,}793$.</li>
+    <li>Départ complet : $P = 13{,}52\ \mathrm{kW}$ et $S = 17{,}04\ \mathrm{kVA}$ ; la source doit fournir $26\ \%$ de voltampères de plus que ne l'indiquerait la puissance active.</li>
+  </ol>
+
+  <h3 id="h-thd-section">Animation : le THD construit rang par rang</h3>
+  <p>
+    L'animation ajoute les rangs du spectre un par un et met à jour la valeur efficace, le taux de distorsion et le courant
+    du neutre. Le lecteur ajoute les rangs, avec pause, vitesse et remise à zéro. Avant de lancer, prédisez : quel rang fait
+    à lui seul l'essentiel du taux de distorsion ? Lequel fait l'essentiel du courant du neutre ?
+  </p>
+  <figure id="h-thd-figure">
+    <div id="h-thd-spectre"></div>
+    <figcaption>
+      Spectre du courant de chaque phase de l'exemple, en ampères efficaces par rang, limité aux rangs déjà ajoutés ; le
+      fondamental est la première barre. Les valeurs cumulées s'affichent sous le spectre : courant efficace vrai, taux de
+      distorsion rapporté au fondamental et courant du neutre.
+    </figcaption>
+  </figure>
+  <div id="h-thd-lecteur"></div>
+  <div id="h-thd-valeurs"></div>
+  <p>
+    Interprétation : le rang 3 seul porte le taux à $60\ \%$ et le neutre à $36\ \mathrm{A}$ ; les rangs suivants n'ajoutent
+    que $12{,}5$ points de taux et $0{,}4\ \mathrm{A}$ de neutre. La valeur efficace passe de $20$ à $23{,}3\ \mathrm{A}$ avec le
+    rang 3, puis à $24{,}7\ \mathrm{A}$. Pour ce départ, le rang 3 est la cible de toute action corrective.
+  </p>
+
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li>Bilan des puissances : $\sqrt{4508^2 + 915^2 + 3335^2} = 5682\ \mathrm{VA}$, égal à $S$ ; la décomposition est cohérente.</li>
+    <li>Bornes : $I = 24{,}70 \geq I_1 = 20\ \mathrm{A}$ ; $\mathrm{THD}_R = 58{,}7\ \% < 100\ \%$ ; $I_N/I = 1{,}47 \leq \sqrt{3}$.</li>
+    <li>Ordre de grandeur : un $\mathrm{THD}_F$ de $72{,}5\ \%$ est typique d'un mélange d'alimentations sans correction et d'appareils corrigés.</li>
+    <li>Dimensions : des ampères, des watts et des voltampères ; $\lambda$ et les taux sont sans dimension.</li>
+  </ul>
+  <p>
+    Conclusion : le neutre, de même section que les phases, porte $36{,}4\ \mathrm{A}$ quand les phases n'en portent que
+    $24{,}7$. Si le câble a été choisi pour environ $25\ \mathrm{A}$ par conducteur, le neutre est surchargé de près de
+    $50\ \%$, ses pertes Joule sont multipliées par $2{,}2$, sans qu'aucune protection de phase ne réagisse. Il faut soit
+    dimensionner le câble sur le courant du neutre, soit prévoir un neutre de section supérieure à celle des phases, et
+    surveiller ou protéger le neutre contre la surintensité, selon la norme d'installation applicable. Une pince à valeur
+    moyenne sur le neutre, calibrée pour une sinusoïde, donnerait une lecture faussée, puisque le courant n'y est pas
+    sinusoïdal à $50\ \mathrm{Hz}$ : seule une mesure efficace vraie fait foi.
+  </p>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+
+  <h3 id="i-probleme">Bilan harmonique du tableau général du site</h3>
+  <p>
+    Le site du projet fil rouge comporte trois familles de sources d'harmoniques : le variateur de la pompe, à pont de diodes
+    triphasé muni d'une self de ligne de $3\ \%$ ; les alimentations électroniques du départ éclairage et prises et de
+    l'armoire automate, monophasées ; l'éclairage à LED de l'atelier de maintenance. La compensation individuelle du
+    compresseur, $149{,}3\ \mu\mathrm{F}$ par phase, résonne avec la source au rang $18{,}3$, d'après le cours
+    <a href="#/cours/resonance-serie-et-parallele">Résonance série et parallèle</a>. Le schéma suivant situe ces éléments.
+  </p>
+  <figure id="i-site-figure">
+    <svg viewBox="0 0 860 420" role="img" aria-label="Schéma unifilaire du tableau général du site : source équivalente de 2,5 mégavoltampères et Ls de 0,204 millihenry, jeu de barres 400 volts, analyseur efficace vrai à l'arrivée, départs pompe à variateur source des rangs 5, 7, 11 et 13, compresseur avec condensateurs de 149,3 microfarads, éclairage et prises source des rangs 3 et 9 vers le neutre, atelier et armoire automate">
+      <defs>
+        <marker id="fl-i-s" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse">
+          <path d="M0 0 11 5 0 10Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="90" cy="60" r="22"/><circle cx="90" cy="88" r="22"/>
+        <path d="M90 110V128"/>
+        <path d="M90 128a9 9 0 0 1 0 18a9 9 0 0 1 0 18a9 9 0 0 1 0 18"/>
+        <path d="M90 182V210"/>
+        <path d="M60 210H820" stroke-width="4"/>
+        <path d="M150 210V260"/>
+        <rect x="122" y="260" width="56" height="40" rx="4"/>
+        <path d="M150 300V330"/>
+        <circle cx="150" cy="350" r="18"/>
+        <path d="M300 210V330"/>
+        <circle cx="300" cy="350" r="18"/>
+        <path d="M300 250H350V284M350 296V320"/>
+        <path d="M336 284H364M336 296H364"/>
+        <path d="M480 210V320"/>
+        <rect x="445" y="320" width="70" height="40" rx="4"/>
+        <path d="M630 210V320"/>
+        <rect x="595" y="320" width="70" height="40" rx="4"/>
+        <path d="M770 210V320"/>
+        <rect x="735" y="320" width="70" height="40" rx="4"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.6" fill="none">
+        <circle cx="90" cy="196" r="9"/>
+        <path d="M194 290V236" marker-end="url(#fl-i-s)"/>
+        <path d="M500 300V236" marker-end="url(#fl-i-s)"/>
+        <path d="M650 300V236" marker-end="url(#fl-i-s)"/>
+        <path d="M790 300V236" marker-end="url(#fl-i-s)"/>
+        <path d="M110 196H136"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="150" cy="210" r="4"/><circle cx="300" cy="210" r="4"/><circle cx="480" cy="210" r="4"/><circle cx="630" cy="210" r="4"/><circle cx="770" cy="210" r="4"/><circle cx="300" cy="250" r="4"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="122" y="60">source équivalente 2,5 MVA</text>
+        <text x="122" y="78">transformateur supposé 100 kVA</text>
+        <text x="104" y="160">Ls = 0,204 mH par phase</text>
+        <text x="140" y="190">analyseur efficace vrai</text>
+        <text x="660" y="200">jeu de barres 230/400 V</text>
+        <text x="133" y="284">VAR</text>
+        <text x="138" y="355">M</text>
+        <text x="90" y="392">pompe</text>
+        <text x="90" y="408">rangs 5, 7, 11, 13</text>
+        <text x="288" y="355">M</text>
+        <text x="372" y="296">C = 149,3 µF</text>
+        <text x="250" y="392">compresseur</text>
+        <text x="250" y="408">résonance 18,3</text>
+        <text x="455" y="344">éclair.</text>
+        <text x="420" y="392">éclairage, prises</text>
+        <text x="420" y="408">rangs 3, 9 : neutre</text>
+        <text x="605" y="344">atelier</text>
+        <text x="585" y="392">atelier</text>
+        <text x="585" y="408">LED, machines</text>
+        <text x="741" y="344">automate</text>
+        <text x="720" y="392">armoire</text>
+        <text x="720" y="408">alimentations</text>
+        <text x="202" y="262">Ih</text>
+        <text x="508" y="262">Ih</text>
+        <text x="658" y="262">Ih</text>
+        <text x="798" y="262">Ih</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma unifilaire du tableau général : un trait représente les trois phases et, pour les départs qui en ont un, le
+      neutre. En haut, la source équivalente, symbole à deux cercles du transformateur, et son inductance $L_s$ par phase ;
+      le petit cercle à l'arrivée est le point de mesure de l'analyseur efficace vrai. Le jeu de barres, trait épais, alimente
+      les départs : la pompe par son variateur, rectangle VAR, et le compresseur avec ses condensateurs commutés. Les flèches
+      verticales $I_h$, pointées vers le jeu de barres, indiquent les départs qui injectent des courants harmoniques, à
+      considérer comme des sources de courant dans le schéma équivalent de la section E.
+    </figcaption>
+  </figure>
+  <p>Trois questions d'ingénierie se posent.</p>
+  <ul>
+    <li><strong>Courant de la pompe.</strong> Dans le modèle idéal, $I_1 = 47{,}75\ \mathrm{A}$, $I_5 = 9{,}55$, $I_7 = 6{,}82$, $I_{11} = 4{,}34$, $I_{13} = 3{,}67\ \mathrm{A}$ ; tous rangs comptés, $\mathrm{THD}_F = \sqrt{\pi^2/9 - 1} = 31{,}1\ \%$, $14{,}8\ \mathrm{A}$ d'harmoniques et $\lambda = 3/\pi = 0{,}955$, valeurs cohérentes avec les cours <a href="#/cours/signaux-periodiques-et-sinusoides">Signaux périodiques et sinusoïdes</a> et <a href="#/cours/puissances-en-courant-alternatif">Puissances en courant alternatif</a>. Un variateur réel avec self de $3\ \%$ affiche plutôt $35$ à $45\ \%$, rang 5 renforcé, rangs élevés atténués.</li>
+    <li><strong>Distorsion de tension au jeu de barres.</strong> Avec $X_s = 0{,}064\ \Omega$ et $R_d = 10\ \Omega$ d'amortissement supposé par les charges linéaires, chaque rang 5 à 13 de la pompe produit environ $3{,}05\ \mathrm{V}$ sans les condensateurs du compresseur. Avec eux, la résonance relève les rangs proches : $3{,}30$, $3{,}58$, $4{,}77$ et $6{,}12\ \mathrm{V}$ aux rangs 5, 7, 11 et 13 ; aux rangs 17 et 19, l'impédance atteint $6{,}35$ et $8{,}24\ \Omega$.</li>
+    <li><strong>Neutre du départ éclairage et prises.</strong> Fondamental de $16\ \mathrm{A}$ par phase ; spectre supposé $\tau_3 = 35\ \%$, $\tau_5 = 20\ \%$, $\tau_7 = 10\ \%$, $\tau_9 = 6\ \%$, soit $\mathrm{THD}_F = 42{,}0\ \%$ et $17{,}35\ \mathrm{A}$ efficaces vrais par phase ; neutre à $3\sqrt{5{,}6^2 + 0{,}96^2} = 17{,}05\ \mathrm{A}$, soit $0{,}98$ fois le courant de phase, alors que le bilan au fondamental le disait vide.</li>
+  </ul>
+
+  <h3 id="i-jdb-section">Simulation interactive : la distorsion de tension du jeu de barres</h3>
+  <p>
+    La simulation calcule, rang par rang, la tension harmonique créée au jeu de barres par le courant de la pompe, avec
+    l'impédance complète de la section E. Les curseurs règlent la puissance de court-circuit de la source, la présence des
+    condensateurs du compresseur, l'amortissement des charges linéaires et le taux réel des rangs 17 et 19, que le modèle
+    idéal place à $5{,}9$ et $5{,}3\ \%$. Avant de manipuler, prédisez : la mise en service des condensateurs augmente-t-elle
+    la tension harmonique de tous les rangs, ou surtout de certains ? Que devient le $\mathrm{THD}_V$ si les rangs 17 et 19
+    suivent le modèle idéal ?
+  </p>
+  <figure id="i-jdb-figure">
+    <div id="i-jdb-spectre"></div>
+    <figcaption>
+      Tension harmonique au jeu de barres, en pourcentage de la tension simple de $230\ \mathrm{V}$, pour les rangs 5, 7, 11, 13,
+      17 et 19 du courant de la pompe. La hauteur de chaque barre est $Z_h I_h / 230$ ; les valeurs exactes et le
+      $\mathrm{THD}_V$ s'affichent sous le spectre, avec le rang de résonance et le courant efficace vrai des condensateurs.
+    </figcaption>
+  </figure>
+  <div id="i-jdb-curseurs"></div>
+  <div id="i-jdb-valeurs"></div>
+  <p>
+    Interprétation : sans les condensateurs, $\mathrm{THD}_V = 2{,}67\ \%$ avec des rangs 17 et 19 à $1\ \%$. Avec eux, les
+    rangs 11 à 19 sont amplifiés et le taux monte à $4{,}53\ \%$. Si les rangs 17 et 19 suivaient le modèle idéal, $2{,}81$ et
+    $2{,}51\ \mathrm{A}$, ils produiraient $17{,}8$ et $20{,}7\ \mathrm{V}$, le $\mathrm{THD}_V$ atteindrait $12{,}5\ \%$ et
+    le courant efficace des condensateurs passerait de $10{,}8$ à $26{,}1\ \mathrm{A}$, $2{,}4$ fois sa valeur nominale.
+    L'acceptation de la résonance au rang $18{,}3$ repose donc entièrement sur la faiblesse réelle des rangs 17 et 19 :
+    c'est une hypothèse à vérifier, pas un acquis.
+  </p>
+
+  <h3 id="i-compromis">Contraintes, risques et compromis</h3>
+  <ul>
+    <li><strong>Neutre :</strong> le départ éclairage et prises garde un neutre de pleine section, protégé ou surveillé contre la surintensité ; toute réduction de section du neutre est exclue sur les départs de charges électroniques.</li>
+    <li><strong>Condensateurs du compresseur :</strong> à la mise en service, compresseur et pompe en marche, mesurer les rangs 17 et 19 de la tension et le courant efficace vrai des condensateurs ; si le courant dépasse la surcharge admissible donnée par le constructeur, équiper la batterie d'une self anti-harmonique, comme déjà prévu pour toute batterie globale.</li>
+    <li><strong>Pompe :</strong> la self de ligne de $3\ \%$ est conservée ; un filtre passif ou actif n'est pas justifié tant que le $\mathrm{THD}_V$ mesuré reste de l'ordre de quelques pour cent, à comparer aux niveaux de la norme et du contrat de raccordement applicables.</li>
+    <li><strong>Transformateur :</strong> le courant de la pompe, déformé, augmente ses pertes par courants de Foucault ; le déclassement éventuel se calcule avec les données du constructeur, à partir du spectre mesuré.</li>
+    <li><strong>Mesure :</strong> l'analyseur de l'arrivée doit être efficace vrai, avec analyse spectrale jusqu'au rang 40 au moins et facteur de crête admissible d'au moins 3, cohérent avec la décision du cours <a href="#/cours/signaux-periodiques-et-sinusoides">Signaux périodiques et sinusoïdes</a>.</li>
+    <li><strong>Limite du calcul :</strong> les sources d'harmoniques ont été traitées séparément, et leurs rangs de même ordre peuvent s'ajouter ou se compenser selon leurs phases ; seule une campagne de mesure donne le $\mathrm{THD}_V$ réel.</li>
+  </ul>
+
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : ce que cette séance ajoute</span>
+    <p>
+      Bilan harmonique du tableau général : courant de la pompe dans le modèle idéal en créneaux de $120^\circ$,
+      $I_1 = 47{,}75\ \mathrm{A}$, rangs 5, 7, 11, 13 à $9{,}55$, $6{,}82$, $4{,}34$, $3{,}67\ \mathrm{A}$, $\mathrm{THD}_F = 31{,}1\ \%$,
+      $\lambda = 0{,}955$ ; tension du jeu de barres avec $X_s = 0{,}064\ \Omega$ et $R_d = 10\ \Omega$ supposé :
+      $\mathrm{THD}_V = 2{,}67\ \%$ sans les condensateurs du compresseur et $4{,}53\ \%$ avec eux, pour des rangs 17 et 19 à
+      $1\ \%$ du fondamental ; $12{,}5\ \%$ et $26{,}1\ \mathrm{A}$ dans les condensateurs au lieu de $10{,}8\ \mathrm{A}$ s'ils
+      suivaient le modèle idéal ; neutre du départ éclairage et prises à $17{,}05\ \mathrm{A}$ pour $17{,}35\ \mathrm{A}$ par
+      phase, spectre supposé de $42\ \%$ de distorsion. Décisions : neutre de pleine section protégé ou surveillé, mesure des
+      rangs 17 et 19 et du courant des condensateurs à la mise en service, self anti-harmonique sur la compensation du
+      compresseur si nécessaire, analyseur efficace vrai à l'arrivée. Hypothèses d'étude à remplacer par la documentation du
+      variateur, des alimentations et du transformateur retenus et par une campagne de mesure harmonique.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Additionner les valeurs efficaces des harmoniques.</strong> On additionne leurs carrés : $20$, $12$ et $7\ \mathrm{A}$ donnent $24{,}4\ \mathrm{A}$, pas $39\ \mathrm{A}$.</li>
+    <li><strong>Donner un THD sans sa référence.</strong> $72{,}5\ \%$ rapporté au fondamental et $58{,}7\ \%$ rapporté au total décrivent le même courant ; il faut toujours préciser la convention et le nombre de rangs.</li>
+    <li><strong>Croire qu'un réseau équilibré a un neutre vide.</strong> Les rangs multiples de 3 s'y additionnent : le neutre peut porter jusqu'à $\sqrt{3}$ fois le courant de phase.</li>
+    <li><strong>Compenser le facteur de puissance d'une charge déformante par des condensateurs seuls.</strong> Ils relèvent $\cos\varphi_1$, pas le facteur de distorsion, et risquent d'entrer en résonance avec la source à un rang présent.</li>
+    <li><strong>Déduire la crête du THD.</strong> À taux égal, la crête dépend des phases des harmoniques : de $1{,}25$ à $1{,}76$ pour un rang 3 de $30\ \%$.</li>
+    <li><strong>Attribuer une puissance active aux harmoniques de courant.</strong> Sous tension sinusoïdale, ils n'en transportent aucune ; ils augmentent la puissance apparente et les pertes.</li>
+    <li><strong>Supposer que le spectre idéal $I_1/h$ est sûr.</strong> Il sous-estime le rang 5 d'un pont réel et surestime les rangs élevés ; près d'une résonance, cette erreur change la conclusion.</li>
+    <li><strong>Mesurer avec un appareil à valeur moyenne ou crête.</strong> Il est étalonné pour une sinusoïde ; sur un courant déformé, seule la mesure efficace vraie est correcte.</li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain : un neutre qui chauffe, ou dont le courant dépasse celui des phases, sur un tableau de bureaux ;
+    des condensateurs de compensation qui gonflent, dont les fusibles fondent ou qui bourdonnent ; un transformateur qui
+    chauffe à charge modérée ; un disjoncteur qui déclenche alors que la pince usuelle indique une charge normale ; des
+    moteurs qui chauffent ou vibrent près d'un gros variateur ; une tension dont la crête est aplatie à l'oscilloscope. Les
+    mesures décisives sont le courant efficace vrai des phases et du neutre, le spectre et le taux de distorsion du courant et
+    de la tension, enregistrés sur une période représentative du fonctionnement.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic
+    industriel et une question conceptuelle. La correction de chacun reste masquée jusqu'à une tentative ou un clic explicite
+    sur "Voir la correction", puis se déroule étape par étape, accompagnée d'un spectre, d'une courbe ou d'un diagramme de
+    phaseurs.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma.</p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$I = \sqrt{\sum_h I_h^2} = I_1\sqrt{1 + \mathrm{THD}_F^2}$$
+    $$\mathrm{THD}_F = \frac{\sqrt{\sum_{h \geq 2} I_h^2}}{I_1}, \qquad \mathrm{THD}_R = \frac{\mathrm{THD}_F}{\sqrt{1 + \mathrm{THD}_F^2}}$$
+    $$\lambda = \frac{P}{S} = \frac{\cos\varphi_1}{\sqrt{1 + \mathrm{THD}_F^2}} \ \text{(tension sinusoïdale)}, \qquad S^2 = P^2 + Q_1^2 + D^2$$
+    $$I_N = 3\sqrt{I_3^2 + I_9^2 + I_{15}^2 + \cdots} \ \text{(charges identiques)}$$
+    $$V_h = Z_h I_h, \qquad Z_h \approx h X_s, \qquad h_r = \sqrt{S_{cc}/Q_C}$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>Les harmoniques s'ajoutent en carrés : beaucoup de forme, peu de valeur efficace, mais des pertes réelles.</li>
+      <li>Un THD sans sa référence ni son nombre de rangs n'a pas de sens.</li>
+      <li>Les rangs multiples de 3 s'additionnent dans le neutre : jamais de neutre réduit sur un départ électronique.</li>
+      <li>Une batterie de condensateurs peut amplifier les harmoniques près de sa résonance avec la source.</li>
+      <li>Toute mesure sur un courant déformé se fait en efficace vrai, avec un facteur de crête admissible suffisant.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Une charge non linéaire, redresseur ou alimentation électronique, appelle un courant périodique
+    déformé, somme d'un fondamental et d'harmoniques de rangs entiers. La valeur efficace vraie est la racine de la somme des
+    carrés ; le taux de distorsion compare les harmoniques au fondamental ou au total, convention à préciser. Sous tension
+    sinusoïdale, seul le fondamental transporte de la puissance active : le facteur de puissance vaut
+    $\cos\varphi_1/\sqrt{1 + \mathrm{THD}^2}$. En triphasé équilibré, les rangs sont directs, inverses ou homopolaires ; les
+    homopolaires, multiples de 3, s'additionnent dans le neutre. Les courants harmoniques traversent l'impédance de la source
+    et déforment la tension, d'autant plus près d'une résonance avec des condensateurs. On mesure en efficace vrai, on
+    dimensionne le neutre sur le rang 3 et on choisit un remède adapté.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent,
+    <a href="#/cours/charges-triphasees-desequilibrees">Charges triphasées déséquilibrées</a> ; une sur le cours
+    <a href="#/cours/puissances-en-courant-alternatif">Puissances en courant alternatif</a>, vieux d'une semaine ; le
+    parcours n'a pas encore de cours vieux d'un mois, et cette question porte sur le plus ancien,
+    <a href="#/cours/diagnostic-initial-et-remise-a-niveau-mathematique">Diagnostic initial et remise à niveau mathématique</a>,
+    dont la trigonométrie fonde l'orthogonalité des harmoniques.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : retrouver par une simulation temporelle le spectre et le taux de distorsion du redresseur monophasé à
+    condensateur de la section D, et vérifier l'effet de l'inductance de ligne. Prédictions à écrire avant de commencer : le
+    taux de distorsion calculé par le simulateur sera-t-il proche de $10\ \%$, de $50\ \%$ ou de plus de $100\ \%$ ? En
+    passant de $0{,}5$ à $2\ \mathrm{mH}$, quel rang diminuera le plus, en proportion ?
+  </p>
+  <ol>
+    <li>Dans LTspice, saisir la source <code>V1 a 0 SINE(0 325.27 50)</code>, la ligne <code>L1 a b 0.5m</code> et <code>R1 b c 0.8</code>, un pont de quatre diodes <code>D1 c p D</code>, <code>D2 0 p D</code>, <code>D3 m c D</code>, <code>D4 m 0 D</code> avec <code>.model D D(Ron=0.01 Roff=1Meg Vfwd=0.7)</code>, le condensateur <code>C1 p m 330u</code> et une charge résistive <code>RL p m 200</code>, qui absorbe environ $500\ \mathrm{W}$ sous $315\ \mathrm{V}$.</li>
+    <li>Lancer <code>.tran 0 300m 200m 10u</code>, puis <code>.four 50 15 1 I(R1)</code> ; lire dans le journal d'erreurs, menu View puis SPICE Error Log, le tableau des harmoniques et la ligne Total Harmonic Distortion.</li>
+    <li>Mesurer aussi <code>.meas TRAN Ieff RMS I(R1) FROM 280m TO 300m</code> et <code>.meas TRAN Icr MAX I(R1) FROM 280m TO 300m</code>, et calculer le facteur de crête.</li>
+    <li>Remplacer <code>0.5m</code> par <code>2m</code>, relancer et comparer. En Python, reprendre les équations de la simulation de la section D, intégrées par la méthode d'Euler avec un pas de $10\ \mu\mathrm{s}$, et calculer les harmoniques par une transformée de Fourier discrète sur la dernière période, à l'aide de <code>cmath.exp</code> ou de <code>numpy.fft.rfft</code>.</li>
+  </ol>
+  <p>
+    Résultats attendus : avec la charge résistive et des diodes à seuil, l'ordre de grandeur est le même que dans la
+    simulation de la section D, à puissance constante : impulsions de $13$ à $15\ \mathrm{A}$ crête, courant efficace vrai
+    de l'ordre de $4\ \mathrm{A}$, fondamental de l'ordre de $2{,}2\ \mathrm{A}$, taux de distorsion de l'ordre de $130$ à
+    $160\ \%$, facteur de crête supérieur à 3 ; avec $2\ \mathrm{mH}$, un taux vers $110$ à $130\ \%$ et une baisse relative
+    surtout marquée sur les rangs 11 et 13, divisés par plus de trois. Anomalies à observer : une analyse <code>.four</code> lancée sur le démarrage, qui
+    inclut l'appel de charge du condensateur, des centaines d'ampères, et fausse tout le spectre ; un pas maximal trop grand,
+    qui arrondit les impulsions et sous-estime les rangs élevés ; un taux affiché par LTspice qui suit sa propre convention et
+    son propre nombre de rangs, à vérifier en recalculant $\sqrt{\sum I_h^2}/I_1$ à partir du tableau.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est calculé dans
+    ce navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées
+    localement pour suivre votre progression. Le jalon de fin du module Triphasé et qualité de l'énergie demande de maîtriser
+    les régimes sinusoïdaux monophasés et triphasés, les puissances, la compensation, les harmoniques et les filtres
+    élémentaires : cette séance en couvre les harmoniques.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Un courant déformé est une somme d'harmoniques ; sa valeur efficace est la racine de la somme des carrés, et son THD n'a de sens qu'avec sa référence.</li>
+    <li data-rang="02">En triphasé équilibré, les rangs multiples de 3 sont en phase sur les trois phases et s'additionnent dans le neutre, qui peut porter jusqu'à $\sqrt{3}$ fois le courant de phase.</li>
+    <li data-rang="03">Les courants harmoniques déforment la tension en traversant l'impédance de la source, d'autant plus fortement près d'une résonance avec des condensateurs.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> passer de la vision temporelle, une forme d'onde déformée, à la vision
+    fréquentielle, rang par rang, et traiter chaque rang avec sa propre impédance et sa propre séquence. L'animation des
+    séquences, la simulation du neutre et l'exercice avancé sur la résonance sont faits pour installer ce réflexe ; la
+    question de diagnostic industriel le met à l'épreuve.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Filtres passifs, étudie les circuits qui laissent passer
+    certaines fréquences et en atténuent d'autres. Question à préparer : la mesure de courant d'un automate est filtrée par
+    un circuit $RC$ passe-bas, $R = 1\ \mathrm{k}\Omega$ et $C = 1\ \mu\mathrm{F}$, sortie prise aux bornes du condensateur.
+    Quel est le rapport entre la tension de sortie et la tension d'entrée à $50\ \mathrm{Hz}$, puis pour un harmonique de
+    rang 5, à $250\ \mathrm{Hz}$ ? Ce filtre suffit-il à rendre la mesure insensible au rang 5, et que fait-il subir au
+    fondamental ?
+  </p>
+
+</article>
