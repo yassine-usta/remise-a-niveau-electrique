@@ -1,0 +1,1096 @@
+<article class="cours" data-slug="circuits-magnetiques">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/revision-4-et-mini-projet-qualite-reseau">Révision 4 et mini-projet qualité réseau</a> s'est achevé
+      sur une correction : une self anti-harmonique de $5{,}11\ \mathrm{mH}$ par phase, placée en série avec les condensateurs du
+      compresseur, accorde la branche à $189\ \mathrm{Hz}$, au rang $3{,}78$, et la met à l'abri de la résonance. Ce résultat
+      suppose que l'inductance vaut $5{,}11\ \mathrm{mH}$ et qu'elle le reste quand le courant monte. Or une self industrielle
+      est un bobinage sur un noyau de fer : sa valeur dépend du nombre de spires, de la section du fer, de la longueur d'un
+      entrefer de quelques dixièmes de millimètre, et elle s'effondre si le fer sature. Le module qui s'ouvre, Magnétisme et
+      transformateurs, part de là. Cette séance donne l'outil de base, le circuit magnétique, qui servira ensuite à chaque
+      transformateur et à chaque machine du parcours. Le cours
+      <a href="#/cours/inductances-et-champ-magnetique">Inductances et champ magnétique</a> a déjà posé le champ créé par un
+      courant, le flux lié, la loi de Faraday et l'inductance d'un solénoïde dans l'air : on y ajoute maintenant le fer.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Presque toute l'énergie électrique consommée dans une usine traverse au moins un circuit magnétique : le transformateur du
+    poste, puis le stator et le rotor des moteurs. S'y ajoutent les selfs de lissage des variateurs, les selfs anti-harmoniques,
+    les électroaimants des contacteurs et des freins, les transformateurs de courant des mesures et des protections. Dans tous ces
+    appareils, un bobinage crée un flux et un noyau ferromagnétique le canalise, le renforce et le dirige là où il sert.
+  </p>
+  <p>
+    Savoir calculer un circuit magnétique, c'est pouvoir répondre à des questions très concrètes : quel courant faut-il pour
+    obtenir une induction donnée dans une colonne de transformateur ; pourquoi un transformateur alimenté sous $10\ \%$ de
+    surtension absorbe un courant à vide presque doublé ; pourquoi une bobine de contacteur alternatif grille quand une poussière
+    l'empêche de se fermer ; pourquoi une self de filtrage porte un entrefer et un transformateur n'en porte pas ; combien de
+    watts chauffent le fer au repos. Le travail central de la séance est de calculer flux, induction et courant magnétisant d'un
+    noyau avec entrefer ; il débouche, dans le projet fil rouge, sur le dimensionnement magnétique de la self anti-harmonique du
+    site, et prépare directement le cours Transformateur idéal.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Calculer la réluctance d'un tronçon de fer ou d'un entrefer, puis le flux, l'induction et le champ dans chaque partie d'un circuit magnétique série ou à branches parallèles.</li>
+    <li data-rang="02">Expliquer, à partir des domaines magnétiques et de la courbe $B(H)$, la perméabilité élevée du fer, la saturation, l'hystérésis et l'origine des pertes fer.</li>
+    <li data-rang="03">Calculer l'inductance $L = N^2/\mathcal{R}$ d'un bobinage sur noyau et l'énergie stockée, et justifier quantitativement le rôle de l'entrefer.</li>
+    <li data-rang="04">Calculer, sous tension sinusoïdale, l'induction crête par la formule de Boucherot et le courant magnétisant, en modèle linéaire puis avec saturation.</li>
+    <li data-rang="05">Dimensionner le nombre de spires et l'entrefer d'une self pour une inductance, un courant crête et une induction maximale imposés.</li>
+    <li data-rang="06">Diagnostiquer un échauffement ou un courant à vide anormal d'un appareil magnétique à partir de la tension, de la fréquence et de l'état du noyau.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois acquis du cours <a href="#/cours/inductances-et-champ-magnetique">Inductances et champ magnétique</a> suffisent. Le
+    premier est le théorème d'Ampère : le long d'un contour fermé, la circulation du champ $H$ égale le courant total enlacé.
+    Dans un tore ou un long solénoïde de $N$ spires parcourues par $i$, sur une ligne de champ de longueur $l$, cela donne
+    $H = Ni/l$, en ampères par mètre. Le deuxième est la loi de Faraday : une bobine de $N$ spires traversées par un flux
+    $\Phi$ variable présente à ses bornes, en convention récepteur, $u = N\,\mathrm{d}\Phi/\mathrm{d}t$ ; le produit $N\Phi$
+    est le flux lié. Le troisième est la définition de l'inductance, $L = N\Phi/i$, et l'énergie $\tfrac{1}{2}Li^2$. On utilisera
+    aussi les puissances de dix du cours
+    <a href="#/cours/diagnostic-initial-et-remise-a-niveau-mathematique">Diagnostic initial et remise à niveau mathématique</a> :
+    $\mu_0 = 4\pi \times 10^{-7}\ \mathrm{H/m}$ revient à chaque ligne. Le mini-test n'est pas noté ; la correction de chaque
+    question reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la correction".
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-canaliser">Le fer canalise le flux</h3>
+  <p>
+    Un courant crée autour de lui une excitation magnétique $H$, fixée uniquement par les courants et la géométrie : c'est ce
+    que dit le théorème d'Ampère. Dans l'air, l'induction qui en résulte est faible, $B = \mu_0 H$ : $1000$ ampères-tours sur
+    $25\ \mathrm{cm}$ ne donnent que $5\ \mathrm{mT}$. Placez maintenant ce bobinage sur un anneau de fer : l'induction est
+    multipliée par mille ou davantage. Le fer ne crée pas d'énergie ; il contient d'innombrables petits aimants élémentaires,
+    regroupés en domaines, qui s'orientent dans le sens de l'excitation et ajoutent leur propre aimantation à celle du courant.
+  </p>
+  <p>
+    Comme le fer conduit le flux mille fois mieux que l'air qui l'entoure, presque tout le flux reste dans le noyau, à la
+    manière d'un courant qui reste dans un fil de cuivre plutôt que de traverser l'isolant. On parle de circuit magnétique : le
+    bobinage joue le rôle du générateur, le noyau celui du conducteur, et le flux celui du courant. Le schéma ci-dessous montre
+    un tel circuit, avec un entrefer, une coupure de quelques dixièmes de millimètre dans le fer.
+  </p>
+  <figure id="d-noyau-figure">
+    <svg viewBox="0 0 660 340" role="img" aria-label="Noyau rectangulaire en fer avec un entrefer dans la colonne de droite, bobinage de N spires sur la colonne de gauche, sens du courant, sens du flux, épanouissement dans l'entrefer et flux de fuite">
+      <defs>
+        <marker id="fl-d-noyau" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <path d="M140 40H440V160H380V100H200V240H380V172H440V300H140Z" fill="rgba(128,128,128,0.16)" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M128 112L212 104M128 126L212 118M128 140L212 132M128 154L212 146M128 168L212 160M128 182L212 174M128 196L212 188M128 210L212 202M128 224L212 216"/>
+        <path d="M128 112H70"/>
+        <path d="M128 224H70"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M92 112H118" marker-end="url(#fl-d-noyau)"/>
+        <path d="M60 210V128" marker-end="url(#fl-d-noyau)"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="7 5" stroke-linejoin="round">
+        <path d="M170 220V70H410V280H170V222"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M170 170V140" marker-end="url(#fl-d-noyau)"/>
+        <path d="M280 70H310" marker-end="url(#fl-d-noyau)"/>
+        <path d="M410 120V140" marker-end="url(#fl-d-noyau)"/>
+        <path d="M310 280H280" marker-end="url(#fl-d-noyau)"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.8">
+        <path d="M386 160C378 164 378 168 386 172"/>
+        <path d="M434 160C442 164 442 168 434 172"/>
+        <path d="M372 158C358 164 358 168 372 174"/>
+        <path d="M448 158C462 164 462 168 448 174"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="3 4" opacity="0.8">
+        <path d="M200 120C250 128 250 208 200 216"/>
+        <path d="M126 104C96 140 96 196 126 232"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="30" y="106">i</text>
+        <text x="20" y="176">u</text>
+        <text x="64" y="104">+</text>
+        <text x="64" y="244">-</text>
+        <text x="40" y="270">borne inférieure :</text>
+        <text x="40" y="286">référence de potentiel</text>
+        <text x="150" y="330">bobinage de N spires sur la colonne de gauche</text>
+        <text x="300" y="62">Φ</text>
+        <text x="182" y="160">Φ</text>
+        <text x="456" y="152">entrefer e</text>
+        <text x="456" y="190">épanouissement</text>
+        <text x="236" y="170">fuite</text>
+        <text x="214" y="228">fer : l_fer, section S</text>
+        <text x="476" y="62">tirets :</text>
+        <text x="476" y="78">ligne de flux moyenne</text>
+      </g>
+    </svg>
+    <figcaption>
+      Le noyau est la plage grisée. Le courant $i$ entre par la borne supérieure, marquée $+$, et la tension $u$ est fléchée de
+      la borne inférieure, prise comme référence de potentiel, vers la borne supérieure : convention récepteur. Avec le sens
+      d'enroulement dessiné, la règle de la main droite donne un flux $\Phi$ qui monte dans la colonne de gauche et parcourt le
+      noyau dans le sens horaire, comme l'indiquent les flèches posées sur la ligne de flux moyenne en tirets. Dans la colonne de
+      droite, le flux franchit l'entrefer $e$ ; les arcs fins de part et d'autre montrent l'épanouissement des lignes dans l'air.
+      Les deux arcs pointillés près du bobinage représentent le flux de fuite, qui se referme par l'air sans faire le tour du
+      noyau.
+    </figcaption>
+  </figure>
+
+  <h3 id="d-saturation">Saturation et mémoire</h3>
+  <p>
+    Les domaines ne s'orientent qu'une fois. Tant qu'il en reste à aligner, un petit supplément d'excitation produit un gros
+    supplément d'induction : c'est la zone linéaire, où la perméabilité relative $\mu_r$ vaut quelques milliers. Quand presque
+    tous sont alignés, vers $1{,}5$ à $1{,}8\ \mathrm{T}$ pour les tôles au silicium, le fer n'a plus rien à donner : l'induction
+    ne croît plus que comme dans l'air. C'est la saturation, et elle fait exploser le courant nécessaire pour gagner encore
+    quelques centièmes de tesla. Enfin, les parois entre domaines se déplacent par à-coups, en frottant sur les impuretés du
+    métal : quand l'excitation redescend, les domaines ne reprennent pas leur état initial. Le fer garde une mémoire, l'hystérésis,
+    et chaque aller-retour dissipe de l'énergie en chaleur.
+  </p>
+
+  <h3 id="d-domaines-section">Animation : les domaines s'alignent sous l'excitation</h3>
+  <p>
+    L'animation montre, à gauche, une vingtaine de domaines représentés par une flèche chacun ; à droite, la courbe de première
+    aimantation d'une tôle de qualité courante, induction $B$ en fonction de l'excitation $H$, et, en tirets, la droite
+    $B = \mu_0 H$ qu'on obtiendrait dans l'air. Faites glisser la poignée le long de l'axe de $H$, à la souris, au doigt ou au
+    clavier, ou lancez le lecteur. Avant de manipuler, prédisez : entre $100$ et $200\ \mathrm{A/m}$, puis entre $3000$ et
+    $3100\ \mathrm{A/m}$, de combien l'induction augmente-t-elle ? Que vaut le rapport $B/(\mu_0 H)$ aux deux extrémités ?
+  </p>
+  <figure id="d-domaines-figure">
+    <div class="schema-vivant" id="d-domaines"></div>
+    <figcaption>
+      À gauche, chaque flèche est l'aimantation d'un domaine ; la grande flèche au-dessus donne le sens de l'excitation $H$,
+      créée par le courant du bobinage. À droite, la courbe en trait plein est la caractéristique $B(H)$ du fer, la droite en
+      tirets celle de l'air, à la même échelle ; la poignée ronde, sur l'axe horizontal, règle $H$, et le point plein marque
+      l'état actuel sur la courbe. La perméabilité relative apparente $\mu_r = B/(\mu_0 H)$ est affichée sous le schéma.
+    </figcaption>
+  </figure>
+  <div id="d-domaines-lecteur"></div>
+  <div id="d-domaines-valeurs"></div>
+  <p>
+    Interprétation : de $100$ à $200\ \mathrm{A/m}$, l'induction passe de $0{,}25$ à $0{,}50\ \mathrm{T}$ : chaque ampère par
+    mètre rapporte $2{,}5\ \mathrm{mT}$, et $\mu_r$ voisine $2000$. De $3000$ à $3100\ \mathrm{A/m}$, le gain n'est plus que de
+    l'ordre de $5\ \mathrm{mT}$ en tout, alors que les flèches sont déjà presque toutes alignées. La perméabilité apparente chute
+    vers $400$ : elle n'est pas une constante du matériau, mais une pente qui dépend du point de fonctionnement. Toute formule qui
+    suppose $\mu_r$ constant n'est valable que sous le coude de la courbe.
+  </p>
+
+  <h3 id="d-analogie">Une analogie contrôlée : le circuit électrique</h3>
+  <p>
+    Le bobinage pousse le flux comme un générateur pousse le courant : sa "force" est le nombre d'ampères-tours $Ni$, appelé
+    force magnétomotrice. Chaque tronçon du circuit s'oppose au passage du flux comme une résistance au courant : c'est la
+    réluctance, d'autant plus grande que le tronçon est long, étroit et peu perméable. Un entrefer d'un millimètre, fait d'air
+    dont la perméabilité est deux mille fois plus faible que celle du fer, s'oppose au flux autant que deux mètres de fer : le
+    plus petit élément du circuit peut en être le plus important. Les mêmes réflexes s'appliquent : réluctances en série qui
+    s'ajoutent, branches en parallèle qui se partagent le flux, "chute" d'ampères-tours dans chaque tronçon.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie</span>
+    <p>
+      L'analogie électrique rend bien compte de la répartition du flux et de l'effet de l'entrefer. Elle s'arrête sur quatre
+      points. Il n'existe pas d'isolant magnétique : l'air n'est que mille à dix mille fois moins perméable que le fer, alors
+      qu'un isolant électrique est des milliards de milliards de fois moins conducteur que le cuivre ; une partie du flux fuit
+      toujours, et l'épanouissement dans l'entrefer élargit la section utile. La réluctance du fer n'est pas constante : elle
+      croît fortement à la saturation, ce qu'une résistance ordinaire ne fait pas. Une réluctance ne dissipe pas d'énergie, elle
+      en stocke ; les pertes du fer viennent de l'hystérésis et des courants de Foucault, que le modèle n'inclut pas. Enfin, le
+      fer a une mémoire : l'état magnétique dépend de l'histoire, pas seulement du courant présent.
+    </p>
+  </div>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-grandeurs">Les grandeurs et leurs unités</h3>
+  <p>
+    On utilise quatre grandeurs. L'excitation magnétique $H$, en ampères par mètre, est fixée par les courants. L'induction
+    magnétique $B$, en teslas, est ce qui agit sur la matière, crée les forces et entre dans la loi de Faraday. Le flux
+    $\Phi = \iint \vec{B} \cdot \mathrm{d}\vec{S}$, en webers, mesure l'induction totale qui traverse une section ; pour une
+    induction uniforme et normale à une section $S$, $\Phi = BS$, avec $1\ \mathrm{Wb} = 1\ \mathrm{T \cdot m^2}$. La perméabilité
+    $\mu = \mu_0 \mu_r$, en henrys par mètre, relie les deux premières dans un matériau linéaire.
+  </p>
+  <div class="formule-cle">
+    $$B = \mu_0\,(H + M) = \mu_0 \mu_r H, \qquad \mu_0 = 4\pi \times 10^{-7}\ \mathrm{H/m}$$
+    <p class="formule-cle-legende">
+      $M$ est l'aimantation du matériau, en $\mathrm{A/m}$, contribution des domaines alignés. L'écriture $B = \mu_0\mu_r H$ suppose
+      $M$ proportionnel à $H$ : c'est une approximation, valable dans la zone linéaire d'un matériau sans mémoire. Ordres de
+      grandeur de $\mu_r$ : $1$ pour l'air, le cuivre et l'aluminium ; $1000$ à $8000$ pour les tôles au silicium sous le coude ;
+      $2000$ à $15\,000$ pour les ferrites ; jusqu'à $10^5$ pour les alliages fer-nickel. Vérification : $[\mu_0 H] =
+      \mathrm{H/m} \times \mathrm{A/m} = \mathrm{Wb/(A \cdot m)} \times \mathrm{A/m} = \mathrm{Wb/m^2} = \mathrm{T}$.
+    </p>
+  </div>
+
+  <h3 id="e-lois">Les deux lois du circuit magnétique</h3>
+  <p>
+    Première loi, physique : le théorème d'Ampère. Sur la ligne de flux moyenne du noyau, qui enlace une fois les $N$ spires
+    parcourues par $i$, la circulation de $H$ vaut $Ni$. Si le champ est uniforme sur chaque tronçon $k$ de longueur $l_k$, la
+    circulation devient une somme :
+  </p>
+  <div class="formule-cle">
+    $$\oint \vec{H} \cdot \mathrm{d}\vec{l} = N i \quad \Longrightarrow \quad \sum_k H_k\,l_k = N i = \mathcal{F}$$
+    <p class="formule-cle-legende">
+      $\mathcal{F}$ est la force magnétomotrice, en ampères, que l'on écrit souvent "ampères-tours" pour rappeler son origine ;
+      $H_k$ en $\mathrm{A/m}$, $l_k$ en $\mathrm{m}$. Hypothèses : champ uniforme et tangent à la ligne moyenne sur chaque tronçon,
+      courants de déplacement négligés, ce qui est toujours le cas aux fréquences industrielles. Le sens positif de $\Phi$ est
+      relié au sens de $i$ par la règle de la main droite : c'est une convention d'orientation.
+    </p>
+  </div>
+  <p>
+    Seconde loi, physique aussi : le flux est conservatif. L'induction n'a ni source ni puits, $\mathrm{div}\,\vec{B} = 0$, si
+    bien que le flux qui entre dans un tronçon en ressort entièrement. Dans un circuit série sans fuite, le même $\Phi$ traverse
+    le fer et l'entrefer ; à une jonction de branches, la somme des flux entrants égale la somme des flux sortants. C'est
+    l'exact équivalent de la loi des nœuds du cours <a href="#/cours/lois-de-kirchhoff">Lois de Kirchhoff</a>, et le théorème
+    d'Ampère joue le rôle de la loi des mailles.
+  </p>
+
+  <h3 id="e-reluctance">Réluctance et loi d'Hopkinson</h3>
+  <p>
+    Sur un tronçon de longueur $l$, de section $S$ et de perméabilité $\mu$ constantes, traversé par le flux $\Phi$ :
+    $B = \Phi/S$, puis $H = B/\mu = \Phi/(\mu S)$, d'où la chute d'ampères-tours $Hl = \Phi\,l/(\mu S)$. Le coefficient de $\Phi$
+    ne dépend que du tronçon : c'est sa réluctance. Le schéma ci-dessous met en regard un tube de flux et la résistance qui lui
+    correspond.
+  </p>
+  <figure id="e-tube-figure">
+    <svg viewBox="0 0 680 230" role="img" aria-label="Tube de flux de longueur l et de section S traversé par le flux Phi, et résistance électrique analogue traversée par le courant I">
+      <defs>
+        <marker id="fl-e-tube" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+        <path d="M70 70H290"/>
+        <path d="M70 140H290"/>
+        <ellipse cx="70" cy="105" rx="14" ry="35"/>
+        <ellipse cx="290" cy="105" rx="14" ry="35"/>
+        <path d="M420 105H480"/>
+        <rect x="480" y="88" width="90" height="34" rx="3"/>
+        <path d="M570 105H630"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M110 92H250" marker-end="url(#fl-e-tube)"/>
+        <path d="M110 118H250" marker-end="url(#fl-e-tube)"/>
+        <path d="M70 170H290" marker-start="url(#fl-e-tube)" marker-end="url(#fl-e-tube)"/>
+        <path d="M430 92H466" marker-end="url(#fl-e-tube)"/>
+        <path d="M630 160H420" marker-end="url(#fl-e-tube)"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="4 4" opacity="0.7">
+        <path d="M290 170V146M70 170V146M420 160V112M630 160V112"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="40" y="40">tube de flux : l, S, μ</text>
+        <text x="172" y="86">Φ</text>
+        <text x="40" y="110">S</text>
+        <text x="168" y="190">l</text>
+        <text x="90" y="214">chute d'ampères-tours : H l = 𝓡 Φ</text>
+        <text x="430" y="40">résistance analogue : l, S, σ</text>
+        <text x="440" y="84">I</text>
+        <text x="518" y="110">R</text>
+        <text x="490" y="182">tension : U = R I</text>
+        <text x="440" y="214">R = l / (σ S)  ;  𝓡 = l / (μ S)</text>
+      </g>
+    </svg>
+    <figcaption>
+      À gauche, un tronçon de circuit magnétique : le flux $\Phi$, flèches pleines, le traverse de gauche à droite sur toute sa
+      section $S$ ; la double flèche repère sa longueur $l$. La chute d'ampères-tours $Hl$ est comptée dans le sens du flux, comme
+      une chute de tension est comptée dans le sens du courant. À droite, la résistance analogue : $U$ fléchée en convention
+      récepteur, opposée au sens de $I$. Les deux formules de la dernière ligne ont la même structure, la conductivité $\sigma$
+      étant remplacée par la perméabilité $\mu$.
+    </figcaption>
+  </figure>
+  <div class="formule-cle">
+    $$\mathcal{R} = \frac{l}{\mu_0 \mu_r S}, \qquad \mathcal{F} = N i = \Big(\sum_k \mathcal{R}_k\Big)\,\Phi \qquad \text{(loi d'Hopkinson)}$$
+    <p class="formule-cle-legende">
+      $\mathcal{R}$ en ampères par weber, $\mathrm{A/Wb}$, qui est aussi l'inverse du henry, $\mathrm{H^{-1}}$. Hypothèses : $\mu$
+      constant, donc fer non saturé ; flux uniforme sur la section ; fuites et épanouissement négligés. Vérification
+      dimensionnelle : $\mathrm{m}/(\mathrm{H/m} \cdot \mathrm{m^2}) = 1/\mathrm{H} = \mathrm{A/Wb}$, et
+      $\mathrm{A/Wb} \times \mathrm{Wb} = \mathrm{A}$, l'unité de $\mathcal{F}$. Cas limites : si $\mu_r \to \infty$, la réluctance
+      du fer s'annule et toute la force magnétomotrice se retrouve dans l'entrefer ; si l'entrefer est nul, il ne reste que le
+      fer. Interprétation : une réluctance est d'autant plus forte que le chemin est long et étroit, et l'air compte
+      $\mu_r$ fois plus que le fer à dimensions égales.
+    </p>
+  </div>
+  <p>
+    Pour le noyau de la section D, avec un entrefer d'épaisseur $e$ et un fer de longueur moyenne $l_{\mathrm{fer}}$, les deux
+    réluctances sont en série : $\mathcal{R} = \dfrac{l_{\mathrm{fer}}}{\mu_0\mu_r S} + \dfrac{e}{\mu_0 S}$. Le rapport des deux
+    termes vaut $\dfrac{e\,\mu_r}{l_{\mathrm{fer}}}$ : avec $e = 1\ \mathrm{mm}$, $\mu_r = 2000$ et $l_{\mathrm{fer}} = 0{,}40\ \mathrm{m}$,
+    l'entrefer pèse cinq fois plus que les $40\ \mathrm{cm}$ de fer. Le même raisonnement s'applique aux branches en parallèle :
+    deux réluctances qui reçoivent la même force magnétomotrice se partagent le flux comme deux résistances se partagent un
+    courant, et leur réluctance équivalente est $\mathcal{R}_1\mathcal{R}_2/(\mathcal{R}_1 + \mathcal{R}_2)$. Le circuit
+    cuirassé ci-dessous, forme courante des transformateurs monophasés et des selfs, en est l'exemple type.
+  </p>
+  <figure id="e-cuirasse-figure">
+    <svg viewBox="0 0 700 310" role="img" aria-label="Circuit magnétique cuirassé : colonne centrale bobinée avec entrefer, deux colonnes latérales, et réseau de réluctances équivalent avec la source de force magnétomotrice">
+      <defs>
+        <marker id="fl-e-cui" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <path d="M40 40H320V270H40Z M90 90V220H155V90Z M205 90V220H270V90Z" fill="rgba(128,128,128,0.16)" fill-rule="evenodd" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+      <g fill="none" stroke="currentColor" stroke-width="2.2">
+        <path d="M155 150H205M155 158H205" stroke-width="1.4"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M148 114L212 108M148 126L212 120M148 186L212 180M148 198L212 192"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M180 240V214" marker-end="url(#fl-e-cui)"/>
+        <path d="M168 64H96" marker-end="url(#fl-e-cui)"/>
+        <path d="M192 64H264" marker-end="url(#fl-e-cui)"/>
+        <path d="M64 120V190" marker-end="url(#fl-e-cui)"/>
+        <path d="M296 120V190" marker-end="url(#fl-e-cui)"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+        <circle cx="430" cy="160" r="24"/>
+        <path d="M430 136V70H500"/>
+        <rect x="500" y="56" width="70" height="28" rx="3"/>
+        <path d="M570 70H610V110"/>
+        <path d="M610 110H580V130M610 110H640V130"/>
+        <rect x="566" y="130" width="28" height="60" rx="3"/>
+        <rect x="626" y="130" width="28" height="60" rx="3"/>
+        <path d="M580 190V230H640V190M610 230V250H430V184"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M430 168V152" marker-end="url(#fl-e-cui)"/>
+        <path d="M452 62H488" marker-end="url(#fl-e-cui)"/>
+        <path d="M560 140V176" marker-end="url(#fl-e-cui)"/>
+        <path d="M664 140V176" marker-end="url(#fl-e-cui)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="214" y="160">entrefer</text>
+        <text x="172" y="262">Φc</text>
+        <text x="100" y="58">Φc/2</text>
+        <text x="226" y="58">Φc/2</text>
+        <text x="40" y="294">colonne centrale bobinée, N spires</text>
+        <text x="380" y="164">𝓕</text>
+        <text x="424" y="125">+</text>
+        <text x="460" y="52">Φc</text>
+        <text x="506" y="104">𝓡c</text>
+        <text x="526" y="164">Φl</text>
+        <text x="670" y="164">Φl</text>
+        <text x="572" y="214">𝓡l</text>
+        <text x="632" y="214">𝓡l</text>
+        <text x="380" y="290">𝓕 = N i = (𝓡c + 𝓡l / 2) Φc</text>
+      </g>
+    </svg>
+    <figcaption>
+      À gauche, le circuit cuirassé : la colonne centrale porte le bobinage et un entrefer ; le flux $\Phi_c$ y monte, puis se
+      partage par moitié entre les deux colonnes latérales, identiques, et redescend. À droite, le réseau équivalent : la force
+      magnétomotrice $\mathcal{F} = Ni$ est une source dont le signe $+$ marque le côté par où sort le flux ; $\mathcal{R}_c$
+      regroupe la colonne centrale, ses culasses et l'entrefer ; chaque colonne latérale, avec ses culasses, vaut
+      $\mathcal{R}_l$. Les deux $\mathcal{R}_l$ en parallèle valent $\mathcal{R}_l/2$, et chacune porte $\Phi_l = \Phi_c/2$ par
+      symétrie. C'est pourquoi les colonnes latérales n'ont que la moitié de la section de la colonne centrale.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-inductance">Inductance d'un bobinage sur noyau</h3>
+  <p>
+    Le flux lié par les $N$ spires vaut $N\Phi$, et $\Phi = Ni/\mathcal{R}$ par la loi d'Hopkinson. La définition
+    $L = N\Phi/i$ donne immédiatement :
+  </p>
+  <div class="formule-cle">
+    $$L = \frac{N\Phi}{i} = \frac{N^2}{\mathcal{R}}, \qquad \text{avec entrefer dominant : } L \approx \frac{\mu_0 N^2 S}{e}$$
+    <p class="formule-cle-legende">
+      $L$ en henrys, $N$ sans dimension, $\mathcal{R}$ en $\mathrm{A/Wb}$. Hypothèses : celles de la loi d'Hopkinson, plus un
+      flux qui traverse toutes les spires, sans fuite. La forme approchée suppose $e \gg l_{\mathrm{fer}}/\mu_r$. Vérification :
+      $1/\mathrm{H^{-1}} = \mathrm{H}$ ; et $\mathrm{H/m} \times \mathrm{m^2}/\mathrm{m} = \mathrm{H}$. Interprétation :
+      l'inductance croît comme le carré du nombre de spires, car doubler $N$ double à la fois le flux et le nombre de spires qui
+      le captent. Cas limite : sans entrefer, $L = \mu_0\mu_r N^2 S/l_{\mathrm{fer}}$ dépend de $\mu_r$, donc du courant, de la
+      température et de la tôle ; avec un entrefer dominant, $L$ ne dépend plus que de la géométrie. L'entrefer rend
+      l'inductance stable et linéaire, au prix d'un courant plus grand pour un même flux.
+    </p>
+  </div>
+
+  <h3 id="e-sim-entrefer-section">Simulation interactive : le noyau avec entrefer</h3>
+  <p>
+    La simulation reprend le noyau de la section D avec un modèle de tôle non linéaire, $H(B) = 398\,B + 7{,}5\,B^{13}$ en
+    $\mathrm{A/m}$ pour $B$ en teslas, qui donne $\mu_r \approx 2000$ sous $1\ \mathrm{T}$ et sature vers $1{,}6\ \mathrm{T}$.
+    Pour chaque force magnétomotrice $Ni$, elle résout $H(B)\,l_{\mathrm{fer}} + B e/\mu_0 = Ni$ et trace l'induction obtenue,
+    avec l'entrefer réglé et sans entrefer. Prédisez avant de toucher aux curseurs : en passant de $0$ à $1\ \mathrm{mm}$
+    d'entrefer, l'induction obtenue avec $1000$ ampères-tours sera-t-elle divisée par deux, par cinq, ou à peine modifiée ? Et
+    que devient la courbe au-delà de $1{,}5\ \mathrm{T}$ ?
+  </p>
+  <figure id="e-sim-entrefer-figure">
+    <div id="e-sim-entrefer-trace"></div>
+    <figcaption>
+      Induction dans le fer en fonction de la force magnétomotrice. Les couleurs des courbes sont rappelées dans la légende du
+      tracé. Le point marque l'état obtenu avec le courant réglé ; le trait vertical en tirets repère la force magnétomotrice
+      correspondante, le trait horizontal en pointillés le seuil indicatif de saturation à $1{,}5\ \mathrm{T}$.
+    </figcaption>
+  </figure>
+  <div id="e-sim-entrefer-curseurs"></div>
+  <div id="e-sim-entrefer-valeurs"></div>
+  <p>
+    Interprétation : avec $1000$ ampères-tours, l'induction passe de $1{,}53\ \mathrm{T}$ sans entrefer, déjà dans le coude, à
+    $1{,}04\ \mathrm{T}$ avec $1\ \mathrm{mm}$ : elle n'est pas divisée par cinq, car sans entrefer le fer saturé ne profitait
+    plus de sa perméabilité. La courbe avec entrefer est presque une droite jusqu'à $1{,}3\ \mathrm{T}$ : l'entrefer "cisaille" la
+    caractéristique du fer, il l'incline et la rend linéaire, ce qui rend l'inductance indépendante du courant. Au-delà du
+    coude, les deux courbes s'aplatissent : une fois le fer saturé, chaque ampère-tour supplémentaire ne rapporte presque plus
+    rien, avec ou sans entrefer ; l'entrefer repousse la saturation vers des courants plus élevés, il ne la supprime pas. Observez enfin la part de la force magnétomotrice consommée dans l'entrefer : plus de $80\ \%$ pour
+    $1\ \mathrm{mm}$, dans la zone linéaire.
+  </p>
+
+  <h3 id="e-energie">Énergie stockée et force d'attraction</h3>
+  <p>
+    Le bobinage reçoit la puissance $ui = N\,\dfrac{\mathrm{d}\Phi}{\mathrm{d}t}\,i$. En remplaçant $Ni$ par $\mathcal{R}\Phi$ et en
+    intégrant de $0$ à $\Phi$, on obtient l'énergie stockée dans un circuit linéaire ; en la rapportant au volume, avec
+    $Ni = Hl$ et $\mathrm{d}\Phi = S\,\mathrm{d}B$, on obtient sa densité.
+  </p>
+  <div class="formule-cle">
+    $$W = \int_0^{\Phi} \mathcal{R}\,\Phi'\,\mathrm{d}\Phi' = \tfrac{1}{2}\mathcal{R}\Phi^2 = \tfrac{1}{2}Li^2, \qquad w = \frac{B^2}{2\mu_0\mu_r}, \qquad F_{\mathrm{att}} = \frac{B^2 S}{2\mu_0}$$
+    <p class="formule-cle-legende">
+      $W$ en joules ; $w$ en $\mathrm{J/m^3}$ ; $F_{\mathrm{att}}$ en newtons, force qui attire l'une vers l'autre les deux faces d'un
+      entrefer de section $S$, obtenue en dérivant l'énergie par rapport à $e$ à flux constant. Hypothèses : matériau linéaire,
+      sans hystérésis. Vérification : $\mathrm{T^2}/(\mathrm{H/m}) = \mathrm{Wb^2 \cdot m^{-4}} \cdot \mathrm{m/H} =
+      \mathrm{Wb \cdot A \cdot m^{-3}} = \mathrm{J/m^3}$, et $\mathrm{J/m^3} \times \mathrm{m^2} = \mathrm{N}$. Interprétation : à
+      induction égale, la densité d'énergie est $\mu_r$ fois plus grande dans l'air que dans le fer ; l'énergie se partage entre
+      les tronçons dans le rapport de leurs réluctances. Une self stocke donc son énergie dans l'entrefer, et un transformateur,
+      qui doit en stocker le moins possible, n'en a pas.
+    </p>
+  </div>
+  <p>
+    La force d'attraction est le principe de l'électroaimant du contacteur KM1 étudié dans le cours
+    <a href="#/cours/inductances-et-champ-magnetique">Inductances et champ magnétique</a> : à $1\ \mathrm{T}$ sur
+    $4\ \mathrm{cm^2}$, $F = 1^2 \times 4 \times 10^{-4}/(2 \times 4\pi \times 10^{-7}) = 159\ \mathrm{N}$. En courant alternatif,
+    $B^2$ oscille à deux fois la fréquence du réseau : la force s'annule cent fois par seconde, d'où le bourdonnement des tôles
+    et la spire de déphasage des contacteurs alternatifs, qui maintient une force non nulle.
+  </p>
+
+  <h3 id="e-boucherot">Régime sinusoïdal : la tension impose le flux</h3>
+  <p>
+    Supposons maintenant la bobine branchée sur une tension sinusoïdale $u = \hat{U}\cos\omega t$, sa résistance étant négligée.
+    La loi de Faraday impose $N\,\mathrm{d}\Phi/\mathrm{d}t = u$, donc $\Phi = \dfrac{\hat{U}}{N\omega}\sin\omega t$ en régime
+    établi : le flux est sinusoïdal, en retard de $90^\circ$ sur la tension, et son amplitude ne dépend que de la tension, de la
+    fréquence et du nombre de spires. Pas du noyau, pas de l'entrefer. En remplaçant $\hat{U}$ par $\sqrt{2}\,U$ et
+    $\hat{\Phi}$ par $\hat{B}S$, on obtient la formule de Boucherot :
+  </p>
+  <div class="formule-cle">
+    $$U = \frac{2\pi}{\sqrt{2}}\,f N S \hat{B} \approx 4{,}44\,f N S \hat{B}$$
+    <p class="formule-cle-legende">
+      $U$ valeur efficace en volts, $f$ en hertz, $S$ section nette du fer en $\mathrm{m^2}$, $\hat{B}$ induction crête en teslas.
+      Hypothèses : tension sinusoïdale, chute ohmique et flux de fuite négligés. Vérification : $\mathrm{s^{-1} \cdot m^2 \cdot T}
+      = \mathrm{Wb/s} = \mathrm{V}$. Interprétation : à fréquence fixée, l'induction crête est proportionnelle à la tension ; à
+      tension fixée, inversement proportionnelle à la fréquence. C'est la raison de la commande à $U/f$ constant des variateurs,
+      sujet du cours Variation de vitesse des moteurs asynchrones. Cas limite : quand $f \to 0$, $\hat{B}$ tend vers l'infini ;
+      une bobine prévue pour l'alternatif, branchée sur une tension continue, n'est limitée que par sa résistance et grille.
+    </p>
+  </div>
+  <p>
+    Le courant, lui, s'adapte : c'est le courant magnétisant, celui qui fournit les ampères-tours nécessaires au flux imposé,
+    $i_m = \mathcal{R}\Phi/N$ dans un circuit linéaire. Un entrefer ou un noyau dégradé ne change pas le flux, mais augmente ce
+    courant dans la proportion de la réluctance. Et si $\hat{B}$ atteint le coude de la courbe, le courant reste sinusoïdal sur
+    la plus grande partie de la période mais forme des pointes autour des crêtes du flux : il se déforme et s'enrichit en rang 3,
+    exactement le type de courant non sinusoïdal analysé dans le cours
+    <a href="#/cours/introduction-a-fourier">Introduction à Fourier</a>. On le construit point par point dans la section H.
+  </p>
+
+  <h3 id="e-hysteresis">Hystérésis et pertes associées</h3>
+  <p>
+    En régime alternatif, l'induction parcourt une boucle, le cycle d'hystérésis : en montant, il faut un peu plus d'excitation
+    qu'en descendant. Deux points le caractérisent : l'induction rémanente $B_r$, qui subsiste quand $H$ s'annule, et le champ
+    coercitif $H_c$, qu'il faut appliquer en sens inverse pour annuler $B$. Sur un cycle complet, l'énergie fournie par la source
+    au volume $V = S\,l$ de fer vaut $\oint N i\,\mathrm{d}\Phi = \oint (Hl)(S\,\mathrm{d}B)$ : elle ne revient pas, car l'aire de
+    la boucle n'est pas nulle.
+  </p>
+  <div class="formule-cle">
+    $$W_{\mathrm{cycle}} = V \oint H\,\mathrm{d}B, \qquad P_h = f\,V \oint H\,\mathrm{d}B \approx k_h\,f\,\hat{B}^{\alpha}\,V$$
+    <p class="formule-cle-legende">
+      $\oint H\,\mathrm{d}B$ est l'aire du cycle, en $\mathrm{J/m^3}$ ; $P_h$ en watts. La forme $k_h f \hat{B}^{\alpha}$, avec
+      $\alpha$ voisin de $1{,}6$ à $2$, est une loi empirique dite de Steinmetz : une approximation dont les coefficients viennent
+      des mesures du fabricant de tôles. Vérification : $\mathrm{A/m} \times \mathrm{T} = \mathrm{A \cdot Wb \cdot m^{-3}} =
+      \mathrm{J/m^3}$. Interprétation : la perte par cycle est fixe, si bien que la puissance est proportionnelle à la fréquence.
+      Cas limite : un matériau idéal, dont le cycle se réduit à une courbe, ne dissiperait rien.
+    </p>
+  </div>
+
+  <h3 id="e-cycle-section">Animation et simulation : parcourir le cycle d'hystérésis</h3>
+  <p>
+    Le cycle tracé suit un modèle volontairement simple : branche montante et branche descendante s'écartent de la courbe
+    $H(B)$ de la tôle d'un champ $H_c$ pondéré par $(\hat{B}/1\ \mathrm{T})^{0{,}6}$, ce qui donne une aire proportionnelle à
+    $\hat{B}^{1{,}6}$, conforme à la loi de Steinmetz. Le point qui marque l'état magnétique se déplace sur la boucle quand on
+    déplace la poignée du cercle des phases ou que l'on lance le lecteur, qui fait défiler une période ; les curseurs règlent l'induction crête, la
+    fréquence, le champ coercitif et l'épaisseur des tôles. Prédiction à écrire avant de manipuler : en doublant la fréquence,
+    la perte par hystérésis double-t-elle, et la perte par courants de Foucault, présentée juste après ?
+  </p>
+  <figure id="e-cycle-figure">
+    <div class="schema-vivant" id="e-cycle"></div>
+    <figcaption>
+      Cycle $B(H)$ en trait épais, parcouru dans le sens trigonométrique : branche du bas en montant, branche du haut en
+      descendant. En tirets, la courbe $H(B)$ sans hystérésis. Les deux croix repèrent l'induction rémanente $B_r$ sur l'axe vertical et le
+      champ coercitif $H_c$ sur l'axe horizontal. L'aire grisée est l'énergie dissipée par mètre cube et par cycle. À droite, le petit cercle des phases porte la
+      poignée ronde qui règle l'instant $\omega t$ ; le point plein sur la boucle marque l'état magnétique à cet instant.
+    </figcaption>
+  </figure>
+  <div id="e-cycle-curseurs"></div>
+  <div id="e-cycle-lecteur"></div>
+  <div id="e-cycle-valeurs"></div>
+  <p>
+    Interprétation : avec $H_c = 40\ \mathrm{A/m}$ à $1\ \mathrm{T}$, l'aire vaut $\pi H_c \hat{B} = 126\ \mathrm{J/m^3}$ par cycle,
+    soit $0{,}82\ \mathrm{W/kg}$ à $50\ \mathrm{Hz}$ pour une masse volumique de $7650\ \mathrm{kg/m^3}$. Doubler la fréquence ne
+    change pas le cycle dans ce modèle quasi statique : la perte par hystérésis double. La perte par courants de Foucault, elle,
+    quadruple, car elle varie comme $f^2$ ; à $400\ \mathrm{Hz}$, elle devient prépondérante avec des tôles de $0{,}35\ \mathrm{mm}$.
+    Le modèle ignore un fait réel : aux fréquences élevées, les courants de Foucault élargissent eux-mêmes le cycle mesuré.
+  </p>
+
+  <h3 id="e-foucault">Courants de Foucault et feuilletage</h3>
+  <p>
+    Le fer est conducteur. Un flux alternatif y induit, dans chaque contour fermé de la section, une force électromotrice qui
+    fait circuler des courants, dits de Foucault, perpendiculaires au flux. Dans une tôle d'épaisseur $d$, de résistivité
+    $\rho$, traversée par $B = \hat{B}\sin\omega t$, le champ électrique induit à la distance $x$ du plan médian vaut
+    $x\,\mathrm{d}B/\mathrm{d}t$, la densité de courant $J = (x/\rho)\,\mathrm{d}B/\mathrm{d}t$ et la puissance volumique $\rho J^2$.
+    En moyennant sur l'épaisseur, $\overline{x^2} = d^2/12$, puis sur une période, $\overline{(\mathrm{d}B/\mathrm{d}t)^2} =
+    \omega^2\hat{B}^2/2$ :
+  </p>
+  <div class="formule-cle">
+    $$p_F = \frac{d^2}{12\,\rho}\cdot\frac{\omega^2 \hat{B}^2}{2} = \frac{\pi^2 f^2 \hat{B}^2 d^2}{6\,\rho}$$
+    <p class="formule-cle-legende">
+      $p_F$ en $\mathrm{W/m^3}$, $d$ en mètres, $\rho$ en $\Omega \cdot \mathrm{m}$. Hypothèses : tôle mince devant sa largeur,
+      induction uniforme dans l'épaisseur, donc pas d'effet de peau, ce qui est vrai à $50\ \mathrm{Hz}$ pour $d < 0{,}5\ \mathrm{mm}$.
+      Vérification : $\mathrm{s^{-2} \cdot T^2 \cdot m^2}/(\Omega \cdot \mathrm{m}) = (\mathrm{V/m})^2/(\Omega \cdot \mathrm{m}) =
+      \mathrm{W/m^3}$. Application : $d = 0{,}35\ \mathrm{mm}$, $\rho = 4{,}8 \times 10^{-7}\ \Omega \cdot \mathrm{m}$ pour un fer à
+      $3\ \%$ de silicium, $1\ \mathrm{T}$, $50\ \mathrm{Hz}$ : $p_F = 1050\ \mathrm{W/m^3}$, soit $0{,}14\ \mathrm{W/kg}$. Un bloc
+      massif de $5\ \mathrm{cm}$ dissiperait, sans effet de peau, vingt mille fois plus : c'est pourquoi les noyaux sont feuilletés
+      en tôles isolées, et le silicium ajouté pour augmenter $\rho$.
+    </p>
+  </div>
+  <p>
+    Les pertes fer totales sont la somme des deux termes, environ $0{,}96\ \mathrm{W/kg}$ à $1\ \mathrm{T}$ et $50\ \mathrm{Hz}$ dans
+    nos hypothèses. En pratique, on ne les calcule pas par ces formules : le fabricant de tôles fournit des courbes de pertes
+    spécifiques en $\mathrm{W/kg}$ en fonction de $\hat{B}$ et de $f$, mesurées selon une méthode normalisée, que l'on multiplie
+    par la masse de fer. En alternatif, ces pertes se traduisent par une petite composante du courant magnétisant en phase avec
+    la tension, $I_a = P_{\mathrm{fer}}/U$, à côté de la composante magnétisante proprement dite, en quadrature.
+  </p>
+
+  <h3 id="e-statut">Statut des énoncés</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Ce qui relève de la loi, de la convention, de l'approximation, de la conception et du constructeur</caption>
+      <thead><tr><th>Énoncé</th><th>Statut</th></tr></thead>
+      <tbody>
+        <tr><td>Théorème d'Ampère ; conservation du flux ; loi de Faraday ; existence de la saturation et de l'hystérésis</td><td>Lois physiques</td></tr>
+        <tr><td>Sens de $\Phi$ lié à celui de $i$ par la main droite ; convention récepteur pour $u$ et $i$ ; signe $+$ de la source de force magnétomotrice ; point de polarité des enroulements</td><td>Conventions, à préciser sur chaque schéma</td></tr>
+        <tr><td>$B = \mu_0\mu_r H$ avec $\mu_r$ constant ; loi d'Hopkinson ; longueur moyenne ; flux de fuite et épanouissement négligés ; loi de Steinmetz ; modèles $H(B)$ de cette séance</td><td>Approximations, valables sous le coude de saturation et pour des géométries simples</td></tr>
+        <tr><td>Induction de travail de $1{,}2$ à $1{,}7\ \mathrm{T}$ selon les tôles ; entrefer dans une self, pas dans un transformateur ; tôles feuilletées et isolées ; colonnes latérales de demi-section</td><td>Règles de conception</td></tr>
+        <tr><td>Courbe $B(H)$, pertes spécifiques en $\mathrm{W/kg}$, épaisseur et résistivité des tôles ; méthode de mesure des pertes</td><td>Données du constructeur ; méthode de mesure normalisée, à vérifier pour chaque matériau</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, le circuit magnétique équivalent d'un noyau avec entrefer,
+    l'organigramme de résolution d'un circuit magnétique et un tableau comparatif des méthodes de calcul.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 780 360" role="img" aria-label="Schéma principal : noyau avec entrefer et son circuit magnétique équivalent, source de force magnétomotrice N i en série avec la réluctance du fer et la réluctance de l'entrefer">
+      <defs>
+        <marker id="fl-f" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <path d="M60 50H320V150H270V100H110V250H270V162H320V300H60Z" fill="rgba(128,128,128,0.16)" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M50 120L120 112M50 136L120 128M50 152L120 144M50 168L120 160M50 184L120 176M50 200L120 192M50 216L120 208M50 232L120 224"/>
+        <path d="M50 120H20M50 232H20"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="7 5">
+        <path d="M85 225V75H295V275H85V227"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M85 190V160" marker-end="url(#fl-f)"/>
+        <path d="M180 75H210" marker-end="url(#fl-f)"/>
+        <path d="M295 200V230" marker-end="url(#fl-f)"/>
+        <path d="M30 120H44" marker-end="url(#fl-f)"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round">
+        <circle cx="480" cy="190" r="28"/>
+        <path d="M480 162V90H560"/>
+        <rect x="560" y="74" width="100" height="32" rx="3"/>
+        <path d="M660 90H720V170"/>
+        <rect x="704" y="170" width="32" height="70" rx="3"/>
+        <path d="M720 240V300H480V218"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M480 200V180" marker-end="url(#fl-f)"/>
+        <path d="M500 80H540" marker-end="url(#fl-f)"/>
+        <path d="M600 312H660" marker-start="url(#fl-f)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="14" y="112">i</text>
+        <text x="22" y="262">N spires</text>
+        <text x="186" y="66">Φ</text>
+        <text x="332" y="160">e</text>
+        <text x="118" y="180">fer : l_fer, S, μr</text>
+        <text x="60" y="330">noyau réel</text>
+        <text x="392" y="196">𝓕 = N i</text>
+        <text x="474" y="152">+</text>
+        <text x="514" y="70">Φ</text>
+        <text x="574" y="128">𝓡fer = l_fer / (μ0 μr S)</text>
+        <text x="580" y="262">𝓡e = e / (μ0 S)</text>
+        <text x="616" y="330">Φ, sens horaire</text>
+        <text x="420" y="40">circuit magnétique équivalent</text>
+        <text x="420" y="350">N i = (𝓡fer + 𝓡e) Φ   ;   L = N² / (𝓡fer + 𝓡e)</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal. À gauche, le noyau réel : bobinage de $N$ spires sur la colonne de gauche, courant $i$ entrant par la
+      borne du haut, flux $\Phi$ dans le sens horaire sur la ligne moyenne en tirets, entrefer $e$ dans la colonne de droite. À
+      droite, le circuit équivalent : la source de force magnétomotrice $\mathcal{F} = Ni$, dont le signe $+$ marque la sortie du
+      flux, alimente en série la réluctance du fer, rectangle horizontal, et celle de l'entrefer, rectangle vertical, parcourues
+      par le même flux $\Phi$. La dernière ligne rappelle la loi d'Hopkinson et l'inductance qui en découle. Ce schéma suppose
+      un fer non saturé, sans fuite ni épanouissement.
+    </figcaption>
+  </figure>
+
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Géométrie du noyau, matériau,<br/>N, et donnée imposée"] --> B["Tracer la ligne de flux moyenne,<br/>découper en tronçons l, S"]
+  B --> C{"Qu'est-ce qui est imposé ?"}
+  C -->|"le courant continu i"| D{"Fer saturé possible ?"}
+  C -->|"le flux ou B"| E["Φ = B S ; H dans chaque tronçon<br/>par la courbe B(H) ; somme des H l"]
+  C -->|"une tension alternative"| F["Boucherot : B crête = U / (4,44 f N S)"]
+  F --> E
+  D -->|"non"| G["Réluctances, loi d'Hopkinson :<br/>Φ = N i / somme des 𝓡"]
+  D -->|"oui"| H["Résolution itérative ou graphique :<br/>H(B) l_fer + B e / μ0 = N i"]
+  E --> I["Courant : i = somme des H l / N"]
+  G --> J["B dans chaque tronçon,<br/>contrôle du coude de saturation"]
+  H --> J
+  I --> J
+  J --> K["L = N² / 𝓡, énergie, pertes fer"]
+  K --> L["Contrôles : unités, ordre de grandeur,<br/>part de l'entrefer, bilan d'énergie"]</pre>
+    <figcaption>
+      Organigramme de résolution. Les rectangles sont des actions, les losanges des décisions, les libellés des flèches les
+      réponses. La première décision porte sur la grandeur imposée : un courant continu conduit au calcul direct par les
+      réluctances si le fer reste linéaire, à une résolution itérative sinon ; un flux, une induction ou une tension alternative,
+      ramenée à une induction par la formule de Boucherot, conduisent au calcul inverse, tronçon par tronçon, qui reste exact même
+      en saturation. Toutes les branches se terminent par la vérification du coude de saturation et par les contrôles.
+    </figcaption>
+  </figure>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Comparaison des méthodes de calcul d'un circuit magnétique</caption>
+      <thead><tr><th>Méthode</th><th>Hypothèses</th><th>Atouts</th><th>Limites</th><th>Préférable quand</th></tr></thead>
+      <tbody>
+        <tr><td>Réluctances et loi d'Hopkinson</td><td>$\mu_r$ constant, pas de fuite</td><td>rapide, analogie électrique, réseaux à branches</td><td>faux au-delà du coude</td><td>pré-dimensionnement, noyau avec entrefer dominant</td></tr>
+        <tr><td>Calcul inverse par la courbe $B(H)$</td><td>flux imposé, tronçons uniformes</td><td>exact en saturation, sans itération</td><td>suppose la courbe du fabricant</td><td>flux ou tension imposés : transformateurs, courant magnétisant</td></tr>
+        <tr><td>Résolution itérative ou graphique</td><td>courant imposé, courbe $B(H)$ connue</td><td>tient compte de la saturation</td><td>itérations, droite de charge de l'entrefer à tracer</td><td>électroaimant, self en régime de surcharge</td></tr>
+        <tr><td>Simulation par éléments finis</td><td>géométrie et matériaux complets</td><td>fuites, épanouissement, saturation locale</td><td>logiciel, temps, données d'entrée</td><td>conception fine, géométrie complexe, vérification finale</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-noyau-figure" data-renvoi="d-noyau-figure">le noyau avec entrefer, ses conventions et ses fuites</a> et <a href="#d-domaines-figure" data-renvoi="d-domaines-figure">l'animation des domaines et de la première aimantation</a>, section D ;</li>
+    <li><a href="#e-tube-figure" data-renvoi="e-tube-figure">le tube de flux et sa résistance analogue</a>, <a href="#e-cuirasse-figure" data-renvoi="e-cuirasse-figure">le circuit cuirassé et son réseau de réluctances</a>, <a href="#e-sim-entrefer-figure" data-renvoi="e-sim-entrefer-figure">la simulation du noyau avec entrefer</a> et <a href="#e-cycle-figure" data-renvoi="e-cycle-figure">le cycle d'hystérésis manipulable</a>, section E ;</li>
+    <li><a href="#h-donnees-figure" data-renvoi="h-donnees-figure">le noyau de l'exemple, cotes et conventions</a> et <a href="#h-construction-figure" data-renvoi="h-construction-figure">la construction point par point du courant magnétisant</a>, section H ;</li>
+    <li><a href="#i-self-figure" data-renvoi="i-self-figure">la self anti-harmonique dans sa branche et son noyau</a> et <a href="#i-sim-self-figure" data-renvoi="i-sim-self-figure">la simulation de l'inductance en fonction du courant</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour calculer un circuit magnétique :</p>
+  <ol>
+    <li>Dessiner le noyau, orienter le courant et en déduire le sens du flux par la règle de la main droite ; tracer la ligne de flux moyenne.</li>
+    <li>Découper le circuit en tronçons de section et de matériau uniformes ; relever pour chacun sa longueur moyenne $l_k$ et sa section nette $S_k$, en tenant compte du coefficient de foisonnement des tôles.</li>
+    <li>Identifier la grandeur imposée : courant continu, flux ou induction, ou tension alternative ; dans ce dernier cas, calculer $\hat{B}$ par la formule de Boucherot.</li>
+    <li>Flux imposé : calculer $B_k = \Phi/S_k$ dans chaque tronçon, lire $H_k$ sur la courbe $B(H)$ du fer ou calculer $H = B/\mu_0$ dans l'air, puis sommer $\sum H_k l_k = Ni$.</li>
+    <li>Courant imposé : si le fer reste sous le coude, calculer les réluctances et appliquer la loi d'Hopkinson, en traitant les branches parallèles comme des résistances ; sinon, résoudre $\sum H_k(B)\,l_k = Ni$ par itération.</li>
+    <li>Vérifier que l'induction de chaque tronçon reste sous le coude de saturation et que la section la plus étroite n'est pas le point faible.</li>
+    <li>En déduire l'inductance $L = N^2/\mathcal{R}$, l'énergie stockée, et les pertes fer à partir des pertes spécifiques et de la masse.</li>
+    <li>Contrôler les unités, l'ordre de grandeur, la part de l'entrefer dans la force magnétomotrice et le bilan d'énergie $\tfrac{1}{2}Li^2 = \tfrac{1}{2}\mathcal{F}\Phi$ ; énoncer les hypothèses négligées : fuites, épanouissement, hystérésis.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Un noyau rectangulaire en tôles au silicium porte un bobinage de $500$ spires. On l'étudie d'abord en courant continu, puis
+    raccordé à une tension alternative du réseau du site, entre phase et neutre. Le schéma fixe les cotes et les conventions.
+  </p>
+  <figure id="h-donnees-figure">
+    <svg viewBox="0 0 720 320" role="img" aria-label="Noyau de l'exemple : longueur moyenne 0,40 m, section 4 cm sur 4 cm, entrefer 1 mm, 500 spires, alimenté par la tension u entre phase et neutre, avec point de polarité, sens du courant et du flux">
+      <defs>
+        <marker id="fl-h" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <path d="M260 40H520V150H470V100H310V240H470V160H520V290H260Z" fill="rgba(128,128,128,0.16)" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M250 112L320 104M250 128L320 120M250 144L320 136M250 160L320 152M250 176L320 168M250 192L320 184M250 208L320 200M250 224L320 216"/>
+        <path d="M250 112H180V90H120M250 224H180V250H120"/>
+        <circle cx="90" cy="170" r="24"/>
+        <path d="M90 146V90H120M90 194V250H120"/>
+        <path d="M78 170C84 160 88 160 90 170S96 180 102 170"/>
+      </g>
+      <circle cx="240" cy="102" r="4" fill="currentColor"/>
+      <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="7 5">
+        <path d="M285 220V65H495V265H285V222"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M130 90H168" marker-end="url(#fl-h)"/>
+        <path d="M40 236V108" marker-end="url(#fl-h)"/>
+        <path d="M285 190V160" marker-end="url(#fl-h)"/>
+        <path d="M380 65H410" marker-end="url(#fl-h)"/>
+        <path d="M495 200V230" marker-end="url(#fl-h)"/>
+        <path d="M548 100V40" marker-start="url(#fl-h)" marker-end="url(#fl-h)"/>
+        <path d="M570 150V160" stroke-width="1.2"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1" opacity="0.7">
+        <path d="M520 100H556M520 40H556M520 150H580M520 160H580"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="136" y="82">i</text>
+        <text x="20" y="176">u</text>
+        <text x="72" y="84">L1</text>
+        <text x="72" y="270">N, référence</text>
+        <text x="388" y="56">Φ</text>
+        <text x="560" y="74">4 cm</text>
+        <text x="588" y="160">e = 1 mm</text>
+        <text x="330" y="176">l_fer = 0,40 m</text>
+        <text x="330" y="194">S = 16 cm²</text>
+        <text x="330" y="212">μr = 2000</text>
+        <text x="210" y="312">N = 500 spires ; tôles de 0,35 mm</text>
+      </g>
+    </svg>
+    <figcaption>
+      Le bobinage est raccordé entre la phase L1 et le neutre N, qui sert de référence de potentiel ; la tension $u$ est fléchée
+      du neutre vers la phase et le courant $i$ entre par la borne marquée d'un point, borne de polarité de l'enroulement : un
+      courant entrant par le point crée un flux dans le sens horaire, indiqué sur la ligne moyenne en tirets. Cotes : longueur
+      moyenne du fer $0{,}40\ \mathrm{m}$, section carrée de $4\ \mathrm{cm}$ de côté, soit $16\ \mathrm{cm^2}$ nets en négligeant le
+      foisonnement, entrefer de $1\ \mathrm{mm}$ dans la colonne de droite, dessiné très agrandi.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Données : $l_{\mathrm{fer}} = 0{,}40\ \mathrm{m}$, $S = 16\ \mathrm{cm^2} = 1{,}6 \times 10^{-3}\ \mathrm{m^2}$, $\mu_r = 2000$
+    supposé constant sous le coude, $e = 1\ \mathrm{mm}$, $N = 500$. Premier cas : courant continu $I = 2\ \mathrm{A}$. Second cas :
+    tension sinusoïdale $U = 230\ \mathrm{V}$, $f = 50\ \mathrm{Hz}$, résistance du bobinage négligée. Inconnues : réluctances,
+    flux, induction, champ dans le fer et dans l'air, inductance et énergie dans le premier cas ; induction crête et courant
+    magnétisant, avec et sans entrefer, dans le second ; pertes fer. Stratégie : courant imposé et fer supposé linéaire, donc
+    loi d'Hopkinson ; puis tension imposée, donc formule de Boucherot pour le flux et calcul inverse pour le courant, avec une
+    vérification sur la courbe non linéaire de la tôle.
+  </p>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li>Réluctance du fer : $\mathcal{R}_{\mathrm{fer}} = \dfrac{0{,}40}{4\pi \times 10^{-7} \times 2000 \times 1{,}6 \times 10^{-3}} = \dfrac{0{,}40}{4{,}021 \times 10^{-6}} = 9{,}947 \times 10^{4}\ \mathrm{A/Wb}$.</li>
+    <li>Réluctance de l'entrefer : $\mathcal{R}_e = \dfrac{10^{-3}}{4\pi \times 10^{-7} \times 1{,}6 \times 10^{-3}} = 4{,}974 \times 10^{5}\ \mathrm{A/Wb}$, cinq fois celle du fer.</li>
+    <li>Réluctance totale : $\mathcal{R} = 5{,}968 \times 10^{5}\ \mathrm{A/Wb}$ ; force magnétomotrice $\mathcal{F} = 500 \times 2 = 1000\ \mathrm{A}$.</li>
+    <li>Flux : $\Phi = 1000/5{,}968 \times 10^{5} = 1{,}676 \times 10^{-3}\ \mathrm{Wb}$ ; induction $B = \Phi/S = 1{,}047\ \mathrm{T}$, sous le coude.</li>
+    <li>Champs : dans le fer $H_{\mathrm{fer}} = B/(\mu_0\mu_r) = 417\ \mathrm{A/m}$, soit $167\ \mathrm{A}$ sur $0{,}40\ \mathrm{m}$ ; dans l'entrefer $H_e = B/\mu_0 = 8{,}33 \times 10^{5}\ \mathrm{A/m}$, soit $833\ \mathrm{A}$ sur $1\ \mathrm{mm}$. Somme : $1000\ \mathrm{A}$, l'entrefer en consomme $83{,}3\ \%$.</li>
+    <li>Inductance : $L = N^2/\mathcal{R} = 250\,000/5{,}968 \times 10^{5} = 0{,}419\ \mathrm{H}$ ; énergie $W = \tfrac{1}{2} \times 0{,}419 \times 2^2 = 0{,}838\ \mathrm{J}$, dont $83{,}3\ \%$ dans l'entrefer.</li>
+    <li>Sans entrefer, le modèle linéaire donnerait $\Phi = 1000/9{,}947 \times 10^{4} = 10{,}05\ \mathrm{mWb}$ et $B = 6{,}28\ \mathrm{T}$ : résultat impossible, qui signale que l'hypothèse de linéarité est violée. La courbe de la tôle donne en réalité $1{,}53\ \mathrm{T}$, en pleine saturation.</li>
+    <li>Second cas, flux imposé par la tension : $\hat{B} = \dfrac{\sqrt{2} \times 230}{2\pi \times 50 \times 500 \times 1{,}6 \times 10^{-3}} = 1{,}294\ \mathrm{T}$, soit $\hat{\Phi} = 2{,}071\ \mathrm{mWb}$, avec ou sans entrefer.</li>
+    <li>Courant magnétisant en modèle linéaire : $\hat{I}_m = \mathcal{R}\hat{\Phi}/N = 5{,}968 \times 10^{5} \times 2{,}071 \times 10^{-3}/500 = 2{,}47\ \mathrm{A}$ crête, $1{,}75\ \mathrm{A}$ efficaces, soit $402\ \mathrm{var}$ ; sans entrefer, $0{,}412\ \mathrm{A}$ crête, $0{,}291\ \mathrm{A}$ efficaces, $67\ \mathrm{var}$.</li>
+    <li>Correction de saturation : à $1{,}294\ \mathrm{T}$, la courbe de la tôle donne $H = 729\ \mathrm{A/m}$, soit $\mu_r \approx 1410$ au lieu de $2000$. Courant crête : $(729 \times 0{,}40 + 1030)/500 = 2{,}64\ \mathrm{A}$ avec entrefer, $+7\ \%$ ; $729 \times 0{,}40/500 = 0{,}584\ \mathrm{A}$ sans entrefer, $+42\ \%$.</li>
+    <li>Pertes fer : masse $7650 \times 1{,}6 \times 10^{-3} \times 0{,}40 = 4{,}90\ \mathrm{kg}$ ; avec $0{,}82\ \mathrm{W/kg}$ d'hystérésis et $0{,}14\ \mathrm{W/kg}$ de courants de Foucault à $1\ \mathrm{T}$, extrapolées à $1{,}294\ \mathrm{T}$ en $\hat{B}^{1{,}6}$ et $\hat{B}^2$ : $1{,}47\ \mathrm{W/kg}$, soit $7{,}2\ \mathrm{W}$, et une composante active du courant $7{,}2/230 = 0{,}031\ \mathrm{A}$.</li>
+  </ol>
+
+  <h3 id="h-construction-section">Animation : construire le courant magnétisant point par point</h3>
+  <p>
+    Le courant magnétisant non sinusoïdal se construit graphiquement : à chaque instant, on lit l'induction imposée par la
+    tension sur la sinusoïde $b(\omega t)$, on reporte cette induction sur le cycle $B(H)$ de la tôle pour lire le champ, et
+    l'on calcule $i = (H\,l_{\mathrm{fer}} + b\,e/\mu_0)/N$. L'animation fait cette construction pour le noyau de l'exemple,
+    hystérésis comprise avec $H_c = 40\ \mathrm{A/m}$. Faites glisser la poignée le long de l'axe des temps, ou lancez le lecteur ; les
+    curseurs règlent la tension en pourcentage de $230\ \mathrm{V}$ et l'entrefer. Prédisez d'abord : sans entrefer, à
+    $110\ \%$ de la tension, le courant crête augmente-t-il de $10\ \%$, de $40\ \%$ ou de $80\ \%$ ?
+  </p>
+  <figure id="h-construction-figure">
+    <div class="schema-vivant" id="h-construction"></div>
+    <figcaption>
+      En haut à gauche, le cycle $B(H)$ de la tôle, $H$ en abscisse. En haut à droite, l'induction imposée $b(\omega t)$ sur une
+      période, en trait plein ; la poignée ronde, sur l'axe des temps, fixe l'instant. Le trait horizontal en tirets reporte l'induction de l'instant sur
+      le cycle, le trait vertical en tirets descend du point du cycle pour lire le champ. En bas à droite, le courant magnétisant
+      $i(\omega t)$ obtenu, en trait épais, avec, en pointillés, le courant que donnerait un fer parfaitement linéaire de
+      $\mu_r = 2000$ ; le point plein est le courant de l'instant. Convention : $u$ en cosinus, donc $b$ en sinus, en retard de
+      $90^\circ$.
+    </figcaption>
+  </figure>
+  <div id="h-construction-curseurs"></div>
+  <div id="h-construction-lecteur"></div>
+  <div id="h-construction-valeurs"></div>
+  <p>
+    Interprétation : avec l'entrefer de $1\ \mathrm{mm}$ et la tension nominale, le courant reste presque sinusoïdal, facteur de
+    crête $1{,}47$ contre $1{,}41$, rang 3 à $2\ \%$ du fondamental : l'entrefer domine et le linéarise. Sans entrefer, le même
+    flux demande cinq fois moins de courant, mais celui-ci est pointu : facteur de crête $1{,}69$, rang 3 à $11\ \%$. À
+    $110\ \%$ de la tension, le courant crête passe de $0{,}584$ à $1{,}05\ \mathrm{A}$, $+79\ \%$ pour $+10\ \%$ de tension, et le
+    rang 3 atteint $26\ \%$. C'est le comportement d'un transformateur en surtension. Le cycle penche légèrement le courant vers
+    l'avant : la composante en phase avec la tension, $0{,}026\ \mathrm{A}$ efficaces, correspond aux $6{,}1\ \mathrm{W}$ de pertes
+    par hystérésis du modèle.
+  </p>
+
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li><strong>Dimensions :</strong> $\mathrm{A}/(\mathrm{A/Wb}) = \mathrm{Wb}$ ; $\mathrm{Wb/m^2} = \mathrm{T}$ ; $\mathrm{(A/Wb)} \times \mathrm{Wb}/1 = \mathrm{A}$ pour le courant crête.</li>
+    <li><strong>Bilan d'énergie :</strong> $\tfrac{1}{2}\mathcal{F}\Phi = 0{,}5 \times 1000 \times 1{,}676 \times 10^{-3} = 0{,}838\ \mathrm{J}$, égal à $\tfrac{1}{2}LI^2$.</li>
+    <li><strong>Ordre de grandeur :</strong> l'entrefer domine, donc $L \approx \mu_0 N^2 S/e = 0{,}503\ \mathrm{H}$ ; le fer réduit cette valeur de $1/(1 + 0{,}2) = 0{,}833$, d'où $0{,}419\ \mathrm{H}$. Une inductance de quelques dixièmes de henry pour $500$ spires est usuelle.</li>
+    <li><strong>Cohérence alternative :</strong> en modèle linéaire, $\hat{I}_m = \sqrt{2}\,U/(L\omega) = 325{,}3/(0{,}419 \times 314{,}2) = 2{,}47\ \mathrm{A}$ : on retrouve le résultat par l'inductance.</li>
+    <li><strong>Hypothèses :</strong> fuites et épanouissement négligés, résistance du bobinage ignorée, $\mu_r$ constant dans le calcul linéaire ; le $1{,}294\ \mathrm{T}$ crête est proche du coude, ce que confirme l'écart de $42\ \%$ sans entrefer.</li>
+  </ul>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+
+  <h3 id="i-probleme">Dimensionner la self anti-harmonique de la compensation du compresseur</h3>
+  <p>
+    Le cours <a href="#/cours/revision-4-et-mini-projet-qualite-reseau">Révision 4 et mini-projet qualité réseau</a> a retenu,
+    pour la compensation du compresseur, une self de $5{,}11\ \mathrm{mH}$ par phase en étoile équivalente, en série avec
+    $138{,}8\ \mu\mathrm{F}$, accordée à $189\ \mathrm{Hz}$ et parcourue par $10{,}82\ \mathrm{A}$ efficaces. Il faut maintenant
+    choisir son circuit magnétique. Le schéma situe la self dans sa branche et montre le noyau envisagé.
+  </p>
+  <figure id="i-self-figure">
+    <svg viewBox="0 0 740 320" role="img" aria-label="Branche de compensation : jeu de barres phase L1, self anti-harmonique, condensateur, point neutre de l'étoile équivalente ; noyau de la self en deux U face à face avec deux entrefers et forces d'attraction">
+      <defs>
+        <marker id="fl-i" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+        <path d="M30 50H250"/>
+        <path d="M120 50V90"/>
+        <path d="M120 90c14 0 14 18 0 18c14 0 14 18 0 18c14 0 14 18 0 18c14 0 14 18 0 18"/>
+        <path d="M120 162V200"/>
+        <path d="M100 200H140M100 212H140" stroke-width="3"/>
+        <path d="M120 212V260"/>
+        <path d="M100 260H140M108 268H132M116 276H124"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M150 60V96" marker-end="url(#fl-i)"/>
+        <path d="M60 254V214" marker-end="url(#fl-i)"/>
+      </g>
+      <path d="M400 50H640V130H590V100H450V130H400Z" fill="rgba(128,128,128,0.16)" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M400 142H450V220H590V142H640V270H400Z" fill="rgba(128,128,128,0.16)" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M390 80L460 72M390 94L460 86M390 108L460 100M390 122L460 114M390 156L460 148M390 170L460 162M390 184L460 176M390 198L460 190"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="7 5">
+        <path d="M425 200V75H615V245H425V202"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M425 230V210" marker-end="url(#fl-i)"/>
+        <path d="M510 75H540" marker-end="url(#fl-i)"/>
+        <path d="M615 200V225" marker-end="url(#fl-i)"/>
+        <path d="M672 112V130" marker-end="url(#fl-i)"/>
+        <path d="M672 160V142" marker-end="url(#fl-i)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="34" y="40">jeu de barres, phase L1</text>
+        <text x="158" y="84">i_b</text>
+        <text x="146" y="130">Ls = 5,11 mH</text>
+        <text x="146" y="210">C = 138,8 µF</text>
+        <text x="146" y="276">point neutre de l'étoile</text>
+        <text x="146" y="292">équivalente, référence</text>
+        <text x="20" y="236">u_C</text>
+        <text x="520" y="66">Φ</text>
+        <text x="652" y="104">F</text>
+        <text x="652" y="176">F</text>
+        <text x="440" y="36">deux entrefers de e/2</text>
+        <text x="400" y="300">noyau en deux U, N spires réparties</text>
+      </g>
+    </svg>
+    <figcaption>
+      À gauche, la branche de compensation d'une phase : le courant $i_b$ descend du jeu de barres vers le point neutre de
+      l'étoile équivalente, pris comme référence de potentiel, à travers la self $L_s$ puis le condensateur ; la tension $u_C$ est
+      fléchée en convention récepteur. À droite, le noyau envisagé : deux U en tôles face à face, séparés par deux entrefers de
+      $e/2$, bobinage réparti sur les deux colonnes de gauche, flux $\Phi$ dans le sens horaire sur la ligne moyenne en tirets. Les
+      deux flèches $F$ représentent la force d'attraction entre les faces de l'entrefer de droite, qui ferme le noyau.
+    </figcaption>
+  </figure>
+
+  <h3 id="i-calcul">Choix du nombre de spires et de l'entrefer</h3>
+  <p>
+    Hypothèses d'étude, à confirmer par le fournisseur : tôle au silicium de $\mu_r \approx 4000$ sous le coude, section nette
+    $S = 20\ \mathrm{cm^2}$, longueur moyenne du fer $0{,}30\ \mathrm{m}$. Courant crête de dimensionnement
+    $\hat{I} = 20\ \mathrm{A}$, environ $1{,}3 \times \sqrt{2} \times 10{,}82 = 19{,}9\ \mathrm{A}$, pour couvrir les surtensions
+    du réseau et les harmoniques résiduels en phase ; induction maximale $1{,}2\ \mathrm{T}$, nettement sous le coude, parce que
+    l'accord de la branche exige une inductance constante.
+  </p>
+  <ol>
+    <li>Le flux crête vaut $L\hat{I}/N$ ; imposer $\hat{B} \le B_{\max}$ donne $N \ge \dfrac{L\hat{I}}{B_{\max}S} = \dfrac{5{,}11 \times 10^{-3} \times 20}{1{,}2 \times 2 \times 10^{-3}} = 42{,}6$, soit $N = 43$ spires.</li>
+    <li>Réluctance requise : $\mathcal{R} = N^2/L = 1849/5{,}11 \times 10^{-3} = 3{,}618 \times 10^{5}\ \mathrm{A/Wb}$. Le fer en apporte $0{,}30/(4000\mu_0 \times 2 \times 10^{-3}) = 2{,}98 \times 10^{4}\ \mathrm{A/Wb}$ ; l'entrefer doit fournir le reste, $3{,}32 \times 10^{5}\ \mathrm{A/Wb}$, soit $e = \mathcal{R}_e\,\mu_0 S = 0{,}834\ \mathrm{mm}$ au total, deux fois $0{,}417\ \mathrm{mm}$. En négligeant le fer, on aurait trouvé $0{,}909\ \mathrm{mm}$.</li>
+    <li>Induction : $\hat{B} = L\hat{I}/(NS) = 1{,}19\ \mathrm{T}$ au courant de dimensionnement, $0{,}909\ \mathrm{T}$ en service à $10{,}82\ \mathrm{A}$ efficaces supposés sinusoïdaux.</li>
+    <li>Énergie : $\tfrac{1}{2}L\hat{I}^2 = 1{,}02\ \mathrm{J}$, dont $91{,}7\ \%$ dans les entrefers, part égale au rapport $\mathcal{R}_e/\mathcal{R}$.</li>
+    <li>Force d'attraction entre les faces d'un entrefer : $F = \hat{B}^2S/(2\mu_0) = 1{,}12\ \mathrm{kN}$ à la crête, pulsant à $100\ \mathrm{Hz}$ : cales isolantes collées, noyau serré et imprégné, sous peine de bruit et de desserrage.</li>
+    <li>Pertes fer en service : masse $7650 \times 2 \times 10^{-3} \times 0{,}30 = 4{,}59\ \mathrm{kg}$ ; avec les pertes spécifiques de la section E ramenées à $0{,}909\ \mathrm{T}$, $0{,}82\ \mathrm{W/kg}$, soit environ $3{,}8\ \mathrm{W}$ au fondamental, à compléter par la contribution des harmoniques.</li>
+  </ol>
+  <p>
+    L'épanouissement augmente la section effective de l'entrefer. Une correction empirique courante remplace la section
+    $a \times a$ par $(a + e)(a + e)$ : avec $a = 44{,}7\ \mathrm{mm}$ et un seul entrefer de $0{,}834\ \mathrm{mm}$, l'inductance
+    augmente de $3{,}8\ \%$ et l'accord descend de $189$ à $185{,}5\ \mathrm{Hz}$ ; avec deux entrefers de $0{,}417\ \mathrm{mm}$,
+    l'écart tombe à $1{,}9\ \%$ et l'accord à $187{,}3\ \mathrm{Hz}$. Dans les deux cas, l'accord reste au rang $3{,}7$, loin du
+    rang 5 : la pratique consiste à régler l'entrefer par cales en usine et à mesurer l'inductance avant livraison.
+  </p>
+
+  <h3 id="i-sim-self-section">Simulation interactive : l'inductance de la self en fonction du courant</h3>
+  <p>
+    La simulation calcule l'inductance apparente $L = N\Phi(\hat{I})/\hat{I}$ de la self pour un courant crête variable, avec une
+    tôle modélisée par $H(B) = 199\,B + 7{,}5\,B^{13}$, et la fréquence d'accord correspondante avec $138{,}8\ \mu\mathrm{F}$.
+    Prédisez avant de manipuler : si le courant crête atteint $35\ \mathrm{A}$, sous l'effet d'une forte surtension harmonique,
+    l'accord se déplace-t-il vers le bas, vers le rang 3, ou vers le haut, vers le rang 5 ? Réduisez ensuite l'entrefer et
+    observez à partir de quel courant la self "décroche".
+  </p>
+  <figure id="i-sim-self-figure">
+    <div id="i-sim-self-trace"></div>
+    <figcaption>
+      Inductance apparente en millihenrys en fonction du courant crête, en trait épais ; la droite horizontale en tirets marque
+      la valeur visée de $5{,}11\ \mathrm{mH}$, le trait vertical en pointillés le courant crête réglé. Le panneau de valeurs, sous les curseurs,
+      donne l'induction crête, l'inductance et la fréquence d'accord à ce courant.
+    </figcaption>
+  </figure>
+  <div id="i-sim-self-curseurs"></div>
+  <div id="i-sim-self-valeurs"></div>
+  <p>
+    Interprétation : avec $43$ spires et $0{,}834\ \mathrm{mm}$, l'inductance reste à $2\ \%$ près de $5{,}11\ \mathrm{mH}$ jusqu'à
+    $20\ \mathrm{A}$ ; au-delà, le fer entre dans le coude : $4{,}12\ \mathrm{mH}$ à $30\ \mathrm{A}$, accord à $210\ \mathrm{Hz}$, puis
+    $3{,}68\ \mathrm{mH}$ à $35\ \mathrm{A}$, accord à $223\ \mathrm{Hz}$. L'accord monte vers le rang 5, à $250\ \mathrm{Hz}$, celui du
+    courant le plus fort de la pompe : une self qui sature rapproche la branche de la résonance qu'elle devait éviter. C'est la
+    justification quantitative du choix de $1{,}2\ \mathrm{T}$ et de la marge de courant. Réduire l'entrefer augmente
+    l'inductance mais avance la saturation : on ne règle pas l'inductance en rognant l'entrefer sans revoir le nombre de spires.
+  </p>
+
+  <h3 id="i-compromis">Contraintes, risques et compromis</h3>
+  <ul>
+    <li><strong>Linéarité contre encombrement :</strong> une induction de travail plus basse éloigne la saturation mais demande plus de spires ou plus de fer ; à $1{,}5\ \mathrm{T}$, $35$ spires suffiraient, mais l'accord dériverait dès les premières surcharges.</li>
+    <li><strong>Entrefer réparti :</strong> deux entrefers, ou plusieurs entrefers distribués, réduisent l'épanouissement, les pertes par courants de Foucault qu'il induit dans les tôles et les bobinages voisins, et l'échauffement local.</li>
+    <li><strong>Bruit et tenue mécanique :</strong> la force de $1{,}12\ \mathrm{kN}$ pulse à deux fois la fréquence du réseau ; les cales doivent être rigides, collées, et le noyau imprégné.</li>
+    <li><strong>Thermique :</strong> pertes fer de quelques watts et pertes cuivre des $43$ spires ; une sonde dans le bobinage peut être câblée vers l'automate, comme les autres protections de la batterie de condensateurs.</li>
+    <li><strong>Vérification :</strong> mesure de l'inductance à faible courant et, si possible, au courant de dimensionnement, pour vérifier à la fois l'entrefer et la marge de saturation ; valeurs à comparer à la tolérance garantie par le constructeur.</li>
+  </ul>
+
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : ce que cette séance ajoute</span>
+    <p>
+      Dimensionnement magnétique de la self anti-harmonique de la compensation du compresseur, $5{,}11\ \mathrm{mH}$ par phase et
+      $10{,}82\ \mathrm{A}$ efficaces : noyau en deux U de tôles au silicium, $20\ \mathrm{cm^2}$ de section nette et
+      $0{,}30\ \mathrm{m}$ de longueur moyenne, hypothèses à confirmer ; $43$ spires ; entrefer total de $0{,}834\ \mathrm{mm}$ en deux
+      fois $0{,}417\ \mathrm{mm}$ ; $1{,}19\ \mathrm{T}$ crête au courant de dimensionnement de $20\ \mathrm{A}$ et $0{,}909\ \mathrm{T}$
+      en service ; $1{,}02\ \mathrm{J}$ stockés, dont $91{,}7\ \%$ dans les entrefers ; force de $1{,}12\ \mathrm{kN}$ pulsant à
+      $100\ \mathrm{Hz}$ entre les faces ; épanouissement estimé à $+1{,}9\ \%$ d'inductance, accord à $187{,}3\ \mathrm{Hz}$, d'où un
+      réglage de l'entrefer par cales et une mesure de $L$ à la réception ; pertes fer d'environ $3{,}8\ \mathrm{W}$ au fondamental.
+      Contrôle de saturation : au-delà de $30\ \mathrm{A}$ crête, l'accord monterait vers $210\ \mathrm{Hz}$ et au-delà, en direction
+      du rang 5 de la pompe. Le noyau du transformateur ou de la source équivalente du site sera traité de la même façon dans les
+      cours sur les transformateurs.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Négliger l'entrefer parce qu'il est petit.</strong> Un millimètre d'air vaut, en réluctance, deux mètres de fer à $\mu_r = 2000$ ; c'est souvent l'entrefer qui fixe tout le circuit.</li>
+    <li><strong>Garder $\mu_r$ constant au-delà du coude.</strong> Le modèle linéaire donne alors des inductions impossibles, $6{,}28\ \mathrm{T}$ dans l'exemple. Tout résultat au-dessus de $1{,}5\ \mathrm{T}$ dans une tôle doit être repris avec la courbe $B(H)$.</li>
+    <li><strong>Confondre $B$ et $\Phi$, ou $B$ et $H$.</strong> Le flux est en webers et se conserve d'un tronçon à l'autre ; l'induction est en teslas et change avec la section ; l'excitation est en $\mathrm{A/m}$ et change avec le matériau. Un rétrécissement de section augmente $B$ à flux constant.</li>
+    <li><strong>Croire qu'en alternatif le courant fixe le flux.</strong> Sous tension imposée, c'est la tension qui fixe le flux, par la formule de Boucherot ; le noyau ne fixe que le courant magnétisant. Un entrefer accidentel ne réduit pas le flux d'une bobine alternative : il augmente son courant.</li>
+    <li><strong>Supposer le courant magnétisant sinusoïdal.</strong> Près du coude, il est pointu et riche en rang 3 ; sa valeur efficace et son facteur de crête doivent être calculés point par point ou mesurés en valeur efficace vraie.</li>
+    <li><strong>Additionner les réluctances de branches parallèles.</strong> Comme des résistances en parallèle, elles se combinent par l'inverse de la somme des inverses ; les colonnes latérales d'un circuit cuirassé ne portent chacune que la moitié du flux.</li>
+    <li><strong>Calculer les pertes fer avec la masse sans tenir compte de $\hat{B}$ et de $f$.</strong> Les pertes spécifiques dépendent fortement de l'induction, comme $\hat{B}^{1{,}6}$ à $\hat{B}^2$, et de la fréquence, comme $f$ à $f^2$ ; une valeur lue à $1{,}5\ \mathrm{T}$ ne s'applique pas à $1\ \mathrm{T}$.</li>
+    <li><strong>Utiliser la section géométrique au lieu de la section nette.</strong> Les tôles isolées n'occupent que $95$ à $97\ \%$ de l'empilage : l'induction réelle est plus forte que celle calculée sur la section brute.</li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain : un transformateur ou une self qui chauffe à vide et bourdonne fait d'abord vérifier la tension
+    et la fréquence d'alimentation, puisque $\hat{B} \propto U/f$ ; un appareil prévu pour $60\ \mathrm{Hz}$ alimenté à
+    $50\ \mathrm{Hz}$ travaille à $20\ \%$ d'induction en plus. Un courant à vide pointu, riche en rang 3, signe la saturation ;
+    un courant à vide fort mais sinusoïdal évoque un entrefer accidentel, un noyau mal serré ou des tôles déplacées ; un
+    échauffement localisé du noyau, une isolation entre tôles dégradée, qui laisse les courants de Foucault circuler d'une tôle à
+    l'autre. Les mesures décisives sont la tension et la fréquence réelles, le courant à vide en valeur efficace vraie avec son
+    taux de distorsion, et la puissance absorbée à vide.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic
+    industriel et une question conceptuelle. La correction de chacun reste masquée jusqu'à une tentative ou un clic explicite
+    sur "Voir la correction", puis se déroule étape par étape, accompagnée d'une courbe, d'un diagramme ou d'un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma.</p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$\sum_k H_k l_k = N i, \qquad \Phi = BS \text{ conservé}, \qquad B = \mu_0\mu_r H$$
+    $$\mathcal{R} = \frac{l}{\mu_0\mu_r S}, \qquad N i = \Big(\sum \mathcal{R}_k\Big)\Phi$$
+    $$L = \frac{N^2}{\mathcal{R}} \approx \frac{\mu_0 N^2 S}{e}, \qquad W = \tfrac{1}{2}Li^2 = \tfrac{1}{2}\mathcal{R}\Phi^2$$
+    $$U = 4{,}44\,f N S \hat{B}, \qquad \hat{I}_m = \frac{\mathcal{R}\hat{\Phi}}{N} \text{ en linéaire}$$
+    $$P_{\mathrm{fer}} = \Big(k_h f \hat{B}^{\alpha} + \frac{\pi^2 f^2 \hat{B}^2 d^2}{6\rho}\Big) V, \qquad F_{\mathrm{att}} = \frac{B^2 S}{2\mu_0}$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>L'entrefer, même minuscule, domine souvent la réluctance : ne jamais l'oublier.</li>
+      <li>$\mu_r$ n'est constant que sous le coude ; au-delà, la courbe $B(H)$ remplace la loi d'Hopkinson.</li>
+      <li>En alternatif, la tension et la fréquence fixent le flux ; le noyau ne fixe que le courant magnétisant.</li>
+      <li>Le courant magnétisant d'un fer près de la saturation est pointu : valeur efficace vraie et rang 3.</li>
+      <li>Calculer $B$ sur la section nette et sur le tronçon le plus étroit, là où la saturation commence.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Un bobinage de $N$ spires parcouru par $i$ crée une force magnétomotrice $Ni$, égale à la circulation
+    de $H$ le long du circuit. Le fer, grâce à l'alignement de ses domaines, multiplie l'induction par $\mu_r$ et canalise le
+    flux, qui se conserve d'un tronçon à l'autre. Sous le coude de saturation, chaque tronçon a une réluctance $l/(\mu S)$ et la
+    loi d'Hopkinson, $Ni = \mathcal{R}\Phi$, se traite comme un circuit électrique. L'entrefer, de réluctance $e/(\mu_0 S)$, domine
+    souvent, stocke l'énergie et rend l'inductance $N^2/\mathcal{R}$ stable. Sous tension alternative, le flux est fixé par la
+    formule de Boucherot et le noyau ne détermine que le courant magnétisant, qui devient pointu en saturation. L'hystérésis et
+    les courants de Foucault produisent les pertes fer, réduites par le feuilletage.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent,
+    <a href="#/cours/revision-4-et-mini-projet-qualite-reseau">Révision 4 et mini-projet qualité réseau</a> ; une sur le cours
+    <a href="#/cours/systemes-triphases-equilibres">Systèmes triphasés équilibrés</a>, vieux d'une semaine ; une sur le cours
+    <a href="#/cours/diagnostic-initial-et-remise-a-niveau-mathematique">Diagnostic initial et remise à niveau mathématique</a>,
+    vieux d'un mois, dont les puissances de dix servent à chaque calcul de réluctance.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : reproduire numériquement le courant magnétisant du noyau de l'exemple, mesurer l'effet de l'entrefer et de la
+    surtension, puis retrouver qualitativement les mêmes phénomènes avec le modèle de noyau non linéaire de LTspice. Prédictions
+    à écrire avant de commencer : sans entrefer, à $120\ \%$ de la tension, le courant crête sera-t-il multiplié par $1{,}2$, par
+    $2$ ou par $4$ ? Le facteur de crête augmentera-t-il ou diminuera-t-il ?
+  </p>
+  <ol>
+    <li>En Python, sans bibliothèque, écrire la fonction $H(B) = 398\,B + 7{,}5\,B^{13}$, puis, pour $3600$ instants d'une période, calculer $b = \hat{B}\sin\theta$ avec $\hat{B} = \sqrt{2}\,U/(2\pi f N S)$, et $i = (H(b)\,l_{\mathrm{fer}} + b\,e/\mu_0)/N$ pour $N = 500$, $S = 1{,}6 \times 10^{-3}\ \mathrm{m^2}$, $l_{\mathrm{fer}} = 0{,}40\ \mathrm{m}$.</li>
+    <li>Pour $U = 230$, $253$ et $276\ \mathrm{V}$, avec $e = 0$ puis $e = 1\ \mathrm{mm}$, imprimer le courant crête, la valeur efficace, le facteur de crête et le rapport du rang 3 au fondamental, calculés comme au cours <a href="#/cours/introduction-a-fourier">Introduction à Fourier</a>.</li>
+    <li>Ajouter l'hystérésis : $H = H(b) \pm H_c\,(\hat{B})^{0{,}6}\sqrt{1 - (b/\hat{B})^2}$, signe $+$ quand $b$ croît, avec $H_c = 40\ \mathrm{A/m}$ ; calculer la composante du fondamental en phase avec la tension et la puissance $U I_a$ correspondante.</li>
+    <li>Dans LTspice, saisir une source <code>V1 a 0 SINE(0 325.3 50)</code>, une résistance série <code>R1 a b 0.5</code> et une inductance non linéaire <code>L1 b 0 Hc=40 Br=0.8 Bs=1.6 A=0.0016 Lm=0.4 Lg=0 N=500</code>, qui utilise le modèle de noyau hystérétique du logiciel ; lancer <code>.tran 0 200m 100m 10u</code>.</li>
+    <li>Tracer <code>I(L1)</code>, puis recommencer avec <code>Lg=0.001</code>, puis avec une amplitude de source de $357{,}8\ \mathrm{V}$ ; tracer la caractéristique en plaçant <code>V(b)</code> intégrée ou le flux en ordonnée selon les possibilités de l'afficheur, et utiliser la vue FFT du courant.</li>
+  </ol>
+  <p>
+    Résultats attendus en Python : à $230\ \mathrm{V}$, $\hat{B} = 1{,}294\ \mathrm{T}$ ; sans entrefer, $0{,}584\ \mathrm{A}$ crête,
+    $0{,}346\ \mathrm{A}$ efficaces, facteur de crête $1{,}69$, rang 3 à $11\ \%$ ; avec $1\ \mathrm{mm}$, $2{,}64\ \mathrm{A}$ crête,
+    $1{,}80\ \mathrm{A}$ efficaces, facteur $1{,}47$, rang 3 à $2\ \%$. À $276\ \mathrm{V}$ sans entrefer : $2{,}33\ \mathrm{A}$ crête,
+    quatre fois la valeur nominale, facteur $2{,}30$, rang 3 à $46\ \%$. Composante en phase avec la tension : $0{,}026\ \mathrm{A}$,
+    soit $6{,}1\ \mathrm{W}$, égaux aux pertes par hystérésis calculées par l'aire du cycle. Dans LTspice, le modèle du logiciel
+    n'utilise pas la même courbe : les valeurs différeront, mais l'allure doit être la même, courant pointu sans entrefer,
+    presque sinusoïdal avec, explosion du courant crête en surtension. Anomalies à observer : une composante continue du courant
+    pendant les premières périodes, due à la mise sous tension au passage par zéro de la tension, qui décale le flux et peut
+    saturer le noyau, phénomène d'appel étudié avec les transformateurs ; un pas de calcul trop grand, qui écrête les pointes ;
+    des valeurs aberrantes si les unités du modèle, en mètres et mètres carrés, sont mal saisies.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est calculé dans ce
+    navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement pour
+    suivre votre progression. Le jalon de fin du module Magnétisme et transformateurs, puis de celui des machines, demande de
+    comprendre les transformateurs et les principales machines électriques et de lire leurs modèles : le circuit magnétique en
+    est la première brique.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Un circuit magnétique se calcule comme un circuit électrique : force magnétomotrice $Ni$, réluctances $l/(\mu S)$, flux conservé ; l'entrefer, même minuscule, domine souvent et fixe l'inductance $N^2/\mathcal{R}$.</li>
+    <li data-rang="02">Le fer n'est linéaire que sous le coude : au-delà, la courbe $B(H)$ remplace la réluctance, le courant nécessaire explose et l'inductance chute.</li>
+    <li data-rang="03">Sous tension alternative, $U = 4{,}44\,f N S \hat{B}$ fixe le flux ; le noyau ne fixe que le courant magnétisant, pointu en saturation, et les pertes fer, par hystérésis et courants de Foucault.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> passer d'un raisonnement à courant imposé, où le noyau détermine le flux, à un
+    raisonnement à tension imposée, où la tension détermine le flux et le noyau le courant, et savoir quand l'hypothèse de
+    linéarité cesse d'être valable. La simulation du noyau avec entrefer et la construction point par point du courant
+    magnétisant sont faites pour installer ce double réflexe ; l'exercice de diagnostic le met à l'épreuve.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Transformateur idéal, place deux bobinages sur le même noyau. Question
+    à préparer : sur le noyau de l'exemple, sans entrefer, on ajoute un second bobinage de $250$ spires, laissé ouvert, et l'on
+    alimente le premier sous $230\ \mathrm{V}$ à $50\ \mathrm{Hz}$. Quelle tension efficace apparaît aux bornes du second ? Et si
+    l'on y raccorde une charge qui consomme $2\ \mathrm{A}$, de combien le courant du premier doit-il augmenter pour que le flux,
+    imposé par la tension, reste le même, en raisonnant en ampères-tours ?
+  </p>
+
+</article>
