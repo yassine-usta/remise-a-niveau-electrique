@@ -1,0 +1,1162 @@
+<article class="cours" data-slug="transformateur-reel">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/transformateur-ideal">Transformateur idéal</a> s'est achevé sur une question : le transformateur
+      du poste, de plaque $410\ \mathrm{V}$ à vide, dessert un réseau de $400\ \mathrm{V}$ ; si sa tension de court-circuit de
+      $4\ \%$ représente une impédance presque purement inductive, quelle chute faut-il attendre à pleine charge sous
+      $\cos\varphi = 0{,}95$, et cette chute dépend-elle du facteur de puissance ? Avec une réactance pure, la chute relative vaut
+      environ $4\ \% \times \sin\varphi = 4 \times 0{,}312 = 1{,}25\ \%$, soit $5{,}1\ \mathrm{V}$ ; elle tomberait à zéro sous
+      $\cos\varphi = 1$ et atteindrait $4\ \%$ pour une charge purement inductive. Mais l'impédance n'est pas purement inductive :
+      avec la part résistive qu'on lui attribuera dans cette séance, la chute monte à $2{,}79\ \%$, soit $11{,}4\ \mathrm{V}$. Ces
+      deux réponses, et l'écart entre elles, sont le cœur de ce cours : le transformateur réel ajoute au squelette idéal des
+      résistances, des réactances de fuite et une branche magnétisante, et c'est leur combinaison avec la charge qui fixe la
+      chute de tension, les pertes et le rendement.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Le modèle idéal répond aux questions de rapport ; il est muet sur tout ce qui coûte ou qui limite. Un transformateur réel
+    perd de la tension en charge, ce qui fixe la tension disponible au tableau général et, plus loin, au bornier des moteurs. Il
+    dissipe de l'énergie en permanence dans son noyau, même quand l'usine est arrêtée, et dans ses enroulements dès qu'il est
+    chargé : sur un poste de $100\ \mathrm{kVA}$, ce sont plusieurs milliers de kilowattheures par an, payés pendant les trente
+    ou quarante ans de vie de l'appareil. Il absorbe de la puissance réactive pour magnétiser son noyau et pour entretenir ses
+    flux de fuite, ce qui compte lorsque l'énergie est comptée côté haute tension. Enfin, son impédance série limite le courant
+    de court-circuit, ce qui conditionne le pouvoir de coupure de toutes les protections en aval.
+  </p>
+  <p>
+    Le schéma équivalent du transformateur réel est l'outil qui chiffre tout cela avec six éléments : deux résistances, deux
+    réactances de fuite, et une branche magnétisante formée d'une résistance et d'une réactance. On l'utilise pour choisir un
+    transformateur, calculer une chute de tension, comparer deux offres sur leurs pertes, régler une prise, estimer un
+    échauffement, ou interpréter une mesure anormale. Le travail central de cette séance est de calculer chute de tension,
+    pertes et rendement ; il débouche, dans le projet fil rouge, sur la révision du choix de prise du transformateur du poste,
+    fait jusqu'ici avec le seul modèle idéal, et prépare le cours Essais à vide et en court-circuit, qui montrera comment on
+    mesure les six paramètres sans ouvrir l'appareil.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Expliquer l'origine physique de chacun des six éléments du schéma équivalent : résistances des enroulements, réactances de fuite, résistance de pertes fer et réactance magnétisante.</li>
+    <li data-rang="02">Établir les équations du transformateur réel en phaseurs et en déduire le schéma équivalent complet, puis ramené au primaire et au secondaire.</li>
+    <li data-rang="03">Calculer la chute de tension en charge par la résolution exacte du schéma et par l'approximation de Kapp, et comparer les deux résultats.</li>
+    <li data-rang="04">Calculer les pertes cuivre et fer, le rendement à une charge donnée, la charge de rendement maximal et le rendement énergétique d'une journée d'exploitation.</li>
+    <li data-rang="05">Dimensionner le réglage d'une prise en tenant compte de la chute en charge, de la plage de tension du réseau et de l'induction du noyau.</li>
+    <li data-rang="06">Diagnostiquer une chute de tension, un échauffement ou un courant à vide anormal à partir des grandeurs mesurées.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois acquis suffisent. Le premier vient du cours <a href="#/cours/transformateur-ideal">Transformateur idéal</a> : avec
+    $m = N_2/N_1$, $\underline{V}_2 = m\underline{V}_1$, $\underline{I}_1 = m\underline{I}_2$, et une impédance du secondaire paraît
+    divisée par $m^2$ vue du primaire. Le deuxième vient du cours <a href="#/cours/circuits-magnetiques">Circuits magnétiques</a> :
+    sous tension sinusoïdale imposée, le flux est fixé par la tension, $U = 4{,}44\,fNS\hat{B}$, et le noyau ne fixe que le courant
+    magnétisant ; un noyau dissipe par hystérésis et par courants de Foucault. Le troisième vient du cours
+    <a href="#/cours/impedances-en-regime-sinusoidal">Impédances en régime sinusoïdal</a> : la tension aux bornes d'une réactance,
+    $jX\underline{I}$, est en avance de $90^\circ$ sur le courant, celle d'une résistance en phase avec lui. Le mini-test n'est
+    pas noté ; la correction de chaque question reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la
+    correction".
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-ecarts">Quatre écarts au modèle idéal</h3>
+  <p>
+    Reprenez le transformateur à deux colonnes du cours précédent et regardez-le comme un objet matériel. Ses enroulements sont
+    en cuivre ou en aluminium : ils ont une résistance, qui chauffe sous le passage du courant et fait perdre un peu de tension.
+    Le flux créé par un enroulement ne reste pas entièrement dans le fer : une petite partie se referme dans l'air et dans
+    l'huile, autour de cet enroulement seul, sans traverser l'autre. Ce flux de fuite ne participe pas au transfert d'énergie,
+    mais il est proportionnel au courant qui le crée et il induit une tension dans l'enroulement qui l'a produit : il se
+    comporte comme une inductance placée en série. Le noyau, ensuite, n'a pas une perméabilité infinie : il faut un courant pour
+    l'aimanter, le courant magnétisant, qui existe même à vide. Enfin, le noyau s'échauffe sous l'effet de l'hystérésis et des
+    courants de Foucault : ces pertes fer dépendent du flux, donc de la tension, et presque pas de la charge. Le schéma
+    ci-dessous situe ces quatre phénomènes.
+  </p>
+  <figure id="d-ecarts-figure">
+    <svg viewBox="0 0 720 360" role="img" aria-label="Transformateur à deux colonnes : flux commun dans le noyau en tirets, flux de fuite autour de chaque enroulement en pointillés, résistances des enroulements et pertes dans le noyau annotées">
+      <defs>
+        <marker id="fl-d-ec" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <path d="M200 50H520V310H200Z M260 110V250H460V110Z" fill="rgba(128,128,128,0.16)" fill-rule="evenodd" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M188 138L272 130M188 154L272 146M188 170L272 162M188 186L272 178M188 202L272 194M188 218L272 210"/>
+        <path d="M188 138H110M188 218V234H110"/>
+        <path d="M448 130L532 138M448 146L532 154M448 162L532 170M448 178L532 186M448 194L532 202M448 210L532 218"/>
+        <path d="M532 138H610M532 218V234H610"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="104" cy="138" r="4"/>
+        <circle cx="104" cy="234" r="4"/>
+        <circle cx="616" cy="138" r="4"/>
+        <circle cx="616" cy="234" r="4"/>
+        <circle cx="178" cy="124" r="5"/>
+        <circle cx="542" cy="124" r="5"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="7 5" stroke-linejoin="round">
+        <path d="M230 80H490V280H230Z"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="2 4">
+        <path d="M230 120C150 120 150 240 230 240"/>
+        <path d="M230 120C300 120 300 240 230 240"/>
+        <path d="M490 120C410 120 410 240 490 240"/>
+        <path d="M490 120C570 120 570 240 490 240"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M340 80H380" marker-end="url(#fl-d-ec)"/>
+        <path d="M380 280H340" marker-end="url(#fl-d-ec)"/>
+        <path d="M168 190V176" marker-end="url(#fl-d-ec)"/>
+        <path d="M552 176V190" marker-end="url(#fl-d-ec)"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1" opacity="0.7">
+        <path d="M120 96L160 128M600 96L560 128M330 330L330 290M150 290L176 240M570 290L544 240"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="330" y="72">Φ commun</text>
+        <text x="20" y="90">1. cuivre du primaire : R1</text>
+        <text x="500" y="90">1. cuivre du secondaire : R2</text>
+        <text x="40" y="306">2. fuite du primaire : X1</text>
+        <text x="500" y="306">2. fuite du secondaire : X2</text>
+        <text x="210" y="348">3. aimantation : Xm ; 4. hystérésis et Foucault : Rf</text>
+        <text x="46" y="186">v1</text>
+        <text x="640" y="186">v2</text>
+        <text x="40" y="30">primaire : convention récepteur</text>
+        <text x="420" y="30">secondaire : convention générateur</text>
+      </g>
+    </svg>
+    <figcaption>
+      Le noyau est la plage grisée ; le flux commun $\Phi$ suit la ligne moyenne en tirets, dans le sens horaire indiqué par les
+      flèches. Autour de chaque enroulement, les boucles en pointillés figurent les flux de fuite : ils entourent un seul
+      enroulement en passant par l'air, et leur sens suit le courant de l'enroulement qui les crée, indiqué par la petite flèche
+      voisine. Les points marquent les bornes homologues, avec les conventions du cours précédent : récepteur au primaire,
+      générateur au secondaire, chaque côté ayant sa propre référence de potentiel à la borne basse. Les numéros renvoient aux
+      quatre écarts au modèle idéal et au nom de l'élément qui les représente dans le schéma équivalent : résistances $R_1$ et
+      $R_2$, réactances de fuite $X_1$ et $X_2$, réactance magnétisante $X_m$ et résistance de pertes fer $R_f$.
+    </figcaption>
+  </figure>
+
+  <h3 id="d-ordres">Des écarts petits, mais pas du même genre</h3>
+  <p>
+    Sur un transformateur de distribution, les quatre écarts sont petits : le courant magnétisant vaut de l'ordre de $1$ à
+    $3\ \%$ du courant assigné, les pertes fer quelques dixièmes de pour cent de la puissance assignée, les pertes cuivre en
+    pleine charge de $1$ à $2\ \%$, et la chute de tension totale de quelques pour cent. Mais ils n'agissent pas de la même
+    façon. Les résistances et les fuites sont traversées par le courant de charge : leurs effets croissent avec la charge, la
+    chute comme le courant, les pertes comme son carré. La branche magnétisante est soumise à la tension : son courant et ses
+    pertes restent presque constants de la marche à vide à la pleine charge. Cette séparation entre éléments série, qui
+    dépendent du courant, et éléments parallèles, qui dépendent de la tension, est la clé de lecture de tout le schéma
+    équivalent, et elle explique les deux essais du cours Essais à vide et en court-circuit.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Une analogie contrôlée et ses limites</span>
+    <p>
+      On compare souvent le transformateur chargé à une pile qui débite : vu de la charge, il se comporte comme une source de
+      tension à vide $mV_1$ derrière une impédance interne, et sa tension baisse quand le courant augmente, comme celle d'une
+      pile. L'analogie, qui est exactement le théorème de Thévenin du cours
+      <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes de Thévenin, Norton et superposition</a>, rend bien
+      compte de la chute en charge et de la limitation du courant de court-circuit. Elle s'arrête sur trois points. L'impédance
+      interne est surtout inductive : la chute dépend autant du déphasage du courant que de son module, et une charge capacitive
+      peut faire monter la tension au-dessus de la valeur à vide, ce qu'aucune pile ne fait. La branche magnétisante consomme du
+      courant et de la puissance même à vide, alors qu'une pile ouverte ne débite rien. Enfin, une pile convertit une énergie
+      chimique ; le transformateur ne fait que transmettre, et tout ce qu'il ne transmet pas devient de la chaleur.
+    </p>
+  </div>
+
+  <h3 id="d-anim-section">Animation : flux commun et flux de fuite en charge</h3>
+  <p>
+    L'animation reprend le transformateur de l'exemple numérique de la section H : primaire de $600$ spires sous
+    $400\ \mathrm{V}$, $50\ \mathrm{Hz}$, secondaire de $345$ spires, avec ses résistances, ses réactances de fuite et sa branche
+    magnétisante. À gauche, le noyau : l'opacité des flèches du flux commun et des boucles de fuite suit leur valeur
+    instantanée. À droite, une période : en haut, le flux commun et les flux de fuite par spire, ces derniers agrandis dix fois ;
+    en bas, le courant primaire et la chute interne du primaire, $v_1 - e_1$. Faites glisser la poignée le long de l'axe des
+    temps ou lancez le lecteur ; les curseurs règlent la charge et son facteur de puissance. Avant de manipuler, prédisez : si
+    l'on passe de la marche à vide à la pleine charge, le flux commun augmente-t-il, reste-t-il presque le même ou diminue-t-il ?
+    Et les flux de fuite ?
+  </p>
+  <figure id="d-anim-figure">
+    <div class="schema-vivant" id="d-anim"></div>
+    <figcaption>
+      À gauche, le noyau grisé avec ses deux enroulements et leurs points de polarité ; les quatre flèches en tirets sur la ligne
+      moyenne donnent le sens du flux commun à l'instant choisi, les boucles en pointillés autour de chaque enroulement celui des
+      flux de fuite ; les unes et les autres s'effacent quand la grandeur s'annule. En haut à droite, le flux commun par spire en
+      trait plein, la fuite du primaire en tirets et celle du secondaire en pointillés, toutes deux à l'échelle dix fois agrandie
+      indiquée dans le libellé. En bas à droite, le courant primaire $i_1$ en trait épais et la chute interne $v_1 - e_1$ en tirets,
+      à son échelle propre. La poignée ronde, sous les courbes, fixe l'instant $\omega t$ ; le trait vertical repère cet instant sur
+      les deux graphes. Les valeurs crêtes et efficaces s'affichent sous l'animation.
+    </figcaption>
+  </figure>
+  <div id="d-anim-curseurs"></div>
+  <div id="d-anim-lecteur"></div>
+  <div id="d-anim-valeurs"></div>
+  <p>
+    Interprétation : à vide, le flux commun crête vaut $3{,}00\ \mathrm{mWb}$ ; en pleine charge sous $\cos\varphi = 0{,}8$, il
+    descend à $2{,}94\ \mathrm{mWb}$, soit $2\ \%$ de moins : la chute interne du primaire réduit un peu la tension $e_1$ qui
+    entretient le flux, mais le flux reste imposé par la tension du réseau. Les flux de fuite, au contraire, partent de zéro à
+    vide et croissent comme les courants : en pleine charge, celui du primaire atteint environ $51\ \mu\mathrm{Wb}$ crête par
+    spire, $1{,}7\ \%$ du flux commun. Ils sont en phase avec le courant qui les crée, alors que le flux commun suit la tension avec
+    un retard de $90^\circ$. La chute interne $v_1 - e_1 = R_1 i_1 + \ell_1\,\mathrm{d}i_1/\mathrm{d}t$ est en avance sur le
+    courant, d'environ $51^\circ$ ici, parce que résistance et réactance de fuite sont du même ordre. Faites varier le facteur de
+    puissance : la chute interne change d'orientation par rapport à la tension, c'est tout l'enjeu de la chute de tension en
+    charge, que la section E met en équation.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-equations">Équations du transformateur réel</h3>
+  <p>
+    Gardons les conventions du cours précédent : $i_1$ entre par la borne pointée du primaire, $i_2$ sort par celle du
+    secondaire, les tensions sont fléchées vers les points. Le flux traversant le primaire se décompose en flux commun $\Phi$,
+    vu par toutes les spires des deux enroulements, et flux de fuite $\varphi_{\sigma 1}$, vu par le seul primaire. On définit
+    l'inductance de fuite $\ell_1 = N_1\varphi_{\sigma 1}/i_1$, constante parce que ce flux se referme surtout dans l'air, milieu
+    linéaire. La loi des mailles, avec la loi de Faraday, donne pour chaque enroulement :
+  </p>
+  <div class="formule-cle">
+    $$v_1 = R_1 i_1 + \ell_1\frac{\mathrm{d}i_1}{\mathrm{d}t} + N_1\frac{\mathrm{d}\Phi}{\mathrm{d}t}, \qquad v_2 = -R_2 i_2 - \ell_2\frac{\mathrm{d}i_2}{\mathrm{d}t} + N_2\frac{\mathrm{d}\Phi}{\mathrm{d}t}$$
+    $$\underline{V}_1 = (R_1 + jX_1)\,\underline{I}_1 + \underline{E}_1, \qquad \underline{V}_2 = \underline{E}_2 - (R_2 + jX_2)\,\underline{I}_2, \qquad \underline{E}_2 = m\,\underline{E}_1$$
+    <p class="formule-cle-legende">
+      $R_1$, $R_2$ : résistances des enroulements, en ohms ; $\ell_1$, $\ell_2$ : inductances de fuite, en henrys ;
+      $X_k = \ell_k\omega$ : réactances de fuite, en ohms ; $\underline{E}_1 = j\omega N_1\underline{\Phi}$ et
+      $\underline{E}_2 = j\omega N_2\underline{\Phi}$ : forces électromotrices induites par le flux commun, en volts, dans le rapport
+      $m = N_2/N_1$. Hypothèses : régime sinusoïdal établi, flux de fuite proportionnels aux courants, résistances constantes à
+      température donnée. Le signe moins au secondaire vient de la convention générateur : le courant débité fait chuter la
+      tension. Vérification : $\Omega \cdot \mathrm{A} = \mathrm{V}$ et $\mathrm{H} \cdot \mathrm{A/s} = \mathrm{Wb/s} = \mathrm{V}$.
+      Cas limite : $R_k = X_k = 0$ redonne $\underline{V}_2 = m\underline{V}_1$, le modèle idéal.
+    </p>
+  </div>
+  <p>
+    Le théorème d'Ampère sur la ligne moyenne, avec une réluctance $\mathcal{R}$ finie, donne
+    $N_1 i_1 - N_2 i_2 = \mathcal{R}\Phi$. Le second membre n'est plus nul : on l'écrit $N_1 i_0$, où $i_0$ est le courant que le
+    primaire absorberait à vide pour entretenir le même flux. Comme le flux est imposé par $\underline{E}_1$, ce courant dépend de
+    la tension et non de la charge. Il comporte une composante en quadrature arrière, le courant magnétisant $\underline{I}_\mu$,
+    et une petite composante en phase, $\underline{I}_f$, qui fournit la puissance des pertes fer :
+  </p>
+  <div class="formule-cle">
+    $$\underline{I}_1 = m\,\underline{I}_2 + \underline{I}_0, \qquad \underline{I}_0 = \underline{I}_f + \underline{I}_\mu = \frac{\underline{E}_1}{R_f} + \frac{\underline{E}_1}{jX_m}$$
+    <p class="formule-cle-legende">
+      $\underline{I}_0$ : courant à vide, en ampères ; $X_m = N_1^2\omega/\mathcal{R}$ : réactance magnétisante, en ohms, qui
+      représente l'inductance $N_1^2/\mathcal{R}$ du noyau vue du primaire ; $R_f$ : résistance fictive, en ohms, telle que
+      $E_1^2/R_f$ soit égale aux pertes fer. Hypothèses : noyau non saturé, $X_m$ et $R_f$ constants à tension et fréquence
+      données ; c'est une approximation, car le courant magnétisant réel est déformé dès que l'induction approche du coude, ce
+      que le cours <a href="#/cours/circuits-magnetiques">Circuits magnétiques</a> a montré. Cas limites : $\mathcal{R} \to 0$
+      donne $X_m \to \infty$ et $\underline{I}_\mu = 0$ ; l'absence de pertes fer donne $R_f \to \infty$ ; on retrouve
+      $\underline{I}_1 = m\underline{I}_2$. Vérification : $\mathrm{V}/\Omega = \mathrm{A}$.
+    </p>
+  </div>
+
+  <h3 id="e-schema-complet">Le schéma équivalent complet</h3>
+  <p>
+    Ces trois équations se lisent comme un circuit. Au primaire, $R_1$ et $X_1$ en série portent le courant $\underline{I}_1$ ;
+    entre elles et le transformateur idéal, une branche parallèle $R_f \parallel jX_m$ prélève $\underline{I}_0$ sous la tension
+    $\underline{E}_1$ ; le transformateur idéal de rapport $m$ relie $\underline{E}_1$ à $\underline{E}_2$ et
+    $m\underline{I}_2 = \underline{I}_1 - \underline{I}_0$ à $\underline{I}_2$ ; au secondaire, $X_2$ et $R_2$ portent
+    $\underline{I}_2$. Le schéma ci-dessous fixe ces éléments et les conventions.
+  </p>
+  <figure id="e-complet-figure">
+    <svg viewBox="0 0 760 300" role="img" aria-label="Schéma équivalent complet : R1 et X1 en série au primaire, branche parallèle Rf et Xm sous E1, transformateur idéal de rapport m, X2 et R2 en série au secondaire, charge Z2">
+      <defs>
+        <marker id="fl-e-co" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M40 70H80M130 70H140M196 70H330V96M40 230H330V204"/>
+        <rect x="80" y="62" width="50" height="16" rx="2"/>
+        <path d="M140 70a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0"/>
+        <path d="M236 70V100H206V120M236 100H266V118M206 180V200H266V182M236 200V230"/>
+        <rect x="198" y="120" width="16" height="60" rx="2"/>
+        <path d="M266 118a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16"/>
+        <path d="M330 96a9 9 0 0 1 0 18a9 9 0 0 1 0 18a9 9 0 0 1 0 18a9 9 0 0 1 0 18a9 9 0 0 1 0 18a9 9 0 0 1 0 18"/>
+        <path d="M350 90V210M360 90V210"/>
+        <path d="M380 96a9 9 0 0 0 0 18a9 9 0 0 0 0 18a9 9 0 0 0 0 18a9 9 0 0 0 0 18a9 9 0 0 0 0 18a9 9 0 0 0 0 18"/>
+        <path d="M380 96V70H440M496 70H510M560 70H700V120M380 204V230H700V180"/>
+        <path d="M440 70a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0"/>
+        <rect x="510" y="62" width="50" height="16" rx="2"/>
+        <rect x="686" y="120" width="28" height="60" rx="3"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="40" cy="70" r="4"/>
+        <circle cx="40" cy="230" r="4"/>
+        <circle cx="600" cy="70" r="4"/>
+        <circle cx="600" cy="230" r="4"/>
+        <circle cx="236" cy="70" r="3"/>
+        <circle cx="236" cy="230" r="3"/>
+        <circle cx="320" cy="88" r="4.5"/>
+        <circle cx="390" cy="88" r="4.5"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M46 56H74" marker-end="url(#fl-e-co)"/>
+        <path d="M244 78V94" marker-end="url(#fl-e-co)"/>
+        <path d="M276 56H316" marker-end="url(#fl-e-co)"/>
+        <path d="M570 56H596" marker-end="url(#fl-e-co)"/>
+        <path d="M22 220V80" marker-end="url(#fl-e-co)"/>
+        <path d="M304 220V108" marker-end="url(#fl-e-co)"/>
+        <path d="M406 220V108" marker-end="url(#fl-e-co)"/>
+        <path d="M620 220V80" marker-end="url(#fl-e-co)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="50" y="50">I1</text>
+        <text x="94" y="98">R1</text>
+        <text x="158" y="98">X1</text>
+        <text x="250" y="90">I0</text>
+        <text x="174" y="156">Rf</text>
+        <text x="280" y="156">Xm</text>
+        <text x="186" y="216">If</text>
+        <text x="270" y="216">Iμ</text>
+        <text x="270" y="50">m I2</text>
+        <text x="4" y="156">V1</text>
+        <text x="310" y="180">E1</text>
+        <text x="412" y="166">E2</text>
+        <text x="454" y="98">X2</text>
+        <text x="524" y="98">R2</text>
+        <text x="572" y="50">I2</text>
+        <text x="628" y="156">V2</text>
+        <text x="720" y="156">Z2</text>
+        <text x="322" y="252">1 : m</text>
+        <text x="300" y="270">idéal</text>
+        <text x="30" y="290">référence primaire : borne basse</text>
+        <text x="470" y="290">référence secondaire : borne basse</text>
+        <text x="40" y="24">primaire : récepteur</text>
+        <text x="470" y="24">secondaire : générateur</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma équivalent complet, dit en T. À gauche, la source impose $\underline{V}_1$ entre les bornes du primaire, fléchée de la
+      borne basse, référence de potentiel du primaire, vers la borne haute ; $\underline{I}_1$ entre par la borne haute. $R_1$,
+      rectangle, et $X_1$, bobine, sont en série. La branche parallèle, entre les deux petits nœuds, comporte $R_f$ et $X_m$ ; elle
+      prélève $\underline{I}_0 = \underline{I}_f + \underline{I}_\mu$ sous la tension $\underline{E}_1$. Le transformateur idéal, au
+      centre, est dessiné avec ses deux bobinages, ses deux traits de noyau et ses points ; il reçoit $m\underline{I}_2$ par son
+      point primaire. À droite, $X_2$ et $R_2$ sont parcourues par $\underline{I}_2$, qui sort vers la charge $\underline{Z}_2$ ;
+      $\underline{V}_2$ est fléchée de la référence du secondaire, borne basse, vers la borne haute. Les deux références sont
+      indépendantes : il n'y a aucune liaison galvanique entre les deux côtés.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-ramene">Le schéma ramené au primaire</h3>
+  <p>
+    Le transformateur idéal gêne le calcul : on l'élimine en ramenant le secondaire au primaire, comme au cours précédent.
+    Divisons l'équation du secondaire par $m$ et posons $\underline{V}_2' = \underline{V}_2/m$ et $\underline{I}_2' = m\underline{I}_2$ :
+    $\underline{V}_2' = \underline{E}_1 - (R_2/m^2 + jX_2/m^2)\,\underline{I}_2'$. Tout le secondaire se transporte au primaire, les
+    tensions divisées par $m$, les courants multipliés par $m$, les impédances divisées par $m^2$.
+  </p>
+  <div class="formule-cle">
+    $$R_2' = \frac{R_2}{m^2}, \quad X_2' = \frac{X_2}{m^2}, \quad \underline{Z}_2' = \frac{\underline{Z}_2}{m^2}, \qquad \underline{V}_1 = (R_1 + jX_1)\,\underline{I}_1 + \underline{E}_1, \quad \underline{E}_1 = (R_2' + jX_2' + \underline{Z}_2')\,\underline{I}_2'$$
+    <p class="formule-cle-legende">
+      Grandeurs ramenées, notées avec un prime, en ohms, volts et ampères. Hypothèses : celles du schéma complet ; aucune
+      approximation supplémentaire, le schéma ramené est exactement équivalent vu du primaire. Vérification : la puissance
+      dissipée dans $R_2'$ vaut $R_2 I_2^2/m^2 \times m^2 = R_2 I_2^2$, comme dans l'enroulement réel. Cas limite : $m = 1$, rien ne
+      change. Le schéma ramené au secondaire s'obtient de même en multipliant les impédances du primaire par $m^2$ et
+      $\underline{V}_1$ par $m$. Interprétation : $R_1$ et $R_2'$ ont des valeurs voisines dans un transformateur bien conçu, parce
+      que chaque enroulement occupe à peu près la moitié de la fenêtre du noyau avec la même densité de courant.
+    </p>
+  </div>
+  <figure id="e-ramene-figure">
+    <svg viewBox="0 0 760 260" role="img" aria-label="Schéma équivalent ramené au primaire : R1, X1, branche Rf parallèle à Xm sous E1, puis R2 prime, X2 prime et charge Z2 prime, sans transformateur idéal">
+      <defs>
+        <marker id="fl-e-ra" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M40 60H80M130 60H140M196 60H390M446 60H460M510 60H660V100M40 210H660V160"/>
+        <rect x="80" y="52" width="50" height="16" rx="2"/>
+        <path d="M140 60a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0"/>
+        <path d="M290 60V90H260V105M290 90H320V103M260 165V185H320V167M290 185V210"/>
+        <rect x="252" y="105" width="16" height="60" rx="2"/>
+        <path d="M320 103a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16"/>
+        <path d="M390 60a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0"/>
+        <rect x="460" y="52" width="50" height="16" rx="2"/>
+        <rect x="646" y="100" width="28" height="60" rx="3"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="40" cy="60" r="4"/>
+        <circle cx="40" cy="210" r="4"/>
+        <circle cx="580" cy="60" r="4"/>
+        <circle cx="580" cy="210" r="4"/>
+        <circle cx="290" cy="60" r="3"/>
+        <circle cx="290" cy="210" r="3"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M46 46H74" marker-end="url(#fl-e-ra)"/>
+        <path d="M298 68V84" marker-end="url(#fl-e-ra)"/>
+        <path d="M540 46H576" marker-end="url(#fl-e-ra)"/>
+        <path d="M22 200V70" marker-end="url(#fl-e-ra)"/>
+        <path d="M360 200V70" marker-end="url(#fl-e-ra)"/>
+        <path d="M600 200V70" marker-end="url(#fl-e-ra)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="50" y="40">I1</text>
+        <text x="94" y="88">R1</text>
+        <text x="158" y="88">X1</text>
+        <text x="304" y="82">I0</text>
+        <text x="228" y="140">Rf</text>
+        <text x="334" y="140">Xm</text>
+        <text x="4" y="140">V1</text>
+        <text x="366" y="140">E1</text>
+        <text x="404" y="88">X2' = X2 / m²</text>
+        <text x="440" y="44">R2' = R2 / m²</text>
+        <text x="520" y="24">I2' = m I2</text>
+        <text x="606" y="140">V2'</text>
+        <text x="682" y="126">Z2' =</text>
+        <text x="682" y="142">Z2 / m²</text>
+        <text x="40" y="240">une seule référence : la borne basse du primaire ; V2' = V2 / m</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma ramené au primaire. Le transformateur idéal a disparu : à sa place, les éléments du secondaire sont portés au
+      primaire, $R_2' = R_2/m^2$, $X_2' = X_2/m^2$ et $\underline{Z}_2' = \underline{Z}_2/m^2$, parcourus par le courant ramené
+      $\underline{I}_2' = m\underline{I}_2$ et soumis à la tension ramenée $\underline{V}_2' = \underline{V}_2/m$. Les flèches de tension
+      partent toutes de la borne basse, devenue l'unique référence de potentiel ; cette référence commune est fictive, le
+      transformateur réel restant isolé. La branche magnétisante reste entre les deux impédances de fuite, sous la tension
+      $\underline{E}_1$ : c'est pourquoi ce schéma est dit en T.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-kapp">Le schéma simplifié de Kapp</h3>
+  <p>
+    Le courant à vide ne représente que quelques pour cent du courant assigné, et la chute dans $R_1 + jX_1$ ne vaut que
+    quelques pour cent de la tension. On commet donc une erreur du second ordre en déplaçant la branche magnétisante aux bornes
+    d'entrée, sous $\underline{V}_1$ au lieu de $\underline{E}_1$. Les deux impédances de fuite se retrouvent alors en série et
+    s'additionnent : c'est le schéma en L, ou schéma de Kapp. Vu du secondaire, il se réduit à un générateur de Thévenin.
+  </p>
+  <div class="formule-cle">
+    $$R_{s1} = R_1 + \frac{R_2}{m^2}, \quad X_{s1} = X_1 + \frac{X_2}{m^2}; \qquad \underline{V}_2 = m\underline{V}_1 - (R_s + jX_s)\,\underline{I}_2, \quad R_s = R_2 + m^2R_1 = m^2R_{s1}, \quad X_s = X_2 + m^2X_1$$
+    <p class="formule-cle-legende">
+      $R_{s1}$, $X_{s1}$ : résistance et réactance série ramenées au primaire ; $R_s$, $X_s$ : les mêmes ramenées au secondaire,
+      en ohms ; $mV_1 = V_{20}$ : tension secondaire à vide. Hypothèse : branche magnétisante placée en tête, ce qui revient à
+      négliger la chute que $\underline{I}_0$ provoque dans $R_1 + jX_1$. C'est une approximation, excellente en charge pour un
+      transformateur de puissance, médiocre pour un petit transformateur à vide ou pour un transformateur de courant. Cas
+      limite : secondaire en court-circuit, $\underline{I}_{2cc} = mV_1/(R_s + jX_s)$, limité par la seule impédance série.
+      Vérification : $m^2$ sans dimension, ohms partout.
+    </p>
+  </div>
+  <figure id="e-kapp-figure">
+    <svg viewBox="0 0 760 270" role="img" aria-label="a. Schéma de Kapp ramené au primaire : branche magnétisante aux bornes d'entrée, puis résistance et réactance série. b. Générateur de Thévenin vu du secondaire : source m V1 en série avec Rs et Xs, charge Z2">
+      <defs>
+        <marker id="fl-e-ka" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M30 70H170M220 70H230M286 70H340V110M30 220H340V170"/>
+        <path d="M90 70V95H70V110M90 95H110V108M70 170V190H110V172M90 190V220"/>
+        <rect x="62" y="110" width="16" height="60" rx="2"/>
+        <path d="M110 108a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16"/>
+        <rect x="170" y="62" width="50" height="16" rx="2"/>
+        <path d="M230 70a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0"/>
+        <rect x="326" y="110" width="28" height="60" rx="3"/>
+        <circle cx="440" cy="145" r="22"/>
+        <path d="M430 145c4 -8 8 -8 10 0s6 8 10 0"/>
+        <path d="M440 123V70H500M550 70H560M616 70H700V110M440 167V220H700V170"/>
+        <rect x="500" y="62" width="50" height="16" rx="2"/>
+        <path d="M560 70a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0"/>
+        <rect x="686" y="110" width="28" height="60" rx="3"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="30" cy="70" r="4"/>
+        <circle cx="30" cy="220" r="4"/>
+        <circle cx="90" cy="70" r="3"/>
+        <circle cx="90" cy="220" r="3"/>
+        <circle cx="650" cy="70" r="4"/>
+        <circle cx="650" cy="220" r="4"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M130 56H160" marker-end="url(#fl-e-ka)"/>
+        <path d="M12 210V80" marker-end="url(#fl-e-ka)"/>
+        <path d="M620 56H646" marker-end="url(#fl-e-ka)"/>
+        <path d="M410 200V90" marker-end="url(#fl-e-ka)"/>
+        <path d="M670 210V80" marker-end="url(#fl-e-ka)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="20" y="30">a. Kapp, ramené au primaire</text>
+        <text x="420" y="30">b. Thévenin vu du secondaire</text>
+        <text x="130" y="50">I2'</text>
+        <text x="40" y="144">Rf</text>
+        <text x="124" y="144">Xm</text>
+        <text x="176" y="98">Rs1</text>
+        <text x="240" y="98">Xs1</text>
+        <text x="360" y="140">Z2'</text>
+        <text x="2" y="244">V1 sur la branche</text>
+        <text x="372" y="84">m V1</text>
+        <text x="510" y="98">Rs</text>
+        <text x="570" y="98">Xs</text>
+        <text x="622" y="50">I2</text>
+        <text x="646" y="150">V2</text>
+        <text x="720" y="144">Z2</text>
+        <text x="440" y="250">Rs = R2 + m² R1 ; Xs = X2 + m² X1</text>
+      </g>
+    </svg>
+    <figcaption>
+      En a, le schéma de Kapp ramené au primaire : la branche magnétisante $R_f \parallel X_m$ est placée directement sous
+      $\underline{V}_1$, à l'entrée, et l'impédance série $R_{s1} + jX_{s1}$ porte le seul courant ramené $\underline{I}_2'$ vers la
+      charge $\underline{Z}_2'$ ; la tension d'entrée $V_1$ est fléchée depuis la borne basse, référence. En b, le même modèle vu
+      du secondaire : la source $m\underline{V}_1$, cercle, est la tension à vide, en série avec $R_s$ et $X_s$ ; le courant
+      $\underline{I}_2$ sort vers la charge $\underline{Z}_2$ et $\underline{V}_2$ est fléchée depuis la référence du secondaire.
+      La branche magnétisante n'apparaît plus vue du secondaire : elle ne charge que le réseau primaire.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-chute">Chute de tension : la formule de Kapp</h3>
+  <p>
+    Prenons $\underline{V}_2$ comme référence horizontale et une charge qui absorbe $\underline{I}_2$ en retard de $\varphi_2$. La
+    relation $m\underline{V}_1 = \underline{V}_2 + R_s\underline{I}_2 + jX_s\underline{I}_2$ se dessine comme un triangle : à
+    l'extrémité de $\underline{V}_2$, on ajoute $R_s\underline{I}_2$, parallèle au courant, puis $jX_s\underline{I}_2$,
+    perpendiculaire, pour arriver à $m\underline{V}_1$, de module connu $V_{20}$. Projetons sur la direction de $\underline{V}_2$ :
+    la composante en phase de la chute vaut $R_sI_2\cos\varphi_2 + X_sI_2\sin\varphi_2$, la composante en quadrature
+    $X_sI_2\cos\varphi_2 - R_sI_2\sin\varphi_2$. Comme celle-ci est petite devant $V_{20}$, elle ne change le module que d'un terme
+    du second ordre, et :
+  </p>
+  <div class="formule-cle">
+    $$\Delta V = V_{20} - V_2 \approx R_sI_2\cos\varphi_2 + X_sI_2\sin\varphi_2, \qquad \frac{\Delta V}{V_{20}} \approx x\,(u_r\cos\varphi_2 + u_x\sin\varphi_2) \approx \frac{R_sP_2 + X_sQ_2}{V_{20}^2}$$
+    <p class="formule-cle-legende">
+      $\Delta V$ en volts ; $x = I_2/I_{2n}$ : taux de charge, sans dimension ; $u_r = R_sI_{2n}/V_{20}$ et
+      $u_x = X_sI_{2n}/V_{20}$ : chutes résistive et réactive relatives à courant assigné ; $u_{cc} = \sqrt{u_r^2 + u_x^2}$ :
+      tension de court-circuit relative ; $P_2$, $Q_2$ : puissances active et réactive par phase de la charge. Hypothèses :
+      schéma de Kapp, terme en quadrature négligé, $\varphi_2 &gt; 0$ pour une charge inductive. Dérivation : écrire
+      $V_{20}^2 = (V_2 + a)^2 + b^2$ avec $a$ et $b$ les composantes en phase et en quadrature, d'où
+      $V_{20} - V_2 = a + b^2/(2V_{20}) + \dots$ Vérification : $\Omega \cdot \mathrm{A} = \mathrm{V}$, et
+      $\Omega \cdot \mathrm{W}/\mathrm{V}^2 = $ sans dimension. Cas limites : chute maximale $Z_sI_2$ quand $\tan\varphi_2 = X_s/R_s$ ;
+      chute nulle quand $\tan\varphi_2 = -R_s/X_s$, charge capacitive ; au-delà, $\Delta V &lt; 0$ : la tension monte en charge.
+      Interprétation : la réactance de fuite fait chuter la tension en proportion de la puissance réactive, la résistance en
+      proportion de la puissance active ; c'est déjà la règle des flux de puissance du cours Flux de puissance.
+    </p>
+  </div>
+
+  <h3 id="e-fresnel-section">Animation : le diagramme de Kapp et le rôle du facteur de puissance</h3>
+  <p>
+    L'animation trace le triangle de Kapp du transformateur de l'exemple, vu du secondaire : $V_{20} = 230\ \mathrm{V}$, courant
+    assigné $10{,}87\ \mathrm{A}$, $u_r = 2{,}82\ \%$ et $u_x = 3{,}42\ \%$. Les chutes sont si petites qu'à l'échelle elles
+    seraient invisibles : un curseur les agrandit d'un facteur affiché, sans changer les valeurs calculées. La poignée ronde, sur
+    le cadran de droite, oriente le courant de charge, d'une charge capacitive à une charge inductive ; les curseurs règlent le
+    taux de charge et les chutes relatives. Prédisez avant de manipuler : à courant assigné, pour quel déphasage la chute
+    est-elle maximale ? Existe-t-il une charge pour laquelle la tension ne baisse pas du tout ?
+  </p>
+  <figure id="e-fresnel-figure">
+    <div class="schema-vivant" id="e-fresnel"></div>
+    <figcaption>
+      Diagramme de Kapp vu du secondaire, référence de phase horizontale portée par $\underline{V}_2$, flèche en trait plein
+      depuis l'origine. À son extrémité, $R_s\underline{I}_2$ en tirets, parallèle au courant, puis $jX_s\underline{I}_2$ en
+      pointillés, perpendiculaire au courant ; la flèche épaisse, de l'origine à l'extrémité de cette chaîne, est la tension à
+      vide $m\underline{V}_1$. Le cercle fin a pour rayon $V_{20}$ : $\underline{V}_2$ est ce qui reste quand la chute est
+      retranchée. La courte flèche fine issue de l'origine donne la direction du courant $\underline{I}_2$. Sur le cadran, le rayon
+      terminé par la poignée ronde fixe l'angle du courant ; en dessous de l'horizontale, il est en retard, charge inductive ;
+      au-dessus, en avance, charge capacitive. Les chutes sont dessinées agrandies du facteur indiqué en bas du schéma.
+    </figcaption>
+  </figure>
+  <div id="e-fresnel-curseurs"></div>
+  <div id="e-fresnel-valeurs"></div>
+  <p>
+    Interprétation : à courant assigné et $\cos\varphi_2 = 0{,}8$ inductif, la formule de Kapp donne
+    $230 \times (2{,}82 \times 0{,}8 + 3{,}42 \times 0{,}6)/100 = 9{,}92\ \mathrm{V}$, soit $4{,}31\ \%$. La chute est maximale,
+    $Z_sI_{2n} = 10{,}20\ \mathrm{V}$, soit $u_{cc} = 4{,}44\ \%$, quand le courant est en retard de $\arctan(3{,}42/2{,}82) = 50{,}5^\circ$ :
+    le triangle des chutes est alors aligné sur $\underline{V}_2$. Sous $\cos\varphi_2 = 1$, il ne reste que $u_r$ en phase,
+    $6{,}5\ \mathrm{V}$. Pour une avance de $\arctan(2{,}82/3{,}42) = 39{,}5^\circ$, la chute s'annule ; au-delà, la tension monte :
+    à $\cos\varphi_2 = 0{,}6$ capacitif, $V_2$ dépasse $V_{20}$ d'environ $2{,}4\ \mathrm{V}$ selon la formule, ce que confirme la
+    résolution exacte du triangle affichée. Cette montée explique pourquoi des condensateurs restés en service sur un site presque à l'arrêt
+    élèvent la tension du tableau, situation qu'étudie l'exercice avancé de la section K.
+  </p>
+
+  <h3 id="e-pertes">Pertes et rendement</h3>
+  <p>
+    Les pertes se lisent sur le schéma. Les pertes cuivre sont dissipées dans les résistances série :
+    $P_{cu} = R_1I_1^2 + R_2I_2^2 \approx R_sI_2^2$, proportionnelles au carré du courant. Les pertes fer sont dissipées dans
+    $R_f$ : $P_f = E_1^2/R_f \approx V_1^2/R_f$, indépendantes de la charge et proportionnelles au carré de la tension à fréquence
+    fixée. On les caractérise par deux nombres de catalogue : $P_0$, pertes à vide sous tension assignée, presque toutes des
+    pertes fer, et $P_{cc}$, pertes en court-circuit à courant assigné, presque toutes des pertes cuivre. Le rendement s'écrit
+    alors en fonction du taux de charge $x$ :
+  </p>
+  <div class="formule-cle">
+    $$P_{cu} = x^2P_{cc}, \quad P_f \approx P_0, \qquad \eta(x) = \frac{xS_n\cos\varphi_2}{xS_n\cos\varphi_2 + P_0 + x^2P_{cc}}, \qquad \eta\ \text{maximal pour}\ x_{opt} = \sqrt{\frac{P_0}{P_{cc}}}$$
+    <p class="formule-cle-legende">
+      $P_{cu}$, $P_f$, $P_0$, $P_{cc}$ en watts ; $S_n$ en voltampères ; $\eta$ sans dimension. Hypothèses : tension primaire
+      constante, pertes fer constantes, résistances à leur température de référence, courant sinusoïdal. Dérivation : écrire
+      $\eta = 1/[1 + (P_0/x + xP_{cc})/(S_n\cos\varphi_2)]$ ; le dénominateur est minimal quand la dérivée de $P_0/x + xP_{cc}$
+      s'annule, $-P_0/x^2 + P_{cc} = 0$, c'est-à-dire quand pertes cuivre et pertes fer sont égales. Cas limites : à vide,
+      $\eta = 0$ alors que l'appareil dissipe $P_0$ ; en très forte surcharge, les pertes cuivre dominent et $\eta$ baisse.
+      Vérification : watts au numérateur et au dénominateur. Interprétation : le facteur de puissance ne déplace pas
+      l'optimum, il abaisse toute la courbe, parce que les pertes dépendent du courant, pas de la puissance active.
+    </p>
+  </div>
+  <p>
+    Deux précisions complètent ce bilan. Les pertes fer se décomposent en pertes par hystérésis, proportionnelles à la fréquence
+    et à peu près au carré de l'induction, et en pertes par courants de Foucault, proportionnelles au carré de la fréquence, de
+    l'induction et de l'épaisseur des tôles : c'est pourquoi le noyau est feuilleté. Les pertes cuivre sont données à une
+    température de référence, par exemple $75\ ^\circ\mathrm{C}$ pour un transformateur immergé ; la résistivité du cuivre croît
+    d'environ $0{,}4\ \%$ par kelvin, comme l'a montré le cours <a href="#/cours/loi-d-ohm-et-resistivite">Loi d'Ohm et
+    résistivité</a>. Enfin, un courant chargé d'harmoniques chauffe davantage les enroulements que sa seule valeur efficace ne
+    le laisse prévoir, à cause des courants de Foucault induits dans les conducteurs : c'est une limite du modèle, traitée par
+    les constructeurs au moyen d'un déclassement.
+  </p>
+
+  <h3 id="e-sim-rendement-section">Simulation interactive : rendement en fonction de la charge</h3>
+  <p>
+    La simulation trace le rendement du transformateur de l'exemple, $2{,}5\ \mathrm{kVA}$, en fonction du taux de charge, pour le
+    facteur de puissance choisi et pour un facteur de puissance unité. Les curseurs règlent les pertes à vide, les pertes en
+    court-circuit, le facteur de puissance et le point de fonctionnement. Prédisez avant de manipuler : avec
+    $P_0 = 34{,}8\ \mathrm{W}$ et $P_{cc} = 70{,}6\ \mathrm{W}$, le rendement est-il maximal à pleine charge, à mi-charge ou
+    ailleurs ? Que devient cet optimum si l'on choisit un noyau à pertes réduites de moitié ?
+  </p>
+  <figure id="e-sim-rendement-figure">
+    <div id="e-sim-rendement-trace"></div>
+    <figcaption>
+      Rendement en pour cent en fonction du taux de charge $x = S/S_n$ ; les deux courbes sont nommées dans la légende du tracé,
+      l'une pour le facteur de puissance réglé, l'autre pour $\cos\varphi = 1$. Le trait vertical en pointillés repère la charge
+      de rendement maximal $\sqrt{P_0/P_{cc}}$, le trait vertical en tirets et le point le fonctionnement réglé.
+    </figcaption>
+  </figure>
+  <div id="e-sim-rendement-curseurs"></div>
+  <div id="e-sim-rendement-valeurs"></div>
+  <p>
+    Interprétation : l'optimum est à $x = \sqrt{34{,}8/70{,}6} = 0{,}702$, soit $1{,}75\ \mathrm{kVA}$, avec
+    $\eta = 95{,}28\ \%$ sous $\cos\varphi = 0{,}8$ ; à pleine charge, $95{,}0\ \%$. La courbe est très plate autour de l'optimum :
+    entre $x = 0{,}44$ et $x = 1{,}12$, le rendement reste à moins d'un demi-point de son maximum. Elle s'effondre en revanche aux
+    faibles charges, où les pertes fer, constantes, deviennent prépondérantes : à $10\ \%$ de charge, le rendement tombe à
+    $84{,}9\ \%$ sous $\cos\varphi = 0{,}8$. Diviser $P_0$ par deux déplace l'optimum vers $x = 0{,}50$ et relève surtout le rendement
+    aux faibles charges. Le choix d'un transformateur se fait donc sur le profil de charge réel : un appareil peu chargé la plupart
+    du temps doit avoir de faibles pertes à vide, ce que la section I chiffre pour le poste du site.
+  </p>
+
+  <h3 id="e-statut">Statut des énoncés</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Ce qui relève de la loi, de la convention, de l'approximation, de la conception et du constructeur</caption>
+      <thead><tr><th>Énoncé</th><th>Statut</th></tr></thead>
+      <tbody>
+        <tr><td>Lois de Faraday et d'Ampère, loi d'Ohm dans les enroulements, conservation de l'énergie $P_1 = P_2 + P_{cu} + P_f$</td><td>Lois physiques</td></tr>
+        <tr><td>Décomposition du flux en flux commun et flux de fuite ; grandeurs ramenées notées avec un prime ; $\varphi_2 &gt; 0$ en inductif ; $m = N_2/N_1$</td><td>Conventions, à rappeler sur chaque document</td></tr>
+        <tr><td>Inductances de fuite constantes ; $R_f$ et $X_m$ constants ; branche magnétisante en tête (Kapp) ; terme en quadrature négligé dans $\Delta V$ ; pertes fer égales à $P_0$</td><td>Approximations, à justifier par l'ordre de grandeur</td></tr>
+        <tr><td>Tension secondaire à vide supérieure de quelques pour cent à la tension du réseau desservi ; charge habituelle autour de l'optimum de rendement ; choix de $P_0$ faible pour un appareil peu chargé</td><td>Règles de conception</td></tr>
+        <tr><td>Valeurs de $P_0$, $P_{cc}$, $u_{cc}$ et $i_0$ ; température de référence des pertes ; pertes maximales imposées par les règlements d'écoconception ; déclassement en présence d'harmoniques</td><td>Données du constructeur et exigences réglementaires, à vérifier pour chaque appareil et chaque pays</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, le schéma ramené au primaire avec la chaîne des puissances de
+    l'exemple numérique, l'organigramme de résolution d'un problème de chute de tension et de rendement, et un tableau
+    comparatif des modèles.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 760 400" role="img" aria-label="Schéma principal : schéma équivalent ramené au primaire avec les valeurs de l'exemple et, en dessous, la chaîne des puissances depuis la puissance absorbée jusqu'à la puissance utile, avec les pertes cuivre du primaire, les pertes fer et les pertes cuivre du secondaire">
+      <defs>
+        <marker id="fl-f" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M40 60H80M130 60H140M196 60H390M446 60H460M510 60H660V90M40 190H660V150"/>
+        <rect x="80" y="52" width="50" height="16" rx="2"/>
+        <path d="M140 60a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0"/>
+        <path d="M290 60V82H260V95M290 82H320V93M260 155V170H320V157M290 170V190"/>
+        <rect x="252" y="95" width="16" height="60" rx="2"/>
+        <path d="M320 93a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16"/>
+        <path d="M390 60a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0"/>
+        <rect x="460" y="52" width="50" height="16" rx="2"/>
+        <rect x="646" y="90" width="28" height="60" rx="3"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="40" cy="60" r="4"/>
+        <circle cx="40" cy="190" r="4"/>
+        <circle cx="290" cy="60" r="3"/>
+        <circle cx="290" cy="190" r="3"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M46 46H74" marker-end="url(#fl-f)"/>
+        <path d="M22 180V70" marker-end="url(#fl-f)"/>
+        <path d="M600 46H640" marker-end="url(#fl-f)"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="14" stroke-linecap="butt" opacity="0.35">
+        <path d="M60 270H690"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M105 270V320" marker-end="url(#fl-f)"/>
+        <path d="M290 270V320" marker-end="url(#fl-f)"/>
+        <path d="M485 270V320" marker-end="url(#fl-f)"/>
+        <path d="M680 270H720" marker-end="url(#fl-f)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="50" y="40">I1 = 5,71 A</text>
+        <text x="78" y="88">0,90 Ω</text>
+        <text x="146" y="88">1,10 Ω</text>
+        <text x="180" y="130">4600 Ω</text>
+        <text x="334" y="130">2000 Ω</text>
+        <text x="296" y="210">E1 = 392,1 V</text>
+        <text x="390" y="88">1,089 Ω</text>
+        <text x="458" y="88">0,907 Ω</text>
+        <text x="560" y="36">I2' = 5,53 A</text>
+        <text x="682" y="112">Z2'</text>
+        <text x="682" y="128">69,6 Ω</text>
+        <text x="682" y="144">36,87°</text>
+        <text x="28" y="130">V1</text>
+        <text x="28" y="146">400 V</text>
+        <text x="40" y="226">ramené au primaire, m = 0,575 ; V2 = 0,575 V2' = 221,1 V</text>
+        <text x="40" y="256">P1 = 1790 W absorbés</text>
+        <text x="60" y="340">Pcu1 = 29,4 W</text>
+        <text x="250" y="340">Pfer = 33,4 W</text>
+        <text x="440" y="340">Pcu2 = 27,7 W</text>
+        <text x="560" y="256">P2 = 1700 W utiles</text>
+        <text x="40" y="380">rendement : 1700 / 1790 = 94,9 %</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal. En haut, le schéma en T ramené au primaire, avec les valeurs de l'exemple de la section H et les mêmes
+      conventions qu'en section E : $\underline{V}_1$ fléchée depuis la borne basse, unique référence de potentiel du schéma
+      ramené, et $\underline{I}_1$ entrant par la borne haute. Dans l'ordre : $R_1$, $X_1$, la branche $R_f \parallel X_m$ sous
+      $\underline{E}_1$, puis $X_2'$, $R_2'$ et la charge ramenée $\underline{Z}_2'$ parcourue par $\underline{I}_2'$. En bas, la chaîne
+      des puissances, bande grisée de gauche à droite : la puissance absorbée $P_1$ perd successivement les pertes cuivre du
+      primaire, les pertes fer et les pertes cuivre du secondaire, flèches verticales, avant d'arriver à la charge.
+    </figcaption>
+  </figure>
+
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Plaque : Sn, U1n, U20, ucc, P0, Pcc, i0"] --> B["Paramètres série : Rs = ur U20 / I2n,<br/>Xs = ux U20 / I2n"]
+  B --> C["Branche magnétisante :<br/>Rf = U1² / P0, Xm par I0"]
+  C --> D{"Précision<br/>exigée ?"}
+  D -->|"courante"| E["Kapp : ΔV = x U20 (ur cos φ + ux sin φ)"]
+  D -->|"fine ou à vide"| F["Schéma en T ramené :<br/>résolution complexe exacte"]
+  E --> G["V2 = U20 - ΔV ; signe de ΔV<br/>selon inductif ou capacitif"]
+  F --> G
+  G --> H["Pertes : Pcu = x² Pcc, Pfer = P0"]
+  H --> I["Rendement η(x) ;<br/>optimum x = racine de P0 / Pcc"]
+  I --> J["Contrôles : bilan P1 = P2 + pertes,<br/>ordres de grandeur, induction, température"]</pre>
+    <figcaption>
+      Organigramme de résolution. Les rectangles sont des actions, le losange une décision, les libellés des flèches les choix
+      possibles. On part des données de plaque, on en déduit les paramètres série et parallèles, puis on choisit le modèle :
+      Kapp pour un calcul courant en charge, schéma en T pour un calcul fin ou un fonctionnement à vide. Les deux branches se
+      rejoignent pour la tension, les pertes et le rendement, et se terminent par les mêmes contrôles.
+    </figcaption>
+  </figure>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Comparaison des modèles du transformateur</caption>
+      <thead><tr><th>Modèle</th><th>Ce qu'il représente</th><th>Atouts</th><th>Limites</th><th>Préférable quand</th></tr></thead>
+      <tbody>
+        <tr><td>Idéal</td><td>rapports $m$ seulement</td><td>immédiat</td><td>ni chute, ni pertes, ni courant à vide</td><td>calcul de rapport, ordre de grandeur des courants</td></tr>
+        <tr><td>Kapp, en L</td><td>$R_s + jX_s$ en série, branche en tête</td><td>une seule impédance, formule de chute simple</td><td>erreur du second ordre sur $V_2$ et sur $I_1$</td><td>chute de tension, pertes, court-circuit, calculs de réseau</td></tr>
+        <tr><td>Schéma en T</td><td>six éléments à leur place</td><td>exact dans le cadre linéaire</td><td>calcul complexe plus long ; paramètres $R_1$ et $R_2$ séparés rarement connus</td><td>petits transformateurs, marche à vide, transformateurs de mesure</td></tr>
+        <tr><td>Thévenin vu du secondaire</td><td>$mV_1$ derrière $R_s + jX_s$</td><td>se branche directement sur le réseau aval</td><td>ignore ce que voit le primaire</td><td>tension au tableau général, courant de défaut basse tension</td></tr>
+        <tr><td>Non linéaire</td><td>courbe d'aimantation et hystérésis</td><td>courant d'appel, saturation, harmoniques</td><td>simulation numérique nécessaire</td><td>mise sous tension, surtension, ferrorésonance</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-ecarts-figure" data-renvoi="d-ecarts-figure">les quatre écarts au modèle idéal sur le noyau</a> et <a href="#d-anim-figure" data-renvoi="d-anim-figure">l'animation du flux commun et des flux de fuite</a>, section D ;</li>
+    <li><a href="#e-complet-figure" data-renvoi="e-complet-figure">le schéma équivalent complet</a>, <a href="#e-ramene-figure" data-renvoi="e-ramene-figure">le schéma ramené au primaire</a>, <a href="#e-kapp-figure" data-renvoi="e-kapp-figure">le schéma de Kapp et son équivalent de Thévenin</a>, <a href="#e-fresnel-figure" data-renvoi="e-fresnel-figure">l'animation du diagramme de Kapp</a> et <a href="#e-sim-rendement-figure" data-renvoi="e-sim-rendement-figure">la simulation du rendement</a>, section E ;</li>
+    <li><a href="#h-donnees-figure" data-renvoi="h-donnees-figure">les données du transformateur de l'exemple</a> et <a href="#h-fresnel-figure" data-renvoi="h-fresnel-figure">le diagramme de Fresnel complet</a>, section H ;</li>
+    <li><a href="#i-poste-figure" data-renvoi="i-poste-figure">le modèle par phase du poste vu du tableau général</a> et <a href="#i-sim-poste-figure" data-renvoi="i-sim-poste-figure">la simulation de la journée d'exploitation</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour calculer la chute de tension, les pertes et le rendement d'un transformateur :</p>
+  <ol>
+    <li>Rassembler les données : puissance et tensions assignées, tension secondaire à vide $V_{20}$, $u_{cc}$, $P_0$, $P_{cc}$, $i_0$, ou directement les six éléments ; noter la température de référence des pertes et la définition du rapport $m$.</li>
+    <li>Calculer le courant assigné de chaque côté, puis $R_s = P_{cc}/I_{2n}^2$ par phase, $Z_s = u_{cc}V_{20}/I_{2n}$ et $X_s = \sqrt{Z_s^2 - R_s^2}$, du côté où l'on veut la tension.</li>
+    <li>Si nécessaire, calculer la branche magnétisante : $R_f = V_1^2/P_0$, $I_f = P_0/V_1$, $I_\mu = \sqrt{I_0^2 - I_f^2}$, $X_m = V_1/I_\mu$, par phase.</li>
+    <li>Décrire la charge : courant ou puissances $P_2$, $Q_2$, et signe de $\varphi_2$, inductif ou capacitif.</li>
+    <li>Choisir le modèle : Kapp pour une chute en charge, schéma en T ramené pour un calcul fin, à vide ou sur un petit appareil ; écrire le circuit ramené d'un seul côté.</li>
+    <li>Calculer la chute : $\Delta V \approx R_sI_2\cos\varphi_2 + X_sI_2\sin\varphi_2$, ou résolution complexe exacte ; en déduire $V_2$, en tenant compte du signe.</li>
+    <li>Calculer les pertes $P_{cu} = x^2P_{cc}$, corrigées si besoin de la température, et $P_f \approx P_0 (V_1/V_{1n})^2$, puis le rendement et, pour une exploitation variable, le rendement énergétique sur un profil de charge.</li>
+    <li>Contrôler : bilan $P_1 = P_2 + P_{cu} + P_f$, ordres de grandeur, chute comprise entre $\min(u_r, u_x)$ et $u_{cc}$ en charge inductive, induction et courant assigné respectés ; énoncer ce que le modèle néglige.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    On reprend le transformateur monophasé de l'exemple du cours <a href="#/cours/transformateur-ideal">Transformateur idéal</a> :
+    $2{,}5\ \mathrm{kVA}$, $400\ \mathrm{V} / 230\ \mathrm{V}$ à vide, $50\ \mathrm{Hz}$, $N_1 = 600$ et $N_2 = 345$ spires,
+    l'enroulement $24\ \mathrm{V}$ étant laissé à vide. Ses six paramètres, supposés connus par les essais du cours Essais à vide
+    et en court-circuit, sont donnés ci-dessous. Il alimente l'atelier d'essais, que le modèle idéal voyait appeler
+    $10\ \mathrm{A}$ sous $230\ \mathrm{V}$ à $\cos\varphi = 0{,}8$ : on le représente par son impédance,
+    $\underline{Z}_2 = 23\angle 36{,}87^\circ = 18{,}40 + j13{,}80\ \Omega$. Le schéma fixe les données et les conventions.
+  </p>
+  <figure id="h-donnees-figure">
+    <svg viewBox="0 0 760 250" role="img" aria-label="Transformateur réel de l'exemple : source 400 V, bloc du transformateur avec ses six paramètres, charge de 18,40 ohms en série avec une réactance de 13,80 ohms au secondaire">
+      <defs>
+        <marker id="fl-h" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="70" cy="125" r="24"/>
+        <path d="M58 125c5 -9 9 -9 12 0s7 9 12 0"/>
+        <path d="M70 101V60H220M70 149V190H220"/>
+        <rect x="220" y="40" width="300" height="170" rx="6"/>
+        <path d="M520 60H660V80M520 190H660V170"/>
+        <rect x="646" y="80" width="28" height="40" rx="3"/>
+        <path d="M660 120V126a6 6 0 0 1 0 11a6 6 0 0 1 0 11a6 6 0 0 1 0 11V170"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="220" cy="60" r="3.5"/>
+        <circle cx="220" cy="190" r="3.5"/>
+        <circle cx="520" cy="60" r="3.5"/>
+        <circle cx="520" cy="190" r="3.5"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M120 48H170" marker-end="url(#fl-h)"/>
+        <path d="M560 48H610" marker-end="url(#fl-h)"/>
+        <path d="M30 180V70" marker-end="url(#fl-h)"/>
+        <path d="M590 180V70" marker-end="url(#fl-h)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="130" y="40">I1</text>
+        <text x="570" y="40">I2</text>
+        <text x="4" y="58">V1 = 400 V</text>
+        <text x="600" y="130">V2</text>
+        <text x="684" y="104">18,40 Ω</text>
+        <text x="684" y="150">13,80 Ω</text>
+        <text x="236" y="66">2,5 kVA ; 400 V / 230 V ; m = 0,575</text>
+        <text x="236" y="94">R1 = 0,90 Ω    X1 = 1,10 Ω</text>
+        <text x="236" y="118">R2 = 0,30 Ω    X2 = 0,36 Ω</text>
+        <text x="236" y="142">Rf = 4600 Ω    Xm = 2000 Ω</text>
+        <text x="236" y="166">vus des bornes de chaque côté</text>
+        <text x="236" y="194">récepteur au primaire, générateur au</text>
+        <text x="236" y="206">secondaire</text>
+        <text x="40" y="236">référence primaire : borne basse</text>
+        <text x="460" y="236">référence secondaire : borne basse</text>
+      </g>
+    </svg>
+    <figcaption>
+      La source de $400\ \mathrm{V}$, à gauche, alimente le primaire ; $\underline{V}_1$ est fléchée depuis la borne basse, référence
+      du primaire, et $\underline{I}_1$ entre par la borne haute. Le rectangle central est le transformateur réel ; ses six paramètres
+      y sont inscrits, $R_1$, $X_1$, $R_f$ et $X_m$ vus du primaire, $R_2$ et $X_2$ vus du secondaire. À droite, l'atelier est
+      représenté par une résistance de $18{,}40\ \Omega$ en série avec une réactance de $13{,}80\ \Omega$ ; $\underline{I}_2$ sort par
+      la borne haute du secondaire et $\underline{V}_2$ est fléchée depuis la référence du secondaire.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Données : $V_1 = 400\ \mathrm{V}$, $f = 50\ \mathrm{Hz}$, $m = 0{,}575$, $R_1 = 0{,}90\ \Omega$, $X_1 = 1{,}10\ \Omega$,
+    $R_2 = 0{,}30\ \Omega$, $X_2 = 0{,}36\ \Omega$, $R_f = 4600\ \Omega$, $X_m = 2000\ \Omega$, $\underline{Z}_2 = 18{,}40 + j13{,}80\ \Omega$.
+    Inconnues : courants $\underline{I}_1$, $\underline{I}_0$, $\underline{I}_2$ ; tension $V_2$ et chute de tension ; pertes cuivre et
+    fer ; rendement et facteur de puissance vu du réseau ; écart entre le calcul exact et la formule de Kapp. Stratégie : ramener
+    le secondaire au primaire, résoudre le schéma en T en complexes avec $\underline{V}_1 = 400\angle 0^\circ$ comme référence,
+    revenir au secondaire par $m$, faire le bilan des puissances, puis comparer avec le schéma de Kapp vu du secondaire.
+  </p>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li>Ramener le secondaire : $m^2 = 0{,}330\,6$ ; $R_2' = 0{,}30/0{,}330\,6 = 0{,}907\ \Omega$ ; $X_2' = 0{,}36/0{,}330\,6 = 1{,}089\ \Omega$ ; $\underline{Z}_2' = (18{,}40 + j13{,}80)/0{,}330\,6 = 55{,}65 + j41{,}74\ \Omega$. Branche secondaire ramenée : $\underline{Z}_b = 56{,}56 + j42{,}83\ \Omega$.</li>
+    <li>Branche magnétisante : $\underline{Z}_m = R_f \parallel jX_m = \dfrac{4600 \times j2000}{4600 + j2000} = 731{,}3 + j1682{,}0\ \Omega$, de module $1834\ \Omega$.</li>
+    <li>Impédance d'entrée : $\underline{Z}_m \parallel \underline{Z}_b = 53{,}94 + j42{,}42\ \Omega$, puis $\underline{Z}_e = 0{,}90 + j1{,}10 + 53{,}94 + j42{,}42 = 54{,}84 + j43{,}52\ \Omega = 70{,}01\angle 38{,}44^\circ\ \Omega$.</li>
+    <li>Courant primaire : $\underline{I}_1 = 400/\underline{Z}_e = 5{,}714\angle{-38{,}44^\circ}\ \mathrm{A} = 4{,}475 - j3{,}552\ \mathrm{A}$.</li>
+    <li>Force électromotrice : $\underline{E}_1 = \underline{V}_1 - (0{,}90 + j1{,}10)\,\underline{I}_1 = 392{,}07\angle{-0{,}25^\circ}\ \mathrm{V}$ : $2\ \%$ de moins que $V_1$.</li>
+    <li>Courant à vide : $\underline{I}_0 = \underline{E}_1/\underline{Z}_m = 0{,}214\ \mathrm{A}$, avec $I_f = 392{,}07/4600 = 0{,}085\ \mathrm{A}$ et $I_\mu = 392{,}07/2000 = 0{,}196\ \mathrm{A}$, soit $3{,}7\ \%$ du courant primaire.</li>
+    <li>Courant secondaire : $\underline{I}_2' = \underline{E}_1/\underline{Z}_b = 5{,}526\angle{-37{,}39^\circ}\ \mathrm{A}$, d'où $I_2 = 5{,}526/0{,}575 = 9{,}611\ \mathrm{A}$, au lieu des $10\ \mathrm{A}$ du modèle idéal.</li>
+    <li>Tension secondaire : $V_2 = Z_2I_2 = 23 \times 9{,}611 = 221{,}05\ \mathrm{V}$, déphasée de $-0{,}52^\circ$ par rapport à $\underline{V}_1$. Chute : $230 - 221{,}05 = 8{,}95\ \mathrm{V}$, soit $3{,}89\ \%$.</li>
+    <li>Pertes : $P_{cu1} = 0{,}90 \times 5{,}714^2 = 29{,}38\ \mathrm{W}$ ; $P_{cu2} = 0{,}30 \times 9{,}611^2 = 27{,}71\ \mathrm{W}$ ; $P_f = 392{,}07^2/4600 = 33{,}42\ \mathrm{W}$ ; total $90{,}51\ \mathrm{W}$.</li>
+    <li>Puissances et rendement : $P_2 = 18{,}40 \times 9{,}611^2 = 1699{,}7\ \mathrm{W}$ ; $P_1 = \mathrm{Re}(\underline{V}_1\underline{I}_1^{*}) = 400 \times 4{,}475 = 1790{,}2\ \mathrm{W}$ ; $\eta = 1699{,}7/1790{,}2 = 94{,}94\ \%$. Facteur de puissance vu du réseau : $\cos 38{,}44^\circ = 0{,}783$, contre $0{,}8$ pour la charge.</li>
+    <li>Comparaison avec Kapp : $R_s = 0{,}30 + 0{,}330\,6 \times 0{,}90 = 0{,}598\ \Omega$ et $X_s = 0{,}36 + 0{,}330\,6 \times 1{,}10 = 0{,}724\ \Omega$ vus du secondaire ; avec le courant exact, $\Delta V \approx 0{,}598 \times 9{,}611 \times 0{,}8 + 0{,}724 \times 9{,}611 \times 0{,}6 = 4{,}60 + 4{,}17 = 8{,}77\ \mathrm{V}$, soit $V_2 \approx 221{,}23\ \mathrm{V}$. L'écart avec le calcul exact, $0{,}18\ \mathrm{V}$, représente $2\ \%$ de la chute : c'est la chute du courant à vide dans $R_1 + jX_1$, que Kapp néglige.</li>
+  </ol>
+
+  <h3 id="h-fresnel-section">Animation : le diagramme de Fresnel complet</h3>
+  <p>
+    L'animation construit le diagramme de Fresnel du schéma en T ramené au primaire, calculé exactement pour la charge choisie.
+    La tension ramenée $\underline{V}_2'$ sert de référence ; on lui ajoute la chute dans $R_2' + jX_2'$ pour obtenir
+    $\underline{E}_1$, puis, côté courants, on ajoute $\underline{I}_0$ à $\underline{I}_2'$ pour obtenir $\underline{I}_1$, et enfin la
+    chute dans $R_1 + jX_1$ pour arriver à $\underline{V}_1$, de module $400\ \mathrm{V}$ imposé. La poignée ronde du cadran règle
+    l'angle de l'impédance de charge ; les curseurs règlent la charge et le facteur d'agrandissement des petites grandeurs.
+    Prédisez avant de manipuler : quand la charge tend vers zéro, que devient l'angle entre $\underline{V}_1$ et $\underline{I}_1$ ?
+    Et que devient le rendement ?
+  </p>
+  <figure id="h-fresnel-figure">
+    <div class="schema-vivant" id="h-fresnel"></div>
+    <figcaption>
+      Diagramme de Fresnel du schéma en T ramené au primaire. Partie haute, les tensions : $\underline{V}_2'$ en trait plein
+      horizontal depuis l'origine, puis, bout à bout, $R_2'\underline{I}_2'$ et $jX_2'\underline{I}_2'$ en tirets jusqu'à l'extrémité de
+      $\underline{E}_1$, flèche fine depuis l'origine, puis $R_1\underline{I}_1$ et $jX_1\underline{I}_1$ en pointillés jusqu'à l'extrémité
+      de $\underline{V}_1$, flèche épaisse ; les chutes sont agrandies du facteur indiqué. Partie basse, les courants, à leur
+      propre échelle : $\underline{I}_2'$ en trait plein, $\underline{I}_0$ en tirets à sa suite, agrandi du même facteur, et
+      $\underline{I}_1$ en trait épais. Sur le cadran de droite, le rayon terminé par la poignée ronde donne l'angle de la charge.
+    </figcaption>
+  </figure>
+  <div id="h-fresnel-curseurs"></div>
+  <div id="h-fresnel-valeurs"></div>
+  <p>
+    Interprétation : avec les données de l'exemple, l'animation retrouve $V_2 = 221{,}05\ \mathrm{V}$, $I_1 = 5{,}714\ \mathrm{A}$ et
+    $\eta = 94{,}94\ \%$. Le triangle des chutes du secondaire et celui du primaire ont des formes voisines, parce que $R_1$ et
+    $R_2'$, $X_1$ et $X_2'$ sont du même ordre : c'est ce qui rend légitime leur regroupement dans le schéma de Kapp. Quand la
+    charge tend vers zéro, $\underline{I}_1$ se réduit à $\underline{I}_0$, en retard de $66{,}5^\circ$ sur $\underline{E}_1$ :
+    le transformateur à vide est une charge très inductive, de facteur de puissance $0{,}40$ environ, et son rendement est nul.
+    Quand on rend la charge capacitive, le triangle des chutes se retourne et $V_2$ peut dépasser $mV_1$. Les puissances
+    affichées vérifient à tout instant $P_1 = P_2 + P_{cu1} + P_{cu2} + P_f$.
+  </p>
+
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li><strong>Bilan de puissance :</strong> $P_1 - P_2 = 1790{,}2 - 1699{,}7 = 90{,}5\ \mathrm{W}$, égal à $29{,}38 + 27{,}71 + 33{,}42 = 90{,}51\ \mathrm{W}$. Bilan réactif : $Q_1 = 1420{,}8\ \mathrm{var}$, $Q_2 = 1274{,}7\ \mathrm{var}$, et l'écart, $146{,}0\ \mathrm{var}$, est absorbé par $X_1$ pour $35{,}9$, $X_2$ pour $33{,}3$ et $X_m$ pour $76{,}9\ \mathrm{var}$.</li>
+    <li><strong>Dimensions :</strong> ohms ramenés par un rapport sans dimension ; $\mathrm{V}^2/\Omega = \mathrm{W}$ pour les pertes fer ; $\Omega \cdot \mathrm{A}^2 = \mathrm{W}$ pour les pertes cuivre.</li>
+    <li><strong>Ordre de grandeur :</strong> pour un transformateur de $2{,}5\ \mathrm{kVA}$, une chute de $4\ \%$, un courant à vide de $3{,}5\ \%$ et un rendement de $95\ \%$ sont courants ; un transformateur de $100\ \mathrm{kVA}$ ferait nettement mieux, comme le montre la section I.</li>
+    <li><strong>Encadrement :</strong> la chute relative, $3{,}89\ \%$, est comprise entre $x\,u_r = 0{,}884 \times 2{,}82 = 2{,}50\ \%$ et $x\,u_{cc} = 0{,}884 \times 4{,}44 = 3{,}92\ \%$, avec $x = 9{,}611/10{,}87 = 0{,}884$ : c'est l'encadrement attendu pour une charge inductive.</li>
+    <li><strong>Hypothèses :</strong> paramètres linéaires et constants ; résistances à leur température de référence ; à chaud, $R_1$ et $R_2$ seraient plus élevées, et les pertes cuivre aussi. Le partage de $R_s$ entre primaire et secondaire n'influence presque pas le résultat en charge.</li>
+  </ul>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+
+  <h3 id="i-probleme">Le transformateur du poste du site, en modèle réel</h3>
+  <p>
+    Le cours <a href="#/cours/transformateur-ideal">Transformateur idéal</a> a modélisé le transformateur du poste, hypothèses
+    d'étude $100\ \mathrm{kVA}$, $20\ \mathrm{kV} / 410\ \mathrm{V}$, $u_{cc} = 4\ \%$, et a retenu la prise $+5\ \%$ pour une
+    tension haute tension moyenne supposée de $20{,}8\ \mathrm{kV}$, sur la seule base de la tension à vide. On complète la plaque
+    par des valeurs de catalogue supposées pour un appareil immergé de cette taille : pertes à vide $P_0 = 210\ \mathrm{W}$,
+    pertes en court-circuit $P_{cc} = 1750\ \mathrm{W}$ à $75\ ^\circ\mathrm{C}$, courant à vide $i_0 = 1{,}6\ \%$. La charge du site
+    compensé est celle du cours <a href="#/cours/correction-du-facteur-de-puissance">Correction du facteur de puissance</a> :
+    $P = 64{,}8\ \mathrm{kW}$ et $Q = 11{,}06\ \mathrm{kvar}$ au fondamental, et $66{,}5\ \mathrm{kVA}$ en valeur efficace vraie,
+    harmoniques comprises. La question est de savoir si la prise $+5\ \%$ reste un bon choix quand on tient compte de la chute en
+    charge, et ce que coûtent les pertes. Le schéma situe le modèle utilisé.
+  </p>
+  <figure id="i-poste-figure">
+    <svg viewBox="0 0 760 300" role="img" aria-label="Modèle par phase du poste vu du tableau général : source à vide dépendant de la tension HTA et de la prise, branche magnétisante côté haute tension, résistance et réactance de court-circuit ramenées côté basse tension, jeu de barres et charge du site">
+      <defs>
+        <marker id="fl-i" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="70" cy="140" r="24"/>
+        <path d="M58 140c5 -9 9 -9 12 0s7 9 12 0"/>
+        <path d="M70 116V70H150M70 164V220H520"/>
+        <path d="M120 70V90H104V104M120 90H136V102M104 164V182H136V170M120 182V220"/>
+        <rect x="96" y="104" width="16" height="60" rx="2"/>
+        <path d="M136 102a8 8 0 0 1 0 17a8 8 0 0 1 0 17a8 8 0 0 1 0 17a8 8 0 0 1 0 17"/>
+        <path d="M150 70H260M310 70H330M386 70H520"/>
+        <rect x="260" y="62" width="50" height="16" rx="2"/>
+        <path d="M330 70a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0"/>
+        <path d="M520 50V240" stroke-width="6"/>
+        <path d="M520 70H650V110M520 220H650V170"/>
+        <rect x="636" y="110" width="28" height="60" rx="3"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="120" cy="70" r="3"/>
+        <circle cx="120" cy="220" r="3"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M410 56H460" marker-end="url(#fl-i)"/>
+        <path d="M30 210V80" marker-end="url(#fl-i)"/>
+        <path d="M560 210V80" marker-end="url(#fl-i)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="20" y="30">source à vide : U20 = 410 (U HTA / 20 kV) / (1 + prise)</text>
+        <text x="4" y="146">U20</text>
+        <text x="40" y="262">branche magnétisante :</text>
+        <text x="40" y="278">P0 = 210 W, Q0 = 1,59 kvar</text>
+        <text x="236" y="52">Rcc = 29,4 mΩ</text>
+        <text x="330" y="100">Xcc = 60,5 mΩ</text>
+        <text x="420" y="48">I2</text>
+        <text x="460" y="262">tableau général</text>
+        <text x="568" y="146">U2</text>
+        <text x="672" y="124">site :</text>
+        <text x="672" y="140">64,8 kW</text>
+        <text x="672" y="156">11,06 kvar</text>
+        <text x="250" y="140">ur = 1,75 %</text>
+        <text x="250" y="156">ux = 3,60 %</text>
+        <text x="250" y="190">neutre BT : référence</text>
+      </g>
+    </svg>
+    <figcaption>
+      Modèle par phase, en étoile équivalente, vu du tableau général. La source, cercle, est la tension à vide $U_{20}$, qui
+      dépend de la tension haute tension et de la prise ; la branche magnétisante est placée en tête, selon Kapp, et ne charge
+      que le réseau haute tension, si bien qu'elle ne change pas la tension du tableau. L'impédance de court-circuit,
+      $R_{cc}$ rectangle et $X_{cc}$ bobine, est ramenée côté basse tension ; elle porte le courant $I_2$ du site, fléché vers le
+      jeu de barres, trait épais. Les tensions sont fléchées depuis le neutre basse tension, référence de potentiel. Les valeurs
+      inscrites sont celles des hypothèses d'étude de cette section.
+    </figcaption>
+  </figure>
+
+  <h3 id="i-calcul">Paramètres, chute, pertes et réactif</h3>
+  <ol>
+    <li>Paramètres série : $I_{2n} = 100\,000/(\sqrt{3} \times 410) = 140{,}8\ \mathrm{A}$ ; $Z_{cc} = 0{,}04 \times 410^2/100\,000 = 67{,}24\ \mathrm{m\Omega}$ ; $R_{cc} = 1750/(3 \times 140{,}8^2) = 29{,}42\ \mathrm{m\Omega}$, soit $u_r = P_{cc}/S_n = 1{,}75\ \%$ ; $X_{cc} = \sqrt{67{,}24^2 - 29{,}42^2} = 60{,}46\ \mathrm{m\Omega}$, soit $u_x = 3{,}60\ \%$. Le rapport $X/R$ vaut $2{,}06$.</li>
+    <li>Branche magnétisante, vue de la basse tension par phase : $I_0 = 0{,}016 \times 140{,}8 = 2{,}25\ \mathrm{A}$, $I_f = 70/236{,}7 = 0{,}296\ \mathrm{A}$, $I_\mu = 2{,}23\ \mathrm{A}$, $R_f = 800\ \Omega$, $X_m = 106\ \Omega$ ; le noyau absorbe $Q_0 = 3 \times 236{,}7 \times 2{,}23 = 1{,}59\ \mathrm{kvar}$ en permanence.</li>
+    <li>Chute au fondamental : $\Delta U/U_{2n} \approx (u_rP + u_xQ)/S_n = (1{,}75 \times 64{,}8 + 3{,}60 \times 11{,}06)/100 = 1{,}53\ \%$, soit $6{,}28\ \mathrm{V}$ composés. La compensation du compresseur paie ici une seconde fois : sans elle, $Q = 18{,}5\ \mathrm{kvar}$ ajouterait $0{,}27$ point de chute.</li>
+    <li>Tension au tableau général à pleine activité : sous $20{,}8\ \mathrm{kV}$, $406{,}1 - 6{,}3 = 399{,}8\ \mathrm{V}$ avec la prise $+5\ \%$ et $416{,}0 - 6{,}3 = 409{,}7\ \mathrm{V}$ avec la prise $+2{,}5\ \%$ ; sous $20{,}0\ \mathrm{kV}$, $384{,}2\ \mathrm{V}$ et $393{,}7\ \mathrm{V}$.</li>
+    <li>Pertes à pleine activité : $x = 66{,}5/100 = 0{,}665$ en courant efficace vrai, $P_{cu} = 0{,}665^2 \times 1750 = 774\ \mathrm{W}$ ; avec $P_0 = 210\ \mathrm{W}$, $984\ \mathrm{W}$ et $\eta = 64{,}8/(64{,}8 + 0{,}984) = 98{,}50\ \%$. Optimum à $x = \sqrt{210/1750} = 0{,}346$, soit $34{,}6\ \mathrm{kVA}$, où $\eta = 98{,}79\ \%$.</li>
+    <li>Réactif vu du réseau haute tension : aux $11{,}06\ \mathrm{kvar}$ du site s'ajoutent $1{,}59\ \mathrm{kvar}$ de magnétisation et $3X_{cc}I^2 = 3 \times 0{,}0605 \times 96{,}0^2 = 1{,}67\ \mathrm{kvar}$ de fuites, soit $14{,}3\ \mathrm{kvar}$ : $\tan\varphi = 0{,}218$ au comptage haute tension au lieu de $0{,}171$ au tableau.</li>
+  </ol>
+
+  <h3 id="i-sim-poste-section">Simulation interactive : une journée d'exploitation du poste</h3>
+  <p>
+    La simulation applique le modèle de Kapp au poste sur une journée type d'exploitation, supposée : $33\ \%$ de la pointe la
+    nuit, montée en début de matinée, pleine activité de $7$ à $12\ \mathrm{h}$ et de $13$ à $17\ \mathrm{h}$, puis décroissance en
+    soirée. Elle trace la tension du tableau général heure par heure pour trois prises, et cumule les pertes. Le lecteur fait
+    défiler les heures ; les curseurs règlent la tension haute tension, la prise étudiée et un coefficient appliqué à la pointe,
+    pour simuler une extension du site. Prédisez avant de manipuler : sous $20{,}0\ \mathrm{kV}$, la prise $+5\ \%$ garde-t-elle le
+    tableau au-dessus de $390\ \mathrm{V}$ toute la journée ? Quelle part des pertes journalières vient du noyau ?
+  </p>
+  <figure id="i-sim-poste-figure">
+    <div id="i-sim-poste-trace"></div>
+    <figcaption>
+      Tension composée du tableau général en fonction de l'heure, une courbe en escalier par prise ; les couleurs et le nom de
+      chaque prise sont rappelés dans la légende du tracé. Le trait horizontal en tirets marque $400\ \mathrm{V}$, le trait
+      horizontal en pointillés $390\ \mathrm{V}$, soit $-2{,}5\ \%$, seuil retenu pour garder une marge aux chutes des câbles en aval.
+      Le trait vertical repère l'heure lue par le lecteur, et le point la tension sur la prise étudiée.
+    </figcaption>
+  </figure>
+  <div id="i-sim-poste-curseurs"></div>
+  <div id="i-sim-poste-lecteur"></div>
+  <div id="i-sim-poste-valeurs"></div>
+  <p>
+    Interprétation : sous $20{,}8\ \mathrm{kV}$, la prise $+5\ \%$ donne $399{,}8\ \mathrm{V}$ aux heures de pleine activité et
+    $404{,}0\ \mathrm{V}$ la nuit ; la prise $+2{,}5\ \%$, $409{,}7$ et $413{,}9\ \mathrm{V}$. Sous $20{,}0\ \mathrm{kV}$, la prise $+5\ \%$
+    tombe à $384{,}2\ \mathrm{V}$ en journée, $3{,}9\ \%$ sous $400\ \mathrm{V}$, avant même les $1{,}4\ \%$ de chute du départ de
+    l'atelier calculés au cours <a href="#/cours/revision-3-et-analyse-d-une-charge-ac">Révision 3 et analyse d'une charge AC</a> :
+    le choix fait sur la seule tension à vide était trop prudent. La prise $+2{,}5\ \%$ reste à $393{,}7\ \mathrm{V}$ dans ce cas
+    défavorable et ne dépasse pas $417{,}9\ \mathrm{V}$ la nuit sous $21\ \mathrm{kV}$, avec une induction de $102{,}4\ \%$. Sur la
+    journée, sous $20{,}8\ \mathrm{kV}$ avec la prise $+2{,}5\ \%$, les pertes valent $5{,}19\ \mathrm{kWh}$ dans le noyau, dont
+    l'induction de $101{,}5\ \%$ porte les pertes fer à $216\ \mathrm{W}$, et $9{,}92\ \mathrm{kWh}$ dans les enroulements, soit
+    $15{,}11\ \mathrm{kWh}$ : un tiers vient du fer, présent même la nuit, et le rendement énergétique de la journée vaut
+    $98{,}6\ \%$. Augmentez la pointe de $40\ \%$ : la tension de la prise $+5\ \%$ sous $20\ \mathrm{kV}$ descend vers
+    $382\ \mathrm{V}$ et les pertes cuivre doublent presque, ce que devra prendre en compte toute extension du site.
+  </p>
+
+  <h3 id="i-compromis">Contraintes, risques et compromis</h3>
+  <ul>
+    <li><strong>Prise :</strong> le choix d'une prise se fait sur la tension en charge et sur toute la plage de tension haute tension mesurée, pas sur la seule tension à vide ; la prise $+2{,}5\ \%$ est retenue, sous réserve d'une campagne de mesure de la tension haute tension sur plusieurs semaines.</li>
+    <li><strong>Pertes :</strong> les pertes à vide se paient $8760\ \mathrm{h}$ par an ; un appareil à pertes à vide réduites, au noyau en tôles de meilleure qualité, coûte plus cher à l'achat et se compare sur le coût actualisé des pertes. Sur la journée type répétée toute l'année, hypothèse à affiner, le poste perd environ $1890\ \mathrm{kWh}$ dans le noyau et $3620\ \mathrm{kWh}$ dans les enroulements.</li>
+    <li><strong>Harmoniques :</strong> le courant de la pompe, chargé d'harmoniques, induit des courants de Foucault supplémentaires dans les enroulements ; les pertes cuivre réelles dépassent donc $x^2P_{cc}$, et le constructeur doit confirmer l'aptitude de l'appareil ou son déclassement.</li>
+    <li><strong>Réactif et comptage :</strong> si l'énergie est comptée côté haute tension, le réactif du transformateur, $3{,}3\ \mathrm{kvar}$ en pleine activité, s'ajoute à celui du site ; un petit condensateur fixe au secondaire, de l'ordre de la puissance de magnétisation, est une pratique répandue, à confirmer avec le contrat de fourniture.</li>
+    <li><strong>Limites du modèle :</strong> le modèle linéaire ignore le courant d'appel à la mise sous tension, la saturation et l'échauffement transitoire ; la chute réelle dépend aussi de la température des enroulements et du déséquilibre des phases étudié au cours <a href="#/cours/charges-triphasees-desequilibrees">Charges triphasées déséquilibrées</a>.</li>
+  </ul>
+
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : ce que cette séance ajoute</span>
+    <p>
+      Modèle réel du transformateur du poste, hypothèses de catalogue $P_0 = 210\ \mathrm{W}$, $P_{cc} = 1750\ \mathrm{W}$ à
+      $75\ ^\circ\mathrm{C}$ et $i_0 = 1{,}6\ \%$ : $R_{cc} = 29{,}4\ \mathrm{m\Omega}$ et $X_{cc} = 60{,}5\ \mathrm{m\Omega}$ par phase
+      côté basse tension, $u_r = 1{,}75\ \%$, $u_x = 3{,}60\ \%$ ; branche magnétisante de $210\ \mathrm{W}$ et $1{,}59\ \mathrm{kvar}$.
+      Pour le site compensé, $64{,}8\ \mathrm{kW}$ et $11{,}06\ \mathrm{kvar}$, chute de $1{,}53\ \%$, soit $6{,}3\ \mathrm{V}$ ; pertes de
+      $984\ \mathrm{W}$ et rendement de $98{,}50\ \%$ en pleine activité, optimum à $34{,}6\ \mathrm{kVA}$ ; réactif vu de la haute
+      tension porté à $14{,}3\ \mathrm{kvar}$. Révision du choix de prise : la prise $+5\ \%$ retenue sur la seule tension à vide
+      donnerait $384{,}2\ \mathrm{V}$ en pleine activité sous $20{,}0\ \mathrm{kV}$ ; prise $+2{,}5\ \%$ retenue, $409{,}7\ \mathrm{V}$
+      sous $20{,}8\ \mathrm{kV}$, $393{,}7\ \mathrm{V}$ au pire sous $20{,}0\ \mathrm{kV}$ et $417{,}9\ \mathrm{V}$ la nuit sous
+      $21\ \mathrm{kV}$, induction à $102{,}4\ \%$ au plus. Pertes d'une journée type de $15{,}11\ \mathrm{kWh}$, dont un tiers dans le
+      noyau, rendement énergétique de $98{,}6\ \%$, environ $5510\ \mathrm{kWh}$ par an si cette journée se répète. Hypothèses à
+      remplacer par la plaque et le procès-verbal d'essais du transformateur retenu, une campagne de mesure de la tension haute
+      tension et le profil de charge réel.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Additionner $R_1$ et $R_2$ sans les ramener.</strong> Les deux résistances ne sont pas du même côté : $R_s = R_2 + m^2R_1$. Sur un transformateur $230/24\ \mathrm{V}$, l'erreur multiplierait la résistance série par plus de quarante.</li>
+    <li><strong>Prendre $u_{cc}$ pour la chute en charge.</strong> La tension de court-circuit est la chute maximale à courant assigné ; la chute réelle vaut $x(u_r\cos\varphi + u_x\sin\varphi)$ : $1{,}75\ \%$ sous $\cos\varphi = 1$ pour le poste, $4\ \%$ seulement dans le cas le plus défavorable.</li>
+    <li><strong>Oublier le signe de $\sin\varphi$.</strong> En charge capacitive, la chute peut être nulle ou négative ; appliquer la formule avec $\sin\varphi &gt; 0$ ferait croire à une baisse quand la tension monte.</li>
+    <li><strong>Croire que les pertes fer dépendent de la charge.</strong> Elles dépendent de la tension et de la fréquence ; un transformateur à vide dissipe autant dans son noyau qu'en pleine charge. Inversement, les pertes cuivre ne dépendent pas de la tension mais du courant.</li>
+    <li><strong>Chercher le rendement maximal à pleine charge.</strong> Il est atteint quand pertes cuivre et pertes fer sont égales, souvent entre $30$ et $70\ \%$ de charge ; un transformateur surdimensionné n'est pas forcément plus économe s'il est presque toujours très peu chargé.</li>
+    <li><strong>Négliger la température.</strong> $P_{cc}$ est donnée à une température de référence ; à froid, la mesure donne une résistance plus faible de $20$ à $25\ \%$ ; comparer une mesure à froid à la plaque sans correction fausse le diagnostic.</li>
+    <li><strong>Placer la branche magnétisante côté secondaire dans un calcul de tension.</strong> Elle est soumise à la tension primaire ; vue du secondaire, elle n'influe pas sur $V_2$ dans le schéma de Kapp.</li>
+    <li><strong>Confondre rendement instantané et rendement énergétique.</strong> Le coût des pertes se calcule sur un profil de charge : un rendement de $98{,}5\ \%$ en pleine activité ne dit rien des nuits où seules les pertes fer subsistent.</li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain : une chute de tension anormale en charge, avec une tension à vide correcte, oriente vers une
+    impédance série trop forte, un mauvais contact sur une connexion ou un changeur de prise, ou une charge plus inductive que
+    prévu ; un échauffement à vide, vers des pertes fer excessives, tension trop haute, prise inadaptée, tôles en court-circuit
+    après une intervention sur le noyau ; un courant à vide trop fort, vers un noyau mal resserré, un entrefer accidentel ou une
+    saturation par surtension. Les mesures décisives sont la tension à vide et en charge de chaque phase, le courant et la
+    puissance à vide, et la température des enroulements ; elles préfigurent les deux essais du cours suivant.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic
+    industriel et une question conceptuelle. La correction de chacun reste masquée jusqu'à une tentative ou un clic explicite
+    sur "Voir la correction", puis se déroule étape par étape, accompagnée d'une courbe, d'un diagramme ou d'un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma.</p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$\underline{V}_1 = (R_1 + jX_1)\underline{I}_1 + \underline{E}_1, \quad \underline{V}_2 = m\underline{E}_1 - (R_2 + jX_2)\underline{I}_2, \quad \underline{I}_1 = m\underline{I}_2 + \underline{I}_0$$
+    $$R_s = R_2 + m^2R_1, \qquad X_s = X_2 + m^2X_1 \qquad \text{(ramenés au secondaire)}$$
+    $$\Delta V \approx R_sI_2\cos\varphi_2 + X_sI_2\sin\varphi_2 = x\,V_{20}\,(u_r\cos\varphi_2 + u_x\sin\varphi_2)$$
+    $$u_{cc} = \sqrt{u_r^2 + u_x^2}, \qquad u_r = \frac{P_{cc}}{S_n}$$
+    $$\eta = \frac{xS_n\cos\varphi_2}{xS_n\cos\varphi_2 + P_0 + x^2P_{cc}}, \qquad x_{opt} = \sqrt{P_0/P_{cc}}$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>Ramener toutes les impédances du même côté, avec $m^2$, avant de les additionner.</li>
+      <li>La chute dépend du facteur de puissance et change de signe en charge capacitive ; $u_{cc}$ n'en est que le maximum.</li>
+      <li>Pertes fer : tension et fréquence ; pertes cuivre : courant au carré et température.</li>
+      <li>Le rendement maximal est atteint quand les deux pertes sont égales, rarement à pleine charge.</li>
+      <li>Une prise se choisit sur la tension en charge et sur la plage réelle de la tension amont.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Le transformateur réel ajoute au modèle idéal quatre écarts : la résistance des enroulements, le flux
+    de fuite, qui agit comme une inductance série, le courant magnétisant d'un noyau de perméabilité finie et les pertes fer. Le
+    schéma équivalent en T les représente par $R_1$, $X_1$, $R_2$, $X_2$ en série et $R_f \parallel X_m$ en parallèle ; ramené
+    d'un seul côté par $m^2$, il se résout comme un circuit ordinaire. Comme le courant à vide est faible, on peut placer la
+    branche magnétisante en tête : c'est le schéma de Kapp, qui donne $\Delta V \approx R_sI\cos\varphi + X_sI\sin\varphi$. Les
+    pertes cuivre croissent comme le carré de la charge, les pertes fer restent constantes, et le rendement est maximal quand
+    elles sont égales.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent,
+    <a href="#/cours/transformateur-ideal">Transformateur idéal</a> ; une sur le cours
+    <a href="#/cours/charges-triphasees-desequilibrees">Charges triphasées déséquilibrées</a>, vieux d'une semaine, dont le neutre
+    réapparaît dans le déséquilibre du poste ; une sur le cours
+    <a href="#/cours/diagnostic-initial-et-remise-a-niveau-mathematique">Diagnostic initial et remise à niveau mathématique</a>,
+    vieux d'un mois, dont la trigonométrie sert à chaque formule de Kapp.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : résoudre en Python le schéma en T de l'exemple et le comparer à Kapp sur toute une plage de facteurs de
+    puissance, puis retrouver les mêmes grandeurs dans LTspice avec deux inductances couplées. Prédictions à écrire avant de
+    commencer : l'écart entre le calcul exact et Kapp est-il plus grand à vide ou en charge ? La tension secondaire en charge
+    capacitive sera-t-elle supérieure à $230\ \mathrm{V}$ ?
+  </p>
+  <ol>
+    <li>En Python, avec le module <code>cmath</code>, écrire une fonction qui reçoit l'impédance de charge et renvoie $\underline{I}_1$, $\underline{E}_1$, $\underline{I}_2$, $V_2$, les trois pertes et le rendement, en suivant les étapes 1 à 10 de la section H ; vérifier $221{,}05\ \mathrm{V}$ et $94{,}94\ \%$.</li>
+    <li>Balayer l'angle de la charge de $-60^\circ$ à $90^\circ$ à module constant, $23\ \Omega$, et imprimer pour chaque angle $V_2$ exact, $V_2$ selon Kapp et leur écart ; repérer l'angle de chute maximale et celui de chute nulle.</li>
+    <li>Balayer le module de la charge pour tracer $\eta$ en fonction du taux de charge, et comparer l'optimum trouvé avec $\sqrt{P_0/P_{cc}}$ calculé avec les valeurs exactes de la section E.</li>
+    <li>Dans LTspice, saisir <code>V1 a 0 SINE(0 565.69 50)</code>, <code>R1 a b 0.9</code>, <code>Ll1 b c 3.501m</code>, <code>Rf c 0 4600</code>, <code>Lp c 0 6.366</code>, <code>Ls d e 2.105</code>, la directive <code>K1 Lp Ls 1</code>, puis <code>Ll2 d f 1.146m</code>, <code>R2 f g 0.30</code>, <code>RL g h 18.4</code>, <code>LL h e 43.93m</code> et <code>Rref e 0 1Meg</code> ; lancer <code>.tran 0 400m 300m 10u</code>.</li>
+    <li>Mesurer sur les dernières périodes les valeurs efficaces de la tension aux bornes de la charge, <code>V(g,e)</code>, du courant primaire <code>I(R1)</code> et du courant de charge <code>I(RL)</code> ; ouvrir ensuite le secondaire en portant <code>RL</code> à $1\ \mathrm{G\Omega}$ et mesurer le courant et la puissance à vide.</li>
+  </ol>
+  <p>
+    Résultats attendus : en Python, chute maximale d'environ $9{,}2\ \mathrm{V}$ autour de $50^\circ$ de retard et chute nulle vers
+    $42^\circ$ d'avance, l'écart avec Kapp restant de l'ordre de $0{,}2\ \mathrm{V}$ ; optimum de rendement vers $x = 0{,}70$. Dans
+    LTspice, la tension aux bornes de la charge voisine $221\ \mathrm{V}$ efficaces, le courant primaire $5{,}71\ \mathrm{A}$ et le
+    courant de charge $9{,}61\ \mathrm{A}$ ; à vide, le courant primaire vaut environ $0{,}22\ \mathrm{A}$ et la puissance absorbée
+    environ $35\ \mathrm{W}$, le courant à vide étant en retard d'environ $66^\circ$. Les inductances $L_p = X_m/\omega$ et
+    $L_s = m^2L_p$ couplées avec $K = 1$ représentent le transformateur idéal muni de sa réactance magnétisante, et les
+    inductances <code>Ll1</code> et <code>Ll2</code> les fuites. Anomalies à observer : une erreur de matrice singulière si le
+    secondaire n'a aucune liaison avec la masse, d'où <code>Rref</code> ; une composante continue transitoire du courant primaire
+    pendant les premières périodes, due à l'instant de mise sous tension et lente à s'amortir parce que la constante de temps
+    $L_p/R_1$ est longue, d'où la mesure sur des périodes tardives ; des écarts de quelques dixièmes de pour cent dus au pas de
+    calcul.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est calculé dans ce
+    navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement pour
+    suivre votre progression. Le jalon de fin du module des machines demande de comprendre les transformateurs, de lire leurs
+    modèles et d'interpréter une plaque signalétique : le schéma équivalent du transformateur réel en est la pièce centrale.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Les éléments série, $R_1$, $X_1$, $R_2$, $X_2$, dépendent du courant et fixent la chute et les pertes cuivre ; les éléments parallèles, $R_f$ et $X_m$, dépendent de la tension et fixent le courant à vide et les pertes fer.</li>
+    <li data-rang="02">En charge, la chute vaut $\Delta V \approx R_sI\cos\varphi + X_sI\sin\varphi$ : elle dépend du facteur de puissance, atteint $u_{cc}$ au plus et change de signe en charge capacitive.</li>
+    <li data-rang="03">Le rendement est maximal quand pertes cuivre et pertes fer sont égales ; le coût réel des pertes se calcule sur le profil de charge.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> ramener correctement les grandeurs d'un côté à l'autre tout en gardant le
+    bon signe de la chute selon le déphasage de la charge, et distinguer ce qui dépend du courant de ce qui dépend de la
+    tension. L'animation du diagramme de Kapp, le diagramme de Fresnel complet et l'exercice avancé, où la tension monte en
+    charge capacitive, sont faits pour installer ces réflexes ; l'exercice de diagnostic les met à l'épreuve.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Essais à vide et en court-circuit, montre comment obtenir les
+    six paramètres sans ouvrir l'appareil. Question à préparer : pour mesurer $P_0$ et $I_0$, quel enroulement faut-il alimenter
+    et sous quelle tension ? Et pourquoi l'essai en court-circuit, qui donne $P_{cc}$ et $u_{cc}$, se fait-il sous une tension
+    réduite à quelques pour cent de la tension assignée, sans que le noyau intervienne presque ?
+  </p>
+
+</article>
