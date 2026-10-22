@@ -1,0 +1,1106 @@
+<article class="cours" data-slug="essais-a-vide-et-en-court-circuit">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/transformateur-reel">Transformateur réel</a> s'est achevé sur deux questions : pour mesurer
+      $P_0$ et $I_0$, quel enroulement faut-il alimenter, et sous quelle tension ? Et pourquoi l'essai en court-circuit se
+      fait-il sous une tension réduite à quelques pour cent de la tension assignée ? Les réponses tiennent dans la séparation
+      vue en fin de séance : les éléments parallèles du schéma équivalent dépendent de la tension, les éléments série du courant.
+      L'essai à vide se fait donc sous la tension assignée de l'enroulement alimenté, souvent celui de basse tension, plus
+      commode, parce que les pertes fer et le courant magnétisant n'ont de sens qu'au flux de service. L'essai en court-circuit
+      se fait au courant assigné, ce qui ne demande que $u_{cc}V_n$, environ $4\ \%$ de la tension assignée : le flux tombe alors à
+      $2\ \%$ environ de sa valeur de service, et le noyau ne dissipe presque plus rien. Chaque essai fait travailler une seule
+      famille d'éléments, et c'est ce qui permet de les identifier séparément, sans ouvrir l'appareil.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Le schéma équivalent du cours précédent ne sert à rien tant que ses six éléments ne sont pas chiffrés, et aucun d'eux ne se
+    lit sur un plan : la réactance de fuite dépend de la géométrie exacte des bobinages, la résistance de pertes fer de la qualité
+    des tôles et de leur assemblage, la réactance magnétisante des joints du noyau. Les essais à vide et en court-circuit sont la
+    méthode universelle pour les obtenir de l'extérieur, avec une source modeste, quelques instruments et deux mesures de
+    puissance. Ce sont aussi les essais qui figurent sur le procès-verbal remis avec chaque transformateur de distribution :
+    les pertes à vide $P_0$, les pertes dues à la charge $P_{cc}$, la tension de court-circuit $u_{cc}$ et le courant à vide $i_0$
+    sont des grandeurs garanties par contrat, et c'est leur mesure qui dit si l'appareil livré est conforme.
+  </p>
+  <p>
+    L'intérêt dépasse l'identification. La méthode des pertes séparées permet de connaître le rendement d'un transformateur de
+    plusieurs centaines de kilovoltampères sans disposer d'une charge de cette puissance, et avec une précision bien meilleure
+    qu'une mesure directe. Répétés au cours de la vie de l'appareil, les mêmes essais servent au diagnostic : un courant à vide
+    qui grimpe signale un défaut du noyau, des pertes en court-circuit qui augmentent un mauvais contact ou une spire abîmée.
+    Le travail central de cette séance est d'extraire les paramètres d'un transformateur à partir de mesures ; il débouche, dans
+    le projet fil rouge, sur l'exploitation du procès-verbal d'essais du transformateur du poste, qui remplace les hypothèses de
+    catalogue retenues jusqu'ici.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Expliquer pourquoi l'essai à vide isole la branche magnétisante et l'essai en court-circuit l'impédance série, en chiffrant les grandeurs négligées dans chaque cas.</li>
+    <li data-rang="02">Calculer $R_f$, $X_m$ et le rapport $m$ à partir des mesures à vide, puis $R_s$, $X_s$, $u_r$, $u_x$ et $u_{cc}$ à partir des mesures en court-circuit.</li>
+    <li data-rang="03">Corriger les pertes en court-circuit d'une température d'essai à la température de référence, en séparant pertes Joule et pertes supplémentaires.</li>
+    <li data-rang="04">Comparer la méthode des pertes séparées et la mesure directe du rendement du point de vue de la puissance nécessaire et de l'incertitude.</li>
+    <li data-rang="05">Dimensionner un banc d'essais : côté alimenté, tension, courant et puissance apparente de la source, calibres et précautions de sécurité.</li>
+    <li data-rang="06">Interpréter un procès-verbal d'essais et diagnostiquer un défaut à partir d'écarts de $P_0$, $I_0$, $P_{cc}$ ou $u_{cc}$.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois acquis suffisent. Le premier vient du cours <a href="#/cours/transformateur-reel">Transformateur réel</a> : le schéma de
+    Kapp place la branche magnétisante $R_f \parallel jX_m$ en tête, sous $\underline{V}_1$, et regroupe les éléments série en
+    $R_{s1} = R_1 + R_2/m^2$ et $X_{s1} = X_1 + X_2/m^2$ vus du primaire. Le deuxième vient du cours
+    <a href="#/cours/puissances-en-courant-alternatif">Puissances en courant alternatif</a> : un wattmètre mesure
+    $P = VI\cos\varphi$, la puissance apparente vaut $S = VI$ et $Q = \sqrt{S^2 - P^2}$. Le troisième vient du cours
+    <a href="#/cours/impedances-en-regime-sinusoidal">Impédances en régime sinusoïdal</a> : une impédance série $R + jX$ de module
+    $Z$ vérifie $X = \sqrt{Z^2 - R^2}$, et deux éléments en parallèle se lisent mieux en admittances. Le mini-test n'est pas noté ;
+    la correction de chaque question reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la correction".
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-familles">Deux essais, deux familles d'éléments</h3>
+  <p>
+    Regardez le schéma de Kapp comme deux familles. Les éléments parallèles, $R_f$ et $X_m$, sont soumis à la tension : le courant
+    qu'ils prélèvent et la puissance qu'ils dissipent dépendent du flux, donc de la tension appliquée. Les éléments série,
+    $R_s$ et $X_s$, sont traversés par le courant de charge : leur chute et leurs pertes dépendent du courant. Un essai bien choisi
+    réveille une famille et endort l'autre. Secondaire ouvert, aucun courant de charge ne circule : seule la branche
+    magnétisante travaille, sous sa tension de service. Secondaire en court-circuit, le courant est fixé par la seule impédance
+    série, qui est petite ; il suffit donc d'une petite tension pour atteindre le courant assigné, et sous cette petite tension la
+    branche magnétisante ne prélève presque rien. Le schéma ci-dessous montre ce que chaque essai laisse en jeu.
+  </p>
+  <figure id="d-familles-figure">
+    <svg viewBox="0 0 760 290" role="img" aria-label="Deux schémas de Kapp ramenés au primaire. À gauche, essai à vide : secondaire ouvert, éléments série en pointillés car sans courant, branche magnétisante en trait plein. À droite, essai en court-circuit : secondaire relié par une liaison, branche magnétisante en pointillés car presque sans courant, éléments série en trait plein">
+      <defs>
+        <marker id="fl-d-fa" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M30 70H170M30 220H330"/>
+        <path d="M90 70V95H70V110M90 95H110V108M70 170V190H110V172M90 190V220"/>
+        <rect x="62" y="110" width="16" height="60" rx="2"/>
+        <path d="M110 108a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="2 4" stroke-linecap="round" opacity="0.75">
+        <path d="M220 70H230M286 70H330"/>
+        <rect x="170" y="62" width="50" height="16" rx="2"/>
+        <path d="M230 70a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M420 70H480M530 70H540M596 70H700V220H420"/>
+        <rect x="480" y="62" width="50" height="16" rx="2"/>
+        <path d="M540 70a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0"/>
+        <path d="M700 70V220" stroke-width="5"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="2 4" stroke-linecap="round" opacity="0.75">
+        <path d="M450 70V95H430V110M450 95H470V108M430 170V190H470V172M450 190V220"/>
+        <rect x="422" y="110" width="16" height="60" rx="2"/>
+        <path d="M470 108a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="30" cy="70" r="4"/>
+        <circle cx="30" cy="220" r="4"/>
+        <circle cx="330" cy="70" r="4"/>
+        <circle cx="330" cy="220" r="4"/>
+        <circle cx="90" cy="70" r="3"/>
+        <circle cx="90" cy="220" r="3"/>
+        <circle cx="420" cy="70" r="4"/>
+        <circle cx="420" cy="220" r="4"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M40 56H76" marker-end="url(#fl-d-fa)"/>
+        <path d="M12 210V80" marker-end="url(#fl-d-fa)"/>
+        <path d="M612 56H660" marker-end="url(#fl-d-fa)"/>
+        <path d="M402 210V80" marker-end="url(#fl-d-fa)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="20" y="28">a. essai à vide : V1 = V1n</text>
+        <text x="410" y="28">b. court-circuit : I1 = I1n</text>
+        <text x="42" y="44">I10 = I0</text>
+        <text x="40" y="144">Rf</text>
+        <text x="124" y="144">Xm</text>
+        <text x="176" y="98">Rs1</text>
+        <text x="240" y="98">Xs1</text>
+        <text x="200" y="124">I = 0</text>
+        <text x="300" y="150">ouvert</text>
+        <text x="0" y="246">V1</text>
+        <text x="40" y="262">flux de service : P10 = pertes fer</text>
+        <text x="486" y="98">Rs1</text>
+        <text x="550" y="98">Xs1</text>
+        <text x="610" y="44">I1cc</text>
+        <text x="390" y="246">V1cc</text>
+        <text x="454" y="150">I0 ≈ 0</text>
+        <text x="712" y="150">V2 = 0</text>
+        <text x="430" y="262">flux à 2 % : P1cc = pertes cuivre</text>
+      </g>
+    </svg>
+    <figcaption>
+      Deux schémas de Kapp ramenés au primaire, avec la même convention récepteur que dans les cours précédents : la tension
+      d'alimentation est fléchée depuis la borne basse, référence de potentiel du primaire, et le courant entre par la borne
+      haute. En a, l'essai à vide : le secondaire est ouvert, l'impédance série, dessinée en pointillés, ne porte aucun courant, et
+      toute la puissance absorbée va à la branche magnétisante, en trait plein. En b, l'essai en court-circuit : une liaison de
+      forte section, trait épais à droite, impose $V_2 = 0$ ; la tension d'alimentation n'est que de quelques pour cent de la tension
+      assignée, la branche magnétisante, en pointillés, ne prélève presque rien, et la puissance absorbée est dissipée dans
+      l'impédance série.
+    </figcaption>
+  </figure>
+
+  <h3 id="d-ordres">Ce que chaque essai néglige, en ordre de grandeur</h3>
+  <p>
+    Sur le transformateur de $2{,}5\ \mathrm{kVA}$ des cours précédents, le courant à vide vaut $0{,}218\ \mathrm{A}$ pour un courant
+    assigné de $6{,}25\ \mathrm{A}$ au primaire, soit $3{,}5\ \%$ ; dans l'essai à vide, il ne produit dans $R_1$ que
+    $0{,}9 \times 0{,}218^2 = 0{,}043\ \mathrm{W}$, à comparer aux $34{,}8\ \mathrm{W}$ absorbés : $0{,}12\ \%$. Dans l'essai en
+    court-circuit, la tension d'alimentation vaut $17{,}7\ \mathrm{V}$ pour $400\ \mathrm{V}$ assignés ; la force électromotrice qui
+    entretient le flux en vaut à peu près la moitié, $8{,}9\ \mathrm{V}$, soit $2{,}2\ \%$ de sa valeur de service. Les pertes fer
+    évoluant à peu près comme le carré du flux, elles tombent à $34{,}8 \times 0{,}022^2 \approx 0{,}017\ \mathrm{W}$, pour
+    $70{,}6\ \mathrm{W}$ absorbés : $0{,}02\ \%$. Les deux simplifications sont donc du second ordre, et chacune peut être corrigée
+    quand on veut un résultat plus fin.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Une analogie contrôlée et ses limites</span>
+    <p>
+      Pour chiffrer les pertes d'un réseau de distribution d'eau, on mesure d'abord le débit la nuit, tous les robinets fermés :
+      ce qui passe encore au compteur, ce sont les fuites, qui dépendent de la pression et non de la consommation. On mesure
+      ensuite la perte de charge des conduites lorsque le débit est maximal : elle dépend du débit et non des fuites. L'essai à
+      vide est la mesure de nuit, l'essai en court-circuit la mesure à plein débit. L'analogie s'arrête sur trois points. Dans un
+      réseau d'eau, on ne peut pas réduire la pression au point de faire disparaître les fuites tout en gardant le plein débit ;
+      dans un transformateur, si, puisque le court-circuit permet d'atteindre le courant assigné sous une tension infime. Les
+      fuites d'eau sont une perte pure, alors que la branche magnétisante consomme surtout de la puissance réactive, sans
+      équivalent hydraulique. Enfin, les pertes de charge d'une conduite croissent plus vite que le carré du débit en régime
+      turbulent, alors que les pertes Joule suivent exactement le carré du courant.
+    </p>
+  </div>
+
+  <h3 id="d-anim-section">Animation : le banc d'essais, de la mise sous tension à la lecture</h3>
+  <p>
+    L'animation reproduit le banc d'essais du transformateur de $2{,}5\ \mathrm{kVA}$ : un autotransformateur réglable alimente le
+    primaire à travers un ampèremètre, un wattmètre et un voltmètre ; au secondaire, on lit soit la tension à vide, soit le courant
+    de court-circuit. Choisissez l'essai avec le premier curseur, puis faites glisser la poignée de l'autotransformateur, ou lancez
+    le lecteur, qui fait la montée progressive depuis zéro comme sur un vrai banc. L'épaisseur des traits de la branche
+    magnétisante et de la branche série suit le courant qui les traverse, et les barres du bas partagent la puissance absorbée
+    entre le noyau et les enroulements. Avant de manipuler, prédisez : dans l'essai en court-circuit au courant assigné, quelle
+    fraction de la puissance lue par le wattmètre part dans le noyau ? Et que se passerait-il si l'on appliquait au secondaire en
+    court-circuit la tension assignée ?
+  </p>
+  <figure id="d-anim-figure">
+    <div class="schema-vivant" id="d-anim"></div>
+    <figcaption>
+      En haut à gauche, l'autotransformateur, bobine verticale dont la flèche de prise est la poignée ronde : sa position fixe la
+      tension appliquée, de zéro au calibre indiqué. Le courant d'alimentation, flèche sur le fil supérieur, traverse l'ampèremètre
+      A1 et le circuit courant du wattmètre W ; le circuit tension du wattmètre et le voltmètre V1 sont branchés entre les deux fils,
+      la borne basse étant la référence de potentiel du primaire. Au centre, le transformateur est représenté par son schéma de
+      Kapp, branche magnétisante en tête puis impédance série ; l'épaisseur de chaque branche suit son courant. À droite, le
+      secondaire est ouvert, avec le voltmètre V2, ou fermé sur la liaison de court-circuit, avec l'ampèremètre A2. En bas, deux
+      barres partagent la puissance absorbée entre pertes fer, noyau, et pertes cuivre, enroulements.
+    </figcaption>
+  </figure>
+  <div id="d-anim-curseurs"></div>
+  <div id="d-anim-lecteur"></div>
+  <div id="d-anim-valeurs"></div>
+  <p>
+    Interprétation : à vide, sous $400\ \mathrm{V}$, le wattmètre lit $34{,}8\ \mathrm{W}$ dont plus de $99{,}8\ \%$ partent dans le
+    noyau, et le voltmètre du secondaire lit $229{,}8\ \mathrm{V}$. En court-circuit, le courant assigné de $6{,}25\ \mathrm{A}$ est
+    atteint sous $17{,}7\ \mathrm{V}$ seulement ; le wattmètre lit alors $70{,}6\ \mathrm{W}$, dont $0{,}02\ \%$ dans le noyau, et
+    l'ampèremètre du secondaire $10{,}86\ \mathrm{A}$. La puissance demandée à la source reste modeste dans les deux cas,
+    $87\ \mathrm{VA}$ à vide et $111\ \mathrm{VA}$ en court-circuit, pour un appareil de $2{,}5\ \mathrm{kVA}$. Poussez la prise jusqu'au
+    bout en court-circuit, puis imaginez le calibre étendu à $400\ \mathrm{V}$ : le courant atteindrait $1/u_{cc} = 22{,}6$ fois le
+    courant assigné, d'où la règle de banc qui consiste à toujours partir de zéro et à monter lentement en surveillant
+    l'ampèremètre. Notez aussi l'ordre des choses à vide : la tension appliquée suit la poignée, le courant croît presque en
+    proportion dans ce modèle linéaire, et la puissance comme le carré de la tension.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-vide">L'essai à vide</h3>
+  <p>
+    On alimente un enroulement sous sa tension assignée, à sa fréquence assignée, l'autre restant ouvert. On mesure la tension
+    appliquée $V_{10}$, le courant absorbé $I_{10}$, la puissance active $P_{10}$ et la tension de l'enroulement ouvert $V_{20}$,
+    avec un voltmètre de grande impédance. Le montage est représenté ci-dessous dans le cas où l'on alimente le primaire ; on
+    verra plus loin pourquoi on préfère souvent alimenter la basse tension.
+  </p>
+  <figure id="e-vide-figure">
+    <svg viewBox="0 0 760 300" role="img" aria-label="Montage de l'essai à vide : source réglable, ampèremètre A1, wattmètre W, voltmètre V1 aux bornes du primaire, transformateur, voltmètre V2 aux bornes du secondaire ouvert">
+      <defs>
+        <marker id="fl-e-vi" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="50" cy="160" r="22"/>
+        <path d="M38 160c5 -9 9 -9 12 0s7 9 12 0"/>
+        <path d="M50 138V70H130V86M50 182V250H130V234"/>
+        <path d="M130 86a9 9 0 0 1 0 18a9 9 0 0 1 0 18a9 9 0 0 1 0 18a9 9 0 0 1 0 18a9 9 0 0 1 0 18a9 9 0 0 1 0 18a9 9 0 0 1 0 18a9 9 0 0 1 0 22"/>
+        <path d="M170 110H192M220 110H244M296 110H430V126M130 250H430V234"/>
+        <circle cx="206" cy="110" r="14"/>
+        <rect x="244" y="96" width="52" height="28" rx="3"/>
+        <path d="M270 124V250"/>
+        <path d="M360 110V161M360 189V250"/>
+        <circle cx="360" cy="175" r="14"/>
+        <path d="M430 126a9 9 0 0 1 0 18a9 9 0 0 1 0 18a9 9 0 0 1 0 18a9 9 0 0 1 0 18a9 9 0 0 1 0 18a9 9 0 0 1 0 18"/>
+        <path d="M452 116V244M462 116V244"/>
+        <path d="M484 126a9 9 0 0 0 0 18a9 9 0 0 0 0 18a9 9 0 0 0 0 18a9 9 0 0 0 0 18a9 9 0 0 0 0 18a9 9 0 0 0 0 18"/>
+        <path d="M484 126V110H620V161M484 234V250H620V189"/>
+        <circle cx="620" cy="175" r="14"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M170 110H146" marker-end="url(#fl-e-vi)"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="270" cy="250" r="3"/>
+        <circle cx="360" cy="110" r="3"/>
+        <circle cx="360" cy="250" r="3"/>
+        <circle cx="420" cy="118" r="4.5"/>
+        <circle cx="494" cy="118" r="4.5"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M310 96H346" marker-end="url(#fl-e-vi)"/>
+        <path d="M392 240V120" marker-end="url(#fl-e-vi)"/>
+        <path d="M660 240V120" marker-end="url(#fl-e-vi)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="201" y="114">A</text>
+        <text x="264" y="114">W</text>
+        <text x="355" y="179">V</text>
+        <text x="615" y="179">V</text>
+        <text x="16" y="200">réseau</text>
+        <text x="80" y="40">autotransformateur réglable</text>
+        <text x="190" y="88">A1</text>
+        <text x="276" y="190">circuit</text>
+        <text x="276" y="204">tension</text>
+        <text x="314" y="88">I10</text>
+        <text x="398" y="200">V10</text>
+        <text x="438" y="272">1 : m</text>
+        <text x="596" y="96">I2 = 0</text>
+        <text x="666" y="186">V20</text>
+        <text x="600" y="226">V2</text>
+        <text x="40" y="290">référence primaire : borne basse ; secondaire ouvert, référence propre</text>
+      </g>
+    </svg>
+    <figcaption>
+      Montage de l'essai à vide, en convention récepteur au primaire. La source réglable, cercle, alimente un autotransformateur
+      dont la prise, flèche horizontale, délivre la tension d'essai. Le courant $I_{10}$, fléché vers le transformateur, traverse
+      l'ampèremètre A1 puis le circuit courant du wattmètre W, rectangle ; le circuit tension du wattmètre et le voltmètre V1 sont
+      branchés entre le fil supérieur et le fil inférieur, référence de potentiel du primaire, en aval du circuit courant. Le
+      transformateur est dessiné avec ses deux bobinages, son noyau et ses points de polarité. Le secondaire reste ouvert : seul
+      le voltmètre V2, de grande impédance, y est raccordé, et $V_{20}$ est fléchée depuis sa borne basse.
+    </figcaption>
+  </figure>
+  <p>
+    Secondaire ouvert, $\underline{I}_2 = 0$ et $\underline{I}_1 = \underline{I}_0$. Dans le schéma en T, le courant à vide provoque
+    dans $R_1 + jX_1$ une chute de l'ordre de $0{,}1\ \%$ de la tension : $\underline{E}_1 \approx \underline{V}_{10}$, ce qui revient
+    au schéma de Kapp. La puissance absorbée se partage entre $R_1I_{10}^2$, négligeable, et les pertes fer. On en tire :
+  </p>
+  <div class="formule-cle">
+    $$\cos\varphi_0 = \frac{P_{10}}{V_{10}I_{10}}, \quad I_f = I_{10}\cos\varphi_0 = \frac{P_{10}}{V_{10}}, \quad I_\mu = I_{10}\sin\varphi_0 = \sqrt{I_{10}^2 - I_f^2}$$
+    $$R_f = \frac{V_{10}^2}{P_{10}}, \qquad X_m = \frac{V_{10}}{I_\mu} = \frac{V_{10}^2}{Q_{10}}, \quad Q_{10} = \sqrt{(V_{10}I_{10})^2 - P_{10}^2}, \qquad m \approx \frac{V_{20}}{V_{10}}$$
+    <p class="formule-cle-legende">
+      $V_{10}$, $V_{20}$ en volts ; $I_{10}$, $I_f$, $I_\mu$ en ampères ; $P_{10}$ en watts, $Q_{10}$ en vars ; $R_f$ et $X_m$ en ohms,
+      vus de l'enroulement alimenté ; $m$ sans dimension. Hypothèses : tension sinusoïdale, $R_1I_{10}^2 \ll P_{10}$ et chute dans
+      $R_1 + jX_1$ négligeable, voltmètre V2 sans consommation. Dérivation : la branche $R_f \parallel jX_m$ sous $V_{10}$ absorbe
+      $V_{10}^2/R_f$ de puissance active et $V_{10}^2/X_m$ de réactive ; on identifie avec $P_{10}$ et $Q_{10}$. Vérification :
+      $\mathrm{V}^2/\mathrm{W} = \mathrm{V}^2/(\mathrm{V} \cdot \mathrm{A}) = \Omega$. Cas limites : un noyau sans pertes donne
+      $P_{10} = 0$, $\cos\varphi_0 = 0$ et $R_f \to \infty$ ; un noyau de perméabilité infinie donne $I_\mu = 0$ et
+      $X_m \to \infty$. Interprétation : $\cos\varphi_0$ est faible, de $0{,}1$ à $0{,}4$ selon la taille, parce que magnétiser coûte
+      bien plus de réactif que d'actif. Le rapport mesuré à vide est un rapport de tensions, inférieur au rapport des spires de la
+      chute du courant à vide dans $R_1 + jX_1$.
+    </p>
+  </div>
+  <p>
+    Deux corrections affinent ce résultat quand le transformateur est petit ou les instruments gourmands. On retranche de
+    $P_{10}$ les pertes $R_1I_{10}^2$ et la consommation propre des appareils branchés en aval du circuit courant du wattmètre,
+    circuit tension et voltmètres ; on remplace $V_{10}$ par $E_1 = |\underline{V}_{10} - (R_1 + jX_1)\underline{I}_{10}|$. Une
+    précaution est plus importante encore : le courant à vide n'est pas sinusoïdal, parce que le noyau travaille près du coude
+    de saturation, comme l'a montré le cours <a href="#/cours/circuits-magnetiques">Circuits magnétiques</a>. Il faut un
+    ampèremètre à valeur efficace vraie, et $I_\mu$ calculé par $\sqrt{I_{10}^2 - I_f^2}$ est un courant sinusoïdal équivalent qui
+    inclut les harmoniques. Si la tension d'essai elle-même est déformée, les pertes mesurées dépendent de sa forme ; les
+    laboratoires mesurent alors aussi la valeur moyenne redressée de la tension, image du flux crête, pour ramener $P_{10}$ à une
+    tension sinusoïdale.
+  </p>
+
+  <h3 id="e-phaseurs-section">Animation : du phaseur du courant à vide aux paramètres de la branche</h3>
+  <p>
+    L'animation relie ce que lit chaque instrument à ce que l'on calcule. À gauche, le diagramme de Fresnel de l'essai à vide :
+    la tension $\underline{V}_{10}$ sert de référence horizontale et le courant $\underline{I}_{10}$, dont l'extrémité est la poignée
+    ronde, se décompose en $I_f$ en phase et $I_\mu$ en quadrature arrière. À droite, une période : la tension, le courant et la
+    puissance instantanée, dont la moyenne est ce que lit le wattmètre. Déplacez la poignée pour changer le noyau, ou lancez le
+    lecteur pour parcourir la période. Prédisez avant de manipuler : si les tôles se mettaient en court-circuit entre elles, dans
+    quel sens se déplacerait l'extrémité du courant ? Et que lirait le wattmètre pour un noyau sans pertes, le courant restant
+    non nul ?
+  </p>
+  <figure id="e-phaseurs-figure">
+    <div class="schema-vivant" id="e-phaseurs"></div>
+    <figcaption>
+      À gauche, $\underline{V}_{10}$ en trait plein horizontal, référence de phase ; $\underline{I}_{10}$ en trait épais, de l'origine à
+      la poignée, à l'échelle des courants indiquée ; ses projections en tirets donnent $I_f$ sur l'axe horizontal et $I_\mu$ sur
+      l'axe vertical, vers le bas puisque le courant est en retard. L'arc repère l'angle $\varphi_0$. À droite, sur une période,
+      $v$ en trait plein fin, $i$ en trait épais à son échelle propre et $p = vi$ en tirets ; le trait horizontal en pointillés est
+      la valeur moyenne de $p$, c'est-à-dire $P_{10}$ ; le trait vertical repère l'instant lu par le lecteur.
+    </figcaption>
+  </figure>
+  <div id="e-phaseurs-lecteur"></div>
+  <div id="e-phaseurs-valeurs"></div>
+  <p>
+    Interprétation : avec la position de départ, $I_{10} = 0{,}218\ \mathrm{A}$ en retard de $66{,}5^\circ$, la puissance instantanée
+    oscille à deux fois la fréquence du réseau entre $-52$ et $+122\ \mathrm{W}$, et sa moyenne vaut $34{,}8\ \mathrm{W}$ :
+    $R_f = 4598\ \Omega$ et $X_m = 2001\ \Omega$. Pendant une partie de chaque alternance, $p$ est négative : le noyau rend au réseau
+    une partie de l'énergie magnétique qu'il a reçue, ce qui est la signature d'un courant réactif. Amenez la poignée sur l'axe
+    vertical : la moyenne de $p$ s'annule, le wattmètre lit zéro alors que l'ampèremètre lit toujours un courant, et $R_f$ devient
+    infinie. Des tôles en court-circuit augmentent les courants de Foucault : l'extrémité du courant part vers la droite, $I_f$
+    croît, $R_f$ baisse. Un entrefer accidentel aux joints fait au contraire descendre l'extrémité : $I_\mu$ croît et $X_m$ baisse.
+    Les deux défauts se distinguent donc sur un seul essai, à condition de lire à la fois le courant et la puissance.
+  </p>
+
+  <h3 id="e-sim-vide-section">Simulation interactive : la courbe à vide et le choix de la tension d'essai</h3>
+  <p>
+    Les paramètres $R_f$ et $X_m$ ne sont constants que dans un modèle linéaire. La simulation remplace le noyau du transformateur
+    de l'exemple par un modèle simple de saturation : le courant magnétisant comporte une part proportionnelle à la tension et une
+    part qui croît comme la puissance neuvième de la tension, et les pertes fer varient comme une puissance $\beta$ de la tension.
+    Elle trace la courbe à vide, courant et pertes rapportés à leur valeur sous tension assignée, et affiche les paramètres que
+    l'on identifierait si l'essai était fait sous la tension choisie. Les curseurs règlent la part de saturation sous tension
+    assignée, l'exposant des pertes fer et la tension d'essai. Prédisez avant de manipuler : si l'on fait l'essai à $90\ \%$ de la
+    tension assignée, la réactance magnétisante identifiée sera-t-elle plus grande ou plus petite que sa valeur de service ? Et
+    la résistance de pertes fer ?
+  </p>
+  <figure id="e-sim-vide-figure">
+    <div id="e-sim-vide-trace"></div>
+    <figcaption>
+      Courant à vide et pertes à vide en fonction de la tension appliquée, tous rapportés à leur valeur sous tension assignée ;
+      les deux courbes sont nommées dans la légende du tracé. Le trait vertical en tirets repère la tension d'essai choisie, le
+      trait vertical en pointillés la tension assignée, et les deux points les valeurs lues sous la tension d'essai.
+    </figcaption>
+  </figure>
+  <div id="e-sim-vide-curseurs"></div>
+  <div id="e-sim-vide-valeurs"></div>
+  <p>
+    Interprétation : avec une part de saturation de $25\ \%$, la courbe du courant se redresse au-dessus de la tension assignée,
+    alors que celle des pertes reste régulière. Un essai à $90\ \%$ donne $X_m = 2333\ \Omega$, soit $17\ \%$ de trop, et un essai à
+    $110\ \%$ donne $1556\ \Omega$, $22\ \%$ de moins : la réactance magnétisante identifiée dépend fortement de la tension
+    d'essai. La résistance de pertes fer, elle, ne bouge pas avec un exposant $\beta = 2$, puisque $V^2/P$ reste constant ; avec
+    $\beta = 1{,}8$, valeur plus représentative de pertes où l'hystérésis domine, elle varie de $2\ \%$ entre $90$ et $100\ \%$.
+    Mettez la saturation à zéro : toutes les tensions donnent les mêmes paramètres, ce qui montre que le problème vient du noyau et
+    non de la méthode. D'où la règle : l'essai à vide se fait sous la tension et à la fréquence assignées, et les paramètres
+    obtenus ne valent qu'au voisinage de ce point de fonctionnement. Sur un banc, on relève souvent la courbe complète entre
+    $50$ et $110\ \%$, qui renseigne sur la marge de saturation.
+  </p>
+
+  <h3 id="e-cc">L'essai en court-circuit</h3>
+  <p>
+    On relie les bornes d'un enroulement par une liaison de forte section, puis on alimente l'autre sous une tension réduite, en
+    partant de zéro, jusqu'à ce que le courant atteigne sa valeur assignée. On mesure la tension $V_{1cc}$, le courant $I_{1cc}$, la
+    puissance $P_{1cc}$, et souvent le courant de l'enroulement en court-circuit, qui contrôle le rapport. Le montage ne diffère
+    de celui de l'essai à vide que par le secondaire et par les calibres.
+  </p>
+  <figure id="e-cc-figure">
+    <svg viewBox="0 0 760 300" role="img" aria-label="Montage de l'essai en court-circuit : source réglable, ampèremètre A1, wattmètre W, voltmètre V1 aux bornes du primaire, transformateur, secondaire fermé sur une liaison de court-circuit avec l'ampèremètre A2">
+      <defs>
+        <marker id="fl-e-cc" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="50" cy="160" r="22"/>
+        <path d="M38 160c5 -9 9 -9 12 0s7 9 12 0"/>
+        <path d="M50 138V70H130V86M50 182V250H130V234"/>
+        <path d="M130 86a9 9 0 0 1 0 18a9 9 0 0 1 0 18a9 9 0 0 1 0 18a9 9 0 0 1 0 18a9 9 0 0 1 0 18a9 9 0 0 1 0 18a9 9 0 0 1 0 18a9 9 0 0 1 0 22"/>
+        <path d="M170 196H192M220 196H244M296 196H330V110H430V126M130 250H430V234"/>
+        <circle cx="206" cy="196" r="14"/>
+        <rect x="244" y="182" width="52" height="28" rx="3"/>
+        <path d="M270 210V250"/>
+        <path d="M370 110V161M370 189V250"/>
+        <circle cx="370" cy="175" r="14"/>
+        <path d="M430 126a9 9 0 0 1 0 18a9 9 0 0 1 0 18a9 9 0 0 1 0 18a9 9 0 0 1 0 18a9 9 0 0 1 0 18a9 9 0 0 1 0 18"/>
+        <path d="M452 116V244M462 116V244"/>
+        <path d="M484 126a9 9 0 0 0 0 18a9 9 0 0 0 0 18a9 9 0 0 0 0 18a9 9 0 0 0 0 18a9 9 0 0 0 0 18a9 9 0 0 0 0 18"/>
+        <circle cx="620" cy="175" r="14"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M484 126V110H620V161M484 234V250H620V189"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M170 196H146" marker-end="url(#fl-e-cc)"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="270" cy="250" r="3"/>
+        <circle cx="370" cy="110" r="3"/>
+        <circle cx="370" cy="250" r="3"/>
+        <circle cx="420" cy="118" r="4.5"/>
+        <circle cx="494" cy="118" r="4.5"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M340 96H372" marker-end="url(#fl-e-cc)"/>
+        <path d="M402 240V120" marker-end="url(#fl-e-cc)"/>
+        <path d="M530 96H580" marker-end="url(#fl-e-cc)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="201" y="200">A</text>
+        <text x="264" y="200">W</text>
+        <text x="365" y="179">V</text>
+        <text x="615" y="179">A</text>
+        <text x="16" y="200">réseau</text>
+        <text x="80" y="40">autotransformateur réglable</text>
+        <text x="148" y="226">tension réduite</text>
+        <text x="190" y="174">A1</text>
+        <text x="344" y="88">I1cc</text>
+        <text x="374" y="232">V1cc</text>
+        <text x="438" y="272">1 : m</text>
+        <text x="534" y="88">I2cc</text>
+        <text x="642" y="170">A2</text>
+        <text x="642" y="186">liaison de</text>
+        <text x="642" y="202">forte section</text>
+        <text x="40" y="290">partir de zéro et monter jusqu'à I1cc = I1n ; référence primaire : borne basse</text>
+      </g>
+    </svg>
+    <figcaption>
+      Montage de l'essai en court-circuit, avec les mêmes conventions qu'à vide. La prise de l'autotransformateur est placée bas,
+      près de la borne inférieure, parce que la tension d'essai n'est que de quelques pour cent de la tension assignée. Le courant
+      $I_{1cc}$, fléché vers le transformateur, traverse A1 puis le circuit courant du wattmètre ; V1 et le circuit tension du
+      wattmètre mesurent $V_{1cc}$, fléchée depuis la borne basse, référence du primaire. Au secondaire, la liaison en trait épais
+      ferme l'enroulement à travers l'ampèremètre A2, qui lit $I_{2cc}$ ; elle doit supporter le courant assigné du secondaire
+      avec une résistance de contact négligeable.
+    </figcaption>
+  </figure>
+  <p>
+    Secondaire en court-circuit, $\underline{V}_2 = 0$. Avec le schéma en T et des enroulements équilibrés, la force
+    électromotrice $\underline{E}_1$ vaut environ la moitié de $\underline{V}_{1cc}$, soit $u_{cc}/2$ de la tension assignée : le
+    courant à vide y est réduit dans la même proportion et les pertes fer dans le carré de cette proportion. On peut donc ôter la
+    branche magnétisante, et le transformateur se réduit à son impédance série vue du côté alimenté :
+  </p>
+  <div class="formule-cle">
+    $$Z_{s1} = \frac{V_{1cc}}{I_{1cc}}, \qquad R_{s1} = \frac{P_{1cc}}{I_{1cc}^2}, \qquad X_{s1} = \sqrt{Z_{s1}^2 - R_{s1}^2}, \qquad R_s = m^2R_{s1}, \quad X_s = m^2X_{s1}$$
+    $$u_{cc} = \frac{V_{1cc}}{V_{1n}}\bigg|_{I_{1cc} = I_{1n}}, \qquad u_r = \frac{P_{cc}}{S_n}, \qquad u_x = \sqrt{u_{cc}^2 - u_r^2}, \qquad P_{cc}(I_n) = P_{1cc}\left(\frac{I_{1n}}{I_{1cc}}\right)^2$$
+    <p class="formule-cle-legende">
+      $Z_{s1}$, $R_{s1}$, $X_{s1}$ : impédance, résistance et réactance série vues du côté alimenté, en ohms ; $R_s$, $X_s$ : les mêmes
+      vues de l'autre côté ; $u_{cc}$, $u_r$, $u_x$ : sans dimension, souvent en pour cent ; $P_{cc}$ : pertes dues à la charge au
+      courant assigné, en watts. Hypothèses : branche magnétisante négligée, paramètres série linéaires, liaison de court-circuit
+      d'impédance négligeable. Dérivation : $\underline{V}_{1cc} = (R_{s1} + jX_{s1})\underline{I}_{1cc}$, dont le module donne
+      $Z_{s1}$ et la partie active $P_{1cc} = R_{s1}I_{1cc}^2$. Vérification : $\mathrm{V}/\mathrm{A} = \Omega$ et
+      $\mathrm{W}/\mathrm{A}^2 = \Omega$. Cas limite : un essai fait à un courant $I_{1cc} \neq I_{1n}$ reste exploitable, car dans un
+      circuit linéaire la tension est proportionnelle au courant et la puissance à son carré. Interprétation : $u_{cc}$ est la
+      chute maximale à courant assigné ; ce n'est pas la chute habituelle en charge, qui dépend du facteur de puissance comme l'a
+      montré le cours précédent.
+    </p>
+  </div>
+  <p>
+    L'essai en court-circuit donne la somme des deux résistances et la somme des deux réactances, jamais leur partage. Pour les
+    séparer, on mesure les résistances en courant continu, par une méthode voltampèremétrique, ce qui donne $R_1$ et $R_2$ ; pour les
+    réactances, on convient le plus souvent de partager $X_{s1}$ en deux moitiés égales, $X_1 = X_2/m^2 = X_{s1}/2$. Ce partage est une
+    convention, sans conséquence pour la chute et les pertes, qui ne font intervenir que la somme. La comparaison de
+    $R_1 + R_2/m^2$, mesurée en continu, à $R_{s1}$, déduite de la puissance alternative, apporte un renseignement : l'écart est
+    dû aux pertes supplémentaires, courants de Foucault induits par le flux de fuite dans les conducteurs, les cuves et les
+    pièces de serrage, que seul l'essai en alternatif fait apparaître.
+  </p>
+
+  <h3 id="e-temperature">Correction de température</h3>
+  <p>
+    L'essai en court-circuit est fait à la température ambiante de l'atelier, enroulements froids ; les pertes garanties sont
+    rapportées à une température de référence, par exemple $75\ ^\circ\mathrm{C}$, voisine de celle des enroulements en service. La
+    résistivité du cuivre croît linéairement avec la température, et sa droite, prolongée, s'annulerait vers $-235\ ^\circ\mathrm{C}$ ;
+    pour l'aluminium, vers $-225\ ^\circ\mathrm{C}$. Les pertes Joule en courant continu suivent ce facteur ; les pertes
+    supplémentaires, dues à des courants induits que la résistance limite, varient à peu près en sens inverse.
+  </p>
+  <div class="formule-cle">
+    $$k = \frac{235 + \theta_{ref}}{235 + \theta_{mes}}, \qquad P_{cc}(\theta_{ref}) = k\,P_J(\theta_{mes}) + \frac{P_{cc}(\theta_{mes}) - P_J(\theta_{mes})}{k}, \qquad P_J = \sum R_{cont}I^2$$
+    <p class="formule-cle-legende">
+      $\theta$ en degrés Celsius ; $k$ sans dimension ; $P_J$ : pertes Joule calculées avec les résistances mesurées en continu et
+      les courants de l'essai, en watts ; la différence $P_{cc} - P_J$ est la part des pertes supplémentaires. Hypothèses :
+      enroulements en cuivre, température uniforme et connue au moment de la mesure des résistances, souvent égale à celle de
+      l'huile après un long repos hors tension ; pertes supplémentaires inversement proportionnelles à la résistance, ce qui est
+      une approximation. La valeur $235$ découle du coefficient de température du cuivre, $1/(235 + 20) \approx 0{,}39\ \%$ par
+      kelvin à $20\ ^\circ\mathrm{C}$ ; la température de référence est fixée par la norme applicable ou le contrat. Cas limite :
+      $\theta_{mes} = \theta_{ref}$ donne $k = 1$. Vérification : $k$ est un rapport de températures décalées, sans dimension.
+      La réactance de fuite ne dépend pas de la température : seule $u_r$ change, et $u_{cc}$ se recalcule par
+      $\sqrt{u_x^2 + u_r^2}$.
+    </p>
+  </div>
+
+  <h3 id="e-temp-anim-section">Animation : de la mesure à froid aux pertes garanties</h3>
+  <p>
+    L'animation applique cette correction au transformateur du poste, dont le procès-verbal est étudié en section I : à
+    $22\ ^\circ\mathrm{C}$, $1490\ \mathrm{W}$ mesurés en court-circuit, dont $1340\ \mathrm{W}$ de pertes Joule en continu, et
+    $u_{cc} = 3{,}95\ \%$. À gauche, la droite de la résistance série en fonction de la température ; à droite, le triangle de
+    court-circuit, $u_r$ horizontal et $u_x$ vertical. Faites glisser la poignée le long de l'axe des températures. Prédisez avant de
+    manipuler : de combien les pertes en court-circuit augmentent-elles entre $22$ et $75\ ^\circ\mathrm{C}$ ? Et la tension de
+    court-circuit, change-t-elle beaucoup ?
+  </p>
+  <figure id="e-temp-figure">
+    <div class="schema-vivant" id="e-temp"></div>
+    <figcaption>
+      À gauche, la résistance série en courant continu ramenée côté basse tension, en milliohms, en fonction de la température :
+      la droite en trait plein a pour pente le coefficient du cuivre, son prolongement en pointillés vers les basses températures
+      indique le point d'annulation théorique à $-235\ ^\circ\mathrm{C}$, hors du cadre. La poignée ronde, sur l'axe horizontal,
+      fixe la température. Le point de mesure à $22\ ^\circ\mathrm{C}$ est repéré par un petit carré, la référence de
+      $75\ ^\circ\mathrm{C}$ par un trait vertical en tirets. À droite, le triangle de court-circuit à la température choisie : la chute
+      résistive $u_r$ en trait épais horizontal, la chute réactive $u_x$ en tirets vertical, inchangée, et l'hypoténuse $u_{cc}$ en
+      trait plein ; le triangle en pointillés est celui de la mesure à $22\ ^\circ\mathrm{C}$.
+    </figcaption>
+  </figure>
+  <div id="e-temp-valeurs"></div>
+  <p>
+    Interprétation : à $75\ ^\circ\mathrm{C}$, $k = 310/257 = 1{,}206$ ; les pertes Joule passent de $1340$ à $1616\ \mathrm{W}$, les
+    pertes supplémentaires baissent de $150$ à $124\ \mathrm{W}$, et $P_{cc}$ vaut $1740{,}6\ \mathrm{W}$, soit $17\ \%$ de plus que la
+    mesure. Appliquer le facteur $k$ à toute la puissance mesurée donnerait $1797\ \mathrm{W}$, $3\ \%$ de trop. La tension de
+    court-circuit ne passe que de $3{,}95$ à $4{,}05\ \%$ : la réactance, qui en fait l'essentiel, est indépendante de la
+    température. Poussez la poignée vers $120\ ^\circ\mathrm{C}$, température qu'un enroulement peut atteindre en surcharge : les
+    pertes dépassent $1950\ \mathrm{W}$. Comparer une mesure faite à froid à une valeur garantie à chaud, sans correction, ferait
+    croire à un appareil meilleur qu'il n'est.
+  </p>
+
+  <h3 id="e-cote">Quel côté alimenter, et avec quelle source</h3>
+  <p>
+    Les paramètres identifiés sont vus du côté alimenté, et on les ramène de l'autre côté par $m^2$ ; le choix du côté est donc
+    libre sur le principe et dicté par la pratique. À vide, il faut la tension assignée de l'enroulement alimenté : on alimente la
+    basse tension, plus facile à produire, et l'enroulement haute tension ouvert porte alors sa pleine tension assignée, ce qui
+    impose de le protéger contre tout contact. En court-circuit, il faut le courant assigné de l'enroulement alimenté : on alimente
+    la haute tension, dont le courant assigné est faible, et on court-circuite la basse tension, dont la liaison doit porter le
+    fort courant assigné. Les deux sources restent petites : à vide, $S_0 = i_0S_n$ ; en court-circuit, $S_{cc} = u_{cc}S_n$, de
+    l'ordre de quelques pour cent de la puissance assignée, surtout réactive dans les deux cas.
+  </p>
+
+  <h3 id="e-methodes">Pertes séparées ou mesure directe du rendement</h3>
+  <p>
+    On pourrait mesurer le rendement directement, en chargeant le transformateur et en lisant $P_1$ et $P_2$. Deux défauts
+    condamnent cette méthode pour les appareils de puissance : elle exige une charge et une source de la puissance assignée, et
+    elle calcule les pertes comme la différence de deux grandeurs voisines. Sur l'exemple du cours précédent, $P_1 = 1790\ \mathrm{W}$
+    et $P_2 = 1700\ \mathrm{W}$ lus avec des wattmètres à $0{,}5\ \%$ donnent $90\ \mathrm{W}$ de pertes à $\pm 17{,}5\ \mathrm{W}$ près
+    dans le cas le plus défavorable, soit $\pm 19\ \%$, et un rendement connu à $\pm 0{,}95$ point. La méthode des pertes séparées
+    mesure directement $P_0$ et $P_{cc}$ : avec $1\ \%$ d'incertitude sur chacune, les mêmes pertes sont connues à $\pm 0{,}9\ \mathrm{W}$
+    et le rendement à $\pm 0{,}05$ point environ. Elle repose en revanche sur une hypothèse, la séparabilité des pertes, qui
+    ignore l'effet d'un courant de charge déformé ou d'un échauffement réel ; l'essai en charge reste utile pour l'échauffement,
+    qui se fait d'ailleurs souvent en court-circuit, en injectant les pertes totales.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Ce qui relève de la loi, de la convention, de l'approximation, de la conception et du constructeur</caption>
+      <thead><tr><th>Énoncé</th><th>Statut</th></tr></thead>
+      <tbody>
+        <tr><td>Conservation de l'énergie : le wattmètre lit la puissance dissipée dans l'appareil ; loi d'Ohm et loi de Faraday ; linéarité de la résistivité du cuivre avec la température</td><td>Lois physiques, la dernière sur une plage limitée</td></tr>
+        <tr><td>Partage $X_1 = X_2/m^2$ ; température de référence des pertes ; pertes et $u_{cc}$ exprimés au courant assigné et sur la prise principale</td><td>Conventions, à rappeler sur chaque procès-verbal</td></tr>
+        <tr><td>Branche magnétisante négligée en court-circuit ; chute du courant à vide négligée à vide ; pertes supplémentaires inversement proportionnelles à la résistance ; paramètres linéaires</td><td>Approximations, justifiées par l'ordre de grandeur</td></tr>
+        <tr><td>Essai à vide côté basse tension, essai en court-circuit côté haute tension ; montée progressive depuis zéro ; instruments à valeur efficace vraie et wattmètres adaptés aux faibles facteurs de puissance</td><td>Règles de conception et de bonne pratique d'essai</td></tr>
+        <tr><td>Valeurs garanties de $P_0$, $P_{cc}$, $u_{cc}$ et $i_0$ ; tolérances admises sur ces valeurs ; liste et conditions des essais individuels de réception</td><td>Données du constructeur et de la norme applicable au contrat, à vérifier pour chaque appareil</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, les montages des deux essais avec les schémas équivalents qu'ils
+    laissent en jeu, l'organigramme d'identification des paramètres, et un tableau comparatif des deux essais.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 760 430" role="img" aria-label="Schéma principal : en haut, les deux essais résumés par leurs instruments ; en bas, le schéma équivalent ramené au primaire avec les éléments identifiés par chaque essai et leurs valeurs pour le transformateur de l'exemple">
+      <defs>
+        <marker id="fl-f" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+        <rect x="20" y="20" width="340" height="130" rx="8"/>
+        <rect x="400" y="20" width="340" height="130" rx="8"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="36" y="44">essai à vide, secondaire ouvert</text>
+        <text x="36" y="70">V10 = 400 V   I10 = 0,218 A</text>
+        <text x="36" y="90">P10 = 34,8 W  V20 = 229,8 V</text>
+        <text x="36" y="114">Rf = V10² / P10 = 4598 Ω</text>
+        <text x="36" y="134">Xm = V10 / Iμ = 2001 Ω ; m = 0,5745</text>
+        <text x="416" y="44">court-circuit, secondaire fermé</text>
+        <text x="416" y="70">I1cc = 6,25 A  V1cc = 17,73 V</text>
+        <text x="416" y="90">P1cc = 70,6 W  I2cc = 10,86 A</text>
+        <text x="416" y="114">Rs1 = P1cc / I1cc² = 1,807 Ω</text>
+        <text x="416" y="134">Xs1 = 2,187 Ω ; ucc = 4,43 %</text>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M190 150V210" marker-end="url(#fl-f)"/>
+        <path d="M570 150V230H470" marker-end="url(#fl-f)"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M60 260H430M480 260H490M546 260H690V300M60 390H690V360"/>
+        <path d="M190 260V282H170V296M190 282H210V294M170 356V370H210V358M190 370V390"/>
+        <rect x="162" y="296" width="16" height="60" rx="2"/>
+        <path d="M210 294a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16"/>
+        <rect x="430" y="252" width="50" height="16" rx="2"/>
+        <path d="M490 260a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0"/>
+        <rect x="676" y="300" width="28" height="60" rx="3"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="60" cy="260" r="4"/>
+        <circle cx="60" cy="390" r="4"/>
+        <circle cx="190" cy="260" r="3"/>
+        <circle cx="190" cy="390" r="3"/>
+        <circle cx="620" cy="260" r="4"/>
+        <circle cx="620" cy="390" r="4"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M70 246H110" marker-end="url(#fl-f)"/>
+        <path d="M42 380V270" marker-end="url(#fl-f)"/>
+        <path d="M640 380V270" marker-end="url(#fl-f)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="74" y="240">I1</text>
+        <text x="14" y="330">V1</text>
+        <text x="110" y="326">Rf</text>
+        <text x="224" y="326">Xm</text>
+        <text x="420" y="246">Rs1</text>
+        <text x="500" y="246">Xs1</text>
+        <text x="648" y="330">V2'</text>
+        <text x="710" y="326">Z2'</text>
+        <text x="60" y="414">schéma de Kapp ramené au primaire ; référence : borne basse</text>
+        <text x="264" y="300">identifiés à vide</text>
+        <text x="420" y="300">identifiés en court-circuit</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal. En haut, les deux essais du transformateur de l'exemple de la section H, avec leurs lectures et les
+      paramètres qu'ils donnent. Les flèches mènent chaque essai vers la famille d'éléments qu'il identifie dans le schéma de Kapp
+      ramené au primaire, en bas : la branche magnétisante $R_f \parallel X_m$, en tête sous $\underline{V}_1$, vient de l'essai à
+      vide ; l'impédance série $R_{s1} + jX_{s1}$ vient de l'essai en court-circuit. Les conventions sont celles de tout le cours :
+      $\underline{V}_1$ fléchée depuis la borne basse, référence de potentiel, et $\underline{I}_1$ entrant par la borne haute ;
+      $\underline{V}_2'$ est la tension secondaire ramenée, aux bornes de la charge ramenée $\underline{Z}_2'$.
+    </figcaption>
+  </figure>
+
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Plaque et conditions :<br/>Sn, V1n, V2n, f, température"] --> B["Résistances en continu :<br/>R1, R2 à θmes"]
+  A --> C["Essai à vide sous V1n :<br/>V10, I10, P10, V20"]
+  A --> D["Court-circuit à I1n :<br/>V1cc, I1cc, P1cc, I2cc"]
+  C --> E["m = V20 / V10 ; Rf = V10² / P10 ;<br/>Iμ = racine de I10² - If² ; Xm = V10 / Iμ"]
+  D --> F["Zs1 = V1cc / I1cc ; Rs1 = P1cc / I1cc² ;<br/>Xs1 = racine de Zs1² - Rs1²"]
+  B --> G{"Rs1 proche de<br/>R1 + R2 / m² ?"}
+  F --> G
+  G -->|"oui"| H["Pertes supplémentaires faibles"]
+  G -->|"non"| I["Pertes supplémentaires :<br/>PJ et Pcc - PJ séparées"]
+  H --> J["Correction à θref :<br/>k = (235 + θref) / (235 + θmes)"]
+  I --> J
+  J --> K["Modèle de Kapp :<br/>chute, pertes, rendement"]
+  E --> K
+  K --> L["Contrôles : ordres de grandeur, rapport des courants,<br/>comparaison aux valeurs garanties"]</pre>
+    <figcaption>
+      Organigramme d'identification. Les rectangles sont des actions, le losange une décision, les libellés des flèches les choix
+      possibles. Trois mesures partent des données de plaque : résistances en continu, essai à vide, essai en court-circuit. L'essai
+      à vide donne directement le rapport et la branche magnétisante ; l'essai en court-circuit donne l'impédance série, qu'on
+      confronte aux résistances en continu pour détecter les pertes supplémentaires, avant la correction de température. Tout
+      converge vers le modèle de Kapp, dont on contrôle la cohérence.
+    </figcaption>
+  </figure>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Comparaison des deux essais</caption>
+      <thead><tr><th>Critère</th><th>Essai à vide</th><th>Essai en court-circuit</th></tr></thead>
+      <tbody>
+        <tr><td>Autre enroulement</td><td>ouvert, voltmètre de grande impédance</td><td>fermé sur une liaison de forte section</td></tr>
+        <tr><td>Grandeur imposée</td><td>tension assignée, fréquence assignée</td><td>courant assigné, tension réduite à $u_{cc}V_n$</td></tr>
+        <tr><td>Côté alimenté en pratique</td><td>basse tension ; la haute tension ouverte est sous tension</td><td>haute tension ; la basse tension porte le fort courant</td></tr>
+        <tr><td>Ce que lit le wattmètre</td><td>pertes fer $P_0$, plus $R_1I_0^2$ négligeable</td><td>pertes dues à la charge $P_{cc}$, plus pertes fer négligeables</td></tr>
+        <tr><td>Paramètres obtenus</td><td>$m$, $R_f$, $X_m$, $i_0$</td><td>$R_s$, $X_s$, $u_r$, $u_x$, $u_{cc}$</td></tr>
+        <tr><td>Facteur de puissance typique</td><td>$0{,}1$ à $0{,}4$ : wattmètre adapté aux faibles facteurs de puissance</td><td>$0{,}2$ à $0{,}7$</td></tr>
+        <tr><td>Sensible à</td><td>tension, fréquence, forme d'onde, état du noyau</td><td>température des enroulements, contacts, courant d'essai</td></tr>
+        <tr><td>Danger principal</td><td>tension de l'enroulement ouvert</td><td>surintensité si la tension monte trop vite</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-familles-figure" data-renvoi="d-familles-figure">ce que chaque essai laisse en jeu dans le schéma de Kapp</a> et <a href="#d-anim-figure" data-renvoi="d-anim-figure">l'animation du banc d'essais</a>, section D ;</li>
+    <li><a href="#e-vide-figure" data-renvoi="e-vide-figure">le montage de l'essai à vide</a>, <a href="#e-phaseurs-figure" data-renvoi="e-phaseurs-figure">l'animation du phaseur du courant à vide</a>, <a href="#e-sim-vide-figure" data-renvoi="e-sim-vide-figure">la simulation de la courbe à vide</a>, <a href="#e-cc-figure" data-renvoi="e-cc-figure">le montage de l'essai en court-circuit</a> et <a href="#e-temp-figure" data-renvoi="e-temp-figure">l'animation de la correction de température</a>, section E ;</li>
+    <li><a href="#h-donnees-figure" data-renvoi="h-donnees-figure">le relevé des mesures de l'exemple</a> et <a href="#h-sim-figure" data-renvoi="h-sim-figure">la simulation d'identification et de prévision</a>, section H ;</li>
+    <li><a href="#i-poste-figure" data-renvoi="i-poste-figure">la chaîne du procès-verbal du poste aux paramètres par phase</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour extraire les paramètres d'un transformateur à partir de mesures :</p>
+  <ol>
+    <li>Rassembler la plaque et les conditions d'essai : $S_n$, tensions et courants assignés de chaque côté, fréquence, couplage, prise en service, température des enroulements au moment des mesures et matériau des conducteurs.</li>
+    <li>Vérifier que chaque essai a été fait au bon point : essai à vide sous tension et fréquence assignées, essai en court-circuit au courant assigné ou ramené à ce courant par les lois de proportionnalité.</li>
+    <li>Pour un appareil triphasé, passer en grandeurs par phase d'une étoile équivalente : tension simple, courant de ligne, tiers de la puissance totale.</li>
+    <li>Essai à vide : calculer $m = V_{20}/V_{10}$, $\cos\varphi_0$, $I_f$, $I_\mu$, puis $R_f = V_{10}^2/P_{10}$ et $X_m = V_{10}/I_\mu$, vus du côté alimenté ; corriger de $R_1I_0^2$ et de la consommation des instruments si l'appareil est petit.</li>
+    <li>Essai en court-circuit : calculer $Z_{s1}$, $R_{s1}$, $X_{s1}$, puis $u_{cc}$, $u_r$ et $u_x$ ; contrôler le rapport par $I_{2cc}/I_{1cc} \approx 1/m$.</li>
+    <li>Comparer $R_{s1}$ à $R_1 + R_2/m^2$ mesuré en continu, en déduire les pertes supplémentaires, puis corriger $P_{cc}$ et $u_{cc}$ à la température de référence.</li>
+    <li>Ramener tous les paramètres du côté où l'on veut calculer, par $m^2$, et partager si besoin $X_s$ en deux moitiés.</li>
+    <li>Contrôler : ordres de grandeur ($i_0$ de $0{,}5$ à $3\ \%$, $u_{cc}$ de $4$ à $6\ \%$ en distribution, $\cos\varphi_0$ faible), comparaison aux valeurs garanties, cohérence d'une prévision faite avec le modèle, par exemple la chute en charge ; énoncer ce que le modèle linéaire ne représente pas.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    On identifie le transformateur monophasé des cours <a href="#/cours/transformateur-ideal">Transformateur idéal</a> et
+    <a href="#/cours/transformateur-reel">Transformateur réel</a> : $2{,}5\ \mathrm{kVA}$, $400\ \mathrm{V} / 230\ \mathrm{V}$,
+    $50\ \mathrm{Hz}$, $600$ et $345$ spires. Le cours précédent a supposé ses six paramètres connus ; on vérifie ici qu'on les
+    retrouve à partir de mesures. Les lectures ci-dessous sont celles que donnerait cet appareil, arrondies à la résolution
+    d'instruments courants ; les résistances en continu ont été mesurées à la température de référence, ce qui dispense ici de
+    correction. Le relevé fixe les données.
+  </p>
+  <figure id="h-donnees-figure">
+    <svg viewBox="0 0 760 250" role="img" aria-label="Relevé des mesures : à gauche l'essai à vide avec 400 V, 0,218 A, 34,8 W et 229,8 V ; au centre l'essai en court-circuit avec 6,25 A, 17,73 V, 70,6 W et 10,86 A ; à droite les résistances en continu, 0,90 et 0,30 ohm">
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+        <rect x="20" y="30" width="230" height="190" rx="8"/>
+        <rect x="270" y="30" width="230" height="190" rx="8"/>
+        <rect x="520" y="30" width="220" height="190" rx="8"/>
+        <path d="M20 66H250M270 66H500M520 66H740"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M196 110H214M196 130H214"/>
+        <circle cx="218" cy="110" r="3.5"/>
+        <circle cx="218" cy="130" r="3.5"/>
+        <path d="M446 110H476M446 130H476"/>
+        <path d="M476 110V130" stroke-width="5"/>
+        <rect x="680" y="104" width="44" height="14" rx="2"/>
+        <rect x="680" y="160" width="44" height="14" rx="2"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="34" y="54">essai à vide</text>
+        <text x="34" y="92">V10 = 400,0 V</text>
+        <text x="34" y="116">I10 = 0,218 A</text>
+        <text x="34" y="140">P10 = 34,8 W</text>
+        <text x="34" y="164">V20 = 229,8 V</text>
+        <text x="34" y="196">secondaire ouvert</text>
+        <text x="284" y="54">essai en court-circuit</text>
+        <text x="284" y="92">I1cc = 6,25 A</text>
+        <text x="284" y="116">V1cc = 17,73 V</text>
+        <text x="284" y="140">P1cc = 70,6 W</text>
+        <text x="284" y="164">I2cc = 10,86 A</text>
+        <text x="284" y="196">secondaire fermé</text>
+        <text x="534" y="54">continu, à θref</text>
+        <text x="534" y="114">R1 = 0,90 Ω</text>
+        <text x="534" y="170">R2 = 0,30 Ω</text>
+        <text x="534" y="204">tension ÷ courant</text>
+        <text x="20" y="244">primaire alimenté dans les deux essais ; convention récepteur au primaire</text>
+      </g>
+    </svg>
+    <figcaption>
+      Relevé des mesures. À gauche, l'essai à vide : tension, courant et puissance au primaire, tension du secondaire ouvert,
+      symbolisé par deux bornes séparées. Au centre, l'essai en court-circuit : courant, tension et puissance au primaire, courant
+      dans la liaison du secondaire, symbolisée en trait épais. À droite, les résistances des deux enroulements mesurées en courant
+      continu par une méthode voltampèremétrique. Toutes les grandeurs du primaire sont prises en convention récepteur, borne basse
+      en référence.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Données : les lectures du relevé, $S_n = 2{,}5\ \mathrm{kVA}$, $V_{1n} = 400\ \mathrm{V}$, $I_{1n} = 2500/400 = 6{,}25\ \mathrm{A}$.
+    Inconnues : $m$, $R_f$, $X_m$, $R_{s1}$, $X_{s1}$, $u_{cc}$, $u_r$, $u_x$, puis les six éléments du schéma en T, et une prévision
+    de la chute et du rendement à pleine charge sous $\cos\varphi_2 = 0{,}8$, à comparer aux valeurs vraies du cours précédent.
+    Stratégie : exploiter l'essai à vide avec le schéma de Kapp, puis l'essai en court-circuit sans branche magnétisante ; séparer
+    les résistances grâce aux mesures en continu et partager la réactance ; chiffrer les approximations ; enfin, prévoir avec le
+    modèle identifié.
+  </p>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li>Rapport : $m = V_{20}/V_{10} = 229{,}8/400 = 0{,}574\,5$. Le rapport des spires vaut $345/600 = 0{,}575$ ; l'écart de $0{,}09\ \%$ vient de la chute du courant à vide dans $R_1 + jX_1$ et de l'arrondi de la lecture.</li>
+    <li>Facteur de puissance à vide : $\cos\varphi_0 = 34{,}8/(400 \times 0{,}218) = 0{,}399$, soit $\varphi_0 = 66{,}48^\circ$. Composantes : $I_f = 34{,}8/400 = 0{,}087\,0\ \mathrm{A}$ et $I_\mu = \sqrt{0{,}218^2 - 0{,}087^2} = 0{,}199\,9\ \mathrm{A}$.</li>
+    <li>Branche magnétisante : $R_f = 400^2/34{,}8 = 4598\ \Omega$ et $X_m = 400/0{,}199\,9 = 2001\ \Omega$. Correction : $R_1I_{10}^2 = 0{,}9 \times 0{,}218^2 = 0{,}043\ \mathrm{W}$ et $E_1 = |400 - (0{,}9 + j1{,}1) \times 0{,}218\angle{-66{,}48^\circ}| = 399{,}70\ \mathrm{V}$, d'où $R_f = 4596\ \Omega$ et $X_m = 1999\ \Omega$ : la correction, moins de $0{,}1\ \%$, reste inférieure à l'incertitude d'arrondi de $P_{10}$, $\pm 0{,}05\ \mathrm{W}$ sur $34{,}8$, soit $\pm 0{,}14\ \%$.</li>
+    <li>Impédance série : $Z_{s1} = 17{,}73/6{,}25 = 2{,}837\ \Omega$ ; $R_{s1} = 70{,}6/6{,}25^2 = 1{,}807\ \Omega$ ; $X_{s1} = \sqrt{2{,}837^2 - 1{,}807^2} = 2{,}187\ \Omega$. Facteur de puissance de l'essai : $70{,}6/(17{,}73 \times 6{,}25) = 0{,}637$.</li>
+    <li>Grandeurs relatives : $u_{cc} = 17{,}73/400 = 4{,}43\ \%$ ; $u_r = 70{,}6/2500 = 2{,}82\ \%$ ; $u_x = \sqrt{4{,}43^2 - 2{,}82^2} = 3{,}42\ \%$.</li>
+    <li>Contrôle du rapport par les courants : $I_{2cc}/I_{1cc} = 10{,}86/6{,}25 = 1{,}738$, contre $1/m = 1{,}741$ : l'écart de $0{,}2\ \%$ est de l'ordre de la résolution de A2, et le courant à vide sous $17{,}7\ \mathrm{V}$, $4{,}8\ \mathrm{mA}$, ne représente que $0{,}08\ \%$ du courant.</li>
+    <li>Séparation des résistances : $R_2' = 0{,}30/0{,}574\,5^2 = 0{,}909\ \Omega$, et $R_1 + R_2' = 1{,}809\ \Omega$, à $0{,}1\ \%$ de $R_{s1}$ : pas de pertes supplémentaires décelables sur ce petit appareil. On retient $R_1 = 0{,}90\ \Omega$ et $R_2 = 0{,}30\ \Omega$.</li>
+    <li>Partage des réactances : $X_1 = X_2' = 2{,}187/2 = 1{,}093\ \Omega$, d'où $X_2 = 1{,}093 \times 0{,}574\,5^2 = 0{,}361\ \Omega$.</li>
+    <li>Approximations de l'essai en court-circuit : $E_1 \approx 8{,}85\ \mathrm{V}$, $2{,}2\ \%$ du flux de service ; pertes fer $\approx 0{,}017\ \mathrm{W}$, soit $0{,}02\ \%$ de $P_{1cc}$. Les négliger est sans effet visible.</li>
+    <li>Prévision à pleine charge sous $\cos\varphi_2 = 0{,}8$ inductif : $\Delta V/V_{20} = 2{,}82 \times 0{,}8 + 3{,}42 \times 0{,}6 = 4{,}31\ \%$, soit $9{,}9\ \mathrm{V}$ sur $230\ \mathrm{V}$ ; rendement $\eta = 2000/(2000 + 34{,}8 + 70{,}6) = 94{,}99\ \%$ ; charge de rendement maximal $\sqrt{34{,}8/70{,}6} = 0{,}702$.</li>
+  </ol>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Paramètres identifiés et valeurs vraies du transformateur de l'exemple</caption>
+      <thead><tr><th>Élément</th><th>Valeur vraie</th><th>Identifiée</th><th>Écart</th><th>Origine</th></tr></thead>
+      <tbody>
+        <tr><td>$R_1$</td><td>$0{,}90\ \Omega$</td><td>$0{,}90\ \Omega$</td><td>mesure directe</td><td>continu</td></tr>
+        <tr><td>$X_1$</td><td>$1{,}10\ \Omega$</td><td>$1{,}093\ \Omega$</td><td>$-0{,}6\ \%$</td><td>court-circuit, partage par moitié</td></tr>
+        <tr><td>$R_2$</td><td>$0{,}30\ \Omega$</td><td>$0{,}30\ \Omega$</td><td>mesure directe</td><td>continu</td></tr>
+        <tr><td>$X_2$</td><td>$0{,}36\ \Omega$</td><td>$0{,}361\ \Omega$</td><td>$+0{,}2\ \%$</td><td>court-circuit, partage par moitié</td></tr>
+        <tr><td>$R_f$</td><td>$4600\ \Omega$</td><td>$4598\ \Omega$</td><td>$-0{,}05\ \%$</td><td>à vide</td></tr>
+        <tr><td>$X_m$</td><td>$2000\ \Omega$</td><td>$2001\ \Omega$</td><td>$+0{,}06\ \%$</td><td>à vide</td></tr>
+        <tr><td>$X_{s1} = X_1 + X_2/m^2$</td><td>$2{,}189\ \Omega$</td><td>$2{,}187\ \Omega$</td><td>$-0{,}1\ \%$</td><td>court-circuit</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="h-sim-section">Simulation interactive : des lectures au modèle, puis à la prévision</h3>
+  <p>
+    La simulation refait les calculs de cette section à partir des six lectures, réglables par les curseurs, et utilise le modèle
+    identifié pour prévoir la tension secondaire en fonction du taux de charge, sous trois facteurs de puissance. Les valeurs de
+    départ sont celles du relevé. Prédisez avant de manipuler : si le wattmètre de l'essai en court-circuit avait lu $100\ \mathrm{W}$
+    au lieu de $70{,}6\ \mathrm{W}$, avec la même tension, la chute à pleine charge sous $\cos\varphi = 1$ serait-elle plus forte ou plus
+    faible ? Et sous $\cos\varphi = 0{,}8$ inductif ?
+  </p>
+  <figure id="h-sim-figure">
+    <div id="h-sim-trace"></div>
+    <figcaption>
+      Tension secondaire prévue par le modèle de Kapp identifié, en fonction du taux de charge $x = I_2/I_{2n}$, pour une charge
+      inductive de facteur de puissance $0{,}8$, une charge résistive et une charge capacitive de facteur de puissance $0{,}8$ ; les
+      trois courbes sont nommées dans la légende du tracé. Le trait horizontal en tirets marque la tension à vide mesurée, le trait
+      vertical en pointillés la charge de rendement maximal.
+    </figcaption>
+  </figure>
+  <div id="h-sim-curseurs"></div>
+  <div id="h-sim-valeurs"></div>
+  <p>
+    Interprétation : avec les lectures du relevé, la simulation retrouve $R_f = 4598\ \Omega$, $X_m = 2001\ \Omega$,
+    $R_{s1} = 1{,}807\ \Omega$, $X_{s1} = 2{,}187\ \Omega$, et prévoit $V_2 = 219{,}9\ \mathrm{V}$ à pleine charge sous
+    $\cos\varphi = 0{,}8$ inductif, à partir de la tension à vide mesurée de $229{,}8\ \mathrm{V}$. Portez $P_{1cc}$ à
+    $100\ \mathrm{W}$ : $u_r$ passe à $4{,}0\ \%$ et $u_x$ tombe à $1{,}91\ \%$, puisque $u_{cc}$ ne change pas. Sous $\cos\varphi = 1$,
+    la chute passe de $2{,}8$ à $4{,}0\ \%$ : à facteur de puissance unité, elle est fixée par la lecture du wattmètre, non par
+    celle du voltmètre. Sous $\cos\varphi = 0{,}8$ inductif, elle bouge à peine, de $4{,}31$ à $4{,}35\ \%$, car elle est déjà proche
+    de son maximum $u_{cc}$ ; en charge capacitive, elle diminue. Une erreur de lecture du wattmètre en court-circuit se voit
+    donc surtout sur les charges résistives et sur le rendement. Faites enfin varier $P_{10}$ : la courbe de tension ne bouge pas,
+    seule la charge de rendement maximal se déplace.
+  </p>
+
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li><strong>Retour aux valeurs vraies :</strong> les six paramètres identifiés sont à moins de $0{,}6\ \%$ des valeurs du cours précédent ; la chute prévue à courant assigné, $9{,}9\ \mathrm{V}$ sur $230\ \mathrm{V}$, est celle qu'il obtenait avec les valeurs vraies, et le rendement de $95{,}0\ \%$ aussi.</li>
+    <li><strong>Dimensions :</strong> $\mathrm{V}^2/\mathrm{W} = \Omega$ pour $R_f$, $\mathrm{W}/\mathrm{A}^2 = \Omega$ pour $R_{s1}$, $\mathrm{V}/\mathrm{A} = \Omega$ pour $X_m$ et $Z_{s1}$.</li>
+    <li><strong>Ordres de grandeur :</strong> $i_0 = 0{,}218/6{,}25 = 3{,}5\ \%$, $u_{cc} = 4{,}4\ \%$ et $\cos\varphi_0 = 0{,}4$ sont normaux pour un appareil de quelques kilovoltampères ; un transformateur de distribution aurait un $i_0$ et un $\cos\varphi_0$ plus faibles, comme le montre la section I.</li>
+    <li><strong>Encadrement :</strong> $X_m$ est environ mille fois plus grande que $X_{s1}$ ; c'est ce rapport qui rend légitimes les deux simplifications.</li>
+    <li><strong>Incertitudes :</strong> les lectures à trois ou quatre chiffres limitent la précision à environ $0{,}1\ \%$ ; le partage des réactances est une convention, non une mesure, et l'écart de $0{,}6\ \%$ sur $X_1$ n'a aucune conséquence sur la chute ni sur les pertes.</li>
+  </ul>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+
+  <h3 id="i-probleme">Le procès-verbal d'essais du transformateur du poste</h3>
+  <p>
+    Le cours <a href="#/cours/transformateur-reel">Transformateur réel</a> a modélisé le transformateur du poste du site, hypothèses
+    d'étude $100\ \mathrm{kVA}$, $20\ \mathrm{kV} / 410\ \mathrm{V}$, $50\ \mathrm{Hz}$, avec des valeurs de catalogue supposées :
+    $P_0 = 210\ \mathrm{W}$, $P_{cc} = 1750\ \mathrm{W}$ à $75\ ^\circ\mathrm{C}$, $u_{cc} = 4\ \%$ et $i_0 = 1{,}6\ \%$. L'appareil retenu
+    arrive avec son procès-verbal d'essais individuels ; on suppose qu'il porte les mesures suivantes, faites sur la prise
+    principale. Résistances en courant continu à $22\ ^\circ\mathrm{C}$, température de l'huile après un long repos, exprimées par
+    phase d'une étoile équivalente : $26{,}8\ \Omega$ côté haute tension et $11{,}26\ \mathrm{m\Omega}$ côté basse tension. Essai à vide
+    côté basse tension sous $410\ \mathrm{V}$ entre phases, haute tension ouverte : courant moyen $2{,}20\ \mathrm{A}$, pertes
+    $198\ \mathrm{W}$. Essai en court-circuit côté haute tension, basse tension court-circuitée, au courant assigné de
+    $2{,}887\ \mathrm{A}$ : $790\ \mathrm{V}$ entre phases et $1490\ \mathrm{W}$ à $22\ ^\circ\mathrm{C}$. Il faut en tirer les paramètres
+    par phase, les ramener à $75\ ^\circ\mathrm{C}$, les comparer aux hypothèses et mettre à jour le modèle du poste. Le schéma situe
+    la chaîne de traitement.
+  </p>
+  <figure id="i-poste-figure">
+    <svg viewBox="0 0 760 330" role="img" aria-label="Chaîne de traitement du procès-verbal du poste : essai à vide côté basse tension et essai en court-circuit côté haute tension, passage en grandeurs par phase d'une étoile équivalente, correction de température, puis modèle de Kapp par phase vu du tableau général">
+      <defs>
+        <marker id="fl-i" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+        <rect x="20" y="20" width="220" height="110" rx="8"/>
+        <rect x="20" y="150" width="220" height="110" rx="8"/>
+        <rect x="290" y="20" width="200" height="110" rx="8"/>
+        <rect x="290" y="150" width="200" height="110" rx="8"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M240 75H284" marker-end="url(#fl-i)"/>
+        <path d="M240 205H284" marker-end="url(#fl-i)"/>
+        <path d="M490 75H530V140H560" marker-end="url(#fl-i)"/>
+        <path d="M490 205H530V170H560" marker-end="url(#fl-i)"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="590" cy="155" r="18"/>
+        <path d="M580 155c4 -7 7 -7 10 0s6 7 10 0"/>
+        <path d="M590 137V110H640M660 110H664M690 110H740M590 173V210H740"/>
+        <rect x="640" y="103" width="20" height="14" rx="2"/>
+        <path d="M664 110a6.5 6.5 0 0 1 13 0a6.5 6.5 0 0 1 13 0"/>
+        <path d="M740 104V216" stroke-width="5"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M700 196V124" marker-end="url(#fl-i)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="32" y="42">à vide côté BT, HT ouverte</text>
+        <text x="32" y="66">410 V ; 2,20 A ; 198 W</text>
+        <text x="32" y="90">cos φ0 = 0,127</text>
+        <text x="32" y="114">danger : 20 kV aux bornes HT</text>
+        <text x="32" y="172">court-circuit côté HT</text>
+        <text x="32" y="196">2,887 A ; 790 V ; 1490 W</text>
+        <text x="32" y="220">22 °C ; R continu par phase</text>
+        <text x="32" y="244">26,8 Ω HT, 11,26 mΩ BT</text>
+        <text x="302" y="42">étoile équivalente BT</text>
+        <text x="302" y="66">236,7 V ; 66 W par phase</text>
+        <text x="302" y="90">Rf = 849 Ω</text>
+        <text x="302" y="114">Xm = 108,5 Ω</text>
+        <text x="302" y="172">par phase, ramené BT</text>
+        <text x="302" y="196">Xcc = 61,5 mΩ</text>
+        <text x="302" y="220">Rcc(75 °C) = 29,3 mΩ</text>
+        <text x="302" y="244">ucc(75 °C) = 4,05 %</text>
+        <text x="560" y="250">modèle par phase</text>
+        <text x="560" y="266">vu du tableau général</text>
+        <text x="630" y="96">Rcc</text>
+        <text x="672" y="96">Xcc</text>
+        <text x="706" y="164">U2</text>
+        <text x="560" y="300">référence : neutre BT</text>
+        <text x="20" y="300">grandeurs triphasées ramenées à une phase :</text>
+        <text x="20" y="316">tension simple, courant de ligne, P / 3</text>
+      </g>
+    </svg>
+    <figcaption>
+      Chaîne de traitement du procès-verbal. À gauche, les deux essais tels qu'ils sont relevés, en grandeurs triphasées : l'essai à
+      vide côté basse tension, pendant lequel les bornes haute tension ouvertes sont sous pleine tension, et l'essai en
+      court-circuit côté haute tension, avec les résistances en continu. Au centre, les grandeurs par phase d'une étoile équivalente,
+      ramenées côté basse tension et, pour la résistance, à $75\ ^\circ\mathrm{C}$. À droite, le modèle de Kapp par phase vu du
+      tableau général : source à vide, cercle, puis $R_{cc}$, rectangle, et $X_{cc}$, bobine, jusqu'au jeu de barres en trait épais ;
+      la tension $U_2$ est fléchée depuis le neutre basse tension, référence de potentiel. La branche magnétisante, côté réseau,
+      n'apparaît pas vue du tableau.
+    </figcaption>
+  </figure>
+
+  <h3 id="i-calcul">Paramètres par phase, correction et comparaison</h3>
+  <ol>
+    <li>Courants assignés : $I_{1n} = 100\,000/(\sqrt{3} \times 20\,000) = 2{,}887\ \mathrm{A}$ et $I_{2n} = 100\,000/(\sqrt{3} \times 410) = 140{,}8\ \mathrm{A}$ ; $m = 410/20\,000 = 0{,}020\,5$ et $m^2 = 4{,}202\,5 \times 10^{-4}$.</li>
+    <li>Essai à vide par phase : $V = 410/\sqrt{3} = 236{,}7\ \mathrm{V}$, $P = 198/3 = 66\ \mathrm{W}$ ; $\cos\varphi_0 = 198/(\sqrt{3} \times 410 \times 2{,}20) = 0{,}127$ ; $I_f = 66/236{,}7 = 0{,}279\ \mathrm{A}$, $I_\mu = \sqrt{2{,}20^2 - 0{,}279^2} = 2{,}182\ \mathrm{A}$ ; $R_f = 236{,}7^2/66 = 849\ \Omega$ et $X_m = 236{,}7/2{,}182 = 108{,}5\ \Omega$ ; $i_0 = 2{,}20/140{,}8 = 1{,}56\ \%$ ; le noyau absorbe $Q_0 = 3 \times 236{,}7 \times 2{,}182 = 1{,}55\ \mathrm{kvar}$.</li>
+    <li>Essai en court-circuit par phase, côté haute tension : $Z_{cc} = (790/\sqrt{3})/2{,}887 = 158{,}0\ \Omega$ ; $R_{cc} = 1490/(3 \times 2{,}887^2) = 59{,}6\ \Omega$ ; $X_{cc} = \sqrt{158{,}0^2 - 59{,}6^2} = 146{,}3\ \Omega$. Ramenés côté basse tension par $m^2$ : $66{,}40$, $25{,}05$ et $61{,}49\ \mathrm{m\Omega}$.</li>
+    <li>Pertes Joule en continu à $22\ ^\circ\mathrm{C}$ : $3 \times (26{,}8 \times 2{,}887^2 + 0{,}011\,26 \times 140{,}8^2) = 670{,}0 + 669{,}8 = 1339{,}8\ \mathrm{W}$ ; pertes supplémentaires : $1490 - 1339{,}8 = 150{,}2\ \mathrm{W}$, soit $10\ \%$, ce qui est courant pour un appareil de cette taille. Contrôle : la résistance en continu ramenée, $26{,}8 \times m^2 + 11{,}26 = 22{,}52\ \mathrm{m\Omega}$, est bien inférieure aux $25{,}05\ \mathrm{m\Omega}$ de l'essai en alternatif.</li>
+    <li>Correction à $75\ ^\circ\mathrm{C}$ : $k = 310/257 = 1{,}206\,2$ ; $P_{cc} = 1339{,}8 \times 1{,}206\,2 + 150{,}2/1{,}206\,2 = 1616{,}1 + 124{,}5 = 1740{,}6\ \mathrm{W}$ ; $R_{cc} = 1740{,}6/(3 \times 140{,}8^2) = 29{,}26\ \mathrm{m\Omega}$ ; $u_r = 1{,}741\ \%$, $u_x = \sqrt{3{,}95^2 - 1{,}49^2} = 3{,}658\ \%$, $u_{cc} = \sqrt{3{,}658^2 + 1{,}741^2} = 4{,}05\ \%$.</li>
+    <li>Comparaison aux hypothèses : $P_0$ mesuré $198\ \mathrm{W}$ contre $210$, soit $-5{,}7\ \%$ ; $P_{cc}$ $1740{,}6\ \mathrm{W}$ contre $1750$, $-0{,}5\ \%$ ; $u_{cc}$ $4{,}05\ \%$ contre $4\ \%$ ; $i_0$ $1{,}56\ \%$ contre $1{,}6\ \%$ ; $R_{cc}$ $29{,}26$ contre $29{,}42\ \mathrm{m\Omega}$ et $X_{cc}$ $61{,}49$ contre $60{,}46\ \mathrm{m\Omega}$. Les écarts sont de quelques pour cent et vont dans le sens favorable pour les pertes ; leur conformité se juge sur les tolérances du contrat et de la norme applicable, qu'il faut vérifier.</li>
+    <li>Mise à jour du modèle du poste : chute à pleine activité du site compensé, $64{,}8\ \mathrm{kW}$ et $11{,}06\ \mathrm{kvar}$ : $(1{,}741 \times 64{,}8 + 3{,}658 \times 11{,}06)/100 = 1{,}53\ \%$, soit $6{,}3\ \mathrm{V}$, inchangée ; pertes à $66{,}5\ \mathrm{kVA}$ : $0{,}665^2 \times 1740{,}6 + 198 = 769{,}8 + 198 = 967{,}8\ \mathrm{W}$, rendement $64{,}8/(64{,}8 + 0{,}968) = 98{,}53\ \%$ ; optimum à $\sqrt{198/1740{,}6} = 0{,}337$, soit $33{,}7\ \mathrm{kVA}$.</li>
+    <li>Moyens d'essai : la source de l'essai en court-circuit fournit $\sqrt{3} \times 790 \times 2{,}887 = 3{,}95\ \mathrm{kVA}$ sous un facteur de puissance de $0{,}377$, celle de l'essai à vide $\sqrt{3} \times 410 \times 2{,}20 = 1{,}56\ \mathrm{kVA}$ : quelques kilovoltampères suffisent à caractériser un appareil de $100\ \mathrm{kVA}$.</li>
+  </ol>
+
+  <h3 id="i-compromis">Contraintes, risques et compromis</h3>
+  <ul>
+    <li><strong>Sécurité :</strong> pendant l'essai à vide côté basse tension, les bornes haute tension portent $20\ \mathrm{kV}$ ; la zone doit être balisée et l'appareil traité comme sous haute tension. Pendant l'essai en court-circuit, une ouverture accidentelle de la liaison basse tension ferait monter la tension secondaire sans danger notable, mais une montée trop rapide de la source ferait passer un courant excessif.</li>
+    <li><strong>Mesure à faible facteur de puissance :</strong> avec $\cos\varphi_0 = 0{,}127$, un wattmètre ordinaire dont l'erreur est rapportée à sa pleine échelle $VI$ commettrait une erreur relative environ huit fois plus grande sur $P_0$ ; il faut un wattmètre adapté ou un analyseur de puissance, et des transformateurs de mesure d'angle d'erreur faible, sujet du cours Autotransformateurs, TC et TP.</li>
+    <li><strong>Température :</strong> une mesure de résistance faite avec une huile encore chaude, sans attendre l'équilibre, fausse le facteur $k$ ; un écart de $5\ \mathrm{K}$ sur $\theta_{mes}$ change $P_{cc}$ corrigé d'environ $1{,}7\ \%$.</li>
+    <li><strong>Exploitation :</strong> les nouvelles valeurs réduisent les pertes en pleine activité de $984$ à $968\ \mathrm{W}$ ; sur la journée type du cours précédent, sous $20{,}8\ \mathrm{kV}$ avec la prise $+2{,}5\ \%$, les pertes passent d'environ $15{,}1$ à $14{,}8\ \mathrm{kWh}$, soit environ $5390\ \mathrm{kWh}$ par an au lieu de $5510$.</li>
+    <li><strong>Suivi dans le temps :</strong> les mêmes essais, refaits après un incident ou une longue période de service et comparés au procès-verbal d'origine, sont un outil de diagnostic : courant à vide et pertes à vide pour le noyau, résistances par phase et pertes en court-circuit pour les enroulements et les contacts.</li>
+    <li><strong>Limites :</strong> les essais caractérisent l'appareil en régime sinusoïdal, sur la prise principale ; l'effet des harmoniques de la pompe sur les pertes en charge, la saturation lors d'une surtension et le courant d'appel à la mise sous tension ne sont pas mesurés par ces deux essais.</li>
+  </ul>
+
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : ce que cette séance ajoute</span>
+    <p>
+      Exploitation du procès-verbal d'essais du transformateur du poste, $100\ \mathrm{kVA}$, $20\ \mathrm{kV} / 410\ \mathrm{V}$, valeurs
+      supposées : à vide côté basse tension sous $410\ \mathrm{V}$, $2{,}20\ \mathrm{A}$ et $198\ \mathrm{W}$, d'où $R_f = 849\ \Omega$ et
+      $X_m = 108{,}5\ \Omega$ par phase côté basse tension, $i_0 = 1{,}56\ \%$ et $1{,}55\ \mathrm{kvar}$ de magnétisation ; en
+      court-circuit côté haute tension au courant assigné, $790\ \mathrm{V}$ et $1490\ \mathrm{W}$ à $22\ ^\circ\mathrm{C}$, dont
+      $1339{,}8\ \mathrm{W}$ de pertes Joule en continu et $150{,}2\ \mathrm{W}$ de pertes supplémentaires ; ramené à
+      $75\ ^\circ\mathrm{C}$, $P_{cc} = 1740{,}6\ \mathrm{W}$, $R_{cc} = 29{,}26\ \mathrm{m\Omega}$, $X_{cc} = 61{,}49\ \mathrm{m\Omega}$,
+      $u_r = 1{,}74\ \%$, $u_x = 3{,}66\ \%$ et $u_{cc} = 4{,}05\ \%$. Écarts aux hypothèses de catalogue : $P_0$ $-5{,}7\ \%$, $P_{cc}$
+      $-0{,}5\ \%$, $u_{cc}$ $+0{,}05$ point. Modèle du poste mis à jour : chute de $1{,}53\ \%$ inchangée en pleine activité, pertes de
+      $968\ \mathrm{W}$ et rendement de $98{,}53\ \%$, optimum à $33{,}7\ \mathrm{kVA}$, environ $5390\ \mathrm{kWh}$ de pertes par an
+      sur la journée type. Conformité à juger sur les tolérances du contrat ; essais à refaire en suivi après tout incident.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Faire l'essai à vide sous une tension quelconque.</strong> Les pertes fer et surtout le courant magnétisant dépendent fortement de la tension ; un essai à $90\ \%$ donnait dans la simulation une réactance magnétisante $17\ \%$ trop grande. L'essai se fait sous la tension et la fréquence assignées.</li>
+    <li><strong>Appliquer la tension assignée au transformateur en court-circuit.</strong> Le courant atteindrait $1/u_{cc}$, soit plus de vingt fois le courant assigné : on part toujours de zéro et l'on monte en surveillant l'ampèremètre.</li>
+    <li><strong>Prendre $Z_{s1}$ pour $X_{s1}$.</strong> Sur un petit transformateur, $R_{s1}$ et $X_{s1}$ sont du même ordre : dans l'exemple, confondre les deux surestimerait la réactance de $30\ \%$. Il faut le wattmètre, pas seulement le voltmètre et l'ampèremètre.</li>
+    <li><strong>Oublier que les paramètres sont vus du côté alimenté.</strong> L'essai à vide fait côté basse tension donne $R_f$ et $X_m$ côté basse tension ; les comparer à des valeurs côté haute tension sans facteur $m^2$, ici $1/4{,}2 \times 10^{-4}$, conduit à des écarts absurdes.</li>
+    <li><strong>Comparer des pertes mesurées à froid à des valeurs garanties à chaud.</strong> Sans correction, le poste paraîtrait perdre $1490\ \mathrm{W}$ au lieu de $1741$ ; appliquer le facteur $k$ à toute la puissance, sans séparer les pertes supplémentaires, donnerait $1797\ \mathrm{W}$, trop.</li>
+    <li><strong>Mélanger grandeurs de ligne et grandeurs par phase.</strong> En triphasé, on travaille par phase d'une étoile équivalente : tension simple, courant de ligne et tiers de la puissance ; utiliser $410\ \mathrm{V}$ avec $66\ \mathrm{W}$ multiplierait $R_f$ par trois.</li>
+    <li><strong>Utiliser un ampèremètre à valeur moyenne pour le courant à vide.</strong> Le courant à vide est déformé ; un appareil étalonné en sinus mais sensible à la valeur moyenne se trompe de plusieurs pour cent, et l'erreur se reporte sur $X_m$.</li>
+    <li><strong>Ignorer la consommation des instruments.</strong> Sur un petit transformateur, un voltmètre de $10\ \mathrm{k\Omega}$ sous $400\ \mathrm{V}$ dissipe $16\ \mathrm{W}$, la moitié des pertes à vide de l'exemple : il faut un voltmètre de grande impédance ou retrancher sa consommation.</li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain : un courant à vide en hausse avec des pertes à vide stables signale une réluctance accrue, joints du
+    noyau desserrés ou entrefer accidentel ; des pertes à vide en hausse signalent des tôles en contact, une isolation entre tôles
+    dégradée ou une surtension ; des pertes en court-circuit en hausse avec $u_x$ stable signalent une résistance accrue, mauvais
+    contact au changeur de prise ou à une connexion, ce que confirme une résistance en continu déséquilibrée entre phases ; une
+    variation de $u_x$ signale une déformation des enroulements, par exemple après un court-circuit violent qui les a déplacés.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic
+    industriel et une question conceptuelle. La correction de chacun reste masquée jusqu'à une tentative ou un clic explicite
+    sur "Voir la correction", puis se déroule étape par étape, accompagnée d'une courbe, d'un diagramme ou d'un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma.</p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$\cos\varphi_0 = \frac{P_{10}}{V_{10}I_{10}}, \qquad R_f = \frac{V_{10}^2}{P_{10}}, \qquad X_m = \frac{V_{10}}{\sqrt{I_{10}^2 - (P_{10}/V_{10})^2}}$$
+    $$m \approx \frac{V_{20}}{V_{10}}, \qquad \frac{I_{2cc}}{I_{1cc}} \approx \frac{1}{m}$$
+    $$R_{s1} = \frac{P_{1cc}}{I_{1cc}^2}, \qquad Z_{s1} = \frac{V_{1cc}}{I_{1cc}}, \qquad X_{s1} = \sqrt{Z_{s1}^2 - R_{s1}^2}$$
+    $$u_{cc} = \frac{V_{1cc}}{V_{1n}}\bigg|_{I_{1n}}, \qquad u_r = \frac{P_{cc}}{S_n}, \qquad u_x = \sqrt{u_{cc}^2 - u_r^2}$$
+    $$P_{cc}(\theta_{ref}) = k\,P_J + \frac{P_{cc} - P_J}{k}, \qquad k = \frac{235 + \theta_{ref}}{235 + \theta_{mes}}$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>Essai à vide sous tension et fréquence assignées, avec des instruments à valeur efficace vraie.</li>
+      <li>Essai en court-circuit en partant de zéro, jusqu'au courant assigné, jamais sous la tension assignée.</li>
+      <li>Paramètres vus du côté alimenté : ramener par $m^2$ avant de comparer ou d'additionner.</li>
+      <li>En triphasé : grandeurs par phase d'une étoile équivalente, puissance divisée par trois.</li>
+      <li>Pertes en court-circuit corrigées à la température de référence, pertes Joule et supplémentaires séparées.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Deux essais suffisent à chiffrer le schéma de Kapp d'un transformateur. À vide, sous tension assignée,
+    seule la branche magnétisante travaille : le wattmètre lit les pertes fer, d'où $R_f = V^2/P_{10}$, et la part réactive du
+    courant donne $X_m$ ; le voltmètre du secondaire donne le rapport. En court-circuit, au courant assigné, la tension n'est que
+    de $u_{cc}V_n$ et le noyau ne compte plus : le wattmètre lit les pertes dues à la charge, d'où $R_s = P_{cc}/I^2$, et la tension
+    donne $Z_s$ puis $X_s$. Les résistances en continu séparent primaire et secondaire et révèlent les pertes supplémentaires ;
+    les pertes se corrigent à la température de référence. La méthode demande une source de quelques pour cent de la puissance
+    assignée et donne le rendement bien plus précisément qu'une mesure directe.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent,
+    <a href="#/cours/transformateur-reel">Transformateur réel</a> ; une sur le cours
+    <a href="#/cours/harmoniques-et-qualite-de-l-energie">Harmoniques et qualité de l'énergie</a>, vieux d'une semaine, dont la
+    valeur efficace vraie sert à lire le courant à vide déformé ; une sur le cours
+    <a href="#/cours/tension-courant-charge-et-puissance">Tension, courant, charge et puissance</a>, vieux d'un mois, dont la
+    convention récepteur fixe le signe de chaque lecture de wattmètre.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : simuler les deux essais du transformateur de l'exemple dans LTspice, identifier ses paramètres en Python à partir des
+    lectures simulées, puis mesurer l'effet d'une erreur de méthode. Prédictions à écrire avant de commencer : quelle tension
+    faudra-t-il appliquer en court-circuit pour obtenir $6{,}25\ \mathrm{A}$ ? Le courant à vide sera-t-il en retard de plus ou de
+    moins de $60^\circ$ ?
+  </p>
+  <ol>
+    <li>Dans LTspice, reprendre le schéma du travail pratique du cours précédent : <code>R1 a b 0.9</code>, <code>Ll1 b c 3.501m</code>, <code>Rf c 0 4600</code>, <code>Lp c 0 6.366</code>, <code>Ls d e 2.105</code>, <code>K1 Lp Ls 1</code>, <code>Ll2 d f 1.146m</code>, <code>R2 f g 0.30</code> et <code>Rref e 0 1Meg</code>.</li>
+    <li>Essai à vide : source <code>V1 a 0 SINE(0 565.69 50)</code>, secondaire ouvert par <code>RL g e 1G</code> ; lancer <code>.tran 0 2 1.9 10u</code> et mesurer sur les dernières périodes la valeur efficace de <code>I(R1)</code>, la moyenne de <code>V(a)*I(R1)</code> et la valeur efficace de <code>V(g,e)</code>.</li>
+    <li>Essai en court-circuit : remplacer <code>RL</code> par <code>Rcc g e 1m</code>, régler l'amplitude de la source pour lire $6{,}25\ \mathrm{A}$ efficaces, puis mesurer la tension, la puissance moyenne et le courant dans <code>Rcc</code>.</li>
+    <li>En Python, écrire une fonction qui reçoit les six lectures et renvoie $m$, $R_f$, $X_m$, $R_{s1}$, $X_{s1}$, $u_{cc}$, $u_r$, $u_x$ selon la section G ; l'appliquer aux lectures simulées, puis aux lectures du relevé de la section H, et comparer aux valeurs vraies.</li>
+    <li>Erreur de méthode : refaire l'essai à vide avec un voltmètre simulé par une résistance de $10\ \mathrm{k\Omega}$ branchée aux bornes du primaire en aval du wattmètre, et chiffrer l'erreur commise sur $R_f$ si l'on ne retranche pas sa consommation.</li>
+  </ol>
+  <p>
+    Résultats attendus : à vide, environ $0{,}218\ \mathrm{A}$, $34{,}8\ \mathrm{W}$ et $229{,}8\ \mathrm{V}$, le courant étant en retard
+    d'environ $66^\circ$ ; en court-circuit, environ $17{,}7\ \mathrm{V}$ efficaces, soit $25{,}1\ \mathrm{V}$ crête, pour $6{,}25\ \mathrm{A}$,
+    $70{,}6\ \mathrm{W}$ et $10{,}86\ \mathrm{A}$ au secondaire ; paramètres identifiés à quelques dixièmes de pour cent des valeurs
+    vraies. Avec le voltmètre de $10\ \mathrm{k\Omega}$, la puissance lue monte vers $50{,}8\ \mathrm{W}$ et la résistance de pertes fer
+    identifiée tombe vers $3150\ \Omega$, environ $31\ \%$ trop bas. Anomalies à observer : une composante continue du courant primaire
+    pendant les premières dixièmes de seconde, due à l'instant de mise sous tension et lente à s'amortir parce que la constante de
+    temps $L_p/R_1$ est de l'ordre de $7\ \mathrm{s}$, d'où des mesures faites tard et éventuellement une source démarrée au passage
+    par le maximum de tension ; une erreur de matrice singulière si l'on retire <code>Rref</code> ; des écarts de quelques dixièmes de
+    pour cent liés au pas de calcul et à la résistance de la liaison de court-circuit.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est calculé dans ce
+    navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement pour
+    suivre votre progression. Le jalon de fin du module des machines demande de comprendre les transformateurs, de lire leurs
+    modèles et d'interpréter une plaque signalétique : savoir passer d'un procès-verbal d'essais au schéma équivalent en est une
+    étape directe.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">À vide, sous tension assignée, seule la branche magnétisante travaille : $P_{10}$ donne $R_f$, la part réactive du courant donne $X_m$, et $V_{20}/V_{10}$ le rapport.</li>
+    <li data-rang="02">En court-circuit, au courant assigné sous $u_{cc}V_n$, le noyau ne compte plus : $P_{1cc}$ donne $R_s$, $V_{1cc}/I_{1cc}$ donne $Z_s$, puis $X_s$.</li>
+    <li data-rang="03">Les paramètres sont vus du côté alimenté et à la température d'essai : on les ramène par $m^2$ et l'on corrige les pertes en séparant pertes Joule et pertes supplémentaires.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> garder la trace de ce que chaque lecture représente, de quel côté elle est
+    prise, en grandeur de ligne ou par phase, et à quelle température, puis enchaîner les conversions sans perdre un facteur
+    $m^2$, $\sqrt{3}$ ou $k$. L'exemple de la section H, la chaîne du procès-verbal de la section I et l'exercice avancé sont faits
+    pour installer ces réflexes ; l'exercice de diagnostic les met à l'épreuve.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Transformateurs triphasés, étudie les couplages. Le transformateur du
+    poste est supposé couplé Dyn11 : triangle côté haute tension, étoile avec neutre côté basse tension. Question à préparer : la
+    résistance mesurée en continu entre deux bornes haute tension d'un enroulement en triangle est-elle la résistance d'une phase,
+    ou une autre combinaison ? Et pourquoi la tension basse tension d'un tel transformateur est-elle déphasée de $30^\circ$ par
+    rapport à la tension haute tension correspondante, alors que chaque colonne se comporte comme un transformateur monophasé ?
+  </p>
+
+</article>
