@@ -1,0 +1,1166 @@
+<article class="cours" data-slug="transformateurs-triphases">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/essais-a-vide-et-en-court-circuit">Essais à vide et en court-circuit</a> s'est achevé sur deux
+      questions. La première : entre deux bornes haute tension d'un enroulement en triangle, l'ohmmètre ne voit pas une phase, mais
+      une phase en parallèle avec les deux autres placées en série, soit $R_{mes} = R_{ph} \parallel 2R_{ph} = \tfrac{2}{3}R_{ph}$. Les
+      $26{,}8\ \Omega$ par phase d'étoile équivalente du procès-verbal du poste correspondent donc à $53{,}6\ \Omega$ lus entre bornes et
+      à $80{,}4\ \Omega$ par enroulement réel. La seconde : chaque colonne se comporte bien comme un transformateur monophasé, et sa
+      tension basse tension est exactement en phase avec la tension de l'enroulement haute tension de la même colonne. Mais dans un
+      triangle, cet enroulement est soumis à une tension composée, déphasée de $30^\circ$ sur la tension simple ; l'enroulement basse
+      tension, couplé en étoile, fournit une tension simple. Le déphasage ne vient donc pas de l'appareil magnétique, il vient des
+      couplages. Cette séance en fait une méthode.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Presque toute l'énergie électrique transite par des transformateurs triphasés : élévateurs des centrales, autotransformateurs
+    du transport, transformateurs de distribution des postes publics et privés, transformateurs d'alimentation des variateurs et
+    des redresseurs. Leur plaque porte, à côté de la puissance et des tensions, un symbole comme Dyn11, Yyn0 ou Yzn11. Ce symbole
+    dit comment les enroulements sont reliés entre eux et quel déphasage sépare les tensions des deux côtés. Il n'est pas un détail
+    de câblage : il décide si l'appareil supporte des charges monophasées déséquilibrées, s'il laisse passer les harmoniques de
+    rang 3 vers le réseau, comment il se comporte lors d'un défaut à la terre et, surtout, s'il peut être mis en parallèle avec un
+    autre transformateur.
+  </p>
+  <p>
+    Une erreur sur ce point ne pardonne pas. Deux transformateurs dont les indices diffèrent d'une seule heure, mis en parallèle,
+    font circuler entre eux un courant de plusieurs fois leur courant assigné dès la fermeture du disjoncteur de couplage, sans
+    aucune charge. Deux transformateurs de même indice mais réglés sur des prises différentes chauffent à vide. Deux transformateurs
+    de tensions de court-circuit différentes se partagent mal la charge, et le plus raide est surchargé avant que l'ensemble
+    n'atteigne sa puissance totale. Le travail central de cette séance est d'interpréter un groupe de couplage et de vérifier une
+    mise en parallèle ; il débouche, dans le projet fil rouge, sur la vérification du groupe Dyn11 du transformateur du poste et sur
+    le choix du second transformateur qui pourrait lui être associé.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Expliquer l'origine du déphasage introduit par un transformateur triphasé à partir des couplages étoile, triangle et zigzag et des points de polarité.</li>
+    <li data-rang="02">Calculer les tensions et courants d'enroulement, le rapport des spires et le rapport des tensions composées pour chaque couplage.</li>
+    <li data-rang="03">Interpréter un symbole de groupe comme Dyn11 : construire le diagramme vectoriel, lire l'indice horaire et en déduire le déphasage.</li>
+    <li data-rang="04">Comparer les couplages du point de vue des charges déséquilibrées, du courant homopolaire et des harmoniques de rang 3.</li>
+    <li data-rang="05">Vérifier une mise en parallèle : conditions indispensables, partage de la charge selon les impédances de court-circuit et courant de circulation.</li>
+    <li data-rang="06">Diagnostiquer une anomalie de couplage ou de mise en parallèle à partir de mesures de tension et de courant.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois acquis suffisent. Le premier vient du cours <a href="#/cours/systemes-triphases-equilibres">Systèmes triphasés
+    équilibrés</a> : dans un système direct, $\underline{V}_B = \underline{V}_A e^{-j120^\circ}$ et $\underline{V}_C = \underline{V}_A
+    e^{+j120^\circ}$ ; la tension composée $\underline{U}_{AB} = \underline{V}_A - \underline{V}_B = \sqrt{3}\,\underline{V}_A
+    e^{+j30^\circ}$ est $\sqrt{3}$ fois plus grande et en avance de $30^\circ$ ; dans un triangle, le courant de ligne est $\sqrt{3}$ fois
+    le courant d'une branche. Le deuxième vient du cours <a href="#/cours/transformateur-ideal">Transformateur idéal</a> : sur une
+    même colonne, les tensions des deux enroulements sont en phase entre bornes homologues, repérées par les points, dans le rapport
+    des spires, et les ampères-tours se compensent. Le troisième vient du cours <a href="#/cours/transformateur-reel">Transformateur
+    réel</a> : une impédance de court-circuit $Z_{cc} = u_{cc}\,U_n^2/S_n$ par phase d'étoile équivalente représente l'appareil vu de
+    la charge. Le mini-test n'est pas noté ; la correction de chaque question reste masquée jusqu'à une tentative ou un clic explicite
+    sur "Voir la correction".
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-colonnes">Trois colonnes, trois transformateurs monophasés</h3>
+  <p>
+    Prenez trois transformateurs monophasés identiques et alimentez leurs primaires par les trois phases d'un réseau équilibré :
+    vous obtenez un banc triphasé. Leurs trois flux sont sinusoïdaux, de même amplitude, déphasés de $120^\circ$, et leur somme est
+    nulle à chaque instant. Si l'on accole les trois noyaux par une colonne commune, cette colonne de retour ne porte aucun flux :
+    on peut la supprimer. C'est le noyau à trois colonnes, forme la plus courante des transformateurs de distribution : chaque
+    colonne porte un enroulement haute tension et un enroulement basse tension, le flux d'une colonne se referme par les deux
+    autres, et chaque colonne fonctionne comme un transformateur monophasé.
+  </p>
+  <figure id="d-noyau-figure">
+    <svg viewBox="0 0 760 320" role="img" aria-label="Noyau à trois colonnes : chaque colonne porte un enroulement haute tension et un enroulement basse tension avec leurs points de polarité ; les flux des trois colonnes ont une somme nulle et se referment par les culasses">
+      <defs>
+        <marker id="fl-d-no" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+        <rect x="120" y="50" width="400" height="220" rx="4"/>
+        <rect x="160" y="90" width="140" height="140" rx="2"/>
+        <rect x="340" y="90" width="140" height="140" rx="2"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round">
+        <rect x="106" y="100" width="68" height="48" rx="5"/>
+        <rect x="114" y="160" width="52" height="48" rx="5"/>
+        <rect x="286" y="100" width="68" height="48" rx="5"/>
+        <rect x="294" y="160" width="52" height="48" rx="5"/>
+        <rect x="466" y="100" width="68" height="48" rx="5"/>
+        <rect x="474" y="160" width="52" height="48" rx="5"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M140 262V222" marker-end="url(#fl-d-no)"/>
+        <path d="M320 262V222" marker-end="url(#fl-d-no)"/>
+        <path d="M500 262V222" marker-end="url(#fl-d-no)"/>
+        <path d="M150 70H290" stroke-dasharray="6 4" marker-end="url(#fl-d-no)"/>
+        <path d="M490 70H350" stroke-dasharray="6 4" marker-end="url(#fl-d-no)"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="114" cy="108" r="4"/>
+        <circle cx="122" cy="168" r="4"/>
+        <circle cx="294" cy="108" r="4"/>
+        <circle cx="302" cy="168" r="4"/>
+        <circle cx="474" cy="108" r="4"/>
+        <circle cx="482" cy="168" r="4"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="126" y="129">HT 1</text>
+        <text x="128" y="189">BT 1</text>
+        <text x="306" y="129">HT 2</text>
+        <text x="308" y="189">BT 2</text>
+        <text x="486" y="129">HT 3</text>
+        <text x="488" y="189">BT 3</text>
+        <text x="148" y="252">φ1</text>
+        <text x="328" y="252">φ2</text>
+        <text x="508" y="252">φ3</text>
+        <text x="186" y="64">culasse</text>
+        <text x="110" y="296">colonne 1</text>
+        <text x="290" y="296">colonne 2</text>
+        <text x="470" y="296">colonne 3</text>
+        <text x="560" y="80">φ1 + φ2 + φ3 = 0</text>
+        <text x="560" y="100">pas de colonne de retour</text>
+        <text x="560" y="140">sur une colonne :</text>
+        <text x="560" y="160">même flux pour HT et BT,</text>
+        <text x="560" y="180">tensions en phase entre</text>
+        <text x="560" y="200">bornes repérées par un point</text>
+        <text x="560" y="240">enroulements dessinés l'un</text>
+        <text x="560" y="260">au-dessus de l'autre ;</text>
+        <text x="560" y="280">en réalité concentriques</text>
+      </g>
+    </svg>
+    <figcaption>
+      Noyau à trois colonnes vu de face. Chaque colonne porte un enroulement haute tension, HT, et un enroulement basse tension,
+      BT ; le point noir repère la borne homologue de chaque enroulement : entre bornes repérées et bornes non repérées, les deux
+      tensions d'une colonne sont en phase. Les flèches verticales indiquent le sens conventionnel positif du flux dans chaque
+      colonne ; les flèches en tirets, dans la culasse supérieure, rappellent que le flux de la colonne centrale, par exemple, se
+      referme par les deux colonnes extrêmes. La somme des trois flux étant nulle, aucune colonne de retour n'est nécessaire.
+    </figcaption>
+  </figure>
+  <p>
+    Tout se joue ensuite dans la façon de relier les trois enroulements de chaque côté. En étoile, chaque enroulement va d'un point
+    commun, le neutre, à une borne de ligne : il voit la tension simple. En triangle, chaque enroulement relie deux bornes de ligne :
+    il voit une tension composée, $\sqrt{3}$ fois plus grande et décalée de $30^\circ$. Sur une colonne, les deux enroulements sont
+    toujours en phase ; mais si l'un voit une tension simple et l'autre une tension composée, les tensions de ligne des deux côtés ne
+    sont plus en phase. Le transformateur triphasé introduit donc un déphasage qui n'existe pas en monophasé, et ce déphasage est un
+    multiple de $30^\circ$.
+  </p>
+
+  <h3 id="d-analogie">Une analogie contrôlée et ses limites</h3>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Trois coureurs sur une piste circulaire</span>
+    <p>
+      Trois coureurs tournent à la même vitesse sur une piste circulaire, régulièrement espacés d'un tiers de tour. La position de
+      chacun, repérée depuis le centre de la piste, joue le rôle d'une tension simple : c'est ce que voit un enroulement en étoile.
+      Tendez maintenant une corde entre deux coureurs voisins : elle tourne à la même vitesse qu'eux, mais elle est plus longue que
+      le rayon, dans le rapport $\sqrt{3}$, et elle pointe dans une direction décalée de $30^\circ$ par rapport à celle du coureur de
+      tête. C'est ce que voit un enroulement en triangle. Le déphasage du transformateur est donc une affaire de géométrie : il
+      dépend de ce qu'on mesure, pas de la façon dont l'énergie traverse le noyau. L'analogie s'arrête là. Elle ne dit rien des
+      courants et de la compensation des ampères-tours, qui expliquent le comportement face aux charges déséquilibrées ; elle ignore
+      le sens de bobinage, qu'un simple point de polarité inversé change en un décalage supplémentaire de $180^\circ$ ; et elle ne
+      représente pas le flux homopolaire, qui n'a pas d'équivalent géométrique dans un système équilibré.
+    </p>
+  </div>
+
+  <h3 id="d-anim-section">Animation : d'où viennent les trente degrés</h3>
+  <p>
+    L'animation montre, à gauche, les trois tensions simples haute tension et la tension composée $\underline{U}_{AB}$ qui s'applique
+    à l'enroulement haute tension de la colonne 1 d'un couplage en triangle ; la tension simple basse tension $\underline{V}_a$, portée
+    par l'enroulement basse tension de la même colonne, couplé en étoile, lui est parallèle. À droite, les valeurs instantanées
+    correspondantes sur une période. Faites tourner les phaseurs en déplaçant la poignée ronde, ou lancez le lecteur, qui fait
+    avancer le temps. Avant de manipuler, prédisez : quand $v_A$ passe par son maximum, $v_a$ est-elle déjà redescendue, ou
+    monte-t-elle encore ? Et de combien de millisecondes, à $50\ \mathrm{Hz}$, les deux maxima sont-ils séparés ?
+  </p>
+  <figure id="d-anim-figure">
+    <div class="schema-vivant" id="d-anim"></div>
+    <figcaption>
+      À gauche, le diagramme de Fresnel tournant. Les trois tensions simples haute tension $\underline{V}_A$, $\underline{V}_B$,
+      $\underline{V}_C$ sont en traits fins, la tension composée $\underline{U}_{AB} = \underline{V}_A - \underline{V}_B$ en trait épais,
+      tracée de l'extrémité de $\underline{V}_B$ à celle de $\underline{V}_A$, et la tension simple basse tension $\underline{V}_a$, ramenée
+      à la même échelle que $\underline{V}_A$, en tirets épais depuis l'origine. La poignée ronde est l'extrémité de $\underline{V}_A$ ;
+      les projections sur l'axe vertical, en pointillés, donnent les valeurs instantanées. À droite, sur une période, $v_A$ en trait
+      fin et $v_a$ en tirets épais, toutes deux rapportées à leur valeur crête ; le trait vertical repère l'instant courant.
+    </figcaption>
+  </figure>
+  <div id="d-anim-lecteur"></div>
+  <div id="d-anim-valeurs"></div>
+  <p>
+    Interprétation : quand $v_A$ passe par son maximum, $v_a$ est déjà redescendue à $\cos 30^\circ = 0{,}866$ de sa crête ; elle avait
+    atteint son maximum $30^\circ$ plus tôt, soit $1{,}67\ \mathrm{ms}$ à $50\ \mathrm{Hz}$. Faites tourner l'ensemble : l'écart angulaire
+    entre $\underline{V}_A$ et $\underline{V}_a$ ne change jamais, parce que tous les phaseurs tournent ensemble. Le déphasage est une
+    propriété du couplage, indépendante de l'instant d'observation et de la charge, tant que l'on néglige les chutes de tension dans
+    les impédances de court-circuit. Remarquez enfin que la tension composée est $\sqrt{3}$ fois plus longue que la tension simple :
+    c'est pour cela qu'un enroulement en triangle compte $\sqrt{3}$ fois plus de spires qu'un enroulement en étoile de même tension de
+    ligne.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-structure">Banc de trois monophasés, noyau à trois colonnes, noyau à cinq colonnes</h3>
+  <p>
+    Un banc de trois transformateurs monophasés offre des noyaux magnétiquement indépendants : il coûte plus cher et pèse plus
+    lourd, mais une unité de réserve suffit pour remplacer une phase, ce qui le fait préférer pour les très grandes puissances et
+    les sites isolés. Le noyau à trois colonnes économise la matière, mais il impose une contrainte : les trois flux doivent avoir
+    une somme nulle. Une composante de flux commune aux trois colonnes, dite homopolaire, ne trouve pas de chemin dans le fer ; elle
+    se referme par l'air, l'huile et la cuve, où elle provoque des échauffements. Le noyau à cinq colonnes, ou le noyau cuirassé,
+    ajoute des chemins de retour et accepte ce flux, ce qui change le comportement homopolaire de l'appareil. Retenez la
+    conséquence pratique : le comportement d'un transformateur face à une charge déséquilibrée dépend à la fois du couplage et de la
+    forme du noyau.
+  </p>
+
+  <h3 id="e-couplages">Les trois couplages et leurs grandeurs d'enroulement</h3>
+  <p>
+    On note par une majuscule le couplage de l'enroulement de plus haute tension, Y pour l'étoile, D pour le triangle, Z pour le
+    zigzag, et par une minuscule celui de l'enroulement de plus basse tension. La lettre N ou n indique que le neutre est sorti sur
+    une borne. Le schéma ci-dessous représente les trois couplages d'un même jeu d'enroulements, dessinés dans l'orientation de leurs
+    phaseurs : c'est la convention des diagrammes de connexion, où un enroulement est tracé parallèlement à la tension qu'il porte.
+  </p>
+  <figure id="e-couplages-figure">
+    <svg viewBox="0 0 760 330" role="img" aria-label="Trois couplages dessinés selon l'orientation de leurs phaseurs : étoile avec neutre, triangle avec un enroulement par côté, zigzag avec deux demi-enroulements par phase pris sur deux colonnes différentes">
+      <defs>
+        <marker id="fl-e-co" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M130 175V145M130 100V75"/>
+        <rect x="122" y="100" width="16" height="45" rx="2"/>
+        <g transform="rotate(120 130 175)"><path d="M130 175V145M130 100V75"/><rect x="122" y="100" width="16" height="45" rx="2"/></g>
+        <g transform="rotate(240 130 175)"><path d="M130 175V145M130 100V75"/><rect x="122" y="100" width="16" height="45" rx="2"/></g>
+        <path d="M130 175V230"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M380 75L413.75 133.5M436.25 172.5L470 231L403 231M358 231L290 231L323.75 172.5M346.25 133.5L380 75"/>
+        <path d="M380 75V55M470 231l17 10M290 231l-17 10"/>
+        <rect x="417" y="130.5" width="16" height="45" rx="2" transform="rotate(-30 425 153)"/>
+        <rect x="358" y="223" width="45" height="16" rx="2"/>
+        <rect x="327" y="130.5" width="16" height="45" rx="2" transform="rotate(30 335 153)"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M630 175V150M630 118V112"/>
+        <rect x="622" y="118" width="16" height="32" rx="2"/>
+        <path d="M630 112L617.9 105M590.1 89L583.2 85"/>
+        <rect x="596" y="81" width="16" height="32" rx="2" transform="rotate(-60 604 97)"/>
+        <g transform="rotate(120 630 175)"><path d="M630 175V150M630 118V112"/><rect x="622" y="118" width="16" height="32" rx="2"/><path d="M630 112L617.9 105M590.1 89L583.2 85"/><rect x="596" y="81" width="16" height="32" rx="2" transform="rotate(-60 604 97)"/><circle cx="583.2" cy="85" r="4" fill="currentColor" stroke="none"/></g>
+        <g transform="rotate(240 630 175)"><path d="M630 175V150M630 118V112"/><rect x="622" y="118" width="16" height="32" rx="2"/><path d="M630 112L617.9 105M590.1 89L583.2 85"/><rect x="596" y="81" width="16" height="32" rx="2" transform="rotate(-60 604 97)"/><circle cx="583.2" cy="85" r="4" fill="currentColor" stroke="none"/></g>
+        <path d="M630 175V230"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="130" cy="75" r="4"/>
+        <circle cx="216.6" cy="225" r="4"/>
+        <circle cx="43.4" cy="225" r="4"/>
+        <circle cx="130" cy="175" r="3.5"/>
+        <circle cx="130" cy="230" r="4"/>
+        <circle cx="380" cy="55" r="4"/>
+        <circle cx="487" cy="241" r="4"/>
+        <circle cx="273" cy="241" r="4"/>
+        <circle cx="583.2" cy="85" r="4"/>
+        <circle cx="630" cy="175" r="3.5"/>
+        <circle cx="630" cy="230" r="4"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M144 165V92" marker-end="url(#fl-e-co)"/>
+        <path d="M394 28V54" marker-end="url(#fl-e-co)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="20" y="28">a. étoile Y, y</text>
+        <text x="138" y="70">A</text>
+        <text x="226" y="230">B</text>
+        <text x="20" y="230">C</text>
+        <text x="140" y="245">N</text>
+        <text x="150" y="130">V</text>
+        <text x="20" y="282">enroulement sous V = U / √3</text>
+        <text x="20" y="300">I ligne = I enroulement</text>
+        <text x="270" y="28">b. triangle D, d</text>
+        <text x="362" y="52">A</text>
+        <text x="494" y="256">B</text>
+        <text x="256" y="256">C</text>
+        <text x="440" y="146">1</text>
+        <text x="376" y="216">2</text>
+        <text x="308" y="146">3</text>
+        <text x="400" y="38">I ligne</text>
+        <text x="270" y="282">enroulement sous U</text>
+        <text x="270" y="300">I ligne = √3 I enroulement</text>
+        <text x="520" y="28">c. zigzag Z, z</text>
+        <text x="566" y="80">a</text>
+        <text x="642" y="140">1</text>
+        <text x="580" y="116">2'</text>
+        <text x="640" y="245">n</text>
+        <text x="520" y="282">deux demi-enroulements :</text>
+        <text x="520" y="300">col. 1, puis col. 2 inversée</text>
+        <text x="520" y="318">phase = √3 × demi-tension</text>
+      </g>
+    </svg>
+    <figcaption>
+      Les trois couplages, dessinés dans l'orientation de leurs phaseurs, avec un rectangle par enroulement. En a, l'étoile : chaque
+      enroulement relie le neutre N, référence de potentiel, à une borne de ligne et porte la tension simple $V$, fléchée du neutre
+      vers la borne A ; le courant de ligne traverse l'enroulement. En b, le triangle : chaque enroulement, numéroté par sa colonne,
+      relie deux bornes et porte une tension composée ; le courant de ligne, fléché vers la borne A, se partage entre deux côtés. En
+      c, le zigzag côté basse tension : la phase a part du neutre n, traverse un demi-enroulement de la colonne 1, puis un
+      demi-enroulement de la colonne 2 raccordé en sens inverse, noté 2'. Les deux autres phases sont obtenues par rotation de
+      $120^\circ$ ; seule la phase a est nommée pour ne pas surcharger le dessin.
+    </figcaption>
+  </figure>
+  <p>
+    Les relations entre grandeurs de ligne et grandeurs d'enroulement découlent des lois de Kirchhoff appliquées à chaque couplage.
+    En étoile, l'enroulement porte la tension simple et le courant de ligne. En triangle, il porte la tension composée, et la loi
+    des nœuds en une borne donne $\underline{I}_A = \underline{J}_{AB} - \underline{J}_{CA}$, soit un courant de ligne $\sqrt{3}$ fois
+    plus grand que le courant d'enroulement en régime équilibré. La puissance d'un enroulement vaut toujours $S_n/3$, quel que soit
+    le couplage ; seul le partage entre tension et courant change.
+  </p>
+  <div class="formule-cle">
+    $$\text{Y : } V_{enr} = \frac{U}{\sqrt{3}},\ J = I \qquad \text{D : } V_{enr} = U,\ J = \frac{I}{\sqrt{3}} \qquad S_{enr} = V_{enr}J = \frac{S_n}{3}$$
+    $$\frac{U_2}{U_1}\bigg|_{vide} = \frac{N_2}{N_1} \text{ (Yy, Dd)}, \quad \sqrt{3}\,\frac{N_2}{N_1} \text{ (Dy)}, \quad \frac{1}{\sqrt{3}}\,\frac{N_2}{N_1} \text{ (Yd)}, \quad \frac{\sqrt{3}}{2}\,\frac{N_2}{N_1} \text{ (Yz)}$$
+    <p class="formule-cle-legende">
+      $U$ : tension composée de ligne, $V_{enr}$ : tension d'un enroulement, en volts ; $I$ : courant de ligne, $J$ : courant
+      d'enroulement, en ampères ; $N_1$, $N_2$ : nombres de spires d'un enroulement de chaque côté, pour le zigzag $N_2$ est le total des
+      deux demi-enroulements d'une phase. Hypothèses : système direct équilibré, transformateur idéal, à vide pour le rapport.
+      Dérivation pour Dy : l'enroulement haute tension porte $U_1$, celui de basse tension de la même colonne porte
+      $U_1N_2/N_1$, qui est une tension simple, d'où $U_2 = \sqrt{3}\,U_1N_2/N_1$. Pour Yz : chaque demi-enroulement porte
+      $(N_2/2)\,V_1/N_1$, et la différence de deux tensions décalées de $120^\circ$ vaut $\sqrt{3}$ fois l'une d'elles. Vérification :
+      les rapports sont sans dimension, et $S_{enr}$ s'exprime en voltampères. Cas limite : $N_2 = N_1$ en Dy donne $U_2 = \sqrt{3}\,U_1$,
+      ce qui montre que le rapport des tensions de ligne n'est pas le rapport des spires. Interprétation : la plaque donne toujours le
+      rapport des tensions composées à vide, appelé rapport de transformation ; le rapport des spires s'en déduit par le couplage.
+    </p>
+  </div>
+  <p>
+    Pour le transformateur du poste, $20\ \mathrm{kV} / 410\ \mathrm{V}$ en Dyn11, chaque enroulement haute tension porte
+    $20\ \mathrm{kV}$ et chaque enroulement basse tension $410/\sqrt{3} = 236{,}7\ \mathrm{V}$, d'où $N_2/N_1 = 0{,}011\,84$, alors que le
+    rapport de transformation vaut $m = 410/20\,000 = 0{,}020\,5$. Au courant assigné, la ligne haute tension porte $2{,}887\ \mathrm{A}$
+    et chaque enroulement du triangle $1{,}667\ \mathrm{A}$.
+  </p>
+
+  <h3 id="e-zigzag-principe">Le zigzag et le décalage angulaire réglable</h3>
+  <p>
+    Dans un zigzag, chaque phase est formée de deux demi-enroulements pris sur deux colonnes différentes, le second raccordé à
+    l'envers. Sa tension est la différence de deux tensions décalées de $120^\circ$ : elle vaut $\sqrt{3}/2 = 0{,}866$ fois la somme
+    arithmétique des deux demi-tensions et elle est décalée de $30^\circ$. Il faut donc $2/\sqrt{3} - 1 = 15{,}5\ \%$ de spires de plus
+    qu'en étoile pour la même tension : c'est le prix du zigzag. Son intérêt est ailleurs : chaque colonne porte deux demi-enroulements
+    appartenant à deux phases différentes, parcourus en sens opposés ; un courant commun aux trois phases, homopolaire, y produit
+    des ampères-tours qui se compensent sur chaque colonne. Le zigzag accepte donc un courant de neutre sans créer de flux
+    homopolaire, même si l'autre côté est en étoile sans neutre.
+  </p>
+
+  <h3 id="e-zigzag-section">Animation : partager les spires entre deux colonnes</h3>
+  <p>
+    Si l'on ne partage plus les spires d'une phase à parts égales entre les deux colonnes, mais dans une proportion $k$ et $1 - k$,
+    le décalage angulaire varie continûment de $0$ à $60^\circ$. C'est ainsi que l'on construit les transformateurs déphaseurs des
+    redresseurs à douze, dix-huit ou vingt-quatre impulsions. L'animation compose le phaseur de la phase a à partir des deux
+    demi-enroulements ; faites glisser la poignée sur la règle pour changer $k$, et lancez le lecteur pour faire tourner l'ensemble.
+    Avant de manipuler, prédisez : pour $k = 0{,}5$, le décalage est de $30^\circ$ ; pour obtenir $15^\circ$, faut-il $k = 0{,}75$, ou une
+    autre valeur ? Et la compensation des ampères-tours homopolaires reste-t-elle complète quand $k$ s'écarte de $0{,}5$ ?
+  </p>
+  <figure id="e-zigzag-figure">
+    <div class="schema-vivant" id="e-zigzag"></div>
+    <figcaption>
+      À gauche, la composition du phaseur de la phase a. Le trait fin vertical en pointillés est la référence de phase, tension de la
+      colonne 1 ; la première flèche, en trait plein, est la contribution $k$ du demi-enroulement de la colonne 1 ; la seconde, en
+      tirets, partant de son extrémité, est la contribution $1 - k$ du demi-enroulement de la colonne 2 inversé ; la résultante, en
+      trait épais, est la tension de la phase a. L'arc repère le décalage angulaire. En bas, la règle graduée de $0$ à $1$ porte la
+      poignée qui fixe $k$. À droite, trois barres donnent les ampères-tours homopolaires résiduels sur chaque colonne, rapportés à
+      ceux d'une phase complète, pour un même courant de neutre réparti sur les trois phases.
+    </figcaption>
+  </figure>
+  <div id="e-zigzag-lecteur"></div>
+  <div id="e-zigzag-valeurs"></div>
+  <p>
+    Interprétation : le décalage n'est pas proportionnel à $k$. Il faut $k = 0{,}732$ pour $15^\circ$, et $k = 0{,}653$ pour $20^\circ$ ;
+    le facteur de tension passe par son minimum de $0{,}866$ à $k = 0{,}5$, où le surcroît de spires est maximal, $15{,}5\ \%$. Les
+    ampères-tours homopolaires résiduels valent $|2k - 1|$ : nuls seulement à $k = 0{,}5$, ils atteignent $46\ \%$ pour un décalage de
+    $15^\circ$. Les transformateurs déphaseurs de redresseurs n'ont pas besoin de cette compensation, car le pont de diodes ne
+    prélève aucun courant homopolaire ; le zigzag de mise à la terre, lui, exige $k = 0{,}5$. Deux secondaires décalés de $30^\circ$,
+    l'un en étoile et l'autre en triangle, alimentant deux ponts de Graetz, suppriment les harmoniques de rang 5 et 7 du courant
+    vu par le réseau, comme on le verra dans le cours Redresseurs triphasés.
+  </p>
+
+  <h3 id="e-indice">Le groupe de couplage et l'indice horaire</h3>
+  <p>
+    Le déphasage entre une tension haute tension et la tension basse tension homologue, par exemple entre $\underline{V}_A$ et
+    $\underline{V}_a$, est toujours un multiple de $30^\circ$. On l'exprime par un indice horaire $h$ de $0$ à $11$ : on place le phaseur
+    haute tension sur le chiffre 12 d'un cadran d'horloge, et le phaseur basse tension homologue tombe sur le chiffre $h$. Comme les
+    phaseurs tournent dans le sens trigonométrique et les aiguilles dans le sens horaire, l'indice mesure le retard de la basse
+    tension : $h \times 30^\circ$. Le symbole complet réunit les couplages et l'indice : Dyn11 désigne un triangle côté haute tension,
+    une étoile avec neutre sorti côté basse tension, et une basse tension en retard de $330^\circ$, c'est-à-dire en avance de
+    $30^\circ$.
+  </p>
+  <figure id="e-horloge-figure">
+    <svg viewBox="0 0 760 330" role="img" aria-label="Cadran d'horloge du groupe Dyn11 : phaseur haute tension A sur le chiffre 12, phaseur basse tension a sur le chiffre 11, en avance de 30 degrés">
+      <defs>
+        <marker id="fl-e-ho" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="1.6">
+        <circle cx="170" cy="165" r="125"/>
+        <path d="M170 40v14M232.5 56.7l-7 12.1M278.3 102.5l-12.1 7M295 165h-14M278.3 227.5l-12.1-7M232.5 273.3l-7-12.1M170 290v-14M107.5 273.3l7-12.1M61.7 227.5l12.1-7M45 165h14M61.7 102.5l12.1 7M107.5 56.7l7 12.1"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-linecap="round">
+        <path d="M170 165V66" stroke-width="3.2" marker-end="url(#fl-e-ho)"/>
+        <path d="M170 165L130 95.7" stroke-width="3.2" stroke-dasharray="8 5" marker-end="url(#fl-e-ho)"/>
+        <path d="M170 120A45 45 0 0 0 147.5 126" stroke-width="1.4"/>
+        <circle cx="420" cy="126" r="22" stroke-width="1.2" stroke-dasharray="4 4"/>
+        <path d="M442 126A22 22 0 0 0 420 104" stroke-width="1.6" marker-end="url(#fl-e-ho)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="163" y="34">12</text>
+        <text x="235" y="50">1</text>
+        <text x="300" y="169">3</text>
+        <text x="166" y="308">6</text>
+        <text x="28" y="169">9</text>
+        <text x="94" y="50">11</text>
+        <text x="176" y="80">A (HT)</text>
+        <text x="96" y="92">a (BT)</text>
+        <text x="146" y="114">30°</text>
+        <text x="350" y="56">rotation des phaseurs : sens trigonométrique</text>
+        <text x="350" y="76">lecture : aiguilles dans le sens horaire</text>
+        <text x="452" y="112">ωt</text>
+        <text x="350" y="172">indice h : la BT est en retard de h × 30°</text>
+        <text x="350" y="194">Yy0, Dd0 : 0°</text>
+        <text x="350" y="212">Dy1, Yd1 : retard de 30°</text>
+        <text x="350" y="230">Dy5, Yd5 : retard de 150°</text>
+        <text x="350" y="248">Yy6 : retard de 180°</text>
+        <text x="350" y="266">Dyn11, Yzn11 : retard de 330°, avance de 30°</text>
+        <text x="350" y="298">homologues : V_A et V_a, ou U_AB et U_ab</text>
+      </g>
+    </svg>
+    <figcaption>
+      Convention de l'horloge pour le groupe Dyn11. Le phaseur de la tension haute tension $\underline{V}_A$, en trait plein épais, est
+      placé sur le chiffre 12 ; le phaseur de la tension basse tension homologue $\underline{V}_a$, en tirets épais, tombe sur le chiffre
+      11. L'arc indique l'angle de $30^\circ$ qui les sépare. Le petit cercle en pointillés rappelle que les phaseurs tournent dans le
+      sens trigonométrique : un phaseur placé à 11 heures est donc en avance sur celui placé à 12 heures. Les indices courants et
+      leurs déphasages sont rappelés à droite. Pour un enroulement en triangle sans neutre, la tension simple est celle de l'étoile
+      équivalente.
+    </figcaption>
+  </figure>
+  <p>
+    Pour trouver l'indice d'un transformateur dont on connaît le schéma de raccordement, on procède en quatre temps. On trace les
+    phaseurs des tensions de ligne haute tension, $\underline{V}_A$ vertical. On identifie la tension que porte l'enroulement haute
+    tension de chaque colonne, en respectant ses points de polarité. On trace parallèlement à elle la tension de l'enroulement basse
+    tension de la même colonne, puisque les deux sont en phase entre bornes repérées. On assemble enfin les enroulements basse
+    tension selon leur couplage pour obtenir $\underline{V}_a$, et on lit sa position sur le cadran. Inverser les bornes d'un
+    enroulement ajoute $6$ heures ; renommer circulairement les bornes basse tension, $a \to b \to c$, ajoute ou retranche $4$ heures.
+  </p>
+
+  <h3 id="e-horloge-section">Simulation interactive : construire l'indice horaire</h3>
+  <p>
+    La simulation applique cette méthode à tous les couplages. Choisissez le couplage de chaque côté, le sens de fermeture du
+    triangle ou du zigzag, et le sens de raccordement des enroulements basse tension. Elle trace les phaseurs haute tension et basse
+    tension et lit l'indice sur le cadran. Prédisez avant de manipuler : un Dy dont l'enroulement de la colonne 1 relie A à C au lieu
+    de A à B aura-t-il l'indice 1 ou l'indice 11 ? Que devient un Yy0 si l'on inverse les bornes de ses trois enroulements basse
+    tension ? Et peut-on obtenir un indice impair avec deux enroulements de même couplage ?
+  </p>
+  <figure id="e-horloge-sim-figure">
+    <div class="schema-vivant" id="e-horloge-sim"></div>
+    <figcaption>
+      À gauche, la figure haute tension : en étoile, trois phaseurs issus du neutre, en traits fins ; en triangle, le triangle des
+      tensions composées, dont chaque côté porte le numéro de sa colonne. Au centre, la figure basse tension construite à partir des
+      enroulements de mêmes colonnes, en tirets épais pour la phase a et en traits fins pour b et c. À droite, le cadran : l'aiguille
+      longue en trait plein est $\underline{V}_A$ sur le chiffre 12, l'aiguille courte en tirets est $\underline{V}_a$, ou la tension
+      simple de l'étoile équivalente si la basse tension est en triangle.
+    </figcaption>
+  </figure>
+  <div id="e-horloge-curseurs"></div>
+  <div id="e-horloge-valeurs"></div>
+  <p>
+    Interprétation : un Dy dont la colonne 1 relie A à B donne Dy11, et relié de A à C il donne Dy1 ; inverser les enroulements basse
+    tension transforme Dy11 en Dy5 et Dy1 en Dy7, puisque cela ajoute $180^\circ$. Un Yy n'offre que les indices 0 et 6, un Dd les
+    indices pairs : deux enroulements de même nature ne peuvent pas créer un décalage de $30^\circ$, il faut une étoile face à un
+    triangle, ou un zigzag. Les indices se rangent ainsi en quatre familles : 0, 4, 8 ; 6, 10, 2 ; 1, 5, 9 ; 11, 7, 3. Dans une même
+    famille, on passe d'un indice à l'autre en renommant circulairement les bornes. Observez enfin le rapport affiché : à nombres de
+    spires égaux, Dy donne une tension basse tension $\sqrt{3}$ fois plus élevée que Yy, et Yz $0{,}866$ fois.
+  </p>
+
+  <h3 id="e-homopolaire">Charges déséquilibrées, courant homopolaire et harmoniques de rang 3</h3>
+  <p>
+    Côté basse tension, un réseau de distribution alimente des charges monophasées entre phase et neutre, qui ne sont jamais
+    parfaitement réparties. Le courant de neutre qui en résulte contient une composante homopolaire, la même dans les trois
+    phases, que le cours <a href="#/cours/charges-triphasees-desequilibrees">Charges triphasées déséquilibrées</a> a introduite.
+    Pour que le transformateur la supporte, il faut que ses ampères-tours basse tension soient compensés colonne par colonne par
+    des courants haute tension. Un triangle haute tension le permet : un courant peut circuler dans un enroulement du triangle sans
+    sortir par les trois lignes. Une étoile haute tension sans neutre ne le permet pas, puisque ses trois courants de ligne ont une
+    somme nulle : la composante homopolaire basse tension reste non compensée, crée un flux homopolaire qui, dans un noyau à trois
+    colonnes, se referme par la cuve, et déplace le point neutre basse tension. D'où la règle de conception : en distribution
+    publique ou industrielle avec neutre distribué, on choisit Dyn ou Yzn, et l'on réserve Yyn aux charges peu déséquilibrées,
+    avec une limitation du courant de neutre fixée par le constructeur.
+  </p>
+  <p>
+    Les harmoniques de rang multiple de 3 obéissent à la même logique, puisqu'ils forment un système homopolaire. Le courant
+    magnétisant contient un rang 3 que le triangle laisse circuler en boucle : le flux reste sinusoïdal et les tensions aussi. Les
+    courants de rang 3 des charges monophasées non linéaires, éclairage et informatique, circulent dans le triangle d'un Dyn sans
+    apparaître sur les lignes haute tension ; ils échauffent l'enroulement, mais ne polluent pas le réseau amont.
+  </p>
+
+  <h3 id="e-homo-section">Animation : une charge monophasée vue des deux côtés</h3>
+  <p>
+    L'animation place une charge entre la phase a et le neutre du transformateur du poste, les deux autres phases restant à vide.
+    Choisissez le couplage avec le curseur, réglez le courant de charge avec la poignée de la règle, et lancez le lecteur pour suivre
+    les courants instantanés. Avant de manipuler, prédisez : en Dyn11, combien de lignes haute tension portent un courant ? Et en
+    Yyn0, que deviennent les ampères-tours des colonnes 2 et 3, dont les enroulements basse tension ne portent aucun courant ?
+  </p>
+  <figure id="e-homo-figure">
+    <div class="schema-vivant" id="e-homo"></div>
+    <figcaption>
+      Trois colonnes vues de face, chacune avec son enroulement haute tension en haut et son enroulement basse tension en bas.
+      L'épaisseur de chaque enroulement suit la valeur efficace de son courant ; la flèche à côté de chaque enroulement indique le
+      sens du courant instantané, rapporté au sens repéré par le point de polarité. Les trois lignes haute tension A, B et C sont
+      dessinées au-dessus, avec la valeur efficace de leur courant. Sous chaque colonne, une barre verticale donne les ampères-tours
+      résiduels instantanés, c'est-à-dire non compensés, en unités de $N_2I_a$ ; quand les trois barres montent et descendent
+      ensemble, c'est un flux homopolaire. En bas, la règle porte la poignée qui fixe le courant de la charge monophasée.
+    </figcaption>
+  </figure>
+  <div id="e-homo-curseurs"></div>
+  <div id="e-homo-lecteur"></div>
+  <div id="e-homo-valeurs"></div>
+  <p>
+    Interprétation : en Dyn11, avec $100\ \mathrm{A}$ sur la phase a, seul l'enroulement haute tension de la colonne 1 porte un
+    courant, $100 \times 0{,}011\,84 = 1{,}18\ \mathrm{A}$, qui sort par les lignes A et B : la charge monophasée basse tension apparaît
+    comme une charge entre deux phases côté haute tension, et les ampères-tours résiduels sont nuls sur les trois colonnes. En Yzn11,
+    les deux demi-enroulements de la phase a, sur les colonnes 1 et 2, sont compensés par les lignes A et B, avec le même résultat.
+    En Yyn0, les courants haute tension, $1{,}37\ \mathrm{A}$ en A et $0{,}68\ \mathrm{A}$ en B et en C, ont une somme nulle et ne peuvent
+    compenser qu'une partie des ampères-tours : il reste $N_2I_a/3$ sur chaque colonne, en phase sur les trois. Ce flux homopolaire
+    n'a pas de chemin dans le fer : il traverse l'huile et la cuve, induit une tension homopolaire qui déplace le neutre, abaisse la
+    tension de la phase chargée et élève celle des deux autres.
+  </p>
+
+  <h3 id="e-parallele">Mise en parallèle : conditions, partage de la charge, courant de circulation</h3>
+  <p>
+    Deux transformateurs sont en parallèle quand leurs enroulements haute tension sont alimentés par le même jeu de barres et leurs
+    enroulements basse tension débitent sur un même jeu de barres. On le fait pour augmenter la puissance disponible, pour garder
+    une alimentation en cas d'indisponibilité d'un appareil, ou pour mettre un transformateur hors tension aux heures creuses. Par
+    phase d'étoile équivalente, chaque transformateur se réduit à sa force électromotrice à vide en série avec son impédance de
+    court-circuit, et les deux branches débitent sur la même tension.
+  </p>
+  <figure id="e-parallele-figure">
+    <svg viewBox="0 0 760 300" role="img" aria-label="Schéma équivalent par phase de deux transformateurs en parallèle : deux forces électromotrices à vide, chacune en série avec son impédance de court-circuit, débitant sur un jeu de barres commun et une charge ; courant de circulation dans la boucle formée par les deux branches">
+      <defs>
+        <marker id="fl-e-pa" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="70" cy="170" r="20"/>
+        <path d="M60 170c4 -8 7 -8 10 0s6 8 10 0"/>
+        <path d="M70 150V60H150M200 60H206M262 60H420M70 190V260H560"/>
+        <rect x="150" y="52" width="50" height="16" rx="2"/>
+        <path d="M206 60a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0"/>
+        <circle cx="200" cy="200" r="20"/>
+        <path d="M190 200c4 -8 7 -8 10 0s6 8 10 0"/>
+        <path d="M200 180V140H260M310 140H316M372 140H420V60M200 220V260"/>
+        <rect x="260" y="132" width="50" height="16" rx="2"/>
+        <path d="M316 140a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0"/>
+        <path d="M420 60H560V120M560 200V260"/>
+        <rect x="550" y="120" width="20" height="80" rx="3"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="420" cy="60" r="4"/>
+        <circle cx="200" cy="260" r="3.5"/>
+        <circle cx="70" cy="260" r="3.5"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M290 46H340" marker-end="url(#fl-e-pa)"/>
+        <path d="M384 126H408" marker-end="url(#fl-e-pa)"/>
+        <path d="M540 70V112" marker-end="url(#fl-e-pa)"/>
+        <path d="M610 250V70" marker-end="url(#fl-e-pa)"/>
+        <path d="M30 240V100" marker-end="url(#fl-e-pa)"/>
+        <path d="M250 245V160" marker-end="url(#fl-e-pa)"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="5 4">
+        <path d="M130 80H390V120H230V100" marker-end="url(#fl-e-pa)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="12" y="90">E1</text>
+        <text x="258" y="174">E2</text>
+        <text x="150" y="40">Zcc1</text>
+        <text x="262" y="118">Zcc2</text>
+        <text x="300" y="38">I1</text>
+        <text x="380" y="118">I2</text>
+        <text x="514" y="98">IL</text>
+        <text x="494" y="174">charge</text>
+        <text x="594" y="244">U</text>
+        <text x="140" y="102">Ic</text>
+        <text x="430" y="52">jeu de barres BT</text>
+        <text x="80" y="284">référence : neutre BT commun</text>
+        <text x="626" y="60">E1 = E2 :</text>
+        <text x="626" y="78">Zcc1 I1 = Zcc2 I2</text>
+        <text x="626" y="110">E1 ≠ E2 :</text>
+        <text x="626" y="128">Ic = (E1 - E2)</text>
+        <text x="626" y="146">  / (Zcc1 + Zcc2)</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma équivalent par phase de deux transformateurs en parallèle, vus du jeu de barres basse tension. Chaque transformateur
+      est une force électromotrice à vide, cercle, fléchée depuis le neutre basse tension commun, référence de potentiel, en série
+      avec son impédance de court-circuit, résistance puis réactance. Les deux branches rejoignent le nœud du jeu de barres, où la
+      tension $\underline{U}$ alimente la charge parcourue par $\underline{I}_L = \underline{I}_1 + \underline{I}_2$. La boucle en
+      tirets représente le courant de circulation $\underline{I}_c$, qui existe dès que les deux forces électromotrices diffèrent en
+      module ou en phase, même sans charge.
+    </figcaption>
+  </figure>
+  <p>
+    Quatre conditions se déduisent de ce schéma. La première est indispensable : même ordre des phases, sans quoi deux phases
+    seraient court-circuitées entre elles. La deuxième aussi : même déphasage, donc même indice horaire ou indice rendu identique
+    par renommage des bornes. Un écart d'une heure fait apparaître entre les deux forces électromotrices une différence de
+    $2E\sin 15^\circ = 0{,}52\,E$ : avec des tensions de court-circuit de quelques pour cent, le courant de circulation vaut plusieurs
+    fois le courant assigné. La troisième : même rapport de transformation, donc mêmes tensions assignées et même prise ; sinon
+    $\underline{E}_1 - \underline{E}_2$ n'est pas nul et un courant de circulation se superpose à la charge. La quatrième règle le
+    partage : la chute de tension est la même dans les deux branches, donc les courants se partagent en raison inverse des
+    impédances.
+  </p>
+  <div class="formule-cle">
+    $$\underline{I}_1 = \underline{I}_L\,\frac{\underline{Z}_2}{\underline{Z}_1 + \underline{Z}_2} + \underline{I}_c, \qquad \underline{I}_2 = \underline{I}_L\,\frac{\underline{Z}_1}{\underline{Z}_1 + \underline{Z}_2} - \underline{I}_c, \qquad \underline{I}_c = \frac{\underline{E}_1 - \underline{E}_2}{\underline{Z}_1 + \underline{Z}_2}$$
+    $$\frac{S_1/S_{n1}}{S_2/S_{n2}} = \frac{u_{cc2}}{u_{cc1}} \quad \text{(rapports } X/R \text{ égaux)}, \qquad i_c = \frac{\Delta u}{u_{cc1} + u_{cc2}} \quad \text{(puissances égales, en p.u.)}$$
+    <p class="formule-cle-legende">
+      $\underline{Z}_1$, $\underline{Z}_2$ : impédances de court-circuit par phase ramenées du même côté, en ohms ; $\underline{I}_L$,
+      $\underline{I}_1$, $\underline{I}_2$, $\underline{I}_c$ : courants de charge, de chaque transformateur et de circulation, en
+      ampères ; $\underline{E}_1$, $\underline{E}_2$ : forces électromotrices à vide par phase, en volts ; $S_1$, $S_2$ : puissances
+      apparentes débitées, $S_{n1}$, $S_{n2}$ : puissances assignées ; $u_{cc}$ : tensions de court-circuit relatives ; $\Delta u$ :
+      écart relatif des tensions à vide. Hypothèses : modèle de Kapp sans branche magnétisante, linéarité, superposition de la charge
+      et de la circulation, charge assimilée à une source de courant. Dérivation : la loi des mailles dans la boucle des deux branches
+      donne $\underline{E}_1 - \underline{Z}_1\underline{I}_1 = \underline{E}_2 - \underline{Z}_2\underline{I}_2$, et la loi des nœuds
+      $\underline{I}_1 + \underline{I}_2 = \underline{I}_L$ ; on résout ce système. Avec $Z_i = u_{cci}\,U^2/S_{ni}$, le taux de charge de
+      chaque appareil est inversement proportionnel à sa tension de court-circuit. Vérification : $\mathrm{V}/\Omega = \mathrm{A}$, et
+      les rapports sont sans dimension. Cas limites : $\underline{Z}_2 \to 0$ fait tout passer par le second appareil ; $\underline{E}_1 =
+      \underline{E}_2$ annule la circulation. Interprétation : c'est le transformateur de plus faible $u_{cc}$ qui atteint le premier sa
+      pleine charge.
+    </p>
+  </div>
+  <p>
+    Deux remarques complètent la règle. Si les rapports $X/R$ diffèrent, les courants ne sont pas en phase et la somme de leurs
+    modules dépasse le courant de charge : une petite part de puissance est perdue en circulation. Et un Dyn1 peut être couplé avec
+    un Dyn11 : en croisant deux phases côté haute tension et les deux mêmes côté basse tension sur l'un des appareils, on lui fait
+    voir le système inverse, pour lequel son déphasage change de signe. Cette astuce relie les familles 1, 5, 9 et 11, 7, 3 ; elle
+    ne relie jamais un indice pair à un indice impair.
+  </p>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Ce qui relève de la loi, de la convention, de l'approximation, de la conception et du constructeur</caption>
+      <thead><tr><th>Énoncé</th><th>Statut</th></tr></thead>
+      <tbody>
+        <tr><td>Tensions des deux enroulements d'une colonne en phase dans le rapport des spires ; compensation des ampères-tours ; somme nulle des courants d'une étoile sans neutre ; lois des nœuds et des mailles appliquées au parallèle</td><td>Lois physiques</td></tr>
+        <tr><td>Lettres Y, D, Z en majuscule côté haute tension ; cadran à 12 heures pour la haute tension ; indice mesurant le retard de la basse tension ; rapport de transformation défini par les tensions composées à vide</td><td>Conventions de désignation, à vérifier sur la norme applicable</td></tr>
+        <tr><td>Déphasage indépendant de la charge ; modèle de Kapp sans branche magnétisante pour le partage ; charge représentée par une source de courant ; noyau sans flux homopolaire possible dans le fer pour trois colonnes</td><td>Approximations</td></tr>
+        <tr><td>Dyn ou Yzn pour une distribution avec neutre ; écart de $u_{cc}$ limité à environ $10\ \%$ entre appareils en parallèle ; rapport des puissances limité à environ $2$ ; même prise sur les deux appareils</td><td>Règles de conception usuelles</td></tr>
+        <tr><td>Courant de neutre admissible en Yyn ; impédance homopolaire ; tolérances sur le rapport et sur $u_{cc}$ ; groupe effectivement câblé</td><td>Données du constructeur et de la norme du contrat, à vérifier pour chaque appareil</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, l'horloge de groupe vectoriel appliquée au Dyn11, puis l'organigramme de
+    vérification d'une mise en parallèle et un tableau comparatif des couplages.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 760 460" role="img" aria-label="Schéma principal : à gauche, le schéma de raccordement d'un Dyn11 avec les trois enroulements haute tension en triangle, les trois enroulements basse tension en étoile avec neutre et les points de polarité ; à droite, le diagramme vectoriel haute tension en triangle et l'étoile basse tension, le phaseur a se trouvant à 11 heures">
+      <defs>
+        <marker id="fl-f" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M120 50V90M220 50V90M320 50V90"/>
+        <path d="M120 90a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16"/>
+        <path d="M220 90a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16"/>
+        <path d="M320 90a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16"/>
+        <path d="M120 170V190H170V70H220M220 170V190H270V70H320M320 170V205H80V70H120"/>
+        <path d="M120 250V280M220 250V280M320 250V280"/>
+        <path d="M120 280a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16"/>
+        <path d="M220 280a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16"/>
+        <path d="M320 280a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16"/>
+        <path d="M120 360V375H370M220 360V375M320 360V375"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="3 4" opacity="0.8">
+        <path d="M140 92V168M140 282V358M240 92V168M240 282V358M340 92V168M340 282V358"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="120" cy="50" r="4"/>
+        <circle cx="220" cy="50" r="4"/>
+        <circle cx="320" cy="50" r="4"/>
+        <circle cx="120" cy="70" r="3"/>
+        <circle cx="220" cy="70" r="3"/>
+        <circle cx="320" cy="70" r="3"/>
+        <circle cx="108" cy="96" r="3.5"/>
+        <circle cx="208" cy="96" r="3.5"/>
+        <circle cx="308" cy="96" r="3.5"/>
+        <circle cx="120" cy="250" r="4"/>
+        <circle cx="220" cy="250" r="4"/>
+        <circle cx="320" cy="250" r="4"/>
+        <circle cx="108" cy="286" r="3.5"/>
+        <circle cx="208" cy="286" r="3.5"/>
+        <circle cx="308" cy="286" r="3.5"/>
+        <circle cx="370" cy="375" r="4"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+        <path d="M560 150L560 62" stroke-dasharray="3 4" stroke-width="1.4" marker-end="url(#fl-f)"/>
+        <path d="M560 55L642.3 197.5L477.7 197.5Z" stroke-width="1.6"/>
+        <path d="M642.3 197.5L564 61.8" stroke-width="3" marker-end="url(#fl-f)"/>
+        <path d="M600 345L573.5 299" stroke-width="3" stroke-dasharray="7 4" marker-end="url(#fl-f)"/>
+        <path d="M600 345H648" marker-end="url(#fl-f)"/>
+        <path d="M600 345L574.5 389.4" marker-end="url(#fl-f)"/>
+        <path d="M600 345V283" stroke-width="1.2" stroke-dasharray="3 4"/>
+        <path d="M600 313A32 32 0 0 0 584 317.3" stroke-width="1.4"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="112" y="38">A</text>
+        <text x="212" y="38">B</text>
+        <text x="312" y="38">C</text>
+        <text x="124" y="244">a</text>
+        <text x="224" y="244">b</text>
+        <text x="324" y="244">c</text>
+        <text x="378" y="379">n</text>
+        <text x="14" y="134">HT D</text>
+        <text x="14" y="324">BT yn</text>
+        <text x="96" y="404">col. 1</text>
+        <text x="196" y="404">col. 2</text>
+        <text x="296" y="404">col. 3</text>
+        <text x="60" y="428">col. 1 : A vers B ; col. 2 : B vers C ; col. 3 : C vers A</text>
+        <text x="552" y="44">A</text>
+        <text x="650" y="212">B</text>
+        <text x="458" y="212">C</text>
+        <text x="510" y="100">V_A</text>
+        <text x="612" y="120">U_AB (col. 1)</text>
+        <text x="548" y="292">a</text>
+        <text x="654" y="349">b</text>
+        <text x="556" y="402">c</text>
+        <text x="606" y="314">30°</text>
+        <text x="440" y="250">HT : triangle des tensions composées</text>
+        <text x="440" y="268">BT : étoile ; a parallèle à U_AB</text>
+        <text x="440" y="452">a à 11 h : Dyn11, avance de 30°</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal : horloge de groupe vectoriel du Dyn11. À gauche, le schéma de raccordement. Les traits verticaux en
+      pointillés figurent les trois colonnes du noyau ; chaque colonne porte un enroulement haute tension en haut et un enroulement
+      basse tension en bas, avec le point de polarité sur la borne haute de chacun. Côté haute tension, le triangle relie la borne
+      repérée de la colonne 1 à A et sa borne non repérée à B ; de même la colonne 2 va de B à C et la colonne 3 de C à A. Côté basse
+      tension, les bornes repérées vont à a, b et c, et les bornes non repérées au neutre n, référence de potentiel basse tension. À
+      droite, le diagramme vectoriel : le triangle haute tension a pour sommets les extrémités de $\underline{V}_A$, $\underline{V}_B$,
+      $\underline{V}_C$ ; la flèche épaisse de B vers A est $\underline{U}_{AB}$, tension de l'enroulement de la colonne 1. L'étoile
+      basse tension est tracée en dessous : $\underline{V}_a$, en tirets épais, est parallèle à $\underline{U}_{AB}$, donc décalée de
+      $30^\circ$ en avance sur la verticale, qui figure la direction de $\underline{V}_A$ : elle tombe à 11 heures.
+    </figcaption>
+  </figure>
+
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Plaques des deux appareils :<br/>Sn, U1 / U2, groupe, ucc, Pcc, prise"] --> B{"Même ordre<br/>des phases ?"}
+  B -->|"non"| X["Interdit : corriger le raccordement"]
+  B -->|"oui"| C{"Indices identiques<br/>ou de même famille ?"}
+  C -->|"non, pair contre impair"| X
+  C -->|"même famille, ou 1 et 11"| D["Renommer les bornes,<br/>ou croiser deux phases des deux côtés"]
+  C -->|"oui"| E{"Même rapport<br/>et même prise ?"}
+  D --> E
+  E -->|"non"| F["Calculer Ic = ΔE / (Z1 + Z2) ;<br/>ajuster les prises"]
+  F --> E
+  E -->|"oui"| G["Zcc par phase ramenées<br/>au même côté"]
+  G --> H["Partage : S1 = S Z2 / (Z1 + Z2)"]
+  H --> I{"Chaque taux de charge<br/>inférieur ou égal à 1 ?"}
+  I -->|"non"| J["Limiter la charge totale<br/>ou choisir un autre appareil"]
+  I -->|"oui"| K["Vérifier les courants de court-circuit<br/>et les protections du jeu de barres"]
+  K --> L["Essai de groupe, mesure<br/>aux bornes du disjoncteur ouvert"]</pre>
+    <figcaption>
+      Organigramme de vérification d'une mise en parallèle. Les losanges sont des tests, les rectangles des actions, les libellés
+      des flèches les réponses. Les deux premiers tests sont éliminatoires ; le troisième peut être rattrapé en ajustant les prises ;
+      le quatrième, le partage de la charge, fixe la charge totale admissible. On termine par les conséquences sur le courant de
+      court-circuit, qui augmente quand les appareils sont en parallèle, et par une vérification sur site avant de fermer le
+      disjoncteur de couplage.
+    </figcaption>
+  </figure>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Comparaison des couplages usuels</caption>
+      <thead><tr><th>Groupe</th><th>Indices possibles</th><th>Charge monophasée côté BT</th><th>Rang 3 et flux homopolaire</th><th>Usage typique</th></tr></thead>
+      <tbody>
+        <tr><td>Yyn</td><td>0, 6</td><td>mal supportée, courant de neutre limité</td><td>flux homopolaire par la cuve si trois colonnes</td><td>petites puissances, charges équilibrées</td></tr>
+        <tr><td>Dyn</td><td>1, 5, 7, 11</td><td>bien supportée, compensée par le triangle</td><td>rang 3 confiné dans le triangle</td><td>distribution avec neutre, cas le plus courant</td></tr>
+        <tr><td>Yd</td><td>1, 5, 7, 11</td><td>pas de neutre côté BT</td><td>triangle côté BT</td><td>élévateur de centrale, alimentation de redresseur</td></tr>
+        <tr><td>Yzn</td><td>1, 5, 7, 11</td><td>bien supportée, compensée par le zigzag</td><td>pas de flux homopolaire</td><td>petite distribution, $15\ \%$ de spires en plus côté BT</td></tr>
+        <tr><td>Dd</td><td>0, 2, 4, 6, 8, 10</td><td>pas de neutre</td><td>rang 3 confiné</td><td>industrie sans neutre, déphasage nul</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-noyau-figure" data-renvoi="d-noyau-figure">le noyau à trois colonnes</a> et <a href="#d-anim-figure" data-renvoi="d-anim-figure">l'animation de l'origine des trente degrés</a>, section D ;</li>
+    <li><a href="#e-couplages-figure" data-renvoi="e-couplages-figure">les trois couplages</a>, <a href="#e-zigzag-figure" data-renvoi="e-zigzag-figure">l'animation du zigzag</a>, <a href="#e-horloge-figure" data-renvoi="e-horloge-figure">la convention de l'horloge</a>, <a href="#e-horloge-sim-figure" data-renvoi="e-horloge-sim-figure">la simulation de l'indice horaire</a>, <a href="#e-homo-figure" data-renvoi="e-homo-figure">l'animation de la charge monophasée</a> et <a href="#e-parallele-figure" data-renvoi="e-parallele-figure">le schéma équivalent du parallèle</a>, section E ;</li>
+    <li><a href="#h-donnees-figure" data-renvoi="h-donnees-figure">le schéma unifilaire de l'exemple</a> et <a href="#h-sim-figure" data-renvoi="h-sim-figure">la simulation de mise en parallèle</a>, section H ;</li>
+    <li><a href="#i-poste-figure" data-renvoi="i-poste-figure">l'essai de groupe du transformateur du poste</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour interpréter un groupe de couplage puis vérifier une mise en parallèle :</p>
+  <ol>
+    <li>Lire la plaque : puissance assignée, tensions composées à vide de chaque côté, symbole de groupe, $u_{cc}$, pertes, prise en service. Décomposer le symbole : majuscule côté haute tension, minuscule côté basse tension, n ou N pour le neutre sorti, indice.</li>
+    <li>Calculer les grandeurs d'enroulement : tension d'enroulement, $U$ en triangle et $U/\sqrt{3}$ en étoile ; courant d'enroulement, $I/\sqrt{3}$ en triangle et $I$ en étoile ; rapport des spires à partir du rapport de transformation.</li>
+    <li>Construire le diagramme vectoriel : phaseurs haute tension avec $\underline{V}_A$ sur 12 heures, tension de chaque enroulement haute tension, tension parallèle de l'enroulement basse tension de la même colonne, assemblage basse tension, lecture de l'indice ; vérifier que l'on retrouve celui de la plaque.</li>
+    <li>En déduire le comportement : neutre utilisable ou non en charge déséquilibrée, chemin des courants de rang 3, déphasage à prendre en compte pour les mesures et les protections.</li>
+    <li>Pour un parallèle : vérifier l'ordre des phases, puis l'identité des indices ou leur compatibilité par renommage ou croisement ; à défaut, s'arrêter.</li>
+    <li>Comparer les rapports et les prises ; calculer s'il y a lieu $\underline{I}_c = \Delta\underline{E}/(\underline{Z}_1 + \underline{Z}_2)$ et le comparer aux courants assignés.</li>
+    <li>Ramener les impédances de court-circuit au même côté, par phase d'étoile équivalente ; calculer le partage $S_1 = S\,|\underline{Z}_2/(\underline{Z}_1 + \underline{Z}_2)|$, la charge totale admissible et le taux d'utilisation de la puissance installée.</li>
+    <li>Contrôler : somme des puissances débitées voisine de la charge, transformateur de plus faible $u_{cc}$ le plus chargé, ordre de grandeur des courants, augmentation du courant de court-circuit au jeu de barres, et procédure d'essai sur site avant couplage.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Un atelier est alimenté par un transformateur T1 de $400\ \mathrm{kVA}$. Pour une extension, on envisage de lui adjoindre en
+    parallèle un transformateur T2 de $630\ \mathrm{kVA}$ disponible en magasin. Le schéma unifilaire et les plaques fixent les données.
+  </p>
+  <figure id="h-donnees-figure">
+    <svg viewBox="0 0 760 260" role="img" aria-label="Schéma unifilaire de l'exemple : jeu de barres haute tension 20 kV, transformateurs T1 de 400 kVA et T2 de 630 kVA en Dyn11, jeu de barres basse tension commun et charge de 800 kVA">
+      <defs>
+        <marker id="fl-h" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M60 40H700" stroke-width="4"/>
+        <path d="M60 190H700" stroke-width="4"/>
+        <path d="M160 40V72M160 134V150M160 166V190"/>
+        <circle cx="160" cy="90" r="18"/>
+        <circle cx="160" cy="116" r="18"/>
+        <rect x="152" y="150" width="16" height="16" rx="1"/>
+        <path d="M480 40V72M480 134V150M480 166V190"/>
+        <circle cx="480" cy="90" r="18"/>
+        <circle cx="480" cy="116" r="18"/>
+        <rect x="472" y="150" width="16" height="16" rx="1"/>
+        <path d="M640 190V230"/>
+        <rect x="628" y="200" width="24" height="30" rx="3"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M670 198V240" marker-end="url(#fl-h)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="64" y="30">jeu de barres 20 kV</text>
+        <text x="64" y="212">jeu de barres BT 410 V, neutre commun</text>
+        <text x="190" y="78">T1 : 400 kVA</text>
+        <text x="190" y="96">20 kV / 410 V, Dyn11</text>
+        <text x="190" y="114">ucc = 4 % ; Pcc = 4,6 kW</text>
+        <text x="190" y="132">prise principale</text>
+        <text x="510" y="78">T2 : 630 kVA</text>
+        <text x="510" y="96">20 kV / 410 V, Dyn11</text>
+        <text x="510" y="114">ucc = 6 % ; Pcc = 6,5 kW</text>
+        <text x="510" y="132">prise principale</text>
+        <text x="190" y="162">disjoncteur BT</text>
+        <text x="510" y="162">disjoncteur de couplage</text>
+        <text x="420" y="250">charge : 800 kVA, cos φ = 0,85</text>
+        <text x="680" y="232">S</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma unifilaire de l'exemple : chaque trait représente les trois phases, et chaque transformateur est figuré par deux cercles
+      entrelacés. Les deux appareils sont alimentés par le même jeu de barres $20\ \mathrm{kV}$ et débitent, à travers leurs
+      disjoncteurs basse tension, sur un jeu de barres $410\ \mathrm{V}$ commun dont le neutre est la référence de potentiel. La charge
+      de $800\ \mathrm{kVA}$, flèche, est inductive. Les plaques sont reportées à côté de chaque transformateur.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Données : T1, $400\ \mathrm{kVA}$, $20\ \mathrm{kV} / 410\ \mathrm{V}$, Dyn11, $u_{cc} = 4\ \%$, $P_{cc} = 4600\ \mathrm{W}$ ; T2,
+    $630\ \mathrm{kVA}$, $20\ \mathrm{kV} / 410\ \mathrm{V}$, Dyn11, $u_{cc} = 6\ \%$, $P_{cc} = 6500\ \mathrm{W}$ ; charge prévue
+    $800\ \mathrm{kVA}$ sous $\cos\varphi = 0{,}85$ inductif. Inconnues : grandeurs d'enroulement de T1, position de $\underline{V}_a$,
+    impédances de court-circuit, partage de la charge, charge totale admissible, courant de circulation si T2 restait sur une autre
+    prise ou s'il avait un autre indice. Stratégie : interpréter la plaque de T1, puis appliquer la méthode G, en travaillant par
+    phase d'étoile équivalente côté basse tension.
+  </p>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li>Plaque de T1 : D, triangle côté $20\ \mathrm{kV}$ ; yn, étoile avec neutre sorti côté $410\ \mathrm{V}$ ; indice 11, la basse tension est en avance de $30^\circ$. Courants de ligne : $I_1 = 400\,000/(\sqrt{3} \times 20\,000) = 11{,}55\ \mathrm{A}$ et $I_2 = 400\,000/(\sqrt{3} \times 410) = 563{,}3\ \mathrm{A}$. Courant dans chaque enroulement du triangle : $J_1 = 11{,}55/\sqrt{3} = 6{,}667\ \mathrm{A}$.</li>
+    <li>Tensions d'enroulement : $20\,000\ \mathrm{V}$ côté haute tension, $410/\sqrt{3} = 236{,}7\ \mathrm{V}$ côté basse tension ; rapport des spires $N_2/N_1 = 236{,}7/20\,000 = 0{,}011\,84$ ; rapport de transformation $m = 0{,}020\,5$. Contrôle par la puissance d'un enroulement : $20\,000 \times 6{,}667 = 236{,}7 \times 563{,}3 = 133{,}3\ \mathrm{kVA} = 400/3$.</li>
+    <li>Diagramme : avec $\underline{V}_A = 11\,547\angle 0^\circ\ \mathrm{V}$, l'enroulement de la colonne 1 porte $\underline{U}_{AB} = 20\,000\angle 30^\circ$, donc $\underline{V}_a = 236{,}7\angle 30^\circ\ \mathrm{V}$ : 11 heures, conforme à la plaque. T2 étant aussi Dyn11, ordre des phases et indice sont compatibles si les bornes homologues sont reliées.</li>
+    <li>Rapports : $20\ \mathrm{kV} / 410\ \mathrm{V}$ des deux côtés, prises principales : $\underline{E}_1 = \underline{E}_2$, pas de courant de circulation. Puissances dans le rapport $630/400 = 1{,}58 &lt; 2$. Tensions de court-circuit dans le rapport $6/4 = 1{,}5$ : la règle d'un écart d'environ $10\ \%$ n'est pas respectée, il faut chiffrer le partage.</li>
+    <li>Impédances de base et de court-circuit côté $410\ \mathrm{V}$ : $Z_{b1} = 410^2/400\,000 = 0{,}420\,3\ \Omega$ ; $u_{r1} = 4600/400\,000 = 1{,}15\ \%$, $u_{x1} = \sqrt{4^2 - 1{,}15^2} = 3{,}831\ \%$ ; $\underline{Z}_1 = 4{,}833 + j16{,}10\ \mathrm{m\Omega}$. $Z_{b2} = 410^2/630\,000 = 0{,}266\,8\ \Omega$ ; $u_{r2} = 1{,}032\ \%$, $u_{x2} = 5{,}911\ \%$ ; $\underline{Z}_2 = 2{,}753 + j15{,}77\ \mathrm{m\Omega}$.</li>
+    <li>Partage : $\underline{Z}_2/(\underline{Z}_1 + \underline{Z}_2) = 0{,}488\,7\angle 3{,}49^\circ$ et $\underline{Z}_1/(\underline{Z}_1 + \underline{Z}_2) = 0{,}513\,1\angle{-3{,}32^\circ}$. Sous $800\ \mathrm{kVA}$ : $S_1 = 390{,}9\ \mathrm{kVA}$, soit $97{,}7\ \%$ de $400\ \mathrm{kVA}$, et $S_2 = 410{,}5\ \mathrm{kVA}$, soit $65{,}2\ \%$ de $630\ \mathrm{kVA}$. La méthode scalaire, $S_1 = 800 \times (400/4)/(400/4 + 630/6) = 390{,}2\ \mathrm{kVA}$, donne le même résultat à $0{,}2\ \%$ près.</li>
+    <li>Charge admissible : T1 atteint $400\ \mathrm{kVA}$ quand $S = 400/0{,}488\,7 = 818{,}6\ \mathrm{kVA}$, alors que T2 n'est qu'à $66{,}7\ \%$. La puissance utilisable n'est que de $79{,}5\ \%$ des $1030\ \mathrm{kVA}$ installés. À $950\ \mathrm{kVA}$, T1 serait chargé à $116\ \%$.</li>
+    <li>Prise différente : si T2 était resté sur la prise $+2{,}5\ \%$, sa tension à vide serait $410/1{,}025 = 400\ \mathrm{V}$, soit $\Delta E = 236{,}7 \times (1 - 1/1{,}025) = 5{,}77\ \mathrm{V}$ par phase, et $I_c = 5{,}77/|\underline{Z}_1 + \underline{Z}_2| = 5{,}77/0{,}032\,76 = 176\ \mathrm{A}$, soit $31\ \%$ du courant assigné de T1, à vide.</li>
+    <li>Indice différent : si T2 était un Yyn0, à une heure d'écart du Dyn11, $\Delta E = 2 \times 236{,}7 \times \sin 15^\circ = 122{,}5\ \mathrm{V}$ et $I_c = 122{,}5/0{,}032\,76 = 3740\ \mathrm{A}$, $6{,}6$ fois le courant assigné de T1. Un Dyn1 raccordé tel quel, à deux heures d'écart, donnerait $\Delta E = 2 \times 236{,}7 \times \sin 30^\circ = 236{,}7\ \mathrm{V}$ et $7225\ \mathrm{A}$. Le disjoncteur de couplage s'ouvrirait aussitôt, au mieux.</li>
+  </ol>
+
+  <h3 id="h-sim-section">Simulation interactive : vérifier une mise en parallèle</h3>
+  <p>
+    La simulation reprend le schéma équivalent de la section E. T1 est fixé, $400\ \mathrm{kVA}$ et $u_{cc} = 4\ \%$ ; les curseurs règlent
+    la puissance de T2, sa tension de court-circuit, sa part résistive, l'écart de rapport dû aux prises et un éventuel écart
+    d'indice. Le tracé donne le taux de charge de chaque appareil en fonction de la charge totale, sous $\cos\varphi = 0{,}85$.
+    Prédisez avant de manipuler : si T2 avait $u_{cc} = 4\ \%$, quelle part de la puissance installée deviendrait utilisable ? Et un
+    écart de prise de $2{,}5\ \%$ charge-t-il davantage T1 ou T2 lorsque la charge est forte ?
+  </p>
+  <figure id="h-sim-figure">
+    <div id="h-sim-trace"></div>
+    <figcaption>
+      Taux de charge $|I_1|/I_{n1}$ et $|I_2|/I_{n2}$ en fonction de la puissance apparente totale de la charge ; les deux courbes sont
+      nommées dans la légende du tracé. Le trait horizontal en tirets marque la pleine charge, le trait vertical en pointillés la
+      charge totale admissible, atteinte quand le premier appareil arrive à $100\ \%$. À charge nulle, la valeur lue est celle du
+      courant de circulation.
+    </figcaption>
+  </figure>
+  <div id="h-sim-curseurs"></div>
+  <div id="h-sim-valeurs"></div>
+  <p>
+    Interprétation : avec les valeurs de départ, la simulation retrouve $818{,}6\ \mathrm{kVA}$ admissibles, $79{,}5\ \%$ de la puissance
+    installée. Ramenez $u_{cc2}$ à $4\ \%$ : la charge admissible monte à $1030\ \mathrm{kVA}$, les deux appareils atteignant ensemble leur
+    pleine charge. Introduisez un écart de $+2{,}5\ \%$, T2 ayant alors la tension à vide la plus haute : à charge nulle, $181\ \mathrm{A}$
+    circulent, $32\ \%$ du courant assigné de T1 ; en charge, ce courant, très inductif, s'ajoute en bonne partie à celui de T2 et
+    se retranche de celui de T1, si bien que la charge admissible monte à $969\ \mathrm{kVA}$. Avec $-2{,}5\ \%$, l'effet s'inverse et
+    T1 atteint sa pleine charge dès $620\ \mathrm{kVA}$. Un décalage de prise peut donc soulager l'appareil le plus raide, mais au prix
+    de pertes de circulation permanentes, même la nuit à vide ; la règle de conception reste des prises identiques. Avec un écart d'une heure, les courants de
+    circulation dépassent plusieurs fois les courants assignés, quelle que soit la charge : aucun réglage ne rattrape un indice
+    incompatible.
+  </p>
+
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li><strong>Somme des puissances :</strong> $390{,}9 + 410{,}5 = 801{,}4\ \mathrm{kVA}$, à peine plus que $800$ : les deux courants sont décalés de $6{,}8^\circ$ parce que les rapports $X/R$ diffèrent, $3{,}3$ et $5{,}7$.</li>
+    <li><strong>Sens de variation :</strong> T1, de plus faible $u_{cc}$, est le plus chargé, ce qu'annonçait la formule de partage.</li>
+    <li><strong>Dimensions :</strong> $\mathrm{V}^2/\mathrm{VA} = \Omega$ pour les impédances de base, $\mathrm{V}/\Omega = \mathrm{A}$ pour le courant de circulation.</li>
+    <li><strong>Ordres de grandeur :</strong> une impédance de court-circuit de quelques dizaines de milliohms pour quelques centaines de kilovoltampères en $410\ \mathrm{V}$ ; un écart de rapport de $2{,}5\ \%$ divisé par une somme de $u_{cc}$ de l'ordre de $8$ à $10\ \%$ donne bien un courant de circulation de $25$ à $30\ \%$.</li>
+    <li><strong>Limites :</strong> le calcul suppose des tensions de court-circuit égales à leurs valeurs de plaque, connues à une tolérance près, et ignore la branche magnétisante, les harmoniques et l'échauffement réel ; le résultat doit être confronté aux données du constructeur.</li>
+  </ul>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+
+  <h3 id="i-probleme">Le groupe Dyn11 du transformateur du poste, et son futur voisin</h3>
+  <p>
+    Le transformateur du poste du site, hypothèses d'étude $100\ \mathrm{kVA}$, $20\ \mathrm{kV} / 410\ \mathrm{V}$, est annoncé en Dyn11
+    sur sa plaque, avec la prise $+2{,}5\ \%$ retenue au cours <a href="#/cours/transformateur-reel">Transformateur réel</a> et les
+    paramètres du procès-verbal exploité au cours <a href="#/cours/essais-a-vide-et-en-court-circuit">Essais à vide et en
+    court-circuit</a> : $\underline{Z}_{cc} = 29{,}26 + j61{,}49\ \mathrm{m\Omega}$ par phase côté basse tension à $75\ ^\circ\mathrm{C}$. Trois
+    questions se posent à la réception et pour l'avenir. Le groupe câblé est-il bien celui de la plaque ? Le neutre basse tension,
+    qui alimente le départ éclairage et prises et ses courants de rang 3, est-il correctement supporté ? Et si l'appel de puissance
+    du site passait à $150\ \mathrm{kVA}$, hypothèse d'extension, quel second transformateur pourrait être mis en parallèle ? Le
+    schéma situe l'essai de groupe prévu à la réception.
+  </p>
+  <figure id="i-poste-figure">
+    <svg viewBox="0 0 760 300" role="img" aria-label="Essai de groupe du transformateur du poste : source d'essai triphasée de 400 V sur les bornes haute tension, liaison entre la borne A et la borne a, voltmètre mesurant successivement les tensions entre bornes haute tension et basse tension">
+      <defs>
+        <marker id="fl-i" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round">
+        <rect x="200" y="8" width="250" height="32" rx="4"/>
+        <rect x="200" y="80" width="240" height="140" rx="8"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M250 40V80M320 40V80M390 40V80M250 220V232M320 220V232M390 220V232M430 220V232"/>
+        <path d="M250 60H170V250H250V232" stroke-width="4.5"/>
+        <path d="M320 70H384a6 6 0 0 1 12 0H480V130M320 240H480V170"/>
+        <circle cx="480" cy="150" r="20"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="250" cy="80" r="4"/>
+        <circle cx="320" cy="80" r="4"/>
+        <circle cx="390" cy="80" r="4"/>
+        <circle cx="250" cy="232" r="4"/>
+        <circle cx="320" cy="232" r="4"/>
+        <circle cx="390" cy="232" r="4"/>
+        <circle cx="430" cy="232" r="4"/>
+        <circle cx="250" cy="60" r="3"/>
+        <circle cx="320" cy="70" r="3"/>
+        <circle cx="320" cy="240" r="3"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M520 180V120" marker-end="url(#fl-i)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="212" y="29">source d'essai 400 V, 50 Hz</text>
+        <text x="256" y="98">A</text>
+        <text x="326" y="98">B</text>
+        <text x="396" y="98">C</text>
+        <text x="256" y="214">a</text>
+        <text x="326" y="214">b</text>
+        <text x="396" y="214">c</text>
+        <text x="420" y="214">n</text>
+        <text x="270" y="140">100 kVA</text>
+        <text x="270" y="158">20 kV / 410 V</text>
+        <text x="270" y="176">plaque : Dyn11</text>
+        <text x="40" y="150">liaison A-a</text>
+        <text x="475" y="154">V</text>
+        <text x="530" y="146">U_Bb, puis U_Cc,</text>
+        <text x="530" y="164">U_Bc, U_Cb</text>
+        <text x="530" y="200">fils déplacés entre</text>
+        <text x="530" y="218">deux lectures, hors tension</text>
+        <text x="40" y="285">BT à vide : 8,2 V entre phases ; la liaison A-a fixe le potentiel commun</text>
+      </g>
+    </svg>
+    <figcaption>
+      Essai de groupe à la réception. Une source triphasée réglable de $400\ \mathrm{V}$, rectangle du haut, alimente les bornes haute
+      tension A, B, C ; la basse tension reste à vide et ne porte que $400 \times 0{,}020\,5 = 8{,}2\ \mathrm{V}$ entre phases. La liaison en
+      trait épais relie la borne A à la borne a : elle met les deux enroulements à un potentiel commun, qui sert de référence. Un
+      voltmètre, cercle, mesure successivement les tensions entre une borne haute tension et une borne basse tension, ici dessiné
+      entre B et b ; ses fils sont déplacés hors tension entre deux lectures. La flèche à côté du voltmètre indique le sens de lecture.
+    </figcaption>
+  </figure>
+
+  <h3 id="i-calcul">Calculs et vérifications</h3>
+  <ol>
+    <li>Grandeurs d'enroulement : $1{,}667\ \mathrm{A}$ dans chaque enroulement haute tension au courant assigné, $2{,}887\ \mathrm{A}$ en ligne ; $236{,}7\ \mathrm{V}$ et $140{,}8\ \mathrm{A}$ par enroulement basse tension ; $N_2/N_1 = 0{,}011\,84$.</li>
+    <li>Résistances du procès-verbal : les $26{,}8\ \Omega$ par phase d'étoile équivalente proviennent de $53{,}6\ \Omega$ lus entre deux bornes haute tension, soit $80{,}4\ \Omega$ par enroulement du triangle. Contrôle par les pertes Joule : $3 \times 80{,}4 \times 1{,}667^2 = 3 \times 26{,}8 \times 2{,}887^2 = 670{,}0\ \mathrm{W}$, comme au procès-verbal.</li>
+    <li>Essai de groupe : avec A relié à a et la source de $400\ \mathrm{V}$, les tensions attendues se calculent par phaseurs en ajoutant $\underline{V}_A - \underline{V}_a$ au potentiel de chaque borne basse tension ; elles figurent dans le tableau ci-dessous. Pour un Dyn11, $U_{Bb} = U_{Cc} = U_{Bc} = 392{,}9\ \mathrm{V}$ et $U_{Cb} = 400{,}1\ \mathrm{V}$ ; pour un Dyn1, c'est $U_{Bc}$ qui vaut $400{,}1\ \mathrm{V}$. L'écart de $7\ \mathrm{V}$ se lit sans difficulté avec un voltmètre de classe $0{,}5$.</li>
+    <li>Neutre et rang 3 : une charge de $100\ \mathrm{A}$ entre la phase a et le neutre ne fait circuler que $1{,}18\ \mathrm{A}$ dans l'enroulement de la colonne 1 et sur les lignes A et B ; les courants de rang 3 du départ éclairage et prises restent dans le triangle et ne remontent pas vers le réseau du distributeur, mais ils échauffent les enroulements. Le Dyn11 convient donc au neutre distribué du site.</li>
+    <li>Second transformateur, appel de puissance supposé de $150\ \mathrm{kVA}$ : option A, un second $100\ \mathrm{kVA}$ identique, chaque appareil porte $75\ \mathrm{kVA}$ ; option B, un $160\ \mathrm{kVA}$ Dyn11, $u_{cc} = 4\ \%$, $P_{cc} = 2350\ \mathrm{W}$, hypothèses de catalogue, soit $\underline{Z}_2 = 15{,}43 + j39{,}09\ \mathrm{m\Omega}$ : T1 porte $57{,}3\ \mathrm{kVA}$, $57{,}3\ \%$, et T2 $92{,}8\ \mathrm{kVA}$, $58{,}0\ \%$ ; la charge admissible atteint $258{,}6\ \mathrm{kVA}$, $99{,}5\ \%$ des $260\ \mathrm{kVA}$ installés ; option C, un $160\ \mathrm{kVA}$ Yyn0 disponible en stock, est exclue : $122{,}5\ \mathrm{V}$ d'écart par phase et $1113\ \mathrm{A}$ de courant de circulation, $7{,}9$ fois le courant assigné de T1.</li>
+    <li>Prises : T1 est sur la prise $+2{,}5\ \%$. Sous $20{,}8\ \mathrm{kV}$, il donne $416{,}0\ \mathrm{V}$ à vide ; un T2 laissé sur la prise principale donnerait $426{,}4\ \mathrm{V}$, soit $6{,}0\ \mathrm{V}$ d'écart par phase et un courant de circulation de $54{,}6\ \mathrm{A}$, $39\ \%$ du courant assigné de T1. T2 doit être placé sur la même prise.</li>
+    <li>Court-circuit au tableau général : avec le seul T1, $I_k = 236{,}7\ \mathrm{V}/|29{,}26 + j62{,}16|\ \mathrm{m\Omega} = 3445\ \mathrm{A}$, réseau amont de $j0{,}672\ \mathrm{m\Omega}$ compris, contre $3486\ \mathrm{A}$ avec les hypothèses du cours <a href="#/cours/transformateur-ideal">Transformateur idéal</a> ; avec T1 et le $160\ \mathrm{kVA}$ en parallèle, $8892\ \mathrm{A}$, $2{,}6$ fois plus. Le pouvoir de coupure des disjoncteurs du tableau devra être vérifié, ce que fera le cours Calcul des courants de court-circuit.</li>
+  </ol>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Tensions attendues lors de l'essai de groupe, source de 400 V, liaison A-a, rapport 0,020 5</caption>
+      <thead><tr><th>Groupe</th><th>$U_{Bb}$</th><th>$U_{Cc}$</th><th>$U_{Bc}$</th><th>$U_{Cb}$</th></tr></thead>
+      <tbody>
+        <tr><td>Dyn11</td><td>$392{,}9\ \mathrm{V}$</td><td>$392{,}9\ \mathrm{V}$</td><td>$392{,}9\ \mathrm{V}$</td><td>$400{,}1\ \mathrm{V}$</td></tr>
+        <tr><td>Dyn1</td><td>$392{,}9\ \mathrm{V}$</td><td>$392{,}9\ \mathrm{V}$</td><td>$400{,}1\ \mathrm{V}$</td><td>$392{,}9\ \mathrm{V}$</td></tr>
+        <tr><td>Dyn5</td><td>$407{,}1\ \mathrm{V}$</td><td>$407{,}1\ \mathrm{V}$</td><td>$407{,}1\ \mathrm{V}$</td><td>$400{,}1\ \mathrm{V}$</td></tr>
+        <tr><td>Yyn0, pour comparaison</td><td>$391{,}8\ \mathrm{V}$</td><td>$391{,}8\ \mathrm{V}$</td><td>$396{,}0\ \mathrm{V}$</td><td>$396{,}0\ \mathrm{V}$</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="i-compromis">Contraintes, risques et compromis</h3>
+  <ul>
+    <li><strong>Choix du second appareil :</strong> l'option A simplifie l'exploitation, avec une réserve complète, mais limite la puissance à $200\ \mathrm{kVA}$ ; l'option B offre $260\ \mathrm{kVA}$ avec un partage presque parfait, au prix d'un appareil différent et d'un courant de court-circuit plus élevé. L'option C est à proscrire, quelle que soit la charge.</li>
+    <li><strong>Exploitation :</strong> aux heures creuses, mettre un appareil hors tension supprime ses pertes à vide, mais il faut alors que l'autre suffise ; un automatisme de couplage doit vérifier l'égalité des tensions avant de fermer.</li>
+    <li><strong>Sécurité de l'essai :</strong> la source de $400\ \mathrm{V}$ est appliquée aux bornes haute tension, qui ne doivent être raccordées à rien d'autre ; la basse tension, à vide, ne porte que quelques volts, mais la liaison A-a la porte au potentiel de la source.</li>
+    <li><strong>Avant toute fermeture du disjoncteur de couplage :</strong> mesurer la tension entre pôles homologues ouverts ; elle doit être de quelques volts au plus. $10\ \mathrm{V}$ entre phases signalent une prise différente ; une centaine de volts, un indice ou un ordre des phases erroné.</li>
+    <li><strong>Limites :</strong> les impédances des options sont des hypothèses de catalogue ; le partage réel dépend des valeurs du procès-verbal de chaque appareil et de leurs tolérances, et l'appel de puissance de $150\ \mathrm{kVA}$ reste à établir par le bilan de puissance du site.</li>
+  </ul>
+
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : ce que cette séance ajoute</span>
+    <p>
+      Groupe de couplage du transformateur du poste, $100\ \mathrm{kVA}$, $20\ \mathrm{kV} / 410\ \mathrm{V}$, Dyn11 : basse tension en avance
+      de $30^\circ$, $1{,}667\ \mathrm{A}$ par enroulement haute tension et $2{,}887\ \mathrm{A}$ en ligne, $N_2/N_1 = 0{,}011\,84$ ; résistance
+      de $80{,}4\ \Omega$ par enroulement du triangle, $53{,}6\ \Omega$ entre bornes ; essai de groupe à la réception, liaison A-a et
+      source de $400\ \mathrm{V}$, attendu $U_{Bb} = U_{Cc} = U_{Bc} = 392{,}9\ \mathrm{V}$ et $U_{Cb} = 400{,}1\ \mathrm{V}$ ; neutre distribué
+      supporté, charge de $100\ \mathrm{A}$ sur une phase vue comme $1{,}18\ \mathrm{A}$ entre deux lignes haute tension, rang 3 confiné dans
+      le triangle. Mise en parallèle future pour un appel supposé de $150\ \mathrm{kVA}$ : $160\ \mathrm{kVA}$ Dyn11, $u_{cc} = 4\ \%$, retenu
+      en hypothèse, partage $57{,}3$ et $92{,}8\ \mathrm{kVA}$, $258{,}6\ \mathrm{kVA}$ admissibles ; même prise $+2{,}5\ \%$ obligatoire, sinon
+      $54{,}6\ \mathrm{A}$ de circulation ; Yyn0 du stock exclu, $1113\ \mathrm{A}$ ; courant de court-circuit au tableau porté de $3445$ à
+      $8892\ \mathrm{A}$, pouvoirs de coupure à vérifier.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Prendre le rapport de transformation pour le rapport des spires.</strong> En Dyn11, $m = 0{,}020\,5$ mais $N_2/N_1 = 0{,}011\,84$ : le couplage introduit un facteur $\sqrt{3}$, qu'on ne retrouve qu'en raisonnant sur les tensions d'enroulement.</li>
+    <li><strong>Lire l'indice comme une avance.</strong> L'indice mesure le retard de la basse tension : Dyn1 est en retard de $30^\circ$, Dyn11 en avance de $30^\circ$. L'erreur inverse les deux groupes, ce qui est grave pour un parallèle.</li>
+    <li><strong>Croire que deux appareils de même indice se partagent toujours la charge au prorata de leurs puissances.</strong> Le partage suit l'inverse des tensions de court-circuit : dans l'exemple, T1 de $400\ \mathrm{kVA}$ à $4\ \%$ prend autant de charge que T2 de $630\ \mathrm{kVA}$ à $6\ \%$.</li>
+    <li><strong>Oublier la prise.</strong> Deux appareils identiques sur des prises différentes de $2{,}5\ \%$ font circuler à vide environ $30\ \%$ de leur courant assigné ; l'échauffement apparaît sans aucune charge.</li>
+    <li><strong>Penser qu'un écart d'indice se corrige en permutant n'importe quelles bornes.</strong> Renommer circulairement change l'indice de $4$ heures, croiser deux phases des deux côtés change son signe ; rien ne fait passer d'un indice pair à un indice impair.</li>
+    <li><strong>Choisir un Yyn pour des charges monophasées importantes.</strong> Le courant de neutre n'est pas compensé, le flux homopolaire traverse la cuve et le neutre se déplace : les tensions simples deviennent inégales.</li>
+    <li><strong>Confondre la résistance lue entre bornes et celle d'un enroulement.</strong> Entre deux bornes d'un triangle on lit $\tfrac{2}{3}R_{ph}$, entre deux bornes d'une étoile $2R_{ph}$ ; sans cette correction, les pertes Joule calculées sont fausses.</li>
+    <li><strong>Oublier le déphasage dans les mesures et les protections.</strong> Comparer une tension basse tension à une tension haute tension, ou un courant de chaque côté dans une protection différentielle, exige de compenser les $30^\circ$ du groupe.</li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain : des courants égaux et opposés sur deux transformateurs en parallèle à charge nulle, de quelques
+    dizaines de pour cent, signalent une différence de prise ou de rapport ; un déclenchement immédiat à la fermeture du couplage
+    signale un indice ou un ordre des phases incompatibles ; des tensions simples basse tension inégales alors que les tensions
+    composées sont correctes, sur un Yyn chargé en monophasé, signalent un déplacement du neutre par flux homopolaire ; un
+    échauffement anormal d'un Dyn sans surcharge apparente peut venir de courants de rang 3 qui circulent dans le triangle.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic
+    industriel et une question conceptuelle. La correction de chacun reste masquée jusqu'à une tentative ou un clic explicite
+    sur "Voir la correction", puis se déroule étape par étape, accompagnée d'un diagramme, d'une courbe ou d'un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Après chaque
+    réponse, l'explication s'affiche avec un petit schéma tracé pas à pas.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$\text{Y : } V_{enr} = U/\sqrt{3},\ J = I \qquad \text{D : } V_{enr} = U,\ J = I/\sqrt{3}$$
+    $$\theta_{retard\ BT} = h \times 30^\circ, \qquad \underline{U}_{AB} = \sqrt{3}\,\underline{V}_A\,e^{j30^\circ}$$
+    $$\frac{U_2}{U_1} = \sqrt{3}\,\frac{N_2}{N_1} \text{ (Dy)}, \qquad \frac{U_2}{U_1} = \frac{\sqrt{3}}{2}\,\frac{N_2}{N_1} \text{ (Yz)}$$
+    $$S_1 = S\left|\frac{\underline{Z}_2}{\underline{Z}_1 + \underline{Z}_2}\right|, \qquad \frac{S_1/S_{n1}}{S_2/S_{n2}} = \frac{u_{cc2}}{u_{cc1}}$$
+    $$\underline{I}_c = \frac{\underline{E}_1 - \underline{E}_2}{\underline{Z}_1 + \underline{Z}_2}, \qquad \Delta E = 2E\sin\frac{\Delta\theta}{2}$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>L'indice horaire mesure le retard de la basse tension : 11 signifie une avance de $30^\circ$.</li>
+      <li>Rapport de transformation et rapport des spires diffèrent dès que les couplages diffèrent.</li>
+      <li>En parallèle : même ordre des phases, même indice, même rapport et même prise, sinon courant de circulation.</li>
+      <li>La charge se partage en raison inverse des $u_{cc}$ : le plus raide sature le premier.</li>
+      <li>Un neutre chargé exige un triangle ou un zigzag de l'autre côté ou du même côté.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Un transformateur triphasé réunit trois transformateurs monophasés, souvent sur un noyau à trois colonnes
+    dont les flux ont une somme nulle. Sur chaque colonne, les deux enroulements sont en phase ; le déphasage entre les tensions de
+    ligne des deux côtés vient des couplages, étoile, triangle ou zigzag, et vaut un multiple de $30^\circ$, noté par l'indice horaire.
+    Dyn11 : triangle haute tension, étoile avec neutre basse tension, basse tension en avance de $30^\circ$. Le triangle et le zigzag
+    compensent les courants homopolaires et confinent le rang 3 ; l'étoile sans neutre ne le peut pas. En parallèle, il faut même
+    ordre des phases, même indice et même rapport ; la charge se partage en raison inverse des impédances de court-circuit, et tout
+    écart de tension à vide crée un courant de circulation.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent,
+    <a href="#/cours/essais-a-vide-et-en-court-circuit">Essais à vide et en court-circuit</a> ; une sur le cours
+    <a href="#/cours/filtres-passifs">Filtres passifs</a>, vieux d'une semaine, dont l'atténuation fréquentielle sert à comprendre le
+    filtrage des harmoniques par les couplages déphaseurs ; une sur le cours
+    <a href="#/cours/loi-d-ohm-et-resistivite">Loi d'Ohm et résistivité</a>, vieux d'un mois, dont la variation de la résistance avec
+    la température s'applique aux enroulements du triangle.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : construire un Dyn11 dans LTspice avec trois transformateurs monophasés idéaux, mesurer son déphasage, le transformer
+    en Dyn1 puis en Dyn5 en changeant des connexions, puis simuler deux appareils en parallèle sur des prises différentes.
+    Prédictions à écrire avant de commencer : de combien de millisecondes le maximum de $v_a$ précède-t-il celui de $v_A$ ? Quel
+    courant de circulation attendez-vous entre deux appareils identiques de $u_{cc} = 4\ \%$ dont les tensions à vide diffèrent de
+    $2{,}5\ \%$ ?
+  </p>
+  <ol>
+    <li>Sources haute tension en étoile, réduites pour la simulation : <code>VA A 0 SINE(0 326.6 50 0 0 0)</code>, <code>VB B 0 SINE(0 326.6 50 0 0 -120)</code>, <code>VC C 0 SINE(0 326.6 50 0 0 120)</code>, soit $400\ \mathrm{V}$ entre phases.</li>
+    <li>Colonne 1 : <code>L1 A B 10</code> et <code>L2 a n 0.04</code> avec <code>K1 L1 L2 0.9999</code> ; colonnes 2 et 3 sur le même modèle, <code>L3 B C 10</code> et <code>L4 b n 0.04</code>, <code>L5 C A 10</code> et <code>L6 c n 0.04</code>. Le rapport des spires vaut $\sqrt{0{,}04/10} = 0{,}063\,2$ ; ajouter <code>Rn n 0 1Meg</code> et une charge de <code>100</code> ohms entre chaque phase basse tension et n.</li>
+    <li>Lancer <code>.tran 0 0.2 0.1 10u</code> et mesurer l'instant des maxima de <code>V(A)</code> et de <code>V(a,n)</code> ; en Python, calculer le déphasage par la phase du fondamental, obtenue par une transformée de Fourier sur un nombre entier de périodes.</li>
+    <li>Passer en Dyn1 en reliant la colonne 1 entre A et C, la colonne 2 entre B et A, la colonne 3 entre C et B ; puis en Dyn5 en inversant les trois enroulements basse tension. Relever l'indice obtenu à chaque fois et le comparer à la simulation de la section E.</li>
+    <li>Parallèle : dupliquer le montage Dyn11, insérer en série avec chaque phase basse tension des deux appareils une résistance de <code>0.03</code> ohm et une inductance de <code>0.2m</code>, puis donner au second une inductance basse tension de <code>0.042</code> au lieu de <code>0.04</code>, ce qui élève son rapport d'environ $2{,}5\ \%$. Relier les deux jeux de barres basse tension sans charge et mesurer le courant de circulation.</li>
+  </ol>
+  <p>
+    Résultats attendus : $v_a$ précède $v_A$ de $1{,}67\ \mathrm{ms}$ en Dyn11, la suit de $1{,}67\ \mathrm{ms}$ en Dyn1 et de
+    $8{,}33\ \mathrm{ms}$ en Dyn5 ; la tension basse tension entre phases vaut environ $\sqrt{3} \times 400 \times 0{,}063\,2 = 43{,}8\ \mathrm{V}$.
+    Pour le parallèle, avec une impédance série de $0{,}069\ \Omega$ par appareil, l'écart d'environ $0{,}6\ \mathrm{V}$ par phase donne un
+    courant de circulation de l'ordre de $4\ \mathrm{A}$, à comparer au courant de charge qu'auraient ces appareils. Anomalies à
+    observer : un couplage de $1$ exact rend la matrice singulière, d'où $0{,}9999$ ; une composante continue au démarrage, à laisser
+    s'éteindre en ne mesurant qu'après $0{,}1\ \mathrm{s}$ ; une matrice singulière si le neutre basse tension n'a aucun chemin vers la
+    masse ; un déphasage faussé de quelques degrés si l'on mesure sur une charge trop forte, à cause de la chute dans les fuites.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est calculé dans ce
+    navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement pour
+    suivre votre progression. Le jalon de fin du module des machines demande de comprendre les transformateurs et d'interpréter une
+    plaque signalétique : lire un symbole de groupe et vérifier une mise en parallèle en sont des étapes directes.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Sur une colonne, les deux enroulements sont en phase ; le déphasage du transformateur triphasé, multiple de $30^\circ$, vient des couplages et se lit sur l'horloge : Dyn11, basse tension en avance de $30^\circ$.</li>
+    <li data-rang="02">Le triangle et le zigzag compensent les courants homopolaires et confinent le rang 3 ; c'est pourquoi la distribution avec neutre utilise Dyn ou Yzn.</li>
+    <li data-rang="03">En parallèle : même ordre des phases, même indice, même rapport et même prise ; la charge se partage en raison inverse des $u_{cc}$, et tout écart de tension à vide crée un courant de circulation.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> construire sans erreur le diagramme vectoriel d'un couplage, en respectant les
+    points de polarité et le sens de fermeture du triangle, puis lire l'indice comme un retard et non comme une avance. La simulation
+    de la section E, l'exercice de lecture de cadran et l'essai de groupe de la section I sont faits pour installer ce réflexe ; la
+    simulation de mise en parallèle relie ensuite l'indice aux courants qu'il provoque.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Autotransformateurs, TC et TP, étudie des transformateurs particuliers.
+    Question à préparer : un autotransformateur $400\ \mathrm{V} / 360\ \mathrm{V}$ n'a qu'un enroulement par phase, dont une partie est
+    commune aux deux côtés ; quelle part de la puissance traverse réellement le noyau, et pourquoi l'appareil est-il plus petit qu'un
+    transformateur à deux enroulements de même puissance ? Et pour le départ de la pompe, que se passerait-il si l'on ouvrait le
+    secondaire d'un transformateur de courant de rapport $150/5\ \mathrm{A}$ pendant que le moteur tourne ?
+  </p>
+
+</article>
