@@ -1,0 +1,1222 @@
+<article class="cours" data-slug="autotransformateurs-tc-et-tp">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/transformateurs-triphases">Transformateurs triphasés</a> s'est achevé sur deux questions. La première :
+      dans un autotransformateur $400\ \mathrm{V} / 360\ \mathrm{V}$, quelle part de la puissance traverse réellement le noyau ? Réponse
+      que cette séance va démontrer : $1 - 360/400 = 10\ \%$ seulement ; les $90\ \%$ restants passent directement, par conduction, à
+      travers la portion d'enroulement commune aux deux côtés. C'est pourquoi l'appareil est environ dix fois plus petit qu'un
+      transformateur à deux enroulements de même puissance. La seconde : que se passe-t-il si l'on ouvre le secondaire d'un
+      transformateur de courant $150/5\ \mathrm{A}$ pendant que la pompe tourne ? Les ampères-tours du primaire ne sont plus compensés,
+      le noyau sature à chaque demi-période et, à chaque passage du courant par zéro, le flux bascule brutalement : la loi de Faraday
+      fait apparaître des pointes de tension de plusieurs centaines de volts aux bornes du secondaire ouvert. Cette séance chiffre ces
+      deux réponses et en tire des règles de choix et de sécurité.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Le transformateur à deux enroulements séparés n'est pas la seule forme utile du principe d'induction. Trois appareils dérivés
+    sont partout dans l'industrie et les réseaux. L'autotransformateur n'a qu'un enroulement par phase, avec une prise
+    intermédiaire : il relie les grands réseaux de transport entre eux, démarre des moteurs sous tension réduite, alimente des
+    bancs d'essai par un rapport réglable. Le transformateur de courant, noté TC, et le transformateur de tension, noté TP, ne
+    transportent pas d'énergie : ils réduisent fidèlement un courant de plusieurs centaines d'ampères ou une tension de plusieurs
+    dizaines de kilovolts à $1$ ou $5\ \mathrm{A}$ et à $100\ \mathrm{V}$, pour alimenter compteurs, centrales de mesure, analyseurs et
+    relais de protection, tout en les isolant du circuit de puissance.
+  </p>
+  <p>
+    Ces appareils de mesure portent deux enjeux distincts. Le premier est la justesse : un TC mal choisi, trop gros pour le courant
+    de service ou trop chargé par ses câbles, fausse le comptage, les bilans de puissance et les seuils des protections. Le second
+    est la sécurité : un TC ne doit jamais être ouvert en service, un TP ne doit jamais être court-circuité, et l'oubli de l'une de
+    ces deux règles blesse encore des électriciens chaque année. Le travail central de cette séance est de choisir un rapport de TC
+    et d'estimer les contraintes qu'il subit ; dans le projet fil rouge, il s'applique aux transformateurs de courant de l'arrivée
+    du tableau général et du départ de la pompe prévus au plan de mesure.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Calculer les courants, la puissance transmise par induction et la puissance propre d'un autotransformateur, et expliquer pourquoi il est plus petit qu'un transformateur à deux enroulements.</li>
+    <li data-rang="02">Expliquer le fonctionnement d'un transformateur de courant comme source de courant et d'un transformateur de tension comme source de tension, et en déduire leurs règles de sécurité.</li>
+    <li data-rang="03">Calculer le courant secondaire, la charge en voltampères, l'erreur de courant et le déphasage d'un TC à partir de son schéma équivalent.</li>
+    <li data-rang="04">Dimensionner un TC : rapport, classe de précision, puissance de précision, facteur de sécurité ou facteur limite de précision, tenue thermique et dynamique.</li>
+    <li data-rang="05">Estimer la tension qui apparaît aux bornes d'un secondaire de TC ouvert et interpréter le phénomène de saturation.</li>
+    <li data-rang="06">Diagnostiquer une erreur de raccordement, de polarité ou de charge à partir des indications d'une centrale de mesure.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois acquis suffisent. Le premier vient du cours <a href="#/cours/transformateur-ideal">Transformateur idéal</a> : dans un
+    transformateur idéal, les ampères-tours se compensent, $N_1 i_1 = N_2 i_2$, et le flux est imposé par la tension, $v_1 = N_1\,
+    \mathrm{d}\Phi/\mathrm{d}t$. Le deuxième vient du cours <a href="#/cours/circuits-magnetiques">Circuits magnétiques</a> : le fer
+    canalise le flux tant qu'il n'est pas saturé ; au-delà de l'induction de saturation, de l'ordre de $1{,}2$ à $1{,}8\ \mathrm{T}$
+    selon le matériau, un supplément de champ ne produit presque plus de flux. Le troisième vient du cours
+    <a href="#/cours/inductances-et-champ-magnetique">Inductances et champ magnétique</a> : la loi de Faraday $e = N\,\mathrm{d}\Phi/
+    \mathrm{d}t$ transforme toute variation rapide de flux en tension élevée. Le mini-test n'est pas noté ; la correction de chaque
+    question reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la correction".
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-trois">Un même principe, trois usages</h3>
+  <p>
+    Dans un transformateur de puissance, la tension primaire est imposée par le réseau : elle fixe le flux, et le courant suit la
+    charge. Le transformateur de tension, TP, fonctionne exactement ainsi, mais presque à vide : sa charge, quelques voltampères de
+    relais ou de compteur, est si faible que la tension secondaire reste l'image fidèle de la tension primaire. Il se comporte vu
+    de ses bornes secondaires comme une source de tension de faible impédance interne. Le transformateur de courant, TC, est placé
+    au contraire en série dans un conducteur : c'est le courant primaire qui lui est imposé, par la charge du réseau, quelle que
+    soit l'impédance branchée sur son secondaire. Son secondaire impose donc un courant $i_2 \approx i_1/K$ : il se comporte comme
+    une source de courant d'impédance interne très élevée, celle de sa branche magnétisante.
+  </p>
+  <figure id="d-sources-figure">
+    <svg viewBox="0 0 760 300" role="img" aria-label="Comparaison des deux appareils de mesure : le transformateur de tension vu comme une source de tension dont le court-circuit est dangereux, le transformateur de courant vu comme une source de courant dont l'ouverture est dangereuse">
+      <defs>
+        <marker id="fl-d-so" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="80" cy="150" r="26"/>
+        <path d="M66 150q7 -10 14 0t14 0"/>
+        <path d="M80 124V70H140M190 70H300V110M300 190V230H80V176"/>
+        <rect x="140" y="62" width="50" height="16" rx="2"/>
+        <rect x="290" y="110" width="20" height="80" rx="2"/>
+        <circle cx="460" cy="150" r="26"/>
+        <path d="M460 124V70H610M640 70H700V110M700 190V230H460V176"/>
+        <path d="M560 70V100M560 180V230"/>
+        <rect x="552" y="100" width="16" height="80" rx="2"/>
+        <rect x="690" y="110" width="20" height="80" rx="2"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M205 56H255" marker-end="url(#fl-d-so)"/>
+        <path d="M335 196V112" marker-end="url(#fl-d-so)"/>
+        <path d="M250 74V226" stroke-dasharray="6 5"/>
+        <path d="M460 164V138" marker-end="url(#fl-d-so)"/>
+        <path d="M655 56H690" marker-end="url(#fl-d-so)"/>
+        <path d="M735 196V112" marker-end="url(#fl-d-so)"/>
+        <path d="M612 60L638 80M638 60L612 80" stroke-width="2.4"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="250" cy="70" r="3.5"/>
+        <circle cx="250" cy="230" r="3.5"/>
+        <circle cx="560" cy="70" r="3.5"/>
+        <circle cx="560" cy="230" r="3.5"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="20" y="26">a. TP vu du secondaire</text>
+        <text x="20" y="44">source de tension</text>
+        <text x="90" y="118">+</text>
+        <text x="132" y="96">Z interne faible</text>
+        <text x="222" y="50">i2</text>
+        <text x="318" y="150">Zb</text>
+        <text x="342" y="158">u2</text>
+        <text x="90" y="204">u1 / K</text>
+        <text x="146" y="258">court-circuit en tirets :</text>
+        <text x="146" y="276">i2 limité par Z interne seule</text>
+        <text x="400" y="26">b. TC vu du secondaire</text>
+        <text x="400" y="44">source de courant</text>
+        <text x="410" y="200">i1 / K</text>
+        <text x="574" y="146">Zm</text>
+        <text x="574" y="162">élevée</text>
+        <text x="664" y="50">i2</text>
+        <text x="716" y="104">Zb</text>
+        <text x="744" y="160">e2</text>
+        <text x="590" y="258">ouverture, croix :</text>
+        <text x="590" y="276">e2 = (i1 / K) Zm, énorme</text>
+      </g>
+    </svg>
+    <figcaption>
+      Modèles vus des bornes secondaires, en convention récepteur pour la charge $Z_b$ ; le conducteur du bas est la référence de
+      potentiel du circuit secondaire. En a, le TP : une source de tension $u_1/K$ derrière une impédance interne faible, rectangle
+      horizontal ; la flèche $i_2$ indique le sens du courant dans la charge et la flèche $u_2$ la tension à ses bornes. Le trait en
+      tirets figure un court-circuit : seule l'impédance interne limite alors le courant. En b, le TC : une source de courant
+      $i_1/K$, flèche dans le cercle, en parallèle avec l'impédance magnétisante $Z_m$, très élevée, puis la charge $Z_b$, très faible.
+      La croix figure une ouverture du circuit : tout le courant $i_1/K$ est forcé dans $Z_m$, et la tension $e_2$ devient énorme.
+    </figcaption>
+  </figure>
+  <p>
+    Ce schéma contient les deux règles de sécurité de la séance. Une source de tension se met à débiter un courant destructeur si
+    on la court-circuite : le secondaire d'un TP ne doit jamais être court-circuité et il est protégé par un fusible ou un
+    disjoncteur. Une source de courant développe une tension destructrice si on l'ouvre : le secondaire d'un TC ne doit jamais
+    être ouvert en service et il ne comporte jamais de fusible. Ces deux règles sont duales, comme les deux modèles.
+  </p>
+  <p>
+    L'autotransformateur, lui, est un transformateur de puissance dont les deux enroulements se confondent en partie. Prenez un
+    transformateur $400/360\ \mathrm{V}$ : les $360$ premiers volts sont communs aux deux côtés. Pourquoi les transformer ? Il suffit
+    de laisser passer le courant directement et de n'ajouter, par induction, que les $40\ \mathrm{V}$ qui manquent. Seule cette
+    différence exige un circuit magnétique ; le reste de la puissance passe par simple conduction dans le cuivre.
+  </p>
+
+  <h3 id="d-analogie">Une analogie contrôlée et ses limites</h3>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Le pont et le passeur</span>
+    <p>
+      Un convoi doit franchir une rivière de $400\ \mathrm{m}$ de large dont les $360$ premiers mètres sont couverts par un pont : seuls
+      les $40$ derniers mètres demandent un bac. Le bac n'a besoin de transporter que le convoi sur ce court trajet, et son coût est
+      proportionnel à ce qu'il fait réellement : le dixième du trajet. Dans l'autotransformateur, le pont est la conduction directe
+      dans l'enroulement commun, le bac est l'induction dans le noyau. Le transformateur de courant, lui, ressemble à un compteur
+      de voyageurs installé sur le pont : il ne transporte rien, il doit seulement indiquer fidèlement le flux de passage, et il
+      n'est juste que si personne ne bloque sa sortie. L'analogie a trois limites. Le convoi électrique n'est pas un objet : le
+      courant de l'enroulement commun est la différence de deux courants, et il est d'autant plus faible que le rapport est voisin
+      de 1. Le pont transmet aussi les incidents : une surtension ou un défaut à la terre côté haute tension passe directement côté
+      basse tension, puisqu'il n'y a pas d'isolation galvanique. Enfin, un compteur de voyageurs bloqué ne fait rien exploser,
+      alors qu'un secondaire de TC ouvert crée une tension dangereuse : là, l'analogie se tait, et c'est la loi de Faraday qui parle.
+    </p>
+  </div>
+
+  <h3 id="d-auto-section">Animation : où passe la puissance d'un autotransformateur</h3>
+  <p>
+    L'animation représente une phase d'un autotransformateur abaisseur triphasé de $50\ \mathrm{kVA}$ alimenté sous $400\ \mathrm{V}$ entre
+    phases. Faites glisser la poignée le long de l'enroulement pour déplacer la prise intermédiaire, donc le rapport
+    $k = U_2/U_1$ ; lancez le lecteur pour faire évoluer le temps et voir les courants instantanés changer de signe. Avant de
+    manipuler, prédisez : pour $k = 0{,}5$, quelle part de la puissance traverse le noyau ? Et quand $k$ s'approche de 1, le courant
+    dans l'enroulement commun augmente-t-il ou diminue-t-il ?
+  </p>
+  <figure id="d-auto-figure">
+    <div class="schema-vivant" id="d-auto"></div>
+    <figcaption>
+      À gauche, l'enroulement unique d'une phase, de la borne haute tension A au neutre N, référence de potentiel. La partie série,
+      de A à la prise a, est dessinée en trait plein épais ; la partie commune, de a à N, en tirets épais. La poignée ronde, sur la
+      règle placée à droite de l'enroulement, fixe la position de la prise. Les trois flèches donnent les courants instantanés,
+      leur longueur étant proportionnelle à la valeur : $i_1$ sur le fil d'arrivée, $i_2$ vers la charge, $i_c$ dans la partie commune,
+      orienté de N vers a. À droite, deux barres comparent la puissance transmise par conduction et celle transmise par induction.
+    </figcaption>
+  </figure>
+  <div id="d-auto-lecteur"></div>
+  <div id="d-auto-valeurs"></div>
+  <p>
+    Interprétation : à $k = 0{,}5$, la moitié de la puissance traverse le noyau, et l'avantage est déjà réduit de moitié ; à
+    $k = 0{,}9$, seuls $10\ \%$ passent par induction et le courant commun ne vaut que $8{,}0\ \mathrm{A}$ pour $80{,}2\ \mathrm{A}$ en sortie.
+    Le courant commun $i_c = i_2 - i_1$ tend vers zéro quand $k$ tend vers 1, parce que les deux courants deviennent presque égaux et
+    en phase : ils se retranchent dans la partie commune. À chaque instant, les flèches $i_1$ et $i_c$ s'additionnent pour former
+    $i_2$, ce qui n'est que la loi des nœuds en a. L'autotransformateur n'est donc rentable que pour un rapport voisin de 1, typiquement
+    entre $0{,}5$ et $1$ ; au-delà, le gain de taille ne compense plus la perte d'isolation.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-auto-theorie">L'autotransformateur : rapport, courants et puissance propre</h3>
+  <p>
+    On considère une phase d'un autotransformateur idéal abaisseur : l'enroulement compte $N_s$ spires en série entre la borne haute
+    tension A et la prise a, puis $N_c$ spires communes entre a et le neutre N. Toutes les spires embrassent le même flux, donc la
+    tension par spire est la même partout. Le schéma fixe les conventions.
+  </p>
+  <figure id="e-auto-figure">
+    <svg viewBox="0 0 760 340" role="img" aria-label="Schéma d'une phase d'autotransformateur abaisseur : enroulement série entre A et a, enroulement commun entre a et N, courants I1, I2 et Ic, tensions U1, U2 et U1 moins U2">
+      <defs>
+        <marker id="fl-e-au" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M120 40H300V60M300 150V196M300 290V310H120V196"/>
+        <path d="M120 154V40"/>
+        <circle cx="120" cy="175" r="22"/>
+        <path d="M108 175q6 -9 12 0t12 0"/>
+        <path d="M300 170H560V196M560 270V310H300"/>
+        <rect x="548" y="196" width="24" height="74" rx="3"/>
+        <path d="M300 60a10 10 0 0 1 0 18a10 10 0 0 1 0 18a10 10 0 0 1 0 18a10 10 0 0 1 0 18a10 10 0 0 1 0 18" stroke-width="2.4"/>
+        <path d="M300 196a10 10 0 0 1 0 18.8a10 10 0 0 1 0 18.8a10 10 0 0 1 0 18.8a10 10 0 0 1 0 18.8a10 10 0 0 1 0 18.8" stroke-width="2.4"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+        <path d="M330 56V296M337 56V296"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M180 30H240" marker-end="url(#fl-e-au)"/>
+        <path d="M420 160H480" marker-end="url(#fl-e-au)"/>
+        <path d="M270 282V206" marker-end="url(#fl-e-au)"/>
+        <path d="M270 74V138" marker-end="url(#fl-e-au)"/>
+        <path d="M80 300V52" marker-end="url(#fl-e-au)"/>
+        <path d="M600 300V182" marker-end="url(#fl-e-au)"/>
+        <path d="M370 164V48" marker-end="url(#fl-e-au)" stroke-dasharray="5 4"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="300" cy="40" r="4"/>
+        <circle cx="300" cy="170" r="4"/>
+        <circle cx="300" cy="310" r="4"/>
+        <circle cx="286" cy="64" r="3.5"/>
+        <circle cx="286" cy="200" r="3.5"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="306" y="34">A (HT)</text>
+        <text x="344" y="190">a (BT)</text>
+        <text x="306" y="328">N, référence</text>
+        <text x="200" y="22">I1</text>
+        <text x="440" y="152">I2</text>
+        <text x="200" y="250">Ic = I2 - I1</text>
+        <text x="236" y="112">I1</text>
+        <text x="348" y="100">Ns</text>
+        <text x="348" y="248">Nc</text>
+        <text x="40" y="180">U1</text>
+        <text x="96" y="214">source</text>
+        <text x="610" y="246">U2</text>
+        <text x="380" y="116">U1 - U2</text>
+        <text x="520" y="290">charge</text>
+        <text x="420" y="40">U1 / U2 = (Ns + Nc) / Nc = 1 / k</text>
+        <text x="420" y="60">I1 = k I2</text>
+        <text x="420" y="80">Ic = I2 (1 - k)</text>
+        <text x="420" y="100">S propre = S (1 - k)</text>
+      </g>
+    </svg>
+    <figcaption>
+      Une phase d'autotransformateur abaisseur. L'enroulement série, $N_s$ spires, relie la borne haute tension A à la prise a ;
+      l'enroulement commun, $N_c$ spires, relie a au neutre N, référence de potentiel des deux côtés. Les deux traits verticaux
+      épais figurent le noyau, et les points de polarité marquent le début de chaque partie bobinée dans le même sens. La source, à
+      gauche, est en convention générateur, la charge, à droite, en convention récepteur. Le courant $I_1$ descend dans l'enroulement
+      série ; le courant $I_c = I_2 - I_1$ remonte dans l'enroulement commun, de N vers a ; leur somme $I_2$ sort par a vers la charge.
+      La flèche en tirets donne la tension de l'enroulement série, $U_1 - U_2$.
+    </figcaption>
+  </figure>
+  <p>
+    La tension par spire étant commune, $U_1/(N_s + N_c) = U_2/N_c$, d'où le rapport $k = U_2/U_1 = N_c/(N_s + N_c)$. La compensation
+    des ampères-tours, valable comme pour tout transformateur idéal, s'écrit $N_s I_1 = N_c I_c$ ; avec la loi des nœuds en a,
+    $I_c = I_2 - I_1$, on obtient $N_s I_1 = N_c(I_2 - I_1)$, soit $I_1 = k I_2$ : la puissance apparente entrante $U_1 I_1$ est égale à
+    la puissance sortante $U_2 I_2$. Calculons maintenant la puissance que voit chaque partie bobinée. L'enroulement série porte la
+    tension $U_1 - U_2 = U_1(1 - k)$ et le courant $I_1$ ; l'enroulement commun porte $U_2$ et $I_c = I_2(1 - k)$. Les deux produits
+    valent $S(1 - k)$ : c'est la puissance propre, ou puissance de dimensionnement, celle qui fixe la taille du noyau et du cuivre.
+  </p>
+  <div class="formule-cle">
+    $$k = \frac{U_2}{U_1} = \frac{N_c}{N_s + N_c}, \qquad I_1 = k\,I_2, \qquad I_c = I_2 - I_1 = (1 - k)\,I_2$$
+    $$S_{propre} = (U_1 - U_2)\,I_1 = U_2\,I_c = (1 - k)\,S, \qquad S_{conduction} = k\,S$$
+    <p class="formule-cle-legende">
+      $U_1$, $U_2$ : tensions haute et basse tension, en volts ; $I_1$, $I_2$, $I_c$ : courants d'entrée, de sortie et de l'enroulement
+      commun, en ampères ; $N_s$, $N_c$ : nombres de spires, sans dimension ; $S$ : puissance apparente transmise, en voltampères. Hypothèses :
+      autotransformateur idéal, sans pertes ni courant magnétisant, abaisseur ; pour un élévateur, on échange les rôles et
+      $k = U_{BT}/U_{HT}$ reste inférieur à 1. Vérification dimensionnelle : $\mathrm{V} \times \mathrm{A} = \mathrm{VA}$ des deux côtés.
+      Cas limites : $k = 1$ donne $S_{propre} = 0$, l'appareil se réduit à un fil ; $k \to 0$ donne $S_{propre} \to S$, on retrouve un
+      transformateur à deux enroulements, sans aucun avantage. Interprétation : seule la différence des tensions est transformée.
+    </p>
+  </div>
+  <p>
+    Application à l'autotransformateur triphasé de la question de transition, $50\ \mathrm{kVA}$, $400\ \mathrm{V} / 360\ \mathrm{V}$ :
+    $k = 0{,}9$, $I_1 = 50\,000/(\sqrt{3} \times 400) = 72{,}17\ \mathrm{A}$, $I_2 = 50\,000/(\sqrt{3} \times 360) = 80{,}19\ \mathrm{A}$, et
+    l'enroulement commun ne porte que $I_c = 8{,}02\ \mathrm{A}$. La puissance propre vaut $S_{propre} = 0{,}1 \times 50 = 5\ \mathrm{kVA}$ :
+    l'appareil a la taille d'un transformateur de $5\ \mathrm{kVA}$, et ses pertes sont du même ordre. Pour un autotransformateur
+    élévateur $400/690\ \mathrm{V}$, $k = 0{,}580$ et la puissance propre atteint déjà $42\ \%$ de la puissance transmise.
+  </p>
+  <p>
+    Deux conséquences pratiques en découlent. La première concerne l'impédance de court-circuit. Les fuites magnétiques n'existent
+    qu'entre les deux parties bobinées, qui forment en réalité un transformateur à deux enroulements de puissance $S_{propre}$. Si
+    ce transformateur a une tension de court-circuit $u_{cc,propre}$ rapportée à sa propre puissance, la tension de court-circuit de
+    l'autotransformateur rapportée à la puissance transmise vaut $u_{cc} = (1 - k)\,u_{cc,propre}$. Avec $4\ \%$ et $k = 0{,}9$, on
+    obtient $0{,}4\ \%$, et un courant de court-circuit de $250$ fois le courant assigné si le réseau amont était infiniment puissant :
+    un autotransformateur limite très mal les courants de défaut. La seconde concerne la sécurité : les deux côtés sont reliés
+    galvaniquement. Si l'enroulement commun se coupe, ou si le neutre est perdu, la borne basse tension se retrouve au potentiel de
+    la haute tension à travers l'enroulement série. Les autotransformateurs triphasés sont donc couplés en étoile avec neutre relié
+    à la terre, et les grands autotransformateurs de réseau comportent en plus un enroulement tertiaire en triangle, qui confine le
+    rang 3 et le courant homopolaire comme on l'a vu au cours <a href="#/cours/transformateurs-triphases">Transformateurs triphasés</a>.
+    Le démarrage d'un moteur par autotransformateur sera étudié dans le cours Démarrage des moteurs asynchrones.
+  </p>
+
+  <h3 id="e-tc-principe">Le transformateur de courant : principe et schéma équivalent</h3>
+  <p>
+    Un TC basse tension est le plus souvent un tore de fer à haute perméabilité, traversé par le conducteur de puissance, qui
+    constitue un primaire d'une seule spire, et portant un secondaire de $N_2$ spires refermé sur une faible impédance : appareil de
+    mesure, relais, câbles. Le courant primaire $i_1$ est imposé par le réseau. Si le noyau était parfait, les ampères-tours se
+    compenseraient exactement : $N_1 i_1 = N_2 i_2$, soit $i_2 = i_1/K$ avec le rapport assigné $K = I_{1n}/I_{2n}$. Un TC $150/5\ \mathrm{A}$
+    a donc $N_2 = 30$ spires pour $N_1 = 1$.
+  </p>
+  <figure id="e-tc-figure">
+    <svg viewBox="0 0 760 330" role="img" aria-label="Transformateur de courant à primaire traversant : tore, conducteur primaire de P1 vers P2, secondaire de S1 et S2 vers un ampèremètre, et schéma équivalent ramené au secondaire avec source de courant, impédance magnétisante, résistance du secondaire et charge">
+      <defs>
+        <marker id="fl-e-tc" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <ellipse cx="185" cy="120" rx="30" ry="72"/>
+        <ellipse cx="185" cy="120" rx="16" ry="56"/>
+        <path d="M168 176l34 -6M166 184l38 -6M168 192l32 -6" stroke-width="1.6"/>
+        <path d="M172 192V250M198 186V250"/>
+        <path d="M172 262V290H160M198 262V290H210"/>
+        <circle cx="185" cy="292" r="22"/>
+        <path d="M198 270H240V284M230 284H250M234 290H246M238 296H242"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round">
+        <path d="M40 120H330"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M70 100H130" marker-end="url(#fl-e-tc)"/>
+        <path d="M150 230V266" marker-end="url(#fl-e-tc)"/>
+        <path d="M232 70C252 86 252 154 232 170" marker-end="url(#fl-e-tc)"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="172" cy="256" r="4"/>
+        <circle cx="198" cy="256" r="4"/>
+        <circle cx="52" cy="120" r="4"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="450" cy="170" r="24"/>
+        <path d="M450 146V80H560M610 80H690V130M690 210V260H450V194"/>
+        <path d="M520 80V120M520 200V260"/>
+        <rect x="512" y="120" width="16" height="80" rx="2"/>
+        <rect x="560" y="72" width="50" height="16" rx="2"/>
+        <rect x="680" y="130" width="20" height="80" rx="2"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M450 184V156" marker-end="url(#fl-e-tc)"/>
+        <path d="M540 128V176" marker-end="url(#fl-e-tc)"/>
+        <path d="M630 66H670" marker-end="url(#fl-e-tc)"/>
+        <path d="M494 250V96" marker-end="url(#fl-e-tc)" stroke-dasharray="5 4"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="520" cy="80" r="3.5"/>
+        <circle cx="520" cy="260" r="3.5"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="30" y="144">P1</text>
+        <text x="314" y="144">P2</text>
+        <text x="84" y="92">i1</text>
+        <text x="258" y="96">φ</text>
+        <text x="120" y="226">S1</text>
+        <text x="206" y="226">S2</text>
+        <text x="132" y="254">i2</text>
+        <text x="180" y="297">A</text>
+        <text x="254" y="300">terre</text>
+        <text x="40" y="24">tore, N2 spires ; primaire traversant N1 = 1</text>
+        <text x="400" y="24">schéma équivalent ramené au secondaire</text>
+        <text x="404" y="214">i1 / K</text>
+        <text x="474" y="240">e2</text>
+        <text x="548" y="196">i0</text>
+        <text x="536" y="216">Zm : Lm // Rf</text>
+        <text x="566" y="106">Rct</text>
+        <text x="644" y="60">i2</text>
+        <text x="708" y="174">Zb</text>
+        <text x="400" y="292">i1 / K = i2 + i0 ;  e2 = (Rct + Zb) i2</text>
+        <text x="400" y="312">i0 = e2 / Zm : origine de l'erreur</text>
+      </g>
+    </svg>
+    <figcaption>
+      À gauche, un TC à primaire traversant : le conducteur épais est la spire primaire, parcourue de P1 vers P2 par $i_1$ ; le tore
+      porte $N_2$ spires secondaires, figurées par des traits obliques, sorties sur S1 et S2. Par convention, quand le courant primaire
+      entre par P1, le courant secondaire sort par S1 dans le circuit extérieur ; la flèche courbe donne le sens du flux $\varphi$. Un
+      point du secondaire, ici S2, est relié à la terre. À droite, le schéma équivalent ramené au secondaire : la source de courant
+      $i_1/K$ alimente en parallèle la branche magnétisante $Z_m$, inductance $L_m$ et résistance de pertes fer $R_f$, et la branche
+      utile, résistance du secondaire $R_{ct}$ en série avec la charge $Z_b$. La flèche en tirets donne la tension interne $e_2$ ; le
+      conducteur du bas est la référence de potentiel du circuit secondaire.
+    </figcaption>
+  </figure>
+  <p>
+    Le noyau réel demande un courant magnétisant pour porter le flux nécessaire à la tension $e_2$ que réclame la charge. Ce courant,
+    $i_0$, est prélevé sur l'image du courant primaire : $i_1/K = i_2 + i_0$. Il est faible tant que la charge est faible et que le
+    fer n'est pas saturé, parce que $Z_m$ est grande. Le flux crête se déduit de la tension par la relation du cours
+    <a href="#/cours/transformateur-ideal">Transformateur idéal</a>, $E_2 = 4{,}44\,f\,N_2\,A\,B_{max}$ : plus la charge est
+    élevée, plus l'induction monte, et plus le courant magnétisant et l'erreur augmentent. On définit l'erreur de courant et le
+    déphasage :
+  </p>
+  <div class="formule-cle">
+    $$\varepsilon = \frac{K\,I_2 - I_1}{I_1} \times 100\ \%, \qquad \delta = \arg \underline{I}_2 - \arg\frac{\underline{I}_1}{K}$$
+    $$\frac{\underline{I}_1}{K} = \underline{I}_2 + \underline{I}_0, \qquad \underline{I}_0 = \frac{(R_{ct} + \underline{Z}_b)\,\underline{I}_2}{\underline{Z}_m}, \qquad S_b = Z_b\,I_{2n}^2$$
+    <p class="formule-cle-legende">
+      $K$ : rapport assigné $I_{1n}/I_{2n}$, sans dimension ; $I_1$, $I_2$, $I_0$ : courants primaire, secondaire et magnétisant ramené au
+      secondaire, en ampères ; $\delta$ : déphasage, en minutes d'angle, positif quand $\underline{I}_2$ est en avance ; $R_{ct}$ : résistance
+      de l'enroulement secondaire, $Z_b$ : impédance de la charge, $Z_m$ : impédance magnétisante, en ohms ; $S_b$ : charge exprimée en
+      voltampères au courant secondaire assigné. Hypothèses : régime sinusoïdal, noyau non saturé, $Z_m$ constante. Dérivation : loi
+      des nœuds au point haut du schéma équivalent. Vérification : $\Omega \times \mathrm{A}^2 = \mathrm{VA}$. Cas limites : $Z_b \to 0$ donne
+      $I_0 \to R_{ct} I_2/Z_m$, l'erreur minimale ; $Z_b \to \infty$ donne $I_2 \to 0$, tout le courant devient magnétisant.
+      Interprétation : la charge d'un TC se mesure en voltampères, et elle ne doit pas dépasser sa puissance de précision.
+    </p>
+  </div>
+
+  <h3 id="e-polarite-section">Animation : polarités P1, P2, S1, S2 et signe de la puissance mesurée</h3>
+  <p>
+    Une centrale de mesure calcule la puissance active d'une phase en multipliant, à chaque instant, la tension phase-neutre par
+    le courant fourni par le TC, puis en faisant la moyenne. Le signe de ce courant dépend du sens de raccordement. L'animation
+    montre la phase L1 de l'arrivée du tableau général, $230\ \mathrm{V}$ et $108{,}2\ \mathrm{A}$, à travers un TC $150/5\ \mathrm{A}$. Lancez le
+    lecteur pour suivre les courants instantanés, choisissez le câblage avec le premier curseur et le déphasage de la charge avec le
+    second. Prédisez avant de manipuler : si l'on inverse S1 et S2, la puissance affichée change-t-elle de signe, de valeur, ou les
+    deux ? Et si l'on retourne le TC sur le conducteur en inversant aussi S1 et S2 ?
+  </p>
+  <figure id="e-polarite-figure">
+    <div class="schema-vivant" id="e-polarite"></div>
+    <figcaption>
+      À gauche, le conducteur de la phase L1, épais, traverse le TC de P1 vers P2 ; le secondaire relie S1 et S2 à l'entrée de courant
+      I+ et I- de la centrale. Les flèches donnent les courants instantanés, primaire au-dessus du conducteur et secondaire dans les
+      fils de mesure ; leur longueur suit la valeur instantanée. À droite, sur une période, la tension $v$ en trait fin, le courant
+      vu par la centrale, ramené au primaire, en trait épais, et la puissance instantanée calculée $p = v\,i$ en tirets ; le trait
+      vertical repère l'instant courant, et la ligne horizontale en pointillés la valeur moyenne affichée.
+    </figcaption>
+  </figure>
+  <div id="e-polarite-curseurs"></div>
+  <div id="e-polarite-lecteur"></div>
+  <div id="e-polarite-valeurs"></div>
+  <p>
+    Interprétation : inverser S1 et S2 ne change pas la valeur efficace lue, ce qui rend l'erreur invisible sur un ampèremètre, mais
+    retourne le courant mesuré : la puissance active de la phase affichée devient $-23{,}9\ \mathrm{kW}$ au lieu de $+23{,}9\ \mathrm{kW}$, et la
+    somme des trois phases est fausse d'environ deux fois la puissance d'une phase. Retourner le TC sur le conducteur produit
+    le même effet ; faire les deux erreurs à la fois les annule. La convention de polarité, P1 vers la source et S1 vers l'entrée
+    I+ de l'appareil, est donc une convention au sens strict : le choix est arbitraire, mais il doit être tenu de bout en bout,
+    notamment pour les relais directionnels et les protections différentielles, pour lesquels une inversion est un défaut de
+    fonctionnement et non une simple erreur d'affichage.
+  </p>
+
+  <h3 id="e-erreurs-section">Animation : erreur de courant, déphasage et charge du TC</h3>
+  <p>
+    Le schéma équivalent se traduit par un diagramme de Fresnel. On prend $\underline{I}_2$ comme référence : la tension interne
+    $\underline{E}_2 = (R_{ct} + \underline{Z}_b)\,\underline{I}_2$ est en avance si la charge est inductive ; le courant magnétisant
+    $\underline{I}_0$ se compose d'une partie en phase avec $\underline{E}_2$, due aux pertes fer, et d'une partie en retard de $90^\circ$,
+    due à l'aimantation ; $\underline{I}_1/K$ s'obtient en ajoutant $\underline{I}_0$ à $\underline{I}_2$. L'animation reprend un TC
+    $150/5\ \mathrm{A}$ de $5\ \mathrm{VA}$ au courant assigné, modèle linéaire : $R_{ct} = 0{,}1\ \Omega$, $X_m = 44{,}4\ \Omega$, $R_f = 120\ \Omega$,
+    hypothèses d'étude. Déplacez la poignée sur la règle pour changer la charge en voltampères et réglez son facteur de puissance
+    au curseur. Prédisez : en passant de $2{,}5$ à $15\ \mathrm{VA}$, l'erreur de courant est-elle multipliée par 6 ? Et une charge
+    inductive aggrave-t-elle plutôt l'erreur de rapport ou le déphasage ?
+  </p>
+  <figure id="e-fresnel-figure">
+    <div class="schema-vivant" id="e-fresnel"></div>
+    <figcaption>
+      Diagramme de Fresnel du TC au courant assigné. Le phaseur horizontal en trait plein épais est $\underline{I}_2$, référence ; le
+      phaseur en tirets épais est $\underline{I}_1/K$ ; le petit segment qui les relie, en trait fin, est $\underline{I}_0$. Le triangle
+      d'erreur formé par $\underline{I}_0$ est dessiné vingt fois agrandi, faute de quoi il serait invisible. En haut à droite, le phaseur en
+      pointillés est $\underline{E}_2$, tracé depuis une origine séparée à une échelle de tension arbitraire ; le trait horizontal fin
+      qui part de cette origine rappelle la direction de $\underline{I}_2$. En bas, la règle graduée en voltampères porte la poignée de la charge ;
+      les tirets verticaux sur la règle repèrent $25\ \%$ et $100\ \%$ de la puissance de précision de $5\ \mathrm{VA}$.
+    </figcaption>
+  </figure>
+  <div id="e-fresnel-curseurs"></div>
+  <div id="e-fresnel-valeurs"></div>
+  <p>
+    Interprétation : l'erreur croît à peu près comme $R_{ct} + Z_b$, pas comme la seule charge : passer de $2{,}5$ à $15\ \mathrm{VA}$ multiplie
+    $R_{ct} + R_b$ par $3{,}5$ seulement, de $0{,}2$ à $0{,}7\ \Omega$, parce que la résistance propre du secondaire reste présente. Une charge
+    résistive produit surtout un déphasage, l'aimantation étant en quadrature ; une charge inductive fait tourner $\underline{E}_2$
+    et reporte l'aimantation sur l'erreur de rapport, qui devient plus négative. Au courant assigné, sous $5\ \mathrm{VA}$ résistifs, on
+    lit environ $-0{,}25\ \%$ et $23$ minutes, dans les limites de la classe $0{,}5$ ; à $15\ \mathrm{VA}$, l'appareil en sort. Ce modèle à
+    $Z_m$ constante sous-estime l'erreur aux faibles courants, où la perméabilité initiale du fer est plus basse : c'est pourquoi
+    les classes autorisent des erreurs plus larges à $5\ \%$ et $20\ \%$ du courant assigné.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Limites usuelles de l'erreur de courant des classes de mesure, en pour cent, sous une charge comprise entre 25 et 100 % de la puissance de précision</caption>
+      <thead><tr><th>Classe</th><th>1 % de In</th><th>5 % de In</th><th>20 % de In</th><th>100 % de In</th><th>120 % de In</th><th>Déphasage à 100 %</th></tr></thead>
+      <tbody>
+        <tr><td>0,2</td><td>non défini</td><td>0,75</td><td>0,35</td><td>0,2</td><td>0,2</td><td>10 min</td></tr>
+        <tr><td>0,5</td><td>non défini</td><td>1,5</td><td>0,75</td><td>0,5</td><td>0,5</td><td>30 min</td></tr>
+        <tr><td>0,5S</td><td>1,5</td><td>0,75</td><td>0,5</td><td>0,5</td><td>0,5</td><td>30 min</td></tr>
+        <tr><td>1</td><td>non défini</td><td>3</td><td>1,5</td><td>1</td><td>1</td><td>60 min</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Ces valeurs sont celles de la norme internationale des transformateurs de courant de mesure ; elles relèvent de la norme, non de
+    la physique, et l'édition applicable au marché doit être vérifiée avant un cahier des charges. Entre deux points, on interpole
+    linéairement. Les classes S, comme $0{,}5$S, sont destinées au comptage, dont la charge varie beaucoup entre la journée et la nuit.
+  </p>
+
+  <h3 id="e-ouvert">Le secondaire ouvert : saturation et pointes de tension</h3>
+  <p>
+    Ouvrez le secondaire : $i_2 = 0$, et la compensation disparaît. Tout l'ampère-tour primaire $N_1 i_1$ devient magnétisant. Or ce
+    courant primaire, imposé par le réseau, vaut des centaines d'ampères, alors que le noyau sature pour quelques ampères-tours :
+    pour le tore de l'exemple, $A = 7{,}5\ \mathrm{cm^2}$, $l = 0{,}30\ \mathrm{m}$, $\mu_r = 50\,000$ et $B_{sat} = 1{,}5\ \mathrm{T}$, hypothèses
+    d'étude, la saturation est atteinte pour $H_{sat}\,l = B_{sat}\,l/(\mu_0\mu_r) = 7{,}16\ \mathrm{A}$. Le flux reste donc bloqué à
+    $\pm\Phi_{sat}$ pendant presque toute la période et ne bascule de l'un à l'autre que pendant le bref instant où $|i_1|$ est inférieur à
+    $7{,}16\ \mathrm{A}$, autour de chaque passage par zéro. Cette variation brutale crée, par la loi de Faraday, une pointe de tension :
+  </p>
+  <div class="formule-cle">
+    $$\Delta t \approx \frac{2\,H_{sat}\,l}{N_1\,\sqrt{2}\,I_1\,\omega}, \qquad e_{2,max} \approx N_2\,\frac{2\,B_{sat}\,A}{\Delta t} = \frac{N_2\,N_1\,\mu_0\,\mu_r\,A\,\sqrt{2}\,I_1\,\omega}{l}$$
+    <p class="formule-cle-legende">
+      $\Delta t$ : durée de basculement du flux, en secondes ; $H_{sat}$ : champ de saturation, en ampères par mètre ; $l$ : longueur
+      moyenne du tore et $A$ : sa section, en mètres et mètres carrés ; $I_1$ : courant primaire efficace, en ampères ; $\omega$ : pulsation,
+      en radians par seconde ; $e_{2,max}$ : tension crête secondaire, en volts. Hypothèses : courbe d'aimantation linéaire jusqu'à
+      $B_{sat}$ puis plate, hystérésis, courants de Foucault et capacités parasites négligés ; ces effets arrondissent et réduisent
+      les pointes, mais le claquage d'une isolation ou un arc peut se produire avant. Dérivation : pendant le basculement, $i_1$
+      varie presque linéairement à la pente $\sqrt{2}\,I_1\,\omega$. Vérification : $\mathrm{T \cdot m^2/s} = \mathrm{Wb/s} = \mathrm{V}$.
+      Cas limite : $I_1 \to 0$ donne $e_{2,max} \to 0$ ; la tension croît proportionnellement au courant primaire et au nombre de spires.
+    </p>
+  </div>
+  <p>
+    Pour un TC $150/5\ \mathrm{A}$ ouvert sous $150\ \mathrm{A}$, la pente du courant au passage par zéro est $\sqrt{2} \times 150 \times 314{,}2
+    = 66\,640\ \mathrm{A/s}$ ; le basculement dure $2 \times 7{,}16/66\,640 = 215\ \mu\mathrm{s}$, pour une variation de flux de
+    $2 \times 1{,}5 \times 7{,}5 \times 10^{-4} = 2{,}25\ \mathrm{mWb}$ ; la pointe vaut $30 \times 2{,}25 \times 10^{-3}/215 \times 10^{-6}
+    = 314\ \mathrm{V}$. Sous un courant de court-circuit de $3445\ \mathrm{A}$, elle dépasserait $7\ \mathrm{kV}$ dans ce modèle. À ce danger
+    électrique s'ajoutent l'échauffement du noyau, parcouru deux fois par période par tout son cycle de saturation, et une
+    aimantation rémanente qui dégrade la précision après refermeture, jusqu'à une démagnétisation.
+  </p>
+
+  <h3 id="e-sat-section">Simulation interactive : saturation du TC et secondaire ouvert</h3>
+  <p>
+    La simulation résout pas à pas l'équation du TC, $N_2 A\,\mathrm{d}B/\mathrm{d}t = (R_{ct} + R_b)\,i_2$ avec $N_2 i_2 = N_1 i_1 - H(B)\,l$,
+    pour le tore de l'exemple, $150/5\ \mathrm{A}$, sur une période de $20\ \mathrm{ms}$. Le premier curseur règle le courant primaire en pour cent
+    du courant assigné, le second la charge résistive extérieure, jusqu'au circuit ouvert. Prédisez avant de manipuler : avec la
+    charge de $0{,}13\ \Omega$, à partir de combien de fois le courant assigné le courant secondaire cesse-t-il d'être une image fidèle ?
+    Et le secondaire ouvert donne-t-il une tension sinusoïdale élevée, ou des pointes brèves ?
+  </p>
+  <figure id="e-sat-figure">
+    <div id="e-sat-courants"></div>
+    <div id="e-sat-tension"></div>
+    <figcaption>
+      En haut, sur une période, le courant secondaire réel $i_2$ en trait épais et le courant idéal $i_1/K$ en trait fin, nommés dans
+      la légende du tracé : les deux se superposent tant que le TC est fidèle. En bas,
+      la tension $e_2$ aux bornes du secondaire, en volts ; son échelle s'adapte au cas étudié. Le trait horizontal en tirets du tracé
+      du haut marque la crête idéale.
+    </figcaption>
+  </figure>
+  <div id="e-sat-curseurs"></div>
+  <div id="e-sat-valeurs"></div>
+  <p>
+    Interprétation : avec $0{,}13\ \Omega$, le TC reste fidèle jusqu'à environ $6{,}5$ fois son courant assigné ; à $10$ fois, le courant
+    secondaire efficace n'est plus que de $41{,}7\ \mathrm{A}$ au lieu de $50\ \mathrm{A}$, et à $23$ fois, $56\ \mathrm{A}$ au lieu de $115\ \mathrm{A}$ :
+    le courant secondaire s'effondre après chaque passage par zéro, dès que le flux atteint la saturation. Pour un TC de mesure,
+    c'est une protection : les appareils ne reçoivent pas $23$ fois leur courant. Pour un TC de protection, ce serait une
+    défaillance, d'où les classes P décrites plus bas. Secondaire ouvert, $i_2$ est nul et la tension n'est pas sinusoïdale : ce
+    sont des pointes de $\pm 314\ \mathrm{V}$ à $100\ \%$ de $I_n$, de $105\ \mathrm{V}$ à $33\ \%$, le courant de la pompe, et de plus de
+    $7\ \mathrm{kV}$ à $23$ fois. Une connexion desserrée qui ajoute $20\ \Omega$ ne coupe pas tout à fait le circuit, mais l'appareil n'indique
+    plus que $18\ \%$ du courant, avec $69\ \mathrm{V}$ crête : un défaut de serrage est un début d'ouverture.
+  </p>
+
+  <h3 id="e-protection">TC de protection, facteur de sécurité et tenues au court-circuit</h3>
+  <p>
+    Un TC de mesure doit être juste en service normal et saturer en cas de défaut pour protéger les appareils : on caractérise ce
+    comportement par le facteur de sécurité $F_S$. Un TC de protection doit rester juste jusqu'à plusieurs fois son courant assigné
+    pour que le relais voie le défaut : on lui donne une classe comme $5\mathrm{P}10$, erreur composée d'au plus $5\ \%$ jusqu'à $10$ fois
+    $I_n$, sous la charge de précision. Dans les deux cas, la saturation est fixée par la tension interne $E_2 = (R_{ct} + R_b)\,F\,I_{2n}$
+    que le noyau peut fournir. Si la charge réelle diffère de la charge de précision, le facteur réel change dans le rapport des
+    impédances totales :
+  </p>
+  <div class="formule-cle">
+    $$F' = F_n\,\frac{S_{ct} + S_n}{S_{ct} + S_{reelle}}, \qquad S_{ct} = R_{ct}\,I_{2n}^2, \qquad i_p = \kappa\,\sqrt{2}\,I_k \le I_{dyn}, \qquad I_k^2\,t \le I_{th}^2 \times 1\ \mathrm{s}$$
+    <p class="formule-cle-legende">
+      $F_n$ : facteur assigné, $F_S$ ou facteur limite de précision ; $F'$ : facteur réel ; $S_n$ : puissance de précision, $S_{reelle}$ :
+      charge réelle, $S_{ct}$ : pertes du secondaire, en voltampères au courant assigné ; $I_k$ : courant de court-circuit efficace,
+      $i_p$ : sa crête, $\kappa$ : facteur de crête compris entre $1$ et $2$ selon le rapport $R/X$ du réseau ; $I_{th}$ : courant thermique
+      de courte durée assigné, en général pour $1\ \mathrm{s}$, $I_{dyn}$ : courant dynamique assigné, souvent $2{,}5\,I_{th}$. Hypothèses :
+      charges résistives, noyau caractérisé par une tension de coude fixe. Vérification : $F'$ est sans dimension. Cas limite :
+      $S_{reelle} = S_n$ donne $F' = F_n$. Interprétation : un TC de mesure trop peu chargé protège moins bien ses appareils, et un
+      TC de protection trop chargé sature avant d'avoir vu le défaut.
+    </p>
+  </div>
+  <p>
+    Deux contraintes mécaniques et thermiques complètent le choix. Le courant de court-circuit traverse le primaire, quelle que soit
+    la saturation : l'effort électrodynamique dépend de la crête $i_p$, et l'échauffement de $I_k^2 t$. Un TC basse tension usuel
+    annonce par exemple $I_{th} = 60\,I_n$ pendant $1\ \mathrm{s}$, valeur de catalogue à vérifier. Le secondaire, enfin, se choisit entre
+    $1\ \mathrm{A}$ et $5\ \mathrm{A}$ : la puissance absorbée par les câbles vaut $R_{cable}\,I_{2n}^2$ ; elle est $25$ fois plus faible en $1\ \mathrm{A}$.
+    On garde $5\ \mathrm{A}$ pour les liaisons courtes, dans un même tableau, et l'on passe à $1\ \mathrm{A}$ au-delà de quelques dizaines de mètres.
+  </p>
+
+  <h3 id="e-tp">Le transformateur de tension</h3>
+  <p>
+    Un TP est un transformateur de faible puissance qui fonctionne presque à vide, comme un transformateur de puissance au voisinage
+    de l'essai à vide étudié au cours <a href="#/cours/essais-a-vide-et-en-court-circuit">Essais à vide et en court-circuit</a>. Sa
+    tension secondaire assignée est normalisée, en général $100\ \mathrm{V}$ entre phases, soit $100/\sqrt{3}\ \mathrm{V}$ pour un TP raccordé
+    entre phase et terre. Son erreur de tension vient des chutes de tension dans ses résistances et ses réactances de fuite,
+    parcourues par le courant de la charge : elle croît avec la charge en voltampères, comme celle d'un TC.
+  </p>
+  <figure id="e-tp-figure">
+    <svg viewBox="0 0 760 300" role="img" aria-label="Transformateur de tension unipolaire raccordé entre la phase L1 d'un réseau de 20 kV et la terre : fusible haute tension, primaire A-N, secondaire a-n protégé par un disjoncteur, relais et compteur en parallèle, borne n reliée à la terre">
+      <defs>
+        <marker id="fl-e-tp" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M40 40H360" stroke-width="4"/>
+        <path d="M150 40V62M150 98V120"/>
+        <rect x="140" y="62" width="20" height="36" rx="2"/>
+        <path d="M150 120a12 12 0 0 1 0 22a12 12 0 0 1 0 22a12 12 0 0 1 0 22a12 12 0 0 1 0 22"/>
+        <path d="M150 208V240M138 240H162M142 246H158M146 252H154"/>
+        <path d="M196 120a12 12 0 0 0 0 22a12 12 0 0 0 0 22a12 12 0 0 0 0 22a12 12 0 0 0 0 22"/>
+        <path d="M196 120H300M330 120H600V140M420 120V140M420 190V230M600 190V230M196 208V230H600"/>
+        <rect x="300" y="112" width="30" height="16" rx="3"/>
+        <rect x="404" y="140" width="32" height="50" rx="4"/>
+        <rect x="584" y="140" width="32" height="50" rx="4"/>
+        <path d="M196 230V262M184 262H208M188 268H204M192 274H200"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+        <path d="M170 116V212M176 116V212"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M110 204V126" marker-end="url(#fl-e-tp)"/>
+        <path d="M250 222V130" marker-end="url(#fl-e-tp)"/>
+        <path d="M352 110H392" marker-end="url(#fl-e-tp)"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="140" cy="126" r="3.5"/>
+        <circle cx="206" cy="126" r="3.5"/>
+        <circle cx="150" cy="40" r="4"/>
+        <circle cx="420" cy="120" r="3.5"/>
+        <circle cx="420" cy="230" r="3.5"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="40" y="30">phase L1 du réseau 20 kV</text>
+        <text x="168" y="84">fusible HT</text>
+        <text x="128" y="118">A</text>
+        <text x="128" y="214">N</text>
+        <text x="72" y="170">u1</text>
+        <text x="212" y="116">a</text>
+        <text x="212" y="214">n</text>
+        <text x="256" y="176">u2</text>
+        <text x="292" y="104">disj. BT</text>
+        <text x="366" y="104">i2</text>
+        <text x="442" y="170">relais</text>
+        <text x="622" y="170">compteur</text>
+        <text x="216" y="290">n relié à la terre</text>
+        <text x="460" y="30">20 000 / √3 V sur 100 / √3 V</text>
+        <text x="460" y="50">K = 200 ; charge : quelques VA</text>
+        <text x="460" y="70">appareils en parallèle sur a-n</text>
+        <text x="460" y="90">secondaire : jamais court-circuité</text>
+      </g>
+    </svg>
+    <figcaption>
+      TP unipolaire raccordé entre la phase L1 d'un réseau $20\ \mathrm{kV}$ et la terre. Le fusible haute tension, rectangle vertical,
+      protège le réseau contre un défaut interne du TP. Le primaire A-N et le secondaire a-n sont repérés par des points de polarité
+      sur leurs bornes A et a ; les tensions $u_1$ et $u_2$ sont fléchées de la borne N, ou n, vers la borne repérée. Le secondaire est
+      protégé par un petit disjoncteur, rectangle horizontal, et alimente en parallèle un relais et un compteur, en convention
+      récepteur ; la flèche $i_2$ donne le sens du courant secondaire. La borne n est reliée à la terre, référence de potentiel du
+      circuit secondaire et protection contre un amorçage entre enroulements.
+    </figcaption>
+  </figure>
+  <p>
+    Trois points distinguent l'usage du TP. Les appareils se branchent en parallèle, alors que ceux d'un TC se branchent en série.
+    Le secondaire est protégé contre les courts-circuits, alors que celui d'un TC ne l'est jamais. Enfin, sur un réseau à neutre
+    isolé, un TP inductif raccordé entre phase et terre peut entrer en ferrorésonance avec les capacités du réseau : surtensions et
+    échauffement apparaissent sans défaut apparent, d'où l'usage de résistances d'amortissement sur un enroulement en triangle
+    ouvert, qui fournit aussi la tension homopolaire aux protections. Au-delà de quelques centaines de kilovolts, on utilise des
+    transformateurs de tension capacitifs, qui associent un diviseur capacitif à un petit transformateur. Pour le site, alimenté
+    en $410\ \mathrm{V}$, aucun TP n'est nécessaire : les centrales de mesure acceptent directement la tension basse tension, à travers
+    des fusibles ou un disjoncteur de protection des circuits de tension.
+  </p>
+
+  <h3 id="e-securite">Sécurité de mesure : les règles et leur raison</h3>
+  <ul>
+    <li><strong>Ne jamais ouvrir un secondaire de TC en service.</strong> Avant de débrancher un appareil, court-circuiter les bornes S1 et S2 côté TC, par un bornier d'essai court-circuitable ou un pont prévu à cet effet ; jamais de fusible ni d'interrupteur seul dans un circuit de courant.</li>
+    <li><strong>Ne jamais court-circuiter un secondaire de TP.</strong> Le protéger par fusibles ou disjoncteur au plus près des bornes, et ouvrir ces protections avant d'intervenir sur l'appareil.</li>
+    <li><strong>Relier à la terre un point de chaque secondaire, et un seul.</strong> En cas de claquage entre primaire et secondaire, la terre écoule le défaut au lieu de porter les appareils au potentiel du réseau ; deux mises à la terre créeraient une boucle qui fausse la mesure.</li>
+    <li><strong>Respecter les polarités et les repérer sur le schéma.</strong> P1 côté source, S1 vers l'entrée I+ : la convention importe moins que sa constance.</li>
+    <li><strong>Vérifier la catégorie de mesure et l'isolement des appareils portatifs.</strong> Une pince ouvrante ou un analyseur raccordé au tableau général doit être prévu pour la catégorie de surtension du point de raccordement ; le cours Multimètre, oscilloscope et sondes en détaillera le choix.</li>
+  </ul>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Loi, convention, approximation, règle de conception, norme</span>
+    <p>
+      Lois physiques : la compensation des ampères-tours, la loi de Faraday et la loi des nœuds, qui donnent $I_1 = k I_2$, $i_2 \approx
+      i_1/K$ et les pointes de tension du secondaire ouvert. Conventions : le repérage P1, P2, S1, S2 et le signe de l'erreur de courant
+      et du déphasage. Approximations : le modèle à $Z_m$ constante, la courbe d'aimantation linéaire puis plate, l'autotransformateur
+      idéal. Règles de conception : autotransformateur pour $k$ compris entre environ $0{,}5$ et $1$, courant de service entre la moitié
+      et la totalité du courant assigné du TC, secondaire $1\ \mathrm{A}$ pour les grandes longueurs, charge réelle entre $25$ et $100\ \%$ de la
+      puissance de précision. Norme ou constructeur : les valeurs des classes, des facteurs, des tenues $I_{th}$ et $I_{dyn}$, les
+      puissances de précision disponibles et la résistance $R_{ct}$.
+    </p>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Le schéma principal réunit les deux situations du plan : à gauche, le raccordement correct d'un TC sur une arrivée, avec le
+    bornier d'essai et la mise à la terre ; à droite, ce qui se passe lorsque son secondaire est ouvert.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 760 430" role="img" aria-label="Schéma principal : raccordement correct d'un transformateur de courant avec bornier d'essai court-circuitable et mise à la terre, et formes d'onde du courant primaire, du flux saturé et des pointes de tension d'un secondaire ouvert">
+      <defs>
+        <marker id="fl-f" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round">
+        <path d="M110 30V250"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <ellipse cx="110" cy="130" rx="42" ry="16"/>
+        <path d="M96 146V190H200M124 146V170H200"/>
+        <rect x="200" y="150" width="70" height="60" rx="4"/>
+        <path d="M200 170H270M200 190H270" stroke-width="1.4" stroke-dasharray="3 3"/>
+        <path d="M222 160V200" stroke-width="3"/>
+        <path d="M270 170H330M270 190H330"/>
+        <rect x="330" y="150" width="60" height="60" rx="4"/>
+        <path d="M235 210V246M223 246H247M227 252H243M231 258H239"/>
+        <path d="M235 190V210"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M130 50V100" marker-end="url(#fl-f)"/>
+        <path d="M150 166H190" marker-end="url(#fl-f)"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="96" cy="146" r="3.5"/>
+        <circle cx="124" cy="146" r="3.5"/>
+        <circle cx="222" cy="160" r="3"/>
+        <circle cx="222" cy="200" r="3"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="20" y="16">a. raccordement correct</text>
+        <text x="118" y="44">L1, côté source</text>
+        <text x="138" y="80">i1</text>
+        <text x="58" y="112">P1</text>
+        <text x="58" y="156">P2</text>
+        <text x="62" y="200">S2</text>
+        <text x="132" y="160">S1</text>
+        <text x="154" y="160">i2</text>
+        <text x="116" y="270">vers les départs</text>
+        <text x="200" y="142">bornier d'essai</text>
+        <text x="228" y="232">pont</text>
+        <text x="344" y="176">I+</text>
+        <text x="344" y="196">I-</text>
+        <text x="326" y="226">centrale</text>
+        <text x="250" y="262">terre en un point</text>
+        <text x="20" y="300">pont de court-circuit en trait épais :</text>
+        <text x="20" y="318">fermé avant de déposer l'appareil,</text>
+        <text x="20" y="336">ouvert seulement appareil en place</text>
+        <text x="20" y="366">pas de fusible, pas d'interrupteur</text>
+        <text x="20" y="384">dans le circuit S1-S2</text>
+        <text x="430" y="16">b. secondaire ouvert, 150 A, TC 150/5 A</text>
+        <text x="430" y="70">i1</text>
+        <text x="430" y="180">Φ</text>
+        <text x="430" y="300">e2</text>
+        <text x="600" y="168">flux saturé : plat</text>
+        <text x="460" y="262">+314 V</text>
+        <text x="600" y="414">-314 V</text>
+        <text x="430" y="428">pointes aux passages par zéro de i1</text>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1" opacity="0.55">
+        <path d="M450 110H736M450 210H736M450 330H736M450 60V160M450 175V245M450 250V410"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M450.0 110.0 L453.1 107.2 L456.2 104.4 L459.3 101.7 L462.4 99.0 L465.6 96.3 L468.7 93.7 L471.8 91.2 L474.9 88.8 L478.0 86.5 L481.1 84.3 L484.2 82.2 L487.3 80.3 L490.4 78.5 L493.6 76.8 L496.7 75.4 L499.8 74.0 L502.9 72.9 L506.0 72.0 L509.1 71.2 L512.2 70.6 L515.3 70.2 L518.4 70.0 L521.6 70.0 L524.7 70.2 L527.8 70.6 L530.9 71.2 L534.0 72.0 L537.1 72.9 L540.2 74.0 L543.3 75.4 L546.4 76.8 L549.6 78.5 L552.7 80.3 L555.8 82.2 L558.9 84.3 L562.0 86.5 L565.1 88.8 L568.2 91.2 L571.3 93.7 L574.4 96.3 L577.6 99.0 L580.7 101.7 L583.8 104.4 L586.9 107.2 L590.0 110.0 L593.1 112.8 L596.2 115.6 L599.3 118.3 L602.4 121.0 L605.6 123.7 L608.7 126.3 L611.8 128.8 L614.9 131.2 L618.0 133.5 L621.1 135.7 L624.2 137.8 L627.3 139.7 L630.4 141.5 L633.6 143.2 L636.7 144.6 L639.8 146.0 L642.9 147.1 L646.0 148.0 L649.1 148.8 L652.2 149.4 L655.3 149.8 L658.4 150.0 L661.6 150.0 L664.7 149.8 L667.8 149.4 L670.9 148.8 L674.0 148.0 L677.1 147.1 L680.2 146.0 L683.3 144.6 L686.4 143.2 L689.6 141.5 L692.7 139.7 L695.8 137.8 L698.9 135.7 L702.0 133.5 L705.1 131.2 L708.2 128.8 L711.3 126.3 L714.4 123.7 L717.6 121.0 L720.7 118.3 L723.8 115.6 L726.9 112.8 L730.0 110.0" stroke-width="1.6"/>
+        <path d="M450.0 210.0 L450.2 206.1 L450.4 202.2 L450.6 198.4 L450.8 194.5 L451.0 190.6 L451.2 186.7 L451.4 182.9 L451.6 180.0 L451.8 180.0 L451.9 180.0 L452.1 180.0 L452.3 180.0 L453.1 180.0 L454.7 180.0 L456.2 180.0 L457.8 180.0 L459.3 180.0 L460.9 180.0 L462.4 180.0 L464.0 180.0 L465.6 180.0 L467.1 180.0 L468.7 180.0 L470.2 180.0 L471.8 180.0 L473.3 180.0 L474.9 180.0 L476.4 180.0 L478.0 180.0 L479.6 180.0 L481.1 180.0 L482.7 180.0 L484.2 180.0 L485.8 180.0 L487.3 180.0 L488.9 180.0 L490.4 180.0 L492.0 180.0 L493.6 180.0 L495.1 180.0 L496.7 180.0 L498.2 180.0 L499.8 180.0 L501.3 180.0 L502.9 180.0 L504.4 180.0 L506.0 180.0 L507.6 180.0 L509.1 180.0 L510.7 180.0 L512.2 180.0 L513.8 180.0 L515.3 180.0 L516.9 180.0 L518.4 180.0 L520.0 180.0 L521.6 180.0 L523.1 180.0 L524.7 180.0 L526.2 180.0 L527.8 180.0 L529.3 180.0 L530.9 180.0 L532.4 180.0 L534.0 180.0 L535.6 180.0 L537.1 180.0 L538.7 180.0 L540.2 180.0 L541.8 180.0 L543.3 180.0 L544.9 180.0 L546.4 180.0 L548.0 180.0 L549.6 180.0 L551.1 180.0 L552.7 180.0 L554.2 180.0 L555.8 180.0 L557.3 180.0 L558.9 180.0 L560.4 180.0 L562.0 180.0 L563.6 180.0 L565.1 180.0 L566.7 180.0 L568.2 180.0 L569.8 180.0 L571.3 180.0 L572.9 180.0 L574.4 180.0 L576.0 180.0 L577.6 180.0 L579.1 180.0 L580.7 180.0 L582.2 180.0 L583.8 180.0 L585.3 180.0 L586.9 180.0 L587.7 180.0 L587.9 180.0 L588.1 180.0 L588.2 180.0 L588.4 180.0 L588.6 182.9 L588.8 186.7 L589.0 190.6 L589.2 194.5 L589.4 198.4 L589.6 202.2 L589.8 206.1 L590.0 210.0 L590.2 213.9 L590.4 217.8 L590.6 221.6 L590.8 225.5 L591.0 229.4 L591.2 233.3 L591.4 237.1 L591.6 240.0 L591.8 240.0 L591.9 240.0 L592.1 240.0 L592.3 240.0 L593.1 240.0 L594.7 240.0 L596.2 240.0 L597.8 240.0 L599.3 240.0 L600.9 240.0 L602.4 240.0 L604.0 240.0 L605.6 240.0 L607.1 240.0 L608.7 240.0 L610.2 240.0 L611.8 240.0 L613.3 240.0 L614.9 240.0 L616.4 240.0 L618.0 240.0 L619.6 240.0 L621.1 240.0 L622.7 240.0 L624.2 240.0 L625.8 240.0 L627.3 240.0 L628.9 240.0 L630.4 240.0 L632.0 240.0 L633.6 240.0 L635.1 240.0 L636.7 240.0 L638.2 240.0 L639.8 240.0 L641.3 240.0 L642.9 240.0 L644.4 240.0 L646.0 240.0 L647.6 240.0 L649.1 240.0 L650.7 240.0 L652.2 240.0 L653.8 240.0 L655.3 240.0 L656.9 240.0 L658.4 240.0 L660.0 240.0 L661.6 240.0 L663.1 240.0 L664.7 240.0 L666.2 240.0 L667.8 240.0 L669.3 240.0 L670.9 240.0 L672.4 240.0 L674.0 240.0 L675.6 240.0 L677.1 240.0 L678.7 240.0 L680.2 240.0 L681.8 240.0 L683.3 240.0 L684.9 240.0 L686.4 240.0 L688.0 240.0 L689.6 240.0 L691.1 240.0 L692.7 240.0 L694.2 240.0 L695.8 240.0 L697.3 240.0 L698.9 240.0 L700.4 240.0 L702.0 240.0 L703.6 240.0 L705.1 240.0 L706.7 240.0 L708.2 240.0 L709.8 240.0 L711.3 240.0 L712.9 240.0 L714.4 240.0 L716.0 240.0 L717.6 240.0 L719.1 240.0 L720.7 240.0 L722.2 240.0 L723.8 240.0 L725.3 240.0 L726.9 240.0 L727.7 240.0 L727.9 240.0 L728.1 240.0 L728.2 240.0 L728.4 240.0 L728.6 237.1 L728.8 233.3 L729.0 229.4 L729.2 225.5 L729.4 221.6 L729.6 217.8 L729.8 213.9 L730.0 210.0" stroke-width="2.2" stroke-dasharray="7 4"/>
+        <path d="M450.0 255.0 L450.2 255.0 L450.4 255.0 L450.6 255.0 L450.8 255.0 L451.0 255.0 L451.2 255.0 L451.4 255.0 L451.6 330.0 L451.8 330.0 L451.9 330.0 L452.1 330.0 L452.3 330.0 L453.1 330.0 L454.7 330.0 L456.2 330.0 L457.8 330.0 L459.3 330.0 L460.9 330.0 L462.4 330.0 L464.0 330.0 L465.6 330.0 L467.1 330.0 L468.7 330.0 L470.2 330.0 L471.8 330.0 L473.3 330.0 L474.9 330.0 L476.4 330.0 L478.0 330.0 L479.6 330.0 L481.1 330.0 L482.7 330.0 L484.2 330.0 L485.8 330.0 L487.3 330.0 L488.9 330.0 L490.4 330.0 L492.0 330.0 L493.6 330.0 L495.1 330.0 L496.7 330.0 L498.2 330.0 L499.8 330.0 L501.3 330.0 L502.9 330.0 L504.4 330.0 L506.0 330.0 L507.6 330.0 L509.1 330.0 L510.7 330.0 L512.2 330.0 L513.8 330.0 L515.3 330.0 L516.9 330.0 L518.4 330.0 L520.0 330.0 L521.6 330.0 L523.1 330.0 L524.7 330.0 L526.2 330.0 L527.8 330.0 L529.3 330.0 L530.9 330.0 L532.4 330.0 L534.0 330.0 L535.6 330.0 L537.1 330.0 L538.7 330.0 L540.2 330.0 L541.8 330.0 L543.3 330.0 L544.9 330.0 L546.4 330.0 L548.0 330.0 L549.6 330.0 L551.1 330.0 L552.7 330.0 L554.2 330.0 L555.8 330.0 L557.3 330.0 L558.9 330.0 L560.4 330.0 L562.0 330.0 L563.6 330.0 L565.1 330.0 L566.7 330.0 L568.2 330.0 L569.8 330.0 L571.3 330.0 L572.9 330.0 L574.4 330.0 L576.0 330.0 L577.6 330.0 L579.1 330.0 L580.7 330.0 L582.2 330.0 L583.8 330.0 L585.3 330.0 L586.9 330.0 L587.7 330.0 L587.9 330.0 L588.1 330.0 L588.2 330.0 L588.4 330.0 L588.6 405.0 L588.8 405.0 L589.0 405.0 L589.2 405.0 L589.4 405.0 L589.6 405.0 L589.8 405.0 L590.0 405.0 L590.2 405.0 L590.4 405.0 L590.6 405.0 L590.8 405.0 L591.0 405.0 L591.2 405.0 L591.4 405.0 L591.6 330.0 L591.8 330.0 L591.9 330.0 L592.1 330.0 L592.3 330.0 L593.1 330.0 L594.7 330.0 L596.2 330.0 L597.8 330.0 L599.3 330.0 L600.9 330.0 L602.4 330.0 L604.0 330.0 L605.6 330.0 L607.1 330.0 L608.7 330.0 L610.2 330.0 L611.8 330.0 L613.3 330.0 L614.9 330.0 L616.4 330.0 L618.0 330.0 L619.6 330.0 L621.1 330.0 L622.7 330.0 L624.2 330.0 L625.8 330.0 L627.3 330.0 L628.9 330.0 L630.4 330.0 L632.0 330.0 L633.6 330.0 L635.1 330.0 L636.7 330.0 L638.2 330.0 L639.8 330.0 L641.3 330.0 L642.9 330.0 L644.4 330.0 L646.0 330.0 L647.6 330.0 L649.1 330.0 L650.7 330.0 L652.2 330.0 L653.8 330.0 L655.3 330.0 L656.9 330.0 L658.4 330.0 L660.0 330.0 L661.6 330.0 L663.1 330.0 L664.7 330.0 L666.2 330.0 L667.8 330.0 L669.3 330.0 L670.9 330.0 L672.4 330.0 L674.0 330.0 L675.6 330.0 L677.1 330.0 L678.7 330.0 L680.2 330.0 L681.8 330.0 L683.3 330.0 L684.9 330.0 L686.4 330.0 L688.0 330.0 L689.6 330.0 L691.1 330.0 L692.7 330.0 L694.2 330.0 L695.8 330.0 L697.3 330.0 L698.9 330.0 L700.4 330.0 L702.0 330.0 L703.6 330.0 L705.1 330.0 L706.7 330.0 L708.2 330.0 L709.8 330.0 L711.3 330.0 L712.9 330.0 L714.4 330.0 L716.0 330.0 L717.6 330.0 L719.1 330.0 L720.7 330.0 L722.2 330.0 L723.8 330.0 L725.3 330.0 L726.9 330.0 L727.7 330.0 L727.9 330.0 L728.1 330.0 L728.2 330.0 L728.4 330.0 L728.6 255.0 L728.8 255.0 L729.0 255.0 L729.2 255.0 L729.4 255.0 L729.6 255.0 L729.8 255.0 L730.0 255.0" stroke-width="2.6"/>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal. En a, le raccordement correct d'un TC sur la phase L1 d'une arrivée, conducteur vertical épais : P1 est
+      tourné vers la source, et le courant primaire $i_1$ circule de P1 vers P2. Le secondaire sort par S1 et S2 vers un bornier
+      d'essai, puis vers l'entrée de courant I+, I- de la centrale de mesure ; le courant $i_2$ sort par S1. Le bornier contient un pont
+      de court-circuit, trait vertical épais, à fermer côté TC avant de déposer l'appareil ; les traits pointillés figurent les liens
+      de sectionnement. La borne S2 est reliée à la terre en un seul point. En b, le même TC, $150/5\ \mathrm{A}$, avec son secondaire
+      ouvert sous $150\ \mathrm{A}$, sur une période : en haut, le courant primaire sinusoïdal, en trait fin ; au milieu, le flux du noyau,
+      en tirets, saturé et plat sauf autour des passages par zéro de $i_1$ ; en bas, la tension secondaire, en trait épais, nulle
+      tant que le flux est plat et formée de pointes brèves de $\pm 314\ \mathrm{V}$ dans le modèle, à chaque basculement du flux.
+    </figcaption>
+  </figure>
+
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Courants du circuit :<br/>I max de service, I min à mesurer, Ik et durée"] --> B["Calibre primaire In :<br/>I max entre 50 et 100 % de In,<br/>120 % au plus"]
+  B --> C{"Usage ?"}
+  C -->|"comptage, mesure"| D["Classe 0,5 ou 0,2,<br/>classe S si I min faible"]
+  C -->|"protection"| E["Classe 5P ou 10P,<br/>facteur limite selon Ik / In"]
+  D --> F["Secondaire 1 A ou 5 A<br/>selon la longueur des câbles"]
+  E --> F
+  F --> G["Charge réelle en VA :<br/>câbles, bornes, appareils"]
+  G --> H{"Charge entre 25 et 100 %<br/>de la puissance de précision ?"}
+  H -->|"non"| I["Changer de puissance de précision,<br/>de section ou de secondaire"]
+  I --> G
+  H -->|"oui"| J["Facteur réel F' et<br/>tenues Ith, Idyn contre Ik et ip"]
+  J --> K["Polarités, mise à la terre,<br/>bornier court-circuitable"]</pre>
+    <figcaption>
+      Organigramme de choix d'un TC. Les rectangles sont des étapes, les losanges des tests, les libellés des flèches les réponses.
+      On part des courants du circuit, on fixe le calibre, la classe selon l'usage, le secondaire selon la distance, puis on vérifie
+      la charge réelle, en revenant en arrière tant qu'elle sort de la plage garantie. Les contraintes de court-circuit et les
+      règles de raccordement terminent la démarche.
+    </figcaption>
+  </figure>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Comparaison des quatre appareils</caption>
+      <thead><tr><th>Appareil</th><th>Grandeur imposée</th><th>Charge</th><th>Isolation</th><th>Danger principal</th><th>Usage typique</th></tr></thead>
+      <tbody>
+        <tr><td>Transformateur à deux enroulements</td><td>tension primaire</td><td>jusqu'à $S_n$</td><td>galvanique</td><td>surcharge, court-circuit aval</td><td>distribution, alimentation</td></tr>
+        <tr><td>Autotransformateur</td><td>tension primaire</td><td>jusqu'à $S_n$, taille $(1 - k)S_n$</td><td>aucune</td><td>courant de défaut élevé, perte du neutre</td><td>interconnexion de réseaux, démarrage, banc variable</td></tr>
+        <tr><td>Transformateur de courant</td><td>courant primaire</td><td>quelques VA, en série</td><td>galvanique</td><td>secondaire ouvert</td><td>comptage, mesure, protection</td></tr>
+        <tr><td>Transformateur de tension</td><td>tension primaire</td><td>quelques VA, en parallèle</td><td>galvanique</td><td>secondaire court-circuité, ferrorésonance</td><td>mesure et protection en haute tension</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-sources-figure" data-renvoi="d-sources-figure">les modèles de source de tension et de source de courant</a> et <a href="#d-auto-figure" data-renvoi="d-auto-figure">l'animation des puissances de l'autotransformateur</a>, section D ;</li>
+    <li><a href="#e-auto-figure" data-renvoi="e-auto-figure">le schéma de l'autotransformateur</a>, <a href="#e-tc-figure" data-renvoi="e-tc-figure">le TC et son schéma équivalent</a>, <a href="#e-polarite-figure" data-renvoi="e-polarite-figure">l'animation des polarités</a>, <a href="#e-fresnel-figure" data-renvoi="e-fresnel-figure">le diagramme d'erreur</a>, <a href="#e-sat-figure" data-renvoi="e-sat-figure">la simulation de saturation</a> et <a href="#e-tp-figure" data-renvoi="e-tp-figure">le raccordement d'un TP</a>, section E ;</li>
+    <li><a href="#h-donnees-figure" data-renvoi="h-donnees-figure">la chaîne de mesure de l'arrivée</a> et <a href="#h-sim-figure" data-renvoi="h-sim-figure">la simulation de choix d'un TC</a>, section H ;</li>
+    <li><a href="#i-bornier-figure" data-renvoi="i-bornier-figure">la manœuvre du bornier d'essai</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour choisir un TC et vérifier ses contraintes :</p>
+  <ol>
+    <li>Recenser les courants : courant maximal de service, avec ses harmoniques et sa marge d'évolution ; courant minimal à mesurer avec précision ; courant de court-circuit efficace $I_k$, sa crête $i_p$ et la durée d'élimination du défaut.</li>
+    <li>Choisir le calibre primaire normalisé tel que le courant maximal soit compris entre environ $50$ et $100\ \%$ de $I_{1n}$, sans dépasser le courant permanent étendu, souvent $120\ \%$ ; vérifier où tombe le courant minimal.</li>
+    <li>Choisir la classe : mesure ou comptage, $0{,}5$ ou $0{,}2$, classe S si la charge descend durablement sous $20\ \%$ ; protection, $5\mathrm{P}$ ou $10\mathrm{P}$ avec un facteur limite adapté au rapport $I_k/I_{1n}$ et au relais.</li>
+    <li>Choisir le secondaire, $5\ \mathrm{A}$ pour une liaison courte, $1\ \mathrm{A}$ pour une liaison longue, et compter la charge réelle : $R_{cable} I_{2n}^2$ avec la longueur aller et retour, connexions, consommation de chaque appareil.</li>
+    <li>Choisir la puissance de précision telle que la charge réelle soit entre $25$ et $100\ \%$ de $S_n$ ; calculer le facteur réel $F' = F_n (S_{ct} + S_n)/(S_{ct} + S_{reelle})$ et le confronter au besoin : tenue des appareils pour un TC de mesure, $I_k/I_{1n}$ pour un TC de protection.</li>
+    <li>Vérifier les tenues : $I_k^2 t \le I_{th}^2 \times 1\ \mathrm{s}$ et $i_p \le I_{dyn}$.</li>
+    <li>Fixer le raccordement : polarités P1 vers la source, S1 vers I+, mise à la terre d'un seul point, bornier d'essai court-circuitable, absence de fusible ; rédiger la consigne d'intervention.</li>
+    <li>Contrôler : courant secondaire attendu en service, ordre de grandeur de la charge et des erreurs, cohérence de la somme des puissances lue par la centrale avec un bilan indépendant.</li>
+  </ol>
+  <p>
+    Pour un autotransformateur, la méthode est plus courte : calculer $k$, les courants $I_1$, $I_2$ et $I_c$, la puissance propre
+    $(1 - k)S$, la tension de court-circuit $(1 - k)\,u_{cc,propre}$ et le courant de défaut qui en résulte, puis vérifier que l'absence
+    d'isolation est acceptable : neutre relié à la terre, schéma de liaison à la terre compatible, protections dimensionnées pour
+    le courant de défaut.
+  </p>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Le plan de mesure établi au cours <a href="#/cours/puissance-en-triphase">Puissance en triphasé</a> et confirmé au cours
+    <a href="#/cours/revision-4-et-mini-projet-qualite-reseau">Révision 4 et mini-projet qualité réseau</a> prévoit, à l'arrivée du
+    tableau général, une centrale de mesure à trois éléments et quatre fils, alimentée par trois TC de phase et un TC de neutre.
+    Il faut les choisir. La chaîne de mesure fixe les données.
+  </p>
+  <figure id="h-donnees-figure">
+    <svg viewBox="0 0 760 300" role="img" aria-label="Chaîne de mesure de l'arrivée du tableau général : transformateur de 100 kVA, conducteurs L1, L2, L3 et N traversant quatre transformateurs de courant 150/5 A, bornier d'essai, câbles de 2,5 mm² sur 5 m et centrale de mesure">
+      <defs>
+        <marker id="fl-h" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="70" cy="60" r="20"/>
+        <circle cx="70" cy="86" r="20"/>
+        <path d="M90 60H130V280M90 72H180V280M90 84H230V280M90 98H280V280"/>
+        <ellipse cx="130" cy="160" rx="18" ry="7"/>
+        <ellipse cx="180" cy="160" rx="18" ry="7"/>
+        <ellipse cx="230" cy="160" rx="18" ry="7"/>
+        <ellipse cx="280" cy="160" rx="18" ry="7"/>
+        <path d="M298 160H420" stroke-dasharray="2 4" stroke-width="1.4"/>
+        <rect x="420" y="120" width="90" height="120" rx="5"/>
+        <path d="M510 150H590M510 170H590M510 190H590M510 210H590"/>
+        <rect x="590" y="120" width="130" height="120" rx="6"/>
+        <path d="M465 240V262M453 262H477M457 268H473M461 274H469"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M146 210V250" marker-end="url(#fl-h)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="20" y="130">T1</text>
+        <text x="20" y="146">100 kVA</text>
+        <text x="20" y="162">410 V</text>
+        <text x="122" y="294">L1</text>
+        <text x="172" y="294">L2</text>
+        <text x="222" y="294">L3</text>
+        <text x="274" y="294">N</text>
+        <text x="152" y="232">I</text>
+        <text x="136" y="186">TA1</text>
+        <text x="186" y="186">TA2</text>
+        <text x="236" y="186">TA3</text>
+        <text x="286" y="186">TAN</text>
+        <text x="300" y="146">4 x 2 fils</text>
+        <text x="430" y="140">bornier</text>
+        <text x="430" y="158">d'essai</text>
+        <text x="430" y="176">X1</text>
+        <text x="430" y="210">S2 commun</text>
+        <text x="430" y="226">à la terre</text>
+        <text x="520" y="110">2,5 mm², 5 m</text>
+        <text x="600" y="146">centrale de</text>
+        <text x="600" y="164">mesure PM1</text>
+        <text x="600" y="186">4 entrées 5 A</text>
+        <text x="600" y="204">0,5 VA chacune</text>
+        <text x="600" y="222">(hypothèse)</text>
+        <text x="330" y="40">Ik au tableau : 3445 A, crête 6,13 kA</text>
+        <text x="330" y="58">futur, T1 et 160 kVA : 8892 A</text>
+        <text x="330" y="76">I max : 108,2 A ; nuit : 15 A (hypothèse)</text>
+        <text x="330" y="94">In de T1 : 140,8 A</text>
+      </g>
+    </svg>
+    <figcaption>
+      Chaîne de mesure de l'arrivée, en représentation simplifiée : le transformateur T1, deux cercles entrelacés, alimente les
+      conducteurs L1, L2, L3 et N du tableau général, verticaux, parcourus de haut en bas par le courant, flèche $I$. Chaque
+      conducteur traverse un TC, ellipse, P1 en haut. Les secondaires, figurés par une seule ligne en pointillés pour ne pas surcharger
+      le dessin, rejoignent le bornier d'essai X1, où les bornes S2 sont réunies et reliées à la terre en un point ; quatre paires de
+      fils de $2{,}5\ \mathrm{mm^2}$ et de $5\ \mathrm{m}$ vont ensuite à la centrale de mesure PM1. Les grandeurs de court-circuit et de service
+      sont rappelées en haut.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Données : transformateur du poste, $100\ \mathrm{kVA}$, $410\ \mathrm{V}$, courant assigné $140{,}8\ \mathrm{A}$ ; courant maximal de phase au
+    tableau général, $108{,}2\ \mathrm{A}$ après le rééquilibrage du cours <a href="#/cours/charges-triphasees-desequilibrees">Charges
+    triphasées déséquilibrées</a> ; courant de nuit supposé de $15\ \mathrm{A}$ ; courant de court-circuit $I_k = 3445\ \mathrm{A}$ avec
+    $R/X = 29{,}26/62{,}16$, et $8892\ \mathrm{A}$ en cas de mise en parallèle future, valeurs du cours
+    <a href="#/cours/transformateurs-triphases">Transformateurs triphasés</a> ; centrale de mesure à entrées $5\ \mathrm{A}$ de $0{,}5\ \mathrm{VA}$,
+    connexions estimées à $0{,}02\ \Omega$ par circuit, câbles cuivre de $2{,}5\ \mathrm{mm^2}$ sur $5\ \mathrm{m}$, résistivité prudente
+    $\rho = 0{,}022\,5\ \Omega\,\mathrm{mm^2/m}$ ; catalogue supposé : TC $150/5\ \mathrm{A}$ de $R_{ct} = 0{,}1\ \Omega$, $I_{th} = 60\,I_n$ pendant $1\ \mathrm{s}$,
+    $I_{dyn} = 2{,}5\,I_{th}$. Inconnues : calibre, classe, secondaire, puissance de précision, facteur de sécurité réel, tenues.
+    Stratégie : appliquer la méthode G pas à pas.
+  </p>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li>Calibre : le courant maximal possible est celui du transformateur, $140{,}8\ \mathrm{A}$. Un $100/5$ serait à $141\ \%$ à pleine charge du transformateur, au-delà de $120\ \%$ : exclu. Un $150/5$ place $108{,}2\ \mathrm{A}$ à $72{,}1\ \%$ et $140{,}8\ \mathrm{A}$ à $93{,}9\ \%$ ; un $200/5$ les placerait à $54{,}1$ et $70{,}4\ \%$. On retient $150/5\ \mathrm{A}$, $K = 30$. Courant secondaire en service : $108{,}2/30 = 3{,}607\ \mathrm{A}$.</li>
+    <li>Classe : centrale de mesure et bilans, classe $0{,}5$. À $72{,}1\ \%$, la limite interpolée vaut $0{,}5 + 0{,}25 \times (100 - 72{,}1)/80 = 0{,}587\ \%$ ; la nuit, $15\ \mathrm{A}$ font $10\ \%$ de $I_n$ et la limite monte à $1{,}25\ \%$. Si l'énergie était facturée sur cette mesure, on prendrait la classe $0{,}5$S, qui garantit $0{,}5\ \%$ dès $20\ \%$ et $0{,}67\ \%$ à $10\ \%$.</li>
+    <li>Secondaire : la liaison fait $5\ \mathrm{m}$, soit $10\ \mathrm{m}$ aller et retour ; $R_{cable} = 0{,}022\,5 \times 10/2{,}5 = 0{,}090\ \Omega$. En $5\ \mathrm{A}$, $0{,}090 \times 25 = 2{,}25\ \mathrm{VA}$ : acceptable. En $1\ \mathrm{A}$, $0{,}09\ \mathrm{VA}$, mais l'avantage n'est utile qu'au-delà de quelques dizaines de mètres. On garde $5\ \mathrm{A}$.</li>
+    <li>Charge réelle : câbles $2{,}25\ \mathrm{VA}$, connexions $0{,}02 \times 25 = 0{,}50\ \mathrm{VA}$, entrée de la centrale $0{,}50\ \mathrm{VA}$, total $3{,}25\ \mathrm{VA}$, soit $R_b = 3{,}25/25 = 0{,}13\ \Omega$. Avec un TC de $5\ \mathrm{VA}$, la charge vaut $65\ \%$ de la puissance de précision, dans la plage garantie de $25$ à $100\ \%$ ; un $15\ \mathrm{VA}$ ne serait chargé qu'à $21{,}7\ \%$, hors plage.</li>
+    <li>Facteur de sécurité : TC $\mathrm{FS}5$, $S_{ct} = 0{,}1 \times 25 = 2{,}5\ \mathrm{VA}$, d'où $F' = 5 \times (2{,}5 + 5)/(2{,}5 + 3{,}25) = 6{,}52$. En court-circuit, la centrale reçoit au plus environ $6{,}52 \times 5 = 32{,}6\ \mathrm{A}$ pendant la durée du défaut, au lieu de $3445/30 = 115\ \mathrm{A}$ : sa tenue de courte durée doit couvrir cette valeur, à vérifier dans sa documentation.</li>
+    <li>Tenue thermique : $I_{th} = 60 \times 150 = 9000\ \mathrm{A}$ pendant $1\ \mathrm{s}$, soit $81{,}0 \times 10^6\ \mathrm{A^2s}$. Le défaut actuel donne $3445^2 = 11{,}9 \times 10^6\ \mathrm{A^2s}$ par seconde de durée ; le défaut futur $79{,}1 \times 10^6$. Même éliminé en une seconde, ce qui est très pessimiste pour un disjoncteur basse tension, le TC tient.</li>
+    <li>Tenue dynamique : $\kappa = 1{,}02 + 0{,}98\,e^{-3R/X} = 1{,}02 + 0{,}98\,e^{-1{,}412} = 1{,}259$ ; $i_p = 1{,}259 \times \sqrt{2} \times 3445 = 6{,}13\ \mathrm{kA}$ actuellement et $15{,}8\ \mathrm{kA}$ demain, contre $I_{dyn} = 2{,}5 \times 9 = 22{,}5\ \mathrm{kA}$ : tenue assurée. Le facteur $\kappa$ et sa formule seront justifiés au cours Calcul des courants de court-circuit.</li>
+    <li>Erreurs attendues au courant assigné, modèle de la section E : charge résistive de $0{,}13\ \Omega$, $\underline{I}_0 = (0{,}1 + 0{,}13) \times 5/\underline{Z}_m$, soit une erreur de courant de $-0{,}19\ \%$ et un déphasage de $17{,}8$ minutes : classe $0{,}5$ respectée avec marge. Un secondaire ouvert sous $108{,}2\ \mathrm{A}$ donnerait des pointes d'environ $227\ \mathrm{V}$.</li>
+  </ol>
+
+  <h3 id="h-sim-section">Simulation interactive : choisir un TC</h3>
+  <p>
+    La simulation reprend la méthode : elle évalue la charge réelle, sa place dans la plage garantie, les points de fonctionnement
+    sur la courbe limite de la classe et le facteur de sécurité réel. Prédisez avant de manipuler : si la centrale était installée
+    dans un local voisin, à $40\ \mathrm{m}$, faudrait-il passer à une section de $6\ \mathrm{mm^2}$, à une puissance de précision de $15\ \mathrm{VA}$, ou
+    à un secondaire de $1\ \mathrm{A}$ ? Et un calibre $200/5$ améliore-t-il ou dégrade-t-il la mesure de nuit ?
+  </p>
+  <figure id="h-sim-figure">
+    <div id="h-sim-trace"></div>
+    <figcaption>
+      Limites de l'erreur de courant en fonction du courant primaire, en pour cent du calibre choisi, pour les classes $0{,}5$ et
+      $0{,}5$S, nommées dans la légende du tracé. Les deux traits verticaux en tirets repèrent le courant minimal et le courant maximal
+      de service ; leur intersection avec les courbes donne l'erreur garantie en ces points. La zone à droite de $120\ \%$ n'est pas
+      garantie.
+    </figcaption>
+  </figure>
+  <div id="h-sim-curseurs"></div>
+  <div id="h-sim-valeurs"></div>
+  <p>
+    Interprétation : à $40\ \mathrm{m}$ en $2{,}5\ \mathrm{mm^2}$ et $5\ \mathrm{A}$, les câbles absorbent à eux seuls $18\ \mathrm{VA}$ : la charge dépasse
+    $5\ \mathrm{VA}$ et même $15\ \mathrm{VA}$. Le $6\ \mathrm{mm^2}$ ramène les câbles à $7{,}5\ \mathrm{VA}$, ce qui impose encore un $10\ \mathrm{VA}$ ; le
+    secondaire de $1\ \mathrm{A}$, avec la même centrale en version $1\ \mathrm{A}$, ramène les câbles à $0{,}72\ \mathrm{VA}$ et toute la charge à
+    $1{,}24\ \mathrm{VA}$ : c'est la solution propre, qui ne demande qu'un TC de $2{,}5\ \mathrm{VA}$, chargé à $50\ \%$. Le calibre $200/5$ place le courant de nuit à $7{,}5\ \%$ de $I_n$, où la
+    classe $0{,}5$ tolère $1{,}38\ \%$ : il dégrade la mesure de nuit sans rien gagner en journée. Le choix d'un TC est donc un
+    compromis entre le courant le plus fort, qui fixe le calibre, et le courant le plus faible, qui fixe la classe.
+  </p>
+
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li><strong>Courant secondaire :</strong> $3{,}607\ \mathrm{A}$ en service et $4{,}69\ \mathrm{A}$ à pleine charge du transformateur, au-dessous de $5\ \mathrm{A}$ et donc de la plage étendue.</li>
+    <li><strong>Dimensions :</strong> $\Omega\,\mathrm{mm^2/m} \times \mathrm{m}/\mathrm{mm^2} = \Omega$ ; $\Omega \times \mathrm{A^2} = \mathrm{VA}$ ; $F'$ sans dimension.</li>
+    <li><strong>Ordres de grandeur :</strong> une charge de quelques voltampères pour une liaison de quelques mètres en $5\ \mathrm{A}$ ; un facteur de sécurité réel supérieur à l'assigné quand le TC est moins chargé que prévu.</li>
+    <li><strong>Bilan énergétique :</strong> la puissance prélevée par la mesure, $3{,}25 + 2{,}5 \approx 5{,}8\ \mathrm{VA}$ par phase côté secondaire, est négligeable devant les $25\ \mathrm{kVA}$ de la phase : un TC ne charge pas le réseau.</li>
+    <li><strong>Limites :</strong> $R_{ct}$, $I_{th}$, les consommations des entrées et la résistance des connexions sont des hypothèses de catalogue ; la tenue de courte durée des entrées de la centrale et la classe exigée par le contrat de fourniture restent à vérifier.</li>
+  </ul>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+
+  <h3 id="i-probleme">Le départ de la pompe : un TC du stock et une intervention sous charge</h3>
+  <p>
+    Pour le point de mesure M4 du départ de la pompe, $50\ \mathrm{A}$ efficaces vrais au cours <a href="#/cours/signaux-periodiques-et-sinusoides">Signaux
+    périodiques et sinusoïdes</a>, l'atelier propose d'utiliser des TC $150/5\ \mathrm{A}$ disponibles en magasin. Par ailleurs, la centrale de
+    l'arrivée devra tôt ou tard être remplacée sans couper le site. Deux questions se posent : le $150/5$ convient-il, et comment
+    intervenir sur un circuit de courant en service sans ouvrir un secondaire ? Le schéma décrit la manœuvre d'un bornier d'essai.
+  </p>
+  <figure id="i-bornier-figure">
+    <svg viewBox="0 0 760 290" role="img" aria-label="Manœuvre d'un bornier d'essai court-circuitable : en service, les liens sont fermés et le pont ouvert ; pour intervenir, on ferme d'abord le pont côté transformateur de courant, puis on ouvre les liens côté appareil">
+      <defs>
+        <marker id="fl-i" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M40 90H120M40 170H120M200 90H260M200 170H260"/>
+        <rect x="260" y="70" width="80" height="120" rx="5"/>
+        <path d="M120 90L200 90M120 170L200 170"/>
+        <path d="M420 90H500M420 170H500M600 90H660M600 170H660"/>
+        <rect x="660" y="70" width="80" height="120" rx="5"/>
+        <path d="M500 90L590 72M500 170L590 152"/>
+        <path d="M465 90V170" stroke-width="4"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M60 80H100" marker-end="url(#fl-i)"/>
+        <path d="M100 180H60" marker-end="url(#fl-i)"/>
+        <path d="M455 104V156" marker-end="url(#fl-i)"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="120" cy="90" r="4"/>
+        <circle cx="200" cy="90" r="4"/>
+        <circle cx="120" cy="170" r="4"/>
+        <circle cx="200" cy="170" r="4"/>
+        <circle cx="500" cy="90" r="4"/>
+        <circle cx="600" cy="90" r="4"/>
+        <circle cx="500" cy="170" r="4"/>
+        <circle cx="600" cy="170" r="4"/>
+        <circle cx="465" cy="90" r="3.5"/>
+        <circle cx="465" cy="170" r="3.5"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="20" y="30">a. en service</text>
+        <text x="20" y="84">S1</text>
+        <text x="20" y="164">S2</text>
+        <text x="64" y="72">i2</text>
+        <text x="132" y="80">lien fermé</text>
+        <text x="132" y="196">lien fermé</text>
+        <text x="270" y="126">PM1</text>
+        <text x="270" y="144">I+ / I-</text>
+        <text x="40" y="236">côté TC</text>
+        <text x="200" y="236">côté appareil</text>
+        <text x="420" y="30">b. intervention</text>
+        <text x="400" y="84">S1</text>
+        <text x="400" y="164">S2</text>
+        <text x="380" y="134">i2</text>
+        <text x="474" y="134">pont</text>
+        <text x="524" y="66">liens ouverts</text>
+        <text x="668" y="126">PM1</text>
+        <text x="668" y="144">déposable</text>
+        <text x="420" y="236">1. fermer le pont côté TC</text>
+        <text x="420" y="254">2. ouvrir les liens côté appareil</text>
+        <text x="420" y="272">remise en service : ordre inverse</text>
+      </g>
+    </svg>
+    <figcaption>
+      Bornier d'essai d'un circuit de courant, deux bornes par TC. En a, en service : les liens de sectionnement, traits horizontaux
+      entre les deux rangées de bornes, sont fermés, et le courant secondaire $i_2$, flèches, circule de S1 vers l'entrée I+ de la
+      centrale PM1, puis revient par I- vers S2. En b, pendant l'intervention : le pont de court-circuit, trait vertical épais, est
+      fermé côté TC et reprend le courant $i_2$, flèche verticale ; les liens côté appareil sont ensuite ouverts, traits obliques,
+      et la centrale peut être déposée. Le secondaire du TC n'est jamais ouvert. Pour la remise en service, on referme les liens
+      avant d'ouvrir le pont.
+    </figcaption>
+  </figure>
+
+  <h3 id="i-calcul">Calculs et vérifications</h3>
+  <ol>
+    <li>TC du stock, $150/5$ : $50\ \mathrm{A}$ font $33{,}3\ \%$ de $I_n$ ; la limite de la classe $0{,}5$ y vaut $0{,}5 + 0{,}25 \times (100 - 33{,}3)/80 = 0{,}708\ \%$, et le courant secondaire n'est que de $1{,}67\ \mathrm{A}$. Ce n'est pas faux, mais l'erreur garantie est $1{,}3$ fois plus large qu'au calibre adapté, et un fonctionnement à mi-débit, $25\ \mathrm{A}$, tomberait à $16{,}7\ \%$ de $I_n$, où la limite atteint $0{,}92\ \%$.</li>
+    <li>TC adapté, $60/5$ : $50\ \mathrm{A}$ font $83{,}3\ \%$ de $I_n$, limite $0{,}552\ \%$ ; une surcharge passagère du variateur de $10\ \%$, $55\ \mathrm{A}$, reste à $91{,}7\ \%$. Les harmoniques du variateur, jusqu'au rang $40$, soit $2\ \mathrm{kHz}$, restent dans la bande passante d'un TC à noyau de fer, qui dépasse en général quelques kilohertz, à vérifier dans la documentation. On retient $60/5\ \mathrm{A}$, classe $0{,}5$, $5\ \mathrm{VA}$.</li>
+    <li>Secondaire ouvert sur le $150/5$ du stock sous $50\ \mathrm{A}$ : modèle de la section E, pointes d'environ $105\ \mathrm{V}$ ; sur le $150/5$ de l'arrivée sous $108{,}2\ \mathrm{A}$, environ $227\ \mathrm{V}$ ; au passage d'un défaut de $3445\ \mathrm{A}$, plus de $7\ \mathrm{kV}$. Ces tensions dépassent largement le domaine où un contact est sans danger, et le noyau saturé chauffe.</li>
+    <li>Procédure d'intervention sur PM1 : vérifier le repérage du bornier X1, fermer les quatre ponts de court-circuit côté TC, contrôler à la pince que le courant passe bien par les ponts, ouvrir les liens côté appareil, ouvrir la protection des circuits de tension, déposer la centrale ; remise en service dans l'ordre inverse, puis contrôle du signe des puissances de chaque phase.</li>
+    <li>Contrôle de polarité après intervention : les trois puissances actives de phase doivent être positives et voisines, environ $23{,}9\ \mathrm{kW}$ pour la phase L1 dans l'état étudié ; une puissance négative sur une seule phase signale un circuit S1-S2 inversé.</li>
+  </ol>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Choix des TC du tableau général</caption>
+      <thead><tr><th>Point</th><th>Courant de service</th><th>TC retenu</th><th>Taux de charge</th><th>Charge réelle</th><th>Pointe secondaire ouvert</th></tr></thead>
+      <tbody>
+        <tr><td>Arrivée, L1, L2, L3</td><td>$108{,}2\ \mathrm{A}$, nuit $15\ \mathrm{A}$</td><td>$150/5\ \mathrm{A}$, $0{,}5$, $5\ \mathrm{VA}$, FS5</td><td>$72{,}1\ \%$</td><td>$3{,}25\ \mathrm{VA}$, $65\ \%$</td><td>environ $227\ \mathrm{V}$</td></tr>
+        <tr><td>Arrivée, neutre</td><td>environ $20\ \mathrm{A}$ avec le rang 3</td><td>$150/5\ \mathrm{A}$, $0{,}5$S, $5\ \mathrm{VA}$</td><td>$13\ \%$</td><td>$3{,}25\ \mathrm{VA}$</td><td>environ $42\ \mathrm{V}$</td></tr>
+        <tr><td>Départ pompe</td><td>$50\ \mathrm{A}$ efficaces vrais</td><td>$60/5\ \mathrm{A}$, $0{,}5$, $5\ \mathrm{VA}$</td><td>$83{,}3\ \%$</td><td>à établir</td><td>selon le noyau</td></tr>
+        <tr><td>Départ pompe, stock</td><td>$50\ \mathrm{A}$</td><td>$150/5\ \mathrm{A}$, écarté</td><td>$33{,}3\ \%$</td><td>sans objet</td><td>environ $105\ \mathrm{V}$</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="i-compromis">Contraintes, risques et compromis</h3>
+  <ul>
+    <li><strong>Calibre :</strong> un TC trop gros dégrade la mesure des faibles courants, un TC trop petit sature ou chauffe en surcharge ; le calibre se fixe sur le courant maximal durable, la classe sur le courant minimal utile.</li>
+    <li><strong>TC de neutre :</strong> le même calibre que les phases simplifie le paramétrage de la centrale et couvre un neutre chargé par le rang 3, mais place le courant habituel à $13\ \%$ de $I_n$ ; la classe $0{,}5$S compense ce choix.</li>
+    <li><strong>Standardisation contre justesse :</strong> réutiliser les $150/5$ du stock réduit les références en magasin, au prix d'une précision moindre sur la pompe ; le gain d'exploitation ne justifie pas une mesure dégradée sur le plus gros consommateur.</li>
+    <li><strong>Sécurité :</strong> le bornier court-circuitable est un coût de quelques dizaines d'euros par circuit ; il rend possible une intervention sans consignation du tableau et supprime le risque d'ouverture accidentelle.</li>
+    <li><strong>Limites :</strong> les noyaux, les résistances $R_{ct}$, les tenues et les consommations sont des hypothèses ; seules les fiches techniques des TC et de la centrale retenus permettent de conclure.</li>
+  </ul>
+
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : ce que cette séance ajoute</span>
+    <p>
+      Transformateurs de courant du tableau général. Arrivée : trois TC $150/5\ \mathrm{A}$, classe $0{,}5$, $5\ \mathrm{VA}$, $\mathrm{FS}5$, et un TC de
+      neutre identique en classe $0{,}5$S ; $108{,}2\ \mathrm{A}$ vus comme $3{,}607\ \mathrm{A}$, $72{,}1\ \%$ de $I_n$ ; charge réelle de $3{,}25\ \mathrm{VA}$,
+      $65\ \%$ de la puissance de précision ; facteur de sécurité réel $6{,}5$ ; tenues $9\ \mathrm{kA}$ pendant $1\ \mathrm{s}$ et $22{,}5\ \mathrm{kA}$ crête
+      contre $3445\ \mathrm{A}$ et $6{,}13\ \mathrm{kA}$, puis $8892\ \mathrm{A}$ et $15{,}8\ \mathrm{kA}$ en cas de mise en parallèle ; secondaires $5\ \mathrm{A}$,
+      bornier d'essai court-circuitable, S2 à la terre en un point. Départ de la pompe : $60/5\ \mathrm{A}$ au lieu du $150/5$ du stock.
+      Consigne de sécurité : jamais d'ouverture d'un circuit de courant, pointes de $105$ à $227\ \mathrm{V}$ en service et plus de $7\ \mathrm{kV}$ en
+      défaut dans le modèle.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Croire qu'un autotransformateur isole.</strong> Les deux côtés sont reliés par l'enroulement commun : un défaut ou une perte du neutre côté haute tension se retrouve côté basse tension. Il ne remplace jamais un transformateur de séparation.</li>
+    <li><strong>Dimensionner un autotransformateur sur sa puissance transmise.</strong> Sa taille et ses pertes suivent la puissance propre $(1 - k)S$ ; mais son impédance de court-circuit, réduite dans le même rapport, augmente fortement le courant de défaut.</li>
+    <li><strong>Protéger un secondaire de TC par un fusible.</strong> Un fusible qui fond ouvre le circuit : c'est créer volontairement le danger que l'on voulait éviter. Les circuits de courant ne comportent ni fusible ni interrupteur seul.</li>
+    <li><strong>Choisir la puissance de précision la plus élevée par sécurité.</strong> Un TC de $15\ \mathrm{VA}$ chargé à $3\ \mathrm{VA}$ sort de la plage garantie et protège moins bien ses appareils, son facteur de sécurité réel augmentant. La puissance de précision doit encadrer la charge réelle.</li>
+    <li><strong>Oublier les câbles dans la charge.</strong> En $5\ \mathrm{A}$, $30\ \mathrm{m}$ aller et retour de $2{,}5\ \mathrm{mm^2}$ absorbent $6{,}75\ \mathrm{VA}$, plus que la plupart des appareils ; il faut compter la longueur aller et retour.</li>
+    <li><strong>Prendre un TC de mesure pour un TC de protection.</strong> Un TC de mesure sature volontairement vers quelques fois $I_n$ : un relais alimenté par lui sous-estime le courant de défaut et peut ne pas déclencher, ou déclencher trop tard.</li>
+    <li><strong>Inverser S1 et S2 sans le voir.</strong> L'ampèremètre indique la bonne valeur, mais la puissance de la phase change de signe ; le bilan total devient faux et une protection directionnelle ou différentielle fonctionne mal.</li>
+    <li><strong>Court-circuiter un secondaire de TP pour "le rendre sûr".</strong> Le TP est une source de tension : son secondaire court-circuité débite un courant qui détruit l'enroulement, ou fait fondre le fusible haute tension. On ouvre ses protections secondaires, on ne le court-circuite pas.</li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain : une puissance négative sur une seule phase avec des courants plausibles signale une polarité
+    inversée ; un courant affiché nettement inférieur à celui d'une pince de contrôle, sur une seule phase, signale une connexion
+    desserrée ou une charge excessive ; un TC qui ronfle, chauffe ou sent le vernis signale un secondaire ouvert, à court-circuiter
+    immédiatement à distance de sécurité, sans toucher les bornes ; une erreur qui apparaît après un défaut important peut venir de
+    l'aimantation rémanente, à éliminer par démagnétisation ; une tension secondaire de TP instable sur un réseau à neutre isolé, sans
+    défaut, évoque une ferrorésonance.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic
+    industriel et une question conceptuelle. La correction de chacun reste masquée jusqu'à une tentative ou un clic explicite
+    sur "Voir la correction", puis se déroule étape par étape, accompagnée d'un diagramme, d'une courbe ou d'un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Après chaque
+    réponse, l'explication s'affiche avec un petit schéma tracé pas à pas.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$k = \frac{U_2}{U_1}, \qquad I_c = (1 - k)\,I_2, \qquad S_{propre} = (1 - k)\,S$$
+    $$i_2 = \frac{N_1}{N_2}\,i_1 = \frac{i_1}{K}, \qquad \frac{\underline{I}_1}{K} = \underline{I}_2 + \underline{I}_0$$
+    $$\varepsilon = \frac{K I_2 - I_1}{I_1} \times 100\ \%, \qquad S_b = (R_{cable} + R_{app})\,I_{2n}^2$$
+    $$F' = F_n\,\frac{S_{ct} + S_n}{S_{ct} + S_{reelle}}$$
+    $$e_{2,max} \approx \frac{N_1 N_2\,\mu_0\mu_r\,A\,\sqrt{2}\,I_1\,\omega}{l}$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>Secondaire de TC : jamais ouvert, jamais de fusible ; court-circuiter avant de débrancher.</li>
+      <li>Secondaire de TP : jamais court-circuité, toujours protégé.</li>
+      <li>Un seul point de chaque secondaire à la terre, et des polarités P1, S1 tenues de bout en bout.</li>
+      <li>La charge d'un TC se compte en VA, câbles compris, et doit rester entre $25$ et $100\ \%$ de sa puissance de précision.</li>
+      <li>Un autotransformateur n'isole pas et laisse passer de forts courants de défaut.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> L'autotransformateur n'a qu'un enroulement par phase : seule la différence des tensions est transformée,
+    sa puissance propre vaut $(1 - k)S$, il est petit et efficace pour un rapport voisin de 1, mais il n'isole pas et limite mal les
+    courts-circuits. Le TC, en série, impose un courant secondaire $i_1/K$ : c'est une source de courant, juste tant que sa charge en
+    voltampères reste faible et que le noyau ne sature pas, et dangereuse si on l'ouvre, car le flux bascule brutalement et crée
+    des pointes de tension. Le TP, en parallèle et presque à vide, est une source de tension qu'il ne faut jamais court-circuiter.
+    Choisir un TC, c'est fixer le calibre sur le courant maximal, la classe sur le courant minimal, le secondaire sur la distance,
+    puis vérifier la charge, le facteur réel et les tenues.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent,
+    <a href="#/cours/transformateurs-triphases">Transformateurs triphasés</a>, dont le déphasage intervient dès que l'on compare des
+    courants mesurés de part et d'autre d'un transformateur ; une sur le cours <a href="#/cours/introduction-a-fourier">Introduction
+    à Fourier</a>, vieux d'une semaine, qui explique pourquoi un TC saturé crée des harmoniques ; une sur le cours
+    <a href="#/cours/lois-de-kirchhoff">Lois de Kirchhoff</a>, vieux d'un mois, dont la loi des nœuds fonde la mesure du courant
+    résiduel par trois TC.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : simuler dans LTspice un TC à noyau saturable, observer l'effet de la charge puis de l'ouverture du secondaire, et
+    comparer avec la simulation de la section E ; en option, vérifier la puissance propre d'un autotransformateur. Prédictions à
+    écrire avant de commencer : la tension crête secondaire ouverte sous $150\ \mathrm{A}$ sera-t-elle plus proche de $30$, de $300$ ou de
+    $3000\ \mathrm{V}$ ? À partir de quelle charge en ohms le courant secondaire commence-t-il à se déformer sous le courant assigné ?
+  </p>
+  <ol>
+    <li>Schéma équivalent ramené au secondaire : source de courant <code>I1 0 m SINE(0 7.071 50)</code>, soit $150\ \mathrm{A}$ efficaces divisés par $30$ ; inductance non linéaire de Chan entre <code>m</code> et <code>0</code> : <code>L1 m 0 Hc=5 Bs=1.5 Br=0.5 A=7.5e-4 Lm=0.3 Lg=0 N=30</code>. La source injecte l'image du courant primaire, et l'inductance porte le courant magnétisant.</li>
+    <li>Branche utile : <code>Rct m x 0.1</code> puis <code>Rb x 0 0.13</code>. Lancer <code>.tran 0 0.1 0.04 1u</code> et tracer <code>I(Rb)</code> et <code>V(m)</code>. Mesurer la valeur efficace de <code>I(Rb)</code> sur deux périodes par <code>.meas tran I2 RMS I(Rb) FROM 0.06 TO 0.1</code>.</li>
+    <li>Augmenter <code>Rb</code> à $1$, $5$ puis $20\ \Omega$, puis l'amplitude de la source à $10$ fois. Relever le courant efficace et la forme d'onde ; en Python, calculer le taux de distorsion du courant secondaire par une transformée de Fourier sur un nombre entier de périodes.</li>
+    <li>Ouvrir le secondaire en remplaçant <code>Rb</code> par <code>1Meg</code>. Relever la tension crête de <code>V(m)</code> pour $50$, $108{,}2$ et $150\ \mathrm{A}$ primaires.</li>
+    <li>Option autotransformateur : deux inductances couplées <code>Ls A a 0.01</code> et <code>Lc a 0 0.81</code> avec <code>K1 Ls Lc 0.999</code>, source <code>V1 A 0 SINE(0 325.3 50)</code> et charge de <code>5</code> ohms entre <code>a</code> et <code>0</code> ; mesurer les courants dans <code>Ls</code>, <code>Lc</code> et la charge, et vérifier $I_c = I_2 - I_1$.</li>
+  </ol>
+  <p>
+    Résultats attendus : sous $0{,}13\ \Omega$ et $150\ \mathrm{A}$, un courant secondaire de $5{,}0\ \mathrm{A}$ sinusoïdal, avec une tension crête de
+    l'ordre de $1{,}6\ \mathrm{V}$ ; une déformation visible au-delà d'environ $1{,}4\ \Omega$ au courant assigné, ou au-delà d'environ $6$ fois le
+    courant assigné sous $0{,}13\ \Omega$ ; secondaire ouvert, des pointes de quelques centaines de volts sous $150\ \mathrm{A}$, du même ordre
+    que les $314\ \mathrm{V}$ du modèle, proportionnelles au courant. Pour l'autotransformateur, le rapport des spires $N_s/N_c = \sqrt{0{,}01/0{,}81} = 1/9$ donne
+    $k = 9/10 = 0{,}9$, d'où $U_2 \approx 207\ \mathrm{V}$ et un courant commun d'environ
+    $10\ \%$ du courant de charge. Anomalies à observer : avec l'hystérésis du modèle de Chan, les pointes sont plus larges et
+    un peu plus faibles que dans le modèle anhystérétique ; un pas de calcul trop grand écrase les pointes, d'où le pas de
+    $1\ \mu\mathrm{s}$ ; une composante continue initiale peut saturer le noyau d'un côté, d'où l'analyse après $40\ \mathrm{ms}$.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est calculé dans ce
+    navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement pour
+    suivre votre progression. Le jalon de fin du module des machines demande de comprendre les transformateurs et d'interpréter
+    une plaque signalétique : la plaque d'un TC, avec son rapport, sa classe, sa puissance de précision et ses tenues, en fait
+    partie.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">L'autotransformateur ne transforme que la différence des tensions : sa puissance propre est $(1 - k)S$, d'où sa compacité pour $k$ voisin de 1, au prix de l'isolation et d'un fort courant de défaut.</li>
+    <li data-rang="02">Le TC est une source de courant et le TP une source de tension : le premier ne s'ouvre jamais, le second ne se court-circuite jamais.</li>
+    <li data-rang="03">Un TC se choisit sur ses courants extrêmes et sur sa charge réelle en voltampères, câbles compris, puis se vérifie en facteur réel et en tenues au court-circuit.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> raisonner sur un TC comme sur un générateur de courant, et non de tension, et en
+    déduire sans hésiter le sens des dangers et l'effet de la charge sur la saturation ; ensuite, compter correctement la charge
+    réelle, avec la longueur aller et retour et le carré du courant secondaire. Les simulations de la section E et l'exercice sur
+    les câbles sont faits pour installer ces deux réflexes.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Révision 5 et étude de cas transformateur, reprend l'ensemble du
+    module, de la plaque signalétique au schéma équivalent. Question à préparer : à partir de la seule plaque du transformateur du
+    poste, $100\ \mathrm{kVA}$, $20\ \mathrm{kV} / 410\ \mathrm{V}$, Dyn11, $u_{cc} = 4\ \%$, quelles grandeurs du schéma équivalent pouvez-vous
+    estimer sans essai, lesquelles exigent le procès-verbal, et quels TC faudrait-il côté haute tension pour mesurer son courant
+    assigné de $2{,}887\ \mathrm{A}$ ?
+  </p>
+
+</article>
