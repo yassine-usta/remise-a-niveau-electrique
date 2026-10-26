@@ -1,0 +1,1402 @@
+<article class="cours" data-slug="machine-a-courant-continu">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/revision-5-et-etude-de-cas-transformateur">Révision 5 et étude de cas transformateur</a> s'est achevé
+      sur une question : dans une machine à courant continu, le flux de l'inducteur est constant ; d'où vient alors la force
+      électromotrice de l'induit ? La loi de Faraday, vue dans le cours <a href="#/cours/inductances-et-champ-magnetique">Inductances et
+      champ magnétique</a>, ne demande pas que le champ varie : elle demande que le flux à travers le circuit varie. Dans un
+      transformateur, le circuit est immobile et le champ change. Dans une machine tournante, le champ est fixe et c'est le circuit qui
+      bouge : chaque conducteur de l'induit coupe les lignes de champ et devient le siège d'une force électromotrice $e = B\,\ell\,v$.
+      Elle est proportionnelle à l'induction, donc au flux par pôle, et à la vitesse de défilement du conducteur, donc à la vitesse de
+      rotation. Cette séance part de ce constat, puis montre comment le collecteur transforme la tension alternative de chaque spire en
+      une tension continue, et comment la même machine fonctionne en moteur ou en génératrice.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    La machine à courant continu ouvre le module des machines électriques parce qu'elle est la plus simple à décrire : deux équations
+    linéaires, $E = K\Phi\varOmega$ et $C_{em} = K\Phi I$, relient les grandeurs électriques et mécaniques. Le flux est fixé par
+    l'inducteur, le couple par le courant d'induit, la vitesse par la tension d'induit. Ce découplage naturel entre flux et couple est
+    précisément ce que la commande vectorielle reconstruit artificiellement dans les machines à courant alternatif : comprendre la
+    machine à courant continu, c'est disposer du modèle de référence de toute la variation de vitesse moderne.
+  </p>
+  <p>
+    Elle reste aussi très présente dans les installations. De gros moteurs à excitation séparée équipent encore des laminoirs, des
+    enrouleuses, des extrudeuses, des appareils de levage et des engins de traction, alimentés par des redresseurs commandés. Les petits
+    moteurs à aimants permanents sont partout : servomoteurs de vannes, actionneurs de registres, ventilateurs, pompes doseuses,
+    essuie-glaces, robots mobiles alimentés par batterie. La génératrice tachymétrique, machine à courant continu fonctionnant à vide,
+    a longtemps servi de capteur de vitesse. L'ingénieur doit savoir lire une plaque, prévoir la vitesse sous une charge donnée,
+    maîtriser le courant de démarrage, choisir un mode de freinage et reconnaître un défaut de commutation au collecteur. Le travail
+    central de cette séance est de calculer la vitesse, le couple et le rendement d'un moteur à courant continu ; dans le projet fil
+    rouge, il débouche sur l'actionneur de la vanne de refoulement de la pompe, alimenté par le bus 24 V secouru.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Expliquer l'origine physique de la force électromotrice et du couple, et le rôle du collecteur comme redresseur mécanique.</li>
+    <li data-rang="02">Établir puis utiliser $E = K\Phi\varOmega$ et $C_{em} = K\Phi I$, avec la même constante en $\mathrm{V \cdot s/rad}$ et en $\mathrm{N \cdot m/A}$.</li>
+    <li data-rang="03">Calculer la vitesse, le couple, les pertes et le rendement d'un moteur à partir de sa plaque et d'un point de charge.</li>
+    <li data-rang="04">Comparer les modes d'excitation séparée, shunt, série, composée et à aimants, et les méthodes de réglage de vitesse.</li>
+    <li data-rang="05">Dimensionner une limitation du courant de démarrage, rhéostat ou rampe de tension, et interpréter la réponse dynamique du moteur.</li>
+    <li data-rang="06">Diagnostiquer un fonctionnement anormal : perte d'excitation, emballement d'un moteur série, étincelles au collecteur, sens de rotation inversé.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Quatre acquis suffisent. Le premier : un conducteur rectiligne de longueur $\ell$, parcouru par un courant $I$ et placé
+    perpendiculairement à une induction $B$, subit la force de Laplace $F = B\,I\,\ell$, perpendiculaire au conducteur et au champ. Le
+    deuxième, vu dans le cours <a href="#/cours/inductances-et-champ-magnetique">Inductances et champ magnétique</a> : un conducteur qui se
+    déplace à la vitesse $v$ perpendiculairement à $B$ est le siège d'une force électromotrice $e = B\,\ell\,v$, cas particulier de la loi
+    de Faraday $e = -\mathrm{d}\Phi/\mathrm{d}t$. Le troisième, vu dans le cours <a href="#/cours/circuits-magnetiques">Circuits
+    magnétiques</a> : le flux d'un pôle est fixé par les ampères-tours d'excitation et par la réluctance, dominée par l'entrefer, avec une
+    saturation du fer au-delà du coude de la courbe d'aimantation. Le quatrième est mécanique : la puissance transmise par un arbre vaut
+    $P = C\,\varOmega$, avec $\varOmega = 2\pi n/60$ si $n$ est en tours par minute. Le mini-test n'est pas noté ; la correction de chaque
+    question reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la correction".
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Notation de la séance</span>
+    <p>
+      La vitesse angulaire de l'arbre est notée $\varOmega$, en italique, en $\mathrm{rad/s}$ ; la vitesse de rotation $n$ est en tours par
+      minute. Le symbole droit $\mathrm{\Omega}$ reste réservé à l'ohm. $\Phi$ est le flux utile sous un pôle, en webers ; $I$ le courant
+      d'induit, $U$ la tension aux bornes de l'induit, $R$ la résistance du circuit d'induit ; l'indice $e$ désigne l'excitation.
+    </p>
+  </div>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-rails">La plus simple des machines : un barreau sur deux rails</h3>
+  <p>
+    Posez un barreau conducteur sur deux rails horizontaux reliés à une source de tension $U$ à travers une résistance $R$, le tout
+    plongé dans une induction verticale $B$. À l'arrêt, le courant vaut $U/R$ et le barreau subit la force $F = B\,I\,\ell$ : il démarre.
+    Dès qu'il se déplace, il coupe les lignes de champ et devient le siège d'une force électromotrice $e = B\,\ell\,v$ qui s'oppose au
+    courant : c'est la force contre-électromotrice. Le courant tombe à $(U - e)/R$, la force diminue, et le barreau atteint une vitesse
+    d'équilibre où la force motrice compense exactement la force résistante. Sans aucune force résistante, il accélérerait jusqu'à
+    $e = U$, soit $v = U/(B\ell)$, avec un courant nul.
+  </p>
+  <figure id="d-rails-figure">
+    <svg viewBox="0 0 760 300" role="img" aria-label="Rails de Laplace : source U et résistance R en série, deux rails, barreau mobile parcouru par le courant I vers le bas, induction B entrante, force F et vitesse v vers la droite, force électromotrice e orientée vers le haut">
+      <defs>
+        <marker id="fl-d-ra" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M90 60H160M220 60H600"/>
+        <rect x="160" y="49" width="60" height="22" rx="3"/>
+        <path d="M90 60V122M90 142V230H600"/>
+        <path d="M68 122H112" stroke-width="3"/>
+        <path d="M78 142H102" stroke-width="3"/>
+        <path d="M90 230V250M76 250H104M81 256H99M86 262H94"/>
+        <path d="M430 50V240" stroke-width="6"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.4" opacity="0.8">
+        <circle cx="270" cy="105" r="8"/><path d="M264 99l12 12M276 99l-12 12"/>
+        <circle cx="270" cy="185" r="8"/><path d="M264 179l12 12M276 179l-12 12"/>
+        <circle cx="340" cy="145" r="8"/><path d="M334 139l12 12M346 139l-12 12"/>
+        <circle cx="510" cy="105" r="8"/><path d="M504 99l12 12M516 99l-12 12"/>
+        <circle cx="510" cy="185" r="8"/><path d="M504 179l12 12M516 179l-12 12"/>
+        <circle cx="570" cy="145" r="8"/><path d="M564 139l12 12M576 139l-12 12"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M250 46H320" marker-end="url(#fl-d-ra)"/>
+        <path d="M444 90V170" marker-end="url(#fl-d-ra)"/>
+        <path d="M436 145H500" stroke-width="2.4" marker-end="url(#fl-d-ra)"/>
+        <path d="M430 30H490" stroke-width="2.4" marker-end="url(#fl-d-ra)"/>
+        <path d="M412 200V96" stroke-dasharray="6 4" marker-end="url(#fl-d-ra)"/>
+        <path d="M50 160V100" marker-end="url(#fl-d-ra)"/>
+        <path d="M640 72V218" marker-start="url(#fl-d-ra)" marker-end="url(#fl-d-ra)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13">
+        <text x="182" y="40">R</text>
+        <text x="116" y="120">+</text>
+        <text x="24" y="135">U</text>
+        <text x="276" y="38">I</text>
+        <text x="452" y="122">I</text>
+        <text x="460" y="166">F = B I ℓ</text>
+        <text x="496" y="35">v</text>
+        <text x="340" y="96">e = B ℓ v</text>
+        <text x="650" y="150">ℓ</text>
+        <text x="110" y="262">masse : rail inférieur à 0 V</text>
+        <text x="300" y="286">B entrant dans la page, symbole cercle barré</text>
+      </g>
+    </svg>
+    <figcaption>
+      Rails de Laplace vus de dessus. La source $U$, borne $+$ en haut, alimente à travers $R$ le rail supérieur ; le rail inférieur est
+      la référence de potentiel. Le courant $I$, flèche fine, parcourt le barreau de haut en bas. L'induction $B$ entre dans la page,
+      cercles barrés. La force de Laplace $F$ et la vitesse $v$, flèches épaisses, sont dirigées vers la droite. La force
+      électromotrice $e$, flèche en tirets orientée vers le potentiel le plus élevé, est dirigée vers le haut du barreau : elle s'oppose
+      au courant imposé par la source, ce qui en fait une force contre-électromotrice. La source est en convention générateur, le
+      barreau en convention récepteur.
+    </figcaption>
+  </figure>
+  <p>
+    Chiffrons-le avec $B = 1\ \mathrm{T}$, $\ell = 0{,}1\ \mathrm{m}$, $U = 2\ \mathrm{V}$, $R = 0{,}1\ \mathrm{\Omega}$ et une force résistante de
+    $1\ \mathrm{N}$. Au démarrage, $I = 20\ \mathrm{A}$ et $F = 2\ \mathrm{N}$. En régime établi, $F = 1\ \mathrm{N}$ impose
+    $I = F/(B\ell) = 10\ \mathrm{A}$, donc $e = U - RI = 1\ \mathrm{V}$ et $v = e/(B\ell) = 10\ \mathrm{m/s}$. Bilan : la source fournit
+    $UI = 20\ \mathrm{W}$, la résistance en dissipe $RI^2 = 10\ \mathrm{W}$, et les $eI = 10\ \mathrm{W}$ restants deviennent exactement la
+    puissance mécanique $F v = 1 \times 10 = 10\ \mathrm{W}$. Le produit $e\,I$ est la puissance convertie, ni plus ni moins : c'est le cœur de
+    toute machine électrique. Si une force extérieure pousse le barreau au-delà de $20\ \mathrm{m/s}$, $e$ dépasse $U$, le courant
+    s'inverse, et le barreau renvoie de l'énergie vers la source : la même structure est devenue génératrice.
+  </p>
+
+  <h3 id="d-analogie">Une analogie contrôlée et ses limites</h3>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Une boîte de vitesses entre le monde électrique et le monde mécanique</span>
+    <p>
+      Une boîte de vitesses idéale relie deux arbres par un rapport fixe : la vitesse de sortie est proportionnelle à celle d'entrée, le
+      couple de sortie est proportionnel au couple d'entrée, et la puissance se conserve. La machine à courant continu fait la même chose
+      entre une grandeur électrique et une grandeur mécanique, avec le rapport $K\Phi$ : la force électromotrice est proportionnelle à la
+      vitesse, $E = K\Phi\varOmega$, et le couple est proportionnel au courant, $C_{em} = K\Phi I$, si bien que $E\,I = C_{em}\,\varOmega$. Tension
+      et vitesse se correspondent, courant et couple aussi ; changer le flux revient à changer de rapport. L'analogie a trois limites.
+      Elle ignore la résistance de l'induit, qui crée une chute de tension et des pertes qu'aucun engrenage idéal ne connaît. Elle suppose
+      un rapport constant, alors que le flux dépend de la saturation du fer et de la réaction magnétique de l'induit. Enfin elle ne dit
+      rien des limites physiques : le courant est borné par l'échauffement et par la commutation, la tension par l'isolement du
+      collecteur, et la vitesse par la tenue mécanique du rotor.
+    </p>
+  </div>
+
+  <h3 id="d-anim-section">Animation : une spire tournante et son collecteur</h3>
+  <p>
+    Remplaçons le barreau par une spire qui tourne entre deux pôles. Ses deux côtés coupent les lignes de champ en sens opposés, et
+    leurs forces électromotrices s'ajoutent le long de la spire. Mais chaque côté passe alternativement sous le pôle nord puis sous le
+    pôle sud : la force électromotrice de la spire est alternative. Le collecteur, deux demi-bagues solidaires de la spire frottant sur
+    deux balais fixes, inverse les connexions au moment où la spire passe par la ligne neutre, là où sa force électromotrice s'annule.
+    L'animation montre la spire, ses demi-bagues et les balais, puis la tension de la spire et la tension recueillie entre balais.
+    Avant de manipuler, prédisez : avec une seule spire, la tension entre balais est-elle continue ? Et si l'on répartit plusieurs
+    bobines décalées autour du rotor, chacune reliée à sa paire de lames, que devient l'ondulation de cette tension ?
+  </p>
+  <figure id="d-anim-figure">
+    <div class="schema-vivant" id="d-anim"></div>
+    <figcaption>
+      À gauche, coupe de la machine bipolaire : pôle nord en haut, pôle sud en bas, rotor au centre. Les deux côtés de la bobine suivie
+      sont marqués d'un point, courant sortant de la page, ou d'une croix, courant entrant, selon le signe de leur force électromotrice ;
+      la poignée ronde est le côté repéré par la lettre a. Au centre du rotor, le collecteur et ses lames, les deux lames de la bobine
+      suivie étant pleines ; les balais fixes, rectangles, sont sur la ligne neutre horizontale, en pointillés. À droite, en fonction de
+      l'angle de rotation, la force électromotrice de la bobine suivie en trait fin et la tension entre balais en trait épais, toutes
+      deux rapportées à la valeur maximale d'une bobine ; le trait vertical repère l'angle courant.
+    </figcaption>
+  </figure>
+  <div id="d-anim-curseurs"></div>
+  <div id="d-anim-lecteur"></div>
+  <div id="d-anim-valeurs"></div>
+  <p>
+    Interprétation : avec une bobine, la force électromotrice est alternative, en créneau arrondi parce que l'induction est à peu près
+    uniforme sous les épanouissements polaires et s'annule sur la ligne neutre. Le collecteur la redresse : la tension entre balais ne
+    change jamais de signe, mais elle retombe à zéro deux fois par tour : son ondulation crête à crête dépasse sa valeur moyenne,
+    $122\ \%$ dans ce modèle. Avec deux bobines à $90^\circ$, l'une est au maximum quand l'autre traverse la ligne neutre, et l'ondulation
+    tombe à $55\ \%$ de la valeur moyenne ; avec quatre bobines à $18\ \%$, avec douze bobines à moins de $2\ \%$. Une machine réelle compte des dizaines de lames : la tension
+    est pratiquement continue. Le collecteur est donc un redresseur mécanique, synchronisé par construction avec la position du rotor.
+    C'est lui qui fait de la machine à courant continu une machine à courant continu ; c'est aussi sa partie la plus fragile.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-constitution">Constitution : inducteur, induit, collecteur et balais</h3>
+  <p>
+    Le stator est l'inducteur. Une culasse en acier massif porte les pôles principaux, en nombre pair $2p$ ; chaque pôle se termine
+    par un épanouissement polaire qui répartit le flux sur une large portion de l'entrefer. Le flux est créé soit par des bobines
+    d'excitation parcourues par un courant continu, soit par des aimants permanents. Entre les pôles principaux, sur la ligne neutre,
+    les machines de puissance portent des pôles de commutation, ou pôles auxiliaires, dont le rôle est expliqué plus loin. Le rotor est
+    l'induit : un empilage de tôles isolées, feuilletées parce que le flux y est alternatif vu du rotor, dont les encoches logent un
+    enroulement fermé sur lui-même. Les extrémités de ses sections sont soudées aux lames du collecteur, cylindre de lames de cuivre
+    isolées entre elles, sur lequel frottent des balais fixes en carbone ou en graphite métallisé.
+  </p>
+  <figure id="e-coupe-figure">
+    <svg viewBox="0 0 760 440" role="img" aria-label="Coupe d'une machine à courant continu bipolaire : culasse, pôles nord et sud avec bobines d'excitation, pôles de commutation sur la ligne neutre, induit avec seize conducteurs, collecteur et balais, lignes de flux et sens de rotation">
+      <defs>
+        <marker id="fl-e-cp" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+        <circle cx="300" cy="220" r="200"/>
+        <circle cx="300" cy="220" r="176"/>
+        <rect x="270" y="44" width="60" height="76"/>
+        <path d="M200 120H400L393.5 166A108 108 0 0 0 206.5 166Z"/>
+        <rect x="270" y="320" width="60" height="76"/>
+        <path d="M200 320H400L393.5 274A108 108 0 0 1 206.5 274Z"/>
+        <path d="M124 206H190V234H124"/>
+        <path d="M476 206H410V234H476"/>
+        <circle cx="300" cy="220" r="100"/>
+        <circle cx="300" cy="220" r="34"/>
+        <circle cx="300" cy="220" r="12"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+        <rect x="236" y="58" width="30" height="52" rx="4"/>
+        <rect x="334" y="58" width="30" height="52" rx="4"/>
+        <rect x="236" y="330" width="30" height="52" rx="4"/>
+        <rect x="334" y="330" width="30" height="52" rx="4"/>
+        <rect x="140" y="194" width="22" height="52" rx="3"/>
+        <rect x="438" y="194" width="22" height="52" rx="3"/>
+        <path d="M251 76l-8 8M243 76l8 8M251 348l-8 8M243 348l8 8"/>
+        <circle cx="349" cy="80" r="5"/><circle cx="349" cy="352" r="5"/>
+        <circle cx="384.3" cy="203.2" r="7"/><circle cx="371.5" cy="172.2" r="7"/><circle cx="347.8" cy="148.5" r="7"/><circle cx="316.8" cy="135.7" r="7"/><circle cx="283.2" cy="135.7" r="7"/><circle cx="252.2" cy="148.5" r="7"/><circle cx="228.5" cy="172.2" r="7"/><circle cx="215.7" cy="203.2" r="7"/><circle cx="215.7" cy="236.8" r="7"/><circle cx="228.5" cy="267.8" r="7"/><circle cx="252.2" cy="291.5" r="7"/><circle cx="283.2" cy="304.3" r="7"/><circle cx="316.8" cy="304.3" r="7"/><circle cx="347.8" cy="291.5" r="7"/><circle cx="371.5" cy="267.8" r="7"/><circle cx="384.3" cy="236.8" r="7"/>
+        <path d="M319.6 216.1L333.3 213.4M316.6 208.9L328.3 201.1M311.1 203.4L318.9 191.7M303.9 200.4L306.6 186.7M296.1 200.4L293.4 186.7M288.9 203.4L281.1 191.7M283.4 208.9L271.7 201.1M280.4 216.1L266.7 213.4M280.4 223.9L266.7 226.6M283.4 231.1L271.7 238.9M288.9 236.6L281.1 248.3M296.1 239.6L293.4 253.3M303.9 239.6L306.6 253.3M311.1 236.6L318.9 248.3M316.6 231.1L328.3 238.9M319.6 223.9L333.3 226.6"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="349" cy="80" r="1.8"/><circle cx="349" cy="352" r="1.8"/>
+        <rect x="254" y="212" width="12" height="16" rx="2"/>
+        <rect x="334" y="212" width="12" height="16" rx="2"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M379.8 198.7l9 9M388.8 198.7l-9 9"/><path d="M367.0 167.7l9 9M376.0 167.7l-9 9"/><path d="M343.3 144.0l9 9M352.3 144.0l-9 9"/><path d="M312.3 131.2l9 9M321.3 131.2l-9 9"/><path d="M278.7 131.2l9 9M287.7 131.2l-9 9"/><path d="M247.7 144.0l9 9M256.7 144.0l-9 9"/><path d="M224.0 167.7l9 9M233.0 167.7l-9 9"/><path d="M211.2 198.7l9 9M220.2 198.7l-9 9"/><circle cx="215.7" cy="236.8" r="2.6" fill="currentColor"/><circle cx="228.5" cy="267.8" r="2.6" fill="currentColor"/><circle cx="252.2" cy="291.5" r="2.6" fill="currentColor"/><circle cx="283.2" cy="304.3" r="2.6" fill="currentColor"/><circle cx="316.8" cy="304.3" r="2.6" fill="currentColor"/><circle cx="347.8" cy="291.5" r="2.6" fill="currentColor"/><circle cx="371.5" cy="267.8" r="2.6" fill="currentColor"/><circle cx="384.3" cy="236.8" r="2.6" fill="currentColor"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.3" stroke-dasharray="7 5" opacity="0.85">
+        <path d="M80 220H520"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="5 4" stroke-linecap="round">
+        <path d="M300 172V262" marker-end="url(#fl-e-cp)"/>
+        <path d="M290 408A188 188 0 0 1 112 220A188 188 0 0 1 290 32" marker-end="url(#fl-e-cp)"/>
+        <path d="M310 408A188 188 0 0 0 488 220A188 188 0 0 0 310 32" marker-end="url(#fl-e-cp)"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+        <path d="M494 129.6A214 214 0 0 0 390.4 26" marker-end="url(#fl-e-cp)"/>
+        <path d="M318 154H282" marker-end="url(#fl-e-cp)"/>
+        <path d="M282 286H318" marker-end="url(#fl-e-cp)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="288" y="104">N</text>
+        <text x="290" y="346">S</text>
+        <text x="462" y="104">Ω, C_em</text>
+        <text x="324" y="158">F</text>
+        <text x="268" y="290">F</text>
+        <text x="228" y="252">A1 +</text>
+        <text x="336" y="252">A2 -</text>
+        <text x="8" y="212">ligne neutre</text>
+        <text x="540" y="40">culasse</text>
+        <text x="540" y="62">pôle principal et</text>
+        <text x="540" y="78">épanouissement polaire</text>
+        <text x="540" y="100">bobine d'excitation</text>
+        <text x="540" y="122">pôle de commutation,</text>
+        <text x="540" y="138">sur la ligne neutre</text>
+        <text x="540" y="160">induit feuilleté,</text>
+        <text x="540" y="176">16 conducteurs</text>
+        <text x="540" y="198">collecteur au centre,</text>
+        <text x="540" y="214">balais pleins A1 et A2</text>
+        <text x="540" y="252">point : courant sortant</text>
+        <text x="540" y="270">croix : courant entrant</text>
+        <text x="540" y="288">tirets fléchés : flux</text>
+        <text x="540" y="306">flèche épaisse en arc,</text>
+        <text x="540" y="322">en haut : sens de rotation</text>
+        <text x="540" y="360">entrefer : quelques mm</text>
+        <text x="540" y="376">entre pôle et induit</text>
+      </g>
+    </svg>
+    <figcaption>
+      Coupe d'une machine bipolaire, $p = 1$. Le flux, flèches en tirets, sort du pôle nord, traverse l'entrefer et l'induit de haut en
+      bas, entre dans le pôle sud et se referme par les deux moitiés de la culasse. Les bobines d'excitation entourent le corps des pôles ;
+      le point et la croix indiquent le sens de leur courant. Les conducteurs de l'induit situés sous le pôle nord portent un courant
+      entrant, croix, ceux situés sous le pôle sud un courant sortant, point : les forces de Laplace $F$ sont tangentielles, vers la
+      gauche en haut et vers la droite en bas, et produisent un couple dans le sens inverse des aiguilles d'une montre. Le collecteur est
+      dessiné au centre pour la lisibilité ; il est en réalité décalé le long de l'arbre. Les balais A1, borne positive, et A2 sont placés
+      de façon à commuter les sections qui traversent la ligne neutre, en tirets horizontaux, où l'induction est nulle.
+    </figcaption>
+  </figure>
+  <p>
+    Le point essentiel de cette architecture est le suivant : quelle que soit la position du rotor, les balais imposent que tous les
+    conducteurs situés sous un pôle nord portent un courant de même sens, et tous ceux situés sous un pôle sud le sens opposé. La
+    répartition des courants est donc fixe dans l'espace, alors que le rotor tourne. Le courant de chaque conducteur s'inverse au moment
+    où il franchit la ligne neutre : c'est la commutation. Vu des balais, l'induit est un ensemble de $2a$ voies d'enroulement en
+    parallèle, chacune comptant $N/(2a)$ conducteurs en série, si $N$ est le nombre total de conducteurs actifs. Un enroulement imbriqué
+    simple compte autant de voies que de pôles, $a = p$ ; un enroulement ondulé simple n'en compte que deux, $a = 1$.
+  </p>
+
+  <h3 id="e-fem">Force électromotrice</h3>
+  <p>
+    Dérivation. Un conducteur qui fait un tour complet passe sous les $2p$ pôles ; sous chacun, il coupe la totalité du flux $\Phi$ de ce
+    pôle. Pendant un tour, de durée $1/n_s$ si $n_s$ est la vitesse en tours par seconde, il coupe donc un flux total $2p\,\Phi$, et la
+    valeur moyenne de sa force électromotrice vaut, par la loi de Faraday, $\bar{e} = 2p\,\Phi\,n_s$. Les $N/(2a)$ conducteurs d'une voie
+    sont en série, toujours placés de façon que leurs forces électromotrices s'ajoutent grâce au collecteur ; la force électromotrice
+    entre balais est celle d'une voie :
+  </p>
+  <div class="formule-cle">
+    $$E = \frac{N}{2a}\,2p\,\Phi\,n_s = \frac{p\,N}{2\pi a}\,\Phi\,\varOmega = K\,\Phi\,\varOmega, \qquad K = \frac{p\,N}{2\pi a}$$
+    <p class="formule-cle-legende">
+      $E$ en volts ; $\Phi$ flux utile par pôle en webers ; $\varOmega$ en $\mathrm{rad/s}$, avec $\varOmega = 2\pi n_s$ ; $p$ nombre de paires de
+      pôles, $N$ nombre de conducteurs actifs, $2a$ nombre de voies en parallèle, $K$ sans dimension. Hypothèses : balais sur la ligne
+      neutre, flux indépendant du courant d'induit, ondulation négligée, $E$ étant une valeur moyenne. Vérification dimensionnelle :
+      $\mathrm{Wb \cdot rad/s} = \mathrm{V \cdot s \cdot s^{-1}} = \mathrm{V}$. Cas limites : à l'arrêt, $\varOmega = 0$ donc $E = 0$, et seule la
+      résistance limite le courant ; sans flux, $E = 0$ quelle que soit la vitesse.
+    </p>
+  </div>
+  <p>
+    Interprétation : la force électromotrice ne dépend ni de la forme exacte de la répartition de l'induction sous le pôle, ni du
+    courant, mais seulement du flux total coupé par unité de temps. Ordre de grandeur : une machine à quatre pôles, $p = 2$, à
+    enroulement ondulé simple, $a = 1$, comptant $N = 500$ conducteurs et un flux de $20\ \mathrm{mWb}$ par pôle, donne
+    $K = 2 \times 500/(2\pi) = 159{,}2$ et $K\Phi = 3{,}183\ \mathrm{V \cdot s/rad}$ ; à $1500\ \mathrm{tr/min}$, soit $157{,}1\ \mathrm{rad/s}$,
+    $E = 500{,}0\ \mathrm{V}$. En pratique on ne connaît ni $N$ ni $\Phi$ séparément : on mesure directement le produit $K\Phi$ à partir de la
+    plaque ou d'un essai à vide, comme le fera l'exemple de la section H.
+  </p>
+
+  <h3 id="e-couple">Couple électromagnétique</h3>
+  <p>
+    Première dérivation, par l'énergie. La puissance électrique absorbée par la force électromotrice, $E\,I$, est convertie sans perte en
+    puissance mécanique $C_{em}\,\varOmega$ : c'est le bilan du barreau de la section D, étendu à tous les conducteurs. Avec
+    $E = K\Phi\varOmega$, l'égalité $E\,I = C_{em}\,\varOmega$ donne immédiatement $C_{em} = K\Phi I$. Seconde dérivation, par les forces : chaque
+    conducteur porte $I/(2a)$ et subit $B\,\ell\,I/(2a)$ à la distance $r$ de l'axe ; l'induction moyenne sur la périphérie de l'induit vaut
+    $\bar{B} = 2p\,\Phi/(2\pi r\ell)$, et la somme des moments des $N$ conducteurs donne
+    $C_{em} = N\,\bar{B}\,\ell\,r\,I/(2a) = \dfrac{pN}{2\pi a}\,\Phi\,I$. Les deux chemins aboutissent à la même constante.
+  </p>
+  <div class="formule-cle">
+    $$C_{em} = K\,\Phi\,I, \qquad E\,I = C_{em}\,\varOmega$$
+    <p class="formule-cle-legende">
+      $C_{em}$ en $\mathrm{N \cdot m}$, $I$ courant total d'induit en ampères. Hypothèses : celles de la force électromotrice, plus l'absence de
+      réaction magnétique de l'induit sur le flux. Vérification dimensionnelle : $\mathrm{Wb \cdot A} = \mathrm{V \cdot s \cdot A} = \mathrm{J} =
+      \mathrm{N \cdot m}$. Conséquence pratique : $K\Phi$ exprimé en $\mathrm{V \cdot s/rad}$ et en $\mathrm{N \cdot m/A}$ a la même valeur
+      numérique, un excellent contrôle. Cas limites : courant nul, couple nul ; flux nul, couple nul quel que soit le courant.
+    </p>
+  </div>
+  <p>
+    Le couple électromagnétique n'est pas le couple disponible sur l'arbre : une partie sert à vaincre les frottements, la ventilation
+    et les pertes fer de l'induit, regroupés en un couple de pertes $C_p$. Le couple utile vaut $C_u = C_{em} - C_p$. L'animation qui suit
+    montre comment le collecteur rend le couple constant, et ce qui se passerait sans lui.
+  </p>
+
+  <h3 id="e-forces-section">Animation : forces sur les conducteurs et rôle du collecteur</h3>
+  <p>
+    L'induit est représenté avec seize conducteurs. Avec collecteur, le sens du courant de chaque conducteur est imposé par sa position :
+    croix sous le pôle nord, point sous le pôle sud, inversion en traversant la ligne neutre. Sans collecteur, chaque conducteur garde le
+    sens de courant qu'il avait au départ, comme s'il était alimenté par des bagues continues. Faites tourner le rotor avec la poignée ou
+    le lecteur, et basculez le commutateur de mode. Prédisez avant de manipuler : sans collecteur, que devient le couple moyen sur un
+    tour ? Et avec collecteur, le couple total est-il rigoureusement constant ?
+  </p>
+  <figure id="e-forces-figure">
+    <div class="schema-vivant" id="e-forces"></div>
+    <figcaption>
+      Coupe du rotor entre les pôles nord, en haut, et sud, en bas. Chaque conducteur porte une croix, courant entrant, ou un point,
+      courant sortant ; la flèche tangentielle attachée à chaque conducteur représente sa force de Laplace, de longueur proportionnelle à
+      l'induction locale. Le conducteur suivi est entouré d'un double cercle ; la poignée ronde est posée sur lui. La zone de commutation,
+      de part et d'autre de la ligne neutre en pointillés, est délimitée par deux traits courts. À droite, le couple total en fonction de
+      l'angle du rotor : trait épais pour le mode choisi, trait fin pour l'autre mode ; le point marque l'angle courant.
+    </figcaption>
+  </figure>
+  <div id="e-forces-curseurs"></div>
+  <div id="e-forces-lecteur"></div>
+  <div id="e-forces-valeurs"></div>
+  <p>
+    Interprétation : sans collecteur, le couple change de signe chaque fois que les conducteurs passent d'un pôle à l'autre ; sa valeur
+    moyenne sur un tour est nulle, et le rotor ne ferait qu'osciller. Avec collecteur, chaque conducteur qui passe sous l'autre pôle
+    change aussi de sens de courant, si bien que sa force garde le même sens de rotation : le couple total reste positif. Il n'est pas
+    rigoureusement constant, il ondule légèrement au rythme du passage des conducteurs dans la zone où l'induction décroît, d'environ
+    $4\ \%$ crête à crête dans ce modèle à seize conducteurs, bien moins dans une machine réelle qui en compte des centaines. Remarquez enfin que le conducteur suivi change de courant précisément sur la ligne neutre,
+    où sa force électromotrice est nulle : c'est la condition d'une commutation sans étincelle, étudiée plus loin.
+  </p>
+
+  <h3 id="e-equations">Équations électriques, conventions et caractéristique mécanique</h3>
+  <p>
+    Le circuit d'induit se modélise par la force électromotrice $E$ en série avec la résistance $R$ des enroulements de l'induit, des
+    pôles de commutation et, le cas échéant, de l'enroulement série, avec l'inductance $L$ de ces enroulements, et avec la chute de
+    tension aux contacts des balais $\Delta U_b$, de l'ordre de $1\ \mathrm{V}$ par balai en carbone, à peu près indépendante du courant.
+    En moteur, on oriente l'induit en convention récepteur ; en génératrice, en convention générateur. Le circuit d'excitation est
+    indépendant : une source $U_e$, une résistance $R_e$, une inductance $L_e$ élevée, et le flux $\Phi$ fonction du courant $I_e$ selon
+    la caractéristique d'aimantation, linéaire puis saturée.
+  </p>
+  <figure id="e-equivalent-figure">
+    <svg viewBox="0 0 760 400" role="img" aria-label="Schémas équivalents de l'induit : à gauche en moteur, convention récepteur, avec U, I, R et E ; à droite en génératrice, convention générateur ; en bas, le circuit d'excitation avec Ue, Re, Le et Ie">
+      <defs>
+        <marker id="fl-e-eq" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M70 70H130M190 70H280V124M280 176V250H70"/>
+        <rect x="130" y="59" width="60" height="22" rx="3"/>
+        <circle cx="280" cy="150" r="26"/>
+        <path d="M280 136V164M270 146l10-10 10 10"/>
+        <path d="M690 70H630M570 70H480V124M480 176V250H690"/>
+        <rect x="570" y="59" width="60" height="22" rx="3"/>
+        <circle cx="480" cy="150" r="26"/>
+        <path d="M480 136V164M470 146l10-10 10 10"/>
+        <path d="M120 300H170M230 300H250a10 10 0 0 1 20 0a10 10 0 0 1 20 0a10 10 0 0 1 20 0a10 10 0 0 1 20 0H360V370H120"/>
+        <rect x="170" y="289" width="60" height="22" rx="3"/>
+        <path d="M108 320H132" stroke-width="3"/>
+        <path d="M114 334H126" stroke-width="3"/>
+        <path d="M120 300V320M120 334V370"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="70" cy="70" r="4.5"/><circle cx="70" cy="250" r="4.5"/>
+        <circle cx="690" cy="70" r="4.5"/><circle cx="690" cy="250" r="4.5"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+        <path d="M44 240V80" marker-end="url(#fl-e-eq)"/>
+        <path d="M84 56H120" marker-end="url(#fl-e-eq)"/>
+        <path d="M196 44H128" marker-end="url(#fl-e-eq)"/>
+        <path d="M324 190V110" stroke-dasharray="6 4" marker-end="url(#fl-e-eq)"/>
+        <path d="M716 240V80" marker-end="url(#fl-e-eq)"/>
+        <path d="M524 56H560" marker-end="url(#fl-e-eq)"/>
+        <path d="M636 44H568" marker-end="url(#fl-e-eq)"/>
+        <path d="M436 190V110" stroke-dasharray="6 4" marker-end="url(#fl-e-eq)"/>
+        <path d="M240 286H280" marker-end="url(#fl-e-eq)"/>
+        <path d="M86 364V306" marker-end="url(#fl-e-eq)"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="4 5" opacity="0.7">
+        <path d="M380 30V260"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="60" y="24">moteur : convention récepteur</text>
+        <text x="420" y="24">génératrice : convention générateur</text>
+        <text x="20" y="160">U</text>
+        <text x="58" y="88">A1</text>
+        <text x="58" y="270">A2</text>
+        <text x="96" y="50">I</text>
+        <text x="146" y="38">R I</text>
+        <text x="334" y="154">E</text>
+        <text x="96" y="120">E = KΦΩ</text>
+        <text x="96" y="140">U = E + R I</text>
+        <text x="96" y="160">I > 0 : C_em et Ω</text>
+        <text x="96" y="176">de même sens</text>
+        <text x="726" y="160">U</text>
+        <text x="696" y="88">A1</text>
+        <text x="696" y="270">A2</text>
+        <text x="536" y="50">I</text>
+        <text x="586" y="38">R I</text>
+        <text x="390" y="150">E</text>
+        <text x="516" y="140">U = E - R I</text>
+        <text x="516" y="160">C_em opposé à Ω :</text>
+        <text x="516" y="176">P_méca reçue</text>
+        <text x="186" y="280">R_e</text>
+        <text x="244" y="278">I_e</text>
+        <text x="256" y="328">L_e</text>
+        <text x="64" y="340">U_e</text>
+        <text x="390" y="306">circuit d'excitation, commun aux deux modes :</text>
+        <text x="390" y="324">U_e = R_e I_e en régime établi,</text>
+        <text x="390" y="342">Φ = f(I_e), courbe d'aimantation</text>
+        <text x="390" y="360">chute aux balais ΔU_b : à ajouter à R I</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schémas équivalents en régime établi, l'inductance d'induit étant omise. À gauche, en moteur : la tension $U$ appliquée entre A1 et
+      A2, flèche orientée vers A1, fait entrer le courant $I$ par la borne positive ; la force électromotrice $E$, flèche en tirets orientée
+      vers son pôle positif, s'oppose à $U$ ; la flèche $RI$ est opposée au courant, comme pour tout récepteur. À droite, en génératrice :
+      $E$ fait sortir le courant par A1 vers la charge ; $U$ est inférieure à $E$ de la chute $RI$. En bas, le circuit d'excitation, dont le
+      courant $I_e$ fixe le flux $\Phi$ ; la borne inférieure de chaque circuit sert de référence de potentiel.
+    </figcaption>
+  </figure>
+  <div class="formule-cle">
+    $$\text{moteur : } U = E + R\,I + \Delta U_b, \qquad \text{génératrice : } U = E - R\,I - \Delta U_b, \qquad u = e + R\,i + L\,\frac{\mathrm{d}i}{\mathrm{d}t}$$
+    <p class="formule-cle-legende">
+      $U$, $E$, $\Delta U_b$ en volts ; $R$ en ohms ; $I$ en ampères, positif dans le sens de la convention choisie ; $L$ en henrys. La
+      dernière forme, en valeurs instantanées et convention récepteur, sert aux régimes transitoires. Hypothèse : balais sur la ligne
+      neutre, réaction d'induit compensée ou négligée.
+    </p>
+  </div>
+  <p>
+    En combinant $U = E + RI$, $E = K\Phi\varOmega$ et $C_{em} = K\Phi I$, et en regroupant la chute aux balais dans $U$ pour alléger
+    l'écriture, on obtient la caractéristique mécanique du moteur à flux constant :
+  </p>
+  <div class="formule-cle">
+    $$\varOmega = \frac{U - R\,I}{K\Phi} = \frac{U}{K\Phi} - \frac{R}{(K\Phi)^2}\,C_{em}, \qquad \varOmega_0 = \frac{U}{K\Phi}$$
+    <p class="formule-cle-legende">
+      Droite de pente $-R/(K\Phi)^2$, en $\mathrm{rad \cdot s^{-1}}$ par $\mathrm{N \cdot m}$, partant de la vitesse à vide idéale $\varOmega_0$.
+      Dimension de la pente : $\Omega/(\mathrm{V \cdot s/rad})^2 = \mathrm{V \cdot A^{-1} \cdot rad^2 \cdot V^{-2} \cdot s^{-2}}$, et comme
+      $\mathrm{V \cdot A} = \mathrm{N \cdot m \cdot s^{-1}}$, on trouve bien $\mathrm{rad/s}$ par $\mathrm{N \cdot m}$. Cas limites : à vide, $\varOmega =
+      \varOmega_0$ ; rotor bloqué, $\varOmega = 0$ et $C_{em} = K\Phi\,U/R$, couple de démarrage direct, énorme puisque $R$ est faible.
+    </p>
+  </div>
+  <p>
+    Interprétation : la vitesse est fixée par la tension, au premier ordre, et proportionnelle à elle ; le couple est fixé par le
+    courant ; la résistance ne crée qu'une faible chute de vitesse avec la charge, quelques pour cent pour une machine de puissance. Trois
+    leviers modifient la vitesse : la tension d'induit, qui déplace la droite parallèlement à elle-même ; le flux, dont la diminution
+    élève la vitesse à vide mais accentue la pente ; une résistance additionnelle, qui fait pivoter la droite autour de $\varOmega_0$ et
+    gaspille de l'énergie.
+  </p>
+
+  <h3 id="e-excitation">Modes d'excitation</h3>
+  <p>
+    L'inducteur peut être alimenté de quatre façons, à quoi s'ajoutent les aimants permanents. En excitation séparée, une source
+    indépendante fixe le flux : c'est le cas des machines de puissance alimentées par un variateur. En excitation shunt, ou dérivation,
+    l'inducteur est en parallèle sur l'induit ; sous tension constante, il se comporte comme une excitation séparée. En excitation série,
+    l'inducteur, de peu de spires de gros fil, est traversé par le courant d'induit : le flux croît avec la charge. L'excitation composée
+    associe un enroulement shunt et un enroulement série. Les aimants permanents donnent un flux constant sans pertes d'excitation, mais
+    non réglable et sensible à la température et aux surintensités, qui peuvent les désaimanter.
+  </p>
+  <figure id="e-excitations-figure">
+    <svg viewBox="0 0 760 250" role="img" aria-label="Quatre schémas de raccordement de l'inducteur : excitation séparée, shunt, série et composée, avec l'induit, les bornes positive et négative et le sens des courants">
+      <defs>
+        <marker id="fl-e-ex" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M90 50H150M150 50V96M150 140V200M90 200H150"/>
+        <circle cx="150" cy="118" r="22"/>
+        <path d="M40 76a6 6 0 0 1 0 12a6 6 0 0 1 0 12a6 6 0 0 1 0 12a6 6 0 0 1 0 12a6 6 0 0 1 0 12M40 76V62M40 136V150"/>
+        <path d="M230 50H340M340 50V96M340 140V200M230 200H340"/>
+        <circle cx="340" cy="118" r="22"/>
+        <path d="M270 50V76M270 76a6 6 0 0 1 0 12a6 6 0 0 1 0 12a6 6 0 0 1 0 12a6 6 0 0 1 0 12a6 6 0 0 1 0 12M270 136V200"/>
+        <path d="M420 50H530M530 50V60M530 60a6 6 0 0 1 0 12a6 6 0 0 1 0 12a6 6 0 0 1 0 12a6 6 0 0 1 0 12M530 108V118M530 162V200M420 200H530"/>
+        <circle cx="530" cy="140" r="22"/>
+        <path d="M600 50H720M720 50V60M720 60a6 6 0 0 1 0 12a6 6 0 0 1 0 12a6 6 0 0 1 0 12a6 6 0 0 1 0 12M720 108V118M720 162V200M600 200H720"/>
+        <circle cx="720" cy="140" r="22"/>
+        <path d="M640 50V76M640 76a6 6 0 0 1 0 12a6 6 0 0 1 0 12a6 6 0 0 1 0 12a6 6 0 0 1 0 12a6 6 0 0 1 0 12M640 136V200"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="90" cy="50" r="4"/><circle cx="90" cy="200" r="4"/><circle cx="40" cy="62" r="4"/><circle cx="40" cy="150" r="4"/>
+        <circle cx="230" cy="50" r="4"/><circle cx="230" cy="200" r="4"/>
+        <circle cx="420" cy="50" r="4"/><circle cx="420" cy="200" r="4"/>
+        <circle cx="600" cy="50" r="4"/><circle cx="600" cy="200" r="4"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+        <path d="M162 60V84" marker-end="url(#fl-e-ex)"/>
+        <path d="M52 64V88" marker-end="url(#fl-e-ex)"/>
+        <path d="M352 60V84" marker-end="url(#fl-e-ex)"/>
+        <path d="M282 56V72" marker-end="url(#fl-e-ex)"/>
+        <path d="M542 62V86" marker-end="url(#fl-e-ex)"/>
+        <path d="M732 62V86" marker-end="url(#fl-e-ex)"/>
+        <path d="M652 56V72" marker-end="url(#fl-e-ex)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="20" y="232">séparée</text>
+        <text x="230" y="232">shunt (dérivation)</text>
+        <text x="420" y="232">série</text>
+        <text x="600" y="232">composée</text>
+        <text x="80" y="40">+ U</text><text x="84" y="220">-</text>
+        <text x="20" y="56">+ U_e</text><text x="34" y="170">-</text>
+        <text x="220" y="40">+ U</text><text x="224" y="220">-</text>
+        <text x="410" y="40">+ U</text><text x="414" y="220">-</text>
+        <text x="590" y="40">+ U</text><text x="594" y="220">-</text>
+        <text x="168" y="78">I</text><text x="58" y="104">I_e</text>
+        <text x="358" y="78">I</text><text x="288" y="70">I_e</text>
+        <text x="548" y="78">I = I_e</text>
+        <text x="738" y="78">I</text><text x="658" y="70">I_e</text>
+        <text x="142" y="122">M</text><text x="332" y="122">M</text><text x="522" y="144">M</text><text x="712" y="144">M</text>
+        <text x="548" y="102">série</text>
+        <text x="662" y="122">shunt</text>
+      </g>
+    </svg>
+    <figcaption>
+      Raccordement de l'inducteur, bobine dessinée en arcs, et de l'induit, cercle marqué M. Les flèches indiquent le sens des courants en
+      fonctionnement moteur, la borne inférieure est la référence de potentiel. En séparée, l'inducteur a sa propre source $U_e$. En shunt,
+      il est en parallèle sur l'induit et voit la tension $U$. En série, il est traversé par le courant d'induit, $I_e = I$. En composée,
+      un enroulement shunt et un enroulement série agissent ensemble, le plus souvent dans le même sens, ou composition additive.
+    </figcaption>
+  </figure>
+  <p>
+    Le moteur série mérite une dérivation à part. Tant que le fer n'est pas saturé, le flux est proportionnel au courant, $K\Phi = \lambda
+    I$, avec $\lambda$ en $\mathrm{V \cdot s \cdot rad^{-1} \cdot A^{-1}}$. Alors $C_{em} = \lambda I^2$ et $U = \lambda I\varOmega + R_t I$, où $R_t$
+    regroupe induit et inducteur série. On en tire :
+  </p>
+  <div class="formule-cle">
+    $$C_{em} = \lambda\,I^2, \qquad \varOmega = \frac{U}{\lambda I} - \frac{R_t}{\lambda} = \frac{U}{\sqrt{\lambda\,C_{em}}} - \frac{R_t}{\lambda}$$
+    <p class="formule-cle-legende">
+      Hypothèses : fer non saturé, flux rémanent négligé. Dimension : $\mathrm{V}/(\mathrm{V \cdot s \cdot rad^{-1}}) = \mathrm{rad/s}$. Cas
+      limites : au démarrage, le couple croît comme le carré du courant, d'où un fort couple de décollage ; à vide, $C_{em} \to 0$ donc
+      $\varOmega \to \infty$ : le moteur série s'emballe. En réalité la saturation rend le couple à peu près proportionnel au courant aux
+      fortes charges, et les pertes mécaniques bornent la vitesse à vide, mais bien au-delà de la tenue mécanique du rotor.
+    </p>
+  </div>
+  <figure id="e-courbes-figure">
+    <svg viewBox="0 0 760 290" role="img" aria-label="Courbes qualitatives : à gauche, vitesse en fonction du couple pour les excitations séparée, série et composée ; à droite, couple en fonction du courant">
+      <defs>
+        <marker id="fl-e-cb" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+        <path d="M60 240V24" marker-end="url(#fl-e-cb)"/>
+        <path d="M60 240H350" marker-end="url(#fl-e-cb)"/>
+        <path d="M440 240V24" marker-end="url(#fl-e-cb)"/>
+        <path d="M440 240H730" marker-end="url(#fl-e-cb)"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-linecap="round">
+        <path d="M60.0 110.8 L127.5 113.5 L195.1 116.2 L262.6 118.9 L330.2 121.6" stroke-width="2.6"/>
+        <path d="M115.3 28.6 L117.4 33.2 L119.6 37.5 L121.8 41.5 L124.0 45.4 L126.2 49.1 L128.4 52.5 L130.6 55.9 L132.8 59.0 L135.0 62.1 L137.2 65.0 L139.4 67.7 L141.6 70.4 L143.8 73.0 L146.0 75.4 L148.2 77.8 L150.3 80.1 L152.5 82.3 L154.7 84.4 L156.9 86.5 L159.1 88.4 L161.3 90.4 L163.5 92.2 L165.7 94.0 L167.9 95.8 L170.1 97.5 L172.3 99.1 L174.5 100.7 L176.7 102.2 L178.9 103.7 L181.1 105.2 L183.2 106.6 L185.4 108.0 L187.6 109.4 L189.8 110.7 L192.0 112.0 L194.2 113.2 L196.4 114.5 L198.6 115.7 L200.8 116.8 L203.0 118.0 L205.2 119.1 L207.4 120.2 L209.6 121.2 L211.8 122.3 L214.0 123.3 L216.1 124.3 L218.3 125.3 L220.5 126.2 L222.7 127.1 L224.9 128.1 L227.1 129.0 L229.3 129.8 L231.5 130.7 L233.7 131.6 L235.9 132.4 L238.1 133.2 L240.3 134.0 L242.5 134.8 L244.7 135.6 L246.9 136.3 L249.0 137.1 L251.2 137.8 L253.4 138.5 L255.6 139.2 L257.8 139.9 L260.0 140.6 L262.2 141.3 L264.4 142.0 L266.6 142.6 L268.8 143.3 L271.0 143.9 L273.2 144.5 L275.4 145.1 L277.6 145.7 L279.8 146.3 L281.9 146.9 L284.1 147.5 L286.3 148.1 L288.5 148.6 L290.7 149.2 L292.9 149.7 L295.1 150.3 L297.3 150.8 L299.5 151.3 L301.7 151.8 L303.9 152.3 L306.1 152.8 L308.3 153.3 L310.5 153.8 L312.7 154.3 L314.8 154.8 L317.0 155.3 L319.2 155.7 L321.4 156.2 L323.6 156.6 L325.8 157.1 L328.0 157.5 L330.2 158.0" stroke-width="2.6" stroke-dasharray="9 6"/>
+        <path d="M60.0 73.1 L64.5 77.0 L69.0 79.5 L73.5 81.6 L78.0 83.4 L82.5 85.2 L87.0 86.8 L91.5 88.4 L96.0 89.9 L100.5 91.3 L105.0 92.7 L109.5 94.0 L114.0 95.4 L118.5 96.6 L123.0 97.9 L127.5 99.1 L132.1 100.3 L136.6 101.5 L141.1 102.6 L145.6 103.8 L150.1 104.9 L154.6 106.0 L159.1 107.1 L163.6 108.2 L168.1 109.2 L172.6 110.3 L177.1 111.3 L181.6 112.3 L186.1 113.3 L190.6 114.3 L195.1 115.3 L199.6 116.3 L204.1 117.3 L208.6 118.2 L213.1 119.2 L217.6 120.1 L222.1 121.1 L226.6 122.0 L231.1 122.9 L235.6 123.8 L240.1 124.7 L244.6 125.6 L249.1 126.5 L253.6 127.4 L258.1 128.3 L262.6 129.2 L267.2 130.1 L271.7 130.9 L276.2 131.8 L280.7 132.6 L285.2 133.5 L289.7 134.3 L294.2 135.2 L298.7 136.0 L303.2 136.8 L307.7 137.6 L312.2 138.5 L316.7 139.3 L321.2 140.1 L325.7 140.9 L330.2 141.7" stroke-width="2.6" stroke-dasharray="2 5"/>
+        <path d="M440 240L700 70" stroke-width="2.6"/>
+        <path d="M440 240C520 236 570 180 620 110C650 70 680 50 710 38" stroke-width="2.6" stroke-dasharray="9 6"/>
+        <path d="M200 30V240" stroke-width="1" stroke-dasharray="3 4" opacity="0.7"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="200" cy="116.4" r="4"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="68" y="22">Ω</text>
+        <text x="340" y="258">C</text>
+        <text x="448" y="22">C_em</text>
+        <text x="720" y="258">I</text>
+        <text x="206" y="258">C nominal</text>
+        <text x="334" y="118">séparée, shunt</text>
+        <text x="334" y="164">série</text>
+        <text x="334" y="144">composée</text>
+        <text x="600" y="150">séparée : droite,</text>
+        <text x="600" y="166">trait plein</text>
+        <text x="600" y="198">série : parabole puis</text>
+        <text x="600" y="214">quasi-droite, tirets</text>
+      </g>
+    </svg>
+    <figcaption>
+      Courbes qualitatives sous tension nominale. À gauche, vitesse en fonction du couple : la caractéristique de l'excitation séparée,
+      trait plein, est une droite presque horizontale ; celle du moteur série, tirets, est une branche d'hyperbole qui monte sans limite
+      quand le couple tend vers zéro ; l'excitation composée, pointillés, est intermédiaire. Les trois passent par le même point nominal,
+      repéré par le point plein. À droite, couple en fonction du courant : droite en excitation séparée, parabole puis quasi-droite en série
+      à cause de la saturation.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-carac-section">Simulation interactive : caractéristique mécanique et point de fonctionnement</h3>
+  <p>
+    La simulation reprend le moteur de la section H : $440\ \mathrm{V}$, $52\ \mathrm{A}$, $1500\ \mathrm{tr/min}$, $K\Phi = 2{,}656\ \mathrm{V \cdot s/rad}$,
+    $R = 0{,}40\ \mathrm{\Omega}$, $\Delta U_b = 2\ \mathrm{V}$. Une variante série de même point nominal, avec $R_t = 0{,}55\ \mathrm{\Omega}$ et un modèle de
+    saturation simplifié, sert de comparaison. Le tracé donne la vitesse en fonction du couple électromagnétique ; la courbe de charge
+    est soit un couple constant, comme un convoyeur ou un appareil de levage, soit un couple proportionnel au carré de la vitesse, comme
+    une pompe centrifuge. Le point de fonctionnement est l'intersection. Prédisez avant de manipuler : en excitation séparée, si l'on
+    ramène la tension à $300\ \mathrm{V}$ sous couple nominal constant, la vitesse sera-t-elle proportionnelle à la tension ? Et le moteur
+    série, à $10\ \%$ du couple nominal, tournera-t-il plus ou moins vite que le moteur à excitation séparée ?
+  </p>
+  <figure id="e-carac-figure">
+    <div id="e-carac-trace"></div>
+    <figcaption>
+      Vitesse en fonction du couple électromagnétique. Les trois courbes sont nommées dans la légende du tracé : caractéristique du moteur
+      choisi, caractéristique de l'autre mode d'excitation pour comparaison, courbe de couple résistant. Le point plein est le point de
+      fonctionnement ; le trait vertical en tirets marque le couple nominal. Les couples négatifs correspondent au fonctionnement en
+      génératrice, la charge entraînant la machine.
+    </figcaption>
+  </figure>
+  <div id="e-carac-curseurs"></div>
+  <div id="e-carac-valeurs"></div>
+  <p>
+    Interprétation : à $300\ \mathrm{V}$ et couple nominal, la vitesse tombe à $997\ \mathrm{tr/min}$, et non à $300/440 \times 1500 = 1023\ \mathrm{tr/min}$ :
+    la chute $RI + \Delta U_b = 22{,}8\ \mathrm{V}$ ne diminue pas avec la tension, elle pèse donc relativement plus. En excitation séparée, la
+    vitesse ne varie que de $1500$ à $1567\ \mathrm{tr/min}$ entre la pleine charge et $10\ \%$ du couple : la machine est presque une source de
+    vitesse. Le moteur série, lui, passe de $1488$ à $4210\ \mathrm{tr/min}$ dans le même intervalle ; à couple nul, il n'a plus de point de
+    fonctionnement. En contrepartie, à deux fois le courant nominal, il produit $394\ \mathrm{N \cdot m}$ contre $276$ pour l'excitation séparée :
+    c'est pourquoi il a longtemps équipé la traction et le levage. Réduire le flux à $80\ \%$ sous couple nominal porte la vitesse à
+    $1852\ \mathrm{tr/min}$, mais le courant à $65\ \mathrm{A}$, au-delà du courant nominal : le défluxage ne se pratique qu'à couple réduit. Avec
+    une charge de pompe, enfin, baisser la tension réduit fortement le couple demandé : $1036\ \mathrm{tr/min}$ à $300\ \mathrm{V}$. Faites passer le couple
+    résistant en négatif : la vitesse dépasse la vitesse à vide et le courant s'inverse, la machine renvoie de l'énergie.
+  </p>
+
+  <h3 id="e-bilan">Bilan des puissances et rendement</h3>
+  <p>
+    En moteur, la puissance électrique absorbée se décompose ainsi. L'inducteur consomme $U_e I_e$, entièrement dissipés par effet Joule
+    s'il est bobiné, nuls s'il est à aimants. L'induit reçoit $U I$ ; une partie se perd par effet Joule dans le circuit d'induit,
+    $R I^2$, et aux contacts des balais, $\Delta U_b\,I$ ; le reste, $E I$, est la puissance électromagnétique, convertie en puissance
+    mécanique $C_{em}\varOmega$. Sur l'arbre, il faut encore retrancher les pertes collectives $p_c$ : pertes fer dans l'induit, par
+    hystérésis et courants de Foucault puisque le rotor voit un flux alternatif, et pertes mécaniques par frottements et ventilation.
+    Elles dépendent de la vitesse et du flux, mais pas du courant ; à vitesse et flux à peu près constants, on les traite comme
+    constantes, et on les mesure par un essai à vide.
+  </p>
+  <div class="formule-cle">
+    $$P_{abs} = U I + U_e I_e, \qquad P_{em} = E\,I = C_{em}\,\varOmega, \qquad P_u = P_{em} - p_c = C_u\,\varOmega, \qquad \eta = \frac{P_u}{P_{abs}}$$
+    <p class="formule-cle-legende">
+      Puissances en watts, $\eta$ sans dimension. Pertes : $U_e I_e$ à l'excitation, $R I^2$ et $\Delta U_b I$ dans le circuit d'induit,
+      $p_c$ collectives. Contrôle systématique : $P_{abs} - P_u$ doit être égal à la somme des pertes, et $\eta$, rapport de deux
+      puissances, est sans dimension. Cas limites : à vide, $C_u = 0$ donc $P_u = 0$ et $\eta = 0$, toute la puissance absorbée part en
+      pertes ; à l'arrêt rotor bloqué, $P_u = 0$ également, et tout part en effet Joule. En génératrice, le même bilan se lit dans l'autre
+      sens : $P_{\text{méca}} = C\varOmega$ entre par l'arbre, $P_u = U I$ sort par les bornes.
+    </p>
+  </div>
+  <p>
+    Rendement maximal : à tension constante, la vitesse varie peu, et les pertes se répartissent en pertes constantes
+    $P_0 = p_c + U_e I_e$ et en pertes variables $R I^2$, la chute aux balais étant proportionnelle à $I$ comme la puissance absorbée. En
+    écrivant $\eta \approx 1 - (R I^2 + P_0)/(U I) - \Delta U_b/U$ et en dérivant par rapport à $I$, le rendement est maximal pour
+    $R I^2 = P_0$, soit $I = \sqrt{P_0/R}$. C'est la même règle que pour le transformateur : pertes variables égales aux pertes constantes.
+    Elle reste une approximation, puisque $p_c$ suit en réalité la vitesse.
+  </p>
+
+  <h3 id="e-cascade-section">Animation : la cascade des puissances</h3>
+  <p>
+    L'animation reprend le moteur de la section H. Le diagramme en cascade part de la puissance absorbée, retranche une à une les pertes
+    d'excitation, de Joule dans l'induit, de balais, puis les pertes collectives, et aboutit à la puissance utile. Les curseurs règlent le
+    courant d'induit, c'est-à-dire la charge, et la tension d'induit, c'est-à-dire la vitesse ; les pertes collectives sont supposées
+    proportionnelles à la vitesse. Prédisez avant de manipuler : à quel courant le rendement est-il maximal ? Et que devient le
+    rendement à $10\ \mathrm{A}$, soit environ $20\ \%$ de la charge nominale ?
+  </p>
+  <figure id="e-cascade-figure">
+    <div class="schema-vivant" id="e-cascade"></div>
+    <figcaption>
+      Diagramme en cascade. La première barre, pleine, est la puissance absorbée ; chaque barre suivante, hachurée, est une perte qui
+      descend depuis le niveau atteint ; les barres intermédiaires pleines sont la puissance électromagnétique et la puissance utile. Les
+      valeurs sont inscrites au-dessus des barres ; le trait horizontal en tirets rappelle la puissance utile nominale de
+      $21{,}09\ \mathrm{kW}$.
+    </figcaption>
+  </figure>
+  <div id="e-cascade-curseurs"></div>
+  <div id="e-cascade-valeurs"></div>
+  <p>
+    Interprétation : au point nominal, la cascade retrouve les valeurs de la section H, $23{,}28\ \mathrm{kW}$ absorbés, $21{,}09\ \mathrm{kW}$ utiles
+    et un rendement de $90{,}6\ \%$. Le rendement est maximal vers $50\ \mathrm{A}$, là où les $R I^2$ égalent les $996\ \mathrm{W}$ de pertes
+    constantes : cette machine a été conçue pour travailler près de son point nominal. À $10\ \mathrm{A}$, le rendement tombe à $77\ \%$ : les
+    pertes constantes, inchangées, pèsent sur une puissance utile cinq fois plus faible. Réduisez la tension : la vitesse et la puissance
+    utile baissent presque proportionnellement, mais les pertes Joule de l'induit, fixées par le courant donc par le couple, restent les
+    mêmes ; un moteur qui fournit son couple nominal à basse vitesse chauffe autant qu'à pleine vitesse, alors que son ventilateur,
+    s'il est calé sur l'arbre, refroidit beaucoup moins. C'est l'origine des motoventilateurs séparés des moteurs de variation de vitesse.
+  </p>
+
+  <h3 id="e-commutation">Commutation et réaction magnétique d'induit</h3>
+  <p>
+    Pendant que le balai recouvre deux lames voisines, la section qui les relie est court-circuitée, et son courant doit passer de
+    $+I/(2a)$ à $-I/(2a)$ en une durée $t_c$ égale à la largeur du balai divisée par la vitesse périphérique du collecteur. La section
+    possède une inductance propre et mutuelle $L_s$ : cette inversion y induit une force électromotrice de réactance
+    $e_r \approx L_s \cdot 2I/(2a) \cdot 1/t_c$, qui s'oppose à l'inversion et la retarde. Si le courant n'a pas fini de s'inverser quand la
+    lame quitte le balai, l'énergie magnétique résiduelle s'évacue par un arc au bord de sortie du balai : ce sont les étincelles qui
+    brûlent les lames et usent les balais. Ordre de grandeur : collecteur de $0{,}25\ \mathrm{m}$ de diamètre à $1500\ \mathrm{tr/min}$, soit
+    $19{,}6\ \mathrm{m/s}$ ; balai de $15\ \mathrm{mm}$, donc $t_c = 0{,}76\ \mathrm{ms}$ ; $I/(2a) = 26\ \mathrm{A}$ et $L_s = 50\ \mathrm{\mu H}$ supposés
+    donnent $e_r = 50 \times 10^{-6} \times 52/0{,}76 \times 10^{-3} = 3{,}4\ \mathrm{V}$, à comparer à la chute de contact d'un balai, de l'ordre de
+    $1\ \mathrm{V}$ : sans correction, la commutation serait mauvaise.
+  </p>
+  <p>
+    La réaction magnétique d'induit aggrave les choses. Les courants de l'induit créent leur propre force magnétomotrice, dirigée selon
+    la ligne neutre, perpendiculairement à celle des pôles : l'induction est renforcée sous une corne de chaque pôle et affaiblie sous
+    l'autre, la ligne où elle s'annule se décale dans le sens de rotation en génératrice et en sens inverse en moteur, et la saturation de
+    la corne renforcée réduit le flux total. Trois remèdes, du plus simple au plus efficace : décaler les balais, ce qui ne vaut que pour
+    un sens de rotation et une charge ; ajouter des pôles de commutation, placés sur la ligne neutre et parcourus par le courant d'induit,
+    qui créent dans la section commutée une force électromotrice opposée à $e_r$, proportionnelle au courant donc valable à toute charge ;
+    enfin, pour les grosses machines à forte surcharge, un enroulement de compensation logé dans les épanouissements polaires, qui
+    annule la force magnétomotrice d'induit sous les pôles.
+  </p>
+
+  <h3 id="e-commut-section">Animation : le courant d'une section pendant la commutation</h3>
+  <p>
+    L'animation suit une section court-circuitée par le balai, pendant la durée $t_c$ de la commutation, dans un modèle pédagogique
+    simplifié : le courant s'écarte de l'inversion linéaire idéale d'un terme proportionnel à la force électromotrice de réactance non
+    compensée. Le curseur de compensation représente l'effet des pôles de commutation, de $0$, aucun pôle, à $1$, compensation exacte, et
+    au-delà, surcompensation. Prédisez avant de manipuler : sans pôles de commutation, à quel bord du balai la densité de courant
+    devient-elle excessive, à l'entrée ou à la sortie de la lame ? Et que se passe-t-il si l'on surcompense ?
+  </p>
+  <figure id="e-commut-figure">
+    <div class="schema-vivant" id="e-commut"></div>
+    <figcaption>
+      En haut, le balai fixe, rectangle, recouvre la lame qui arrive et la lame qui part ; les deux lames défilent de gauche à droite et la
+      section commutée les relie par-dessous ; la petite flèche sous la section indique le sens de son courant, vers la droite quand il est
+      positif. Les courants de chaque contact, en multiples de $I/(2a)$, sont inscrits au-dessus du balai. En bas à gauche, le courant de la
+      section, rapporté à $I/(2a)$, en fonction de l'avancement de la commutation : trait fin pour l'inversion linéaire idéale, trait épais
+      pour l'inversion du modèle, point pour l'instant courant ; la poignée sous l'axe règle cet instant. En bas à droite, la densité de
+      courant aux bords d'entrée et de sortie du balai, rapportée à la densité moyenne, repérée par le trait pointillé ; une barre qui
+      dépasse le trait en tirets, seuil indicatif de $1{,}5$, signale un risque d'étincelles.
+    </figcaption>
+  </figure>
+  <div id="e-commut-curseurs"></div>
+  <div id="e-commut-lecteur"></div>
+  <div id="e-commut-valeurs"></div>
+  <p>
+    Interprétation : sans compensation, le courant de la section reste en retard sur l'inversion linéaire ; à la fin de la commutation, la
+    lame qui part porte encore un courant important sur une surface de contact qui tend vers zéro, et la densité au bord de sortie atteint
+    près de deux fois la densité moyenne avec les réglages de départ : c'est là qu'apparaissent les étincelles, du côté où la lame quitte
+    le balai. Avec une compensation exacte, l'inversion devient linéaire et la densité est uniforme. Avec une surcompensation, le défaut
+    se reporte au bord d'entrée, au début de la commutation : trop de compensation est aussi nuisible que pas assez. Comme les pôles de
+    commutation sont en série avec l'induit, leur effet suit automatiquement la charge ; c'est ce qui en fait le remède standard.
+  </p>
+
+  <h3 id="e-demarrage">Démarrage, inversion, freinage et quatre quadrants</h3>
+  <p>
+    Au démarrage, $\varOmega = 0$ donc $E = 0$ : seul $R$ limite le courant. Pour le moteur de la section H, un démarrage direct sous
+    $440\ \mathrm{V}$ donnerait en régime quasi statique $I = (440 - 2)/0{,}40 = 1095\ \mathrm{A}$, vingt et une fois le courant nominal : le collecteur
+    ne le supporterait pas et la protection déclencherait. Deux méthodes limitent le courant. Le rhéostat de démarrage, en série avec
+    l'induit, est court-circuité par crans au fur et à mesure que la force électromotrice s'établit ; simple, il dissipe de l'énergie.
+    La tension d'induit progressive, fournie par un redresseur commandé ou un hacheur, démarre sous faible tension et augmente avec la
+    vitesse ; elle ne dissipe presque rien et offre en plus le réglage de vitesse. L'étude de ces convertisseurs viendra avec les cours
+    Thyristors et redresseurs commandés et Hacheurs DC-DC.
+  </p>
+  <p>
+    Le sens de rotation est celui du couple, $C_{em} = K\Phi I$ : on l'inverse en inversant soit le courant d'induit, soit le flux, mais
+    pas les deux. C'est pourquoi un moteur série ou shunt alimenté en sens inverse tourne dans le même sens : courant et flux changent
+    de signe ensemble. On inverse en pratique l'induit, dont la constante de temps est faible, plutôt que l'inducteur, très inductif et
+    qu'il serait dangereux d'ouvrir. Pour freiner, trois solutions : le freinage rhéostatique, où l'induit débite sur une résistance et la
+    machine, devenue génératrice, dissipe l'énergie cinétique ; le freinage à contre-courant, par inversion de l'induit en marche, très
+    énergique mais qui dissipe l'énergie cinétique et celle du réseau, et doit être interrompu à vitesse nulle ; le freinage par
+    récupération, où la tension d'alimentation devient inférieure à la force électromotrice, ce qui renvoie l'énergie vers la source si
+    celle-ci est réversible.
+  </p>
+  <figure id="e-quadrants-figure">
+    <svg viewBox="0 0 760 360" role="img" aria-label="Plan couple-vitesse divisé en quatre quadrants : moteur en marche avant, génératrice en marche avant, moteur en marche arrière, génératrice en marche arrière, avec les signes de U, E et I">
+      <defs>
+        <marker id="fl-e-qd" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M70 180H690" marker-end="url(#fl-e-qd)"/>
+        <path d="M380 340V20" marker-end="url(#fl-e-qd)"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+        <path d="M540 132C560 106 600 98 630 108" marker-end="url(#fl-e-qd)"/>
+        <path d="M220 132C200 106 160 98 130 108" stroke-dasharray="7 5" marker-end="url(#fl-e-qd)"/>
+        <path d="M220 270C200 296 160 304 130 294" marker-end="url(#fl-e-qd)"/>
+        <path d="M540 270C560 296 600 304 630 294" stroke-dasharray="7 5" marker-end="url(#fl-e-qd)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="696" y="184">C</text>
+        <text x="388" y="26">Ω</text>
+        <text x="420" y="48">Q1 : moteur, marche avant</text>
+        <text x="420" y="66">U > 0, I > 0, C > 0, Ω > 0</text>
+        <text x="420" y="84">P_méca = C Ω > 0, fournie</text>
+        <text x="420" y="160">exemple : levage, montée</text>
+        <text x="40" y="48">Q2 : génératrice, freinage</text>
+        <text x="40" y="66">en marche avant</text>
+        <text x="40" y="84">E > 0, I &lt; 0, C &lt; 0, Ω > 0</text>
+        <text x="40" y="160">exemple : arrêt rapide</text>
+        <text x="40" y="212">Q3 : moteur, marche arrière</text>
+        <text x="40" y="230">U &lt; 0, I &lt; 0, C &lt; 0, Ω &lt; 0</text>
+        <text x="40" y="248">P_méca > 0, fournie</text>
+        <text x="420" y="212">Q4 : génératrice, freinage</text>
+        <text x="420" y="230">en marche arrière</text>
+        <text x="420" y="248">E &lt; 0, I > 0, C > 0, Ω &lt; 0</text>
+        <text x="420" y="330">exemple : levage, descente retenue</text>
+      </g>
+    </svg>
+    <figcaption>
+      Plan couple-vitesse en excitation séparée, flux positif. En abscisse le couple électromagnétique, en ordonnée la vitesse, orientés
+      dans le même sens de rotation. Dans les quadrants 1 et 3, couple et vitesse sont de même signe : la machine est motrice, flèches
+      courbes en trait plein. Dans les quadrants 2 et 4, ils sont de signes opposés : la machine reçoit la puissance mécanique et la
+      renvoie vers la source ou la dissipe, flèches courbes en tirets. Le signe de la vitesse fixe celui de $E$, le signe du couple celui de
+      $I$. Un variateur qui couvre les quatre quadrants doit pouvoir inverser à la fois la tension et le courant.
+    </figcaption>
+  </figure>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Comparaison des méthodes de réglage de la vitesse</caption>
+      <thead><tr><th>Méthode</th><th>Effet sur la caractéristique</th><th>Plage</th><th>Pertes</th><th>Préférable quand</th></tr></thead>
+      <tbody>
+        <tr><td>Tension d'induit</td><td>droite translatée, pente inchangée</td><td>de zéro à la vitesse de base, couple nominal disponible</td><td>faibles, celles du convertisseur</td><td>presque toujours, avec un convertisseur réglable</td></tr>
+        <tr><td>Flux, ou défluxage</td><td>vitesse à vide augmentée, pente accentuée</td><td>au-dessus de la vitesse de base, à puissance constante</td><td>faibles</td><td>enrouleuses, broches, traction à grande vitesse</td></tr>
+        <tr><td>Résistance additionnelle</td><td>droite pivotant autour de la vitesse à vide</td><td>vers le bas seulement, dépend de la charge</td><td>élevées, $R_{add} I^2$</td><td>démarrage et réglage temporaire uniquement</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Pour décrire le démarrage dans le temps, il faut les deux équations dynamiques, électrique et mécanique, avec l'inertie $J$ du rotor
+    et de la machine entraînée et le couple résistant $C_r$ :
+  </p>
+  <div class="formule-cle">
+    $$L\,\frac{\mathrm{d}i}{\mathrm{d}t} = u - R\,i - K\Phi\,\varOmega, \qquad J\,\frac{\mathrm{d}\varOmega}{\mathrm{d}t} = K\Phi\,i - C_r$$
+    $$\tau_e = \frac{L}{R}, \qquad \tau_m = \frac{R\,J}{(K\Phi)^2}, \qquad \omega_0 = \frac{K\Phi}{\sqrt{L J}}, \qquad \zeta = \frac{1}{2}\sqrt{\frac{\tau_m}{\tau_e}}$$
+    <p class="formule-cle-legende">
+      $J$ en $\mathrm{kg \cdot m^2}$, $\tau_e$ et $\tau_m$ en secondes. Dérivation : en éliminant $i$ à $C_r = 0$, $L J\,\ddot{\varOmega} + R J\,\dot{\varOmega}
+      + (K\Phi)^2\varOmega = K\Phi\,u$, équation du second ordre identique à celle du cours
+      <a href="#/cours/regime-transitoire-rlc">Régime transitoire RLC</a> ; on identifie $\omega_0^2 = (K\Phi)^2/(LJ)$ et
+      $2\zeta\omega_0 = R/L$. Vérification : $\mathrm{\Omega \cdot kg \cdot m^2}/(\mathrm{V \cdot s})^2 = \mathrm{V \cdot A^{-1} \cdot J \cdot s^2 \cdot
+      V^{-2} \cdot s^{-2}} = \mathrm{J/(V \cdot A)} = \mathrm{s}$. Cas limite : si $\tau_e \ll \tau_m$, la réponse est celle d'un premier ordre
+      de constante de temps $\tau_m$, comme un circuit RC où la capacité serait l'inertie.
+    </p>
+  </div>
+
+  <h3 id="e-dyn-section">Simulation interactive : démarrage et réponse dynamique</h3>
+  <p>
+    La simulation intègre numériquement les deux équations pour le moteur de la section H, avec $L = 12\ \mathrm{mH}$ et une inertie totale
+    réglable, $0{,}35\ \mathrm{kg \cdot m^2}$ au départ, hypothèses d'étude ; la chute aux balais et les pertes collectives sont négligées. On
+    règle la résistance de démarrage, l'instant où elle est court-circuitée en un seul cran, la durée d'une rampe de tension et le couple
+    résistant. Prédisez avant de manipuler : en démarrage direct à vide, la pointe de courant atteindra-t-elle les $1100\ \mathrm{A}$ du calcul
+    statique $U/R$ ? Et avec le rhéostat dimensionné pour deux fois le courant nominal, le moteur atteindra-t-il sa vitesse nominale
+    s'il entraîne son couple nominal sans que le rhéostat soit court-circuité ?
+  </p>
+  <figure id="e-dyn-figure">
+    <div id="e-dyn-courant"></div>
+    <div id="e-dyn-vitesse"></div>
+    <figcaption>
+      En haut, le courant d'induit en fonction du temps ; en bas, la vitesse en tours par minute. Les courbes sont nommées dans la légende de
+      chaque tracé. Le trait horizontal en tirets du tracé du haut marque deux fois le courant nominal, $104\ \mathrm{A}$ ; celui du tracé du
+      bas, la vitesse nominale, $1500\ \mathrm{tr/min}$. Le trait vertical en pointillés repère l'instant du court-circuit du rhéostat.
+    </figcaption>
+  </figure>
+  <div id="e-dyn-curseurs"></div>
+  <div id="e-dyn-valeurs"></div>
+  <p>
+    Interprétation : en démarrage direct à vide, la pointe de courant n'est que de $536\ \mathrm{A}$, environ dix fois le courant nominal, et
+    non $1100\ \mathrm{A}$ : l'inductance retarde la montée du courant et, pendant ce temps, le moteur accélère et sa force électromotrice
+    s'établit. Avec $\tau_m = 20\ \mathrm{ms}$ et $\tau_e = 30\ \mathrm{ms}$, $\zeta = 0{,}41$ : la vitesse dépasse sa valeur finale d'environ
+    $25\ \%$, jusqu'à $1973\ \mathrm{tr/min}$, et le courant s'inverse jusqu'à $-132\ \mathrm{A}$ ; la machine freine brièvement en génératrice
+    avant de se stabiliser. Doublez l'inertie : la pointe monte, car le moteur met plus longtemps à produire sa force
+    contre-électromotrice. Avec $3{,}81\ \mathrm{\Omega}$ de rhéostat, la pointe tombe à $100\ \mathrm{A}$ et la réponse devient apériodique,
+    $\zeta = 4{,}3$ ; mais sous couple nominal, si le rhéostat reste en place, la vitesse plafonne à $795\ \mathrm{tr/min}$. Court-circuité d'un seul
+    coup à $0{,}8\ \mathrm{s}$, il provoque une seconde pointe de $299\ \mathrm{A}$ : c'est pourquoi les rhéostats de démarrage ont plusieurs crans.
+    Une rampe de tension de $2\ \mathrm{s}$ démarre le même moteur chargé avec une pointe de $68\ \mathrm{A}$ et sans aucune résistance
+    dissipative : c'est l'avantage décisif du convertisseur.
+  </p>
+
+  <h3 id="e-statut">Loi, convention, approximation, règle de conception et donnée du constructeur</h3>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Statut des énoncés de la séance</caption>
+      <thead><tr><th>Énoncé</th><th>Statut</th><th>Commentaire</th></tr></thead>
+      <tbody>
+        <tr><td>$e = B\ell v$, $F = BI\ell$, $E I = C_{em}\varOmega$</td><td>loi physique</td><td>induction, force de Laplace, conservation de l'énergie</td></tr>
+        <tr><td>Convention récepteur en moteur, générateur en génératrice</td><td>convention</td><td>choix d'orientation, qui fixe les signes de $I$ et de $RI$</td></tr>
+        <tr><td>$E = K\Phi\varOmega$ avec $K\Phi$ constant</td><td>approximation</td><td>suppose le flux indépendant de la charge : réaction d'induit compensée, pas de saturation variable</td></tr>
+        <tr><td>Pertes collectives constantes, $\Delta U_b$ constante</td><td>approximation</td><td>valable à vitesse et flux voisins du point étudié</td></tr>
+        <tr><td>Courant de démarrage limité à environ deux fois le nominal</td><td>règle de conception</td><td>compromis entre couple de démarrage, collecteur et chute de tension du réseau</td></tr>
+        <tr><td>Rendement maximal quand $R I^2 = P_0$</td><td>conséquence d'un modèle</td><td>exacte seulement si $p_c$ est indépendante du courant et de la vitesse</td></tr>
+        <tr><td>Vitesse maximale, surcharge admissible, classe d'isolation, nuance des balais</td><td>constructeur</td><td>à lire sur la plaque et dans la documentation, jamais à supposer</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, qui relie la structure de la machine à la chaîne de conversion de l'énergie,
+    l'organigramme de résolution d'un problème de moteur à courant continu et un tableau comparatif des modes d'excitation. Les autres
+    schémas sont restés au contact du passage qu'ils illustrent ; la liste de renvois figure à la fin de la section.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 760 400" role="img" aria-label="Schéma principal : source réglable, inducteur et induit, arbre et charge, puis chaîne énergétique du moteur de l'exemple, de la puissance absorbée à la puissance utile, avec chaque perte">
+      <defs>
+        <marker id="fl-f" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+        <rect x="20" y="70" width="150" height="80" rx="10"/>
+        <rect x="300" y="20" width="150" height="50" rx="10"/>
+        <rect x="300" y="100" width="150" height="70" rx="10"/>
+        <rect x="590" y="100" width="150" height="70" rx="10"/>
+        <rect x="20" y="230" width="190" height="56" rx="8"/>
+        <rect x="290" y="230" width="190" height="56" rx="8"/>
+        <rect x="560" y="230" width="180" height="56" rx="8"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M170 128H296" marker-end="url(#fl-f)"/>
+        <path d="M95 70V45H296" marker-end="url(#fl-f)"/>
+        <path d="M375 70V96" marker-end="url(#fl-f)"/>
+        <path d="M450 135H586" stroke-width="3" marker-end="url(#fl-f)"/>
+        <path d="M210 258H286" stroke-width="3" marker-end="url(#fl-f)"/>
+        <path d="M480 258H556" stroke-width="3" marker-end="url(#fl-f)"/>
+        <path d="M70 286V330" stroke-dasharray="5 4" marker-end="url(#fl-f)"/>
+        <path d="M130 286V330" stroke-dasharray="5 4" marker-end="url(#fl-f)"/>
+        <path d="M190 286V330" stroke-dasharray="5 4" marker-end="url(#fl-f)"/>
+        <path d="M385 286V330" stroke-dasharray="5 4" marker-end="url(#fl-f)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="34" y="98">source réglable</text>
+        <text x="34" y="116">redresseur ou</text>
+        <text x="34" y="134">hacheur</text>
+        <text x="320" y="50">inducteur</text>
+        <text x="320" y="130">induit</text>
+        <text x="320" y="148">R, L, E = KΦΩ</text>
+        <text x="610" y="130">arbre et</text>
+        <text x="610" y="148">charge, C_r</text>
+        <text x="190" y="120">U, I</text>
+        <text x="190" y="38">U_e, I_e</text>
+        <text x="384" y="90">Φ</text>
+        <text x="476" y="126">C_u, Ω</text>
+        <text x="30" y="254">P_abs = U I + U_e I_e</text>
+        <text x="30" y="274">23 276 W</text>
+        <text x="300" y="254">P_em = E I = C_em Ω</text>
+        <text x="300" y="274">21 694 W</text>
+        <text x="570" y="254">P_u = C_u Ω</text>
+        <text x="570" y="274">21 094 W</text>
+        <text x="30" y="350">U_e I_e</text>
+        <text x="30" y="366">396 W</text>
+        <text x="104" y="350">R I²</text>
+        <text x="104" y="366">1 082 W</text>
+        <text x="170" y="350">ΔU_b I</text>
+        <text x="170" y="366">104 W</text>
+        <text x="350" y="350">p_c, fer et méca</text>
+        <text x="350" y="366">600 W</text>
+        <text x="570" y="320">η = 21 094 / 23 276</text>
+        <text x="570" y="340">  = 90,6 %</text>
+        <text x="20" y="214">chaîne énergétique du moteur de la section H, en moteur, au point nominal</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal. En haut, la structure fonctionnelle : la source réglable alimente l'induit sous la tension $U$ avec le courant $I$,
+      et l'inducteur sous $U_e$ et $I_e$ ; l'inducteur fixe le flux $\Phi$, l'induit convertit et transmet à l'arbre le couple utile $C_u$
+      à la vitesse $\varOmega$. Les flèches indiquent le sens de transfert de l'énergie en fonctionnement moteur ; en génératrice, les
+      flèches épaisses s'inversent. En bas, la chaîne énergétique chiffrée du moteur de la section H : les flèches épaisses portent la
+      puissance qui progresse, les flèches en tirets les pertes ; les largeurs ne sont pas proportionnelles, la cascade de la section E
+      les donne à l'échelle.
+    </figcaption>
+  </figure>
+
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Plaque et données :<br/>U, I, n, excitation, R, p_c"] --> B["Point nominal :<br/>E = U - R I - ΔU_b<br/>KΦ = E / Ω"]
+  B --> C{"Que cherche-t-on ?"}
+  C -->|"vitesse"| D["C_em = C_u + C_p<br/>I = C_em / KΦ"]
+  D --> E["E = U - R I - ΔU_b<br/>Ω = E / KΦ"]
+  C -->|"couple"| F["C_em = KΦ I<br/>C_u = C_em - C_p"]
+  C -->|"rendement"| G["P_abs et<br/>chaque perte"]
+  C -->|"démarrage"| H["I_d = U / R<br/>R_dém ou rampe"]
+  C -->|"flux modifié"| K["KΦ' = KΦ Φ' / Φ<br/>I ≤ I_n ?"]
+  E --> L{"Contrôles"}
+  F --> L
+  G --> L
+  H --> L
+  K --> L
+  L --> M["Somme des pertes ;<br/>KΦ en V s/rad = N m/A ;<br/>vitesse à vide, ordres de grandeur"]</pre>
+    <figcaption>
+      Organigramme de résolution. On commence toujours par le point nominal, qui fournit la grandeur clé $K\Phi$. Les losanges sont des
+      choix, les rectangles des calculs, les libellés des flèches les questions posées. Toutes les branches se rejoignent sur les mêmes
+      contrôles : bilan des pertes, identité de $K\Phi$ dans ses deux unités, cohérence de la vitesse à vide et des ordres de grandeur.
+    </figcaption>
+  </figure>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Comparaison des modes d'excitation</caption>
+      <thead><tr><th>Excitation</th><th>Flux</th><th>Caractéristique vitesse-couple</th><th>Couple de démarrage</th><th>Risque principal</th><th>Usage typique</th></tr></thead>
+      <tbody>
+        <tr><td>Séparée</td><td>réglable, indépendant de la charge</td><td>droite presque horizontale</td><td>proportionnel au courant</td><td>perte d'excitation : emballement ou surintensité</td><td>variation de vitesse de puissance, laminoirs, enrouleuses</td></tr>
+        <tr><td>Shunt</td><td>fixé par la tension d'induit</td><td>comme séparée sous tension constante</td><td>proportionnel au courant</td><td>idem, et flux réduit si la tension baisse</td><td>anciennes commandes à tension fixe</td></tr>
+        <tr><td>Série</td><td>proportionnel au courant</td><td>hyperbolique, très plongeante</td><td>proportionnel au carré du courant</td><td>emballement à vide</td><td>traction, levage, démarreurs</td></tr>
+        <tr><td>Composée</td><td>shunt plus série</td><td>intermédiaire, vitesse à vide bornée</td><td>élevé</td><td>composition inversée par erreur de câblage</td><td>presses, cisailles à volant</td></tr>
+        <tr><td>Aimants permanents</td><td>constant, non réglable</td><td>droite, comme séparée</td><td>proportionnel au courant</td><td>désaimantation par surintensité ou échauffement</td><td>petits moteurs, actionneurs, servomoteurs</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-rails-figure" data-renvoi="d-rails-figure">les rails de Laplace</a> et <a href="#d-anim-figure" data-renvoi="d-anim-figure">l'animation de la spire et du collecteur</a>, section D ;</li>
+    <li><a href="#e-coupe-figure" data-renvoi="e-coupe-figure">la coupe de la machine</a>, <a href="#e-forces-figure" data-renvoi="e-forces-figure">l'animation des forces et du rôle du collecteur</a>, <a href="#e-equivalent-figure" data-renvoi="e-equivalent-figure">les schémas équivalents</a>, <a href="#e-excitations-figure" data-renvoi="e-excitations-figure">les raccordements de l'inducteur</a>, <a href="#e-courbes-figure" data-renvoi="e-courbes-figure">les courbes qualitatives</a>, <a href="#e-carac-figure" data-renvoi="e-carac-figure">la simulation de la caractéristique mécanique</a>, <a href="#e-cascade-figure" data-renvoi="e-cascade-figure">la cascade des puissances</a>, <a href="#e-commut-figure" data-renvoi="e-commut-figure">l'animation de la commutation</a>, <a href="#e-quadrants-figure" data-renvoi="e-quadrants-figure">les quatre quadrants</a> et <a href="#e-dyn-figure" data-renvoi="e-dyn-figure">la simulation du démarrage</a>, section E ;</li>
+    <li><a href="#h-donnees-figure" data-renvoi="h-donnees-figure">le schéma de l'exemple numérique</a>, section H ;</li>
+    <li><a href="#i-vanne-figure" data-renvoi="i-vanne-figure">l'actionneur de la vanne de refoulement</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour calculer la vitesse, le couple et le rendement d'un moteur à courant continu, puis traiter son démarrage :</p>
+  <ol>
+    <li>Rassembler les données : tension et courant d'induit nominaux, vitesse, puissance utile, mode et grandeurs d'excitation, résistance d'induit à chaud, chute aux balais, pertes collectives ou essai à vide. Noter ce qui est mesuré et ce qui est supposé.</li>
+    <li>Fixer les conventions : récepteur en moteur, générateur en génératrice ; convertir les vitesses en $\mathrm{rad/s}$.</li>
+    <li>Au point nominal, calculer $E = U - RI - \Delta U_b$ puis $K\Phi = E/\varOmega$ ; c'est la constante qui servira partout, à flux inchangé.</li>
+    <li>Pour un autre point : partir de la grandeur imposée par la charge. Couple imposé : $C_{em} = C_u + C_p$, puis $I = C_{em}/K\Phi$, puis $E$, puis $\varOmega$. Vitesse imposée : $E$, puis $I = (U - E - \Delta U_b)/R$, puis le couple.</li>
+    <li>Si le flux change, défluxage ou excitation série, recalculer $K\Phi$ à partir du courant d'excitation et de la courbe d'aimantation, puis reprendre l'étape 4 ; vérifier que le courant ne dépasse pas le courant nominal.</li>
+    <li>Établir le bilan : puissance absorbée, chaque perte, puissance utile, rendement.</li>
+    <li>Pour le démarrage : $E = 0$, donc $I_d = (U - \Delta U_b)/R$ ; fixer le courant maximal admissible, en déduire la résistance totale ou la rampe de tension, puis le nombre de crans ou la durée de la rampe ; vérifier la chute de tension imposée à la source.</li>
+    <li>Contrôler : somme des pertes, $K\Phi$ identique en $\mathrm{V \cdot s/rad}$ et en $\mathrm{N \cdot m/A}$, vitesse à vide légèrement supérieure à la vitesse nominale, rendement plausible, sens de rotation et quadrant de fonctionnement cohérents.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Une enrouleuse est entraînée par un moteur à courant continu à excitation séparée, alimenté par un redresseur commandé réglable.
+    Le schéma fixe les conventions et les données.
+  </p>
+  <figure id="h-donnees-figure">
+    <svg viewBox="0 0 760 270" role="img" aria-label="Schéma de l'exemple : redresseur commandé alimentant l'induit sous 440 volts, excitation séparée sous 220 volts, moteur accouplé à une enrouleuse, avec les sens de U, I, Ue, Ie, du couple et de la vitesse">
+      <defs>
+        <marker id="fl-h" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="30" y="60" width="140" height="120" rx="10"/>
+        <path d="M170 90H330V108M330 152V210H170V170"/>
+        <circle cx="330" cy="130" r="22"/>
+        <path d="M352 130H520" stroke-width="5"/>
+        <rect x="520" y="95" width="80" height="70" rx="8"/>
+        <circle cx="560" cy="130" r="24"/>
+        <path d="M80 60V30H300a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0H380V48H120V60"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="330" cy="90" r="4"/><circle cx="330" cy="210" r="4"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+        <path d="M290 200V100" marker-end="url(#fl-h)"/>
+        <path d="M220 80H262" marker-end="url(#fl-h)"/>
+        <path d="M226 18H262" marker-end="url(#fl-h)"/>
+        <path d="M410 108C430 96 456 96 474 108" stroke-width="2.4" marker-end="url(#fl-h)"/>
+        <path d="M410 152C430 164 456 164 474 152" stroke-width="2.4" stroke-dasharray="6 4" marker-end="url(#fl-h)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="44" y="94">redresseur</text>
+        <text x="44" y="112">commandé</text>
+        <text x="44" y="130">U réglable</text>
+        <text x="44" y="148">0 à 440 V</text>
+        <text x="270" y="160">U</text>
+        <text x="232" y="74">I</text>
+        <text x="200" y="22">I_e</text>
+        <text x="392" y="34">inducteur</text>
+        <text x="322" y="134">M</text>
+        <text x="340" y="84">A1</text>
+        <text x="340" y="226">A2</text>
+        <text x="420" y="90">Ω</text>
+        <text x="420" y="182">C_u</text>
+        <text x="528" y="190">enrouleuse</text>
+        <text x="620" y="40">plaque :</text>
+        <text x="620" y="58">440 V, 52 A</text>
+        <text x="620" y="76">1500 tr/min, 21 kW</text>
+        <text x="620" y="94">excitation séparée</text>
+        <text x="620" y="112">220 V, 1,8 A</text>
+        <text x="620" y="140">mesures et données :</text>
+        <text x="620" y="158">R = 0,40 Ω à chaud</text>
+        <text x="620" y="176">ΔU_b = 2 V</text>
+        <text x="620" y="194">p_c = 600 W</text>
+        <text x="620" y="212">à 1500 tr/min</text>
+        <text x="30" y="254">référence de potentiel : borne A2 ; induit en convention récepteur</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma de l'exemple. Le redresseur commandé impose $U$ entre A1 et A2, flèche orientée vers A1 ; le courant $I$ entre par A1, convention
+      récepteur. Une sortie séparée alimente l'inducteur sous $U_e$ avec $I_e$. Le moteur, cercle marqué M, entraîne l'enrouleuse : la
+      flèche courbe pleine indique le sens de rotation $\varOmega$, la flèche courbe en tirets le couple utile $C_u$ transmis à la charge,
+      de même sens en fonctionnement moteur. Les données de plaque et de mesure sont reportées à droite.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Données : $U_n = 440\ \mathrm{V}$, $I_n = 52\ \mathrm{A}$, $n_n = 1500\ \mathrm{tr/min}$, $P_n = 21\ \mathrm{kW}$ utiles ; excitation séparée
+    $U_e = 220\ \mathrm{V}$, $I_e = 1{,}8\ \mathrm{A}$ ; résistance d'induit et des pôles de commutation à chaud $R = 0{,}40\ \mathrm{\Omega}$, chute aux
+    balais $\Delta U_b = 2\ \mathrm{V}$ ; pertes collectives $p_c = 600\ \mathrm{W}$ à $1500\ \mathrm{tr/min}$, supposées constantes au voisinage.
+    Inconnues : $K\Phi$, couples électromagnétique et utile, rendement nominal ; vitesse à la moitié du couple utile ; vitesse sous
+    $300\ \mathrm{V}$ ; effet d'un défluxage à $80\ \%$ ; courant de démarrage direct et rhéostat de démarrage ; vitesse de récupération.
+    Stratégie : appliquer la méthode G à partir du point nominal.
+  </p>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li>Vitesse angulaire nominale : $\varOmega_n = 2\pi \times 1500/60 = 157{,}08\ \mathrm{rad/s}$.</li>
+    <li>Force électromotrice et constante : $E_n = 440 - 0{,}40 \times 52 - 2 = 417{,}2\ \mathrm{V}$, d'où $K\Phi = 417{,}2/157{,}08 = 2{,}656\ \mathrm{V \cdot s/rad}$, soit aussi $2{,}656\ \mathrm{N \cdot m/A}$.</li>
+    <li>Couples : $C_{em} = 2{,}656 \times 52 = 138{,}1\ \mathrm{N \cdot m}$ ; couple de pertes $C_p = 600/157{,}08 = 3{,}82\ \mathrm{N \cdot m}$ ; couple utile $C_u = 134{,}3\ \mathrm{N \cdot m}$. Puissances : $P_{em} = E I = 417{,}2 \times 52 = 21\,694\ \mathrm{W}$, $P_u = 21\,694 - 600 = 21\,094\ \mathrm{W}$, à $0{,}4\ \%$ des $21\ \mathrm{kW}$ de la plaque.</li>
+    <li>Rendement : $P_{abs} = 440 \times 52 + 220 \times 1{,}8 = 22\,880 + 396 = 23\,276\ \mathrm{W}$ et $\eta = 21\,094/23\,276 = 90{,}6\ \%$. Pertes : $396 + 1081{,}6 + 104 + 600 = 2181{,}6\ \mathrm{W} = 23\,276 - 21\,094$, le bilan est fermé.</li>
+    <li>Moitié du couple utile, $67{,}15\ \mathrm{N \cdot m}$ : $C_{em} = 67{,}15 + 3{,}82 = 70{,}97\ \mathrm{N \cdot m}$, $I = 70{,}97/2{,}656 = 26{,}72\ \mathrm{A}$, $E = 440 - 0{,}40 \times 26{,}72 - 2 = 427{,}3\ \mathrm{V}$, $\varOmega = 160{,}9\ \mathrm{rad/s}$, soit $n = 1536\ \mathrm{tr/min}$. La vitesse n'a augmenté que de $2{,}4\ \%$.</li>
+    <li>Tension réduite à $300\ \mathrm{V}$, couple nominal : $E = 300 - 20{,}8 - 2 = 277{,}2\ \mathrm{V}$, $\varOmega = 104{,}4\ \mathrm{rad/s}$, $n = 997\ \mathrm{tr/min}$.</li>
+    <li>Défluxage à $80\ \%$ sous $440\ \mathrm{V}$ et courant nominal : $K\Phi' = 0{,}8 \times 2{,}656 = 2{,}125\ \mathrm{V \cdot s/rad}$, $E$ inchangée à $417{,}2\ \mathrm{V}$, $\varOmega = 196{,}3\ \mathrm{rad/s}$, $n = 1875\ \mathrm{tr/min}$ ; le couple tombe à $2{,}125 \times 52 = 110{,}5\ \mathrm{N \cdot m}$ et la puissance électromagnétique reste $21{,}69\ \mathrm{kW}$ : c'est le fonctionnement à puissance constante.</li>
+    <li>Démarrage : en direct, $I_d = (440 - 2)/0{,}40 = 1095\ \mathrm{A}$, $21$ fois $I_n$ en régime quasi statique. Pour $2I_n = 104\ \mathrm{A}$ : $R_{tot} = 438/104 = 4{,}21\ \mathrm{\Omega}$, donc $R_{\text{dém}} = 3{,}81\ \mathrm{\Omega}$, qui dissipe $3{,}81 \times 104^2 = 41{,}2\ \mathrm{kW}$ à l'instant initial ; le couple de démarrage vaut $2{,}656 \times 104 = 276\ \mathrm{N \cdot m}$, deux fois le nominal.</li>
+    <li>Récupération : sous $440\ \mathrm{V}$, le courant s'annule à $\varOmega = 440/2{,}656 = 165{,}7\ \mathrm{rad/s}$, soit $1582\ \mathrm{tr/min}$. Pour renvoyer $52\ \mathrm{A}$ en génératrice, il faut $E = 440 + 20{,}8 + 2 = 462{,}8\ \mathrm{V}$, donc $n = 1664\ \mathrm{tr/min}$ ; la source reçoit $440 \times 52 = 22{,}9\ \mathrm{kW}$, à condition que le redresseur soit réversible.</li>
+  </ol>
+
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li><strong>Unités :</strong> $K\Phi$ en $\mathrm{V \cdot s/rad}$ multiplié par des $\mathrm{rad/s}$ donne des volts ; multiplié par des ampères, des $\mathrm{N \cdot m}$ ; $138{,}1 \times 157{,}08 = 21\,694\ \mathrm{W} = E I$.</li>
+    <li><strong>Plaque :</strong> la puissance utile calculée, $21{,}09\ \mathrm{kW}$, recoupe les $21\ \mathrm{kW}$ annoncés : les données sont cohérentes.</li>
+    <li><strong>Ordres de grandeur :</strong> chute $RI$ de $4{,}7\ \%$ de $U$, rendement de $90\ \%$, vitesse à vide $4\ \%$ au-dessus du nominal : valeurs typiques d'une machine de quelques dizaines de kilowatts.</li>
+    <li><strong>Sens de variation :</strong> moins de couple, plus de vitesse ; moins de tension, moins de vitesse ; moins de flux, plus de vitesse et moins de couple au même courant.</li>
+    <li><strong>Limites :</strong> les pertes collectives ont été supposées constantes et la réaction d'induit négligée ; à $1875\ \mathrm{tr/min}$, il faut vérifier la vitesse maximale admise par le constructeur et la commutation, plus difficile à flux réduit.</li>
+  </ul>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+
+  <h3 id="i-probleme">L'actionneur de la vanne de refoulement de la pompe, sur le bus 24 V secouru</h3>
+  <p>
+    Dans le projet fil rouge, la pompe du site refoule à travers une vanne papillon. En cas de perte du réseau, la logique de
+    fonctionnement dégradé doit fermer cette vanne pour éviter la vidange de la colonne de refoulement. On retient un actionneur
+    électrique à moteur à courant continu à aimants permanents, alimenté par le bus 24 V secouru, dont l'équivalent de Thévenin a été
+    établi dans le cours <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes de Thévenin, Norton et superposition</a>.
+    Toutes les données de l'actionneur et de la vanne sont des hypothèses d'étude, à remplacer par la documentation des appareils retenus.
+  </p>
+  <figure id="i-vanne-figure">
+    <svg viewBox="0 0 760 330" role="img" aria-label="Actionneur de la vanne : bus 24 volts secouru avec chargeur et batterie, armoire automate, câble de 40 mètres, module de limitation de courant, inverseur à deux relais verrouillés, moteur à aimants permanents, réducteur à roue et vis et vanne papillon avec fins de course">
+      <defs>
+        <marker id="fl-i" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="20" y="40" width="120" height="70" rx="8"/>
+        <rect x="20" y="140" width="120" height="70" rx="8"/>
+        <path d="M140 75H180V250M140 175H180"/>
+        <path d="M180 120H240"/>
+        <rect x="240" y="100" width="70" height="40" rx="6"/>
+        <path d="M310 120H360"/>
+        <rect x="360" y="98" width="70" height="44" rx="6"/>
+        <path d="M430 120H470"/>
+        <rect x="470" y="90" width="80" height="60" rx="6"/>
+        <path d="M550 120H570"/>
+        <circle cx="592" cy="120" r="22"/>
+        <path d="M614 120H640" stroke-width="4"/>
+        <rect x="640" y="100" width="44" height="40" rx="4"/>
+        <path d="M684 120H700" stroke-width="4"/>
+        <circle cx="720" cy="120" r="18"/>
+        <path d="M708 132L732 108"/>
+        <path d="M180 120V290H240"/>
+        <rect x="240" y="272" width="70" height="36" rx="6"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M200 140V184" marker-end="url(#fl-i)"/>
+        <path d="M330 84H352" marker-end="url(#fl-i)"/>
+        <path d="M700 168C716 176 732 168 738 152" stroke-dasharray="5 4" marker-end="url(#fl-i)"/>
+        <path d="M480 175V160M540 175V160"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="30" y="64">chargeur</text>
+        <text x="30" y="82">27 V ; 0,5 Ω</text>
+        <text x="30" y="164">batterie</text>
+        <text x="30" y="182">24 V ; 0,5 Ω</text>
+        <text x="20" y="232">0 V du bus, référence</text>
+        <text x="186" y="96">bus</text>
+        <text x="210" y="168">U_bus</text>
+        <text x="248" y="124">câble</text>
+        <text x="244" y="156">40 m, 0,576 Ω</text>
+        <text x="366" y="118">limiteur</text>
+        <text x="366" y="134">3 A</text>
+        <text x="334" y="80">I</text>
+        <text x="476" y="112">KF / KO</text>
+        <text x="476" y="128">inverseur</text>
+        <text x="476" y="144">verrouillé</text>
+        <text x="472" y="192">SF, SO : fins de course</text>
+        <text x="584" y="124">M</text>
+        <text x="566" y="164">aimants</text>
+        <text x="644" y="94">1:3000</text>
+        <text x="636" y="160">roue et vis</text>
+        <text x="696" y="94">vanne</text>
+        <text x="246" y="294">armoire</text>
+        <text x="320" y="294">automate, 6 Ω équivalents, sur le même bus</text>
+        <text x="20" y="320">équivalent du bus avec l'armoire : 24,48 V et 0,24 Ω, chargeur en service</text>
+      </g>
+    </svg>
+    <figcaption>
+      Actionneur de la vanne de refoulement. Le bus 24 V secouru est alimenté par le chargeur et par la batterie ; son 0 V sert de référence
+      de potentiel. L'armoire de l'automate, modélisée par $6\ \mathrm{\Omega}$, est raccordée au même bus que l'actionneur. Le courant $I$ du
+      moteur parcourt le câble de $40\ \mathrm{m}$, le module de limitation de courant, puis l'inverseur à deux relais KF, fermeture, et KO,
+      ouverture, verrouillés l'un par l'autre, qui fixe la polarité de l'induit donc le sens de rotation. Le moteur à aimants entraîne la vanne
+      par un réducteur à roue et vis ; la flèche courbe en tirets indique la rotation du papillon. Les fins de course SF et SO coupent le relais
+      correspondant en fin de manœuvre.
+    </figcaption>
+  </figure>
+  <p>
+    Hypothèses : moteur à aimants de plaque $24\ \mathrm{V}$, $3{,}0\ \mathrm{A}$, $2780\ \mathrm{tr/min}$, résistance d'induit balais compris
+    $R_m = 1{,}2\ \mathrm{\Omega}$ à chaud, $K\Phi = 0{,}070\ \mathrm{V \cdot s/rad}$, couple de pertes $C_p = 0{,}010\ \mathrm{N \cdot m}$, inertie
+    $J = 5 \times 10^{-5}\ \mathrm{kg \cdot m^2}$ ; réducteur à roue et vis de rapport $3000$ et de rendement $0{,}35$, donc irréversible ; vanne
+    papillon dont le couple de décollement est de $150\ \mathrm{N \cdot m}$ et le couple de manœuvre de $60\ \mathrm{N \cdot m}$ ; quart de tour en
+    manœuvre ; câble de $40\ \mathrm{m}$ en $2 \times 2{,}5\ \mathrm{mm^2}$, $0{,}576\ \mathrm{\Omega}$, comme celui de la bobine de KM1 ; automate dont la
+    tension minimale de fonctionnement est supposée à $20{,}4\ \mathrm{V}$, soit $24\ \mathrm{V} - 15\ \%$.
+  </p>
+
+  <h3 id="i-calcul">Calculs et vérifications</h3>
+  <ol>
+    <li>Contrôle de la plaque : $E = 24 - 1{,}2 \times 3 = 20{,}4\ \mathrm{V}$, $\varOmega = 20{,}4/0{,}070 = 291{,}4\ \mathrm{rad/s}$, soit $2783\ \mathrm{tr/min}$ ; $C_{em} = 0{,}21\ \mathrm{N \cdot m}$, $P_u = 0{,}20 \times 291{,}4 = 58{,}3\ \mathrm{W}$ pour $72\ \mathrm{W}$ absorbés, $\eta = 81\ \%$.</li>
+    <li>Couples ramenés au moteur : $60/(3000 \times 0{,}35) = 0{,}057\,1\ \mathrm{N \cdot m}$ en manœuvre et $150/1050 = 0{,}142\,9\ \mathrm{N \cdot m}$ au décollement ; courants correspondants $(0{,}057\,1 + 0{,}010)/0{,}070 = 0{,}959\ \mathrm{A}$ et $2{,}18\ \mathrm{A}$.</li>
+    <li>Source vue par l'actionneur, chargeur en service : le bus de $25{,}5\ \mathrm{V}$ et $0{,}25\ \mathrm{\Omega}$ chargé par l'armoire de $6\ \mathrm{\Omega}$ équivaut à $25{,}5 \times 6/6{,}25 = 24{,}48\ \mathrm{V}$ et $0{,}25 \parallel 6 = 0{,}24\ \mathrm{\Omega}$. Résistance totale de la maille : $0{,}24 + 0{,}576 + 1{,}2 = 2{,}016\ \mathrm{\Omega}$.</li>
+    <li>Manœuvre normale : $E = 24{,}48 - 2{,}016 \times 0{,}959 = 22{,}55\ \mathrm{V}$, $n = 3076\ \mathrm{tr/min}$, soit $1{,}03\ \mathrm{tr/min}$ à la vanne : le quart de tour dure $14{,}6\ \mathrm{s}$.</li>
+    <li>Démarrage direct, chargeur en service : $I_d = 24{,}48/2{,}016 = 12{,}1\ \mathrm{A}$, quatre fois le courant de plaque ; le bus descend à $24{,}48 - 0{,}24 \times 12{,}1 = 21{,}57\ \mathrm{V}$, encore au-dessus de $20{,}4\ \mathrm{V}$.</li>
+    <li>Démarrage direct en secours, chargeur coupé, batterie à sa force électromotrice nominale de $24\ \mathrm{V}$ et $0{,}5\ \mathrm{\Omega}$ : source équivalente $22{,}15\ \mathrm{V}$ et $0{,}462\ \mathrm{\Omega}$ ; $I_d = 22{,}15/2{,}238 = 9{,}90\ \mathrm{A}$ et le bus tombe à $17{,}58\ \mathrm{V}$ : l'automate risque de redémarrer précisément au moment où il commande la fermeture de sécurité.</li>
+    <li>Limitation du courant à $3\ \mathrm{A}$ : le bus reste à $22{,}15 - 0{,}462 \times 3 = 20{,}77\ \mathrm{V}$ en secours et à $23{,}76\ \mathrm{V}$ en service normal ; le couple disponible, $0{,}070 \times 3 = 0{,}21\ \mathrm{N \cdot m}$, dépasse les $0{,}153\ \mathrm{N \cdot m}$ du décollement, avec une marge de $1{,}37$. En secours, la manœuvre dure $16{,}5\ \mathrm{s}$.</li>
+    <li>Arrêt en fin de course : le réducteur irréversible tient la vanne sans frein. Moteur coupé, le couple résistant ramené, $0{,}067\ \mathrm{N \cdot m}$, l'arrête en $0{,}24\ \mathrm{s}$ et $6{,}2$ tours moteur, soit $0{,}74^\circ$ de dépassement au papillon. Un freinage par court-circuit de l'induit donnerait une pointe de $22{,}55/1{,}2 = 18{,}8\ \mathrm{A}$ dans les contacts du relais : il n'est pas retenu.</li>
+  </ol>
+
+  <h3 id="i-compromis">Contraintes, risques et compromis</h3>
+  <ul>
+    <li><strong>Limitation de courant :</strong> un module à découpage limitant à $3\ \mathrm{A}$ protège la tension de l'automate et l'aimant du moteur ; une simple résistance série de démarrage, court-circuitée ensuite, coûterait moins cher mais dissiperait en permanence ou demanderait un relais de plus. Le principe de ce module sera étudié dans le cours Hacheurs DC-DC.</li>
+    <li><strong>Inversion :</strong> les relais KF et KO sont verrouillés électriquement par contacts croisés, et logiquement dans l'automate ; leur fermeture simultanée court-circuiterait le bus. Le sens est fixé par la polarité de l'induit, puisque le flux des aimants ne peut pas s'inverser.</li>
+    <li><strong>Blocage :</strong> une vanne grippée maintient le courant à la limite de $3\ \mathrm{A}$ ; l'automate déclare un défaut si les fins de course ne sont pas atteintes en $25\ \mathrm{s}$ environ, valeur à confirmer, ou si le courant reste à la limite plus de $2\ \mathrm{s}$.</li>
+    <li><strong>Ordre de priorité en secours :</strong> la fermeture doit être commandée dès la perte du réseau, tant que la batterie est proche de sa force électromotrice nominale ; en fin de décharge, à $21{,}6\ \mathrm{V}$, le bus n'offre plus que $19{,}9\ \mathrm{V}$ sans l'actionneur.</li>
+    <li><strong>Durée de manœuvre :</strong> $14{,}6$ à $16{,}5\ \mathrm{s}$ pour un quart de tour ; la valeur acceptable dépend du coup de bélier dans la conduite, qui doit être confirmé par une étude hydraulique.</li>
+    <li><strong>Limites :</strong> constantes du moteur, couples de la vanne, rendement du réducteur et seuil de l'automate sont supposés ; ils fixent la marge de $1{,}37$, qui doit être vérifiée à froid, où les couples de décollement augmentent.</li>
+  </ul>
+
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : ce que cette séance ajoute</span>
+    <p>
+      Actionneur de la vanne de refoulement de la pompe, sur le bus 24 V secouru : moteur à aimants supposé de $24\ \mathrm{V}$, $3\ \mathrm{A}$,
+      $2780\ \mathrm{tr/min}$, $K\Phi = 0{,}070\ \mathrm{V \cdot s/rad}$, $R_m = 1{,}2\ \mathrm{\Omega}$, réducteur à roue et vis de $3000$, rendement $0{,}35$ ;
+      vanne de $150\ \mathrm{N \cdot m}$ au décollement et $60\ \mathrm{N \cdot m}$ en manœuvre, soit $2{,}18$ et $0{,}96\ \mathrm{A}$ ; quart de tour en
+      $14{,}6\ \mathrm{s}$ en service normal et $16{,}5\ \mathrm{s}$ sur batterie ; démarrage direct à $12{,}1\ \mathrm{A}$, acceptable chargeur en service,
+      mais qui ferait tomber le bus à $17{,}6\ \mathrm{V}$ en secours ; limitation à $3\ \mathrm{A}$ retenue, bus à $20{,}8\ \mathrm{V}$ au moins, marge de
+      couple de $1{,}37$ ; inverseur à relais verrouillés, fins de course, surveillance du temps de manœuvre et du courant ; fermeture commandée
+      dès la perte du réseau ; pas de frein, dépassement de $0{,}74^\circ$.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Utiliser des tours par minute dans $E = K\Phi\varOmega$.</strong> $K\Phi$ en $\mathrm{V \cdot s/rad}$ exige des $\mathrm{rad/s}$ ; avec des tours par minute, l'erreur est d'un facteur $9{,}55$. Certaines plaques donnent une constante en $\mathrm{V}$ pour $1000\ \mathrm{tr/min}$ : il faut la convertir.</li>
+    <li><strong>Confondre couple électromagnétique et couple utile.</strong> $C_{em} = K\Phi I$ inclut le couple de pertes ; le couple disponible sur l'arbre est $C_u = C_{em} - p_c/\varOmega$.</li>
+    <li><strong>Calculer le courant de démarrage avec la tension divisée par une impédance nominale.</strong> À l'arrêt, $E = 0$ : seul $R$ limite le courant, soit des dizaines de fois le courant nominal.</li>
+    <li><strong>Inverser les deux alimentations pour changer de sens.</strong> Inverser à la fois l'induit et l'inducteur laisse le couple inchangé ; il faut n'en inverser qu'un, de préférence l'induit.</li>
+    <li><strong>Couper l'excitation d'un moteur en marche.</strong> Le flux rémanent seul donne une force électromotrice faible : le courant d'induit monte, la vitesse s'emballe si la charge est faible ; et l'ouverture brutale de l'inducteur, très inductif, crée une surtension.</li>
+    <li><strong>Démarrer un moteur série à vide ou l'accoupler par courroie.</strong> Sans charge, le flux devient faible et la vitesse n'est plus bornée ; une courroie qui casse produit le même effet.</li>
+    <li><strong>Croire que la vitesse est proportionnelle à la tension.</strong> C'est la force électromotrice qui l'est ; la chute $RI + \Delta U_b$ fait que $300\ \mathrm{V}$ au lieu de $440\ \mathrm{V}$ donnent $997$ et non $1023\ \mathrm{tr/min}$.</li>
+    <li><strong>Attribuer les étincelles aux seuls balais usés.</strong> Elles proviennent souvent d'un défaut de commutation : pôles de commutation mal réglés ou inversés, balais hors de la ligne neutre, surcharge, collecteur ovalisé.</li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain : un moteur qui accélère et déclenche en survitesse ou en surintensité après une intervention signale une
+    excitation coupée ou mal serrée ; des étincelles qui croissent avec la charge, sur tous les balais, signalent des pôles de commutation
+    inversés ou un décalage des balais ; une vitesse qui chute sous charge plus que prévu signale une résistance de contact anormale ou un
+    flux réduit par saturation ou par échauffement des aimants ; une rotation dans le mauvais sens après remplacement d'un câble signale
+    une inversion de l'induit ou de l'inducteur, pas des deux ; un courant à vide anormalement élevé signale des frottements ou un
+    défaut de roulement, qui augmentent les pertes collectives.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic industriel et
+    une question conceptuelle. Ils vont de l'application directe d'une formule au dimensionnement sous contrainte, puis au diagnostic et
+    à l'analyse d'un compromis. La correction de chacun reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la correction",
+    puis se déroule étape par étape, accompagnée d'un schéma annoté ou d'une courbe.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Après chaque
+    réponse, l'explication s'affiche avec un petit schéma tracé pas à pas.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$E = K\Phi\varOmega, \qquad K = \frac{pN}{2\pi a}, \qquad \varOmega = \frac{2\pi n}{60}$$
+    $$C_{em} = K\Phi I, \qquad E\,I = C_{em}\,\varOmega, \qquad C_u = C_{em} - \frac{p_c}{\varOmega}$$
+    $$\text{moteur : } U = E + R I + \Delta U_b, \qquad \text{génératrice : } U = E - R I - \Delta U_b$$
+    $$\varOmega = \frac{U}{K\Phi} - \frac{R}{(K\Phi)^2}\,C_{em}, \qquad I_d = \frac{U - \Delta U_b}{R}$$
+    $$\eta = \frac{P_u}{U I + U_e I_e}, \qquad \tau_m = \frac{R J}{(K\Phi)^2}, \qquad \zeta = \frac{1}{2}\sqrt{\frac{\tau_m}{\tau_e}}$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>Vitesses en $\mathrm{rad/s}$ dans toutes les formules ; la constante $K\Phi$ a la même valeur en $\mathrm{V \cdot s/rad}$ et en $\mathrm{N \cdot m/A}$.</li>
+      <li>À l'arrêt, $E = 0$ : le courant de démarrage direct n'est limité que par $R$, soit souvent plus de dix fois le courant nominal.</li>
+      <li>Ne jamais ouvrir l'excitation d'un moteur en marche, ni laisser un moteur série sans charge.</li>
+      <li>Inverser l'induit ou l'inducteur pour changer de sens, jamais les deux.</li>
+      <li>Le défluxage augmente la vitesse mais réduit le couple au même courant : il se pratique à puissance constante, sous le courant nominal.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Une machine à courant continu repose sur deux phénomènes : un conducteur qui coupe des lignes de champ porte une
+    force électromotrice, un conducteur parcouru par un courant dans un champ subit une force. Le collecteur redresse mécaniquement la
+    tension alternative des sections et fixe dans l'espace la répartition des courants. Deux relations résument la machine,
+    $E = K\Phi\varOmega$ et $C_{em} = K\Phi I$, avec la même constante. En moteur, $U = E + RI$ : la tension fixe la vitesse, le courant fixe
+    le couple, le flux fixe le rapport entre les deux. Au démarrage, seule la résistance limite le courant, d'où un rhéostat ou une rampe de
+    tension. L'excitation série donne un fort couple de démarrage mais s'emballe à vide. Le rendement suit le bilan des pertes ; la
+    commutation exige des pôles auxiliaires.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent,
+    <a href="#/cours/revision-5-et-etude-de-cas-transformateur">Révision 5 et étude de cas transformateur</a> ; une sur le cours
+    <a href="#/cours/circuits-magnetiques">Circuits magnétiques</a>, vieux d'une semaine, dont le calcul d'entrefer fixe les ampères-tours
+    d'excitation d'un pôle ; une sur le cours
+    <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes de Thévenin, Norton et superposition</a>, vieux d'un mois, dont
+    l'équivalent du bus 24 V secouru a servi à l'actionneur de la vanne.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : simuler dans LTspice le démarrage du moteur de la section H à l'aide d'un modèle électrique équivalent, puis comparer
+    démarrage direct, rhéostat et rampe de tension, et vérifier en Python les grandeurs caractéristiques. Prédictions à écrire avant de
+    commencer : instant et valeur approximative de la pointe de courant en démarrage direct à vide ; vitesse maximale atteinte ;
+    effet du rhéostat de $3{,}81\ \mathrm{\Omega}$ sur la forme de la réponse.
+  </p>
+  <ol>
+    <li>Principe de l'analogie : la vitesse $\varOmega$ est représentée par la tension d'un nœud <code>w</code>, l'inertie par un condensateur de capacité $J$, le couple par un courant. Ainsi $J\,\mathrm{d}\varOmega/\mathrm{d}t = C_{em} - C_r$ devient la loi des nœuds au nœud <code>w</code>.</li>
+    <li>Circuit d'induit : <code>V1 in 0 PWL(0 0 1u 440)</code>, <code>Rd in a {Rd}</code>, <code>Ra a b 0.40</code>, <code>La b c 12m</code>, et la force électromotrice <code>Be c 0 V=2.656*V(w)</code>.</li>
+    <li>Partie mécanique : <code>Bc 0 w I=2.656*I(La)</code>, qui injecte le couple électromagnétique dans le nœud <code>w</code> ; <code>Cj w 0 0.35</code> pour l'inertie ; <code>Il w 0 {Cr}</code> pour le couple résistant. Ajouter <code>.param Rd=0 Cr=0</code> et <code>.tran 0 1.5 0 20u uic</code>.</li>
+    <li>Lancer, tracer <code>I(La)</code> et <code>V(w)</code>, convertir $V(w)$ en tours par minute par $60/(2\pi)$. Recommencer avec <code>Rd=3.81</code>, puis avec <code>Rd=0</code> et une rampe <code>PWL(0 0 2 440)</code> sur <code>.tran 0 3 0 20u uic</code>, puis avec <code>Cr=138</code>.</li>
+    <li>En Python, calculer $\tau_e = L/R$, $\tau_m = RJ/(K\Phi)^2$, $\zeta$ et le dépassement théorique $e^{-\pi\zeta/\sqrt{1 - \zeta^2}}$ ; tracer la famille de caractéristiques $n(C_{em})$ pour $U$ de $100$ à $440\ \mathrm{V}$ et pour un flux de $80$ à $100\ \%$.</li>
+  </ol>
+  <p>
+    Résultats attendus : en démarrage direct à vide, pointe de courant d'environ $536\ \mathrm{A}$ vers $31\ \mathrm{ms}$, vitesse maximale
+    d'environ $206{,}6\ \mathrm{rad/s}$, soit $1973\ \mathrm{tr/min}$, vers $84\ \mathrm{ms}$, puis stabilisation à $165{,}7\ \mathrm{rad/s}$, soit
+    $1582\ \mathrm{tr/min}$ ; $\zeta = 0{,}41$ et un dépassement théorique de $24\ \%$. Avec $3{,}81\ \mathrm{\Omega}$, pointe de $99{,}7\ \mathrm{A}$ vers
+    $12{,}5\ \mathrm{ms}$ et montée apériodique, $95\ \%$ de la vitesse finale vers $0{,}62\ \mathrm{s}$. Avec la rampe de $2\ \mathrm{s}$, courant à vide
+    de l'ordre de $13{,}6\ \mathrm{A}$, juste ce qu'il faut pour accélérer l'inertie. Anomalies à observer : sans l'option <code>uic</code>, le
+    calcul du point de repos initial fixe un courant et une vitesse non nuls ; avec <code>Cr</code> non nul, la vitesse devient négative au tout
+    début, car le modèle ignore le frottement statique qui maintient le rotor à l'arrêt tant que le couple moteur est insuffisant ; un pas de
+    calcul trop grand écrête la pointe de courant ; enfin la vitesse finale dépasse un peu celle de la section H parce que le modèle néglige
+    la chute aux balais et les pertes collectives.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est calculé dans ce navigateur à
+    partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement pour suivre votre
+    progression. Le jalon de fin du module des machines électriques demande de comprendre les principales machines, de lire leurs modèles,
+    d'interpréter une plaque signalétique et de choisir une solution d'entraînement : calculer la vitesse, le couple et le rendement d'un
+    moteur à courant continu à partir de sa plaque en est la première étape.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Le collecteur est un redresseur mécanique : il garde fixe dans l'espace la répartition des courants de l'induit, ce qui rend le couple unidirectionnel et la tension continue.</li>
+    <li data-rang="02">$E = K\Phi\varOmega$ et $C_{em} = K\Phi I$ : la tension fixe la vitesse, le courant fixe le couple, le flux fixe le rapport entre les deux ; $E I = C_{em}\varOmega$ est la puissance convertie.</li>
+    <li data-rang="03">À l'arrêt la force électromotrice est nulle : le démarrage exige une limitation du courant, par rhéostat à plusieurs crans ou, mieux, par une rampe de tension fournie par un convertisseur.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> enchaîner sans erreur les étapes d'un calcul de point de fonctionnement, en partant de la
+    grandeur imposée par la charge, en tenant compte des pertes collectives et de la chute aux balais, et en gardant les vitesses en
+    $\mathrm{rad/s}$. L'exemple de la section H, la simulation de la caractéristique mécanique et les exercices intermédiaires sont faits pour
+    installer ce réflexe ; la simulation du démarrage relie ensuite ces calculs statiques au comportement dans le temps.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Moteur asynchrone triphasé, étudie une machine sans collecteur ni balais. Question
+    à préparer : dans la machine à courant continu, le collecteur maintient la répartition des courants de l'induit fixe dans l'espace pendant
+    que le rotor tourne. Comment trois enroulements fixes, alimentés par les courants d'un réseau triphasé, peuvent-ils créer un champ qui
+    tourne, et pourquoi un rotor en court-circuit, sans aucune alimentation, tourne-t-il un peu moins vite que ce champ ?
+  </p>
+
+</article>
