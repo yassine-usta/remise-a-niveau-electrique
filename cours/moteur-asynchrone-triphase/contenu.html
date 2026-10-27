@@ -1,0 +1,1326 @@
+<article class="cours" data-slug="moteur-asynchrone-triphase">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/machine-a-courant-continu">Machine à courant continu</a> s'est achevé sur deux questions : comment trois
+      enroulements fixes, alimentés par un réseau triphasé, peuvent-ils créer un champ qui tourne, et pourquoi un rotor en court-circuit,
+      sans aucune alimentation, tourne-t-il un peu moins vite que ce champ ? La réponse tient en deux idées que cette séance démontre. La
+      première : trois champs pulsants, décalés de $120^\circ$ dans l'espace et alimentés par des courants décalés de $120^\circ$ dans le
+      temps, s'additionnent en un champ d'amplitude constante qui tourne à vitesse constante ; c'est le calcul de phaseurs du cours
+      <a href="#/cours/nombres-complexes-et-phaseurs">Nombres complexes et phaseurs</a>, appliqué à des directions de l'espace. La seconde : le
+      rotor n'est le siège de courants que s'il voit le flux varier, donc s'il glisse par rapport au champ ; à la vitesse du champ, plus de
+      variation de flux, plus de courant, plus de couple. Là où la machine à courant continu fixait la répartition des courants avec un
+      collecteur, le moteur asynchrone la fait tourner avec le réseau lui-même, et la fait naître dans le rotor par induction.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Le moteur asynchrone triphasé à cage est la machine la plus répandue de l'industrie : il entraîne la grande majorité des pompes,
+    ventilateurs, compresseurs, convoyeurs, malaxeurs et machines-outils, de quelques centaines de watts à plusieurs mégawatts. Il doit ce
+    succès à sa construction : un stator bobiné relié directement au réseau, un rotor fait de barres d'aluminium ou de cuivre court-circuitées,
+    ni collecteur, ni balais, ni bagues, ni aimants. Il est robuste, peu coûteux, presque sans entretien, et démarre seul sur le réseau. Les
+    moteurs électriques consomment une part majeure de l'électricité industrielle : un point de rendement ou un moteur mal adapté à sa charge
+    se chiffre en mégawattheures sur la durée de vie d'une installation.
+  </p>
+  <p>
+    Ses contreparties sont celles qu'il faut savoir chiffrer : un fort courant de démarrage direct, de l'ordre de six à huit fois le courant
+    nominal ; un facteur de puissance médiocre à faible charge, à cause du courant magnétisant qu'exige l'entrefer ; une vitesse fixée par la
+    fréquence du réseau, qui ne se règle finement qu'avec un variateur. L'ingénieur doit savoir lire une plaque signalétique, choisir le
+    couplage, calculer la vitesse de synchronisme, le glissement, le couple et le rendement, prévoir le point de fonctionnement sur une charge
+    donnée et reconnaître les défauts courants : marche sur deux phases, mauvais couplage, sous-tension, surcharge. Le travail central de cette
+    séance est d'interpréter une plaque de moteur et d'en tirer glissement et couple ; dans le projet fil rouge, il débouche sur la fiche du
+    moteur du compresseur du site.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Expliquer et démontrer la création d'un champ tournant par trois enroulements décalés de $120^\circ$, et prévoir l'effet d'une permutation de deux phases ou de la perte d'une phase.</li>
+    <li data-rang="02">Calculer la vitesse de synchronisme, le nombre de paires de pôles, le glissement et la fréquence des courants rotoriques à partir d'une plaque ou d'une mesure de vitesse.</li>
+    <li data-rang="03">Établir l'expression du couple en fonction du glissement, en déduire le couple maximal, le couple de démarrage et la zone de fonctionnement stable, et interpréter la courbe couple-vitesse.</li>
+    <li data-rang="04">Dresser le bilan des puissances, démontrer que les pertes Joule du rotor valent $g\,P_{tr}$, et calculer le rendement.</li>
+    <li data-rang="05">Interpréter une plaque signalétique : choisir le couplage étoile ou triangle, calculer couple nominal, puissance absorbée, courant et puissance réactive.</li>
+    <li data-rang="06">Dimensionner une vérification de démarrage sous tension réduite et estimer la durée d'accélération et l'énergie dissipée dans le rotor.</li>
+    <li data-rang="07">Diagnostiquer un moteur qui ne démarre pas, chauffe ou tourne dans le mauvais sens, à partir des courants, de la vitesse et du bruit.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Quatre acquis suffisent. Le premier, vu dans le cours <a href="#/cours/systemes-triphases-equilibres">Systèmes triphasés équilibrés</a> :
+    trois tensions de même amplitude décalées de $120^\circ$ forment un système direct, de somme nulle ; la tension composée vaut $\sqrt{3}$
+    fois la tension simple, et un récepteur se couple en étoile ou en triangle selon la tension que supporte chacun de ses éléments. Le deuxième,
+    vu dans le cours <a href="#/cours/puissance-en-triphase">Puissance en triphasé</a> : $P = \sqrt{3}\,U I \cos\varphi$ avec $U$ et $I$ grandeurs
+    de ligne, quel que soit le couplage. Le troisième, vu dans le cours <a href="#/cours/machine-a-courant-continu">Machine à courant continu</a> :
+    un conducteur qui coupe des lignes de champ est le siège d'une force électromotrice $e = B\,\ell\,v$, un conducteur parcouru par un courant
+    dans un champ subit la force $F = B\,I\,\ell$, et la puissance d'un arbre vaut $P = C\,\varOmega$. Le quatrième est trigonométrique :
+    $\cos a \cos b = \tfrac{1}{2}\left[\cos(a - b) + \cos(a + b)\right]$, et la somme de trois cosinus décalés de $120^\circ$ est nulle. Le
+    mini-test n'est pas noté ; la correction de chaque question reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la correction".
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Notation de la séance</span>
+    <p>
+      $f$ est la fréquence du réseau, $\omega = 2\pi f$ sa pulsation, $p$ le nombre de paires de pôles. $n_s$ et $\varOmega_s$ désignent la vitesse
+      de synchronisme du champ, en tours par minute et en $\mathrm{rad/s}$ ; $n$ et $\varOmega$ celle du rotor ; $g$ le glissement, sans dimension.
+      $U$ et $I$ sont la tension composée et le courant de ligne ; l'indice $n$ désigne les valeurs nominales de la plaque. $C_{em}$ est le couple
+      électromagnétique, $C_u$ le couple utile sur l'arbre, $C_r$ le couple résistant de la charge. $P_{tr}$ est la puissance transmise au rotor
+      à travers l'entrefer. Le symbole droit $\mathrm{\Omega}$ reste réservé à l'ohm.
+    </p>
+  </div>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-arago">Un aimant qui tourne et un disque qui le suit</h3>
+  <p>
+    Faites tourner un aimant en U au-dessus d'un disque d'aluminium monté sur un axe, sans le toucher. Le disque se met à tourner dans le
+    même sens que l'aimant, mais toujours un peu moins vite. L'aluminium n'est pas magnétique : ce qui l'entraîne, ce sont les courants que
+    le champ mobile y induit. Chaque portion du disque voit le flux varier quand l'aimant passe, devient le siège d'une force électromotrice, et
+    les courants qui en résultent, plongés dans le champ de l'aimant, subissent des forces de Laplace. La loi de Lenz en donne le sens : les
+    courants induits s'opposent à la cause qui les crée, c'est-à-dire au mouvement relatif de l'aimant et du disque. Le disque est donc poussé
+    à suivre l'aimant pour réduire ce mouvement relatif. Mais s'il l'atteignait, il ne verrait plus aucune variation de flux : plus de courant,
+    plus de force. Il se stabilise à une vitesse un peu inférieure, juste assez en retard pour que les courants induits produisent le couple
+    qu'exigent ses frottements.
+  </p>
+  <figure id="d-arago-figure">
+    <svg viewBox="0 0 760 300" role="img" aria-label="Expérience du disque entraîné : un aimant en U tourne à la vitesse n_s au-dessus d'un disque conducteur qui tourne dans le même sens à la vitesse n inférieure, avec les courants induits en boucles sous les pôles et les forces de Laplace tangentielles">
+      <defs>
+        <marker id="fl-d-ar" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+        <ellipse cx="230" cy="200" rx="170" ry="52"/>
+        <path d="M60 200v14M400 200v14"/>
+        <path d="M60 214A170 52 0 0 0 400 214"/>
+        <path d="M230 252V292"/>
+        <path d="M150 40V120H190V70H270V120H310V40"/>
+        <path d="M230 40V10"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="5 4">
+        <ellipse cx="170" cy="200" rx="34" ry="12"/>
+        <ellipse cx="290" cy="200" rx="34" ry="12"/>
+        <path d="M170 128V186M290 128V186"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M262 22A40 12 0 0 1 222 32" marker-end="url(#fl-d-ar)"/>
+        <path d="M330 238A150 40 0 0 1 190 246" marker-end="url(#fl-d-ar)"/>
+        <path d="M140 200H104" stroke-width="2.6" marker-end="url(#fl-d-ar)"/>
+        <path d="M320 200H356" stroke-width="2.6" marker-end="url(#fl-d-ar)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="148" y="34">N</text>
+        <text x="303" y="34">S</text>
+        <text x="270" y="16">aimant, vitesse n_s</text>
+        <text x="300" y="270">disque, vitesse n &lt; n_s</text>
+        <text x="96" y="226">F</text>
+        <text x="352" y="226">F</text>
+        <text x="122" y="226">courant induit</text>
+        <text x="244" y="226">courant induit</text>
+        <text x="438" y="60">1. L'aimant tourne : sous chaque pôle,</text>
+        <text x="438" y="78">   le flux traversant le disque varie.</text>
+        <text x="438" y="108">2. Des courants induits circulent en</text>
+        <text x="438" y="126">   boucles dans le disque (loi de Lenz).</text>
+        <text x="438" y="156">3. Plongés dans le champ, ils subissent</text>
+        <text x="438" y="174">   des forces de Laplace F tangentielles.</text>
+        <text x="438" y="204">4. Le couple entraîne le disque dans le</text>
+        <text x="438" y="222">   sens de l'aimant, mais il s'annule si</text>
+        <text x="438" y="240">   n = n_s : le disque reste en retard.</text>
+      </g>
+    </svg>
+    <figcaption>
+      Expérience du disque entraîné, dite d'Arago. L'aimant en U, en haut, tourne à la vitesse $n_s$ autour de l'axe vertical ; ses pôles nord
+      et sud regardent le disque. Les ellipses en tirets sont les boucles de courant induit sous chaque pôle, les traits verticaux en tirets
+      le flux qui descend dans le disque. Les flèches épaisses horizontales sont les forces de Laplace sur les courants, dans le sens de
+      rotation de l'aimant ; les flèches courbes indiquent les deux sens de rotation, identiques. Le moteur asynchrone reproduit exactement ce
+      montage, en remplaçant l'aimant tournant par un champ tournant créé par des bobines fixes, et le disque par une cage de barres.
+    </figcaption>
+  </figure>
+
+  <h3 id="d-analogie">Une analogie contrôlée et ses limites</h3>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Un embrayage visqueux entre le champ et le rotor</span>
+    <p>
+      Le couple transmis par un embrayage visqueux, ou par un coupleur hydraulique, croît avec l'écart de vitesse entre ses deux plateaux et
+      s'annule quand ils tournent ensemble. Le moteur asynchrone se comporte de la même façon dans sa zone normale : le champ tournant est le
+      plateau menant, le rotor le plateau mené, et le couple est à peu près proportionnel au glissement. L'analogie explique aussi le bilan
+      énergétique : dans un coupleur, la puissance perdue en chaleur vaut le couple multiplié par l'écart de vitesse ; dans le moteur, ce sont
+      les pertes Joule du rotor, $g\,P_{tr}$.
+    </p>
+    <p>
+      Ses limites sont nettes. Le couple d'un vrai coupleur croît indéfiniment avec l'écart de vitesse, alors que celui du moteur passe par un
+      maximum puis décroît : aux forts glissements, la fréquence des courants rotoriques augmente, la réactance de fuite du rotor domine et
+      déphase les courants par rapport au champ, si bien qu'ils produisent moins de couple. L'analogie ignore aussi le stator : le champ
+      tournant n'est pas un plateau de vitesse imposée et d'énergie gratuite, il est fabriqué par des courants qui échauffent le stator et
+      qui augmentent avec la charge. Enfin, un moteur entraîné au-delà du synchronisme devient générateur, ce qu'aucun coupleur ne fait.
+    </p>
+  </div>
+
+  <h3 id="d-glissement">Pourquoi le rotor ne rattrape jamais le champ</h3>
+  <p>
+    Supposons le rotor à la vitesse exacte du champ. Chaque barre voit alors une induction constante : aucune force électromotrice, aucun
+    courant, aucun couple. Le moindre frottement le ralentit ; il glisse par rapport au champ, chaque barre voit défiler les pôles, une force
+    électromotrice apparaît, proportionnelle à la vitesse relative, et le couple renaît. L'équilibre s'établit au glissement qui produit
+    exactement le couple demandé par la charge : quelques pour cent en charge nominale, quelques millièmes à vide. C'est le sens du mot
+    asynchrone : la vitesse dépend de la charge, contrairement à la machine synchrone, que le cours Machine synchrone étudiera. L'écart reste
+    faible tant que la résistance du rotor est faible : un rotor très résistant donnerait le même couple avec un glissement plus grand, donc
+    plus de pertes, ce que le bilan de la section E rendra quantitatif.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-constitution">Constitution : stator, entrefer et rotor à cage</h3>
+  <p>
+    Le stator est un empilement de tôles minces, isolées, pour limiter les courants de Foucault, dont l'alésage porte des encoches. Trois
+    enroulements identiques y sont logés, décalés de $120^\circ$ électriques ; leurs six extrémités, $U_1$-$U_2$, $V_1$-$V_2$, $W_1$-$W_2$,
+    aboutissent à la boîte à bornes. Le rotor est lui aussi en tôles ; dans ses encoches, des barres d'aluminium coulé ou de cuivre sont
+    réunies à chaque extrémité par un anneau de court-circuit : c'est la cage d'écureuil. Aucune liaison électrique ne relie le rotor à
+    l'extérieur. Entre les deux, l'entrefer mesure de $0{,}3$ à $1\ \mathrm{mm}$ selon la taille de la machine, aussi faible que la mécanique le
+    permet. Le cours <a href="#/cours/circuits-magnetiques">Circuits magnétiques</a> en donne la raison : l'entrefer domine la réluctance, donc les
+    ampères-tours magnétisants ; un moteur asynchrone absorbe un courant magnétisant de $25$ à $50\ \%$ du courant nominal, bien plus qu'un
+    transformateur, dont le circuit magnétique n'a pas d'entrefer.
+  </p>
+  <figure id="e-coupe-figure">
+    <svg viewBox="0 0 760 340" role="img" aria-label="À gauche, cage d'écureuil : deux anneaux de court-circuit reliés par des barres. À droite, coupe d'un moteur : carcasse et tôles du stator avec encoches et enroulements, entrefer, rotor avec barres, arbre">
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+        <ellipse cx="80" cy="170" rx="26" ry="96"/>
+        <ellipse cx="300" cy="170" rx="26" ry="96"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M80 74H300M106 170H326M80 266H300M98 104H318M98 236H318M104 138H324M104 202H324"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.3" stroke-dasharray="4 4" opacity="0.7">
+        <path d="M62 104H282M62 236H282M56 138H276M56 202H276"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="560" cy="170" r="150"/>
+        <circle cx="560" cy="170" r="98"/>
+        <circle cx="560" cy="170" r="90"/>
+        <circle cx="560" cy="170" r="20"/>
+      </g>
+      <g fill="currentColor" fill-opacity="0.35" stroke="currentColor" stroke-width="1.2">
+        <rect x="552" y="44" width="16" height="26" rx="2"/>
+        <rect x="552" y="270" width="16" height="26" rx="2"/>
+        <rect x="660" y="162" width="26" height="16" rx="2"/>
+        <rect x="434" y="162" width="26" height="16" rx="2"/>
+        <rect x="621" y="63" width="16" height="26" rx="2" transform="rotate(30 629 76)"/>
+        <rect x="483" y="251" width="16" height="26" rx="2" transform="rotate(30 491 264)"/>
+        <rect x="648" y="96" width="26" height="16" rx="2" transform="rotate(-30 661 104)"/>
+        <rect x="446" y="228" width="26" height="16" rx="2" transform="rotate(-30 459 236)"/>
+        <rect x="483" y="63" width="16" height="26" rx="2" transform="rotate(-30 491 76)"/>
+        <rect x="621" y="251" width="16" height="26" rx="2" transform="rotate(-30 629 264)"/>
+        <rect x="446" y="96" width="26" height="16" rx="2" transform="rotate(30 459 104)"/>
+        <rect x="648" y="228" width="26" height="16" rx="2" transform="rotate(30 661 236)"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="560" cy="92" r="6"/><circle cx="560" cy="248" r="6"/><circle cx="638" cy="170" r="6"/><circle cx="482" cy="170" r="6"/>
+        <circle cx="615" cy="115" r="6"/><circle cx="505" cy="225" r="6"/><circle cx="615" cy="225" r="6"/><circle cx="505" cy="115" r="6"/>
+        <circle cx="590" cy="98" r="6"/><circle cx="530" cy="242" r="6"/><circle cx="632" cy="140" r="6"/><circle cx="488" cy="200" r="6"/>
+        <circle cx="530" cy="98" r="6"/><circle cx="590" cy="242" r="6"/><circle cx="488" cy="140" r="6"/><circle cx="632" cy="200" r="6"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.2">
+        <path d="M686 60L720 30M650 260L716 300M494 236L440 302M560 150V128"/>
+        <path d="M326 100L370 60M300 266L370 300"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="40" y="24">cage d'écureuil du rotor</text>
+        <text x="40" y="320">barres et anneaux en court-circuit</text>
+        <text x="340" y="56">anneau de</text>
+        <text x="340" y="70">court-circuit</text>
+        <text x="320" y="316">barre</text>
+        <text x="610" y="24">tôles du stator</text>
+        <text x="600" y="316">encoche et enroulement</text>
+        <text x="424" y="318">entrefer e</text>
+        <text x="528" y="124">arbre</text>
+        <text x="410" y="40">coupe</text>
+      </g>
+    </svg>
+    <figcaption>
+      Constitution d'un moteur à cage. À gauche, la cage seule, vue de côté : les deux ellipses sont les anneaux de court-circuit, les traits
+      horizontaux pleins les barres visibles, les traits en tirets les barres cachées. À droite, la coupe : le grand cercle est la carcasse et
+      les tôles du stator, les rectangles pleins les encoches qui portent les trois enroulements, l'espace étroit entre les deux cercles
+      intermédiaires l'entrefer, les disques pleins les barres du rotor, le petit cercle central l'arbre. Les proportions de l'entrefer sont
+      exagérées : il ne mesure qu'une fraction de millimètre.
+    </figcaption>
+  </figure>
+  <p>
+    Il existe aussi des rotors bobinés : un enroulement triphasé relié à trois bagues sur lesquelles frottent des balais, ce qui permet d'insérer
+    des résistances extérieures dans le circuit rotorique. Ils ont été très utilisés pour les démarrages difficiles de forte puissance, et le
+    restent dans certaines applications de levage, de broyage et de production éolienne. On verra dans la section sur le couple que la
+    résistance rotorique ne change pas le couple maximal, mais déplace le glissement auquel il est atteint.
+  </p>
+
+  <h3 id="e-ferraris">Le champ tournant : théorème de Ferraris</h3>
+  <p>
+    Considérons d'abord une seule bobine du stator, d'axe repéré par l'angle $\alpha$. Parcourue par un courant $i$, elle crée dans l'entrefer
+    une induction radiale répartie à peu près sinusoïdalement le long de l'alésage, maximale dans la direction de son axe : $b(\theta) = K\,i
+    \cos(\theta - \alpha)$, où $\theta$ repère un point de l'entrefer et $K$ dépend du nombre de spires et de l'entrefer. Alimentée en sinusoïdal,
+    cette bobine crée un champ pulsant : sa direction est fixe, son amplitude oscille. Le schéma suivant fixe la disposition des trois bobines
+    et la convention de signe des courants.
+  </p>
+  <figure id="e-enroulements-figure">
+    <svg viewBox="0 0 760 400" role="img" aria-label="Stator vu en coupe avec trois bobines U, V et W d'axes à 0, 120 et 240 degrés ; chaque bobine est représentée par ses deux conducteurs, une croix pour l'entrée du courant positif et un point pour sa sortie">
+      <defs>
+        <marker id="fl-e-en" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="200" cy="200" r="172"/>
+        <circle cx="200" cy="200" r="148"/>
+        <circle cx="200" cy="200" r="104" stroke-dasharray="3 5" opacity="0.6"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="6 5" opacity="0.8">
+        <path d="M200 200H372" marker-end="url(#fl-e-en)"/>
+        <path d="M200 200L114 51" marker-end="url(#fl-e-en)"/>
+        <path d="M200 200L114 349" marker-end="url(#fl-e-en)"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.8">
+        <circle cx="200" cy="330" r="10"/><path d="M194 324l12 12M206 324l-12 12"/>
+        <circle cx="200" cy="70" r="10"/>
+        <circle cx="312.6" cy="135" r="10"/><path d="M306.6 129l12 12M318.6 129l-12 12"/>
+        <circle cx="87.4" cy="265" r="10"/>
+        <circle cx="87.4" cy="135" r="10"/><path d="M81.4 129l12 12M93.4 129l-12 12"/>
+        <circle cx="312.6" cy="265" r="10"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="200" cy="70" r="3"/><circle cx="87.4" cy="265" r="3"/><circle cx="312.6" cy="265" r="3"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="212" y="352">U1</text>
+        <text x="212" y="62">U2</text>
+        <text x="326" y="128">V1</text>
+        <text x="58" y="290">V2</text>
+        <text x="52" y="128">W1</text>
+        <text x="326" y="290">W2</text>
+        <text x="300" y="192">axe U, 0°</text>
+        <text x="122" y="44">axe V, 120°</text>
+        <text x="122" y="370">axe W, 240°</text>
+        <text x="170" y="214">rotor</text>
+        <text x="410" y="60">Convention de courant :</text>
+        <text x="410" y="80">i_U &gt; 0 entre par U1 (croix, vers la page)</text>
+        <text x="410" y="98">et sort par U2 (point, hors de la page).</text>
+        <text x="410" y="126">Avec cette convention, i_U &gt; 0 crée</text>
+        <text x="410" y="144">une induction dirigée selon l'axe U.</text>
+        <text x="410" y="182">Courants d'un système direct :</text>
+        <text x="410" y="202">i_U = Im cos(ωt)</text>
+        <text x="410" y="220">i_V = Im cos(ωt - 120°)</text>
+        <text x="410" y="238">i_W = Im cos(ωt - 240°)</text>
+        <text x="410" y="276">Angles comptés dans le sens</text>
+        <text x="410" y="294">trigonométrique, origine sur l'axe U.</text>
+        <text x="410" y="332">Machine bipolaire : p = 1.</text>
+      </g>
+    </svg>
+    <figcaption>
+      Disposition des trois bobines dans une machine bipolaire. Chaque bobine est représentée par ses deux conducteurs diamétralement opposés :
+      la croix marque l'entrée du courant compté positif, vers l'intérieur de la page, le point sa sortie. Les flèches en tirets sont les axes
+      magnétiques des bobines, à $0^\circ$, $120^\circ$ et $240^\circ$ : un courant positif crée une induction dans le sens de la flèche,
+      d'après la règle de la main droite. Le cercle en pointillés figure le rotor. Les trois courants forment un système direct, dans l'ordre
+      $U$, $V$, $W$.
+    </figcaption>
+  </figure>
+  <p>
+    Alimentons les trois bobines par les courants d'un système direct, $i_k = I_m\cos(\omega t - \alpha_k)$, avec $\alpha_k = 0$, $2\pi/3$ et
+    $4\pi/3$. Le champ total en un point $\theta$ de l'entrefer est la somme des trois contributions :
+  </p>
+  <div class="formule-cle">
+    $$b(\theta, t) = K I_m \sum_{k=0}^{2} \cos(\omega t - \alpha_k)\cos(\theta - \alpha_k)
+    = \frac{K I_m}{2}\sum_{k=0}^{2}\Big[\cos(\omega t - \theta) + \cos(\omega t + \theta - 2\alpha_k)\Big]$$
+    $$b(\theta, t) = \frac{3}{2}\,K I_m \cos(\omega t - \theta)$$
+    <p class="formule-cle-legende">
+      Dérivation : la formule $\cos a\cos b = \tfrac{1}{2}[\cos(a - b) + \cos(a + b)]$ sépare chaque produit en deux termes. Les trois premiers
+      termes sont identiques. Les trois seconds ont pour phases $\omega t + \theta$, $\omega t + \theta - 4\pi/3$ et $\omega t + \theta - 8\pi/3$,
+      soit trois angles décalés de $120^\circ$ : leur somme est nulle, comme celle d'un système triphasé équilibré. Interprétation : l'induction
+      a une répartition sinusoïdale d'amplitude constante, $\tfrac{3}{2}KI_m$, dont le maximum se trouve en $\theta = \omega t$ : elle tourne à
+      la pulsation $\omega$. Hypothèses : enroulements identiques à répartition sinusoïdale, fer non saturé, courants équilibrés. Unités : $K$ en
+      $\mathrm{T/A}$, $b$ en teslas.
+    </p>
+  </div>
+  <p>
+    Trois conséquences sont essentielles en exploitation. Permuter deux phases, par exemple $V$ et $W$, revient à remplacer $\alpha_k$ par
+    $-\alpha_k$ dans les courants : le terme qui survit devient $\cos(\omega t + \theta)$, le champ tourne en sens inverse, et le moteur aussi.
+    Supprimer une phase d'un moteur couplé en étoile impose $i_W = 0$ et $i_V = -i_U$ : le champ devient
+    $b = K i_U\left[\cos\theta - \cos(\theta - 2\pi/3)\right] = \sqrt{3}\,K i_U \cos(\theta + \pi/6)$, un champ pulsant de direction fixe. Un
+    champ pulsant se décompose en deux champs de demi-amplitude tournant en sens opposés ; à l'arrêt, leurs couples s'équilibrent et le moteur
+    ne démarre pas ; lancé, il continue à tourner sur deux phases, mais en absorbant un courant bien supérieur au nominal. Enfin, un défaut
+    d'équilibre des courants rend le champ elliptique : son amplitude varie au cours d'un tour, ce qui crée des pulsations de couple et des
+    échauffements.
+  </p>
+
+  <h3 id="e-champ-anim-section">Animation : des phaseurs temporels au champ tournant</h3>
+  <p>
+    L'animation met côte à côte deux diagrammes. À droite, les phaseurs des trois courants, qui tournent à la pulsation $\omega$ : la
+    projection de chacun sur l'axe horizontal donne la valeur instantanée du courant. À gauche, le stator : chaque bobine produit, selon son
+    axe fixe, une induction proportionnelle à son courant instantané, et la somme vectorielle des trois est le champ total. Faites glisser la
+    poignée ronde au bout du phaseur $I_U$ pour faire avancer le temps, ou lancez la lecture. Avant de manipuler, prédisez : quand $i_U$ est
+    maximal, où pointe le champ total, et combien vaut-il, rapporté à l'induction maximale d'une bobine seule ? Que deviendra son mouvement si
+    l'on permute $V$ et $W$, puis si l'on coupe la phase $W$ ?
+  </p>
+  <figure id="e-champ-figure">
+    <div class="schema-vivant" id="e-champ"></div>
+    <figcaption>
+      À gauche, le stator : les trois axes en tirets portent les contributions des bobines $U$, $V$ et $W$, flèches fines repérées par leur
+      lettre, dont la longueur suit le courant instantané ; la flèche épaisse est le champ total, et le cercle en pointillés le lieu de son
+      extrémité dans le cas équilibré, de rayon $1{,}5$. À droite, le plan des phaseurs temporels : les trois phaseurs de courant, repérés
+      $I_U$, $I_V$ et $I_W$, et leurs projections sur l'axe horizontal, marquées par de petits carrés, qui sont les courants instantanés. La
+      poignée ronde, sur le cercle en pointillés, fixe l'angle $\omega t$ mesuré depuis l'axe horizontal ; en régime équilibré, elle est
+      l'extrémité de $I_U$.
+    </figcaption>
+  </figure>
+  <div id="e-champ-curseurs"></div>
+  <div id="e-champ-lecteur"></div>
+  <div id="e-champ-valeurs"></div>
+  <p>
+    Interprétation : en régime équilibré, quand $i_U = I_m$, les deux autres courants valent $-I_m/2$ ; leurs contributions, portées par des
+    axes à $\pm 120^\circ$ et de sens inversé, ajoutent chacune $\tfrac{1}{2}\cos 60^\circ = \tfrac{1}{4}$ selon l'axe $U$, d'où $1 + \tfrac{1}{4}
+    + \tfrac{1}{4} = 1{,}5$. L'extrémité du champ total décrit un cercle à la vitesse angulaire des phaseurs : le champ tourne au rythme même
+    des courants, ce qui relie directement le diagramme de Fresnel du cours <a href="#/cours/nombres-complexes-et-phaseurs">Nombres complexes et
+    phaseurs</a> à une rotation physique. Avec $V$ et $W$ permutés, le champ garde la même amplitude mais tourne en sens horaire. Avec la phase
+    $W$ coupée, le champ ne tourne plus : il oscille sur un axe fixe, incliné de $-30^\circ$, avec un maximum de $1{,}5$ dans cette animation, qui
+    suppose $i_U = -i_V$ égal à $\tfrac{\sqrt{3}}{2}$ fois le courant équilibré, ce qui est le cas à l'arrêt, sous la même tension composée.
+  </p>
+
+  <h3 id="e-synchronisme">Vitesse de synchronisme et nombre de paires de pôles</h3>
+  <p>
+    Dans la machine bipolaire précédente, le champ fait un tour par période. Si chaque phase comporte $p$ bobines réparties le long de
+    l'alésage, le champ présente $p$ paires de pôles nord et sud, et la répartition spatiale devient $\cos(\omega t - p\,\theta)$ : un maximum
+    passe d'un pôle nord au suivant en une période, soit $1/p$ de tour. Le champ tourne donc à la vitesse de synchronisme :
+  </p>
+  <div class="formule-cle">
+    $$\varOmega_s = \frac{\omega}{p} = \frac{2\pi f}{p}, \qquad n_s = \frac{60\,f}{p}$$
+    <p class="formule-cle-legende">
+      $\varOmega_s$ en $\mathrm{rad/s}$, $n_s$ en tours par minute, $f$ en hertz, $p$ entier sans dimension. Dimension : $[f]/[p] =
+      \mathrm{s^{-1}}$, soit des tours par seconde, d'où le facteur $60$. Cas limite : $p = 1$ donne $3000\ \mathrm{tr/min}$ à $50\ \mathrm{Hz}$,
+      vitesse maximale d'un moteur alimenté directement par le réseau. Le nombre de pôles est une donnée de construction : il se lit sur la
+      vitesse de la plaque, qui est toujours un peu inférieure à $n_s$.
+    </p>
+  </div>
+  <div class="cadre-tableau">
+    <table>
+      <caption>Vitesses de synchronisme sur un réseau à 50 Hz et à 60 Hz</caption>
+      <thead><tr><th>Paires de pôles $p$</th><th>Nombre de pôles</th><th>$n_s$ à 50 Hz</th><th>$n_s$ à 60 Hz</th><th>Vitesse de plaque typique à 50 Hz</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>2</td><td>3000 tr/min</td><td>3600 tr/min</td><td>2850 à 2970 tr/min</td></tr>
+        <tr><td>2</td><td>4</td><td>1500 tr/min</td><td>1800 tr/min</td><td>1420 à 1485 tr/min</td></tr>
+        <tr><td>3</td><td>6</td><td>1000 tr/min</td><td>1200 tr/min</td><td>940 à 985 tr/min</td></tr>
+        <tr><td>4</td><td>8</td><td>750 tr/min</td><td>900 tr/min</td><td>700 à 740 tr/min</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Lecture : la vitesse de synchronisme est la valeur du tableau immédiatement supérieure à la vitesse de plaque. Un moteur marqué
+    $1460\ \mathrm{tr/min}$ à $50\ \mathrm{Hz}$ a donc $p = 2$ et $n_s = 1500\ \mathrm{tr/min}$. Les plages typiques sont indicatives : les petits
+    moteurs glissent davantage que les gros.
+  </p>
+
+  <h3 id="e-glissement">Glissement, fréquence et force électromotrice rotoriques</h3>
+  <p>
+    Le glissement mesure le retard relatif du rotor sur le champ :
+  </p>
+  <div class="formule-cle">
+    $$g = \frac{n_s - n}{n_s} = \frac{\varOmega_s - \varOmega}{\varOmega_s}, \qquad f_r = g\,f, \qquad E_2 = g\,E_{20}$$
+    <p class="formule-cle-legende">
+      $g$ sans dimension, souvent exprimé en pour cent ; $f_r$ fréquence des courants du rotor, en hertz ; $E_{20}$ force électromotrice par
+      phase du rotor à l'arrêt, en volts ; $E_2$ sa valeur au glissement $g$. Dérivation : un conducteur du rotor voit défiler les pôles du
+      champ à la vitesse relative $\varOmega_s - \varOmega = g\,\varOmega_s$, donc avec la fréquence $p\,g\,\varOmega_s/(2\pi) = g f$ ; sa force
+      électromotrice $e = B\ell v$ est proportionnelle à cette vitesse relative. Cas limites : $g = 1$, rotor à l'arrêt, $f_r = f$ et $E_2 = E_{20}$,
+      la machine est un transformateur dont le secondaire est en court-circuit ; $g = 0$, synchronisme, ni force électromotrice ni courant.
+      $g &lt; 0$ quand le rotor est entraîné plus vite que le champ, $g &gt; 1$ quand il tourne en sens inverse du champ.
+    </p>
+  </div>
+  <p>
+    Ordres de grandeur : en charge nominale, $g$ vaut de $1$ à $5\ \%$, donc $f_r$ de $0{,}5$ à $2{,}5\ \mathrm{Hz}$ sur un réseau à $50\ \mathrm{Hz}$. Les
+    courants du rotor sont de très basse fréquence : les pertes fer du rotor, qui croissent avec la fréquence, sont négligeables en marche
+    normale. Le rotor étant fermé sur lui-même, ses courants valent, par phase, avec $R_2$ sa résistance et $X_{20} = L_2\,\omega$ sa réactance de
+    fuite à la fréquence du réseau :
+  </p>
+  <div class="formule-cle">
+    $$I_2 = \frac{g\,E_{20}}{\sqrt{R_2^2 + (g X_{20})^2}} = \frac{E_{20}}{\sqrt{(R_2/g)^2 + X_{20}^2}}, \qquad \tan\varphi_2 = \frac{g X_{20}}{R_2}$$
+    <p class="formule-cle-legende">
+      La réactance du rotor vaut $g X_{20}$, car elle est proportionnelle à la fréquence rotorique. Diviser numérateur et dénominateur par $g$
+      fait apparaître une résistance apparente $R_2/g$ alimentée sous la force électromotrice à l'arrêt $E_{20}$ : c'est le point de départ du
+      schéma équivalent que le cours Schéma équivalent du moteur asynchrone développera. Hypothèses : impédance du stator négligée, flux
+      constant, ce qui suppose une tension et une fréquence d'alimentation fixes.
+    </p>
+  </div>
+
+  <h3 id="e-glis-anim-section">Animation : le rotor vu depuis le champ</h3>
+  <p>
+    L'animation déroule l'entrefer sur une paire de pôles. En haut, l'onde d'induction du champ tournant ; en bas, les barres du rotor, qui
+    avancent à la vitesse $(1 - g)$ fois celle du champ. Chaque barre porte une croix ou un point selon le signe de son courant, d'autant plus
+    gros que le courant est intense. Réglez le glissement par la poignée ronde sur le segment gradué ou par le curseur, et changez de
+    référentiel pour observer la scène depuis le champ. Avant de manipuler, prédisez : à faible glissement, que voit-on dans le référentiel du
+    champ ? Quand le glissement augmente, l'onde de courant rotorique reste-t-elle centrée sous l'onde d'induction ?
+  </p>
+  <figure id="e-glis-figure">
+    <div class="schema-vivant" id="e-glis"></div>
+    <figcaption>
+      Entrefer déroulé sur une paire de pôles, de $0$ à $360^\circ$ électriques. La courbe en trait plein épais est l'induction du champ
+      tournant ; la courbe en tirets est l'onde de courant des barres, à la même échelle relative que les symboles. Les petits cercles sur la
+      ligne inférieure sont les barres : croix pour un courant entrant dans la page, point pour un courant sortant, cercle vide pour un courant
+      presque nul. La flèche du haut indique la vitesse du champ, celle du bas la vitesse des barres, dans le référentiel choisi. Le segment
+      gradué sous la figure porte la poignée du glissement.
+    </figcaption>
+  </figure>
+  <div id="e-glis-curseurs"></div>
+  <div id="e-glis-lecteur"></div>
+  <div id="e-glis-valeurs"></div>
+  <p>
+    Interprétation : dans le référentiel du champ, l'onde d'induction est immobile et le rotor recule lentement, à la vitesse $g$ fois celle
+    du champ ; chaque barre voit donc passer les pôles à la fréquence $g f$. À faible glissement, l'onde de courant est presque en phase avec
+    l'induction : chaque barre parcourue par un courant se trouve dans une induction de même signe, et toutes les forces s'additionnent. Quand
+    le glissement augmente, l'onde de courant prend du retard, de l'angle $\varphi_2 = \arctan(g/g_m)$ : une partie des barres porte un courant
+    de signe opposé à l'induction locale, et le couple n'augmente plus en proportion du courant. Au-delà du glissement $g_m$, il diminue : c'est
+    l'origine du couple maximal. Cette animation utilise un modèle simplifié, de glissement critique $g_m = 0{,}15$, sans la saturation ni l'effet
+    de peau des barres.
+  </p>
+
+  <h3 id="e-couple">Couple électromagnétique et courbe couple-vitesse</h3>
+  <p>
+    Le stator exerce sur le rotor le couple électromagnétique $C_{em}$ et, en réaction, le rotor exerce $-C_{em}$ sur le stator. La puissance
+    qui traverse l'entrefer est portée par le champ, qui tourne à $\varOmega_s$ : c'est la puissance transmise $P_{tr} = C_{em}\,\varOmega_s$. Le
+    rotor, qui tourne à $\varOmega$, ne fournit à l'arbre que la puissance mécanique $C_{em}\,\varOmega$. La différence, $C_{em}(\varOmega_s -
+    \varOmega)$, ne peut aller que dans les pertes du rotor, qui sont essentiellement ses pertes Joule :
+  </p>
+  <div class="formule-cle">
+    $$p_{jr} = 3 R_2 I_2^2 = C_{em}(\varOmega_s - \varOmega) = g\,P_{tr}, \qquad P_{m} = C_{em}\,\varOmega = (1 - g)\,P_{tr}$$
+    <p class="formule-cle-legende">
+      $p_{jr}$ pertes Joule du rotor et $P_m$ puissance mécanique convertie, en watts ; $R_2$ et $I_2$ par phase du rotor. Loi physique : la
+      conservation de l'énergie appliquée au rotor, avec le même couple sur le champ et sur le rotor. Interprétation : un moteur qui glisse de
+      $3\ \%$ perd $3\ \%$ de la puissance transmise dans son rotor ; un rotor bloqué, $g = 1$, transforme toute la puissance transmise en chaleur.
+      Cas limite : $g \to 0$, les pertes rotoriques s'annulent avec le couple. Unités : $\mathrm{N \cdot m \cdot rad/s} = \mathrm{W}$.
+    </p>
+  </div>
+  <p>
+    Le couple s'en déduit : $C_{em} = p_{jr}/(g\,\varOmega_s) = 3R_2I_2^2/(g\,\varOmega_s)$. En y portant l'expression de $I_2$ :
+  </p>
+  <div class="formule-cle">
+    $$C_{em} = \frac{3\,E_{20}^2}{\varOmega_s}\cdot\frac{R_2/g}{(R_2/g)^2 + X_{20}^2}, \qquad g_m = \frac{R_2}{X_{20}}, \qquad C_{max} = \frac{3\,E_{20}^2}{2\,\varOmega_s X_{20}}$$
+    $$\frac{C_{em}}{C_{max}} = \frac{2}{\dfrac{g}{g_m} + \dfrac{g_m}{g}} \quad \text{(formule de Kloss)}$$
+    <p class="formule-cle-legende">
+      Dérivation du maximum : la fonction $x/(x^2 + X_{20}^2)$, avec $x = R_2/g$, est maximale pour $x = X_{20}$, d'où le glissement critique $g_m$
+      et le couple maximal. Interprétation : $C_{max}$ ne dépend pas de $R_2$ ; augmenter la résistance du rotor déplace le maximum vers les
+      grands glissements sans le changer. Cas limites : $g \ll g_m$, $C_{em} \approx 2C_{max}\,g/g_m$, couple proportionnel au glissement, comme la
+      caractéristique d'un moteur à courant continu à excitation séparée ; $g \gg g_m$, $C_{em} \approx 2C_{max}\,g_m/g$, couple inversement
+      proportionnel au glissement. Comme $E_{20}$ est proportionnelle à la tension d'alimentation à fréquence fixe, le couple à glissement donné
+      est proportionnel à $U^2$ : une chute de tension de $10\ \%$ réduit tous les couples de $19\ \%$. Dimension : $\mathrm{V^2/(\Omega \cdot
+      rad/s)} = \mathrm{W \cdot s/rad} = \mathrm{N \cdot m}$. Approximation : impédance du stator et courant magnétisant négligés ; la formule
+      décrit bien la zone normale, mais sous-estime le couple de démarrage des rotors réels.
+    </p>
+  </div>
+  <p>
+    Le dernier point mérite attention. Avec un rotor à barres rondes et peu profondes, la formule de Kloss donnerait un couple de démarrage de
+    l'ordre du tiers du couple maximal, soit à peine le couple nominal. Les constructeurs obtiennent deux à trois fois le couple nominal en
+    utilisant des barres profondes ou une double cage : à $50\ \mathrm{Hz}$, au démarrage, l'effet de peau repousse le courant vers le haut des
+    barres et augmente leur résistance apparente, ce qui augmente le couple et réduit le courant ; à $1\ \mathrm{Hz}$, en marche normale, le
+    courant se répartit dans toute la section et la résistance redevient faible, ce qui préserve le rendement. Les courbes de ce cours
+    utilisent donc la formule de Kloss avec un glissement critique qui augmente avec le glissement, $g_m(g) = g_{m0}(1 + a\,g)$, les deux
+    constantes étant ajustées pour retrouver le couple nominal, le couple de démarrage et le couple maximal du catalogue : c'est une
+    approximation commode, pas une loi.
+  </p>
+  <figure id="e-courbe-figure">
+    <svg viewBox="0 0 760 440" role="img" aria-label="Courbe couple-vitesse du moteur de l'exemple : couple de démarrage à vitesse nulle, couple maximal vers 1176 tr/min, point nominal à 1460 tr/min, couple nul au synchronisme à 1500 tr/min, couple négatif au-delà en générateur ; à gauche de zéro, freinage à contre-courant ; courbe en tirets d'une charge de ventilateur coupant la courbe au point nominal">
+      <defs>
+        <marker id="fl-e-cv" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M50 300H712" marker-end="url(#fl-e-cv)"/>
+        <path d="M160 432V30" marker-end="url(#fl-e-cv)"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.1" stroke-dasharray="3 5" opacity="0.7">
+        <path d="M640 40V432"/>
+        <path d="M160 75H537.6"/>
+        <path d="M537.6 75V300"/>
+        <path d="M160 225H627.2V300"/>
+        <path d="M160 127.5H240"/>
+      </g>
+      <path fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" d="M64.0 133.5 L80.0 132.6 L96.0 131.7 L112.0 130.7 L128.0 129.7 L144.0 128.6 L160.0 127.5 L176.0 126.3 L192.0 125.0 L208.0 123.7 L224.0 122.3 L240.0 120.8 L256.0 119.2 L272.0 117.5 L288.0 115.7 L304.0 113.8 L320.0 111.8 L336.0 109.6 L352.0 107.3 L368.0 104.8 L384.0 102.2 L400.0 99.4 L416.0 96.4 L432.0 93.2 L448.0 89.9 L464.0 86.6 L480.0 83.2 L496.0 79.9 L505.6 78.2 L515.2 76.7 L524.8 75.6 L531.2 75.1 L537.6 75.0 L544.0 75.3 L550.4 76.2 L556.8 77.7 L563.2 80.0 L569.6 83.5 L576.0 88.2 L582.4 94.7 L588.8 103.2 L595.2 114.2 L601.6 128.2 L608.0 145.9 L614.4 167.6 L620.8 193.9 L624.0 208.9 L627.2 225.0 L630.4 242.3 L633.6 260.6 L636.8 279.9 L640.0 300.0 L643.2 320.1 L646.4 339.4 L649.6 357.7 L652.8 375.0 L656.0 391.1 L659.2 406.1"/>
+      <path fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="8 5" d="M160.0 300.0 L200.0 299.5 L240.0 297.8 L280.0 295.1 L320.0 291.2 L360.0 286.3 L400.0 280.2 L440.0 273.1 L480.0 264.8 L520.0 255.5 L560.0 245.0 L600.0 233.5 L627.2 225.0 L656.0 215.5 L688.0 204.2"/>
+      <g fill="currentColor" stroke="none">
+        <circle cx="627.2" cy="225" r="5"/>
+        <circle cx="537.6" cy="75" r="4.5"/>
+        <circle cx="160" cy="127.5" r="4.5"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="716" y="304">n</text>
+        <text x="168" y="36">C</text>
+        <text x="96" y="68">C_max = 3,0 C_n</text>
+        <text x="72" y="118">C_d = 2,3 C_n</text>
+        <text x="96" y="221">C_n</text>
+        <text x="152" y="318">0</text>
+        <text x="516" y="318">1176</text>
+        <text x="604" y="318">1460</text>
+        <text x="648" y="290">n_s = 1500</text>
+        <text x="476" y="212">point nominal</text>
+        <text x="300" y="248">charge de ventilateur, C_r ∝ n²</text>
+        <text x="300" y="156">zone instable</text>
+        <text x="300" y="172">dC/dn &gt; 0</text>
+        <text x="548" y="48">zone stable</text>
+        <text x="668" y="380">générateur</text>
+        <text x="668" y="396">g &lt; 0</text>
+        <text x="60" y="350">frein</text>
+        <text x="60" y="366">g &gt; 1</text>
+        <text x="330" y="350">moteur, 0 &lt; g &lt; 1</text>
+        <text x="560" y="428">tr/min</text>
+      </g>
+    </svg>
+    <figcaption>
+      Courbe couple-vitesse du moteur de la section H, de $11\ \mathrm{kW}$ et $1460\ \mathrm{tr/min}$, tracée avec le modèle ajusté sur son
+      catalogue. Axe horizontal : vitesse du rotor, de $-300$ à $1650\ \mathrm{tr/min}$ ; axe vertical : couple électromagnétique, compté positif
+      dans le sens du champ. Le trait plein épais est le couple du moteur, la courbe en tirets le couple résistant d'un ventilateur qui demande
+      le couple nominal à $1460\ \mathrm{tr/min}$. Les points marquent le couple de démarrage, le couple maximal et le point de fonctionnement. Le
+      trait vertical pointillé repère le synchronisme. Les trois régimes se lisent sur l'axe : frein à contre-courant pour une vitesse négative,
+      moteur entre $0$ et $n_s$, générateur au-delà de $n_s$, où le couple change de signe.
+    </figcaption>
+  </figure>
+  <p>
+    La stabilité d'un point de fonctionnement se juge sur les pentes. Si la vitesse augmente un peu, le point est stable lorsque le couple
+    moteur devient inférieur au couple résistant, ce qui ramène la vitesse : il faut $\mathrm{d}C_{em}/\mathrm{d}n &lt; \mathrm{d}C_r/\mathrm{d}n$.
+    Sur la partie droite de la courbe, entre le couple maximal et le synchronisme, le couple moteur chute fortement avec la vitesse : tous les
+    points y sont stables. Sur la partie gauche, le couple croît avec la vitesse : un point d'intersection avec une charge à couple constant y
+    serait instable. Une charge qui dépasse $C_{max}$, même brièvement, fait décrocher le moteur : la vitesse s'effondre, le courant monte vers
+    le courant de démarrage, et seule une protection l'arrête.
+  </p>
+
+  <h3 id="e-carac-section">Simulation interactive : point de fonctionnement sur une charge</h3>
+  <p>
+    La simulation trace le couple du moteur de la section H en fonction de la vitesse, et le couple résistant d'une charge à couple constant,
+    comme un convoyeur, ou d'une charge en carré de la vitesse, comme un ventilateur ou une pompe centrifuge. Le point de fonctionnement est
+    l'intersection stable. Vous pouvez réduire la tension, multiplier la résistance du rotor comme on le ferait sur un rotor bobiné, et
+    régler la charge. Avant de manipuler, prédisez : sur un convoyeur au couple nominal, une tension réduite de $10\ \%$ fait-elle baisser la
+    vitesse de $10\ \%$, ou beaucoup moins ? Le courant, donc l'échauffement, augmente-t-il ou diminue-t-il ? Et sur un ventilateur ?
+  </p>
+  <figure id="e-carac-figure">
+    <div id="e-carac-trace"></div>
+    <figcaption>
+      Couple électromagnétique du moteur sous la tension choisie, en trait épais, et sous la tension nominale avec la résistance rotorique
+      d'origine, en trait fin, pour comparaison ; couple résistant de la charge, troisième courbe ; le point marque le fonctionnement
+      stable, et le trait vertical pointillé le synchronisme. Le couple résistant inclut les pertes mécaniques du moteur.
+    </figcaption>
+  </figure>
+  <div id="e-carac-curseurs"></div>
+  <div id="e-carac-valeurs"></div>
+  <p>
+    Interprétation : sur le convoyeur au couple nominal, une tension réduite de $10\ \%$ fait passer la vitesse de $1460$ à environ
+    $1449\ \mathrm{tr/min}$, moins de $1\ \%$ de baisse ; mais le glissement passe de $2{,}7$ à $3{,}4\ \%$ et les pertes Joule du rotor
+    augmentent d'environ $27\ \%$, de $304$ à $388\ \mathrm{W}$, car la puissance transmise reste la même pour le même couple. Le moteur chauffe
+    davantage pour fournir le même service : c'est le piège de la sous-tension, invisible au tachymètre. Sur le ventilateur, la vitesse baisse
+    un peu moins, à $1450\ \mathrm{tr/min}$, parce que la charge diminue avec la vitesse ; les pertes rotoriques augmentent encore d'environ
+    $24\ \%$. Le couple maximal tombe à $0{,}81 \times 3{,}0 = 2{,}43$ fois le couple nominal : la marge de décrochage diminue, et le moteur
+    décrocherait sous le couple nominal si la tension tombait vers $58\ \%$ de sa valeur nominale, $1/\sqrt{3}$ aux frottements près.
+    Multiplier la résistance rotorique déplace le couple maximal vers les basses vitesses sans changer sa valeur : le couple de démarrage
+    augmente, mais la vitesse en charge diminue et les pertes rotoriques augmentent dans la même proportion que le glissement.
+  </p>
+
+  <h3 id="e-bilan">Bilan des puissances et rendement</h3>
+  <p>
+    La puissance absorbée par le stator, $P_{abs} = \sqrt{3}\,U I\cos\varphi$, subit trois prélèvements successifs avant d'atteindre l'arbre.
+    Le stator dissipe ses pertes Joule $p_{js}$ et ses pertes fer $p_{fs}$ ; le reste traverse l'entrefer, c'est $P_{tr}$. Le rotor en dissipe la
+    fraction $g$ en pertes Joule ; il reste la puissance mécanique $P_m = (1 - g)P_{tr}$, dont les pertes mécaniques $p_m$, frottements et
+    ventilation, retranchent encore une part avant la puissance utile $P_u$, celle de la plaque.
+  </p>
+  <div class="formule-cle">
+    $$P_{abs} = \sqrt{3}\,U I\cos\varphi, \qquad P_{tr} = P_{abs} - p_{js} - p_{fs}, \qquad p_{jr} = g\,P_{tr}, \qquad P_u = (1 - g)P_{tr} - p_m$$
+    $$p_{js} = \tfrac{3}{2}\,R_{b}\,I^2, \qquad C_{em} = \frac{P_{tr}}{\varOmega_s}, \qquad C_u = \frac{P_u}{\varOmega}, \qquad \eta = \frac{P_u}{P_{abs}}$$
+    <p class="formule-cle-legende">
+      $R_b$ est la résistance mesurée entre deux bornes du moteur couplé, à chaud ; la formule $\tfrac{3}{2}R_b I^2$ vaut pour les deux couplages,
+      car elle exprime les pertes à partir de grandeurs de ligne. Les pertes fer du rotor sont négligées, puisque $f_r$ est très faible. Les pertes
+      fer du stator dépendent de la tension, à peu près en $U^2$, et non de la charge ; les pertes mécaniques dépendent de la vitesse, presque
+      constante ; les pertes Joule croissent avec le carré du courant. Les pertes supplémentaires en charge, dues aux harmoniques d'encoche et
+      aux flux de fuite, sont réparties par convention selon une méthode d'essai normalisée ; elles sont ici incluses dans les autres postes.
+    </p>
+  </div>
+
+  <h3 id="e-cascade-section">Animation : la cascade des puissances selon la charge</h3>
+  <p>
+    L'animation représente chaque puissance par une barre de longueur proportionnelle, pour le moteur de la section H. Réglez la charge et
+    la tension. Avant de manipuler, prédisez : le rendement est-il maximal à pleine charge, à mi-charge ou au-delà ? Et le facteur de
+    puissance, que devient-il quand la charge diminue ?
+  </p>
+  <figure id="e-cascade-figure">
+    <div class="schema-vivant" id="e-cascade"></div>
+    <figcaption>
+      Cascade des puissances, de haut en bas : puissance absorbée, pertes du stator, puissance transmise à travers l'entrefer, pertes Joule du
+      rotor, puissance mécanique, pertes mécaniques, puissance utile. Les barres de puissance sont pleines, les barres de pertes sont hachurées et tracées
+      à une échelle dix fois plus grande, pour rester lisibles ; les deux courts repères verticaux en tirets, en haut et en bas, marquent la
+      puissance absorbée nominale. Le courant du stator est estimé par une loi approchée ajustée sur la
+      plaque, avec un courant magnétisant supposé de $40\ \%$ du courant nominal ; le cours Schéma équivalent du moteur asynchrone la remplacera
+      par un calcul exact.
+    </figcaption>
+  </figure>
+  <div id="e-cascade-curseurs"></div>
+  <div id="e-cascade-valeurs"></div>
+  <p>
+    Interprétation : le rendement est presque constant, autour de $90\ \%$, entre $60$ et $110\ \%$ de la charge nominale, avec un maximum vers
+    $90\ \%$ de charge, là où les pertes variables rejoignent les pertes fixes, comme pour le transformateur du cours
+    <a href="#/cours/transformateur-reel">Transformateur réel</a>. Il s'effondre à faible charge, $82\ \%$ au quart de charge, parce que les pertes
+    fer et le courant magnétisant restent présents. Le facteur de puissance se dégrade bien plus vite, de $0{,}84$ à pleine charge à environ
+    $0{,}51$ au quart de charge et $0{,}10$ à vide, car la composante magnétisante du courant ne diminue pas avec la charge. Conséquence
+    pratique : un moteur surdimensionné, qui tourne en permanence au tiers de sa puissance, gaspille peu d'énergie active mais beaucoup
+    d'énergie réactive, ce que le cours <a href="#/cours/correction-du-facteur-de-puissance">Correction du facteur de puissance</a> a appris à
+    compenser.
+  </p>
+
+  <h3 id="e-plaque">Plaque signalétique et couplage</h3>
+  <p>
+    La plaque donne les valeurs nominales, ou assignées, pour lesquelles le constructeur garantit le fonctionnement en régime continu sans
+    dépasser l'échauffement admissible. La puissance inscrite est toujours la puissance utile mécanique sur l'arbre, jamais la puissance
+    absorbée. La vitesse est celle du point nominal. Deux tensions sont inscrites : elles correspondent aux deux couplages. Chaque enroulement
+    est conçu pour la plus petite des deux, qu'il reçoit en triangle sous un réseau de cette tension, ou en étoile sous un réseau
+    $\sqrt{3}$ fois plus élevé.
+  </p>
+  <figure id="e-plaque-figure">
+    <svg viewBox="0 0 760 330" role="img" aria-label="Plaque signalétique du moteur de l'exemple, avec annotations : puissance utile, deux couplages et leurs courants, facteur de puissance, vitesse nominale, rendement, fréquence, service et classe d'isolation">
+      <defs>
+        <marker id="fl-e-pl" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="20" y="30" width="400" height="270" rx="10"/>
+        <path d="M20 70H420M20 120H420M20 170H420M20 220H420M20 260H420"/>
+        <circle cx="38" cy="48" r="5"/><circle cx="402" cy="48" r="5"/><circle cx="38" cy="282" r="5"/><circle cx="402" cy="282" r="5"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.3">
+        <path d="M424 95H470" marker-end="url(#fl-e-pl)"/>
+        <path d="M424 145H470" marker-end="url(#fl-e-pl)"/>
+        <path d="M424 195H470" marker-end="url(#fl-e-pl)"/>
+        <path d="M424 240H470" marker-end="url(#fl-e-pl)"/>
+        <path d="M424 280H470" marker-end="url(#fl-e-pl)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13">
+        <text x="60" y="55">MOTEUR ASYNCHRONE TRIPHASÉ</text>
+        <text x="34" y="92">3 ~   50 Hz    IP55   Isol. F   S1</text>
+        <text x="34" y="110">Masse 72 kg      Roulements 6309 / 6209</text>
+        <text x="34" y="142">230 V  Δ    36,5 A</text>
+        <text x="34" y="160">400 V  Y    21,0 A</text>
+        <text x="34" y="192">11 kW      cos φ 0,84</text>
+        <text x="34" y="210">1460 tr/min</text>
+        <text x="34" y="244">η 90,0 %   à 4/4 de charge</text>
+        <text x="58" y="286">Id/In 7,0  Cd/Cn 2,3  Cmax/Cn 3,0</text>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="476" y="84">fréquence, protection, isolation,</text>
+        <text x="476" y="100">service continu S1</text>
+        <text x="476" y="134">deux couplages : chaque enroulement</text>
+        <text x="476" y="150">supporte 230 V ; courants de ligne</text>
+        <text x="476" y="184">puissance UTILE sur l'arbre ;</text>
+        <text x="476" y="200">vitesse nominale : p = 2, g = 2,67 %</text>
+        <text x="476" y="234">rendement au point nominal</text>
+        <text x="476" y="250">P_abs = 11 / 0,90 = 12,22 kW</text>
+        <text x="476" y="274">données de démarrage, en général</text>
+        <text x="476" y="290">au catalogue et non sur la plaque</text>
+      </g>
+    </svg>
+    <figcaption>
+      Plaque signalétique, supposée, du moteur de la section H. Le cadre de gauche reproduit la plaque, ligne par ligne ; les flèches renvoient
+      aux interprétations de droite. La dernière ligne, en général absente de la plaque, est reprise du catalogue du constructeur. La plaque
+      réelle porte aussi un type, un numéro de série, souvent une classe de rendement et des valeurs pour d'autres tensions ou à $60\ \mathrm{Hz}$.
+    </figcaption>
+  </figure>
+  <p>
+    Le couplage se réalise dans la boîte à bornes, par des barrettes. Les six bornes sont disposées de façon que trois barrettes horizontales
+    réalisent l'étoile et trois barrettes verticales le triangle ; le réseau arrive toujours sur $U_1$, $V_1$ et $W_1$.
+  </p>
+  <figure id="e-bornes-figure">
+    <svg viewBox="0 0 760 330" role="img" aria-label="Deux boîtes à bornes : à gauche, couplage étoile avec une barrette reliant W2, U2 et V2 ; à droite, couplage triangle avec trois barrettes verticales W2-U1, U2-V1, V2-W1 ; réseau L1, L2, L3 relié à U1, V1, W1 ; enroulements en tirets">
+      <defs>
+        <marker id="fl-e-bo" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="40" y="70" width="300" height="170" rx="10"/>
+        <rect x="420" y="70" width="300" height="170" rx="10"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="100" cy="110" r="12"/><circle cx="190" cy="110" r="12"/><circle cx="280" cy="110" r="12"/>
+        <circle cx="100" cy="200" r="12"/><circle cx="190" cy="200" r="12"/><circle cx="280" cy="200" r="12"/>
+        <circle cx="480" cy="110" r="12"/><circle cx="570" cy="110" r="12"/><circle cx="660" cy="110" r="12"/>
+        <circle cx="480" cy="200" r="12"/><circle cx="570" cy="200" r="12"/><circle cx="660" cy="200" r="12"/>
+      </g>
+      <g fill="currentColor" fill-opacity="0.45" stroke="currentColor" stroke-width="1.5">
+        <rect x="96" y="104" width="188" height="12" rx="3"/>
+        <rect x="474" y="106" width="12" height="98" rx="3"/>
+        <rect x="564" y="106" width="12" height="98" rx="3"/>
+        <rect x="654" y="106" width="12" height="98" rx="3"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="5 4" opacity="0.8">
+        <path d="M108 192L182 118M198 192L272 118M288 192C330 160 330 130 100 122"/>
+        <path d="M488 192L562 118M578 192L652 118M668 192C710 160 710 130 480 122"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M100 300V212M190 300V212M280 300V212"/>
+        <path d="M480 300V212M570 300V212M660 300V212"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.4">
+        <path d="M86 296V262" marker-end="url(#fl-e-bo)"/>
+        <path d="M466 296V262" marker-end="url(#fl-e-bo)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="40" y="30">ÉTOILE (Y)</text>
+        <text x="40" y="48">réseau = plus grande tension de plaque</text>
+        <text x="420" y="30">TRIANGLE (Δ)</text>
+        <text x="420" y="48">réseau = plus petite tension de plaque</text>
+        <text x="84" y="92">W2</text><text x="174" y="92">U2</text><text x="264" y="92">V2</text>
+        <text x="58" y="226">U1</text><text x="148" y="226">V1</text><text x="238" y="226">W1</text>
+        <text x="464" y="92">W2</text><text x="554" y="92">U2</text><text x="644" y="92">V2</text>
+        <text x="438" y="226">U1</text><text x="528" y="226">V1</text><text x="618" y="226">W1</text>
+        <text x="108" y="318">L1</text><text x="198" y="318">L2</text><text x="288" y="318">L3</text>
+        <text x="488" y="318">L1</text><text x="578" y="318">L2</text><text x="668" y="318">L3</text>
+        <text x="44" y="282">I</text><text x="424" y="282">I</text>
+        <text x="120" y="160">enroulement U</text>
+        <text x="500" y="160">U</text><text x="590" y="160">V</text>
+      </g>
+    </svg>
+    <figcaption>
+      Boîte à bornes vue de face, rangée du haut $W_2$, $U_2$, $V_2$, rangée du bas $U_1$, $V_1$, $W_1$. Les traits en tirets sont les enroulements
+      internes : $U_1$ vers $U_2$, $V_1$ vers $V_2$, $W_1$ vers $W_2$, ce dernier tracé en arc. Les rectangles pleins sont les barrettes. À gauche,
+      une barrette commune aux trois bornes du haut forme le point neutre de l'étoile : chaque enroulement reçoit $U/\sqrt{3}$. À droite, trois
+      barrettes verticales relient la fin d'un enroulement au début du suivant, $W_2$-$U_1$, $U_2$-$V_1$, $V_2$-$W_1$ : chaque enroulement reçoit $U$.
+      Les phases $L_1$, $L_2$, $L_3$ arrivent par le bas ; la flèche indique le sens de référence du courant de ligne, vers le moteur.
+    </figcaption>
+  </figure>
+  <p>
+    Lecture du moteur de la plaque : marqué $230/400\ \mathrm{V}$, il se couple en étoile sur un réseau $230/400\ \mathrm{V}$, dont la tension
+    composée est de $400\ \mathrm{V}$, et absorbe alors $21{,}0\ \mathrm{A}$ par ligne ; en triangle sur un ancien réseau $133/230\ \mathrm{V}$, il
+    absorberait $36{,}5\ \mathrm{A}$ par ligne, soit $\sqrt{3}$ fois plus, pour la même puissance. Un moteur marqué $400/690\ \mathrm{V}$ se couple en
+    triangle sur un réseau $400\ \mathrm{V}$ : c'est la condition pour pouvoir le démarrer en étoile-triangle, que le cours Démarrage des moteurs
+    asynchrones étudiera. La puissance réactive absorbée se déduit de la plaque : $Q = P_{abs}\tan\varphi$. Le couple nominal se calcule toujours
+    à partir de la puissance utile et de la vitesse nominale, convertie en $\mathrm{rad/s}$ : $C_n = P_n/\varOmega_n$.
+  </p>
+
+  <h3 id="e-demarrage">Démarrage, accélération et énergie dissipée dans le rotor</h3>
+  <p>
+    À l'arrêt, $g = 1$ : le moteur est un transformateur dont le secondaire est en court-circuit, limité seulement par les résistances et les
+    réactances de fuite. Le courant de démarrage direct vaut de $5$ à $8$ fois le courant nominal et reste élevé pendant presque toute
+    l'accélération, puisqu'il ne décroît vraiment qu'au-delà du couple maximal. L'accélération obéit au principe fondamental de la dynamique
+    en rotation :
+  </p>
+  <div class="formule-cle">
+    $$J\,\frac{\mathrm{d}\varOmega}{\mathrm{d}t} = C_{em}(\varOmega) - C_r(\varOmega), \qquad W_{jr} = \int p_{jr}\,\mathrm{d}t = \tfrac{1}{2}\,J\,\varOmega_s^2 \ \text{ à vide}$$
+    <p class="formule-cle-legende">
+      $J$ moment d'inertie ramené à l'arbre du moteur, en $\mathrm{kg \cdot m^2}$ ; $W_{jr}$ énergie dissipée dans le rotor pendant le démarrage,
+      en joules. Dérivation du résultat à vide : $p_{jr} = g\,C_{em}\,\varOmega_s = (\varOmega_s - \varOmega)\,C_{em}$ et, sans charge,
+      $C_{em}\,\mathrm{d}t = J\,\mathrm{d}\varOmega$ ; donc $W_{jr} = J\int_0^{\varOmega_s}(\varOmega_s - \varOmega)\,\mathrm{d}\varOmega = \tfrac{1}{2}J\varOmega_s^2$.
+      Interprétation : un démarrage direct à vide dissipe dans le rotor autant d'énergie qu'il en stocke dans les masses tournantes, quelle que
+      soit la forme de la courbe de couple. Avec une charge, l'énergie dissipée est plus grande. C'est elle qui limite le nombre de démarrages
+      par heure des moteurs à forte inertie. Unités : $\mathrm{kg \cdot m^2 \cdot rad^2/s^2} = \mathrm{J}$.
+    </p>
+  </div>
+  <p>
+    Pour inverser le sens de marche, il suffit de permuter deux phases, ce que réalise un inverseur à deux contacteurs verrouillés. Permuter
+    deux phases en pleine marche fait passer le glissement à presque $2$ : c'est le freinage à contre-courant, très brutal, qui dissipe dans le
+    rotor trois fois l'énergie cinétique ; il n'est admissible que pour de petits moteurs. Un moteur entraîné au-dessus de la vitesse de
+    synchronisme par sa charge, une descente de charge ou un convoyeur en pente, fonctionne en générateur et renvoie de l'énergie au réseau,
+    à condition que le réseau lui fournisse sa puissance réactive magnétisante.
+  </p>
+
+  <h3 id="e-dyn-section">Simulation interactive : démarrage direct et durée d'accélération</h3>
+  <p>
+    La simulation intègre l'équation mécanique pas à pas, avec la courbe de couple du moteur de la section H, et trace la vitesse puis les
+    couples en fonction du temps. Vous réglez la tension pendant le démarrage, le moment d'inertie et la charge. Avant de manipuler, prédisez :
+    à vide, si l'on double l'inertie, la durée de démarrage double-t-elle ? L'énergie dissipée dans le rotor double-t-elle ? Et si la tension
+    tombe à $80\ \%$ pendant le démarrage d'un convoyeur au couple nominal ?
+  </p>
+  <figure id="e-dyn-figure">
+    <div id="e-dyn-vitesse"></div>
+    <div id="e-dyn-couple"></div>
+    <figcaption>
+      En haut, la vitesse du rotor en fonction du temps ; le trait horizontal pointillé repère $95\ \%$ de la vitesse finale, le trait vertical
+      l'instant correspondant. En bas, le couple électromagnétique du moteur et le couple résistant de la charge en fonction du temps : leur
+      différence, divisée par l'inertie, donne l'accélération.
+    </figcaption>
+  </figure>
+  <div id="e-dyn-curseurs"></div>
+  <div id="e-dyn-valeurs"></div>
+  <p>
+    Interprétation : à vide, sous la tension nominale et avec $J = 0{,}30\ \mathrm{kg \cdot m^2}$, le moteur atteint $95\ \%$ de sa vitesse en
+    $0{,}24\ \mathrm{s}$ environ ; l'énergie dissipée dans le rotor vaut environ $3{,}7\ \mathrm{kJ}$, pratiquement $\tfrac{1}{2}J\varOmega_s^2 =
+    3{,}70\ \mathrm{kJ}$, le petit écart venant des frottements. Doubler l'inertie double à la fois la durée et l'énergie, puisque l'accélération
+    est inversement proportionnelle à $J$. Sur un convoyeur au couple nominal, la durée passe à environ $0{,}38\ \mathrm{s}$ et l'énergie
+    rotorique jusqu'à $95\ \%$ de la vitesse à environ $6{,}2\ \mathrm{kJ}$. Sous $80\ \%$ de tension, le couple disponible n'est plus que de
+    $0{,}64$ fois le couple de catalogue : la durée atteint environ $0{,}9\ \mathrm{s}$ et l'énergie dissipée environ $10\ \mathrm{kJ}$, avec le
+    courant de démarrage maintenu presque tout ce temps. La simulation suppose la tension constante pendant le démarrage ;
+    en réalité la chute de tension diminue quand le courant décroît.
+  </p>
+
+  <h3 id="e-statut">Loi, convention, approximation, règle de conception et donnée du constructeur</h3>
+  <ul>
+    <li><strong>Lois physiques :</strong> loi de Faraday et force de Laplace, à l'origine des courants et du couple ; conservation de l'énergie, qui impose $p_{jr} = g\,P_{tr}$ ; principe fondamental de la dynamique en rotation.</li>
+    <li><strong>Conventions :</strong> sens positif des courants des bobines et ordre des phases $U$, $V$, $W$ ; glissement positif en moteur ; couple compté positif dans le sens du champ ; puissance de plaque égale à la puissance utile ; repérage des bornes $U_1$ à $W_2$.</li>
+    <li><strong>Approximations :</strong> répartition sinusoïdale de l'induction ; impédance du stator et courant magnétisant négligés dans la formule de Kloss ; glissement critique variable ajusté sur le catalogue pour représenter l'effet de peau ; pertes fer du rotor négligées ; loi approchée du courant dans la cascade des puissances ; tension constante pendant le démarrage.</li>
+    <li><strong>Règles de conception :</strong> entrefer aussi faible que possible ; barres profondes ou double cage pour le couple de démarrage ; couplage choisi pour que chaque enroulement reçoive sa tension assignée ; marge de couple maximal pour tenir les creux de tension ; moteur dimensionné pour fonctionner entre environ $60$ et $100\ \%$ de sa charge.</li>
+    <li><strong>Données du constructeur et des normes :</strong> valeurs assignées de la plaque, rapports $I_d/I_n$, $C_d/C_n$, $C_{max}/C_n$ du catalogue, classe d'isolation, service, indice de protection, classe de rendement et tolérances sur ces valeurs, définies par les normes de machines tournantes applicables, à vérifier pour chaque pays et chaque date de mise sur le marché.</li>
+  </ul>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, qui relie la structure du moteur à la chaîne de conversion de l'énergie,
+    l'organigramme de résolution et un tableau comparatif avec la machine à courant continu. Les autres schémas sont restés au contact du
+    passage qu'ils illustrent ; la liste de renvois figure à la fin de la section.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 760 420" role="img" aria-label="Schéma principal : réseau triphasé, stator et couplage, champ tournant à la vitesse de synchronisme, rotor à cage parcouru par des courants à la fréquence g f, arbre et charge ; en dessous, chaîne énergétique chiffrée du moteur de l'exemple">
+      <defs>
+        <marker id="fl-f" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+        <rect x="10" y="30" width="118" height="86" rx="10"/>
+        <rect x="146" y="30" width="166" height="86" rx="10"/>
+        <rect x="330" y="30" width="150" height="86" rx="10"/>
+        <rect x="498" y="30" width="134" height="86" rx="10"/>
+        <rect x="650" y="30" width="100" height="86" rx="10"/>
+        <rect x="14" y="230" width="150" height="56" rx="8"/>
+        <rect x="214" y="230" width="150" height="56" rx="8"/>
+        <rect x="414" y="230" width="150" height="56" rx="8"/>
+        <rect x="614" y="230" width="136" height="56" rx="8"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M128 73H142" marker-end="url(#fl-f)"/>
+        <path d="M312 73H326" marker-end="url(#fl-f)"/>
+        <path d="M480 73H494" marker-end="url(#fl-f)"/>
+        <path d="M632 73H646" marker-end="url(#fl-f)"/>
+        <path d="M164 258H210" stroke-width="3" marker-end="url(#fl-f)"/>
+        <path d="M364 258H410" stroke-width="3" marker-end="url(#fl-f)"/>
+        <path d="M564 258H610" stroke-width="3" marker-end="url(#fl-f)"/>
+        <path d="M60 286V330" stroke-dasharray="5 4" marker-end="url(#fl-f)"/>
+        <path d="M120 286V330" stroke-dasharray="5 4" marker-end="url(#fl-f)"/>
+        <path d="M290 286V330" stroke-dasharray="5 4" marker-end="url(#fl-f)"/>
+        <path d="M490 286V330" stroke-dasharray="5 4" marker-end="url(#fl-f)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="20" y="54">réseau 3 ~</text>
+        <text x="20" y="72">400 V, 50 Hz</text>
+        <text x="20" y="90">ordre direct</text>
+        <text x="156" y="54">stator</text>
+        <text x="156" y="72">3 enroulements</text>
+        <text x="156" y="90">couplage Y ou Δ</text>
+        <text x="156" y="108">P_abs = √3 U I cos φ</text>
+        <text x="340" y="54">champ tournant</text>
+        <text x="340" y="72">n_s = 60 f / p</text>
+        <text x="340" y="90">entrefer : P_tr</text>
+        <text x="340" y="108">C_em = P_tr / Ω_s</text>
+        <text x="508" y="54">rotor à cage</text>
+        <text x="508" y="72">courants à g f</text>
+        <text x="508" y="90">n = (1 - g) n_s</text>
+        <text x="508" y="108">p_jr = g P_tr</text>
+        <text x="660" y="54">arbre</text>
+        <text x="660" y="72">et charge</text>
+        <text x="660" y="90">C_u, n</text>
+        <text x="20" y="214">chaîne énergétique du moteur de la section H, au point nominal</text>
+        <text x="24" y="254">P_abs</text>
+        <text x="24" y="274">12 222 W</text>
+        <text x="224" y="254">P_tr</text>
+        <text x="224" y="274">11 414 W</text>
+        <text x="424" y="254">P_m = (1 - g) P_tr</text>
+        <text x="424" y="274">11 110 W</text>
+        <text x="624" y="254">P_u = C_u Ω</text>
+        <text x="624" y="274">11 000 W</text>
+        <text x="24" y="350">p_js</text>
+        <text x="24" y="366">410 W</text>
+        <text x="100" y="350">p_fs</text>
+        <text x="100" y="366">398 W</text>
+        <text x="262" y="350">p_jr = g P_tr</text>
+        <text x="262" y="366">304 W</text>
+        <text x="462" y="350">p_m</text>
+        <text x="462" y="366">110 W</text>
+        <text x="614" y="330">η = 11 000 / 12 222</text>
+        <text x="614" y="350">  = 90,0 %</text>
+        <text x="614" y="384">g = 2,67 %</text>
+        <text x="20" y="404">flèches épaisses : puissance qui progresse ; flèches en tirets : pertes</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal. En haut, la chaîne fonctionnelle : le réseau alimente le stator, dont les trois enroulements couplés créent le champ
+      tournant ; la puissance traverse l'entrefer, portée par le champ, et induit dans la cage des courants de fréquence $gf$ ; le rotor
+      entraîne la charge. Les flèches indiquent le sens de transfert de l'énergie en moteur ; en générateur, elles s'inversent. En bas, la
+      chaîne énergétique chiffrée du moteur de la section H : les largeurs des cadres ne sont pas proportionnelles, la cascade animée de la
+      section E les donne à l'échelle.
+    </figcaption>
+  </figure>
+
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Plaque : P_n, U, couplage, I_n,<br/>cos φ, η, n_n, f"] --> B["Couplage :<br/>réseau = tension basse → Δ<br/>réseau = tension haute → Y"]
+  B --> C["n_s : valeur de 60 f / p<br/>juste au-dessus de n_n"]
+  C --> D["g = (n_s - n) / n_s<br/>f_r = g f"]
+  D --> E{"Que cherche-t-on ?"}
+  E -->|"couple"| F["C_n = P_n / Ω_n<br/>Ω en rad/s"]
+  E -->|"puissances"| G["P_abs = P_n / η<br/>I, Q = P_abs tan φ"]
+  E -->|"bilan détaillé"| H["P_tr = (P_u + p_m) / (1 - g)<br/>p_jr = g P_tr"]
+  E -->|"autre charge"| K["zone linéaire : C ∝ g<br/>ou formule de Kloss"]
+  E -->|"démarrage"| L["I_d, C_d × (U / U_n)²<br/>J dΩ/dt = C_em - C_r"]
+  F --> M{"Contrôles"}
+  G --> M
+  H --> M
+  K --> M
+  L --> M
+  M --> N["somme des pertes = P_abs - P_u ;<br/>n inférieure à n_s ;<br/>ordres de grandeur ;<br/>marge sur C_max"]</pre>
+    <figcaption>
+      Organigramme de résolution d'un problème de moteur asynchrone. Les rectangles sont des calculs, les losanges des choix, les libellés des
+      flèches les questions posées. On commence toujours par le couplage et la vitesse de synchronisme, qui fixent le glissement ; toutes les
+      branches se rejoignent sur les mêmes contrôles : bilan des pertes, vitesse inférieure au synchronisme en moteur, ordres de grandeur et
+      marge de couple.
+    </figcaption>
+  </figure>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Moteur asynchrone à cage et moteur à courant continu à excitation séparée</caption>
+      <thead><tr><th>Critère</th><th>Moteur asynchrone à cage</th><th>Moteur à courant continu</th></tr></thead>
+      <tbody>
+        <tr><td>Alimentation</td><td>réseau triphasé direct, ou variateur de fréquence</td><td>source continue réglable, redresseur ou hacheur</td></tr>
+        <tr><td>Création du flux</td><td>courant magnétisant du stator, absorbé au réseau</td><td>inducteur séparé ou aimants</td></tr>
+        <tr><td>Courants du rotor</td><td>induits, à la fréquence $gf$</td><td>imposés par la source, commutés par le collecteur</td></tr>
+        <tr><td>Vitesse</td><td>proche de $n_s = 60f/p$, glissement de quelques pour cent</td><td>fixée par la tension d'induit, $\varOmega = E/K\Phi$</td></tr>
+        <tr><td>Couple en zone normale</td><td>proportionnel au glissement</td><td>proportionnel au courant d'induit</td></tr>
+        <tr><td>Démarrage direct</td><td>$5$ à $8\ I_n$, couple de $1{,}5$ à $3\ C_n$</td><td>courant limité seulement par $R$, à limiter impérativement</td></tr>
+        <tr><td>Entretien</td><td>roulements seulement</td><td>balais et collecteur en plus</td></tr>
+        <tr><td>Facteur de puissance</td><td>$0{,}8$ à $0{,}9$ en charge, très faible à vide</td><td>sans objet côté continu ; celui du redresseur côté réseau</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-arago-figure" data-renvoi="d-arago-figure">l'expérience du disque entraîné</a>, section D ;</li>
+    <li><a href="#e-coupe-figure" data-renvoi="e-coupe-figure">la constitution du moteur à cage</a>, <a href="#e-enroulements-figure" data-renvoi="e-enroulements-figure">la disposition des trois bobines</a>, <a href="#e-champ-figure" data-renvoi="e-champ-figure">l'animation du champ tournant</a>, <a href="#e-glis-figure" data-renvoi="e-glis-figure">l'animation du rotor vu depuis le champ</a>, <a href="#e-courbe-figure" data-renvoi="e-courbe-figure">la courbe couple-vitesse</a>, <a href="#e-carac-figure" data-renvoi="e-carac-figure">la simulation du point de fonctionnement</a>, <a href="#e-cascade-figure" data-renvoi="e-cascade-figure">la cascade des puissances</a>, <a href="#e-plaque-figure" data-renvoi="e-plaque-figure">la plaque signalétique</a>, <a href="#e-bornes-figure" data-renvoi="e-bornes-figure">les couplages dans la boîte à bornes</a> et <a href="#e-dyn-figure" data-renvoi="e-dyn-figure">la simulation du démarrage</a>, section E ;</li>
+    <li><a href="#h-donnees-figure" data-renvoi="h-donnees-figure">le schéma de l'exemple numérique</a>, section H ;</li>
+    <li><a href="#i-compresseur-figure" data-renvoi="i-compresseur-figure">le départ du compresseur du site</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour interpréter une plaque, calculer glissement, couple et rendement, puis traiter un autre point de fonctionnement ou un démarrage :</p>
+  <ol>
+    <li>Relever la plaque et le catalogue : puissance utile, tensions et courants des deux couplages, facteur de puissance, rendement, vitesse, fréquence ; rapports $I_d/I_n$, $C_d/C_n$, $C_{max}/C_n$ ; résistance entre bornes si elle est mesurée. Noter ce qui est mesuré, ce qui est garanti et ce qui est supposé.</li>
+    <li>Choisir le couplage : le réseau doit appliquer à chaque enroulement la plus petite tension de la plaque ; retenir le courant de ligne du couplage choisi.</li>
+    <li>Déterminer $p$ et $n_s$ : la vitesse de synchronisme est la valeur de $60f/p$ immédiatement supérieure à la vitesse de plaque.</li>
+    <li>Calculer le glissement, la fréquence rotorique, $\varOmega_n$ en $\mathrm{rad/s}$, puis le couple nominal $C_n = P_n/\varOmega_n$.</li>
+    <li>Calculer la puissance absorbée $P_{abs} = P_n/\eta$, vérifier $I = P_{abs}/(\sqrt{3}\,U\cos\varphi)$ contre la plaque, puis $Q = P_{abs}\tan\varphi$ et la somme des pertes $P_{abs} - P_n$.</li>
+    <li>Pour le bilan détaillé : $P_{tr} = (P_u + p_m)/(1 - g)$, $p_{jr} = g\,P_{tr}$, pertes du stator $= P_{abs} - P_{tr}$, séparées en Joule, $\tfrac{3}{2}R_bI^2$, et fer.</li>
+    <li>Pour un autre point : dans la zone normale, le couple est proportionnel au glissement, $g \approx g_n\,C/C_n$, et au carré de la tension, $g \approx g_n (C/C_n)(U_n/U)^2$ ; au-delà, utiliser la formule de Kloss ou la courbe du constructeur ; vérifier la stabilité et la marge sur $C_{max}\,(U/U_n)^2$.</li>
+    <li>Pour un démarrage : $C_d$ et $I_d$ corrigés par la tension réelle au moteur, comparaison avec le couple résistant à l'arrêt, durée d'accélération par $J\,\mathrm{d}\varOmega/\mathrm{d}t = C_{em} - C_r$, énergie rotorique.</li>
+    <li>Contrôler : vitesse inférieure à $n_s$ en moteur, somme des pertes, rendement et facteur de puissance plausibles pour la puissance, couple en $\mathrm{N \cdot m}$ cohérent avec $P/\varOmega$, glissement de quelques pour cent.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Un ventilateur d'extraction d'atelier est entraîné en direct par le moteur de la plaque de la section E. On veut tout tirer de la plaque :
+    couplage, glissement, couple, puissances, pertes détaillées, puis le comportement à $75\ \%$ de charge et au démarrage.
+  </p>
+  <figure id="h-donnees-figure">
+    <svg viewBox="0 0 760 280" role="img" aria-label="Schéma de l'exemple : réseau 400 volts trois phases L1 L2 L3, courants de ligne de 21 ampères vers le moteur, tension composée U12 de 400 volts, moteur couplé en étoile, arbre vers un ventilateur, couple et vitesse">
+      <defs>
+        <marker id="fl-h" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M30 60H330M30 120H330M30 180H330"/>
+        <circle cx="400" cy="120" r="64"/>
+        <path d="M464 120H560"/>
+        <rect x="560" y="80" width="150" height="80" rx="10"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6">
+        <path d="M330 60L362 88M330 180L362 152M330 120H346"/>
+        <path d="M376 100L400 120L376 140M400 120H428"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6">
+        <path d="M120 50H160" marker-end="url(#fl-h)"/>
+        <path d="M120 110H160" marker-end="url(#fl-h)"/>
+        <path d="M120 170H160" marker-end="url(#fl-h)"/>
+        <path d="M240 70V112" marker-end="url(#fl-h)"/>
+        <path d="M600 196A60 20 0 0 0 680 196" marker-end="url(#fl-h)"/>
+      </g>
+      <g fill="currentColor" stroke="none"><circle cx="240" cy="60" r="3.5"/><circle cx="240" cy="120" r="3.5"/></g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="10" y="64">L1</text><text x="10" y="124">L2</text><text x="10" y="184">L3</text>
+        <text x="166" y="54">I = 21,0 A</text>
+        <text x="250" y="96">U12 = 400 V</text>
+        <text x="384" y="76">M</text><text x="380" y="176">3 ~</text>
+        <text x="406" y="104">Y</text>
+        <text x="470" y="108">C_u, Ω</text>
+        <text x="584" y="114">ventilateur</text>
+        <text x="584" y="134">C_r ∝ n²</text>
+        <text x="606" y="222">n = 1460 tr/min</text>
+        <text x="30" y="222">réseau 230/400 V, 50 Hz, ordre direct</text>
+        <text x="30" y="242">moteur 11 kW, 230/400 V, couplé en étoile</text>
+        <text x="30" y="262">convention récepteur : courants de ligne comptés positifs vers le moteur</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma de l'exemple. Les trois phases du réseau arrivent par la gauche ; les flèches sur les lignes donnent le sens positif des courants,
+      vers le moteur, en convention récepteur ; la flèche verticale entre $L_1$ et $L_2$ repère la tension composée $U_{12}$, pointe vers le
+      potentiel de référence $L_2$. Le symbole Y dans le moteur rappelle le couplage étoile. L'arbre transmet le couple utile au ventilateur, et
+      la flèche courbe indique le sens de rotation, celui du champ pour l'ordre direct.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Données de plaque : $P_n = 11\ \mathrm{kW}$, $230/400\ \mathrm{V}$, $36{,}5/21{,}0\ \mathrm{A}$, $\cos\varphi_n = 0{,}84$, $\eta_n = 90{,}0\ \%$,
+    $n_n = 1460\ \mathrm{tr/min}$, $50\ \mathrm{Hz}$. Catalogue : $I_d/I_n = 7{,}0$, $C_d/C_n = 2{,}3$, $C_{max}/C_n = 3{,}0$. Mesures et hypothèses :
+    résistance entre bornes à chaud $R_b = 0{,}62\ \mathrm{\Omega}$, pertes mécaniques $p_m = 110\ \mathrm{W}$, réseau $230/400\ \mathrm{V}$. Inconnues :
+    couplage, $p$, $n_s$, $g_n$, $f_r$, $C_n$, $P_{abs}$, $Q$, $P_{tr}$, $p_{jr}$, $p_{js}$, $p_{fs}$, vitesse à $75\ \%$ de charge, courant et couple de
+    démarrage. Stratégie : suivre la méthode de la section G, en partant de la plaque vers l'entrefer, puis contrôler par la somme des pertes.
+  </p>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li><strong>Couplage.</strong> La plus petite tension de plaque, $230\ \mathrm{V}$, est celle d'un enroulement. Sur un réseau de $400\ \mathrm{V}$ composés, il faut appliquer $400/\sqrt{3} = 230{,}9\ \mathrm{V}$ par enroulement : couplage étoile, courant de ligne $I_n = 21{,}0\ \mathrm{A}$.</li>
+    <li><strong>Pôles et synchronisme.</strong> La valeur de $60f/p$ immédiatement supérieure à $1460$ est $1500\ \mathrm{tr/min}$, pour $p = 2$, soit un moteur à quatre pôles ; $\varOmega_s = 2\pi \times 1500/60 = 157{,}08\ \mathrm{rad/s}$.</li>
+    <li><strong>Glissement et fréquence rotorique.</strong> $g_n = (1500 - 1460)/1500 = 0{,}02667$, soit $2{,}67\ \%$ ; $f_r = 0{,}02667 \times 50 = 1{,}33\ \mathrm{Hz}$.</li>
+    <li><strong>Couple nominal.</strong> $\varOmega_n = 2\pi \times 1460/60 = 152{,}89\ \mathrm{rad/s}$ ; $C_n = 11\,000/152{,}89 = 71{,}95\ \mathrm{N \cdot m}$.</li>
+    <li><strong>Puissances absorbées.</strong> $P_{abs} = 11\,000/0{,}90 = 12\,222\ \mathrm{W}$. Contrôle du courant : $I = 12\,222/(\sqrt{3} \times 400 \times 0{,}84) = 21{,}00\ \mathrm{A}$, conforme à la plaque. $S = \sqrt{3} \times 400 \times 21{,}0 = 14{,}55\ \mathrm{kVA}$ ; $\tan\varphi = 0{,}646$, d'où $Q = 12\,222 \times 0{,}646 = 7{,}89\ \mathrm{kvar}$.</li>
+    <li><strong>Somme des pertes.</strong> $P_{abs} - P_n = 12\,222 - 11\,000 = 1222\ \mathrm{W}$.</li>
+    <li><strong>Puissance transmise.</strong> $P_m = P_u + p_m = 11\,110\ \mathrm{W}$ ; $P_{tr} = P_m/(1 - g_n) = 11\,110/0{,}97333 = 11\,414\ \mathrm{W}$ ; contrôle : $C_{em} = P_m/\varOmega_n = 72{,}67\ \mathrm{N \cdot m}$ et $C_{em}\,\varOmega_s = 72{,}67 \times 157{,}08 = 11\,414\ \mathrm{W}$.</li>
+    <li><strong>Pertes Joule du rotor.</strong> $p_{jr} = g_n P_{tr} = 0{,}02667 \times 11\,414 = 304\ \mathrm{W}$.</li>
+    <li><strong>Pertes du stator.</strong> $P_{abs} - P_{tr} = 12\,222 - 11\,414 = 808\ \mathrm{W}$, dont Joule $p_{js} = \tfrac{3}{2} \times 0{,}62 \times 21{,}0^2 = 410\ \mathrm{W}$ et, par différence, fer $p_{fs} = 398\ \mathrm{W}$.</li>
+    <li><strong>À 75 % de charge,</strong> ventilateur moins chargé par exemple après réglage de ses volets : dans la zone normale, le couple est proportionnel au glissement, donc $g \approx 0{,}75 \times 2{,}67\ \% = 2{,}0\ \%$ et $n \approx 1500 \times (1 - 0{,}020) = 1470\ \mathrm{tr/min}$. La formule de Kloss avec $g_m = g_n\left(k + \sqrt{k^2 - 1}\right) = 0{,}02667 \times (3 + 2{,}828) = 0{,}155$ donne $1470{,}4\ \mathrm{tr/min}$ : l'approximation linéaire est excellente.</li>
+    <li><strong>Démarrage direct.</strong> $I_d = 7{,}0 \times 21{,}0 = 147\ \mathrm{A}$ ; $C_d = 2{,}3 \times 71{,}95 = 165{,}5\ \mathrm{N \cdot m}$ ; $C_{max} = 3{,}0 \times 71{,}95 = 215{,}8\ \mathrm{N \cdot m}$. La formule de Kloss seule, avec $g_m = 0{,}155$, prédirait $C_d = 2C_{max}/(1/g_m + g_m) = 65{,}5\ \mathrm{N \cdot m}$ : l'écart mesure l'effet des barres profondes, que le catalogue intègre.</li>
+  </ol>
+
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li><strong>Bilan :</strong> $p_{js} + p_{fs} + p_{jr} + p_m = 410 + 398 + 304 + 110 = 1222\ \mathrm{W}$, égal à $P_{abs} - P_u$.</li>
+    <li><strong>Dimensions :</strong> $C_n$ en $\mathrm{W/(rad/s)} = \mathrm{N \cdot m}$ ; $p_{jr}$ en watts, produit d'un nombre sans dimension par une puissance.</li>
+    <li><strong>Ordres de grandeur :</strong> rendement de $90\ \%$ et facteur de puissance de $0{,}84$ plausibles pour $11\ \mathrm{kW}$ ; glissement de $2{,}7\ \%$ dans la plage des moteurs de cette taille ; couple d'environ $6{,}5\ \mathrm{N \cdot m}$ par kilowatt à $1500\ \mathrm{tr/min}$, valeur repère d'un moteur à quatre pôles.</li>
+    <li><strong>Cas limites :</strong> à vide, $g \to 0$ et $p_{jr} \to 0$ ; à l'arrêt, toute la puissance transmise serait dissipée dans le rotor.</li>
+    <li><strong>Répartition :</strong> les pertes rotoriques valent $25\ \%$ des pertes totales ; si le glissement mesuré était de $4\ \%$ au lieu de $2{,}67\ \%$ au même couple, elles augmenteraient de moitié, signe d'une sous-tension ou d'une barre cassée.</li>
+  </ul>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+
+  <h3 id="i-probleme">Le moteur du compresseur du site, de la plaque au démarrage</h3>
+  <p>
+    Dans le projet fil rouge, le compresseur d'air du site est raccordé au tableau général par un câble de $30\ \mathrm{m}$ en
+    $3 \times 10\ \mathrm{mm^2}$, protégé par un contacteur et un relais thermique, avec une compensation individuelle de $7{,}44\ \mathrm{kvar}$ raccordée
+    en amont du relais et un relais de contrôle de l'ordre et de la présence des phases. Le bilan du site a été établi jusqu'ici avec un point
+    de fonctionnement supposé de $32\ \mathrm{A}$ à $\cos\varphi = 0{,}80$, soit $17{,}66\ \mathrm{kW}$ et $13{,}25\ \mathrm{kvar}$. Il faut maintenant
+    lire la plaque du moteur retenu, supposée ici, et en tirer : couplage, glissement, couple, puissances, cohérence avec les hypothèses du
+    bilan, et vérification du démarrage direct sur le transformateur de $100\ \mathrm{kVA}$ du poste.
+  </p>
+  <figure id="i-compresseur-figure">
+    <svg viewBox="0 0 760 384" role="img" aria-label="Départ du compresseur en schéma unifilaire : jeu de barres du tableau général, câble de 30 mètres, protection, contacteur KM3, dérivation vers les condensateurs de compensation en amont du relais thermique F3, relais de contrôle des phases KA, moteur 18,5 kilowatts couplé en triangle, compresseur à vis ; valeurs au démarrage">
+      <defs>
+        <marker id="fl-i" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M40 40H360" stroke-width="5"/>
+        <path d="M120 40V300"/>
+        <path d="M110 92L130 82M110 98L130 88"/>
+        <path d="M112 140L128 156M128 140L112 156"/>
+        <path d="M120 196L134 178"/>
+        <path d="M120 230H240V250"/>
+        <path d="M228 250H252M228 258H252"/>
+        <path d="M240 258V276"/>
+        <rect x="104" y="262" width="32" height="22" rx="3"/>
+        <circle cx="120" cy="330" r="26"/>
+        <path d="M146 330H220"/>
+        <rect x="220" y="304" width="110" height="52" rx="8"/>
+        <path d="M120 116H40V140"/>
+        <rect x="24" y="140" width="32" height="30" rx="3"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6">
+        <path d="M100 56V100" marker-end="url(#fl-i)"/>
+        <path d="M250 216V236" stroke-dasharray="4 3"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="40" y="30">jeu de barres du tableau général : 373 V au démarrage direct</text>
+        <text x="140" y="70">câble 30 m, 3 x 10 mm²</text>
+        <text x="140" y="96">Z_c = 0,0619 + j0,0024 Ω</text>
+        <text x="140" y="152">protection du départ</text>
+        <text x="140" y="190">KM3, contacteur</text>
+        <text x="258" y="226">compensation 7,44 kvar,</text>
+        <text x="258" y="242">en amont du relais thermique,</text>
+        <text x="258" y="258">commutée avec le moteur</text>
+        <text x="146" y="278">F3, relais thermique, réglé à 33,6 A</text>
+        <text x="110" y="335">M</text>
+        <text x="60" y="376">18,5 kW, couplage Δ</text>
+        <text x="232" y="326">compresseur</text>
+        <text x="232" y="344">à vis</text>
+        <text x="62" y="160">KA</text>
+        <text x="4" y="196">ordre et</text>
+        <text x="4" y="212">présence</text>
+        <text x="4" y="228">des phases</text>
+        <text x="36" y="80">I_d</text>
+        <text x="400" y="66">Démarrage direct, tension supposée constante :</text>
+        <text x="400" y="84">I_d = 7,5 x 33,6 = 252 A sous 400 V</text>
+        <text x="400" y="102">I_d réel ≈ 228 A, transformateur et câble</text>
+        <text x="400" y="120">U moteur ≈ 362 V, soit -9,5 %</text>
+        <text x="400" y="138">C_d ≈ 2,3 x 0,905² C_n = 1,88 C_n</text>
+        <text x="400" y="156">compresseur à vide : C_r ≈ 0,25 C_n</text>
+        <text x="400" y="174">95 % de la vitesse en 0,30 s environ</text>
+      </g>
+    </svg>
+    <figcaption>
+      Départ du compresseur en représentation unifilaire : un seul trait figure les trois phases. Le trait épais horizontal est le jeu de barres
+      du tableau général ; la flèche verticale le sens du courant de démarrage, du réseau vers le moteur. Les symboles se lisent de haut en bas :
+      câble, protection du départ, contacteur KM3, dérivation vers les condensateurs, représentés par deux traits parallèles, relais thermique
+      F3, moteur M couplé en triangle et compresseur. Le relais KA, à gauche, surveille l'ordre et la présence des phases. Les valeurs de droite
+      sont celles du calcul de démarrage ci-dessous, sur le transformateur du poste supposé seul en service.
+    </figcaption>
+  </figure>
+
+  <h3 id="i-calcul">Calculs et vérifications</h3>
+  <ul>
+    <li><strong>Plaque supposée :</strong> $18{,}5\ \mathrm{kW}$, $400/690\ \mathrm{V}$, $33{,}6/19{,}5\ \mathrm{A}$, $\cos\varphi_n = 0{,}86$, $\eta_n = 92{,}4\ \%$, $1470\ \mathrm{tr/min}$, $50\ \mathrm{Hz}$ ; catalogue : $I_d/I_n = 7{,}5$, $C_d/C_n = 2{,}3$, $C_{max}/C_n = 2{,}9$.</li>
+    <li><strong>Couplage :</strong> la plus petite tension, $400\ \mathrm{V}$, est celle du réseau : triangle, comme l'avait retenu le cours <a href="#/cours/systemes-triphases-equilibres">Systèmes triphasés équilibrés</a>, et courant de ligne nominal de $33{,}6\ \mathrm{A}$ ; un couplage étoile par erreur ne donnerait que le tiers du couple.</li>
+    <li><strong>Glissement et couple :</strong> $p = 2$, $n_s = 1500\ \mathrm{tr/min}$, $g_n = 2{,}0\ \%$, $f_r = 1{,}0\ \mathrm{Hz}$ ; $C_n = 18\,500/(2\pi \times 1470/60) = 120{,}2\ \mathrm{N \cdot m}$.</li>
+    <li><strong>Puissances nominales :</strong> $P_{abs} = 18{,}5/0{,}924 = 20{,}02\ \mathrm{kW}$ ; $I = 20\,022/(\sqrt{3} \times 400 \times 0{,}86) = 33{,}6\ \mathrm{A}$, conforme ; $Q_n = 20{,}02 \times \tan(\arccos 0{,}86) = 11{,}88\ \mathrm{kvar}$.</li>
+    <li><strong>Point de service du bilan :</strong> $17{,}66\ \mathrm{kW}$ absorbés correspondent, avec un rendement presque constant près de la charge nominale, à $P_u \approx 0{,}924 \times 17{,}66 = 16{,}3\ \mathrm{kW}$, soit $88\ \%$ de charge ; glissement $\approx 0{,}88 \times 2{,}0\ \% = 1{,}76\ \%$, vitesse $\approx 1474\ \mathrm{tr/min}$, couple utile $\approx 105{,}7\ \mathrm{N \cdot m}$.</li>
+    <li><strong>Cohérence de l'hypothèse $\cos\varphi = 0{,}80$ :</strong> elle implique un courant réactif de $32 \times 0{,}6 = 19{,}2\ \mathrm{A}$, alors que la plaque n'en donne que $33{,}6 \times \sin(\arccos 0{,}86) = 17{,}1\ \mathrm{A}$ à pleine charge. Or le courant réactif d'un moteur asynchrone croît avec la charge, puisqu'il ajoute au courant magnétisant le réactif des fuites. L'hypothèse surestime donc le réactif : à $88\ \%$ de charge, on attend un facteur de puissance de l'ordre de $0{,}85$, soit environ $30\ \mathrm{A}$ et moins de $11{,}9\ \mathrm{kvar}$. Le bilan antérieur reste un majorant prudent ; la valeur réelle sera tranchée par les lectures de la méthode d'Aron prévues au départ du compresseur.</li>
+    <li><strong>Démarrage direct :</strong> $I_d = 7{,}5 \times 33{,}6 = 252\ \mathrm{A}$ sous tension nominale. Avec le transformateur, $R_{cc} = 29{,}26\ \mathrm{m\Omega}$ et $X_{cc} = 61{,}49\ \mathrm{m\Omega}$ par phase, et le câble, le moteur à l'arrêt étant modélisé par $400/(\sqrt{3} \times 252) = 0{,}916\ \mathrm{\Omega}$ par phase à un facteur de puissance supposé de $0{,}40$, le courant réel est d'environ $228\ \mathrm{A}$, la tension tombe à $362\ \mathrm{V}$ aux bornes du moteur, $-9{,}5\ \%$, et à $373\ \mathrm{V}$ au jeu de barres, $-6{,}7\ \%$.</li>
+    <li><strong>Couple disponible :</strong> $C_d \approx 2{,}3 \times 0{,}905^2 = 1{,}88\ C_n = 226\ \mathrm{N \cdot m}$, très supérieur aux $0{,}25\ C_n$ environ d'un compresseur à vis démarré à vide, vanne d'aspiration fermée. Avec un moment d'inertie total supposé de $0{,}45\ \mathrm{kg \cdot m^2}$, l'accélération jusqu'à $95\ \%$ de la vitesse dure environ $0{,}30\ \mathrm{s}$, et le rotor dissipe environ $6{,}3\ \mathrm{kJ}$, contre $\tfrac{1}{2}J\varOmega_s^2 = 5{,}55\ \mathrm{kJ}$ à vide pur.</li>
+  </ul>
+
+  <h3 id="i-compromis">Contraintes, risques et compromis</h3>
+  <ul>
+    <li><strong>Creux de tension :</strong> $6{,}7\ \%$ au jeu de barres pendant environ $0{,}3\ \mathrm{s}$ sont perceptibles sur l'éclairage et doivent être confrontés au seuil de l'automate et des relais du tableau ; le cours Démarrage des moteurs asynchrones comparera ce démarrage direct à un démarrage étoile-triangle, possible puisque le moteur est marqué $400/690\ \mathrm{V}$, ou progressif.</li>
+    <li><strong>Démarrage en charge interdit :</strong> la logique doit imposer la vanne d'aspiration fermée au démarrage ; un démarrage en charge sous tension réduite allongerait l'accélération et l'énergie rotorique.</li>
+    <li><strong>Protection thermique :</strong> le relais F3 est réglé au courant de plaque, $33{,}6\ \mathrm{A}$, et non au courant mesuré ; placé en aval des condensateurs, il ne voit que le courant du moteur.</li>
+    <li><strong>Marche sur deux phases :</strong> un fusible fondu ou un pôle de contacteur défaillant empêche le démarrage et fait circuler près du courant de démarrage dans deux phases ; le relais KA bloque le démarrage et signale le défaut à l'automate, le relais thermique protège en marche.</li>
+    <li><strong>Limites :</strong> la plaque, les rapports de catalogue, le facteur de puissance au démarrage, l'inertie et le couple résistant du compresseur sont supposés ; le transformateur est supposé seul, sans les autres charges ; ces valeurs doivent être remplacées par la documentation du moteur et du compresseur retenus et vérifiées par un enregistrement du courant et de la tension à la mise en service.</li>
+  </ul>
+
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : ce que cette séance ajoute</span>
+    <p>
+      Fiche du moteur du compresseur, plaque supposée $18{,}5\ \mathrm{kW}$, $400/690\ \mathrm{V}$, $33{,}6\ \mathrm{A}$, $\cos\varphi = 0{,}86$, $\eta = 92{,}4\ \%$,
+      $1470\ \mathrm{tr/min}$ : couplage triangle, $p = 2$, $g_n = 2\ \%$, $C_n = 120{,}2\ \mathrm{N \cdot m}$, $P_{abs} = 20{,}02\ \mathrm{kW}$ et $Q_n = 11{,}88\ \mathrm{kvar}$ ;
+      point de service du bilan à $88\ \%$ de charge, environ $1474\ \mathrm{tr/min}$ et $105{,}7\ \mathrm{N \cdot m}$ ; hypothèse $\cos\varphi = 0{,}80$ jugée
+      pessimiste, $0{,}85$ et environ $30\ \mathrm{A}$ attendus, à confirmer par la méthode d'Aron ; démarrage direct à vide accepté sous réserve :
+      $228\ \mathrm{A}$, $362\ \mathrm{V}$ au moteur, $373\ \mathrm{V}$ au jeu de barres, $1{,}88\ C_n$ disponibles, environ $0{,}30\ \mathrm{s}$ et $6{,}3\ \mathrm{kJ}$
+      dans le rotor ; vanne d'aspiration fermée imposée au démarrage, relais thermique réglé à $33{,}6\ \mathrm{A}$, marche sur deux phases
+      surveillée par le relais KA.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Prendre la puissance de plaque pour la puissance absorbée.</strong> La plaque donne la puissance utile ; la puissance absorbée vaut $P_n/\eta$, et c'est elle, avec $\cos\varphi$, qui fixe le courant et le bilan du tableau.</li>
+    <li><strong>Calculer le couple avec des tours par minute.</strong> $C = P/\varOmega$ exige des $\mathrm{rad/s}$ ; avec $1460$ au lieu de $152{,}9$, le couple serait presque dix fois trop faible.</li>
+    <li><strong>Calculer le glissement avec $p$ mal choisi.</strong> Un moteur marqué $960\ \mathrm{tr/min}$ n'a pas $n_s = 1500$ mais $1000\ \mathrm{tr/min}$ : le glissement est de $4\ \%$, pas de $36\ \%$. Un glissement de plus de $10\ \%$ en charge nominale doit alerter.</li>
+    <li><strong>Coupler selon la tension du réseau sans lire la plaque.</strong> Un moteur $230/400\ \mathrm{V}$ couplé en triangle sur $400\ \mathrm{V}$ reçoit $\sqrt{3}$ fois sa tension : flux saturé, courant magnétisant énorme, destruction rapide. Un moteur $400/690\ \mathrm{V}$ couplé en étoile sur $400\ \mathrm{V}$ ne fournit que le tiers de son couple et chauffe en charge.</li>
+    <li><strong>Croire que la sous-tension protège le moteur.</strong> À couple résistant constant, la vitesse baisse à peine, mais le glissement et les pertes rotoriques augmentent comme $1/U^2$, et le courant augmente : le moteur chauffe davantage.</li>
+    <li><strong>Penser qu'un moteur à vide consomme peu.</strong> Il consomme peu de puissance active, mais son courant reste de $25$ à $50\ \%$ du courant nominal, presque entièrement réactif : le facteur de puissance d'une installation de moteurs peu chargés est mauvais.</li>
+    <li><strong>Appliquer la formule de Kloss au démarrage.</strong> Elle sous-estime fortement le couple de démarrage des rotors à barres profondes ou à double cage : il faut prendre le rapport $C_d/C_n$ du constructeur.</li>
+    <li><strong>Attribuer une inversion du sens de rotation au moteur.</strong> Le sens dépend de l'ordre des phases au point de raccordement ; il change après toute intervention qui permute deux conducteurs en amont.</li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain : un moteur qui ronfle sans démarrer, avec deux courants de ligne élevés et le troisième nul, a perdu une phase ;
+    un moteur qui démarre lentement et chauffe, avec des courants équilibrés, subit une sous-tension, une surcharge ou un couplage étoile au
+    lieu de triangle ; un courant qui oscille au rythme de deux fois la fréquence de glissement, accompagné d'un bruit pulsé, signale une
+    barre de cage fissurée ; des courants déséquilibrés de quelques pour cent avec des tensions équilibrées signalent un défaut d'isolement entre
+    spires d'un enroulement ; un échauffement anormal des roulements et une vibration à la vitesse de rotation signalent un défaut
+    mécanique, sans signature électrique au début. Mesurer la vitesse en charge, à l'aide d'un tachymètre optique, donne directement le
+    glissement, donc une image du couple : c'est le contrôle le plus simple d'une estimation de charge.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic industriel et une
+    question conceptuelle. Ils vont de l'application directe d'une formule au choix d'un couplage, puis au calcul multi-étapes, au
+    dimensionnement sous contrainte et au diagnostic. La correction de chacun reste masquée jusqu'à une tentative ou un clic explicite sur
+    "Voir la correction", puis se déroule étape par étape, accompagnée d'un schéma annoté ou d'une courbe.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Après chaque réponse,
+    l'explication s'affiche avec un petit schéma tracé pas à pas.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$n_s = \frac{60\,f}{p}, \qquad \varOmega_s = \frac{2\pi f}{p}, \qquad g = \frac{n_s - n}{n_s}, \qquad f_r = g f$$
+    $$b(\theta, t) = \tfrac{3}{2}\,K I_m\cos(\omega t - p\theta)$$
+    $$P_{tr} = C_{em}\,\varOmega_s, \qquad p_{jr} = g\,P_{tr}, \qquad P_u = (1 - g)P_{tr} - p_m$$
+    $$\frac{C_{em}}{C_{max}} = \frac{2}{g/g_m + g_m/g}, \qquad C \propto U^2 \text{ à glissement donné}$$
+    $$P_{abs} = \frac{P_n}{\eta} = \sqrt{3}\,U I\cos\varphi, \qquad C_n = \frac{P_n}{\varOmega_n}, \qquad W_{jr} = \tfrac{1}{2}J\varOmega_s^2 \text{ à vide}$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>La puissance de plaque est utile, mécanique ; la puissance absorbée vaut $P_n/\eta$.</li>
+      <li>Le couplage se choisit pour que chaque enroulement reçoive la plus petite tension de la plaque.</li>
+      <li>Vitesses en $\mathrm{rad/s}$ dans $C = P/\varOmega$ ; $n_s$ est la valeur de $60f/p$ juste au-dessus de la vitesse de plaque.</li>
+      <li>Le couple varie comme $U^2$ : une sous-tension réduit la marge de décrochage et fait chauffer le rotor à couple constant.</li>
+      <li>Un moteur qui ne démarre pas en ronflant tourne sur deux phases : couper immédiatement et rechercher la phase manquante.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Trois enroulements décalés de $120^\circ$, alimentés par des courants triphasés, créent un champ d'amplitude constante
+    qui tourne à $n_s = 60f/p$ ; permuter deux phases inverse son sens. Le rotor à cage, en court-circuit, n'est le siège de courants que s'il
+    glisse par rapport au champ : la fréquence rotorique vaut $gf$. Le couple naît de ces courants dans le champ ; il est proportionnel au
+    glissement en zone normale, passe par un maximum indépendant de la résistance rotorique et varie comme le carré de la tension. La puissance
+    transmise à travers l'entrefer se partage entre les pertes Joule du rotor, $g\,P_{tr}$, et la puissance mécanique. La plaque donne la
+    puissance utile, les deux couplages, la vitesse, le rendement et le facteur de puissance, dont on tire glissement, couple et puissances.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent, <a href="#/cours/machine-a-courant-continu">Machine à courant
+    continu</a>, dont la caractéristique sert de point de comparaison ; une sur le cours <a href="#/cours/transformateur-ideal">Transformateur
+    idéal</a>, vieux d'une semaine, puisque le moteur à l'arrêt est un transformateur dont le secondaire est en court-circuit ; une sur le cours
+    <a href="#/cours/revision-1-et-etude-de-cas-continu">Révision 1 et étude de cas continu</a>, vieux d'un mois, dont la règle du cas le plus
+    défavorable s'applique à la vérification d'un démarrage.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : reconstruire en Python la courbe couple-vitesse d'un moteur à partir de sa plaque et de son catalogue, déterminer son point de
+    fonctionnement sur une charge, puis simuler son démarrage, et, si vous disposez d'un moteur réel, mesurer son glissement. Prédictions à écrire
+    avant de commencer : vitesse du moteur de la section H sur un ventilateur demandant $60\ \%$ du couple nominal à $1460\ \mathrm{tr/min}$ ; durée
+    de démarrage à vide avec $J = 0{,}30\ \mathrm{kg \cdot m^2}$ ; effet d'une tension de $90\ \%$ sur ces deux résultats.
+  </p>
+  <ol>
+    <li>Écrire une fonction <code>couple(g, gm0, a, kmax)</code> qui renvoie $C/C_n = 2k_{max}/\left(g/g_m + g_m/g\right)$ avec $g_m = g_{m0}(1 + a|g|)$.</li>
+    <li>Ajuster $g_{m0}$ et $a$ par deux recherches par dichotomie imbriquées : pour un $a$ donné, chercher $g_{m0}$ tel que $C(g_n) = 1$ ; puis chercher $a$ tel que $C(1) = C_d/C_n = 2{,}3$. Vérifier que $C_{max}/C_n$ reste égal à $3{,}0$.</li>
+    <li>Tracer $C(n)$ de $0$ à $1500\ \mathrm{tr/min}$ avec <code>matplotlib</code>, superposer la formule de Kloss pure, $a = 0$, et la charge $C_r = 0{,}6\,C_n (n/1460)^2$ ; chercher l'intersection par dichotomie entre $g = 10^{-5}$ et $g = 0{,}1$.</li>
+    <li>Intégrer $J\,\mathrm{d}\varOmega/\mathrm{d}t = C_{em} - C_r$ par la méthode d'Euler avec un pas de $0{,}1\ \mathrm{ms}$, en accumulant $p_{jr} = (\varOmega_s - \varOmega)C_{em}$ ; relever l'instant où la vitesse atteint $95\ \%$ de sa valeur finale.</li>
+    <li>Facultatif, avec LTspice : représenter la vitesse par la tension d'un nœud chargé par un condensateur de capacité $J$, et le couple par une source de courant comportementale <code>B</code> dont l'expression est la formule ajustée, en fonction de $1 - V/\varOmega_s$ ; comparer à Python.</li>
+    <li>Facultatif, sur un moteur réel alimenté par le réseau et sous la supervision prévue pour les essais électriques : mesurer la vitesse à vide puis en charge au tachymètre optique, en déduire le glissement, et comparer le couple estimé par $C \approx C_n\,g/g_n$ à celui que donne la puissance mesurée.</li>
+  </ol>
+  <p>
+    Résultats attendus : $g_{m0} \approx 0{,}147$ et $a \approx 2{,}18$ ; couple maximal $3{,}0\ C_n$ vers $1176\ \mathrm{tr/min}$ avec le modèle ajusté, contre
+    $1267\ \mathrm{tr/min}$ avec Kloss pure ; point de fonctionnement sur le ventilateur à environ $1476\ \mathrm{tr/min}$ ; démarrage à vide en
+    $0{,}24\ \mathrm{s}$ jusqu'à $95\ \%$, avec $3{,}70\ \mathrm{kJ}$ dissipés dans le rotor ; sous $90\ \%$ de tension, démarrage d'environ $0{,}30\ \mathrm{s}$, même
+    énergie à vide. Anomalies à observer : un pas d'intégration trop grand fait osciller la vitesse autour du synchronisme ; la dichotomie
+    de l'intersection doit rester sur la partie stable, sinon elle renvoie un point instable sous le couple maximal ; à vide, la vitesse finale
+    tend vers $1500\ \mathrm{tr/min}$ sans l'atteindre si l'on ajoute le couple des pertes mécaniques, et l'atteint exactement sinon, ce qui est
+    une limite du modèle ; sur un moteur réel, le glissement à vide de quelques millièmes est difficile à mesurer, et l'écart à la vitesse de
+    plaque en charge dépend fortement de la température du rotor.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est calculé dans ce navigateur à
+    partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement pour suivre votre progression.
+    Le jalon de fin du module des machines électriques demande de comprendre les principales machines, de lire leurs modèles, d'interpréter une
+    plaque signalétique et de choisir une solution d'entraînement : interpréter la plaque d'un moteur asynchrone et en tirer glissement et
+    couple en est le cœur.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Trois bobines décalées de $120^\circ$ et trois courants décalés de $120^\circ$ créent un champ d'amplitude constante tournant à $n_s = 60f/p$ ; permuter deux phases inverse le sens, perdre une phase le rend pulsant.</li>
+    <li data-rang="02">Le rotor n'a de courants, donc de couple, que s'il glisse : $g = (n_s - n)/n_s$, $f_r = gf$, et les pertes Joule du rotor valent $g\,P_{tr}$.</li>
+    <li data-rang="03">La plaque donne la puissance utile et deux couplages ; le couple nominal vaut $P_n/\varOmega_n$, la puissance absorbée $P_n/\eta$, et tous les couples varient comme $U^2$.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> relier la courbe couple-vitesse aux grandeurs électriques, en particulier comprendre
+    pourquoi une sous-tension, qui ne fait presque pas varier la vitesse, augmente pourtant l'échauffement, et pourquoi le couple passe par un
+    maximum. La simulation du point de fonctionnement, l'animation du rotor vu depuis le champ et l'exercice avancé sont faits pour installer
+    ce lien ; le prochain cours le rendra calculable par un circuit électrique.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Schéma équivalent du moteur asynchrone, remplace la formule de Kloss par un
+    circuit par phase. Question à préparer : à l'arrêt, le moteur est un transformateur dont le secondaire est en court-circuit ; en marche,
+    le rotor se comporte comme s'il était fermé sur une résistance $R_2/g$. Comment découper cette résistance en deux parts, l'une qui chauffe
+    le rotor et l'autre qui représente la puissance mécanique, et où placer la branche magnétisante pour retrouver le courant à vide de
+    $40\ \%$ du courant nominal ?
+  </p>
+
+</article>
