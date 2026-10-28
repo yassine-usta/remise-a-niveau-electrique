@@ -1,0 +1,1317 @@
+<article class="cours" data-slug="schema-equivalent-du-moteur-asynchrone">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/moteur-asynchrone-triphase">Moteur asynchrone triphasé</a> a laissé deux outils commodes mais incomplets. La
+      formule de Kloss donnait le couple en fonction du glissement en négligeant le stator et le courant magnétisant ; la cascade des
+      puissances estimait le courant absorbé par une loi approchée, ajustée sur la plaque. Il s'est achevé sur une question : à l'arrêt, le
+      moteur est un transformateur dont le secondaire est en court-circuit ; en marche, le rotor se comporte comme s'il était fermé sur une
+      résistance $R_2/g$. Comment découper cette résistance en une part qui chauffe le rotor et une part qui représente la puissance
+      mécanique, et où placer la branche magnétisante ? Cette séance répond en construisant le schéma équivalent par phase, le même circuit
+      en T que celui du cours <a href="#/cours/transformateur-reel">Transformateur réel</a>, à une différence près : la charge du secondaire
+      est une résistance qui dépend de la vitesse. Avec lui, courant, facteur de puissance, pertes, rendement et couple se calculent tous à
+      partir d'un seul circuit, en n'importe quel point de fonctionnement.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    La plaque d'un moteur ne décrit qu'un point : le point nominal. Or un moteur passe sa vie ailleurs. Une pompe tourne à $70\ \%$ de sa
+    charge, un ventilateur est réduit par ses volets, un compresseur alterne marche en charge et marche à vide, un réseau faible abaisse la
+    tension de quelques pour cent, un démarrage traverse tous les glissements de $1$ à presque $0$. Pour chiffrer le courant qui chauffe les
+    câbles, la puissance réactive à compenser, les pertes qui fixent la facture et l'échauffement, ou le couple qui décide d'un démarrage,
+    l'ingénieur a besoin d'un modèle valable sur toute la plage de fonctionnement. Le schéma équivalent par phase est ce modèle : cinq ou six
+    paramètres, identifiés par deux essais simples, et toutes les grandeurs électriques et mécaniques s'en déduisent par le calcul en
+    régime sinusoïdal des cours <a href="#/cours/impedances-en-regime-sinusoidal">Impédances en régime sinusoïdal</a> et
+    <a href="#/cours/puissances-en-courant-alternatif">Puissances en courant alternatif</a>.
+  </p>
+  <p>
+    C'est aussi le langage des outils professionnels. Les logiciels de calcul de réseaux représentent un moteur par ses paramètres de
+    schéma équivalent pour simuler un démarrage ou un creux de tension ; les variateurs de fréquence identifient eux-mêmes ces paramètres à
+    la mise en service, par un essai à l'arrêt, avant de piloter le flux et le couple ; les programmes d'efficacité énergétique s'en servent
+    pour estimer les pertes d'un moteur surdimensionné. Le travail central de cette séance est de calculer courant, pertes et rendement à
+    partir du modèle ; dans le projet fil rouge, il débouche sur le modèle du moteur du compresseur du site, qui tranche enfin la question
+    de son facteur de puissance réel et vérifie sa compensation.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Établir le schéma équivalent en T par phase à partir des équations du stator et du rotor, en expliquant pourquoi la résistance rotorique devient $R_2'/g$ et ce que vaut chaque élément ramené.</li>
+    <li data-rang="02">Calculer, pour un glissement donné, le courant absorbé, le facteur de puissance, le courant rotorique ramené et le courant de la branche magnétisante, avec un contrôle par la loi des nœuds et le bilan de puissance.</li>
+    <li data-rang="03">Répartir la puissance absorbée entre pertes Joule du stator, pertes fer, pertes Joule du rotor et puissance mécanique, puis calculer le couple électromagnétique, le couple utile et le rendement.</li>
+    <li data-rang="04">Appliquer le théorème de Thévenin pour obtenir le couple en fonction du glissement, le glissement critique et le couple maximal, et relier ce résultat à la formule de Kloss.</li>
+    <li data-rang="05">Identifier les paramètres du schéma à partir d'une mesure de résistance, d'un essai à vide et d'un essai à rotor bloqué, en séparant pertes fer et pertes mécaniques.</li>
+    <li data-rang="06">Comparer le schéma en T au schéma approché à branche magnétisante en tête, et chiffrer l'erreur commise sur un moteur.</li>
+    <li data-rang="07">Diagnostiquer un moteur dont le courant à vide, le facteur de puissance ou le glissement s'écartent du modèle, et interpréter l'effet d'une sous-tension selon la charge.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Quatre acquis suffisent. Le premier, vu dans le cours <a href="#/cours/transformateur-ideal">Transformateur idéal</a> : une impédance
+    $Z_2$ branchée au secondaire d'un transformateur de rapport $m = N_2/N_1$ est vue du primaire comme $Z_2/m^2$, et un courant secondaire
+    $I_2$ correspond à un courant primaire $m\,I_2$. Le deuxième, vu dans le cours <a href="#/cours/transformateur-reel">Transformateur
+    réel</a> : le schéma en T place les résistances et réactances de fuite en série et la branche magnétisante, $R_f$ parallèle à $X_m$, en
+    dérivation sous la force électromotrice $E_1$. Le troisième, vu dans le cours <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes
+    de Thévenin, Norton et superposition</a> : tout réseau linéaire vu de deux bornes se réduit à une source et une impédance, et une
+    charge reçoit la puissance maximale quand sa résistance égale le module de l'impédance qui la sépare de la source idéale, si elle ne peut
+    agir que sur sa résistance. Le quatrième, vu dans le cours <a href="#/cours/moteur-asynchrone-triphase">Moteur asynchrone triphasé</a> :
+    $f_r = g f$, $p_{jr} = g\,P_{tr}$, $C_{em} = P_{tr}/\varOmega_s$. Le mini-test n'est pas noté ; la correction de chaque question reste
+    masquée jusqu'à une tentative ou un clic explicite sur "Voir la correction".
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Notation de la séance</span>
+    <p>
+      Le schéma est écrit pour une phase de l'étoile équivalente, quel que soit le couplage réel : $V_1 = U/\sqrt{3}$ est la tension simple,
+      $I_1$ le courant de ligne, et toutes les puissances triphasées valent trois fois la puissance d'une phase. $R_1$ et $X_1$ sont la
+      résistance et la réactance de fuite du stator ; $R_2'$ et $X_2'$ celles du rotor ramenées au stator ; $R_f$ et $X_m$ la résistance
+      équivalente aux pertes fer et la réactance magnétisante ; $E_1$ la force électromotrice par phase, $\underline{I}_2'$ le courant
+      rotorique ramené, $\underline{I}_m$ le courant de la branche magnétisante. Les grandeurs complexes sont soulignées, leurs modules
+      ne le sont pas. $p_{js}$, $p_{fs}$ et $p_{jr}$ sont les pertes Joule du stator, fer du stator et Joule du rotor, $p_m$ les pertes
+      mécaniques. Le symbole droit $\mathrm{\Omega}$ reste réservé à l'ohm, $\varOmega$ désigne une vitesse angulaire.
+    </p>
+  </div>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-transfo">Un transformateur dont la charge dépend de la vitesse</h3>
+  <p>
+    Bloquez le rotor et alimentez le stator : le champ tournant balaie les barres à la fréquence du réseau, exactement comme le flux
+    alternatif d'un transformateur traverse son secondaire. Le rotor en court-circuit est alors un secondaire en court-circuit, et le
+    courant n'est limité que par les résistances et les réactances de fuite : c'est le courant de démarrage. Laissez maintenant le rotor
+    tourner. Plus il approche du synchronisme, moins il voit le champ défiler : sa force électromotrice diminue comme $g$, et il absorbe
+    moins de courant. Vu du stator, tout se passe comme si le secondaire était chargé par une résistance de plus en plus grande, infinie au
+    synchronisme, où le moteur ne tire plus que son courant magnétisant, comme un transformateur à vide. Le moteur asynchrone est un
+    transformateur dont la charge est réglée par la vitesse, et cette charge apparente est purement résistive, donc capable d'absorber de la
+    puissance active : celle qui part sur l'arbre.
+  </p>
+  <figure id="d-transfo-figure">
+    <svg viewBox="0 0 760 330" role="img" aria-label="En haut, transformateur monophasé : source, primaire, secondaire et résistance de charge réglable. En bas, moteur par phase : source, stator, rotor ramené au repos et résistance apparente qui dépend du glissement, avec la part qui représente la puissance mécanique">
+      <defs>
+        <marker id="fl-d-tr" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="70" cy="90" r="22"/>
+        <path d="M60 90c3-8 7-8 10 0s7 8 10 0" stroke-width="1.6"/>
+        <path d="M70 68V40H200V50M70 112V140H200V130"/>
+        <path d="M200 50a10 10 0 0 1 0 20a10 10 0 0 1 0 20a10 10 0 0 1 0 20a10 10 0 0 1 0 20"/>
+        <path d="M250 50a10 10 0 0 0 0 20a10 10 0 0 0 0 20a10 10 0 0 0 0 20a10 10 0 0 0 0 20"/>
+        <path d="M250 50V40H420V70M250 130V140H420V110"/>
+        <rect x="406" y="70" width="28" height="40" rx="3"/>
+        <circle cx="70" cy="250" r="22"/>
+        <path d="M60 250c3-8 7-8 10 0s7 8 10 0" stroke-width="1.6"/>
+        <path d="M70 228V200H200V210M70 272V300H200V290"/>
+        <path d="M200 210a10 10 0 0 1 0 20a10 10 0 0 1 0 20a10 10 0 0 1 0 20a10 10 0 0 1 0 20"/>
+        <path d="M250 210a10 10 0 0 0 0 20a10 10 0 0 0 0 20a10 10 0 0 0 0 20a10 10 0 0 0 0 20"/>
+        <path d="M250 210V200H420V214M250 290V300H420V286"/>
+        <rect x="406" y="214" width="28" height="28" rx="3"/>
+        <rect x="406" y="256" width="28" height="30" rx="3" fill="currentColor" fill-opacity="0.18"/>
+        <path d="M420 242V256"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M398 118L446 64" marker-end="url(#fl-d-tr)"/>
+        <path d="M398 290L446 250" marker-end="url(#fl-d-tr)"/>
+        <path d="M110 34H150" marker-end="url(#fl-d-tr)"/>
+        <path d="M110 194H150" marker-end="url(#fl-d-tr)"/>
+        <path d="M225 46V134" stroke-dasharray="4 4"/>
+        <path d="M225 206V294" stroke-dasharray="4 4"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="20" y="14">transformateur : charge réglable par l'utilisateur</text>
+        <text x="20" y="172">moteur par phase : charge réglée par le glissement g</text>
+        <text x="116" y="30">I1</text>
+        <text x="116" y="190">I1</text>
+        <text x="150" y="160">primaire</text>
+        <text x="236" y="160">secondaire</text>
+        <text x="150" y="320">stator</text>
+        <text x="236" y="320">rotor ramené, au repos</text>
+        <text x="444" y="96">R_c</text>
+        <text x="444" y="232">R2' : chauffe le rotor</text>
+        <text x="444" y="276">R2'(1 - g) / g : puissance mécanique</text>
+        <text x="480" y="60">g = 1 : R2'/g = R2' petit,</text>
+        <text x="480" y="78">courant de court-circuit</text>
+        <text x="480" y="112">g → 0 : R2'/g → infini,</text>
+        <text x="480" y="130">reste le courant magnétisant</text>
+        <text x="480" y="306">la somme vaut R2'/g</text>
+      </g>
+    </svg>
+    <figcaption>
+      Analogie de construction. En haut, un transformateur dont l'utilisateur règle la charge $R_c$, flèche oblique ; en bas, une phase du
+      moteur dont la charge apparente est réglée par le glissement, flèche oblique également. Les flèches horizontales donnent le sens positif
+      du courant de ligne $I_1$, de la source vers la machine, en convention récepteur. Les traits en tirets entre les enroulements figurent
+      le couplage magnétique. Côté moteur, la résistance apparente $R_2'/g$ est dessinée en deux parts : le cadre vide, $R_2'$, représente
+      les pertes Joule réelles du rotor, le cadre grisé, $R_2'(1 - g)/g$, la puissance mécanique ; cette seconde part n'est pas une résistance
+      physique.
+    </figcaption>
+  </figure>
+
+  <h3 id="d-analogie">Une analogie contrôlée et ses limites</h3>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Un frein à friction vu depuis l'arbre moteur</span>
+    <p>
+      Imaginez une source qui entraîne, par une courroie qui patine un peu, un frein qui dissipe de la chaleur. L'énergie fournie se partage
+      entre la chaleur produite par le patinage et le travail reçu par le frein ; si le patinage relatif vaut $g$, la chaleur de patinage
+      vaut la fraction $g$ de la puissance transmise. Le schéma équivalent dit exactement cela, avec une seule résistance $R_2'/g$ découpée
+      en deux : la part $R_2'$ joue le patinage, la part $R_2'(1 - g)/g$ joue le frein. Le découpage n'est pas arbitraire : il est imposé par
+      le bilan $p_{jr} = g\,P_{tr}$ établi dans le cours précédent.
+    </p>
+    <p>
+      Les limites sont nettes. La résistance $R_2'(1 - g)/g$ ne chauffe rien : elle représente une puissance qui quitte la machine par
+      l'arbre, et elle devient négative quand $g &lt; 0$, en génératrice, ce qu'aucune résistance ni aucun frein ne fait. Le circuit est
+      un modèle par phase en régime sinusoïdal établi à la fréquence du stator : il ne décrit ni les régimes transitoires électriques, ni
+      les courants rotoriques réels, qui sont à la fréquence $gf$ et non $f$. Enfin, ses paramètres ne sont pas des constantes physiques :
+      la saturation du fer et l'effet de peau dans les barres les font varier avec le courant et la fréquence rotorique, ce que la section
+      E chiffrera.
+    </p>
+  </div>
+
+  <h3 id="d-magnetisant">Pourquoi la branche magnétisante pèse plus lourd que dans un transformateur</h3>
+  <p>
+    Le flux d'un transformateur parcourt un circuit de fer fermé ; celui du moteur doit franchir deux fois l'entrefer, de $0{,}3$ à
+    $1\ \mathrm{mm}$, pour passer du stator au rotor. Le cours <a href="#/cours/circuits-magnetiques">Circuits magnétiques</a> l'a montré :
+    un entrefer, même mince, domine la réluctance. La réactance magnétisante d'un moteur est donc bien plus faible, relativement, que celle
+    d'un transformateur : le courant magnétisant vaut $25$ à $50\ \%$ du courant nominal au lieu de $1$ à $3\ \%$. Deux conséquences en
+    découlent, que tout le cours exploite. D'abord, ce courant presque purement réactif fixe le facteur de puissance à faible charge.
+    Ensuite, il crée dans la résistance et la réactance de fuite du stator une chute de tension qui n'est plus négligeable : déplacer la
+    branche magnétisante aux bornes, comme on le fait sans scrupule pour un transformateur avec le schéma de Kapp, coûte ici plusieurs
+    pour cent sur le courant et le couple.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-rotor">Du rotor qui tourne au rotor immobile équivalent</h3>
+  <p>
+    Plaçons-nous en régime établi, alimentation sinusoïdale équilibrée, et raisonnons sur une phase. Au stator, la tension simple $\underline{V}_1$
+    équilibre la chute dans la résistance $R_1$ et la réactance de fuite $X_1$, plus la force électromotrice $\underline{E}_1$ induite par le
+    flux tournant d'entrefer, à la fréquence $f$. Au rotor, le cours précédent a établi que la force électromotrice vaut $g\,\underline{E}_{20}$
+    et la réactance de fuite $g\,X_{20}$, toutes deux à la fréquence $g f$, puisque le rotor voit défiler le champ à la vitesse relative
+    $g\,\varOmega_s$. Le rotor étant fermé sur lui-même, la loi des mailles s'y écrit, puis se divise par $g$ :
+  </p>
+  <div class="formule-cle">
+    $$g\,\underline{E}_{20} = \left(R_2 + j\,g X_{20}\right)\underline{I}_2 \quad\Longleftrightarrow\quad \underline{E}_{20} = \left(\frac{R_2}{g} + j X_{20}\right)\underline{I}_2$$
+    <p class="formule-cle-legende">
+      $E_{20}$ force électromotrice par phase du rotor à l'arrêt, en volts ; $R_2$ résistance par phase du rotor, en ohms ; $X_{20} = L_2\,\omega$
+      réactance de fuite du rotor à la fréquence du réseau, en ohms ; $I_2$ courant rotorique, en ampères. Hypothèses : régime sinusoïdal
+      établi, flux d'entrefer sinusoïdal, rotor symétrique. Interprétation : la seconde écriture décrit un rotor fictif immobile, alimenté
+      à la fréquence $f$ sous $E_{20}$ et fermé sur la résistance $R_2/g$. Il a le même courant, en module et en déphasage par rapport à sa
+      force électromotrice, que le rotor réel : il produit donc les mêmes ampères-tours tournants, et le stator ne peut pas faire la
+      différence. Cas limites : $g = 1$, les deux écritures coïncident, rotor bloqué ; $g \to 0$, $R_2/g \to \infty$ et $I_2 \to 0$.
+      Dimension : $R_2/g$ est une résistance, puisque $g$ est sans dimension.
+    </p>
+  </div>
+  <figure id="e-rotor-figure">
+    <svg viewBox="0 0 760 250" role="img" aria-label="À gauche, une phase du rotor réel : source g E20, résistance R2 et réactance g X20, à la fréquence g f. À droite, après division par g : source E20, résistance R2 / g et réactance X20, à la fréquence f. Même courant I2 dans les deux circuits">
+      <defs>
+        <marker id="fl-e-ro" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="70" cy="130" r="22"/>
+        <path d="M70 108V70H130M190 70H220M280 70H320V190H70V152"/>
+        <rect x="130" y="58" width="60" height="24" rx="3"/>
+        <path d="M220 70a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0"/>
+        <circle cx="470" cy="130" r="22"/>
+        <path d="M470 108V70H530M590 70H620M680 70H720V190H470V152"/>
+        <rect x="530" y="58" width="60" height="24" rx="3"/>
+        <path d="M620 70a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6">
+        <path d="M84 70H118" marker-end="url(#fl-e-ro)"/>
+        <path d="M484 70H518" marker-end="url(#fl-e-ro)"/>
+        <path d="M36 168V96" marker-end="url(#fl-e-ro)"/>
+        <path d="M436 168V96" marker-end="url(#fl-e-ro)"/>
+        <path d="M346 130H392" stroke-width="2.4" marker-end="url(#fl-e-ro)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="64" y="134">+</text>
+        <text x="464" y="134">+</text>
+        <text x="88" y="60">I2</text>
+        <text x="488" y="60">I2</text>
+        <text x="4" y="136">g E20</text>
+        <text x="402" y="150">E20</text>
+        <text x="148" y="50">R2</text>
+        <text x="228" y="50">g X20</text>
+        <text x="544" y="50">R2 / g</text>
+        <text x="634" y="50">X20</text>
+        <text x="120" y="218">rotor réel, fréquence g f</text>
+        <text x="500" y="218">rotor fictif immobile, fréquence f</text>
+        <text x="350" y="120">÷ g</text>
+        <text x="120" y="240">tension, courant et réactance à g f</text>
+        <text x="500" y="240">même module et même déphasage de I2</text>
+      </g>
+    </svg>
+    <figcaption>
+      Une phase du rotor avant et après division par $g$. À gauche, le rotor réel : la source figure la force électromotrice induite $gE_{20}$,
+      fléchée vers sa borne $+$ par la flèche verticale ; le courant $I_2$ est compté positif dans le sens de la flèche horizontale, en
+      convention générateur pour la source et récepteur pour la résistance et la réactance. À droite, le rotor fictif immobile : même
+      maille, toutes les grandeurs divisées par $g$, et la fréquence ramenée à celle du stator. La grosse flèche centrale marque l'opération
+      de division, qui ne change ni le module ni la phase du courant.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-ramener">Ramener le rotor au stator</h3>
+  <p>
+    Le rotor fictif est désormais un secondaire de transformateur ordinaire, à la fréquence $f$. On le ramène au stator exactement comme
+    dans le cours <a href="#/cours/transformateur-ideal">Transformateur idéal</a>, avec le rapport $m = E_{20}/E_1$, qui tient compte des
+    nombres de spires, des coefficients de bobinage et, pour une cage, du nombre de barres :
+  </p>
+  <div class="formule-cle">
+    $$\underline{E}_2' = \underline{E}_1, \qquad \underline{I}_2' = m\,\underline{I}_2, \qquad R_2' = \frac{R_2}{m^2}, \qquad X_2' = \frac{X_{20}}{m^2}$$
+    $$\underline{E}_1 = \left(\frac{R_2'}{g} + j X_2'\right)\underline{I}_2'$$
+    <p class="formule-cle-legende">
+      Dérivation : en divisant la maille du rotor fictif par $m$ et en remplaçant $\underline{I}_2$ par $\underline{I}_2'/m$, il vient
+      $\underline{E}_{20}/m = (R_2/m^2 \cdot 1/g + jX_{20}/m^2)\,\underline{I}_2'$. Contrôle énergétique : $R_2' I_2'^2 = (R_2/m^2)\,m^2 I_2^2 = R_2 I_2^2$,
+      la puissance est conservée. Convention : avec $\underline{I}_2'$ compté entrant dans le rotor ramené, les ampères-tours s'écrivent
+      $\underline{I}_1 = \underline{I}_m + \underline{I}_2'$. Point important pour une cage : $R_2$, $X_{20}$ et $m$ ne sont pas mesurables
+      séparément, seules leurs combinaisons ramenées $R_2'$ et $X_2'$ le sont ; c'est pourquoi les catalogues et les logiciels ne donnent que
+      des valeurs ramenées au stator.
+    </p>
+  </div>
+
+  <h3 id="e-schema-t">Le schéma équivalent en T</h3>
+  <p>
+    Il reste à relier stator et rotor ramené. La force électromotrice commune $\underline{E}_1$ est produite par le flux d'entrefer, qui exige
+    un courant magnétisant à travers $X_m$, et les pertes fer du stator sont représentées par la résistance $R_f$ placée sous la même tension.
+    Les quatre équations du circuit par phase sont :
+  </p>
+  <div class="formule-cle">
+    $$\underline{V}_1 = (R_1 + jX_1)\,\underline{I}_1 + \underline{E}_1, \qquad \underline{I}_m = \underline{E}_1\left(\frac{1}{R_f} + \frac{1}{jX_m}\right)$$
+    $$\underline{I}_2' = \frac{\underline{E}_1}{R_2'/g + jX_2'}, \qquad \underline{I}_1 = \underline{I}_m + \underline{I}_2'$$
+    $$\underline{Z}(g) = R_1 + jX_1 + \underline{Z}_m \parallel \left(\frac{R_2'}{g} + jX_2'\right), \qquad \underline{I}_1 = \frac{\underline{V}_1}{\underline{Z}(g)}$$
+    <p class="formule-cle-legende">
+      $\underline{Z}_m$ est l'impédance de $R_f$ en parallèle avec $jX_m$ ; $\underline{Z}(g)$ l'impédance par phase vue du réseau, en ohms. Lois
+      utilisées : loi des mailles au stator et au rotor, loi des nœuds au point commun, c'est-à-dire l'équilibre des ampères-tours du cours
+      <a href="#/cours/transformateur-ideal">Transformateur idéal</a>. Hypothèses : paramètres constants, fer non saturé ou linéarisé autour
+      du point de travail, pertes mécaniques traitées hors du circuit. Cas limites : $g \to 0$, la branche rotorique s'ouvre, $\underline{I}_1 =
+      \underline{V}_1/(R_1 + jX_1 + \underline{Z}_m)$, c'est le courant à vide ; $g = 1$, $R_2'/g = R_2'$ petit, la branche rotorique court-circuite
+      presque la branche magnétisante, c'est le courant de démarrage ; $g &lt; 0$, $R_2'/g$ devient négatif, la branche rotorique fournit de la
+      puissance active, c'est la génératrice. Dimension : chaque terme de la première équation est un produit d'ohms par des ampères, des volts.
+    </p>
+  </div>
+  <figure id="e-schema-t-figure">
+    <svg viewBox="0 0 760 340" role="img" aria-label="Schéma équivalent en T d'une phase du moteur asynchrone : entre la borne A et le neutre N, résistance R1 et réactance X1 du stator, branche magnétisante Rf en parallèle avec Xm sous la force électromotrice E1, puis réactance X2 prime et résistance R2 prime du rotor ramené, et résistance de charge R2 prime fois (1 - g) sur g ; courants I1, Im et I2 prime, tensions V1 et E1, frontière de l'entrefer">
+      <defs>
+        <marker id="fl-e-t" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M44 70H90M140 70H170M230 70H430M490 70H530M580 70H660V130M660 210V270H44"/>
+        <rect x="90" y="58" width="50" height="24" rx="3"/>
+        <path d="M170 70a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0"/>
+        <path d="M430 70a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0"/>
+        <rect x="530" y="58" width="50" height="24" rx="3"/>
+        <rect x="646" y="130" width="28" height="80" rx="3" fill="currentColor" fill-opacity="0.18"/>
+        <path d="M300 70V110M270 110H330M270 110V140M270 200V230M330 110V140M330 200V230M270 230H330M300 230V270"/>
+        <rect x="258" y="140" width="24" height="60" rx="3"/>
+        <path d="M330 140a7.5 7.5 0 0 1 0 15a7.5 7.5 0 0 1 0 15a7.5 7.5 0 0 1 0 15a7.5 7.5 0 0 1 0 15"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6">
+        <circle cx="40" cy="70" r="4"/>
+        <circle cx="40" cy="270" r="4"/>
+        <path d="M50 70H84" marker-end="url(#fl-e-t)"/>
+        <path d="M300 78V104" marker-end="url(#fl-e-t)"/>
+        <path d="M344 70H384" marker-end="url(#fl-e-t)"/>
+        <path d="M22 256V86" marker-end="url(#fl-e-t)"/>
+        <path d="M372 256V86" marker-end="url(#fl-e-t)"/>
+        <path d="M632 200L690 140" marker-end="url(#fl-e-t)"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.3" stroke-dasharray="6 5" opacity="0.8">
+        <path d="M400 34V300"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="300" cy="70" r="3.5"/>
+        <circle cx="300" cy="270" r="3.5"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="30" y="60">A</text>
+        <text x="30" y="292">N</text>
+        <text x="56" y="58">I1</text>
+        <text x="4" y="176">V1</text>
+        <text x="104" y="50">R1</text>
+        <text x="186" y="50">jX1</text>
+        <text x="306" y="98">Im</text>
+        <text x="236" y="176">Rf</text>
+        <text x="346" y="176">jXm</text>
+        <text x="378" y="176">E1</text>
+        <text x="350" y="60">I2'</text>
+        <text x="446" y="50">jX2'</text>
+        <text x="544" y="50">R2'</text>
+        <text x="524" y="166">R2'(1 - g)/g</text>
+        <text x="524" y="184">charge mécanique</text>
+        <text x="406" y="30">entrefer : P_tr traverse ici</text>
+        <text x="92" y="320">stator</text>
+        <text x="220" y="320">branche magnétisante</text>
+        <text x="470" y="320">rotor ramené au stator</text>
+        <text x="440" y="252">R2' + R2'(1 - g)/g = R2'/g</text>
+        <text x="60" y="296">N : neutre de l'étoile équivalente, référence</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma équivalent en T d'une phase, entre la borne de ligne A et le neutre N de l'étoile équivalente, pris comme référence de potentiel.
+      Les tensions sont fléchées vers le potentiel le plus élevé : $V_1$ de N vers A, $E_1$ aux bornes de la branche magnétisante. Les courants
+      sont fléchés en convention récepteur : $I_1$ entre par A, $I_m$ descend dans la branche magnétisante, $I_2'$ part vers le rotor ramené,
+      et le point d'embranchement impose $\underline{I}_1 = \underline{I}_m + \underline{I}_2'$. Les cadres vides sont des résistances, les
+      demi-cercles des réactances de fuite ou magnétisante. Le cadre grisé, traversé d'une flèche oblique, est la résistance de charge
+      $R_2'(1 - g)/g$, réglée par le glissement ; il représente la puissance mécanique. Le trait vertical en tirets marque la frontière de
+      l'entrefer : tout ce qui la franchit vers la droite est la puissance transmise au rotor.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-puissances">Découper $R_2'/g$ : puissances et couple</h3>
+  <p>
+    Tout ce qui franchit l'entrefer est absorbé par la branche rotorique, dont la seule partie résistive est $R_2'/g$. La puissance
+    transmise vaut donc $3\,(R_2'/g)\,I_2'^2$. En écrivant $R_2'/g = R_2' + R_2'(1 - g)/g$, la puissance se partage en deux parts, et le
+    découpage retrouve exactement le bilan du cours précédent :
+  </p>
+  <div class="formule-cle">
+    $$P_{tr} = 3\,\frac{R_2'}{g}\,I_2'^2, \qquad p_{jr} = 3\,R_2'\,I_2'^2 = g\,P_{tr}, \qquad P_m = 3\,R_2'\,\frac{1 - g}{g}\,I_2'^2 = (1 - g)\,P_{tr}$$
+    $$p_{js} = 3\,R_1 I_1^2, \qquad p_{fs} = 3\,\frac{E_1^2}{R_f}, \qquad P_{abs} = 3\,V_1 I_1\cos\varphi = p_{js} + p_{fs} + P_{tr}$$
+    $$C_{em} = \frac{P_{tr}}{\varOmega_s} = \frac{3\,R_2'\,I_2'^2}{g\,\varOmega_s}, \qquad P_u = P_m - p_m, \qquad C_u = \frac{P_u}{\varOmega}, \qquad \eta = \frac{P_u}{P_{abs}}$$
+    <p class="formule-cle-legende">
+      Puissances en watts, couples en $\mathrm{N \cdot m}$, $\varOmega_s = 2\pi f/p$ en $\mathrm{rad/s}$. Lois : conservation de l'énergie, puissance
+      active absorbée par les seules résistances d'un circuit en régime sinusoïdal ; le facteur $3$ vient des trois phases de l'étoile
+      équivalente. Le couple s'obtient sans connaître la vitesse : il est proportionnel à la puissance absorbée par $R_2'/g$. Interprétation :
+      $p_{jr}/P_m = g/(1 - g)$, un rotor qui glisse peu convertit presque toute la puissance transmise. Cas limites : $g = 1$, $P_m = 0$ et toute
+      la puissance transmise chauffe le rotor, mais le couple n'est pas nul ; $g &lt; 0$, $P_m$ et $P_{tr}$ deviennent négatives : la machine reçoit
+      de la puissance mécanique et en renvoie au réseau. Dimension : $\mathrm{\Omega \cdot A^2} = \mathrm{W}$ ; $\mathrm{W/(rad/s)} = \mathrm{N \cdot m}$.
+      Les pertes mécaniques $p_m$ ne figurent pas dans le circuit : elles se retranchent de $P_m$.
+    </p>
+  </div>
+
+  <h3 id="e-decoupage-section">Animation : le rotor ramené, de l'arrêt au synchronisme</h3>
+  <p>
+    L'animation représente le schéma en T du moteur de la section H, de $11\ \mathrm{kW}$, avec ses paramètres identifiés. L'épaisseur et
+    la valeur affichée de chaque flèche de courant suivent le glissement, et la barre du bas découpe la puissance transmise entre les pertes
+    Joule du rotor et la puissance mécanique. Réglez le glissement par la poignée ronde sur l'échelle graduée, par le curseur, ou lancez la
+    lecture, qui balaie un démarrage de l'arrêt vers le synchronisme. Avant de manipuler, prédisez : quand le glissement passe de $1$ à
+    $0{,}03$, le courant de la branche magnétisante varie-t-il beaucoup ? Quel courant domine à l'arrêt, et lequel près du synchronisme ? À quel
+    glissement la puissance mécanique est-elle la plus grande ?
+  </p>
+  <figure id="e-decoupage-figure">
+    <div class="schema-vivant" id="e-decoupage"></div>
+    <figcaption>
+      Schéma en T animé. Les flèches pleines portent les trois courants $I_1$, $I_m$ et $I_2'$, leur épaisseur est proportionnelle au module, et
+      la valeur s'affiche à côté ; la flèche en tirets $E_1$ indique la force électromotrice. Le cadre de droite, grisé, est la résistance de
+      charge $R_2'(1 - g)/g$, dont la valeur s'affiche. En bas, la barre horizontale représente $P_{tr}$ à l'échelle : la partie hachurée est
+      $p_{jr} = g\,P_{tr}$, la partie pleine $P_m = (1 - g)\,P_{tr}$. L'échelle graduée sous la barre porte la poignée du glissement, en échelle
+      logarithmique de $0{,}001$ à $1$.
+    </figcaption>
+  </figure>
+  <div id="e-decoupage-curseurs"></div>
+  <div id="e-decoupage-lecteur"></div>
+  <div id="e-decoupage-valeurs"></div>
+  <p>
+    Interprétation : le courant de la branche magnétisante reste presque constant, de $7{,}6\ \mathrm{A}$ à vide à $7{,}3\ \mathrm{A}$ au point
+    nominal, puis chute vers $3{,}9\ \mathrm{A}$ à l'arrêt, car le fort courant de démarrage fait chuter $E_1$ de moitié dans $R_1 + jX_1$. À
+    l'arrêt, le courant rotorique domine, $76\ \mathrm{A}$, et le courant absorbé atteint $80\ \mathrm{A}$ ; près du synchronisme, c'est le
+    courant magnétisant qui domine, et le courant absorbé tombe vers $7{,}6\ \mathrm{A}$, presque en quadrature avec la tension. Entre les deux,
+    au point nominal, $I_2' = 18{,}5\ \mathrm{A}$ et $I_m = 7{,}3\ \mathrm{A}$ se composent en $I_1 = 21{,}3\ \mathrm{A}$ : leur somme
+    arithmétique, $25{,}8\ \mathrm{A}$, serait fausse, car les deux courants sont déphasés de près de $78^\circ$. La puissance mécanique passe
+    par un maximum d'environ $20{,}8\ \mathrm{kW}$ vers $g = 0{,}094$, bien au-delà du point nominal : on retrouve la limite de puissance d'un réseau à
+    impédance interne, que la suite de la section relie au couple maximal.
+  </p>
+
+  <h3 id="e-fresnel">Diagramme de Fresnel et lieu du courant</h3>
+  <p>
+    Le diagramme de Fresnel du schéma se construit à partir de la force électromotrice. Prenons $\underline{E}_1$ comme référence de phase. Le
+    courant rotorique ramené est en retard sur elle de $\varphi_2 = \arctan(gX_2'/R_2')$, petit en marche normale ; le courant magnétisant
+    $\underline{I}_m$ est presque en quadrature arrière, avec une petite composante active $E_1/R_f$. Leur somme donne $\underline{I}_1$, puis
+    $\underline{V}_1 = \underline{E}_1 + R_1\underline{I}_1 + jX_1\underline{I}_1$ : la chute résistive est parallèle à $\underline{I}_1$, la chute
+    réactive en avance de $90^\circ$ sur lui. Le déphasage $\varphi$ entre $\underline{V}_1$ et $\underline{I}_1$ donne le facteur de puissance.
+  </p>
+  <p>
+    Quand le glissement varie de $0$ à $1$, l'extrémité de $\underline{I}_1$ décrit un arc de cercle. La raison est mathématique : $\underline{Z}(g)$
+    est une fonction homographique de la variable réelle $R_2'/g$, et l'inverse d'une telle fonction parcourt un cercle du plan complexe quand
+    sa variable parcourt la droite réelle. Ce cercle, appelé diagramme du cercle ou cercle de Heyland, a longtemps servi à prédéterminer les
+    moteurs graphiquement : il résume d'un coup d'œil le courant à vide, au point nominal et au démarrage.
+  </p>
+
+  <h3 id="e-cercle-section">Animation : phaseurs du schéma et cercle du courant</h3>
+  <p>
+    L'animation trace, pour le moteur de la section H, la tension $\underline{V}_1$ prise comme référence verticale, la force
+    électromotrice $\underline{E}_1$ et les trois courants, ainsi que le lieu complet de l'extrémité de $\underline{I}_1$. Faites glisser la
+    poignée ronde le long du lieu, ou utilisez le curseur et la lecture. Avant de manipuler, prédisez : en quel point du lieu le facteur de
+    puissance est-il le meilleur ? Ce point coïncide-t-il avec le point nominal, avec le couple maximal, ou avec aucun des deux ?
+  </p>
+  <figure id="e-cercle-figure">
+    <div class="schema-vivant" id="e-cercle"></div>
+    <figcaption>
+      Plan de Fresnel, axe vertical porté par $\underline{V}_1$ et orienté vers le haut, retards comptés vers la droite, comme dans le
+      diagramme du cercle traditionnel. Les tensions et les courants ont chacun leur échelle, indiquée en haut à droite. La flèche longue en trait plein fin est $\underline{V}_1$, la flèche en tirets
+      $\underline{E}_1$ ; les flèches épaisses sont $\underline{I}_1$, au bout duquel se trouve la poignée, $\underline{I}_m$ et $\underline{I}_2'$,
+      ces deux dernières disposées bout à bout pour montrer la loi des nœuds. La courbe en pointillés est le lieu de l'extrémité de
+      $\underline{I}_1$ quand le glissement va de $0{,}0002$ à $1$ ; les petits repères marquent le point nominal, le couple maximal et l'arrêt.
+      La droite en tirets fins issue de l'origine et tangente au lieu indique le meilleur facteur de puissance.
+    </figcaption>
+  </figure>
+  <div id="e-cercle-curseurs"></div>
+  <div id="e-cercle-lecteur"></div>
+  <div id="e-cercle-valeurs"></div>
+  <p>
+    Interprétation : le meilleur facteur de puissance, environ $0{,}84$, est atteint au point de tangence de la droite issue de l'origine,
+    vers $g = 3{,}3\ \%$, un peu au-delà du point nominal : un constructeur choisit le point nominal dans cette zone, où le courant réactif
+    ajouté par les fuites reste petit devant le courant actif. Le couple maximal, vers $g = 10{,}5\ \%$, se trouve plus loin sur le cercle, avec
+    un facteur de puissance d'environ $0{,}68$ ; au démarrage, le facteur de puissance tombe à $0{,}20$. Le courant magnétisant, presque
+    vertical et de longueur presque constante, est le point de départ commun de tous les états : c'est lui qui interdit au facteur de
+    puissance d'approcher $1$.
+  </p>
+
+  <h3 id="e-thevenin">Le couple par le théorème de Thévenin</h3>
+  <p>
+    Pour étudier le couple, seule compte la branche rotorique, puisque $C_{em} = 3R_2'I_2'^2/(g\varOmega_s)$. Le reste du circuit, source,
+    stator et branche magnétisante, est un réseau linéaire vu des bornes du rotor ramené : on le remplace par son équivalent de Thévenin,
+    comme dans le cours <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes de Thévenin, Norton et superposition</a>.
+  </p>
+  <figure id="e-thevenin-figure">
+    <svg viewBox="0 0 760 240" role="img" aria-label="À gauche, la source V1, l'impédance du stator R1 plus jX1 et la branche magnétisante Zm, encadrées en tirets, vues des bornes B et N du rotor ramené. À droite, la même partie réduite à une source Vth en série avec Rth plus jXth, suivie de jX2 prime et de R2 prime sur g">
+      <defs>
+        <marker id="fl-e-th" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="50" cy="120" r="20"/>
+        <path d="M42 120c2-7 5-7 8 0s5 7 8 0" stroke-width="1.5"/>
+        <path d="M50 100V60H90M170 60H250M250 60V90M250 150V180H50V140"/>
+        <rect x="90" y="48" width="80" height="24" rx="3"/>
+        <rect x="236" y="90" width="28" height="60" rx="3"/>
+        <path d="M250 60H300M250 180H300"/>
+        <circle cx="470" cy="120" r="20"/>
+        <path d="M462 120c2-7 5-7 8 0s5 7 8 0" stroke-width="1.5"/>
+        <path d="M470 100V60H510M590 60H610M670 60H700V90M700 150V180H470V140"/>
+        <rect x="510" y="48" width="80" height="24" rx="3"/>
+        <path d="M610 60a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0"/>
+        <rect x="686" y="90" width="28" height="60" rx="3" fill="currentColor" fill-opacity="0.18"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.3" stroke-dasharray="6 5" opacity="0.8">
+        <rect x="20" y="30" width="262" height="170" rx="8"/>
+        <rect x="440" y="30" width="170" height="170" rx="8"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6">
+        <circle cx="304" cy="60" r="4"/>
+        <circle cx="304" cy="180" r="4"/>
+        <path d="M330 120H396" stroke-width="2.4" marker-end="url(#fl-e-th)"/>
+        <path d="M60 60H84" marker-end="url(#fl-e-th)"/>
+        <path d="M480 60H504" marker-end="url(#fl-e-th)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="58" y="164">V1</text>
+        <text x="100" y="40">R1 + jX1</text>
+        <text x="270" y="124">Zm</text>
+        <text x="312" y="56">B</text>
+        <text x="312" y="196">N</text>
+        <text x="62" y="52">I1</text>
+        <text x="478" y="164">Vth</text>
+        <text x="520" y="40">Rth + jXth</text>
+        <text x="624" y="40">jX2'</text>
+        <text x="640" y="124">R2'/g</text>
+        <text x="482" y="52">I2'</text>
+        <text x="338" y="110">Thévenin</text>
+        <text x="20" y="226">partie à réduire, vue des bornes B et N</text>
+        <text x="440" y="226">source équivalente et rotor ramené</text>
+      </g>
+    </svg>
+    <figcaption>
+      Réduction du circuit vu du rotor ramené. À gauche, la partie à réduire, encadrée en tirets : source $V_1$, impédance série du stator et
+      branche magnétisante $\underline{Z}_m$, entre les bornes B et N. À droite, son équivalent : la source $\underline{V}_{th}$ en série avec
+      $R_{th} + jX_{th}$, encadrés en tirets, suivie de la branche rotorique, inchangée. Les flèches horizontales donnent le sens positif des
+      courants $I_1$ et $I_2'$ ; N reste la référence de potentiel.
+    </figcaption>
+  </figure>
+  <div class="formule-cle">
+    $$\underline{V}_{th} = \underline{V}_1\,\frac{\underline{Z}_m}{R_1 + jX_1 + \underline{Z}_m}, \qquad R_{th} + jX_{th} = \frac{(R_1 + jX_1)\,\underline{Z}_m}{R_1 + jX_1 + \underline{Z}_m}$$
+    $$C_{em} = \frac{3\,V_{th}^2}{\varOmega_s}\cdot\frac{R_2'/g}{\left(R_{th} + R_2'/g\right)^2 + \left(X_{th} + X_2'\right)^2}$$
+    $$g_m = \frac{R_2'}{\sqrt{R_{th}^2 + (X_{th} + X_2')^2}}, \qquad C_{max} = \frac{3\,V_{th}^2}{2\,\varOmega_s\left[R_{th} + \sqrt{R_{th}^2 + (X_{th} + X_2')^2}\right]}$$
+    <p class="formule-cle-legende">
+      $V_{th}$ en volts, $R_{th}$ et $X_{th}$ en ohms. Dérivation du maximum : $P_{tr} = 3\,V_{th}^2 R_L/[(R_{th} + R_L)^2 + X^2]$ avec $R_L = R_2'/g$
+      et $X = X_{th} + X_2'$ ; la dérivée par rapport à $R_L$ s'annule pour $R_L^2 = R_{th}^2 + X^2$, c'est le théorème du transfert maximal de
+      puissance appliqué à une charge purement résistive. Comme $C_{em} = P_{tr}/\varOmega_s$ avec $\varOmega_s$ constant, le couple maximal est
+      le transfert maximal de puissance à travers l'entrefer. Interprétation : $C_{max}$ ne dépend pas de $R_2'$, seul $g_m$ en dépend ; il
+      diminue quand les fuites augmentent et varie comme $V_1^2$. Cas limite : $R_{th} \to 0$, on retrouve exactement la formule de Kloss du
+      cours précédent, avec $X_{20}$ remplacé par $X_{th} + X_2'$ et $E_{20}$ par $V_{th}$. Approximation courante : $X_m \gg X_1$ et $R_f$ négligée
+      donnent $V_{th} \approx V_1 X_m/(X_1 + X_m)$ et $X_{th} \approx X_1$. Dimension : $\mathrm{V^2/(rad/s \cdot \Omega)} = \mathrm{W \cdot s/rad} =
+      \mathrm{N \cdot m}$.
+    </p>
+  </div>
+  <p>
+    Pour le moteur de la section H, $\underline{Z}_m$ vaut $R_f = 330\ \mathrm{\Omega}$ en parallèle avec $jX_m = j29\ \mathrm{\Omega}$, et le calcul
+    donne $V_{th} = 219{,}7\ \mathrm{V}$, $R_{th} = 0{,}287\ \mathrm{\Omega}$, $X_{th} = 1{,}381\ \mathrm{\Omega}$. Avec $R_2' = 0{,}30\ \mathrm{\Omega}$ et
+    $X_2' = 1{,}45\ \mathrm{\Omega}$ : $g_m = 0{,}30/2{,}846 = 0{,}105$, soit $1342\ \mathrm{tr/min}$, et $C_{max} = 147{,}2\ \mathrm{N \cdot m}$, $2{,}05$ fois
+    le couple nominal. L'approximation $V_{th} \approx V_1 X_m/(X_1 + X_m) = 219{,}9\ \mathrm{V}$ est excellente ici.
+  </p>
+
+  <h3 id="e-transfert-section">Animation : le couple maximal est un transfert maximal de puissance</h3>
+  <p>
+    L'animation trace la puissance transmise au rotor, donc le couple à l'échelle $1/\varOmega_s$, en fonction de la résistance de charge
+    $R_L = R_2'/g$, sur une échelle logarithmique. Faites glisser la poignée le long de la courbe, ou lancez la lecture, qui balaie $R_L$ de
+    gauche à droite : à partir du repère $g = 1$, c'est un démarrage, puisque $R_L = R_2'/g$ augmente quand le glissement diminue. Avant de manipuler, prédisez : pour quelle valeur de $R_L$ la
+    courbe passe-t-elle par son maximum, et cette valeur dépend-elle de $R_2'$ ? Que devient le glissement correspondant si l'on double $R_2'$ ?
+  </p>
+  <figure id="e-transfert-figure">
+    <div class="schema-vivant" id="e-transfert"></div>
+    <figcaption>
+      Puissance transmise $P_{tr}$, axe vertical, et couple électromagnétique correspondant, en fonction de la résistance de charge
+      $R_L = R_2'/g$, axe horizontal logarithmique de $0{,}1$ à $1000\ \mathrm{\Omega}$. La courbe en trait plein épais porte la poignée. Le trait
+      vertical en tirets marque $R_L = \sqrt{R_{th}^2 + (X_{th} + X_2')^2}$, où se trouve le maximum ; les deux traits verticaux pointillés
+      repèrent l'arrêt, $g = 1$, et le point nominal. L'échelle supérieure donne le glissement correspondant pour la résistance rotorique
+      choisie.
+    </figcaption>
+  </figure>
+  <div id="e-transfert-curseurs"></div>
+  <div id="e-transfert-lecteur"></div>
+  <div id="e-transfert-valeurs"></div>
+  <p>
+    Interprétation : la courbe ne dépend pas de $R_2'$, car elle est écrite en fonction de $R_L$ ; son maximum, $23{,}1\ \mathrm{kW}$ transmis,
+    soit $147{,}2\ \mathrm{N \cdot m}$, est atteint pour $R_L = 2{,}85\ \mathrm{\Omega}$, valeur fixée par le seul réseau de Thévenin. Changer $R_2'$
+    ne fait que déplacer l'échelle des glissements : le même $R_L$ correspond à $g = R_2'/R_L$. Doubler $R_2'$ double donc le glissement critique
+    et, à l'arrêt, rapproche le point de fonctionnement du maximum : le couple de démarrage augmente, le couple maximal reste le même. C'est le
+    principe du rotor bobiné à résistances de démarrage, et celui des barres profondes, dont la résistance apparente est plus grande à
+    l'arrêt qu'en marche.
+  </p>
+
+  <h3 id="e-courbes-section">Simulation interactive : courbes de couple, de courant et de facteur de puissance</h3>
+  <p>
+    La simulation calcule, à partir du schéma en T complet, le couple électromagnétique et le courant absorbé en fonction de la vitesse, de
+    l'arrêt au-delà du synchronisme. Les points du catalogue, couple et courant de démarrage, couple maximal, sont superposés. Vous pouvez
+    modifier la tension, la résistance rotorique, les réactances de fuite et la réactance magnétisante, chacune par un coefficient appliqué au
+    paramètre identifié. Avant de manipuler, prédisez : multiplier $X_1$ et $X_2'$ par $1{,}5$ change-t-il davantage le couple maximal ou le point nominal ?
+    Diviser $X_m$ par deux, comme le ferait un entrefer usé ou élargi, modifie-t-il le couple, le courant nominal ou le courant à vide ?
+  </p>
+  <figure id="e-courbes-figure">
+    <div id="e-courbes-couple"></div>
+    <div id="e-courbes-courant"></div>
+    <figcaption>
+      En haut, couple électromagnétique en fonction de la vitesse : trait épais pour les paramètres choisis, trait fin pour les paramètres
+      identifiés sous tension nominale, courbe de couple résistant d'un ventilateur demandant le couple nominal à $1460\ \mathrm{tr/min}$. En bas,
+      courant de ligne et valeur absolue du facteur de puissance multipliée par $100$, mêmes conventions. Les cercles vides marquent les valeurs du catalogue, le
+      point plein le fonctionnement sur le ventilateur, le trait horizontal pointillé le couple maximal du catalogue ; le trait vertical
+      en tirets repère le synchronisme. Au-delà, le couple devient négatif : génératrice.
+    </figcaption>
+  </figure>
+  <div id="e-courbes-curseurs"></div>
+  <div id="e-courbes-valeurs"></div>
+  <p>
+    Interprétation : avec les paramètres identifiés, le modèle reproduit le point nominal à $1\ \%$ près, mais il ne donne que $3{,}8$ fois le
+    courant nominal et $0{,}46$ fois le couple nominal au démarrage, contre $7{,}0$ et $2{,}3$ au catalogue, et un couple maximal de $2{,}05\ C_n$
+    contre $3{,}0$. L'écart n'est pas une erreur de calcul : à l'arrêt, le courant rotorique est à $50\ \mathrm{Hz}$ au lieu de $1{,}3\ \mathrm{Hz}$,
+    l'effet de peau augmente la résistance apparente des barres et réduit leur réactance de fuite, et le fort courant sature les becs
+    d'encoche, ce qui réduit encore les fuites. Multiplier les réactances de fuite par $1{,}5$ fait tomber le couple maximal de $147$ à $98\ \mathrm{N \cdot m}$, soit
+    $1{,}36\ C_n$, alors que le point nominal bouge peu : $1453$ au lieu de $1461\ \mathrm{tr/min}$, facteur de puissance de $0{,}78$ au lieu de
+    $0{,}84$ ; en les doublant, le couple maximal tomberait à $72\ \mathrm{N \cdot m}$, sous le couple demandé, et le moteur décrocherait. Diviser
+    $X_m$ par deux fait passer le courant à vide de $7{,}6$ à $14{,}5\ \mathrm{A}$, le courant nominal de $21{,}0$ à $25{,}7\ \mathrm{A}$ et le
+    facteur de puissance nominal à $0{,}70$, alors que le couple maximal ne perd que $6\ \%$. Doubler $R_2'$ double le glissement critique et
+    le couple de démarrage, sans changer le couple maximal, mais le glissement nominal passe à $5{,}4\ \%$ et le rendement à $87{,}4\ \%$. Conclusion pratique : un seul jeu de paramètres décrit bien
+    la zone de fonctionnement normal ; pour le démarrage, il faut des paramètres identifiés à l'arrêt, ou un modèle à double cage.
+  </p>
+
+  <h3 id="e-approche">Le schéma approché et le prix de l'approximation</h3>
+  <p>
+    Pour un transformateur, le cours <a href="#/cours/transformateur-reel">Transformateur réel</a> a déplacé la branche magnétisante aux bornes
+    d'entrée, ce qui met toutes les impédances série bout à bout : c'est le schéma de Kapp. Le même déplacement donne pour le moteur le schéma
+    approché en L, très utilisé dans les manuels parce qu'il rend le courant rotorique explicite.
+  </p>
+  <figure id="e-approche-figure">
+    <svg viewBox="0 0 760 220" role="img" aria-label="Schéma approché en L : la branche magnétisante Rf en parallèle avec Xm est placée directement entre la borne A et le neutre N, sous la tension V1, puis R1, jX1, jX2 prime et R2 prime sur g sont en série">
+      <defs>
+        <marker id="fl-e-ap" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M44 50H250M300 50H330M390 50H420M480 50H510M560 50H640V80M640 150V180H44"/>
+        <path d="M150 50V70M126 70H174M126 70V85M126 145V160M174 70V85M174 145V160M126 160H174M150 160V180"/>
+        <rect x="114" y="85" width="24" height="60" rx="3"/>
+        <path d="M174 85a7.5 7.5 0 0 1 0 15a7.5 7.5 0 0 1 0 15a7.5 7.5 0 0 1 0 15a7.5 7.5 0 0 1 0 15"/>
+        <rect x="250" y="38" width="50" height="24" rx="3"/>
+        <path d="M330 50a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0"/>
+        <path d="M420 50a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0"/>
+        <rect x="510" y="38" width="50" height="24" rx="3"/>
+        <rect x="626" y="80" width="28" height="70" rx="3" fill="currentColor" fill-opacity="0.18"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6">
+        <circle cx="40" cy="50" r="4"/>
+        <circle cx="40" cy="180" r="4"/>
+        <path d="M50 50H84" marker-end="url(#fl-e-ap)"/>
+        <path d="M200 50H240" marker-end="url(#fl-e-ap)"/>
+        <path d="M22 166V64" marker-end="url(#fl-e-ap)"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="150" cy="50" r="3.5"/>
+        <circle cx="150" cy="180" r="3.5"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="30" y="40">A</text>
+        <text x="30" y="202">N</text>
+        <text x="4" y="120">V1</text>
+        <text x="56" y="40">I1</text>
+        <text x="204" y="40">I2'</text>
+        <text x="92" y="120">Rf</text>
+        <text x="190" y="120">jXm</text>
+        <text x="264" y="30">R1</text>
+        <text x="346" y="30">jX1</text>
+        <text x="436" y="30">jX2'</text>
+        <text x="524" y="30">R2'</text>
+        <text x="668" y="120">R2'(1 - g)/g</text>
+        <text x="250" y="110">branche magnétisante sous V1 au lieu de E1 :</text>
+        <text x="250" y="128">elle reçoit une tension trop forte</text>
+        <text x="250" y="146">et R1, X1 ne voient plus le courant magnétisant</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma approché en L. La branche magnétisante, $R_f$ en parallèle avec $jX_m$, est branchée directement entre A et N, sous $V_1$ ; les
+      impédances du stator et du rotor ramené forment une seule branche série, parcourue par $I_2'$. Mêmes conventions que le schéma en T :
+      N est la référence, $V_1$ est fléchée vers A, les courants en convention récepteur.
+    </figcaption>
+  </figure>
+  <div class="formule-cle">
+    $$\underline{I}_2' \approx \frac{\underline{V}_1}{R_1 + R_2'/g + j(X_1 + X_2')}, \qquad \underline{I}_1 \approx \underline{I}_2' + \frac{\underline{V}_1}{R_f} + \frac{\underline{V}_1}{jX_m}, \qquad C_{em} \approx \frac{3\,V_1^2}{\varOmega_s}\cdot\frac{R_2'/g}{(R_1 + R_2'/g)^2 + (X_1 + X_2')^2}$$
+    <p class="formule-cle-legende">
+      Approximation : on suppose la chute de tension due au courant magnétisant dans $R_1 + jX_1$ négligeable, ce qui revient à confondre
+      $\underline{E}_1$ et $\underline{V}_1$ pour la branche magnétisante. Cas limite où elle est exacte : $R_1 = X_1 = 0$. Pour le moteur de la
+      section H, au glissement nominal, elle donne $I_1 = 23{,}3\ \mathrm{A}$ au lieu de $21{,}3\ \mathrm{A}$, soit $+9\ \%$, et un couple de
+      $80{,}7\ \mathrm{N \cdot m}$ au lieu de $73{,}5\ \mathrm{N \cdot m}$, soit $+10\ \%$, parce que la branche rotorique reçoit $V_1$ au lieu de
+      $E_1 = 209{,}8\ \mathrm{V}$. Pour un transformateur, où le courant magnétisant ne vaut que $1$ à $3\ \%$ du courant nominal, la même opération
+      coûte moins d'un pour mille. Règle pratique : sur un moteur, le schéma approché sert aux estimations rapides et aux raisonnements
+      qualitatifs ; les calculs de rendement, de courant et de couple se font avec le schéma en T, ou avec l'équivalent de Thévenin, qui est
+      exact.
+    </p>
+  </div>
+
+  <h3 id="e-identification">Identifier les paramètres : trois mesures</h3>
+  <p>
+    Le cours <a href="#/cours/essais-a-vide-et-en-court-circuit">Essais à vide et en court-circuit</a> a identifié le schéma d'un transformateur
+    par deux essais. Le moteur se traite de la même façon, avec deux différences : à vide, il tourne et dissipe des pertes mécaniques qu'il
+    faut séparer des pertes fer ; en court-circuit, il faut bloquer le rotor, et la fréquence de l'essai change la valeur des paramètres
+    rotoriques.
+  </p>
+  <figure id="e-essais-figure">
+    <svg viewBox="0 0 760 300" role="img" aria-label="À gauche, essai à vide sous tension et fréquence nominales, arbre libre : la branche rotorique est presque ouverte, le courant à vide traverse R1, jX1 et la branche magnétisante ; mesures I0 et P0. À droite, essai à rotor bloqué sous fréquence réduite et courant nominal : la branche magnétisante est presque court-circuitée par R2 prime et jX2 prime ; mesures Ucc, Icc, Pcc">
+      <defs>
+        <marker id="fl-e-es" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="50" cy="140" r="20"/>
+        <path d="M42 140c2-7 5-7 8 0s5 7 8 0" stroke-width="1.5"/>
+        <path d="M50 120V80H80M120 80H140M180 80H220V110M220 170V200H50V160"/>
+        <rect x="80" y="70" width="40" height="20" rx="3"/>
+        <path d="M140 80a5 5 0 0 1 10 0a5 5 0 0 1 10 0a5 5 0 0 1 10 0a5 5 0 0 1 10 0"/>
+        <rect x="206" y="110" width="28" height="60" rx="3"/>
+        <circle cx="430" cy="140" r="20"/>
+        <path d="M422 140c2-7 5-7 8 0s5 7 8 0" stroke-width="1.5"/>
+        <path d="M430 120V80H460M500 80H520M560 80H660M700 80H720V110M720 170V200H430V160"/>
+        <rect x="460" y="70" width="40" height="20" rx="3"/>
+        <path d="M520 80a5 5 0 0 1 10 0a5 5 0 0 1 10 0a5 5 0 0 1 10 0a5 5 0 0 1 10 0"/>
+        <path d="M660 80a5 5 0 0 1 10 0a5 5 0 0 1 10 0a5 5 0 0 1 10 0a5 5 0 0 1 10 0"/>
+        <rect x="706" y="110" width="28" height="60" rx="3"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="5 4">
+        <path d="M220 80H300V200H220"/>
+        <rect x="286" y="116" width="28" height="48" rx="3"/>
+        <path d="M600 80V200"/>
+        <rect x="586" y="116" width="28" height="48" rx="3"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6">
+        <path d="M56 80H76" marker-end="url(#fl-e-es)"/>
+        <path d="M436 80H456" marker-end="url(#fl-e-es)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="20" y="30">essai à vide : U = 400 V, 50 Hz, arbre libre</text>
+        <text x="20" y="48">g ≈ 0 : branche rotorique presque ouverte</text>
+        <text x="400" y="30">essai à rotor bloqué : 12,5 Hz, I = I_n</text>
+        <text x="400" y="48">g = 1 : branche magnétisante shuntée</text>
+        <text x="58" y="72">I0</text>
+        <text x="438" y="72">Icc</text>
+        <text x="4" y="146">V1</text>
+        <text x="384" y="146">Vcc</text>
+        <text x="84" y="64">R1</text>
+        <text x="146" y="64">jX1</text>
+        <text x="240" y="144">Zm</text>
+        <text x="318" y="136">R2'/g</text>
+        <text x="318" y="152">→ ∞</text>
+        <text x="464" y="64">R1</text>
+        <text x="522" y="64">jX1/4</text>
+        <text x="620" y="144">jXm/4</text>
+        <text x="664" y="64">jX2'/4</text>
+        <text x="686" y="104">R2'</text>
+        <text x="20" y="232">mesures : I0, P0 (deux wattmètres), U</text>
+        <text x="20" y="250">P0 - 3 R1 I0² = p_fs + p_m</text>
+        <text x="20" y="268">donne Xm et Rf, après séparation de p_m</text>
+        <text x="400" y="232">mesures : Ucc, Icc, Pcc, Qcc</text>
+        <text x="400" y="250">Pcc / 3 Icc² = R1 + R2' corrigée</text>
+        <text x="400" y="268">Qcc / 3 Icc² × 4 = X1 + X2' à 50 Hz</text>
+      </g>
+    </svg>
+    <figcaption>
+      Les deux essais d'identification, vus sur le schéma en T. Les éléments dessinés en tirets sont ceux que l'essai rend presque
+      inopérants : à vide, la branche rotorique, dont la résistance $R_2'/g$ tend vers l'infini ; à rotor bloqué, la branche magnétisante,
+      shuntée par l'impédance rotorique beaucoup plus faible. À $12{,}5\ \mathrm{Hz}$, toutes les réactances sont divisées par $4$. La flèche
+      horizontale donne le sens positif du courant mesuré, de la source vers le moteur ; la source est la tension simple de l'étoile
+      équivalente, référencée au neutre.
+    </figcaption>
+  </figure>
+  <ol>
+    <li>
+      <strong>Résistance entre bornes.</strong> Mesurée en continu à chaud, ou corrigée en température comme dans le cours
+      <a href="#/cours/essais-a-vide-et-en-court-circuit">Essais à vide et en court-circuit</a> : $R_1 = R_b/2$ par phase de l'étoile équivalente,
+      pour les deux couplages. Moteur de la section H : $R_b = 0{,}62\ \mathrm{\Omega}$, $R_1 = 0{,}31\ \mathrm{\Omega}$.
+    </li>
+    <li>
+      <strong>Essai à vide</strong> sous $U = 400\ \mathrm{V}$, $50\ \mathrm{Hz}$ : $I_0 = 7{,}62\ \mathrm{A}$ et $P_0 = 603\ \mathrm{W}$. On retranche
+      $3R_1I_0^2 = 54\ \mathrm{W}$ : il reste $549\ \mathrm{W}$ de pertes fer et mécaniques. Pour les séparer, on répète l'essai à tension
+      décroissante : les pertes fer varient comme $U^2$, les pertes mécaniques restent constantes car la vitesse ne change presque pas. La
+      droite $P_0 - 3R_1I_0^2$ en fonction de $U^2$ coupe l'axe en $p_m = 110\ \mathrm{W}$, d'où $p_{fs} = 439\ \mathrm{W}$. Puissance réactive :
+      $Q_0 = \sqrt{(\sqrt{3}UI_0)^2 - P_0^2} = 5245\ \mathrm{var}$, dont $3X_1I_0^2 = 253\ \mathrm{var}$ dans les fuites du stator ; la branche
+      magnétisante reçoit $4992\ \mathrm{var}$ sous $E_0 \approx V_1 - X_1I_0 = 219{,}9\ \mathrm{V}$, d'où $X_m = 3E_0^2/4992 = 29{,}1\ \mathrm{\Omega}$ et
+      $R_f = 3E_0^2/439 = 330\ \mathrm{\Omega}$.
+    </li>
+    <li>
+      <strong>Essai à rotor bloqué</strong> sous fréquence réduite, $12{,}5\ \mathrm{Hz}$, au courant nominal $21\ \mathrm{A}$ : $U_{cc} = 33{,}6\ \mathrm{V}$
+      entre phases, $P_{cc} = 770\ \mathrm{W}$, $Q_{cc} = 951\ \mathrm{var}$. $R_{cc} = P_{cc}/(3I^2) = 0{,}582\ \mathrm{\Omega}$ et
+      $X_{cc} = Q_{cc}/(3I^2) = 0{,}718\ \mathrm{\Omega}$ à $12{,}5\ \mathrm{Hz}$, soit $2{,}874\ \mathrm{\Omega}$ à $50\ \mathrm{Hz}$. Répartition
+      conventionnelle pour une cage ordinaire : $X_1 = X_2' = 1{,}44\ \mathrm{\Omega}$. Résistance rotorique, corrigée de l'effet de la branche
+      magnétisante en parallèle : $R_2' = (R_{cc} - R_1)\left[(X_m + X_2')/X_m\right]^2 = 0{,}272 \times 1{,}10 = 0{,}30\ \mathrm{\Omega}$.
+    </li>
+  </ol>
+  <p>
+    Pourquoi une fréquence réduite ? En marche normale, les courants rotoriques sont à environ $1\ \mathrm{Hz}$ ; un essai à $50\ \mathrm{Hz}$
+    mesurerait la résistance et la réactance des barres sous un fort effet de peau, c'est-à-dire les paramètres du démarrage, pas ceux de la
+    marche. Les méthodes d'essai normalisées recommandent pour cette raison une fréquence de l'ordre du quart de la fréquence nominale ; un
+    essai complémentaire à $50\ \mathrm{Hz}$ sous tension réduite donne, lui, les paramètres de démarrage. Les deux essais sont couplés : $X_1$
+    sert à exploiter l'essai à vide, $X_m$ à corriger l'essai à rotor bloqué ; on itère une ou deux fois, ce que la petite correction de
+    $1{,}10$ rend presque inutile ici. Les variateurs de fréquence font la même chose à la mise en service, par injection de tensions continues
+    et alternatives à l'arrêt, d'où le nom d'autoréglage.
+  </p>
+
+  <h3 id="e-statut">Loi, convention, approximation, règle de conception et donnée du constructeur</h3>
+  <ul>
+    <li><strong>Lois physiques :</strong> lois de Kirchhoff appliquées au circuit par phase, loi de Faraday au stator et au rotor, équilibre des ampères-tours, conservation de l'énergie qui impose le découpage $R_2' + R_2'(1 - g)/g$, théorème de Thévenin pour un réseau linéaire.</li>
+    <li><strong>Conventions :</strong> étoile équivalente quel que soit le couplage, neutre pris comme référence, convention récepteur aux bornes, courant rotorique ramené compté entrant dans le rotor, rapport $m = E_{20}/E_1$, répartition $X_1 = X_2'$ des réactances de fuite.</li>
+    <li><strong>Approximations :</strong> paramètres constants dans la zone de fonctionnement normal ; pertes fer représentées par une résistance sous $E_1$ ; pertes fer du rotor négligées ; pertes mécaniques retranchées hors du circuit ; pertes supplémentaires en charge non représentées ; schéma en L lorsque la branche magnétisante est déplacée aux bornes.</li>
+    <li><strong>Règles de conception :</strong> entrefer minimal pour limiter le courant magnétisant ; point nominal choisi près du meilleur facteur de puissance ; marge de couple maximal pour tenir les creux de tension ; barres profondes ou double cage pour séparer paramètres de démarrage et de marche.</li>
+    <li><strong>Données du constructeur et des normes :</strong> valeurs de plaque et de catalogue, paramètres de schéma équivalent quand ils sont publiés, méthodes d'essai et de détermination des pertes définies par les normes de machines tournantes applicables, à vérifier pour chaque moteur et chaque pays.</li>
+  </ul>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, le schéma équivalent par phase lu comme une chaîne des puissances, l'organigramme
+    de résolution et un tableau comparatif des trois modèles. Les autres schémas sont restés au contact du passage qu'ils illustrent ; la
+    liste de renvois figure à la fin de la section.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 760 440" role="img" aria-label="Schéma principal : schéma équivalent par phase en T, chaque élément associé à la puissance qu'il absorbe, puis chaîne des puissances chiffrée du moteur de la section H, de la puissance absorbée à la puissance utile">
+      <defs>
+        <marker id="fl-f" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M44 60H80M130 60H150M210 60H360M420 60H450M500 60H620V90M620 160V180H44"/>
+        <rect x="80" y="48" width="50" height="24" rx="3"/>
+        <path d="M150 60a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0"/>
+        <path d="M260 60V80M236 80H284M236 80V95M236 145V160M284 80V95M284 145V160M236 160H284M260 160V180"/>
+        <rect x="224" y="95" width="24" height="50" rx="3"/>
+        <path d="M284 95a6.25 6.25 0 0 1 0 12.5a6.25 6.25 0 0 1 0 12.5a6.25 6.25 0 0 1 0 12.5a6.25 6.25 0 0 1 0 12.5"/>
+        <path d="M360 60a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0"/>
+        <rect x="450" y="48" width="50" height="24" rx="3"/>
+        <rect x="606" y="90" width="28" height="70" rx="3" fill="currentColor" fill-opacity="0.18"/>
+        <rect x="14" y="270" width="140" height="56" rx="8"/>
+        <rect x="204" y="270" width="140" height="56" rx="8"/>
+        <rect x="394" y="270" width="150" height="56" rx="8"/>
+        <rect x="594" y="270" width="150" height="56" rx="8"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.3" stroke-dasharray="6 5" opacity="0.8">
+        <path d="M320 30V196"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <circle cx="40" cy="60" r="4"/>
+        <circle cx="40" cy="180" r="4"/>
+        <path d="M154 298H200" stroke-width="3" marker-end="url(#fl-f)"/>
+        <path d="M344 298H390" stroke-width="3" marker-end="url(#fl-f)"/>
+        <path d="M544 298H590" stroke-width="3" marker-end="url(#fl-f)"/>
+        <path d="M60 326V362" stroke-dasharray="5 4" marker-end="url(#fl-f)"/>
+        <path d="M120 326V362" stroke-dasharray="5 4" marker-end="url(#fl-f)"/>
+        <path d="M274 326V362" stroke-dasharray="5 4" marker-end="url(#fl-f)"/>
+        <path d="M470 326V362" stroke-dasharray="5 4" marker-end="url(#fl-f)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="30" y="50">A</text>
+        <text x="30" y="200">N</text>
+        <text x="94" y="40">R1</text>
+        <text x="166" y="40">jX1</text>
+        <text x="202" y="126">Rf</text>
+        <text x="296" y="126">jXm</text>
+        <text x="372" y="40">jX2'</text>
+        <text x="464" y="40">R2'</text>
+        <text x="644" y="122">R2'(1 - g)/g</text>
+        <text x="326" y="26">entrefer</text>
+        <text x="60" y="214">p_js = 3 R1 I1²</text>
+        <text x="200" y="230">p_fs = 3 E1² / Rf</text>
+        <text x="400" y="214">p_jr = 3 R2' I2'²</text>
+        <text x="560" y="230">P_m = 3 R2'(1 - g)/g I2'²</text>
+        <text x="20" y="252">schéma par phase, lu comme une chaîne des puissances (×3 pour les trois phases)</text>
+        <text x="24" y="294">P_abs</text>
+        <text x="24" y="314">12 370 W</text>
+        <text x="214" y="294">P_tr = C_em Ω_s</text>
+        <text x="214" y="314">11 549 W</text>
+        <text x="404" y="294">P_m = (1 - g) P_tr</text>
+        <text x="404" y="314">11 241 W</text>
+        <text x="604" y="294">P_u = P_m - p_m</text>
+        <text x="604" y="314">11 131 W</text>
+        <text x="24" y="382">p_js</text>
+        <text x="24" y="398">421 W</text>
+        <text x="100" y="382">p_fs</text>
+        <text x="100" y="398">400 W</text>
+        <text x="244" y="382">p_jr = g P_tr</text>
+        <text x="244" y="398">308 W</text>
+        <text x="442" y="382">p_m</text>
+        <text x="442" y="398">110 W</text>
+        <text x="594" y="356">η = 11 131 / 12 370</text>
+        <text x="594" y="374">  = 89,98 %</text>
+        <text x="594" y="398">g = 2,67 %</text>
+        <text x="20" y="430">flèches épaisses : puissance qui progresse ; flèches en tirets : pertes</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal. En haut, le schéma équivalent en T d'une phase, entre la borne A et le neutre N, référence de potentiel ; le trait
+      vertical en tirets marque l'entrefer. Sous chaque élément résistif est écrite la puissance qu'il absorbe : $R_1$ les pertes Joule du stator,
+      $R_f$ les pertes fer, $R_2'$ les pertes Joule du rotor, la résistance de charge grisée la puissance mécanique.
+      Les réactances n'absorbent aucune puissance active. En bas, la chaîne énergétique chiffrée du moteur de la section H au glissement de
+      plaque : la puissance progresse de gauche à droite, flèches épaisses, et chaque étape cède ses pertes, flèches en tirets ; les pertes
+      mécaniques, absentes du circuit, sont retranchées en dernier.
+    </figcaption>
+  </figure>
+
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Données : plaque, catalogue,<br/>essais ou paramètres R1, X1, R2', X2', Xm, Rf"] --> B["Étoile équivalente :<br/>V1 = U / √3, paramètres par phase"]
+  B --> C{"Paramètres connus ?"}
+  C -->|"non"| D["Identifier : R1 = Rb / 2,<br/>essai à vide → Xm, Rf, p_m,<br/>rotor bloqué à f réduite → R2', X1 + X2'"]
+  C -->|"oui"| E["Glissement : mesuré,<br/>imposé, ou cherché pour P_u donnée"]
+  D --> E
+  E --> F{"Que cherche-t-on ?"}
+  F -->|"courant, cos φ, pertes"| G["Z(g) = R1 + jX1 + Zm ∥ (R2'/g + jX2')<br/>I1 = V1 / Z ; E1 ; I2' ; Im"]
+  F -->|"couple seul"| H["Thévenin : Vth, Rth + jXth<br/>C_em, g_m, C_max"]
+  G --> K["P_tr = 3 R2' I2'² / g<br/>p_jr = g P_tr ; P_u = (1 - g) P_tr - p_m"]
+  H --> K
+  K --> M{"Contrôles"}
+  M --> N["I1 = Im + I2' en complexes ;<br/>P_abs = somme des pertes + P_u ;<br/>comparaison avec la plaque ;<br/>domaine de validité des paramètres"]</pre>
+    <figcaption>
+      Organigramme de résolution d'un problème de schéma équivalent. Les rectangles sont des calculs, les losanges des choix, les libellés des
+      flèches les réponses. On commence toujours par passer à l'étoile équivalente ; on identifie les paramètres s'ils manquent ; le schéma en T
+      donne toutes les grandeurs électriques, Thévenin donne le couple plus vite ; toutes les branches se rejoignent sur les mêmes contrôles,
+      dont le dernier rappelle que des paramètres de marche ne décrivent pas le démarrage.
+    </figcaption>
+  </figure>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Trois modèles du moteur asynchrone, du plus complet au plus simple</caption>
+      <thead><tr><th>Critère</th><th>Schéma en T</th><th>Schéma approché en L</th><th>Formule de Kloss</th></tr></thead>
+      <tbody>
+        <tr><td>Hypothèses</td><td>paramètres constants, régime sinusoïdal</td><td>en plus : branche magnétisante sous $V_1$</td><td>en plus : $R_1$ et courant magnétisant négligés</td></tr>
+        <tr><td>Donne le courant et le $\cos\varphi$</td><td>oui, exactement</td><td>oui, avec $5$ à $10\ \%$ d'erreur sur un moteur</td><td>non</td></tr>
+        <tr><td>Donne pertes et rendement</td><td>oui</td><td>approximativement</td><td>pertes rotoriques seulement</td></tr>
+        <tr><td>Donne le couple</td><td>oui, ou par Thévenin sans erreur</td><td>surestimé d'environ $10\ \%$ ici</td><td>oui, si $g_m$ et $C_{max}$ sont connus</td></tr>
+        <tr><td>Données nécessaires</td><td>six paramètres, deux essais</td><td>six paramètres</td><td>$C_{max}$ et $g_m$, ou plaque et catalogue</td></tr>
+        <tr><td>Usage préférable</td><td>bilans, compensation, rendement, réseau</td><td>raisonnements rapides, ordres de grandeur</td><td>courbe couple-vitesse en zone normale</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-transfo-figure" data-renvoi="d-transfo-figure">le moteur vu comme un transformateur à charge variable</a>, section D ;</li>
+    <li><a href="#e-rotor-figure" data-renvoi="e-rotor-figure">le rotor réel et le rotor fictif immobile</a>, <a href="#e-schema-t-figure" data-renvoi="e-schema-t-figure">le schéma équivalent en T</a>, <a href="#e-decoupage-figure" data-renvoi="e-decoupage-figure">l'animation du rotor ramené</a>, <a href="#e-cercle-figure" data-renvoi="e-cercle-figure">l'animation des phaseurs et du cercle du courant</a>, <a href="#e-thevenin-figure" data-renvoi="e-thevenin-figure">la réduction de Thévenin</a>, <a href="#e-transfert-figure" data-renvoi="e-transfert-figure">l'animation du transfert maximal de puissance</a>, <a href="#e-courbes-figure" data-renvoi="e-courbes-figure">la simulation des courbes de couple et de courant</a>, <a href="#e-approche-figure" data-renvoi="e-approche-figure">le schéma approché en L</a> et <a href="#e-essais-figure" data-renvoi="e-essais-figure">les deux essais d'identification</a>, section E ;</li>
+    <li><a href="#h-donnees-figure" data-renvoi="h-donnees-figure">le schéma chiffré de l'exemple</a>, section H ;</li>
+    <li><a href="#i-compresseur-figure" data-renvoi="i-compresseur-figure">le modèle par phase du moteur du compresseur et de sa compensation</a> et <a href="#i-charge-figure" data-renvoi="i-charge-figure">la simulation des performances selon la charge</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour calculer courant, pertes, rendement et couple d'un moteur asynchrone à partir de son schéma équivalent :</p>
+  <ol>
+    <li>Rassembler les données : paramètres publiés, ou mesures de résistance entre bornes, d'essai à vide et d'essai à rotor bloqué, ou à défaut plaque et catalogue. Noter pour chaque valeur si elle est mesurée, garantie ou supposée.</li>
+    <li>Passer à l'étoile équivalente : $V_1 = U/\sqrt{3}$, $I_1$ courant de ligne, $R_1 = R_b/2$ ; pour un moteur couplé en triangle, des paramètres donnés par enroulement se divisent par $3$.</li>
+    <li>Si nécessaire, identifier les paramètres : essai à vide pour $X_m$, $R_f$ et $p_m$, après séparation des pertes ; essai à rotor bloqué à fréquence réduite pour $R_2'$ et $X_1 + X_2'$ ; répartir les fuites ; itérer une fois.</li>
+    <li>Fixer le glissement : mesuré par la vitesse, ou cherché par dichotomie pour obtenir la puissance utile ou le couple demandé, en restant entre $0$ et $g_m$.</li>
+    <li>Calculer $R_2'/g$, l'admittance de la branche rotorique et celle de la branche magnétisante, leur somme, l'impédance totale $\underline{Z}(g)$, puis $\underline{I}_1$, $\cos\varphi$, $\underline{E}_1$, $\underline{I}_2'$ et $\underline{I}_m$.</li>
+    <li>Calculer les puissances : $P_{abs}$, $Q$, $p_{js} = 3R_1I_1^2$, $p_{fs} = 3E_1^2/R_f$, $P_{tr} = 3(R_2'/g)I_2'^2$, $p_{jr} = gP_{tr}$, $P_m$, $P_u = P_m - p_m$, $\eta$.</li>
+    <li>Calculer les couples : $C_{em} = P_{tr}/\varOmega_s$, $C_u = P_u/\varOmega$ ; pour la courbe entière, le couple maximal ou le glissement critique, passer par Thévenin.</li>
+    <li>Contrôler : loi des nœuds en complexes, somme des pertes égale à $P_{abs} - P_u$, comparaison à la plaque, ordre de grandeur du courant magnétisant, et domaine de validité : paramètres de marche pour la zone normale, paramètres de démarrage pour les forts glissements.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    On reprend le moteur de $11\ \mathrm{kW}$, $230/400\ \mathrm{V}$, couplé en étoile, $21{,}0\ \mathrm{A}$, $\cos\varphi = 0{,}84$, $\eta = 90{,}0\ \%$,
+    $1460\ \mathrm{tr/min}$, étudié dans le cours <a href="#/cours/moteur-asynchrone-triphase">Moteur asynchrone triphasé</a>. Ses essais,
+    exploités dans la section E, ont donné les paramètres par phase. On veut, au glissement de plaque, tout calculer à partir du schéma :
+    courants, facteur de puissance, pertes, couples et rendement, puis confronter le résultat à la plaque.
+  </p>
+  <figure id="h-donnees-figure">
+    <svg viewBox="0 0 760 320" role="img" aria-label="Schéma en T chiffré de l'exemple : V1 = 230,9 V, R1 = 0,31 ohm, X1 = 1,45 ohm, Rf = 330 ohms, Xm = 29 ohms, X2 prime = 1,45 ohm, R2 prime = 0,30 ohm, charge mécanique 10,95 ohms à g = 2,67 %, et résultats I1 = 21,27 A, Im = 7,26 A, I2 prime = 18,50 A, E1 = 209,8 V">
+      <defs>
+        <marker id="fl-h" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M44 70H90M140 70H170M230 70H430M490 70H530M580 70H660V120M660 200V250H44"/>
+        <rect x="90" y="58" width="50" height="24" rx="3"/>
+        <path d="M170 70a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0"/>
+        <path d="M430 70a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0"/>
+        <rect x="530" y="58" width="50" height="24" rx="3"/>
+        <rect x="646" y="120" width="28" height="80" rx="3" fill="currentColor" fill-opacity="0.18"/>
+        <path d="M300 70V100M270 100H330M270 100V130M270 190V220M330 100V130M330 190V220M270 220H330M300 220V250"/>
+        <rect x="258" y="130" width="24" height="60" rx="3"/>
+        <path d="M330 130a7.5 7.5 0 0 1 0 15a7.5 7.5 0 0 1 0 15a7.5 7.5 0 0 1 0 15a7.5 7.5 0 0 1 0 15"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6">
+        <circle cx="40" cy="70" r="4"/>
+        <circle cx="40" cy="250" r="4"/>
+        <path d="M50 70H84" marker-end="url(#fl-h)"/>
+        <path d="M300 76V96" marker-end="url(#fl-h)"/>
+        <path d="M344 70H384" marker-end="url(#fl-h)"/>
+        <path d="M22 236V86" marker-end="url(#fl-h)"/>
+        <path d="M384 236V86" marker-end="url(#fl-h)"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="300" cy="70" r="3.5"/>
+        <circle cx="300" cy="250" r="3.5"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="30" y="60">A</text>
+        <text x="30" y="272">N</text>
+        <text x="50" y="48">I1 = 21,27 A</text>
+        <text x="30" y="164">V1</text>
+        <text x="30" y="180">230,9 V</text>
+        <text x="86" y="100">R1 0,31 Ω</text>
+        <text x="170" y="50">X1 1,45 Ω</text>
+        <text x="306" y="92">Im 7,26 A</text>
+        <text x="200" y="164">Rf</text>
+        <text x="188" y="180">330 Ω</text>
+        <text x="342" y="150">Xm</text>
+        <text x="342" y="166">29 Ω</text>
+        <text x="392" y="164">E1</text>
+        <text x="392" y="180">209,8 V</text>
+        <text x="340" y="58">I2' = 18,50 A</text>
+        <text x="424" y="100">X2' 1,45 Ω</text>
+        <text x="526" y="100">R2' 0,30 Ω</text>
+        <text x="546" y="158">10,95 Ω</text>
+        <text x="546" y="176">charge</text>
+        <text x="60" y="296">g = 40 / 1500 = 2,67 %, R2'/g = 11,25 Ω = 0,30 Ω + 10,95 Ω</text>
+        <text x="60" y="314">φ = 32,93°, cos φ = 0,839 ; E1 en retard de 6,10° sur V1</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma de l'exemple, une phase de l'étoile équivalente, avec les paramètres identifiés et les résultats encadrant chaque élément. La
+      tension $V_1$ est fléchée de N, référence, vers A ; $E_1$ aux bornes de la branche magnétisante. Les courants sont fléchés en convention
+      récepteur : $I_1$ entrant par A, $I_m$ descendant dans la branche magnétisante, $I_2'$ vers le rotor ramené. Le cadre grisé est la
+      résistance de charge $R_2'(1 - g)/g = 10{,}95\ \mathrm{\Omega}$, image de la puissance mécanique ; les angles sont comptés par rapport à $V_1$.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Données : réseau $400\ \mathrm{V}$, $50\ \mathrm{Hz}$ ; moteur à quatre pôles couplé en étoile ; paramètres par phase $R_1 = 0{,}31\ \mathrm{\Omega}$,
+    $X_1 = 1{,}45\ \mathrm{\Omega}$, $R_2' = 0{,}30\ \mathrm{\Omega}$, $X_2' = 1{,}45\ \mathrm{\Omega}$, $X_m = 29{,}0\ \mathrm{\Omega}$, $R_f = 330\ \mathrm{\Omega}$ ;
+    pertes mécaniques $p_m = 110\ \mathrm{W}$ ; vitesse mesurée $1460\ \mathrm{tr/min}$. Inconnues : $\underline{I}_1$, $\cos\varphi$,
+    $\underline{E}_1$, $I_2'$, $I_m$, $P_{abs}$, $Q$, les quatre pertes, $P_{tr}$, $P_u$, $C_{em}$, $C_u$, $\eta$. Stratégie : méthode de la section G,
+    calcul par admittances pour la mise en parallèle, puis bilan des puissances, contrôlé par la loi des nœuds et par la somme des pertes.
+  </p>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li><strong>Grandeurs de base.</strong> $V_1 = 400/\sqrt{3} = 230{,}94\ \mathrm{V}$ ; $g = (1500 - 1460)/1500 = 0{,}02667$ ; $\varOmega_s = 2\pi \times 1500/60 = 157{,}08\ \mathrm{rad/s}$ ; $\varOmega = 152{,}89\ \mathrm{rad/s}$.</li>
+    <li><strong>Branche rotorique.</strong> $R_2'/g = 0{,}30/0{,}02667 = 11{,}25\ \mathrm{\Omega}$, donc $\underline{Z}_2 = 11{,}25 + j1{,}45\ \mathrm{\Omega}$, de module $11{,}343\ \mathrm{\Omega}$ ; admittance $\underline{Y}_2 = (11{,}25 - j1{,}45)/128{,}67 = 0{,}08744 - j0{,}01127\ \mathrm{S}$.</li>
+    <li><strong>Branche magnétisante.</strong> $\underline{Y}_m = 1/330 + 1/(j29) = 0{,}00303 - j0{,}03448\ \mathrm{S}$, de module $0{,}03462\ \mathrm{S}$.</li>
+    <li><strong>Mise en parallèle.</strong> $\underline{Y}_2 + \underline{Y}_m = 0{,}09047 - j0{,}04575\ \mathrm{S}$, d'où $\underline{Z}_p = 1/(\underline{Y}_2 + \underline{Y}_m) = 8{,}802 + j4{,}452\ \mathrm{\Omega}$.</li>
+    <li><strong>Impédance totale.</strong> $\underline{Z} = 0{,}31 + j1{,}45 + 8{,}802 + j4{,}452 = 9{,}112 + j5{,}902\ \mathrm{\Omega}$, soit $10{,}857\ \mathrm{\Omega}$ sous un angle de $32{,}93^\circ$.</li>
+    <li><strong>Courant absorbé.</strong> $I_1 = 230{,}94/10{,}857 = 21{,}27\ \mathrm{A}$, en retard de $\varphi = 32{,}93^\circ$ sur $\underline{V}_1$ : $\cos\varphi = 0{,}839$, et $\underline{I}_1 = 17{,}85 - j11{,}56\ \mathrm{A}$.</li>
+    <li><strong>Force électromotrice.</strong> $(R_1 + jX_1)\,\underline{I}_1 = (0{,}31 + j1{,}45)(17{,}85 - j11{,}56) = 22{,}30 + j22{,}30\ \mathrm{V}$ ; $\underline{E}_1 = 230{,}94 - 22{,}30 - j22{,}30 = 208{,}64 - j22{,}30\ \mathrm{V}$, soit $209{,}83\ \mathrm{V}$ en retard de $6{,}10^\circ$.</li>
+    <li><strong>Courants des deux branches.</strong> $I_2' = 209{,}83/11{,}343 = 18{,}50\ \mathrm{A}$ et $\underline{I}_2' = \underline{E}_1\underline{Y}_2 = 17{,}99 - j4{,}30\ \mathrm{A}$ ; $I_m = 209{,}83 \times 0{,}03462 = 7{,}26\ \mathrm{A}$ et $\underline{I}_m = -0{,}14 - j7{,}26\ \mathrm{A}$. Contrôle de la loi des nœuds : $17{,}99 - 0{,}14 = 17{,}85$ et $-4{,}30 - 7{,}26 = -11{,}56$, conforme à $\underline{I}_1$.</li>
+    <li><strong>Puissances absorbées.</strong> $P_{abs} = 3 \times 230{,}94 \times 21{,}27 \times 0{,}839 = 12\,370\ \mathrm{W}$ ; $Q = 3 \times 230{,}94 \times 21{,}27 \times \sin 32{,}93^\circ = 8011\ \mathrm{var}$.</li>
+    <li><strong>Pertes du stator.</strong> $p_{js} = 3 \times 0{,}31 \times 21{,}27^2 = 420{,}8\ \mathrm{W}$ ; $p_{fs} = 3 \times 209{,}83^2/330 = 400{,}2\ \mathrm{W}$.</li>
+    <li><strong>Puissance transmise.</strong> $P_{tr} = 3 \times 11{,}25 \times 18{,}50^2 = 11\,549\ \mathrm{W}$ ; contrôle : $12\,370 - 420{,}8 - 400{,}2 = 11\,549\ \mathrm{W}$.</li>
+    <li><strong>Rotor et arbre.</strong> $p_{jr} = 0{,}02667 \times 11\,549 = 308{,}0\ \mathrm{W}$ ; $P_m = 11\,240{,}8\ \mathrm{W}$ ; $P_u = 11\,240{,}8 - 110 = 11\,130{,}8\ \mathrm{W}$.</li>
+    <li><strong>Couples et rendement.</strong> $C_{em} = 11\,549/157{,}08 = 73{,}52\ \mathrm{N \cdot m}$ ; $C_u = 11\,130{,}8/152{,}89 = 72{,}80\ \mathrm{N \cdot m}$ ; $\eta = 11\,130{,}8/12\,370 = 89{,}98\ \%$.</li>
+  </ol>
+
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li><strong>Bilan :</strong> $p_{js} + p_{fs} + p_{jr} + p_m = 420{,}8 + 400{,}2 + 308{,}0 + 110 = 1239\ \mathrm{W}$, égal à $P_{abs} - P_u = 12\,370 - 11\,131$.</li>
+    <li><strong>Plaque :</strong> courant $21{,}27\ \mathrm{A}$ contre $21{,}0$, soit $+1{,}3\ \%$ ; $\cos\varphi = 0{,}839$ contre $0{,}84$ ; rendement $89{,}98\ \%$ contre $90{,}0\ \%$ ; puissance utile $11{,}13\ \mathrm{kW}$ contre $11$. Le modèle donne exactement $11\ \mathrm{kW}$ à $g = 2{,}63\ \%$, soit $1460{,}6\ \mathrm{tr/min}$, avec $21{,}04\ \mathrm{A}$ : l'écart tient dans une erreur de lecture de vitesse de moins de $1\ \mathrm{tr/min}$, qui représente déjà $2{,}5\ \%$ du glissement.</li>
+    <li><strong>Dimensions :</strong> admittances en siemens, inverses des ohms ; $3(R_2'/g)I_2'^2$ en $\mathrm{\Omega \cdot A^2} = \mathrm{W}$ ; $P_{tr}/\varOmega_s$ en $\mathrm{N \cdot m}$.</li>
+    <li><strong>Ordres de grandeur :</strong> courant magnétisant de $7{,}26\ \mathrm{A}$, soit $35\ \%$ du courant nominal, typique d'un moteur de cette taille ; $E_1$ inférieure de $9\ \%$ à $V_1$, à cause de la chute dans $R_1 + jX_1$, ce qui justifie le refus du schéma approché.</li>
+    <li><strong>Cohérence avec le cours précédent :</strong> la cascade estimée y donnait $410$, $398$ et $304\ \mathrm{W}$ pour $p_{js}$, $p_{fs}$ et $p_{jr}$ ; le schéma donne $421$, $400$ et $308\ \mathrm{W}$ au même glissement : l'estimation par la plaque était bonne, le schéma la rend calculable en tout point.</li>
+  </ul>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+
+  <h3 id="i-probleme">Le moteur du compresseur du site : modèle, facteur de puissance réel et compensation</h3>
+  <p>
+    Dans le projet fil rouge, le cours précédent a établi la fiche du moteur du compresseur, plaque supposée $18{,}5\ \mathrm{kW}$, $400/690\ \mathrm{V}$,
+    couplé en triangle, $33{,}6\ \mathrm{A}$, $\cos\varphi = 0{,}86$, $\eta = 92{,}4\ \%$, $1470\ \mathrm{tr/min}$. Deux questions sont restées ouvertes.
+    La première : le bilan du site retient $32\ \mathrm{A}$ à $\cos\varphi = 0{,}80$ au point de service de $17{,}66\ \mathrm{kW}$ absorbés ; la plaque
+    laissait attendre plutôt $30\ \mathrm{A}$ et $0{,}85$. La seconde : la compensation individuelle de $7{,}44\ \mathrm{kvar}$ est raccordée en aval
+    du contacteur KM3 et en amont du relais thermique ; elle reste donc branchée sur le moteur quand KM3 s'ouvre. Un moteur qui ralentit
+    avec des condensateurs à ses bornes peut s'auto-exciter, comme une génératrice asynchrone isolée, et produire une surtension. Il faut
+    vérifier que la puissance des condensateurs reste inférieure à la puissance réactive à vide du moteur, avec une marge.
+  </p>
+  <figure id="i-compresseur-figure">
+    <svg viewBox="0 0 760 360" role="img" aria-label="Modèle par phase du départ du compresseur : source V1, contact du contacteur KM3, nœud de raccordement des condensateurs de compensation en étoile équivalente de 148 microfarads, puis schéma en T du moteur avec R1 = 0,165 ohm, X1 = 0,53 ohm, Rf = 330 ohms, Xm = 16,2 ohms, X2 prime = 0,53 ohm, R2 prime = 0,148 ohm et la charge mécanique">
+      <defs>
+        <marker id="fl-i" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="50" cy="160" r="20"/>
+        <path d="M42 160c2-7 5-7 8 0s5 7 8 0" stroke-width="1.5"/>
+        <path d="M50 140V70H90M120 70H230M230 70V140M230 166V250M50 180V250H700"/>
+        <path d="M90 70L116 56"/>
+        <path d="M214 140H246M214 150H246"/>
+        <path d="M230 150V166"/>
+        <path d="M230 70H290M330 70H350M390 70H490M530 70H550M590 70H700V120M700 190V250"/>
+        <rect x="290" y="60" width="40" height="20" rx="3"/>
+        <path d="M350 70a5 5 0 0 1 10 0a5 5 0 0 1 10 0a5 5 0 0 1 10 0a5 5 0 0 1 10 0"/>
+        <path d="M420 70V100M396 100H444M396 100V120M396 180V200M444 100V120M444 180V200M396 200H444M420 200V250"/>
+        <rect x="384" y="120" width="24" height="60" rx="3"/>
+        <path d="M444 120a7.5 7.5 0 0 1 0 15a7.5 7.5 0 0 1 0 15a7.5 7.5 0 0 1 0 15a7.5 7.5 0 0 1 0 15"/>
+        <path d="M490 70a5 5 0 0 1 10 0a5 5 0 0 1 10 0a5 5 0 0 1 10 0a5 5 0 0 1 10 0"/>
+        <rect x="550" y="60" width="40" height="20" rx="3"/>
+        <rect x="686" y="120" width="28" height="70" rx="3" fill="currentColor" fill-opacity="0.18"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6">
+        <path d="M140 60H176" marker-end="url(#fl-i)"/>
+        <path d="M244 84V130" marker-end="url(#fl-i)"/>
+        <path d="M250 60H282" marker-end="url(#fl-i)"/>
+        <path d="M16 236V84" marker-end="url(#fl-i)"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.3" stroke-dasharray="6 5" opacity="0.8">
+        <rect x="270" y="30" width="470" height="244" rx="10"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="230" cy="70" r="3.5"/>
+        <circle cx="230" cy="250" r="3.5"/>
+        <circle cx="420" cy="70" r="3.5"/>
+        <circle cx="420" cy="250" r="3.5"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="4" y="64">réseau</text>
+        <text x="22" y="112">V1</text>
+        <text x="84" y="48">KM3</text>
+        <text x="142" y="52">I_amont</text>
+        <text x="160" y="152">C_Y</text>
+        <text x="148" y="190">148 µF</text>
+        <text x="249" y="110">Ic</text>
+        <text x="282" y="52">I1</text>
+        <text x="280" y="98">R1 0,165</text>
+        <text x="346" y="52">X1 0,53</text>
+        <text x="330" y="156">Rf 330</text>
+        <text x="458" y="156">Xm 16,2</text>
+        <text x="482" y="52">X2' 0,53</text>
+        <text x="540" y="98">R2' 0,148</text>
+        <text x="602" y="160">R2'(1-g)/g</text>
+        <text x="280" y="266">moteur du compresseur, étoile équivalente, ohms par phase</text>
+        <text x="20" y="300">condensateurs : 7,44 kvar en triangle, 49,3 µF par élément, soit 148 µF en étoile équivalente</text>
+        <text x="20" y="320">KM3 ouvert : les condensateurs restent aux bornes du moteur qui ralentit</text>
+        <text x="20" y="340">condition retenue : Q_c ≤ 0,9 Q0, soit I_c ≤ 0,9 I0</text>
+      </g>
+    </svg>
+    <figcaption>
+      Modèle par phase du départ du compresseur, dans l'étoile équivalente : à gauche, la source et le contact de KM3, représenté ouvert ; au
+      nœud de raccordement, les condensateurs de compensation, deux traits parallèles ; dans le cadre en tirets, le schéma en T du moteur
+      identifié dans cette section. Le neutre, trait du bas, est la référence. Les flèches donnent les sens positifs : courant amont, de la
+      source vers le départ ; $I_c$, vers les condensateurs ; $I_1$, vers le moteur ; $V_1$, du neutre vers la ligne. Le relais thermique, en
+      aval du nœud, n'est pas représenté : il ne voit que $I_1$.
+    </figcaption>
+  </figure>
+
+  <h3 id="i-calcul">Identification et calculs</h3>
+  <ul>
+    <li><strong>Hypothèses d'identification :</strong> résistance entre bornes à chaud supposée $R_b = 0{,}33\ \mathrm{\Omega}$, à mesurer à la réception ; pertes mécaniques supposées $p_m = 150\ \mathrm{W}$ ; $X_1 = X_2'$. Au point nominal : $P_{abs} = 18{,}5/0{,}924 = 20{,}02\ \mathrm{kW}$, $P_{tr} = (18\,500 + 150)/0{,}98 = 19\,031\ \mathrm{W}$, $p_{jr} = 380{,}6\ \mathrm{W}$, $p_{js} = 1{,}5 \times 0{,}33 \times 33{,}6^2 = 558{,}8\ \mathrm{W}$, d'où $p_{fs} = 20\,022 - 19\,031 - 559 = 432\ \mathrm{W}$.</li>
+    <li><strong>Paramètres :</strong> quatre conditions au glissement de $2\ \%$, courant de $33{,}6\ \mathrm{A}$, puissance absorbée, puissance transmise et pertes fer, pour quatre inconnues $R_2'$, $X_1 = X_2'$, $X_m$, $R_f$, résolues numériquement comme au travail pratique de la section O. Valeurs arrondies, par phase de l'étoile équivalente : $R_1 = 0{,}165\ \mathrm{\Omega}$, $R_2' = 0{,}148\ \mathrm{\Omega}$, $X_1 = X_2' = 0{,}53\ \mathrm{\Omega}$, $X_m = 16{,}2\ \mathrm{\Omega}$, $R_f = 330\ \mathrm{\Omega}$ ; par enroulement du triangle, trois fois plus. Contrôle à $g = 2\ \%$ : $33{,}67\ \mathrm{A}$, $\cos\varphi = 0{,}860$, $\eta = 92{,}41\ \%$.</li>
+    <li><strong>Point de service du bilan :</strong> pour $P_{abs} = 17{,}66\ \mathrm{kW}$, le modèle donne $g = 1{,}74\ \%$, $1474\ \mathrm{tr/min}$, $I_1 = 30{,}3\ \mathrm{A}$, $\cos\varphi = 0{,}842$, $Q = 11{,}33\ \mathrm{kvar}$, $P_u = 16{,}33\ \mathrm{kW}$ et $\eta = 92{,}5\ \%$. L'estimation du cours précédent, environ $30\ \mathrm{A}$ et $0{,}85$, est confirmée ; l'hypothèse du bilan, $32\ \mathrm{A}$ et $13{,}25\ \mathrm{kvar}$, surestimait la puissance réactive de $1{,}92\ \mathrm{kvar}$, soit $17\ \%$.</li>
+    <li><strong>Effet de la compensation en service :</strong> avec $7{,}44\ \mathrm{kvar}$, la puissance réactive nette tombe à $3{,}89\ \mathrm{kvar}$, le facteur de puissance du départ monte à $0{,}977$ et le courant amont à $26{,}1\ \mathrm{A}$ au lieu de $30{,}3\ \mathrm{A}$.</li>
+    <li><strong>Compresseur en marche à vide :</strong> un compresseur à vis délesté appelle encore une part de sa puissance, supposée ici $30\ \%$ de $P_n$, soit $5{,}55\ \mathrm{kW}$ utiles : le moteur seul absorbe $16{,}7\ \mathrm{A}$ sous $\cos\varphi = 0{,}546$ ; compensé, le départ reste inductif, $2{,}25\ \mathrm{kvar}$ nets et $\cos\varphi = 0{,}942$, pour $9{,}7\ \mathrm{A}$ en amont.</li>
+    <li><strong>Risque d'auto-excitation :</strong> moteur découplé et tournant à vide, $I_0 = 13{,}8\ \mathrm{A}$, soit $41\ \%$ du courant nominal, et $Q_0 = 9{,}55\ \mathrm{kvar}$. Les condensateurs fournissent $7{,}44\ \mathrm{kvar}$, soit $10{,}7\ \mathrm{A}$ sous $400\ \mathrm{V}$ : $Q_c/Q_0 = 0{,}78$, sous la limite usuelle de $0{,}9$, qui vaut ici $8{,}60\ \mathrm{kvar}$. À l'ouverture de KM3, les condensateurs ne peuvent pas fournir tout le courant magnétisant : la tension décroît avec la vitesse au lieu de remonter.</li>
+    <li><strong>Sensibilité à la tension :</strong> au point de service, sous $90\ \%$ de la tension nominale, le courant passe de $30{,}3$ à $32{,}7\ \mathrm{A}$, encore sous le réglage du relais thermique de $33{,}6\ \mathrm{A}$ ; en marche à vide, il diminue au contraire, de $16{,}7$ à $16{,}2\ \mathrm{A}$.</li>
+  </ul>
+
+  <h3 id="i-charge-section">Simulation interactive : performances selon la charge et la tension</h3>
+  <p>
+    La simulation résout le schéma en T pour chaque puissance utile, de $0$ à $125\ \%$ de la puissance nominale, et trace le rendement, le
+    facteur de puissance et le courant rapporté au courant nominal, pour le moteur de la section H ou pour celui du compresseur. Vous réglez la
+    tension et le point de charge lu dans le panneau. Avant de manipuler, prédisez : une tension réduite de $10\ \%$ augmente-t-elle le courant
+    à toutes les charges ? Le rendement maximal est-il atteint à pleine charge ? Lequel des deux moteurs garde le meilleur facteur de puissance
+    à mi-charge, et pourquoi ?
+  </p>
+  <figure id="i-charge-figure">
+    <div id="i-charge-trace"></div>
+    <figcaption>
+      Performances calculées par le schéma en T, en fonction de la puissance utile rapportée à la puissance nominale. Trois courbes, désignées
+      dans la légende : rendement en pour cent, facteur de puissance multiplié par $100$, courant de ligne en pour cent du courant nominal.
+      Le trait vertical en tirets repère la charge choisie ; le trait vertical pointillé repère la charge de rendement maximal.
+    </figcaption>
+  </figure>
+  <div id="i-charge-curseurs"></div>
+  <div id="i-charge-valeurs"></div>
+  <p>
+    Interprétation : pour le moteur de la section H, une tension réduite de $10\ \%$ fait passer le courant à pleine charge de $21{,}0$ à
+    $23{,}5\ \mathrm{A}$, $+11\ \%$, car il faut plus de courant rotorique pour le même couple sous un flux plus faible ; mais au quart de charge,
+    elle le fait baisser de $9{,}2$ à $8{,}9\ \mathrm{A}$, car le courant magnétisant, dominant, diminue avec la tension. Le rendement au quart de
+    charge s'améliore même, de $81{,}2$ à $83{,}2\ \%$, grâce aux pertes fer réduites. Le rendement maximal, $90{,}05\ \%$, est atteint vers
+    $91\ \%$ de charge, et la courbe est très plate entre $60$ et $110\ \%$ ; le facteur de puissance chute beaucoup plus vite, à $0{,}73$ à
+    mi-charge et $0{,}53$ au quart. Le moteur du compresseur, pourtant plus gros et moins chargé en fuites, descend à $0{,}71$ à mi-charge contre
+    $0{,}73$ pour le moteur de $11\ \mathrm{kW}$ : son courant magnétisant relatif est plus élevé, $41\ \%$ contre $36\ \%$ du courant nominal,
+    et c'est lui qui gouverne le facteur de puissance à charge partielle. Conséquence de conception : un moteur surdimensionné perd
+    peu en rendement mais dégrade fortement le facteur de puissance du site, et la réduction de tension, parfois proposée comme économie
+    d'énergie, n'en est une qu'à faible charge.
+  </p>
+
+  <h3 id="i-compromis">Contraintes, risques et compromis</h3>
+  <ul>
+    <li><strong>Bilan de puissance :</strong> remplacer au bilan du tableau général l'hypothèse $32\ \mathrm{A}$ et $13{,}25\ \mathrm{kvar}$ par $30{,}3\ \mathrm{A}$ et $11{,}33\ \mathrm{kvar}$ avant compensation ; garder l'ancienne valeur comme majorant tant que la mesure de la méthode d'Aron n'est pas faite.</li>
+    <li><strong>Compensation individuelle :</strong> $7{,}44\ \mathrm{kvar}$ restent compatibles avec le raccordement en aval de KM3 ; une batterie plus forte, au-delà de $8{,}6\ \mathrm{kvar}$, devrait être commutée par son propre contacteur, ouvert avec KM3, ou raccordée en amont.</li>
+    <li><strong>Réglage du relais thermique :</strong> inchangé, au courant de plaque ; placé en aval des condensateurs, il voit le courant du moteur seul, $30{,}3\ \mathrm{A}$ en service.</li>
+    <li><strong>Démarrage :</strong> le modèle de marche ne donne que $212\ \mathrm{A}$ et $0{,}99\ C_n$ à l'arrêt, contre $252\ \mathrm{A}$ et $2{,}3\ C_n$ au catalogue ; la vérification du démarrage reste fondée sur le catalogue, comme dans le cours précédent, et le cours Démarrage des moteurs asynchrones s'appuiera sur des paramètres de démarrage.</li>
+    <li><strong>Limites :</strong> plaque, résistance entre bornes, pertes mécaniques, répartition des fuites et puissance de marche à vide du compresseur sont supposées ; le modèle doit être recalé sur la résistance mesurée à la réception et sur un enregistrement du courant, de la puissance active et de la puissance réactive en charge et en marche à vide.</li>
+  </ul>
+
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : ce que cette séance ajoute</span>
+    <p>
+      Schéma équivalent du moteur du compresseur, identifié à partir de la plaque supposée, de $R_b = 0{,}33\ \mathrm{\Omega}$ et de $p_m = 150\ \mathrm{W}$ :
+      $R_1 = 0{,}165$, $R_2' = 0{,}148$, $X_1 = X_2' = 0{,}53$, $X_m = 16{,}2$ et $R_f = 330\ \mathrm{\Omega}$ par phase de l'étoile équivalente. Au point de
+      service de $17{,}66\ \mathrm{kW}$ : $1474\ \mathrm{tr/min}$, $30{,}3\ \mathrm{A}$, $\cos\varphi = 0{,}842$, $11{,}33\ \mathrm{kvar}$, rendement de
+      $92{,}5\ \%$ ; l'hypothèse du bilan, $13{,}25\ \mathrm{kvar}$, est remplacée. Avec la compensation de $7{,}44\ \mathrm{kvar}$ : $\cos\varphi = 0{,}977$ et
+      $26{,}1\ \mathrm{A}$ en amont en service, $0{,}942$ en marche à vide supposée à $30\ \%$. Auto-excitation exclue à l'ouverture de KM3 :
+      $Q_c/Q_0 = 7{,}44/9{,}55 = 0{,}78 &lt; 0{,}9$. Sous $90\ \%$ de tension, $32{,}7\ \mathrm{A}$ en service, sous le réglage thermique.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Prendre $R_2'/g$ pour la seule puissance mécanique.</strong> La puissance absorbée par $R_2'/g$ est la puissance transmise ; la puissance mécanique ne correspond qu'à la part $R_2'(1 - g)/g$. Confondre les deux revient à oublier les pertes Joule du rotor, $308\ \mathrm{W}$ dans l'exemple.</li>
+    <li><strong>Calculer le couple avec $\varOmega$ au lieu de $\varOmega_s$.</strong> $C_{em} = P_{tr}/\varOmega_s = P_m/\varOmega$ : diviser $P_{tr}$ par la vitesse du rotor surestime le couple de $g/(1 - g)$, et diviser $P_m$ par $\varOmega_s$ le sous-estime de la fraction $g$.</li>
+    <li><strong>Additionner les modules des courants.</strong> $I_1 \ne I_m + I_2'$ en module : les deux courants sont déphasés de près de $80^\circ$ au point nominal ; $7{,}26 + 18{,}50 = 25{,}8\ \mathrm{A}$ au lieu de $21{,}3\ \mathrm{A}$. La loi des nœuds s'applique aux grandeurs complexes.</li>
+    <li><strong>Transposer sans vérification le schéma de Kapp.</strong> Déplacer la branche magnétisante aux bornes est anodin pour un transformateur, pas pour un moteur, dont le courant magnétisant vaut le tiers du courant nominal : $+9\ \%$ sur le courant et $+10\ \%$ sur le couple dans l'exemple.</li>
+    <li><strong>Utiliser la tension composée dans un schéma par phase.</strong> Le schéma est écrit pour l'étoile équivalente : $V_1 = U/\sqrt{3}$, même pour un moteur couplé en triangle. Avec $U$, tous les courants seraient $\sqrt{3}$ fois trop grands et les puissances trois fois trop grandes.</li>
+    <li><strong>Mélanger paramètres par enroulement et paramètres de l'étoile équivalente.</strong> Pour un moteur en triangle, les impédances par enroulement valent trois fois celles de l'étoile équivalente ; la résistance mesurée entre bornes donne $R_1 = R_b/2$ dans l'étoile équivalente, quel que soit le couplage.</li>
+    <li><strong>Prédire le démarrage avec les paramètres de marche.</strong> Le modèle identifié au point nominal donne $3{,}8\ I_n$ et $0{,}46\ C_n$ à l'arrêt, contre $7{,}0$ et $2{,}3$ au catalogue : effet de peau et saturation des fuites changent les paramètres rotoriques. Un essai à rotor bloqué à $50\ \mathrm{Hz}$, ou les données du constructeur, sont nécessaires pour le démarrage.</li>
+    <li><strong>Oublier les pertes mécaniques dans l'essai à vide.</strong> Attribuer les $549\ \mathrm{W}$ restants aux seules pertes fer donnerait $R_f = 264\ \mathrm{\Omega}$ au lieu de $330\ \mathrm{\Omega}$ et un rendement calculé trop faible en charge, puis compterait les frottements deux fois.</li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain, en comparant les mesures au modèle. Un courant à vide nettement supérieur au modèle, avec des pertes à vide
+    presque inchangées, signale une réactance magnétisante réduite : entrefer agrandi par l'usure des paliers ou un rotor réusiné, ou
+    enroulement refait avec moins de spires, puisque $X_m$ varie comme le carré du nombre de spires. Un courant à vide normal mais des pertes à
+    vide accrues signale des pertes fer en hausse, tôles abîmées ou court-circuitées après un incident, ou des frottements, roulements ou
+    ventilateur. Un glissement en charge supérieur au modèle au même couple signale une résistance rotorique accrue, barres fissurées ou
+    rotor trop chaud, ou une sous-tension. Un facteur de puissance en charge inférieur au modèle avec un courant à vide normal oriente vers des
+    fuites accrues ou une tension trop élevée. Dans tous les cas, la démarche est la même : mesurer tension, courant, puissances active et
+    réactive et vitesse, injecter tension et glissement dans le modèle, et chercher le paramètre dont la variation explique l'écart.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic industriel et une
+    question conceptuelle. Ils vont de la lecture du schéma et de l'application directe d'une formule à l'identification d'un paramètre, au
+    calcul multi-étapes, au dimensionnement sous contrainte et au diagnostic. La correction de chacun reste masquée jusqu'à une tentative ou un
+    clic explicite sur "Voir la correction", puis se déroule étape par étape, accompagnée d'un schéma annoté ou d'une courbe.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Après chaque réponse,
+    l'explication s'affiche avec un petit schéma tracé pas à pas.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$\underline{Z}(g) = R_1 + jX_1 + \underline{Z}_m \parallel \left(\frac{R_2'}{g} + jX_2'\right), \qquad \underline{I}_1 = \frac{\underline{V}_1}{\underline{Z}(g)}, \qquad V_1 = \frac{U}{\sqrt{3}}$$
+    $$\frac{R_2'}{g} = R_2' + R_2'\,\frac{1 - g}{g}$$
+    $$P_{tr} = 3\,\frac{R_2'}{g}\,I_2'^2, \qquad p_{jr} = g\,P_{tr}, \qquad P_m = (1 - g)\,P_{tr}, \qquad C_{em} = \frac{P_{tr}}{\varOmega_s}$$
+    $$C_{em} = \frac{3\,V_{th}^2}{\varOmega_s}\cdot\frac{R_2'/g}{(R_{th} + R_2'/g)^2 + (X_{th} + X_2')^2}, \qquad g_m = \frac{R_2'}{\sqrt{R_{th}^2 + (X_{th} + X_2')^2}}$$
+    $$R_1 = \frac{R_b}{2}, \qquad X_m \approx \frac{3\,E_0^2}{Q_0 - 3X_1I_0^2}, \qquad R_2' \approx (R_{cc} - R_1)\left(\frac{X_m + X_2'}{X_m}\right)^2$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>Toujours travailler dans l'étoile équivalente : tension simple, courant de ligne, puissances multipliées par $3$.</li>
+      <li>$R_2'/g$ absorbe la puissance transmise ; seule la part $R_2'(1 - g)/g$ représente la puissance mécanique.</li>
+      <li>La loi des nœuds se fait en complexes : courant magnétisant et courant rotorique sont presque en quadrature.</li>
+      <li>Le schéma approché en L surestime courant et couple d'un moteur de près de $10\ \%$ : préférer le T ou Thévenin.</li>
+      <li>Des paramètres identifiés en marche ne décrivent pas le démarrage : effet de peau et saturation changent $R_2'$ et les fuites.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Divisée par le glissement, l'équation du rotor décrit un rotor immobile fermé sur $R_2/g$ ; ramené au stator,
+    il donne le schéma en T : $R_1$ et $X_1$ en série, la branche magnétisante $R_f$ parallèle à $X_m$ sous $E_1$, puis $X_2'$ et $R_2'/g$. La
+    puissance absorbée par $R_2'/g$ est la puissance transmise ; son découpage en $R_2'$ et $R_2'(1 - g)/g$ sépare pertes Joule du rotor et
+    puissance mécanique. Le courant magnétisant, le tiers du courant nominal, fixe le facteur de puissance à faible charge et interdit de
+    déplacer la branche magnétisante aux bornes. Par Thévenin, le couple maximal est un transfert maximal de puissance, indépendant de $R_2'$.
+    Les paramètres s'identifient par la résistance entre bornes, un essai à vide et un essai à rotor bloqué à fréquence réduite.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent, <a href="#/cours/moteur-asynchrone-triphase">Moteur asynchrone
+    triphasé</a>, dont le schéma équivalent prolonge les résultats ; une sur le cours <a href="#/cours/transformateur-reel">Transformateur
+    réel</a>, vieux d'une semaine, dont le schéma en T est le modèle direct de celui-ci ; une sur le cours
+    <a href="#/cours/condensateurs-et-champ-electrique">Condensateurs et champ électrique</a>, vieux d'un mois, dont l'énergie stockée éclaire le
+    risque d'auto-excitation d'un moteur compensé.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : programmer en Python le schéma équivalent du moteur de la section H, en tirer les courbes de fonctionnement, retrouver les
+    paramètres à partir des essais, puis vérifier le circuit avec LTspice. Prédictions à écrire avant de commencer : courant et facteur de
+    puissance à mi-charge ; glissement du couple maximal ; effet sur le courant nominal d'une réactance magnétisante réduite de moitié.
+  </p>
+  <ol>
+    <li>Écrire une fonction <code>point(g, V1)</code> qui calcule, avec les nombres complexes de Python, $\underline{Z}(g)$, $\underline{I}_1$, $\underline{E}_1$, $\underline{I}_2'$, $\underline{I}_m$ et toutes les puissances, avec $R_1 = 0{,}31$, $X_1 = X_2' = 1{,}45$, $R_2' = 0{,}30$, $X_m = 29$, $R_f = 330\ \mathrm{\Omega}$ et $p_m = 110\ \mathrm{W}$.</li>
+    <li>Vérifier au glissement de $2{,}667\ \%$ les valeurs de la section H, puis chercher par dichotomie le glissement qui donne $P_u = 11\ \mathrm{kW}$, et le glissement à vide, défini par $P_m = p_m$.</li>
+    <li>Tracer avec <code>matplotlib</code> le rendement, le facteur de puissance et le courant en fonction de $P_u/P_n$ de $0$ à $1{,}25$, puis le couple et le courant en fonction de la vitesse ; comparer le couple au calcul par Thévenin.</li>
+    <li>Simuler les essais : calculer $I_0$, $P_0$ à $400\ \mathrm{V}$ et $50\ \mathrm{Hz}$, puis $U_{cc}$, $P_{cc}$, $Q_{cc}$ à $12{,}5\ \mathrm{Hz}$ et $21\ \mathrm{A}$, réactances divisées par $4$ ; appliquer la méthode de la section E à ces mesures simulées et comparer les paramètres retrouvés aux paramètres d'origine.</li>
+    <li>Identifier le moteur du compresseur à partir de sa plaque : résoudre les quatre conditions de la section I avec <code>scipy.optimize.least_squares</code>, inconnues $R_2'$, $X_1 = X_2'$, $X_m$, $R_f$.</li>
+    <li>Facultatif, avec LTspice : dessiner le circuit par phase avec une source sinusoïdale de $230{,}94\ \mathrm{V}$ efficaces, $326{,}6\ \mathrm{V}$ crête, à $50\ \mathrm{Hz}$, des inductances $L = X/(2\pi f)$, soit $4{,}62\ \mathrm{mH}$ pour $X_1$ et $92{,}3\ \mathrm{mH}$ pour $X_m$, et une résistance <code>{R2/g}</code> balayée par <code>.step param g list 0.005 0.0267 0.1 1</code> ; mesurer en régime établi les valeurs efficaces de $I_1$ et la puissance moyenne dans <code>{R2/g}</code>.</li>
+  </ol>
+  <p>
+    Résultats attendus : $21{,}27\ \mathrm{A}$, $\cos\varphi = 0{,}839$, $\eta = 89{,}98\ \%$ à $g = 2{,}667\ \%$ ; $P_u = 11\ \mathrm{kW}$ à $g = 2{,}63\ \%$ ;
+    glissement à vide de $0{,}023\ \%$ et courant à vide de $7{,}62\ \mathrm{A}$ ; à mi-charge, $12{,}3\ \mathrm{A}$ et $\cos\varphi = 0{,}73$ ; rendement
+    maximal de $90{,}05\ \%$ vers $91\ \%$ de charge ; couple maximal de $147{,}2\ \mathrm{N \cdot m}$ à $g = 10{,}5\ \%$, identique par le T et par
+    Thévenin ; essais simulés : $I_0 = 7{,}62\ \mathrm{A}$, $P_0 = 603\ \mathrm{W}$, $U_{cc} = 33{,}6\ \mathrm{V}$, $P_{cc} = 770\ \mathrm{W}$, paramètres
+    retrouvés à $1\ \%$ près. Anomalies à observer : sans la correction $[(X_m + X_2')/X_m]^2$, $R_2'$ sort $10\ \%$ trop faible ; avec $X_1$ ignoré
+    dans l'essai à vide, $X_m$ sort trop fort de $5\ \%$ ; dans LTspice, il faut attendre le régime établi, plusieurs constantes de temps
+    $L/R$ de l'ordre de $0{,}3\ \mathrm{s}$ pour la branche magnétisante, avant de mesurer, sinon la composante transitoire fausse les valeurs
+    efficaces ; enfin, une résistance <code>{R2/g}</code> négative, pour $g &lt; 0$, est acceptée par le simulateur et montre la puissance renvoyée
+    en génératrice.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est calculé dans ce navigateur à
+    partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement pour suivre votre progression.
+    Le jalon de fin du module des machines électriques demande de lire les modèles des machines et d'en tirer leurs performances : savoir
+    calculer un point de fonctionnement complet à partir du schéma équivalent en est une pièce centrale.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Le moteur asynchrone est un transformateur dont le secondaire, ramené au repos, est fermé sur $R_2'/g$ : le schéma en T par phase donne courant, facteur de puissance, pertes et couple en tout point de fonctionnement.</li>
+    <li data-rang="02">$R_2'/g = R_2' + R_2'(1 - g)/g$ : la puissance transmise se partage en pertes Joule du rotor, $g\,P_{tr}$, et puissance mécanique, $(1 - g)\,P_{tr}$ ; le couple vaut $P_{tr}/\varOmega_s$.</li>
+    <li data-rang="03">Le courant magnétisant, de l'ordre du tiers du courant nominal, impose le schéma en T plutôt que le schéma approché et fixe le facteur de puissance à faible charge ; les paramètres se mesurent par un essai à vide et un essai à rotor bloqué à fréquence réduite.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> mener sans erreur le calcul complexe du schéma en T, en particulier la mise en parallèle de
+    la branche magnétisante et de la branche rotorique, puis séparer correctement les puissances : puissance transmise, pertes du rotor et
+    puissance mécanique se confondent facilement. L'exemple de la section H, l'animation du rotor ramené et l'exercice avancé sont faits pour
+    installer ces automatismes ; la principale limite à garder en tête est que les paramètres de marche ne décrivent pas le démarrage.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Démarrage des moteurs asynchrones, compare le démarrage direct, l'étoile-triangle,
+    l'autotransformateur et le démarreur progressif. Question à préparer : si l'on démarre en étoile un moteur prévu pour le triangle, chaque
+    enroulement reçoit $1/\sqrt{3}$ de sa tension. Avec le schéma équivalent, de quel facteur le courant de ligne et le couple de démarrage
+    sont-ils divisés, et pourquoi le facteur est-il le même pour les deux ? Que devient alors le démarrage d'un convoyeur qui exige d'emblée
+    la moitié du couple nominal ?
+  </p>
+
+</article>
