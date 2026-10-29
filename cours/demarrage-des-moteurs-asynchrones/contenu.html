@@ -1,0 +1,1316 @@
+<article class="cours" data-slug="demarrage-des-moteurs-asynchrones">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/schema-equivalent-du-moteur-asynchrone">Schéma équivalent du moteur asynchrone</a> s'est achevé sur une
+      question : si l'on démarre en étoile un moteur prévu pour le triangle, chaque enroulement reçoit $1/\sqrt{3}$ de sa tension ; de quel
+      facteur le courant de ligne et le couple de démarrage sont-ils divisés, et pourquoi est-ce le même facteur ? La réponse est $3$ pour les
+      deux, et cette séance l'établit. Elle part de deux faits déjà acquis : à l'arrêt, le moteur est un transformateur dont le secondaire est
+      en court-circuit, d'où un courant de cinq à huit fois le courant nominal ; à glissement donné, le courant varie comme la tension et le
+      couple comme son carré. Tout le problème du démarrage tient dans cette asymétrie : réduire la tension réduit le courant, mais réduit le
+      couple plus vite encore. Le cours <a href="#/cours/moteur-asynchrone-triphase">Moteur asynchrone triphasé</a> avait vérifié qu'un
+      démarrage direct du compresseur du site était acceptable sur le transformateur du poste ; il annonçait la comparaison avec l'étoile-triangle
+      et le démarreur progressif. La voici, chiffrée, et étendue au fonctionnement sur groupe électrogène.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Un moteur asynchrone passe quelques secondes par démarrage dans un état extrême : courant de cinq à huit fois le courant nominal, facteur
+    de puissance de $0{,}3$ à $0{,}45$, couple élevé appliqué d'un coup à la transmission, pertes rotoriques au moins égales à l'énergie
+    cinétique finale. Ces quelques secondes dimensionnent pourtant une large part de l'installation : la chute de tension que voient les
+    autres équipements du tableau, le réglage des protections qui ne doivent pas déclencher, la tenue thermique du moteur lorsqu'il démarre
+    plusieurs fois par heure, la fatigue des accouplements, des courroies et des réducteurs, le coup de bélier d'une pompe, et parfois
+    l'acceptation du raccordement par le gestionnaire du réseau. Sur une source faible, groupe électrogène ou transformateur juste
+    dimensionné, le démarrage devient même la contrainte principale : il peut faire chuter la tension au point de faire retomber des contacteurs
+    ou de caler le moteur lui-même.
+  </p>
+  <p>
+    Choisir un mode de démarrage, c'est donc arbitrer entre trois exigences qui tirent en sens contraire : limiter le courant pris au réseau,
+    garder assez de couple pour accélérer la machine entraînée, et ne pas allonger le démarrage au point de surchauffer le rotor. Démarrage
+    direct, étoile-triangle, autotransformateur, résistances statoriques, démarreur progressif à thyristors et variateur de fréquence répondent
+    chacun différemment à cet arbitrage. Le travail central de cette séance est de choisir une méthode de démarrage pour trois cas industriels ;
+    dans le projet fil rouge, il conduit au choix définitif du démarreur du compresseur, en tenant compte cette fois du fonctionnement dégradé sur
+    groupe électrogène.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Établir, à partir du schéma équivalent, que le courant varie comme la tension appliquée et le couple comme son carré, et en déduire le courant de ligne et le couple de démarrage de chaque méthode.</li>
+    <li data-rang="02">Calculer le creux de tension provoqué par un démarrage au jeu de barres d'un tableau, à partir des impédances du transformateur, du câble et du moteur à l'arrêt.</li>
+    <li data-rang="03">Comparer le démarrage direct, l'étoile-triangle, l'autotransformateur et le démarreur progressif sur le critère du couple obtenu par ampère pris au réseau, et expliquer pourquoi les méthodes à transformation de tension sont plus efficaces que les méthodes à chute de tension.</li>
+    <li data-rang="04">Calculer la durée d'un démarrage et l'énergie dissipée dans le rotor, et montrer qu'une tension réduite l'augmente lorsque la machine entraînée oppose un couple.</li>
+    <li data-rang="05">Expliquer l'origine de la pointe de courant d'une commutation étoile-triangle à transition ouverte et les moyens de la réduire.</li>
+    <li data-rang="06">Choisir et justifier une méthode de démarrage pour une pompe, un compresseur, un convoyeur et un ventilateur, en énonçant les hypothèses et les compromis.</li>
+    <li data-rang="07">Diagnostiquer un démarrage défaillant à partir de ses symptômes : calage en étoile, déclenchement thermique, pointe à la commutation, creux de tension excessif.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois acquis suffisent. Le premier, vu dans le cours <a href="#/cours/systemes-triphases-equilibres">Systèmes triphasés équilibrés</a> :
+    sur un réseau $230/400\ \mathrm{V}$, une impédance $Z$ couplée en étoile reçoit $230\ \mathrm{V}$ et le courant de ligne vaut $230/Z$ ; couplée
+    en triangle, elle reçoit $400\ \mathrm{V}$, le courant dans la branche vaut $400/Z$ et le courant de ligne $\sqrt{3}$ fois plus. Le deuxième, vu
+    dans le cours <a href="#/cours/schema-equivalent-du-moteur-asynchrone">Schéma équivalent du moteur asynchrone</a> : à glissement fixé, le
+    schéma est un circuit linéaire, et le couple $C_{em} = 3R_2'I_2'^2/(g\varOmega_s)$ est proportionnel au carré de la tension. Le troisième, vu
+    dans le cours <a href="#/cours/autotransformateurs-tc-et-tp">Autotransformateurs, TC et TP</a> : un autotransformateur idéal de rapport
+    $k = U_2/U_1$ transmet la puissance apparente, donc son courant d'entrée vaut $k$ fois son courant de sortie. Le mini-test n'est pas noté ;
+    la correction de chaque question reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la correction".
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Notation de la séance</span>
+    <p>
+      $U_n$ est la tension composée nominale du réseau, $400\ \mathrm{V}$, et $V = U_n/\sqrt{3}$ la tension simple. $I_n$ et $C_n$ sont le
+      courant et le couple nominaux ; $I_d$ et $C_d$ le courant de ligne et le couple au démarrage direct sous tension nominale, donnés par le
+      catalogue sous la forme $I_d/I_n$ et $C_d/C_n$. $u$ désigne la tension réellement appliquée à chaque enroulement, rapportée à sa tension
+      nominale : $u = 1$ en démarrage direct sur un réseau parfait. $k$ est le rapport de l'autotransformateur, $I_{lim}$ le courant de ligne
+      maintenu par un démarreur progressif. $S_{cc}$ est la puissance de court-circuit au point de raccordement, $\Delta U/U$ le creux de
+      tension relatif, $J$ le moment d'inertie total ramené à l'arbre, $\varOmega_s$ la vitesse angulaire de synchronisme, $C_r$ le couple
+      résistant de la machine entraînée et $W_r$ l'énergie dissipée dans le rotor pendant le démarrage. Les impédances sont données par phase de
+      l'étoile équivalente, et le symbole droit $\mathrm{\Omega}$ reste réservé à l'ohm.
+    </p>
+  </div>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-court-circuit">À l'arrêt, un court-circuit franc qui dure</h3>
+  <p>
+    Le cours précédent l'a montré : à l'arrêt, $R_2'/g = R_2'$ est petite, la branche rotorique court-circuite la branche magnétisante, et le
+    moteur n'est plus limité que par ses résistances et ses réactances de fuite. Vu du réseau, un moteur qu'on enclenche est une impédance
+    faible, $0{,}92\ \mathrm{\Omega}$ par phase pour le moteur du compresseur au lieu de $6{,}9\ \mathrm{\Omega}$ en marche, et très inductive,
+    avec un facteur de puissance voisin de $0{,}4$. Ce quasi court-circuit ne disparaît qu'au fur et à mesure que le rotor accélère : le courant
+    reste au-dessus de quatre fois le courant nominal pendant presque tout le démarrage et ne s'effondre qu'à l'approche du synchronisme, quand
+    $R_2'/g$ redevient grande. Ce courant traverse aussi le transformateur et les câbles qui alimentent le moteur. Leurs impédances, faibles
+    devant celle du moteur en marche, ne le sont plus devant celle du moteur à l'arrêt : elles forment avec lui un diviseur de tension, et le
+    jeu de barres qui alimente les autres équipements voit sa tension baisser pendant toute la durée du démarrage.
+  </p>
+  <figure id="d-reseau-figure">
+    <svg viewBox="0 0 760 330" role="img" aria-label="Schéma par phase d'un démarrage : source à vide, impédance du transformateur, jeu de barres alimentant d'autres équipements, câble, puis moteur à l'arrêt représenté par son impédance de démarrage ; le courant de démarrage traverse le transformateur et crée la chute de tension au jeu de barres">
+      <defs>
+        <marker id="fl-d-res" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="70" cy="150" r="24"/>
+        <path d="M58 150c4-9 8-9 12 0s8 9 12 0" stroke-width="1.6"/>
+        <path d="M70 126V70H130M200 70H230M300 70H380M380 70H430M480 70H500M556 70H600V110M600 200V250H70V174"/>
+        <rect x="130" y="58" width="70" height="24" rx="3"/>
+        <path d="M230 70a8.75 8.75 0 0 1 17.5 0a8.75 8.75 0 0 1 17.5 0a8.75 8.75 0 0 1 17.5 0a8.75 8.75 0 0 1 17.5 0"/>
+        <path d="M380 46V94" stroke-width="5"/>
+        <path d="M380 94V150"/>
+        <rect x="364" y="150" width="32" height="44" rx="3"/>
+        <path d="M380 194V250"/>
+        <rect x="430" y="58" width="50" height="24" rx="3"/>
+        <path d="M500 70a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0"/>
+        <rect x="586" y="110" width="28" height="90" rx="3" fill="currentColor" fill-opacity="0.18"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M86 40H126" marker-end="url(#fl-d-res)" stroke-width="3"/>
+        <path d="M540 40H580" marker-end="url(#fl-d-res)" stroke-width="3"/>
+        <path d="M30 236V166" marker-end="url(#fl-d-res)"/>
+        <path d="M420 236V96" marker-end="url(#fl-d-res)" stroke-dasharray="6 4"/>
+        <path d="M566 236V96" marker-end="url(#fl-d-res)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="16" y="110">V0</text>
+        <text x="132" y="104">Rt</text>
+        <text x="240" y="104">jXt</text>
+        <text x="146" y="128">transformateur</text>
+        <text x="350" y="30">jeu de barres</text>
+        <text x="320" y="218">autres</text>
+        <text x="320" y="234">charges</text>
+        <text x="428" y="166">V_jdb</text>
+        <text x="440" y="104">câble</text>
+        <text x="94" y="30">I_d</text>
+        <text x="546" y="30">I_d</text>
+        <text x="624" y="146">Z_d</text>
+        <text x="624" y="164">moteur à l'arrêt</text>
+        <text x="624" y="182">0,92 Ω, cos φ 0,4</text>
+        <text x="536" y="166">V_m</text>
+        <text x="70" y="270">N : neutre, référence des potentiels</text>
+        <text x="8" y="296">source à vide : 230,9 V par phase</text>
+        <text x="8" y="320">V_jdb = V0 - (Rt + jXt) I_d : chute vue par tout le tableau</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma d'une phase de l'étoile équivalente, entre la ligne et le neutre N pris comme référence. La source idéale $V_0$ et l'impédance
+      $R_t + jX_t$ représentent le réseau amont et le transformateur ; le trait épais vertical est le jeu de barres du tableau, d'où partent
+      les autres charges ; puis viennent le câble du départ et le moteur à l'arrêt, cadre grisé, réduit à son impédance de démarrage $Z_d$. Les
+      flèches épaisses horizontales donnent le sens positif du courant de démarrage, de la source vers le moteur, en convention récepteur côté
+      moteur. Les flèches verticales sont les tensions simples : $V_0$ à vide, $V_{jdb}$ au jeu de barres, en tirets, et $V_m$ aux bornes du
+      moteur. Pendant le démarrage, $Z_d$ n'est plus grande devant les impédances amont : le diviseur de tension fait baisser $V_{jdb}$ pour tout
+      le tableau.
+    </figcaption>
+  </figure>
+
+  <h3 id="d-direct-section">Animation : un démarrage direct pas à pas</h3>
+  <p>
+    L'animation reprend le démarrage direct du compresseur du site, moteur de $18{,}5\ \mathrm{kW}$ alimenté par le transformateur du poste et
+    $30\ \mathrm{m}$ de câble, compresseur à vide. À gauche, le couple moteur et le couple résistant en fonction de la vitesse ; à droite, le
+    courant de ligne en fonction de la vitesse. Le point de fonctionnement se déplace avec le temps : réglez l'instant par la poignée ronde sur
+    l'axe du temps, par le curseur, ou lancez la lecture, ralentie trente fois. Avant de manipuler, prédisez : pendant quelle fraction du
+    démarrage le courant reste-t-il au-dessus de quatre fois le courant nominal ? Le couple moteur est-il maximal au démarrage ? Que devient la
+    tension du jeu de barres quand le rotor approche du synchronisme ?
+  </p>
+  <figure id="d-direct-figure">
+    <div class="schema-vivant" id="d-direct"></div>
+    <figcaption>
+      Démarrage direct du compresseur. Panneau de gauche : couple moteur réellement disponible, trait épais, tenant compte de la chute de tension ;
+      couple résistant du compresseur à vide, trait fin en tirets ; la zone hachurée entre les deux est le couple d'accélération. Panneau de droite :
+      courant de ligne, trait épais, et courant nominal, trait fin horizontal. Le point plein marque l'état à l'instant choisi, repéré sur l'axe du
+      temps en bas, gradué de $0$ à $0{,}45\ \mathrm{s}$, qui porte la poignée.
+    </figcaption>
+  </figure>
+  <div id="d-direct-curseurs"></div>
+  <div id="d-direct-lecteur"></div>
+  <div id="d-direct-valeurs"></div>
+  <p>
+    Interprétation : le courant part de $228{,}5\ \mathrm{A}$, $6{,}8\ I_n$, et décroît lentement, $194{,}5\ \mathrm{A}$ à $0{,}10\ \mathrm{s}$,
+    $168{,}8\ \mathrm{A}$ à $0{,}20\ \mathrm{s}$ ; il reste au-dessus de $4\ I_n$ jusqu'à environ $0{,}28\ \mathrm{s}$, soit $90\ \%$ d'un démarrage qui
+    atteint $95\ \%$ de la vitesse de synchronisme en $0{,}31\ \mathrm{s}$. Il ne s'effondre que dans les derniers centièmes de seconde, quand le
+    glissement devient petit. Le couple n'est pas maximal à l'arrêt : $1{,}89\ C_n$ au départ, un léger creux vers $1{,}76\ C_n$ à mi-vitesse,
+    typique d'un rotor à double cage, puis un maximum d'environ $2{,}6\ C_n$ vers $1330\ \mathrm{tr/min}$ avant la chute finale. Le jeu de barres
+    tombe à $373{,}1\ \mathrm{V}$ et ne remonte au-dessus de $390\ \mathrm{V}$ qu'au tout dernier moment ; en régime établi, compresseur à vide,
+    le moteur tourne à $1492\ \mathrm{tr/min}$ et absorbe environ $16\ \mathrm{A}$. Retenez la forme : le courant de démarrage n'est pas une pointe
+    brève, c'est un plateau qui dure presque autant que le démarrage.
+  </p>
+
+  <h3 id="d-analogie">Une analogie contrôlée et ses limites</h3>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Lancer un volant d'inertie par un embrayage qui patine</span>
+    <p>
+      Imaginez un arbre qui tourne à vitesse constante, $\varOmega_s$, et un volant d'inertie au repos qu'on lui accouple par un embrayage à
+      friction. Tant que l'embrayage patine, il transmet un couple $C$ et dissipe en chaleur la puissance $C(\varOmega_s - \varOmega)$. Quel que
+      soit le couple de serrage, la chaleur totale produite pour amener le volant de $0$ à $\varOmega_s$ vaut exactement son énergie cinétique
+      finale, $\tfrac{1}{2}J\varOmega_s^2$ : serrer moins fort allonge le lancement, mais ne réduit pas la chaleur. Si une charge freine en plus
+      le volant, serrer moins fort augmente même la chaleur, car le patinage dure plus longtemps alors que la charge prélève une part du couple.
+      Le moteur asynchrone fonctionne exactement ainsi : le champ tournant est l'arbre à $\varOmega_s$, le rotor est le disque entraîné, et le
+      glissement est le patinage. La relation $p_{jr} = g\,P_{tr}$ du cours <a href="#/cours/moteur-asynchrone-triphase">Moteur asynchrone
+      triphasé</a> est la loi de l'embrayage.
+    </p>
+    <p>
+      Les limites sont précises. L'analogie décrit l'énergie rotorique, pas le courant : elle ne dit rien du courant pris au réseau ni du
+      facteur de puissance, ni des pertes Joule du stator, qui s'ajoutent. Le couple d'un moteur n'est pas réglable comme un serrage : il dépend
+      du glissement et du carré de la tension. Enfin, la chaleur d'un embrayage est concentrée dans les garnitures, alors que celle du rotor se
+      répartit dans les barres puis dans le fer ; un démarrage très long ou très répété dépasse la capacité thermique des barres bien avant que
+      la moyenne du rotor soit chaude.
+    </p>
+  </div>
+
+  <h3 id="d-arbitrage">Le dilemme : la tension réduite agit deux fois sur le couple</h3>
+  <p>
+    Pour réduire le courant, il faut réduire la tension appliquée aux enroulements, ou augmenter l'impédance vue par le réseau. Mais le couple
+    naît du produit du flux, proportionnel à la tension, par le courant rotorique, lui aussi proportionnel à la tension : diviser la tension par
+    deux divise le couple par quatre. Le courant de ligne, lui, dépend de la manière dont la tension est réduite. Si une impédance en série
+    absorbe la moitié de la tension, le courant de ligne est le courant du moteur, divisé par deux, et le couple est divisé par quatre. Si un
+    transformateur abaisse la tension, il abaisse aussi le courant qu'il prend au réseau dans le même rapport : le courant de ligne est divisé par
+    quatre, comme le couple. C'est toute la différence entre les méthodes à chute de tension, résistances statoriques et démarreur progressif,
+    et les méthodes à transformation de tension, étoile-triangle et autotransformateur : pour un même courant pris au réseau, les secondes
+    donnent davantage de couple. La section F en fait son schéma principal.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-tension-reduite">Courant et couple sous tension réduite</h3>
+  <p>
+    Partons du schéma équivalent par phase. À glissement $g$ fixé, l'impédance $\underline{Z}(g)$ est une constante, donc
+    $\underline{I}_1 = \underline{V}_1/\underline{Z}(g)$ est proportionnel à la tension par phase $V_1$ : c'est la loi d'Ohm d'un circuit
+    linéaire. Le courant rotorique ramené $\underline{I}_2'$ s'obtient par un diviseur de courant entre la branche magnétisante et la branche
+    rotorique : il est lui aussi proportionnel à $V_1$. Le couple $C_{em} = 3R_2'I_2'^2/(g\varOmega_s)$ est donc proportionnel à $V_1^2$. En
+    notant $u = V_1/V_{1n}$ la tension relative appliquée à chaque enroulement :
+  </p>
+  <div class="formule-cle">
+    $$I_{moteur}(g, u) = u\,I(g, 1), \qquad C(g, u) = u^2\,C(g, 1), \qquad \text{en particulier au démarrage : } I = u\,I_d, \quad C = u^2\,C_d$$
+    <p class="formule-cle-legende">
+      $I(g, 1)$ et $C(g, 1)$ sont le courant et le couple sous tension nominale, en ampères et en newtons-mètres ; $u$ est sans dimension.
+      Hypothèses : paramètres du schéma constants, donc ni saturation ni variation de l'effet de peau avec la tension, régime sinusoïdal établi
+      à chaque vitesse, tension équilibrée. Cas limites : $u = 1$ redonne le démarrage direct ; $u \to 0$ annule le couple plus vite que le
+      courant. Vérification dimensionnelle : $u$ est un rapport de tensions ; $C$ s'exprime en $\mathrm{N \cdot m}$ comme $C_d$. En réalité, la
+      saturation des chemins de fuite, forte au courant de démarrage direct, s'atténue à tension réduite : les réactances de fuite augmentent un
+      peu, et le courant comme le couple sont légèrement inférieurs à ces lois, de quelques pour cent.
+    </p>
+  </div>
+  <p>
+    Une conséquence pratique mérite d'être retenue. Le rapport $C/C_d = u^2$ ne dépend que de la tension relative, pas de la façon dont on
+    l'obtient. Ce qui distingue les méthodes, c'est le courant de ligne $I_L$ qu'elles prennent au réseau pour obtenir ce $u$. Le cours
+    l'appelle le rendement en couple de la méthode, le rapport $(C/C_d)/(I_L/I_d)$, le couple obtenu par ampère pris au réseau, comparé au
+    démarrage direct.
+  </p>
+
+  <h3 id="e-contraintes">Les trois contraintes : réseau, rotor, machine entraînée</h3>
+  <p>
+    <strong>Le creux de tension.</strong> Avec une source $\underline{V}_0$, une impédance amont $\underline{Z}_r = R_r + jX_r$ et le moteur à
+    l'arrêt d'impédance $\underline{Z}_d = Z_d(\cos\varphi_d + j\sin\varphi_d)$, le courant vaut
+    $\underline{I} = \underline{V}_0/(\underline{Z}_r + \underline{Z}_d)$ et la tension au point de raccordement
+    $\underline{V} = \underline{V}_0 - \underline{Z}_r\underline{I}$. Comme $Z_r \ll Z_d$, l'angle entre $\underline{V}$ et $\underline{V}_0$ est
+    petit, et la projection donne l'approximation de Kapp vue dans le cours <a href="#/cours/transformateur-reel">Transformateur réel</a> :
+  </p>
+  <div class="formule-cle">
+    $$\frac{\Delta U}{U} \approx \frac{(R_r\cos\varphi_d + X_r\sin\varphi_d)\,I_d}{V} \approx \frac{S_d}{S_{cc}}\cos(\psi_r - \varphi_d), \qquad S_d = \sqrt{3}\,U_n I_d, \qquad S_{cc} = \frac{U_n^2}{Z_r}$$
+    <p class="formule-cle-legende">
+      $\Delta U/U$ est le creux relatif au point de raccordement ; $R_r$, $X_r$ en ohms, par phase de l'étoile équivalente ; $\varphi_d$ est
+      l'angle de l'impédance du moteur à l'arrêt, $\psi_r$ celui de l'impédance amont ; $S_d$ est la puissance apparente de démarrage et
+      $S_{cc}$ la puissance de court-circuit, en voltampères. Hypothèses : courant de démarrage pris sous tension nominale, ce qui surestime
+      légèrement le creux, régime établi, réseau équilibré. Cas limites : $S_{cc} \to \infty$ annule le creux ; un réseau et un moteur de même
+      angle, $\psi_r = \varphi_d$, donnent le creux maximal $S_d/S_{cc}$. Vérification dimensionnelle : ohms fois ampères divisés par volts, ou
+      voltampères divisés par voltampères, sans dimension. Avec le transformateur de $100\ \mathrm{kVA}$ du poste et le compresseur, la formule
+      donne $7{,}4\ \%$ au jeu de barres avec $I_d = 252\ \mathrm{A}$, contre $6{,}7\ \%$ par le calcul complexe exact : le courant réel,
+      $228{,}5\ \mathrm{A}$, est réduit par l'impédance du transformateur et surtout par celle du câble. Avec ce courant réel, la formule
+      redonne $6{,}7\ \%$.
+    </p>
+  </div>
+  <p>
+    <strong>L'échauffement du rotor.</strong> Le principe fondamental de la dynamique pour l'arbre s'écrit $J\,\mathrm{d}\varOmega/\mathrm{d}t
+    = C_m - C_r$. La puissance perdue dans le rotor vaut $p_{jr} = g\,P_{tr} = C_m\varOmega_s g$, avec $g = 1 - \varOmega/\varOmega_s$. En
+    remplaçant $\mathrm{d}t = J\,\mathrm{d}\varOmega/(C_m - C_r)$ et en posant $x = \varOmega/\varOmega_s$, l'énergie dissipée de l'arrêt au
+    synchronisme est :
+  </p>
+  <div class="formule-cle">
+    $$W_r = \int_0^{t_d} C_m\varOmega_s g\,\mathrm{d}t = J\varOmega_s^2\int_0^1 \frac{C_m}{C_m - C_r}(1 - x)\,\mathrm{d}x, \qquad t_d = J\varOmega_s\int_0^{x_f} \frac{\mathrm{d}x}{C_m - C_r}$$
+    $$\text{si } C_m \text{ et } C_r \text{ sont constants : } \quad W_r = \frac{1}{2}J\varOmega_s^2\,\frac{C_m}{C_m - C_r}, \qquad t_d \approx \frac{J\varOmega_s}{C_m - C_r}$$
+    <p class="formule-cle-legende">
+      $W_r$ en joules, $J$ en $\mathrm{kg \cdot m^2}$, $\varOmega_s$ en $\mathrm{rad/s}$, $C_m$ couple moteur et $C_r$ couple résistant en
+      $\mathrm{N \cdot m}$, $t_d$ durée en secondes jusqu'à la vitesse relative $x_f$. Hypothèses : régime électrique établi à chaque vitesse,
+      pertes fer du rotor négligées. Cas limites : à vide, $C_r = 0$, $W_r = \tfrac{1}{2}J\varOmega_s^2$, l'énergie cinétique finale, quel que soit
+      le mode de démarrage ; si $C_m \to C_r$, le démarrage s'éternise et $W_r \to \infty$. Vérification dimensionnelle :
+      $\mathrm{kg \cdot m^2 \cdot rad^2/s^2} = \mathrm{J}$, et $\mathrm{kg \cdot m^2 \cdot s^{-1}}/(\mathrm{N \cdot m}) = \mathrm{s}$. Interprétation :
+      réduire le couple moteur n'économise jamais d'énergie rotorique, et il en coûte d'autant plus que la charge est lourde.
+    </p>
+  </div>
+  <p>
+    <strong>La machine entraînée.</strong> Trois exigences mécaniques s'ajoutent. Il faut d'abord décoller : le couple disponible à l'arrêt doit
+    dépasser le couple de décollement, frottements statiques compris, avec une marge de $20$ à $30\ \%$ en règle de conception courante pour
+    couvrir la chute de tension et la dispersion. Il faut ensuite que le couple moteur reste au-dessus du couple résistant à toutes les vitesses,
+    faute de quoi le moteur s'arrête sur un point d'équilibre intermédiaire et y reste, en surchauffe. Il faut enfin ménager la transmission :
+    un couple de $2$ à $3\ C_n$ appliqué en quelques millisecondes sollicite accouplements, courroies, bandes et réducteurs, et l'arrêt brutal
+    d'une pompe peut provoquer un coup de bélier. Les couples résistants se rangent en trois familles : quadratique en vitesse pour les pompes
+    centrifuges et les ventilateurs, faible au démarrage ; à peu près constant pour les convoyeurs, les engins de levage et les compresseurs à
+    piston en charge, souvent avec un couple de décollement supérieur ; faible pour les machines démarrées à vide, compresseurs déchargés,
+    ventilateurs à registre fermé, broyeurs vides.
+  </p>
+
+  <h3 id="e-direct">Le démarrage direct</h3>
+  <p>
+    Le moteur est raccordé directement au réseau par un contacteur. C'est la méthode la plus simple, la moins chère, la plus fiable, et celle qui
+    donne le plus de couple et le démarrage le plus court ; elle dissipe dans le rotor le minimum d'énergie compatible avec la charge. Ses
+    contreparties sont le courant $I_d$ et le creux de tension qui l'accompagne, ainsi que le choc mécanique du couple appliqué d'un coup. Elle est
+    la règle pour les petits moteurs, et pour les moteurs de toute taille dès que la source est assez puissante, que le gestionnaire du réseau
+    l'accepte et que la machine entraînée supporte le choc. La protection comporte un organe contre les courts-circuits, un contacteur et un
+    relais de surcharge dont la classe de déclenchement doit couvrir la durée du démarrage.
+  </p>
+  <figure id="e-direct-figure">
+    <svg viewBox="0 0 760 300" role="img" aria-label="Circuit de puissance d'un démarrage direct : trois phases L1, L2, L3, protection contre les courts-circuits Q1, contacteur KM1, relais de surcharge F1, moteur triphasé M couplé selon sa plaque">
+      <defs>
+        <marker id="fl-e-dir" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M60 30H330M60 50H330M60 70H330"/>
+        <path d="M150 30V96M190 50V96M230 70V96"/>
+        <rect x="134" y="96" width="112" height="34" rx="4"/>
+        <path d="M150 130V160M190 130V160M230 130V160"/>
+        <path d="M150 160L160 186M190 160L200 186M230 160L240 186"/>
+        <path d="M150 190V210M190 190V210M230 190V210"/>
+        <rect x="134" y="210" width="112" height="26" rx="4"/>
+        <path d="M150 236V262L172 268M190 236V248M230 236V262L208 268"/>
+        <circle cx="190" cy="272" r="22"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="5 4">
+        <path d="M140 172H252"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+        <path d="M110 120V200" marker-end="url(#fl-e-dir)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="20" y="34">L1</text>
+        <text x="20" y="54">L2</text>
+        <text x="20" y="74">L3</text>
+        <text x="256" y="118">Q1 : courts-circuits</text>
+        <text x="256" y="176">KM1 : contacteur</text>
+        <text x="256" y="228">F1 : surcharge</text>
+        <text x="182" y="277">M</text>
+        <text x="216" y="296">3~</text>
+        <text x="40" y="150">I_L</text>
+        <text x="40" y="166">= I_d</text>
+        <text x="460" y="110">au démarrage, sous tension nominale :</text>
+        <text x="460" y="132">I_L = I_d ≈ 5 à 8 I_n</text>
+        <text x="460" y="154">C = C_d ≈ 1,5 à 3 C_n</text>
+        <text x="460" y="176">rendement en couple : 1, référence</text>
+        <text x="460" y="210">relais F1 : classe choisie pour</text>
+        <text x="460" y="228">que la durée du démarrage</text>
+        <text x="460" y="246">ne le fasse pas déclencher</text>
+      </g>
+    </svg>
+    <figcaption>
+      Circuit de puissance unifilaire développé en trois fils : les trois phases L1, L2, L3 alimentent la protection contre les courts-circuits
+      Q1, le contacteur KM1, dont la liaison mécanique des trois pôles est figurée par le trait en tirets, et le relais de surcharge F1, puis le
+      moteur, couplé selon sa plaque. La flèche épaisse indique le sens du courant de ligne, de la source vers le moteur. Les valeurs à droite sont
+      les ordres de grandeur du catalogue, la référence de toutes les autres méthodes.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-etoile">Le démarrage étoile-triangle</h3>
+  <p>
+    Le moteur doit être prévu pour fonctionner en triangle sous la tension du réseau : sur un réseau $230/400\ \mathrm{V}$, sa plaque porte
+    $400/690\ \mathrm{V}$, et ses six bornes U1, V1, W1, U2, V2, W2 sont reliées au démarreur par six conducteurs. On démarre en étoile, puis on
+    commute en triangle quand le moteur approche de sa vitesse. Le calcul se fait par enroulement, d'impédance $\underline{Z}_w$ à l'arrêt.
+    En triangle, l'enroulement reçoit $U_n$ : il est parcouru par $U_n/Z_w$ et le courant de ligne vaut $I_{L\Delta} = \sqrt{3}\,U_n/Z_w = I_d$.
+    En étoile, il reçoit $U_n/\sqrt{3}$ et son courant est aussi le courant de ligne : $I_{LY} = U_n/(\sqrt{3}\,Z_w)$. D'où :
+  </p>
+  <div class="formule-cle">
+    $$\frac{I_{LY}}{I_{L\Delta}} = \frac{U_n/(\sqrt{3}\,Z_w)}{\sqrt{3}\,U_n/Z_w} = \frac{1}{3}, \qquad u_Y = \frac{1}{\sqrt{3}}, \qquad \frac{C_Y}{C_\Delta} = u_Y^2 = \frac{1}{3}$$
+    <p class="formule-cle-legende">
+      Le courant de ligne et le couple sont divisés par $3$ à toutes les vitesses, pas seulement à l'arrêt. Le facteur est le même parce que la
+      réduction de tension $1/\sqrt{3}$ agit deux fois sur le courant de ligne, une fois par la tension de l'enroulement et une fois par la
+      disparition du facteur $\sqrt{3}$ entre courant de branche et courant de ligne, comme elle agit deux fois sur le couple. Rendement en
+      couple : $1$, comme un transformateur. Hypothèses : paramètres constants, réseau parfait. Cas limite : un moteur $230/400\ \mathrm{V}$
+      branché en triangle sur $400\ \mathrm{V}$ recevrait $\sqrt{3}$ fois sa tension et serait détruit ; ce moteur ne peut fonctionner qu'en
+      étoile sur ce réseau, et ne peut donc pas démarrer en étoile-triangle. Vérification : rapport de courants et rapport de couples sans dimension.
+    </p>
+  </div>
+  <figure id="e-etoile-figure">
+    <svg viewBox="0 0 760 330" role="img" aria-label="Circuit de puissance d'un démarreur étoile-triangle : contacteur de ligne KM1 et relais de surcharge F1 vers les entrées U1, V1, W1 des trois enroulements ; contacteur étoile KM2 qui relie les sorties U2, V2, W2 ; contacteur triangle KM3 qui relie U2 à V1, V2 à W1 et W2 à U1">
+      <defs>
+        <marker id="fl-e-et" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M40 30H300M40 50H300M40 70H300"/>
+        <path d="M100 30V92M130 50V92M160 70V92"/>
+        <rect x="86" y="92" width="88" height="28" rx="4"/>
+        <path d="M100 120V140M130 120V140M160 120V140"/>
+        <rect x="86" y="140" width="88" height="20" rx="4"/>
+        <path d="M100 160V196M130 160V196M160 160V196"/>
+        <rect x="92" y="196" width="16" height="50" rx="3"/>
+        <rect x="122" y="196" width="16" height="50" rx="3"/>
+        <rect x="152" y="196" width="16" height="50" rx="3"/>
+        <path d="M100 246V270H430V176H130M130 246V280H440V182H160M160 246V290H450V170H100"/>
+        <rect x="258" y="260" width="28" height="40" rx="3"/>
+        <rect x="384" y="260" width="28" height="40" rx="3"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="100" cy="170" r="3.5"/>
+        <circle cx="130" cy="176" r="3.5"/>
+        <circle cx="160" cy="182" r="3.5"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M66 96V136" marker-end="url(#fl-e-et)" stroke-width="3"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="12" y="34">L1</text>
+        <text x="12" y="54">L2</text>
+        <text x="12" y="74">L3</text>
+        <text x="184" y="110">KM1 : ligne</text>
+        <text x="184" y="155">F1 : réglé à I_n/√3</text>
+        <text x="30" y="122">I_L</text>
+        <text x="64" y="194">U1</text>
+        <text x="64" y="262">U2</text>
+        <text x="96" y="225" font-size="10">U</text>
+        <text x="126" y="225" font-size="10">V</text>
+        <text x="156" y="225" font-size="10">W</text>
+        <text x="176" y="214">V1, W1</text>
+        <text x="176" y="262">V2, W2</text>
+        <text x="234" y="318">KM2 : étoile</text>
+        <text x="350" y="318">KM3 : triangle</text>
+        <text x="490" y="182">KM3 relie U2-V1, V2-W1, W2-U1</text>
+        <text x="490" y="40">en étoile, KM1 et KM2 fermés :</text>
+        <text x="490" y="58">  230,9 V par enroulement</text>
+        <text x="490" y="76">  I_L = I_enroulement = I_d/3</text>
+        <text x="490" y="110">en triangle, KM1 et KM3 fermés :</text>
+        <text x="490" y="128">  400 V par enroulement</text>
+        <text x="490" y="146">  I_L = √3 I_enroulement</text>
+        <text x="490" y="220">KM2 et KM3 verrouillés,</text>
+        <text x="490" y="238">jamais fermés ensemble :</text>
+        <text x="490" y="256">sinon court-circuit du réseau</text>
+      </g>
+    </svg>
+    <figcaption>
+      Circuit de puissance d'un démarreur étoile-triangle, dessiné en trois fils. Le contacteur de ligne KM1 alimente les entrées U1, V1, W1 des
+      trois enroulements, cadres verticaux, à travers le relais de surcharge F1, qui voit le courant d'enroulement et se règle donc à
+      $I_n/\sqrt{3}$. Les sorties U2, V2, W2 sont reliées soit entre elles par le contacteur étoile KM2, qui forme le point étoile, soit par le
+      contacteur triangle KM3 aux entrées de l'enroulement voisin, U2 à V1, V2 à W1, W2 à U1, ce qui ferme le triangle. La flèche épaisse est le
+      sens positif du courant de ligne. KM2 et KM3 sont verrouillés mécaniquement et électriquement : fermés ensemble, ils court-circuiteraient
+      le réseau à travers KM3.
+    </figcaption>
+  </figure>
+  <p>
+    Trois limites sont essentielles. Le couple, divisé par $3$, doit suffire : une machine dont le couple résistant dépasse le tiers du couple
+    moteur à une vitesse quelconque s'arrête en étoile sur un point d'équilibre bas, et la commutation en triangle s'y fait alors avec un courant
+    proche du courant de démarrage direct. La commutation doit avoir lieu quand le moteur a atteint son équilibre en étoile, ce que règle la
+    temporisation. Enfin, la transition classique est ouverte : KM2 s'ouvre, l'arc s'éteint, puis KM3 se ferme après un temps mort de quelques
+    dizaines de millisecondes. Pendant ce temps mort, le moteur est déconnecté, mais le rotor tourne encore et son flux, qui décroît avec la
+    constante de temps rotorique à vide, induit dans les enroulements une force électromotrice résiduelle. Quand le triangle se ferme, le
+    courant est fixé par la différence entre la tension appliquée et cette force électromotrice : si elles sont en opposition, la pointe peut
+    dépasser le courant de démarrage direct.
+  </p>
+  <div class="formule-cle">
+    $$\frac{I_{pointe}}{I_d} \approx \left|\,e^{j\delta_c} - e_0\,e^{-t/\tau_r}\,e^{-j\theta(t)}\right|, \qquad \theta(t) = \omega\int_0^t g(\tau)\,\mathrm{d}\tau, \qquad \tau_r = \frac{X_m + X_2'}{\omega R_2'}$$
+    <p class="formule-cle-legende">
+      Modèle simplifié de la reconnexion. $e^{j\delta_c}$ est la tension appliquée à l'enroulement après fermeture du triangle, rapportée à sa
+      tension nominale ; elle est décalée de $\delta_c = \pm 30^\circ$ par rapport à la tension d'étoile qu'il recevait, le signe dépendant
+      de l'ordre de raccordement des enroulements. $e_0$ est la force électromotrice de l'enroulement à l'ouverture de KM2, rapportée à la même
+      tension, environ $0{,}56$ puisque l'enroulement était sous $230{,}9\ \mathrm{V}$ ; $\tau_r$ est la constante de temps rotorique à vide, en
+      secondes ; $\theta(t)$ est le retard pris par le flux rotorique sur le réseau, en radians, parce que le rotor glisse et ralentit pendant
+      le temps mort. L'impédance qui limite la pointe est celle du moteur à l'arrêt, d'où la référence $I_d$. Hypothèses : composante continue
+      d'enclenchement ignorée, alors qu'elle peut majorer la première crête ; impédance du réseau négligée. Cas limites : $t \to \infty$, $e \to 0$,
+      la pointe tend vers le courant de démarrage direct à la vitesse atteinte ; force électromotrice en phase avec la tension appliquée, pointe
+      minimale $(1 - e)I_d$ ; en opposition, maximale $(1 + e)I_d$. Pour le moteur du compresseur, $\tau_r = (16{,}2 + 0{,}53)/(314{,}16 \times 0{,}148) = 0{,}36\ \mathrm{s}$.
+    </p>
+  </div>
+
+  <h3 id="e-transition-section">Animation : la commutation étoile-triangle à transition ouverte</h3>
+  <p>
+    L'animation représente, pour le moteur du compresseur commuté à $1477\ \mathrm{tr/min}$, la tension appliquée à un enroulement après la
+    fermeture du triangle et la force électromotrice résiduelle de cet enroulement, qui décroît et prend du retard pendant le temps mort. Le
+    segment qui les relie est proportionnel à la pointe de courant. Réglez le temps mort par la poignée ronde sur l'axe du temps mort, par le
+    curseur ou par la lecture ; choisissez l'ordre de raccordement et le couple résistant, qui fixe la décélération. Avant de manipuler,
+    prédisez : la pointe est-elle plus faible pour un temps mort très court ou pour un temps mort long ? Un ordre de raccordement vaut-il mieux
+    que l'autre, et pourquoi ? Peut-on dépasser le courant de démarrage direct ?
+  </p>
+  <figure id="e-transition-figure">
+    <div class="schema-vivant" id="e-transition"></div>
+    <figcaption>
+      À gauche, plan de Fresnel d'un enroulement, référence de phase donnée par la tension d'étoile qu'il recevait avant l'ouverture de KM2,
+      trait fin vertical. La flèche épaisse en trait plein est la tension appliquée après fermeture du triangle, de longueur $1$, soit $400\ \mathrm{V}$,
+      décalée de $\pm 30^\circ$ ; la flèche en tirets est la force électromotrice résiduelle, dont l'extrémité décrit une spirale quand le temps
+      mort augmente ; le segment épais qui joint les deux extrémités représente la différence de tension, à laquelle la pointe de courant est
+      proportionnelle. Le cercle en pointillés de rayon $1$ sert d'échelle. À droite, la pointe rapportée à $I_d$ en fonction du temps mort,
+      trait épais pour l'ordre de raccordement choisi, trait fin pour l'autre ; l'axe du temps mort porte la poignée.
+    </figcaption>
+  </figure>
+  <div id="e-transition-curseurs"></div>
+  <div id="e-transition-lecteur"></div>
+  <div id="e-transition-valeurs"></div>
+  <p>
+    Interprétation : avec un temps mort de $50\ \mathrm{ms}$, la force électromotrice ne perd que $13\ \%$, de $0{,}56$ à $0{,}49$, et a pris
+    $23^\circ$ de retard. Si l'ordre de raccordement place la tension de triangle en retard de $30^\circ$ sur la tension d'étoile, les deux
+    vecteurs sont presque alignés et la pointe vaut $0{,}52\ I_d$, soit $131\ \mathrm{A}$ ; dans l'autre ordre, ils s'écartent de $53^\circ$ et la
+    pointe atteint $0{,}81\ I_d$, soit $204\ \mathrm{A}$, deux fois et demie le courant en étoile, $81\ \mathrm{A}$, et huit fois le courant de
+    régime en triangle à cette vitesse, $26{,}6\ \mathrm{A}$. Un temps mort plus long n'arrange rien : le retard croît vite car le rotor
+    ralentit, l'opposition de phase est atteinte vers $160$ à $200\ \mathrm{ms}$ et la pointe y dépasse alors $1{,}3\ I_d$, environ
+    $340\ \mathrm{A}$ dans le pire cas, plus que le démarrage direct. Le bon réglage est donc un temps mort court, juste suffisant pour
+    l'extinction de l'arc, et un ordre de raccordement conforme aux instructions du constructeur du démarreur, qui tient compte du sens de
+    rotation. Quand la pointe reste inacceptable, on passe à une transition fermée : des résistances sont insérées en parallèle pendant la
+    commutation pour que le moteur ne soit jamais déconnecté.
+  </p>
+
+  <h3 id="e-auto">Le démarrage par autotransformateur</h3>
+  <p>
+    Un autotransformateur triphasé, couplé en étoile, applique au moteur une fraction $k$ de la tension du réseau, avec des prises usuelles à
+    $50$, $65$ et $80\ \%$. Le moteur reçoit $u = k$ : son courant vaut $k\,I_d$ et son couple $k^2C_d$. L'autotransformateur, idéal, conserve la
+    puissance apparente : il prend au réseau un courant $k$ fois plus petit que celui qu'il fournit au moteur, soit $k^2I_d$.
+  </p>
+  <div class="formule-cle">
+    $$I_{moteur} = k\,I_d, \qquad I_L = k \cdot k\,I_d = k^2 I_d, \qquad C = k^2 C_d, \qquad \frac{C/C_d}{I_L/I_d} = 1$$
+    <p class="formule-cle-legende">
+      $k$ sans dimension, $0 &lt; k \le 1$. Hypothèses : autotransformateur idéal, courant magnétisant et chute interne négligés, en pratique
+      quelques pour cent de courant de ligne en plus. Cas limites : $k = 1$ redonne le démarrage direct ; $k = 1/\sqrt{3} = 0{,}577$ donne
+      exactement les valeurs de l'étoile-triangle. Vérification : produit de rapports sans dimension par un courant, en ampères. L'avantage sur
+      l'étoile-triangle est le choix de $k$, qu'on adapte au couple de la charge, et la transition fermée.
+    </p>
+  </div>
+  <figure id="e-auto-figure">
+    <svg viewBox="0 0 760 340" role="img" aria-label="Démarrage par autotransformateur selon le montage Korndorfer : contacteur KM2 qui alimente l'autotransformateur, contacteur KM1 qui forme son point étoile, contacteur KM3 de pleine tension ; courant de ligne k au carré fois Id, courant moteur k fois Id, tension moteur k fois la tension du réseau">
+      <defs>
+        <marker id="fl-e-au" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M30 60H120M190 60H330V80"/>
+        <rect x="120" y="48" width="70" height="24" rx="4"/>
+        <path d="M330 80a10 10 0 0 0 0 20a10 10 0 0 0 0 20a10 10 0 0 0 0 20a10 10 0 0 0 0 20a10 10 0 0 0 0 20a10 10 0 0 0 0 20"/>
+        <path d="M330 200V230"/>
+        <rect x="302" y="230" width="56" height="26" rx="4"/>
+        <path d="M330 256V284"/>
+        <path d="M330 140H640V188"/>
+        <circle cx="640" cy="210" r="22"/>
+        <path d="M250 60V24H520M570 24H600V140"/>
+        <rect x="520" y="12" width="50" height="24" rx="4"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="250" cy="60" r="3.5"/>
+        <circle cx="330" cy="140" r="3.5"/>
+        <circle cx="600" cy="140" r="3.5"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M40 84H90" marker-end="url(#fl-e-au)" stroke-width="3"/>
+        <path d="M470 160H520" marker-end="url(#fl-e-au)" stroke-width="3"/>
+        <path d="M312 226V150" marker-end="url(#fl-e-au)" stroke-dasharray="5 4"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="12" y="64">L</text>
+        <text x="138" y="40">KM2</text>
+        <text x="340" y="96">enroulement de</text>
+        <text x="340" y="112">l'autotransformateur</text>
+        <text x="340" y="134">prise k</text>
+        <text x="366" y="248">KM1 : point étoile</text>
+        <text x="340" y="296">vers les deux autres phases</text>
+        <text x="522" y="54">KM3 : pleine tension</text>
+        <text x="632" y="215">M</text>
+        <text x="30" y="106">I_L = k² I_d</text>
+        <text x="466" y="182">I_m = k I_d</text>
+        <text x="272" y="196">k V</text>
+        <text x="20" y="250">séquence Korndorfer :</text>
+        <text x="20" y="268">1. KM1 puis KM2 : moteur sous k U_n</text>
+        <text x="20" y="286">2. KM1 s'ouvre : le haut de l'enroulement</text>
+        <text x="20" y="304">   reste en série, comme une inductance</text>
+        <text x="20" y="322">3. KM3 se ferme, puis KM2 s'ouvre</text>
+      </g>
+    </svg>
+    <figcaption>
+      Une phase du démarreur par autotransformateur, montage Korndorfer. L'enroulement de l'autotransformateur, dessiné vertical, est alimenté
+      par KM2 ; sa prise, à la fraction $k$ de la tension, alimente le moteur ; KM1 forme le point étoile commun aux trois enroulements, dont les
+      deux autres ne sont pas dessinés. KM3 met le moteur sous pleine tension en court-circuitant l'autotransformateur. Les flèches épaisses
+      donnent le sens positif du courant de ligne et du courant moteur ; la flèche en tirets, la tension réduite appliquée au moteur, rapportée
+      au neutre. Pendant l'étape 2, le moteur reste alimenté à travers une partie de l'enroulement : c'est une transition fermée, sans
+      déconnexion ni pointe de reconnexion.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-progressif">Le démarreur progressif à thyristors</h3>
+  <p>
+    Un démarreur progressif, ou gradateur, place dans chaque phase deux thyristors montés tête-bêche. En retardant leur amorçage d'un angle
+    $\alpha$ après le passage par zéro de la tension, il ne laisse passer qu'une partie de chaque alternance : la tension efficace appliquée
+    au moteur diminue, et avec elle le fondamental du courant. Le gradateur ne transforme pas la tension, il la découpe : le courant de ligne est
+    le courant du moteur. Pour limiter le courant de ligne à $I_{lim}$, il faut donc $u = I_{lim}/I_d$, et le couple vaut :
+  </p>
+  <div class="formule-cle">
+    $$u = \frac{I_{lim}}{I_d}, \qquad C = u^2 C_d = \left(\frac{I_{lim}}{I_d}\right)^2 C_d, \qquad \frac{C/C_d}{I_L/I_d} = \frac{I_{lim}}{I_d} &lt; 1$$
+    <p class="formule-cle-legende">
+      Hypothèses : effet du découpage ramené au seul fondamental, harmoniques négligés pour le couple. Cas limite : $I_{lim} = I_d$ redonne le
+      démarrage direct. Exemple : limiter le moteur du compresseur, $I_d = 7{,}5\ I_n$, à $3\ I_n$ donne $u = 0{,}40$ et $C = 0{,}16 \times 2{,}3 =
+      0{,}37\ C_n$, alors qu'un autotransformateur réglé pour le même courant de ligne, $k = \sqrt{0{,}4} = 0{,}632$, donnerait $0{,}92\ C_n$. Les
+      résistances statoriques, méthode ancienne, ont exactement le même comportement : elles chutent la tension sans la transformer.
+    </p>
+  </div>
+  <p>
+    Le démarreur progressif compense cette faiblesse par sa souplesse. En mode rampe, il fait croître la tension d'une valeur initiale réglable
+    jusqu'à la pleine tension en un temps réglable ; en mode limitation de courant, il maintient $I_L = I_{lim}$ et relève la tension à mesure que le
+    moteur accélère et que son impédance augmente ; certains modèles régulent directement le couple. Il permet un arrêt progressif, qui supprime
+    le coup de bélier des pompes. Une fois le démarrage terminé, un contacteur de court-circuitage, dit de bypass, met les thyristors hors
+    circuit : sans lui, leur chute de tension d'environ $1$ à $1{,}5\ \mathrm{V}$ par phase dissiperait en permanence quelques watts par ampère.
+    Deux précautions découlent du principe. Le découpage produit des harmoniques de courant pendant le démarrage, sans conséquence s'il est
+    bref, mais à prendre en compte sur une source faible. Et aucun condensateur de compensation ne doit être raccordé en aval des thyristors :
+    à chaque amorçage, il imposerait un échelon de tension sur une capacité, d'où une pointe de courant destructrice pour les thyristors ; la
+    batterie se raccorde en amont, par son propre contacteur, fermé une fois le bypass fermé.
+  </p>
+  <figure id="e-progressif-figure">
+    <svg viewBox="0 0 760 310" role="img" aria-label="Une phase d'un démarreur progressif : contacteur de ligne KM1, paire de thyristors tête-bêche T1 et T2 court-circuitée en fin de démarrage par le contacteur de bypass KM2, relais de surcharge F1, moteur ; condensateurs de compensation raccordés en amont par leur propre contacteur KM4">
+      <defs>
+        <marker id="fl-e-pr" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M30 120H100M170 120H300M420 120H560M620 120H660V178"/>
+        <rect x="100" y="108" width="70" height="24" rx="4"/>
+        <path d="M250 120V80H330M390 80H470V120"/>
+        <rect x="330" y="68" width="60" height="24" rx="4"/>
+        <path d="M300 120V175M420 120V175"/>
+        <path d="M300 140H345M367 140H420M300 175H353M375 175H420"/>
+        <path d="M345 130L367 140L345 150Z"/>
+        <path d="M367 130V150"/>
+        <path d="M375 165L353 175L375 185Z"/>
+        <path d="M353 165V185"/>
+        <rect x="560" y="108" width="60" height="24" rx="4"/>
+        <circle cx="660" cy="200" r="22"/>
+        <path d="M210 120V188M194 188H226M194 198H226M210 198V236"/>
+        <rect x="186" y="236" width="48" height="24" rx="4"/>
+        <path d="M210 260V284"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="210" cy="120" r="3.5"/>
+        <circle cx="250" cy="120" r="3.5"/>
+        <circle cx="470" cy="120" r="3.5"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
+        <path d="M367 150L375 160"/>
+        <path d="M353 165L345 157"/>
+        <path d="M44 100H84" marker-end="url(#fl-e-pr)" stroke-width="3"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="10" y="124">L</text>
+        <text x="116" y="150">KM1</text>
+        <text x="330" y="60">KM2 : bypass</text>
+        <text x="326" y="128">T1</text>
+        <text x="380" y="198">T2</text>
+        <text x="296" y="216">T1, T2 : thyristors tête-bêche</text>
+        <text x="296" y="232">amorcés avec le retard α</text>
+        <text x="574" y="150">F1</text>
+        <text x="652" y="205">M</text>
+        <text x="20" y="92">I_L = I_moteur</text>
+        <text x="40" y="186">condensateurs,</text>
+        <text x="40" y="202">toujours en amont</text>
+        <text x="244" y="270">KM4 : fermé après KM2</text>
+        <text x="440" y="252">démarrage : KM1 fermé, KM2 ouvert</text>
+        <text x="440" y="268">fin : KM2 fermé, thyristors hors circuit</text>
+        <text x="440" y="284">arrêt progressif : KM2 s'ouvre,</text>
+        <text x="440" y="300">les thyristors reprennent le courant</text>
+      </g>
+    </svg>
+    <figcaption>
+      Une phase du démarreur progressif. Le courant de ligne, flèche épaisse, traverse le contacteur KM1, puis la paire de thyristors tête-bêche
+      T1 et T2, symboles triangulaires opposés avec leurs gâchettes, ou le contacteur de bypass KM2 placé en parallèle, puis le relais de
+      surcharge F1 et le moteur. Comme rien ne transforme la tension, le courant de ligne est égal au courant du moteur. Les condensateurs de
+      compensation, à gauche, sont raccordés en amont des thyristors par leur propre contacteur KM4, qui ne se ferme qu'une fois le bypass fermé.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-gradateur-section">Animation : le gradateur à thyristors</h3>
+  <p>
+    L'animation calcule, sur une phase équivalente, la tension appliquée au moteur et le courant pour un angle de retard $\alpha$ donné, le moteur
+    à l'arrêt étant représenté par son impédance de démarrage, $\cos\varphi_d = 0{,}40$, soit $\varphi_d = 66{,}4^\circ$. Réglez $\alpha$ par la
+    poignée ronde sur le cadran, par le curseur, ou lancez la lecture, qui fait décroître $\alpha$ comme une rampe de démarrage. Avant de
+    manipuler, prédisez : tant que $\alpha$ reste inférieur à $\varphi_d$, la tension est-elle découpée ? Quel angle faut-il pour ramener le
+    fondamental du courant au tiers de sa valeur directe ? La forme du courant reste-t-elle sinusoïdale ?
+  </p>
+  <figure id="e-gradateur-figure">
+    <div class="schema-vivant" id="e-gradateur"></div>
+    <figcaption>
+      À gauche, cadran de l'angle de retard $\alpha$, compté depuis le passage par zéro de la tension, avec la poignée ; le repère fixe marque
+      $\varphi_d$. À droite, une période de $20\ \mathrm{ms}$ : la sinusoïde fine en pointillés est la tension du réseau, le trait plein fin la
+      tension appliquée au moteur, nulle quand les thyristors sont bloqués, et le trait épais le courant, rapporté à l'amplitude du courant de
+      démarrage direct. Les zones grisées sont les intervalles de conduction.
+    </figcaption>
+  </figure>
+  <div id="e-gradateur-curseurs"></div>
+  <div id="e-gradateur-lecteur"></div>
+  <div id="e-gradateur-valeurs"></div>
+  <p>
+    Interprétation : tant que $\alpha \le \varphi_d = 66{,}4^\circ$, le courant, en retard sur la tension, n'est pas encore éteint quand
+    l'impulsion arrive, et la conduction est continue : rien n'est découpé. Au-delà, chaque thyristor conduit pendant un angle inférieur à
+    $180^\circ$ : $149^\circ$ pour $\alpha = 90^\circ$, où le fondamental tombe à $0{,}69$ fois le courant direct, puis $110^\circ$ pour
+    $\alpha = 117^\circ$, où il n'en reste que le tiers, ce qui limiterait le moteur du compresseur à $2{,}5\ I_n$. Le courant n'est plus
+    sinusoïdal : son taux de distorsion passe de $17\ \%$ à $90^\circ$ à environ $44\ \%$ à $117^\circ$, avec des harmoniques de rangs impairs.
+    La relation entre $\alpha$ et le courant dépend de $\varphi$, qui change pendant l'accélération : c'est pourquoi un démarreur régule le courant
+    en boucle fermée au lieu d'appliquer une loi d'angle fixe. Ce modèle monophasé est une approximation : sans neutre, en triphasé, deux phases
+    au moins doivent conduire ensemble, et les intervalles se répartissent autrement, sans changer les ordres de grandeur.
+  </p>
+
+  <h3 id="e-autres">Autres méthodes et rendement en couple</h3>
+  <p>
+    Deux autres solutions complètent le tableau. Le moteur à rotor bobiné, dont les enroulements rotoriques sont reliés par bagues à un rhéostat,
+    augmente $R_2'$ au démarrage : le cours précédent a montré que le couple maximal ne dépend pas de $R_2'$ et que son glissement lui est
+    proportionnel ; avec $R_2'$ choisie pour que $g_m = 1$, le moteur démarre au couple maximal avec un courant modéré, de l'ordre de
+    $2$ à $2{,}5\ I_n$. C'est la seule méthode dont le rendement en couple dépasse nettement $1$, au prix d'un moteur spécial, de bagues et de
+    balais à entretenir ; elle subsiste pour les fortes inerties et les démarrages en charge de grande puissance. Le variateur de fréquence,
+    objet du cours Variation de vitesse des moteurs asynchrones, démarre à basse fréquence en maintenant le flux : il obtient le couple nominal avec
+    environ le courant nominal, et $1{,}5\ C_n$ avec $1{,}5\ I_n$, et ne dissipe dans le rotor que les pertes d'un fonctionnement à faible
+    glissement. Il est la meilleure solution technique pour démarrer en charge, mais aussi la plus chère, et il ajoute ses propres harmoniques
+    en permanence.
+  </p>
+
+  <h3 id="e-comparateur-section">Simulation interactive : comparer les modes de démarrage</h3>
+  <p>
+    La simulation calcule, pour quatre machines entraînées, le couple disponible et le courant de ligne en fonction de la vitesse selon le mode de
+    démarrage, en tenant compte de la puissance de court-circuit du réseau, puis intègre l'équation mécanique pour obtenir la durée du démarrage
+    et l'énergie dissipée dans le rotor. Les moteurs sont décrits par leur catalogue, la méthode est détaillée dans l'encadré qui suit. Choisissez
+    la machine, le mode, le rapport de l'autotransformateur, le courant limite du démarreur progressif et la puissance de court-circuit. Avant de
+    manipuler, prédisez : pour le compresseur à vide, quel mode donne le plus petit courant de ligne, et lequel le plus petit échauffement du rotor ?
+    Pour la pompe en charge, à quelle vitesse le moteur cessera-t-il d'accélérer en étoile ? Pour le convoyeur, un démarreur progressif à
+    $3{,}5\ I_n$ suffit-il ?
+  </p>
+  <figure id="e-comparateur-figure">
+    <div id="e-comparateur-couple"></div>
+    <div id="e-comparateur-courant"></div>
+    <figcaption>
+      En haut, couple moteur disponible selon le mode choisi, trait épais, avec le saut de la commutation pour l'étoile-triangle et
+      l'autotransformateur ; couple en démarrage direct sous tension nominale, trait fin ; couple résistant de la machine entraînée. En bas, courant
+      de ligne selon le mode, trait épais, et courant en démarrage direct, trait fin. Le trait vertical en tirets repère la vitesse de commutation
+      ou la vitesse finale, le cercle vide le point de calage éventuel.
+    </figcaption>
+  </figure>
+  <div id="e-comparateur-curseurs"></div>
+  <div id="e-comparateur-valeurs"></div>
+  <p>
+    Interprétation : pour le compresseur à vide sous $1{,}5\ \mathrm{MVA}$, l'étoile-triangle prend le plus petit courant,
+    $81\ \mathrm{A}$, soit $2{,}4\ I_n$, contre $227\ \mathrm{A}$ en direct, et garde $0{,}71\ C_n$, largement assez pour une machine qui
+    n'oppose que $0{,}075\ C_n$ au décollement ; le démarreur progressif à $3\ I_n$ prend un peu plus, $101\ \mathrm{A}$, pour un couple deux
+    fois plus faible, $0{,}37\ C_n$. L'énergie rotorique, elle, est minimale en direct, $5{,}9\ \mathrm{kJ}$, à peine plus que
+    $\tfrac{1}{2}J\varOmega_s^2 = 5{,}55\ \mathrm{kJ}$, et croît à mesure que le couple baisse : $6{,}6\ \mathrm{kJ}$ en étoile-triangle,
+    $6{,}9\ \mathrm{kJ}$ avec le démarreur progressif à $3\ I_n$. Pour la pompe en charge, le moteur cesse d'accélérer en étoile vers
+    $1426\ \mathrm{tr/min}$ : le couple résistant y vaut déjà $0{,}84\ C_n$, et la commutation reprend $221\ \mathrm{A}$, $2{,}8\ I_n$, avant même
+    la pointe de reconnexion ; le démarrage dure $2{,}4\ \mathrm{s}$ au lieu de $0{,}33\ \mathrm{s}$ et l'énergie rotorique passe de $13{,}1$ à
+    $24{,}7\ \mathrm{kJ}$. Le convoyeur, qui exige $1{,}2\ C_n$ au décollement, ne démarre ni en étoile, $0{,}79\ C_n$, ni sur la prise de
+    $65\ \%$ de l'autotransformateur, $1{,}0\ C_n$, ni avec un démarreur progressif à $3{,}5$ ou même $4\ I_n$, $0{,}54$ et $0{,}70\ C_n$ : il cale,
+    et la commutation se fait à l'arrêt, ce qui revient à un démarrage direct retardé. Enfin, le ventilateur de $25\ \mathrm{kg \cdot m^2}$
+    démarre en $4{,}7\ \mathrm{s}$ en direct avec $356\ \mathrm{kJ}$ dans le rotor, mais en $51\ \mathrm{s}$ et $921\ \mathrm{kJ}$ en
+    étoile-triangle : réduire le courant d'une machine à forte inertie se paie en échauffement. Une loi se dégage : plus le couple résistant
+    est proche du couple disponible, plus la réduction de tension coûte cher, et elle cesse d'être possible quand il le dépasse.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Le modèle de catalogue utilisé par les simulations</span>
+    <p>
+      Le cours précédent a montré qu'un jeu unique de paramètres du schéma équivalent ne reproduit pas à la fois le point nominal et le
+      démarrage, à cause de l'effet de peau dans les barres. Pour étudier un démarrage, on part donc du catalogue. Le couple suit une formule de
+      Kloss dont le glissement critique varie avec le glissement, $C(g) = 2C_{max}/(g/\gamma + \gamma/g)$ avec $\gamma(g) = \gamma_0(1 + \kappa g^2)$,
+      ce qui imite la résistance rotorique croissante d'une double cage ; $\gamma_0$ et $\kappa$ sont ajustés pour retrouver exactement $C_n$
+      au glissement nominal, $C_d$ à l'arrêt et $C_{max}$. Le courant est la somme d'un courant magnétisant réactif et d'un courant rotorique dont
+      le module et la phase sont ajustés sur $I_n$, $\cos\varphi_n$, $I_d$ et le facteur de puissance au démarrage, supposé de $0{,}35$ à $0{,}42$.
+      Sous tension réduite, $I \propto u$ et $C \propto u^2$ ; la chute de tension est calculée en complexes avec l'impédance amont. Ces courbes
+      sont des hypothèses d'étude : seules les courbes du constructeur, ou un enregistrement à la mise en service, font foi.
+    </p>
+  </div>
+
+  <h3 id="e-statut">Loi, convention, approximation, règle de conception et donnée du constructeur</h3>
+  <ul>
+    <li><strong>Lois physiques :</strong> loi d'Ohm et lois de Kirchhoff du circuit par phase, proportionnalité du courant à la tension et du couple à son carré dans un circuit linéaire, conservation de la puissance apparente d'un transformateur, principe fondamental de la dynamique de l'arbre, bilan $p_{jr} = gP_{tr}$ qui fixe l'énergie rotorique.</li>
+    <li><strong>Conventions :</strong> étoile équivalente et tension simple pour les calculs par phase, convention récepteur côté moteur, $I_d$ et $C_d$ définis sous tension nominale, rapport $k$ de l'autotransformateur défini côté moteur, angle $\alpha$ compté depuis le zéro de tension.</li>
+    <li><strong>Approximations :</strong> paramètres indépendants de la tension, saturation des fuites ignorée ; formule de Kapp pour le creux ; régime électrique établi à chaque vitesse ; fondamental seul pour le gradateur ; modèle simplifié de la reconnexion étoile-triangle sans composante continue ; courbes de catalogue reconstituées.</li>
+    <li><strong>Règles de conception :</strong> marge de couple de $20$ à $30\ \%$ au décollement ; commutation étoile-triangle à l'équilibre en étoile avec un temps mort court ; bypass en fin de démarrage ; condensateurs jamais en aval d'un gradateur ; classe du relais de surcharge adaptée à la durée du démarrage ; pas de démarrage en tension réduite d'une machine lourdement chargée.</li>
+    <li><strong>Données du constructeur, du gestionnaire de réseau et des normes :</strong> $I_d/I_n$, $C_d/C_n$, $C_{max}/C_n$, courbes et temps de démarrage admissible, nombre de démarrages par heure ; réglages et limites du démarreur ; limites de creux de tension et de courant de démarrage imposées au raccordement ; exigences des normes de machines tournantes, d'appareillage et d'installation applicables, à vérifier pour chaque projet et chaque pays.</li>
+  </ul>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, la comparaison des courants et des couples de démarrage dans un plan unique,
+    l'organigramme de choix d'un mode de démarrage et un tableau comparatif. Les autres schémas sont restés au contact du passage qu'ils
+    illustrent ; la liste de renvois figure à la fin de la section.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 760 450" role="img" aria-label="Schéma principal : couple de démarrage rapporté au couple direct en fonction du courant de ligne rapporté au courant direct ; droite des méthodes à transformation de tension, étoile-triangle et autotransformateur ; parabole des méthodes à chute de tension, démarreur progressif et résistances ; points du compresseur du site et besoin de couple du convoyeur">
+      <defs>
+        <marker id="fl-f" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
+        <path d="M90 388V35" marker-end="url(#fl-f)"/>
+        <path d="M82 380H706" marker-end="url(#fl-f)"/>
+        <path d="M230 380v6M90 305h-6M370 380v6M90 230h-6M510 380v6M90 155h-6M650 380v6M90 80h-6"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-linecap="round">
+        <path d="M90 380L678 65" stroke-width="3"/>
+        <path d="M90 380Q384 380 678 49.2" stroke-width="3" stroke-dasharray="9 5"/>
+        <path d="M90 192.5H700" stroke-width="1.3" stroke-dasharray="3 4"/>
+        <path d="M90 367.3H700" stroke-width="1.3" stroke-dasharray="3 4"/>
+      </g>
+      <g fill="currentColor" stroke="currentColor" stroke-width="1.5">
+        <circle cx="276.7" cy="280" r="6"/>
+        <circle cx="230" cy="305" r="4.5"/>
+        <circle cx="326.6" cy="253.2" r="4.5"/>
+        <circle cx="448.4" cy="188" r="4.5"/>
+        <circle cx="650" cy="80" r="6"/>
+        <rect x="271" y="341" width="11" height="11" fill="none"/>
+        <rect x="308.5" y="326.5" width="11" height="11" fill="none"/>
+        <rect x="345.8" y="309.2" width="11" height="11" fill="none"/>
+        <path d="M202 176L210 190H194Z"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="206" y="402">0,25</text>
+        <text x="50" y="309">0,25</text>
+        <text x="358" y="402">0,5</text>
+        <text x="50" y="234">0,5</text>
+        <text x="498" y="402">0,75</text>
+        <text x="50" y="159">0,75</text>
+        <text x="646" y="402">1</text>
+        <text x="66" y="84">1</text>
+        <text x="96" y="30">C / C_d</text>
+        <text x="430" y="424">I_L / I_d, courant pris au réseau</text>
+        <text x="540" y="132">transformation de tension :</text>
+        <text x="540" y="148">C/C_d = I_L/I_d</text>
+        <text x="560" y="252">chute de tension :</text>
+        <text x="560" y="268">C/C_d = (I_L/I_d)²</text>
+        <text x="290" y="276">étoile-triangle</text>
+        <text x="146" y="300">auto 50 %</text>
+        <text x="336" y="250">auto 65 %</text>
+        <text x="458" y="210">auto 80 %</text>
+        <text x="604" y="70">direct</text>
+        <text x="372" y="322">progressif 2,5 ; 3 ; 3,5 I_n</text>
+        <text x="216" y="160">variateur : 1,5 C_n avec 1,5 I_n</text>
+        <text x="96" y="208">convoyeur : 1,2 C_n + 25 % = 0,625 C_d</text>
+        <text x="420" y="360">compresseur : 0,075 C_n + 30 % = 0,042 C_d</text>
+        <text x="20" y="444">valeurs du compresseur : I_d = 7,5 I_n = 252 A ; C_d = 2,3 C_n = 276 N·m ; réseau parfait</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal : comparaison des courants et des couples de démarrage. En abscisse, le courant de ligne au démarrage rapporté au
+      courant de démarrage direct ; en ordonnée, le couple de démarrage rapporté au couple direct. Trait plein : méthodes qui transforment la
+      tension, étoile-triangle, point plein le plus gros à gauche, et autotransformateur, petits points pleins pour les prises de $50$, $65$ et
+      $80\ \%$ ; elles restent sur la diagonale, rendement en couple égal à $1$. Trait en tirets : méthodes qui chutent la tension, démarreur
+      progressif et résistances, carrés vides pour des limites de $2{,}5$, $3$ et $3{,}5\ I_n$ ; elles sont sous la diagonale, d'autant plus
+      qu'on réduit le courant. Le triangle plein est le variateur de fréquence, au-dessus de tout. Les deux droites horizontales pointillées sont
+      les besoins de couple de décollement, marge comprise : celui du compresseur à vide est satisfait par toutes les méthodes, celui du
+      convoyeur chargé exige au moins $0{,}625\ I_d$ sur la diagonale et $0{,}79\ I_d$ sur la parabole, presque un démarrage direct.
+    </figcaption>
+  </figure>
+
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Données : plaque et catalogue du moteur,<br/>couple résistant et inertie de la machine,<br/>S_cc et limites du réseau"] --> B{"Démarrage direct :<br/>creux, courant et choc<br/>acceptables ?"}
+  B -->|"oui"| C["Démarrage direct<br/>vérifier t_d, W_r et le relais"]
+  B -->|"non"| D{"Couple résistant<br/>faible au démarrage ?"}
+  D -->|"oui, pompe vanne fermée,<br/>ventilateur, machine à vide"| E{"Plaque 400/690 V<br/>et six conducteurs ?"}
+  E -->|"oui"| F["Étoile-triangle<br/>commutation à l'équilibre,<br/>temps mort court"]
+  E -->|"non ou pointe gênante"| G["Démarreur progressif<br/>ou autotransformateur<br/>arrêt progressif d'une pompe"]
+  D -->|"non, convoyeur chargé,<br/>levage, broyeur plein"| H{"Couple nécessaire<br/>proche de C_d ?"}
+  H -->|"oui"| I["Variateur de fréquence<br/>ou rotor bobiné"]
+  H -->|"non"| J["Autotransformateur<br/>prise choisie sur le couple"]
+  F --> K{"Contrôles"}
+  G --> K
+  J --> K
+  C --> K
+  I --> K
+  K --> L["Couple au-dessus de C_r à toute vitesse ;<br/>creux et pointe au jeu de barres ;<br/>t_d et W_r contre les données du constructeur ;<br/>démarrages par heure ; réglage des protections"]</pre>
+    <figcaption>
+      Organigramme de choix d'un mode de démarrage. Les rectangles sont des décisions de conception, les losanges des questions, les libellés des
+      flèches les réponses. On essaie toujours le démarrage direct en premier, puisqu'il est le plus simple et le moins coûteux pour le rotor ;
+      la nature du couple résistant oriente ensuite vers la transformation de tension, la chute de tension ou la variation de fréquence. Toutes
+      les branches se rejoignent sur les mêmes contrôles, mécaniques, électriques et thermiques.
+    </figcaption>
+  </figure>
+
+  <div class="cadre-tableau">
+    <table>
+      <caption>Modes de démarrage comparés, pour un moteur de $I_d = 7{,}5\ I_n$ et $C_d = 2{,}3\ C_n$ sur réseau parfait</caption>
+      <thead><tr><th>Critère</th><th>Direct</th><th>Étoile-triangle</th><th>Autotransformateur $65\ \%$</th><th>Démarreur progressif $3\ I_n$</th><th>Variateur</th></tr></thead>
+      <tbody>
+        <tr><td>Courant de ligne au démarrage</td><td>$7{,}5\ I_n$</td><td>$2{,}5\ I_n$</td><td>$3{,}17\ I_n$</td><td>$3\ I_n$, réglable</td><td>$1$ à $1{,}5\ I_n$</td></tr>
+        <tr><td>Couple au démarrage</td><td>$2{,}3\ C_n$</td><td>$0{,}77\ C_n$</td><td>$0{,}97\ C_n$</td><td>$0{,}37\ C_n$</td><td>jusqu'à $1{,}5\ C_n$</td></tr>
+        <tr><td>Rendement en couple</td><td>$1$</td><td>$1$</td><td>$1$</td><td>$0{,}40$</td><td>bien supérieur à $1$</td></tr>
+        <tr><td>Transition</td><td>aucune</td><td>ouverte, pointe possible</td><td>fermée, Korndorfer</td><td>continue</td><td>continue</td></tr>
+        <tr><td>Exigences</td><td>source puissante</td><td>plaque $400/690\ \mathrm{V}$, six conducteurs</td><td>appareil encombrant</td><td>bypass, condensateurs en amont</td><td>filtrage, harmoniques permanents</td></tr>
+        <tr><td>Énergie rotorique</td><td>minimale</td><td>accrue si la charge est lourde</td><td>accrue modérément</td><td>la plus accrue à courant égal</td><td>faible</td></tr>
+        <tr><td>Usage préférable</td><td>petits moteurs, réseau fort</td><td>machines démarrées à vide</td><td>forte puissance, couple modéré</td><td>pompes, arrêt progressif, source faible</td><td>démarrage en charge, vitesse variable</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-reseau-figure" data-renvoi="d-reseau-figure">le diviseur de tension entre le réseau et le moteur à l'arrêt</a> et <a href="#d-direct-figure" data-renvoi="d-direct-figure">l'animation du démarrage direct pas à pas</a>, section D ;</li>
+    <li><a href="#e-direct-figure" data-renvoi="e-direct-figure">le circuit du démarrage direct</a>, <a href="#e-etoile-figure" data-renvoi="e-etoile-figure">le circuit étoile-triangle</a>, <a href="#e-transition-figure" data-renvoi="e-transition-figure">l'animation de la commutation à transition ouverte</a>, <a href="#e-auto-figure" data-renvoi="e-auto-figure">le montage Korndorfer de l'autotransformateur</a>, <a href="#e-progressif-figure" data-renvoi="e-progressif-figure">le démarreur progressif et son bypass</a>, <a href="#e-gradateur-figure" data-renvoi="e-gradateur-figure">l'animation du gradateur à thyristors</a> et <a href="#e-comparateur-figure" data-renvoi="e-comparateur-figure">la simulation comparative des modes de démarrage</a>, section E ;</li>
+    <li><a href="#h-figure" data-renvoi="h-figure">le schéma unifilaire chiffré de la station de pompage</a>, section H ;</li>
+    <li><a href="#i-compresseur-figure" data-renvoi="i-compresseur-figure">le départ du compresseur avec son démarreur progressif et ses deux sources</a> et <a href="#i-temps-figure" data-renvoi="i-temps-figure">la simulation temporelle de son démarrage</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour choisir et vérifier le mode de démarrage d'un moteur asynchrone :</p>
+  <ol>
+    <li>Rassembler les données : plaque, $I_d/I_n$, $C_d/C_n$, $C_{max}/C_n$ et courbes du constructeur ; couple résistant de la machine en fonction de la vitesse, couple de décollement et inertie ; impédance de la source et des câbles, ou $S_{cc}$ ; limites imposées : creux admissible, courant de démarrage autorisé, nombre de démarrages par heure. Noter pour chaque valeur si elle est mesurée, garantie ou supposée.</li>
+    <li>Vérifier le démarrage direct : $\underline{Z}_d = (V/I_d)\angle\varphi_d$, courant $\underline{I} = \underline{V}_0/(\underline{Z}_r + \underline{Z}_d)$, tension au moteur $u = |\underline{Z}_d\underline{I}|/V$ et au jeu de barres $|\underline{V}_0 - \underline{Z}_{amont}\underline{I}|$, couple $u^2C_d$. Si creux, courant et choc mécanique sont acceptables, le démarrage direct est retenu.</li>
+    <li>Sinon, lister les méthodes compatibles : plaque et nombre de conducteurs pour l'étoile-triangle, budget et encombrement pour l'autotransformateur, besoin d'arrêt progressif, source faible, besoin de vitesse variable.</li>
+    <li>Pour chaque méthode, calculer le courant de ligne et le couple au démarrage avec l'impédance vue : $3\underline{Z}_d$ en étoile, $\underline{Z}_d/k^2$ pour l'autotransformateur, courant imposé $I_{lim}$ pour le démarreur progressif ; puis la tension réelle de chaque enroulement et le couple $u^2C(g)$.</li>
+    <li>Vérifier le couple à toutes les vitesses : décollement avec marge, absence de point d'équilibre intermédiaire ; pour l'étoile-triangle et l'autotransformateur, déterminer la vitesse d'équilibre de la première étape et le courant à la commutation.</li>
+    <li>Estimer la durée $t_d = J\varOmega_s\int \mathrm{d}x/(C_m - C_r)$ et l'énergie rotorique $W_r$, à la main avec des couples moyens ou par intégration numérique, et les comparer au temps de démarrage admissible et à la capacité thermique donnés par le constructeur.</li>
+    <li>Contrôler l'ensemble : creux au jeu de barres pendant tout le démarrage et à la commutation, réglage et classe du relais de surcharge, tenue des appareils, harmoniques sur source faible, compatibilité avec la compensation, puis choisir en pesant coût, encombrement, maintenance et contraintes mécaniques.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Une station de pompage isolée est alimentée par un transformateur de $160\ \mathrm{kVA}$, $20\ \mathrm{kV}/400\ \mathrm{V}$, qui ne dessert
+    qu'elle. Elle entraîne une pompe centrifuge par un moteur de $45\ \mathrm{kW}$ raccordé au tableau par $50\ \mathrm{m}$ de câble. Le
+    tableau alimente aussi la télégestion et l'éclairage. Faut-il un démarreur, et lequel ?
+  </p>
+  <figure id="h-figure">
+    <svg viewBox="0 0 760 330" role="img" aria-label="Schéma unifilaire de la station de pompage : réseau 20 kilovolts, transformateur 160 kVA, jeu de barres 400 volts alimentant la télégestion et l'éclairage, câble de 50 mètres, démarreur, moteur 45 kilowatts et pompe centrifuge, avec les impédances par phase">
+      <defs>
+        <marker id="fl-h" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M40 40H90"/>
+        <circle cx="104" cy="40" r="14"/>
+        <circle cx="124" cy="40" r="14"/>
+        <path d="M138 40H200"/>
+        <path d="M200 16V140" stroke-width="5"/>
+        <path d="M200 100H240V140M200 60H300"/>
+        <rect x="228" y="140" width="24" height="30" rx="3"/>
+        <path d="M300 60H420"/>
+        <rect x="420" y="44" width="70" height="32" rx="4"/>
+        <path d="M490 60H560"/>
+        <circle cx="582" cy="60" r="22"/>
+        <path d="M604 60H630"/>
+        <circle cx="660" cy="60" r="28"/>
+        <path d="M660 60m-10-10l20 10l-20 10"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+        <path d="M320 80H360" marker-end="url(#fl-h)" stroke-width="3"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="20" y="30">20 kV</text>
+        <text x="80" y="76">T, 160 kVA</text>
+        <text x="80" y="92">u_cc 4 %</text>
+        <text x="80" y="108">P_cc 2350 W</text>
+        <text x="206" y="196">télégestion,</text>
+        <text x="206" y="212">éclairage</text>
+        <text x="190" y="10">jeu de barres</text>
+        <text x="250" y="48">câble 50 m, 3 x 35 mm²</text>
+        <text x="324" y="100">I_d</text>
+        <text x="426" y="98">démarreur ?</text>
+        <text x="574" y="65">M</text>
+        <text x="470" y="112">45 kW, 400/690 V</text>
+        <text x="470" y="128">triangle sur 400 V</text>
+        <text x="642" y="112">pompe</text>
+        <text x="20" y="250">par phase, côté 400 V :</text>
+        <text x="20" y="268">transformateur R_t = 14,69 mΩ ; X_t = 37,21 mΩ</text>
+        <text x="20" y="286">câble R_c = 32,14 mΩ ; X_c = 4,00 mΩ</text>
+        <text x="20" y="304">moteur à l'arrêt Z_d = 0,4009 Ω ; cos φ_d = 0,35</text>
+        <text x="430" y="250">pompe : C_r = C_n (0,1 + 0,8 (n/n_n)²)</text>
+        <text x="430" y="268">J = 0,9 kg·m² au total</text>
+        <text x="430" y="286">critère d'étude : creux ≤ 5 %</text>
+        <text x="430" y="304">au jeu de barres</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma unifilaire de la station : un trait représente les trois phases. Le transformateur, deux cercles entrelacés, alimente le jeu de
+      barres, trait épais vertical, d'où partent la télégestion et l'éclairage, puis le câble vers le démarreur à choisir, le moteur M et la pompe,
+      symbole de pompe centrifuge. La flèche épaisse est le sens du courant de démarrage. En bas, les impédances par phase de l'étoile
+      équivalente ramenées à $400\ \mathrm{V}$, le modèle de la pompe et le critère retenu, qui est une hypothèse d'étude à confirmer avec
+      l'exploitant et le gestionnaire du réseau.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Données : source équivalente $400\ \mathrm{V}$ à vide, réseau haute tension supposé infiniment puissant ; transformateur $160\ \mathrm{kVA}$,
+    $u_{cc} = 4\ \%$, $P_{cc} = 2350\ \mathrm{W}$ ; câble cuivre $3 \times 35\ \mathrm{mm^2}$, $50\ \mathrm{m}$, $\rho = 0{,}0225\ \mathrm{\Omega \cdot mm^2/m}$
+    à chaud et $0{,}08\ \mathrm{m\Omega/m}$ de réactance ; moteur $45\ \mathrm{kW}$, $400/690\ \mathrm{V}$, $80\ \mathrm{A}$, $1480\ \mathrm{tr/min}$,
+    $I_d/I_n = 7{,}2$, $C_d/C_n = 2{,}5$, $C_{max}/C_n = 2{,}9$, $\cos\varphi_d = 0{,}35$ supposé ; pompe à couple quadratique, $0{,}1\ C_n$ au
+    décollement et $0{,}9\ C_n$ à $1480\ \mathrm{tr/min}$, $J = 0{,}9\ \mathrm{kg \cdot m^2}$. Critère d'étude : creux au jeu de barres d'au plus
+    $5\ \%$, marge de couple de $30\ \%$ au décollement. Inconnues : courant, couple, creux pour chaque méthode, vitesse de commutation de
+    l'étoile-triangle, durée et énergie rotorique. Stratégie : méthode de la section G, calcul complexe par phase, puis intégration numérique pour
+    les durées.
+  </p>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li><strong>Grandeurs de base.</strong> $V = 400/\sqrt{3} = 230{,}94\ \mathrm{V}$ ; $C_n = 45\,000/(2\pi \times 1480/60) = 290{,}35\ \mathrm{N \cdot m}$ ; $I_d = 7{,}2 \times 80 = 576\ \mathrm{A}$ ; décollement exigé : $1{,}3 \times 0{,}1 = 0{,}13\ C_n$.</li>
+    <li><strong>Transformateur.</strong> $I_{nT} = 160\,000/(\sqrt{3} \times 400) = 230{,}94\ \mathrm{A}$ ; $Z_t = 0{,}04 \times 400^2/160\,000 = 40{,}0\ \mathrm{m\Omega}$ ; $R_t = 2350/(3 \times 230{,}94^2) = 14{,}69\ \mathrm{m\Omega}$ ; $X_t = \sqrt{40{,}0^2 - 14{,}69^2} = 37{,}21\ \mathrm{m\Omega}$.</li>
+    <li><strong>Câble.</strong> $R_c = 0{,}0225 \times 50/35 = 32{,}14\ \mathrm{m\Omega}$ ; $X_c = 0{,}08 \times 50 = 4{,}00\ \mathrm{m\Omega}$.</li>
+    <li><strong>Moteur à l'arrêt.</strong> $Z_d = 230{,}94/576 = 0{,}4009\ \mathrm{\Omega}$ ; $\sin\varphi_d = \sqrt{1 - 0{,}35^2} = 0{,}9367$ ; $\underline{Z}_d = 0{,}1403 + j0{,}3756\ \mathrm{\Omega}$.</li>
+    <li><strong>Démarrage direct.</strong> $\underline{Z} = (0{,}01469 + 0{,}03214 + 0{,}1403) + j(0{,}03721 + 0{,}0040 + 0{,}3756) = 0{,}1872 + j0{,}4168\ \mathrm{\Omega}$, de module $0{,}4569\ \mathrm{\Omega}$ ; $I = 230{,}94/0{,}4569 = 505{,}5\ \mathrm{A}$, soit $6{,}3\ I_n$. Tension au moteur : $505{,}5 \times 0{,}4009 = 202{,}7\ \mathrm{V}$, $u = 0{,}878$, couple $0{,}878^2 \times 2{,}5 = 1{,}93\ C_n$. Jeu de barres : $|230{,}94 - (0{,}01469 + j0{,}03721)\,\underline{I}| = 210{,}74\ \mathrm{V}$, soit $365{,}0\ \mathrm{V}$ composés et un creux de $8{,}7\ \%$ : refusé.</li>
+    <li><strong>Étoile-triangle.</strong> Le moteur est bien $400/690\ \mathrm{V}$. Impédance vue en étoile : $3\underline{Z}_d = 0{,}4210 + j1{,}1267\ \mathrm{\Omega}$ ; total $0{,}4678 + j1{,}1679\ \mathrm{\Omega}$, de module $1{,}2581\ \mathrm{\Omega}$ ; $I = 183{,}6\ \mathrm{A}$, $2{,}3\ I_n$ ; enroulement sous $183{,}6 \times 1{,}2028 = 220{,}8\ \mathrm{V}$, soit $u = 220{,}8/400 = 0{,}552$ ; couple $0{,}552^2 \times 2{,}5 = 0{,}76\ C_n$, cinq fois le besoin ; creux $3{,}2\ \%$. Mais l'équilibre en étoile se calcule avec les courbes du constructeur, tension presque rétablie à cette vitesse : à $1430\ \mathrm{tr/min}$, $C/3 = 2{,}59/3 = 0{,}862\ C_n$ contre $C_r = 0{,}847\ C_n$ ; à $1440\ \mathrm{tr/min}$, $0{,}799$ contre $0{,}857\ C_n$. L'interpolation linéaire place l'équilibre à $1430 + 10 \times 0{,}015/0{,}073 = 1432\ \mathrm{tr/min}$, où le courant en triangle vaut $2{,}78\ I_n = 222\ \mathrm{A}$, avant toute pointe de reconnexion.</li>
+    <li><strong>Autotransformateur $65\ \%$.</strong> Impédance vue $\underline{Z}_d/0{,}4225 = 0{,}3321 + j0{,}8890\ \mathrm{\Omega}$ ; total $0{,}3790 + j0{,}9301\ \mathrm{\Omega}$, de module $1{,}0044\ \mathrm{\Omega}$ ; $I_L = 229{,}9\ \mathrm{A}$, courant moteur $229{,}9/0{,}65 = 353{,}7\ \mathrm{A}$ ; $u = 0{,}65 \times 218{,}2/230{,}94 = 0{,}614$ ; couple $0{,}94\ C_n$ ; creux $4{,}0\ \%$.</li>
+    <li><strong>Démarreur progressif limité à $3{,}5\ I_n = 280\ \mathrm{A}$.</strong> $u = 280 \times 0{,}4009/230{,}94 = 0{,}486$ ; couple $0{,}486^2 \times 2{,}5 = 0{,}59\ C_n$, $4{,}5$ fois le besoin ; jeu de barres : le courant garde la phase du démarrage direct, $380{,}6\ \mathrm{V}$, creux de $4{,}8\ \%$, juste sous le critère.</li>
+    <li><strong>Durées et énergies</strong>, par intégration de $J\,\mathrm{d}\varOmega/\mathrm{d}t = C_m - C_r$ avec les courbes du constructeur : direct, $0{,}32\ \mathrm{s}$ jusqu'à $95\ \%$ de $n_s$ et $13{,}1\ \mathrm{kJ}$ dans le rotor ; étoile-triangle, $2{,}4\ \mathrm{s}$ et $24{,}6\ \mathrm{kJ}$ ; autotransformateur, $1{,}07\ \mathrm{s}$ et $17{,}6\ \mathrm{kJ}$ ; démarreur progressif, $0{,}91\ \mathrm{s}$ et $16{,}5\ \mathrm{kJ}$. Contrôle à la main du direct : couple moteur moyen d'environ $2{,}3 \times 0{,}9^2 = 1{,}86\ C_n$, couple résistant moyen $0{,}1 + 0{,}8/3 = 0{,}37\ C_n$, d'où $t_d \approx 0{,}9 \times 0{,}95 \times 157{,}08/(1{,}49 \times 290{,}35) = 0{,}31\ \mathrm{s}$ et $W_r \approx \tfrac{1}{2} \times 0{,}9 \times 157{,}08^2 \times 1{,}86/1{,}49 = 13{,}9\ \mathrm{kJ}$.</li>
+  </ol>
+
+  <h3 id="h-controles">Contrôles de cohérence et choix</h3>
+  <p>
+    Ordres de grandeur : la puissance apparente de démarrage direct, $\sqrt{3} \times 400 \times 576 = 399\ \mathrm{kVA}$, vaut $2{,}5$ fois la
+    puissance du transformateur ; un creux de près de $9\ \%$ est donc attendu, ce que confirme $S_d/S_{cc} = 399/2565 = 15{,}6\ \%$ corrigé par
+    l'angle, $\cos(41{,}3^\circ - 69{,}5^\circ) = 0{,}88$, puis par la baisse du courant réel. Énergie : en direct, $13{,}1\ \mathrm{kJ}$ pour
+    $\tfrac{1}{2}J\varOmega_s^2 = 11{,}1\ \mathrm{kJ}$, soit un rapport de $1{,}18$ cohérent avec un couple résistant moyen de $0{,}37\ C_n$. Toutes
+    les méthodes décollent la pompe. Le direct est exclu par le creux. L'étoile-triangle passe au démarrage, mais commute à $1432\ \mathrm{tr/min}$
+    sous $222\ \mathrm{A}$ plus la pointe de reconnexion, demande un second câble de $50\ \mathrm{m}$ et presque double l'énergie rotorique.
+    L'autotransformateur donne le meilleur couple et une transition fermée, au prix d'un appareil encombrant et coûteux. Le démarreur progressif
+    respecte le critère de justesse, réutilise le câble à trois conducteurs, et son arrêt progressif supprime le coup de bélier à l'arrêt de la
+    pompe, que rien d'autre ne traite : il est retenu, réglé à $3{,}5\ I_n$, avec un contacteur de bypass. Son creux de $4{,}8\ \%$ laisse peu de
+    marge : si la mise en service mesure davantage, on abaisse la limite à $3\ I_n$, ce qui ramène le creux à $4{,}2\ \%$ avec un couple de
+    $0{,}43\ C_n$, encore trois fois suffisant, et un démarrage d'environ $1{,}7\ \mathrm{s}$ pour $21{,}5\ \mathrm{kJ}$ dans le rotor.
+  </p>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <p>
+    Le travail central de la séance consiste à choisir une méthode de démarrage pour trois cas industriels. Le premier est le compresseur du
+    projet fil rouge, étudié en détail ; les deux autres, un convoyeur chargé et un ventilateur à forte inertie, montrent les limites des
+    démarrages à tension réduite. Les chiffres viennent de la simulation de la section E et de celle de cette section, avec les modèles de
+    catalogue décrits plus haut.
+  </p>
+
+  <h3 id="i-compresseur">Cas 1, projet fil rouge : le démarreur du compresseur, en marche normale et sur groupe électrogène</h3>
+  <p>
+    Le moteur du compresseur, $18{,}5\ \mathrm{kW}$, $400/690\ \mathrm{V}$, couplé en triangle, $I_d = 7{,}5\ I_n = 252\ \mathrm{A}$,
+    $C_d = 2{,}3\ C_n$, est raccordé au tableau général par $30\ \mathrm{m}$ de câble $3 \times 10\ \mathrm{mm^2}$, pris ici à
+    $R_c = 56{,}3\ \mathrm{m\Omega}$ et $X_c = 2{,}4\ \mathrm{m\Omega}$ par phase. Le cours <a href="#/cours/moteur-asynchrone-triphase">Moteur
+    asynchrone triphasé</a> avait accepté un démarrage direct sous réserve : $228\ \mathrm{A}$, $373\ \mathrm{V}$ au jeu de barres, soit
+    $6{,}7\ \%$ de creux, sur le transformateur du poste, $R_{cc} = 29{,}26\ \mathrm{m\Omega}$ et $X_{cc} = 61{,}49\ \mathrm{m\Omega}$. Deux faits
+    obligent à rouvrir la question. Le cours <a href="#/cours/revision-4-et-mini-projet-qualite-reseau">Révision 4 et mini-projet qualité
+    réseau</a> a introduit un fonctionnement dégradé sur groupe électrogène, de puissance de court-circuit d'environ $0{,}5\ \mathrm{MVA}$,
+    modélisé ici par $32 + j318\ \mathrm{m\Omega}$ par phase, réactance transitoire seule et régulateur de tension ignoré, ce qui majore le creux
+    des premiers instants. Et le bilan du site retient désormais deux critères d'étude, hypothèses à valider avec l'exploitant : creux d'au plus
+    $5\ \%$ au jeu de barres sur le transformateur, pour l'éclairage et les équipements sensibles ; tension maintenue au-dessus de $90\ \%$ sur
+    groupe, pour les contacteurs du tableau. L'automate reste alimenté par le bus $24\ \mathrm{V}$ secouru et n'est pas concerné.
+  </p>
+  <figure id="i-compresseur-figure">
+    <svg viewBox="0 0 760 380" role="img" aria-label="Départ du compresseur en schéma unifilaire : transformateur du poste et groupe électrogène reliés au jeu de barres par un inverseur de sources ; départ avec protection Q3, contacteur de ligne KM3, démarreur progressif à thyristors avec contacteur de bypass, relais de surcharge F3, relais de contrôle des phases KA et moteur 18,5 kilowatts ; batterie de compensation avec self raccordée en amont par son contacteur KM4 ; automate qui choisit le jeu de réglages selon la source">
+      <defs>
+        <marker id="fl-i" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="70" cy="44" r="13"/>
+        <circle cx="70" cy="62" r="13"/>
+        <path d="M70 75V100"/>
+        <circle cx="200" cy="58" r="20"/>
+        <path d="M190 58c3-7 7-7 10 0s7 7 10 0" stroke-width="1.5"/>
+        <path d="M200 78V100"/>
+        <rect x="56" y="100" width="158" height="26" rx="4"/>
+        <path d="M135 126V150"/>
+        <path d="M40 150H700" stroke-width="5"/>
+        <path d="M300 150V180"/>
+        <rect x="286" y="180" width="28" height="22" rx="3"/>
+        <path d="M300 202V222"/>
+        <rect x="286" y="222" width="28" height="22" rx="3"/>
+        <path d="M300 244V262H350M410 262H460M300 262V300H460"/>
+        <rect x="350" y="250" width="60" height="24" rx="3"/>
+        <path d="M366 290L384 300L366 310ZM384 290V310"/>
+        <path d="M400 290L382 300L400 310Z"/>
+        <path d="M460 262V300H490"/>
+        <rect x="490" y="288" width="40" height="24" rx="3"/>
+        <path d="M530 300H560"/>
+        <rect x="560" y="288" width="34" height="24" rx="3"/>
+        <path d="M594 300H620"/>
+        <circle cx="642" cy="300" r="22"/>
+        <path d="M560 150V180"/>
+        <rect x="546" y="180" width="28" height="22" rx="3"/>
+        <path d="M560 202V222M548 222H572M548 230H572M560 230V246"/>
+        <path d="M560 246a6 6 0 0 1 0 12a6 6 0 0 1 0 12"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="5 4">
+        <path d="M140 330H660"/>
+        <path d="M135 126V330"/>
+        <path d="M380 330V318"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M600 280H624" marker-end="url(#fl-i)" stroke-width="3"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="12" y="30">T1 100 kVA, Dyn11</text>
+        <text x="228" y="40">groupe électrogène</text>
+        <text x="228" y="56">S_cc ≈ 0,5 MVA</text>
+        <text x="70" y="118">inverseur de sources</text>
+        <text x="40" y="142">jeu de barres du tableau général</text>
+        <text x="318" y="196">Q3</text>
+        <text x="318" y="238">KM3</text>
+        <text x="352" y="244">KM bypass</text>
+        <text x="350" y="326">thyristors</text>
+        <text x="496" y="330">F3</text>
+        <text x="566" y="330">KA</text>
+        <text x="634" y="305">M</text>
+        <text x="596" y="272">I_L</text>
+        <text x="670" y="290">18,5 kW</text>
+        <text x="670" y="306">compresseur</text>
+        <text x="580" y="196">KM4</text>
+        <text x="580" y="230">7,44 kvar</text>
+        <text x="584" y="262">self p = 7 %</text>
+        <text x="150" y="350">automate : position de l'inverseur → jeu de réglages ; KM4 fermé après le bypass</text>
+        <text x="150" y="368">réglages : 2,5 I_n sur transformateur, 2,0 I_n sur groupe</text>
+      </g>
+    </svg>
+    <figcaption>
+      Départ du compresseur en schéma unifilaire, un trait pour les trois phases. En haut, les deux sources, transformateur du poste et groupe
+      électrogène, rejoignent le jeu de barres, trait épais horizontal, par l'inverseur de sources. Le départ comporte la protection Q3, le
+      contacteur de ligne KM3, le démarreur progressif, symbole des deux thyristors tête-bêche en parallèle avec le contacteur de bypass, le relais
+      de surcharge F3, le relais de contrôle des phases KA et le moteur ; la flèche épaisse donne le sens du courant de ligne. La batterie de
+      compensation avec sa self anti-harmonique, à droite, quitte le contacteur du moteur pour son propre contacteur KM4, en amont du démarreur.
+      Les traits en tirets sont des liaisons de commande vers l'automate.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Calculs.</strong> Le compresseur à vis démarre vanne d'aspiration fermée, $0{,}075\ C_n$ au décollement et $0{,}25\ C_n$ à pleine
+    vitesse, avec $J = 0{,}45\ \mathrm{kg \cdot m^2}$. Sur le transformateur, le démarrage direct donne $228{,}5\ \mathrm{A}$ et $6{,}7\ \%$ de creux,
+    au-delà du nouveau critère ; sur le groupe, $185\ \mathrm{A}$ et $24{,}4\ \%$, inacceptable : le jeu de barres tomberait à $302\ \mathrm{V}$.
+    L'étoile-triangle est possible, puisque le moteur est marqué $400/690\ \mathrm{V}$ : $81\ \mathrm{A}$ en étoile, $0{,}72\ C_n$, équilibre à
+    $1477\ \mathrm{tr/min}$, et une pointe de reconnexion de $131\ \mathrm{A}$ avec le bon ordre de raccordement et $50\ \mathrm{ms}$ de temps mort ; sur
+    groupe, le jeu de barres descend à $360\ \mathrm{V}$, juste au seuil, et à $348\ \mathrm{V}$ si l'ordre est inversé. Elle exige toutefois six
+    conducteurs, donc un second câble de $30\ \mathrm{m}$. Le démarreur progressif limité à $2{,}5\ I_n = 84\ \mathrm{A}$ donne $2{,}5\ \%$ de creux sur
+    le transformateur, mais encore $11{,}2\ \%$ sur groupe ; limité à $2{,}0\ I_n = 67\ \mathrm{A}$, il ramène le creux sur groupe à $8{,}9\ \%$, avec
+    un couple de départ d'environ $0{,}16\ C_n$, deux fois le besoin, un démarrage de $3{,}7\ \mathrm{s}$ et $9{,}9\ \mathrm{kJ}$ dans le rotor, contre
+    $5{,}9\ \mathrm{kJ}$ en direct.
+  </p>
+
+  <h3 id="i-temps-section">Simulation interactive : le démarrage du compresseur dans le temps</h3>
+  <p>
+    La simulation intègre le démarrage du compresseur pour la source et le mode choisis et trace, en fonction du temps, le courant de ligne, la
+    vitesse et la tension du jeu de barres. Pour l'étoile-triangle, le temps mort et l'ordre de raccordement sont réglables, et la pointe de
+    reconnexion suit le modèle de la section E. Avant de manipuler, prédisez : sur le groupe électrogène, lequel des modes respecte le seuil de
+    $90\ \%$ ? Que coûte en durée et en énergie rotorique le passage de $2{,}5$ à $2\ I_n$ ? Un temps mort de $150\ \mathrm{ms}$ avec l'ordre
+    inversé est-il acceptable ?
+  </p>
+  <figure id="i-temps-figure">
+    <div id="i-temps-courant"></div>
+    <div id="i-temps-tension"></div>
+    <figcaption>
+      En haut, courant de ligne en fonction du temps, avec le courant nominal en trait horizontal pointillé et le cercle vide au maximum. En
+      bas, vitesse rapportée à la vitesse de synchronisme et tension du jeu de barres rapportée à $400\ \mathrm{V}$, avec le seuil d'étude en
+      trait horizontal en tirets : $95\ \%$ sur le transformateur, $90\ \%$ sur le groupe. Les séries sont nommées dans la légende de chaque tracé.
+    </figcaption>
+  </figure>
+  <div id="i-temps-curseurs"></div>
+  <div id="i-temps-valeurs"></div>
+  <p>
+    Interprétation : sur le transformateur, tous les modes sauf le direct respectent les $5\ \%$ : $3{,}0\ \%$ pour l'étoile-triangle bien
+    raccordée, pointe comprise, $2{,}5\ \%$ pour le démarreur à $2{,}5\ I_n$ et $2{,}0\ \%$ à $2\ I_n$. Sur groupe, seuls l'étoile-triangle bien raccordée,
+    $9{,}9\ \%$, et le démarreur progressif à $2\ I_n$, $8{,}9\ \%$, restent sous $10\ \%$ ; l'autotransformateur à $65\ \%$ en est à $12{,}2\ \%$.
+    Passer de $2{,}5$ à $2\ I_n$ fait passer la durée de $1{,}87$ à $3{,}73\ \mathrm{s}$ et l'énergie rotorique de $7{,}7$ à $9{,}9\ \mathrm{kJ}$ : le
+    couple d'accélération a été divisé par plus de deux. Avec l'ordre inversé et $150\ \mathrm{ms}$ de temps mort, la pointe de reconnexion atteint
+    $340\ \mathrm{A}$, plus que le démarrage direct, et le jeu de barres tombe à $307\ \mathrm{V}$ sur groupe : c'est exactement le défaut qu'un
+    démarreur étoile-triangle mal câblé ou mal temporisé fait apparaître, et que la courbe de courant rend évident.
+  </p>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Décision pour le projet fil rouge</span>
+    <p>
+      Démarreur progressif retenu pour le compresseur, avec contacteur de bypass, deux jeux de réglages choisis par l'automate selon la position
+      de l'inverseur de sources, $2{,}5\ I_n$ sur le transformateur et $2{,}0\ I_n$ sur groupe, si le modèle retenu offre cette fonction, sinon
+      $2{,}0\ I_n$ dans tous les cas. Raisons : câble à trois conducteurs conservé, pas de pointe de commutation, creux sous les deux critères,
+      couple de départ double du besoin. Conséquences : la batterie de $7{,}44\ \mathrm{kvar}$ et sa self, que le cours
+      <a href="#/cours/correction-du-facteur-de-puissance">Correction du facteur de puissance</a> commutait avec le moteur, passent en amont du
+      démarreur sur un contacteur KM4, fermé quelques secondes après le bypass et ouvert avec l'ordre d'arrêt ; le relais de surcharge
+      reste réglé à $33{,}6\ \mathrm{A}$, sa classe $10$ couvrant un démarrage de $3{,}7\ \mathrm{s}$ à $2\ I_n$ ; l'énergie rotorique de
+      $9{,}9\ \mathrm{kJ}$ sur groupe impose de vérifier auprès du constructeur le nombre de démarrages admissibles par heure, et la logique de
+      l'automate privilégiera la marche à vide temporisée plutôt que l'arrêt, pour espacer les démarrages.
+    </p>
+  </div>
+
+  <h3 id="i-convoyeur">Cas 2 : un convoyeur à bande chargé</h3>
+  <p>
+    Un convoyeur de carrière de $15\ \mathrm{kW}$ doit pouvoir redémarrer bande pleine après un arrêt d'urgence : couple de décollement de
+    $1{,}2\ C_n$, puis $0{,}9\ C_n$ constant, $J = 0{,}35\ \mathrm{kg \cdot m^2}$, moteur $I_d = 7{,}4\ I_n$, $C_d = 2{,}4\ C_n$, sur un tableau
+    de $10\ \mathrm{MVA}$ de puissance de court-circuit. Avec $25\ \%$ de marge, il faut $1{,}5\ C_n$ au départ, soit $C/C_d \ge 0{,}625$. L'étoile-triangle
+    donne $0{,}79\ C_n$, l'autotransformateur à $65\ \%$, $1{,}0\ C_n$, le démarreur progressif à $4\ I_n$, $0{,}70\ C_n$ : aucun ne décolle la bande. Il
+    faudrait une prise d'autotransformateur d'au moins $\sqrt{0{,}625} = 79\ \%$, ou un démarreur progressif d'au moins $0{,}79 \times 7{,}4 =
+    5{,}9\ I_n$ : le gain de courant devient dérisoire. Le démarrage direct, lui, ne crée que $1{,}4\ \%$ de creux et dure $0{,}38\ \mathrm{s}$ : il est
+    électriquement acceptable. Le vrai problème est mécanique : $2{,}3\ C_n$ appliqués d'un coup font patiner la bande et fatiguent jonctions et
+    réducteur. Choix : variateur de fréquence, qui donne $1{,}5\ C_n$ avec environ $1{,}5\ I_n$ et une accélération réglée, ou, à moindre coût, démarrage
+    direct avec un coupleur hydraulique qui laisse le moteur accélérer à vide avant de transmettre progressivement le couple.
+  </p>
+
+  <h3 id="i-ventilateur">Cas 3 : un ventilateur de tirage à forte inertie</h3>
+  <p>
+    Un ventilateur de $90\ \mathrm{kW}$, $J = 25\ \mathrm{kg \cdot m^2}$ au total, couple quadratique de $0{,}05\ C_n$ au décollement à
+    $0{,}9\ C_n$ en pleine vitesse, est alimenté par un transformateur de $1000\ \mathrm{kVA}$, environ $16{,}7\ \mathrm{MVA}$ au tableau. L'énergie
+    rotorique minimale est $\tfrac{1}{2}J\varOmega_s^2 = 308\ \mathrm{kJ}$. En direct : $1073\ \mathrm{A}$, $4{,}2\ \%$ de creux, $4{,}7\ \mathrm{s}$ et
+    $356\ \mathrm{kJ}$. En étoile-triangle, le couple, divisé par $3$, rejoint le couple résistant vers $1120\ \mathrm{tr/min}$ : le démarrage
+    traîne $51\ \mathrm{s}$, le rotor reçoit $921\ \mathrm{kJ}$, et la commutation reprend près de $5\ I_n$. Le démarreur progressif à $4\ I_n$ donne
+    $10{,}3\ \mathrm{s}$ et $410\ \mathrm{kJ}$, à $3{,}5\ I_n$, $16{,}5\ \mathrm{s}$ et $475\ \mathrm{kJ}$. Le constructeur indique un temps de démarrage
+    admissible, hypothèse de cet exemple, de $12\ \mathrm{s}$ à froid. Choix : démarrage direct si le creux de $4{,}2\ \%$ est accepté, avec un relais
+    de surcharge de classe $20$ ou $30$ adapté à un démarrage de près de $5\ \mathrm{s}$ ; démarreur progressif à $4\ I_n$ en limite seulement si le
+    réseau l'impose ; et, si le débit doit varier, variateur de fréquence, dont l'économie d'énergie en marche justifie à elle seule le coût.
+  </p>
+
+  <h3 id="i-compromis">Contraintes, risques et compromis</h3>
+  <ul>
+    <li><strong>Réseau contre rotor :</strong> chaque réduction du courant de ligne allonge le démarrage et augmente l'énergie rotorique dès que la charge oppose un couple ; sur une machine lourde ou à forte inertie, elle peut faire caler le moteur ou dépasser son temps de démarrage admissible.</li>
+    <li><strong>Transformation contre chute de tension :</strong> étoile-triangle et autotransformateur donnent deux à trois fois plus de couple qu'un démarreur progressif pour le même courant de ligne, mais imposent une plaque, des conducteurs, un appareil encombrant ou une transition à maîtriser.</li>
+    <li><strong>Mécanique :</strong> le démarrage direct est électriquement le plus économe en énergie rotorique mais le plus brutal pour la transmission ; l'arrêt progressif ne s'obtient qu'avec un démarreur électronique ou un variateur.</li>
+    <li><strong>Compatibilité :</strong> condensateurs en amont d'un gradateur, harmoniques de démarrage sur source faible, réglage des protections et sélectivité pendant le démarrage, nombre de démarrages par heure.</li>
+    <li><strong>Incertitudes :</strong> courbes reconstituées, facteur de puissance au démarrage supposé, groupe électrogène réduit à une réactance transitoire, critères de creux fixés par hypothèse : la mise en service doit enregistrer courant, tension et durée du premier démarrage sur chaque source.</li>
+  </ul>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Croire que le couple varie comme la tension.</strong> Il varie comme son carré : à $70\ \%$ de tension, il reste $49\ \%$ du couple, pas $70\ \%$. L'erreur fait accepter des démarrages à tension réduite qui calent.</li>
+    <li><strong>Assimiler courant limite et couple disponible.</strong> Un démarreur progressif à $3\ I_n$ et un étoile-triangle à $2{,}5\ I_n$ ne se valent pas : le premier ne donne que $0{,}37\ C_n$ au moteur du compresseur, le second $0{,}77\ C_n$. Ce qui compte est le couple par ampère pris au réseau.</li>
+    <li><strong>Croire qu'un démarrage doux ménage le rotor.</strong> L'énergie rotorique ne descend jamais sous $\tfrac{1}{2}J\varOmega_s^2$ et augmente quand le couple moteur se rapproche du couple résistant : $24{,}6\ \mathrm{kJ}$ en étoile-triangle contre $13{,}1\ \mathrm{kJ}$ en direct pour la pompe de la section H.</li>
+    <li><strong>Démarrer en étoile-triangle un moteur marqué $230/400\ \mathrm{V}$ sur un réseau $400\ \mathrm{V}$.</strong> En triangle, ses enroulements recevraient $400\ \mathrm{V}$ au lieu de $230\ \mathrm{V}$ : le flux et le courant magnétisant exploseraient. Ce moteur fonctionne en étoile, et ne peut démarrer qu'en direct, par autotransformateur ou par démarreur électronique.</li>
+    <li><strong>Commuter en triangle avant l'équilibre en étoile, ou sur une charge trop lourde.</strong> À $1000\ \mathrm{tr/min}$, la commutation reprend presque le courant de démarrage direct ; une pompe vanne ouverte peut plafonner en étoile et ne rien gagner.</li>
+    <li><strong>Régler le relais de surcharge d'un étoile-triangle à $I_n$.</strong> Placé dans le circuit des enroulements, il voit $I_n/\sqrt{3}$ en marche ; réglé à $I_n$, il ne protège plus le moteur. Il se règle à $0{,}58\ I_n$, sauf s'il est placé en ligne.</li>
+    <li><strong>Raccorder des condensateurs en aval d'un démarreur progressif.</strong> Chaque amorçage appliquerait un échelon de tension à une capacité : pointes de courant destructrices pour les thyristors. Ils se raccordent en amont, sur leur propre contacteur.</li>
+    <li><strong>Calculer le creux avec le courant nominal de démarrage sans tenir compte de l'impédance amont.</strong> On surestime le courant et le creux : $7{,}4\ \%$ au lieu de $6{,}7\ \%$ pour le compresseur ; à l'inverse, oublier le câble sous-estime la chute aux bornes du moteur, donc surestime son couple.</li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain. Un moteur en étoile-triangle qui plafonne en étoile à une vitesse nettement inférieure à celle du synchronisme
+    signale un couple résistant trop fort en étoile : vanne ouverte, filtre colmaté, frein mal desserré. Un déclenchement du relais pendant le
+    démarrage signale une durée trop longue pour sa classe, ou un réglage inadapté à sa position. Une pointe de courant élevée et un à-coup
+    mécanique à la commutation signalent un temps mort trop long ou un ordre de raccordement inversé. Un creux plus profond que prévu signale une
+    impédance amont sous-estimée, typiquement un fonctionnement sur groupe. Un démarreur progressif qui s'arrête en défaut de surchauffe signale
+    des démarrages trop longs ou trop rapprochés. Dans tous les cas, la démarche est la même : enregistrer courant de ligne, tension et vitesse
+    pendant le démarrage, puis comparer la courbe à celle que prévoit le modèle.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic industriel et une
+    question conceptuelle. Ils vont de l'application directe d'une formule au choix de la méthode, au calcul multi-étapes, au dimensionnement
+    sous contrainte et au diagnostic. La correction de chacun reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la correction",
+    puis se déroule étape par étape, accompagnée d'un schéma annoté ou d'une courbe.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Après chaque réponse,
+    l'explication s'affiche avec un petit schéma tracé pas à pas.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$I = u\,I_d, \qquad C = u^2\,C_d$$
+    $$\text{étoile-triangle : } I_L = \frac{I_d}{3}, \quad C = \frac{C_d}{3} ; \qquad \text{autotransformateur : } I_L = k^2 I_d, \quad C = k^2 C_d$$
+    $$\text{démarreur progressif : } u = \frac{I_{lim}}{I_d}, \qquad C = \left(\frac{I_{lim}}{I_d}\right)^2 C_d$$
+    $$\frac{\Delta U}{U} \approx \frac{(R_r\cos\varphi_d + X_r\sin\varphi_d)\,I_d}{V} \approx \frac{S_d}{S_{cc}}\cos(\psi_r - \varphi_d)$$
+    $$t_d = J\varOmega_s\int \frac{\mathrm{d}x}{C_m - C_r}, \qquad W_r = \frac{1}{2}J\varOmega_s^2\,\frac{C_m}{C_m - C_r} \text{ à couples constants}$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>Le couple varie comme le carré de la tension : vérifier le décollement et l'absence d'équilibre intermédiaire à toutes les vitesses.</li>
+      <li>Comparer les méthodes au même courant de ligne : la transformation de tension donne plus de couple que la chute de tension.</li>
+      <li>Réduire le courant n'économise jamais l'énergie rotorique : contrôler durée et échauffement avec les données du constructeur.</li>
+      <li>Étoile-triangle : plaque $400/690\ \mathrm{V}$, six conducteurs, commutation à l'équilibre, temps mort court, bon ordre de raccordement, relais à $I_n/\sqrt{3}$.</li>
+      <li>Démarreur progressif : bypass, condensateurs toujours en amont, harmoniques de démarrage sur source faible.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> À l'arrêt, un moteur asynchrone est un quasi court-circuit : cinq à huit fois son courant nominal pendant presque
+    tout le démarrage, et un creux de tension pour le tableau. Réduire la tension appliquée réduit le courant comme $u$ et le couple comme $u^2$.
+    L'étoile-triangle et l'autotransformateur transforment la tension : le courant de ligne baisse comme le couple, par $3$ ou par $k^2$. Le
+    démarreur progressif et les résistances la chutent : à courant de ligne égal, ils donnent moins de couple. Toute réduction de couple allonge
+    le démarrage et augmente l'énergie dissipée dans le rotor, au moins égale à l'énergie cinétique finale. Le choix dépend du couple résistant,
+    de l'inertie, de la puissance de court-circuit et des contraintes mécaniques ; démarrage direct d'abord, puis transformation, chute de tension
+    ou variateur selon la charge.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent, <a href="#/cours/schema-equivalent-du-moteur-asynchrone">Schéma
+    équivalent du moteur asynchrone</a>, dont le couple et ses limites au démarrage fondent cette séance ; une sur le cours
+    <a href="#/cours/essais-a-vide-et-en-court-circuit">Essais à vide et en court-circuit</a>, vieux d'une semaine, qui fournit la tension de
+    court-circuit utilisée pour le creux ; une sur le cours <a href="#/cours/inductances-et-champ-magnetique">Inductances et champ
+    magnétique</a>, vieux d'un mois, dont l'énergie magnétique explique l'arc qui impose le temps mort de l'étoile-triangle.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : programmer en Python un simulateur de démarrage, retrouver les chiffres du compresseur et de la pompe, puis observer dans
+    LTspice la forme d'onde d'un gradateur. Prédictions à écrire avant de commencer : durée d'un démarrage direct du compresseur ; vitesse
+    d'équilibre de la pompe en étoile ; angle d'amorçage qui ramène le fondamental du courant à la moitié de sa valeur directe.
+  </p>
+  <ol>
+    <li>Écrire une fonction <code>couple(g)</code> de Kloss à glissement critique variable, $C = 2C_{max}/(g/\gamma + \gamma/g)$, $\gamma = \gamma_0(1 + \kappa g^2)$, et ajuster $\gamma_0$ et $\kappa$ sur $C_n$ à $g_n$ et $C_d$ à $g = 1$ pour le compresseur, $2{,}3$ et $2{,}9\ C_n$ ; vérifier que le maximum vaut bien $2{,}9\ C_n$ vers $1324\ \mathrm{tr/min}$.</li>
+    <li>Modéliser le moteur à l'arrêt par $Z_d = 0{,}9164\ \mathrm{\Omega}$ à $\cos\varphi_d = 0{,}40$, le transformateur et le câble par leurs impédances, et retrouver $228{,}5\ \mathrm{A}$ et $373{,}1\ \mathrm{V}$ au jeu de barres ; refaire le calcul sur le groupe, $0{,}032 + j0{,}318\ \mathrm{\Omega}$.</li>
+    <li>Intégrer $J\,\mathrm{d}\varOmega/\mathrm{d}t = u^2C(g) - C_r$ par la méthode d'Euler avec un pas de $0{,}5\ \mathrm{ms}$, en supposant le courant proportionnel à $u$ ; tracer avec <code>matplotlib</code> vitesse, couple et courant en fonction du temps, et calculer $W_r = \int C_m\varOmega_s g\,\mathrm{d}t$.</li>
+    <li>Ajouter l'étoile-triangle, commutation à l'équilibre, et le démarreur progressif à courant limité ; comparer avec les valeurs des sections H et I.</li>
+    <li>Facultatif, avec LTspice : une phase équivalente, source de $230{,}94\ \mathrm{V}$ efficaces, soit $326{,}6\ \mathrm{V}$ crête, à $50\ \mathrm{Hz}$, charge $R = 0{,}3666\ \mathrm{\Omega}$ en série avec $L = 2{,}673\ \mathrm{mH}$, c'est-à-dire $0{,}9164\ \mathrm{\Omega}$ à $\cos\varphi = 0{,}40$, et deux interrupteurs commandés tête-bêche ou deux thyristors de bibliothèque, amorcés par des impulsions retardées de $\alpha/360 \times 20\ \mathrm{ms}$ ; balayer <code>.step param alpha list 60 90 117 140</code>, laisser s'établir le régime pendant $0{,}1\ \mathrm{s}$, et mesurer la valeur efficace du courant et son fondamental par <code>.four 50 I(R1)</code>.</li>
+  </ol>
+  <p>
+    Résultats attendus : démarrage direct du compresseur en $0{,}31\ \mathrm{s}$ jusqu'à $95\ \%$ de $n_s$, $5{,}9\ \mathrm{kJ}$ dans le rotor ; sur groupe,
+    $185\ \mathrm{A}$ et $302\ \mathrm{V}$ ; pompe en étoile à l'équilibre vers $1430\ \mathrm{tr/min}$ ; gradateur : courant continu de $252\ \mathrm{A}$
+    efficaces pour $\alpha = 60^\circ$, fondamental de $0{,}69$ fois cette valeur, $175\ \mathrm{A}$, à $90^\circ$, de $0{,}33$, $84\ \mathrm{A}$, à $117^\circ$,
+    et de $0{,}11$ à $140^\circ$ ; la moitié est atteinte vers $104^\circ$. Anomalies à observer : un pas d'intégration trop grand fait osciller la
+    vitesse autour de l'équilibre ; oublier l'impédance amont surestime le couple de $10$ à $20\ \%$ ; dans LTspice, un thyristor dont l'impulsion
+    de gâchette est trop courte ne s'amorce pas tant que le courant n'a pas dépassé son courant d'accrochage, et une mesure prise avant le régime
+    établi garde la composante continue de l'enclenchement.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est calculé dans ce navigateur à
+    partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement pour suivre votre progression.
+    Le jalon de fin du module des machines électriques demande de choisir une solution d'entraînement : savoir chiffrer et comparer les modes de
+    démarrage en est une pièce indispensable, que la séance de synthèse du module mettra en œuvre sur une pompe, un convoyeur et une centrifugeuse.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">À tension réduite, le courant varie comme $u$ et le couple comme $u^2$ : réduire le courant coûte toujours du couple, et le démarrage n'est possible que si le couple disponible reste au-dessus du couple résistant à toutes les vitesses.</li>
+    <li data-rang="02">L'étoile-triangle et l'autotransformateur transforment la tension et réduisent le courant de ligne autant que le couple ; le démarreur progressif et les résistances la chutent et donnent moins de couple pour le même courant.</li>
+    <li data-rang="03">L'énergie dissipée dans le rotor ne descend jamais sous $\tfrac{1}{2}J\varOmega_s^2$ et augmente quand le couple d'accélération diminue : une charge lourde ou une forte inertie se démarre en direct ou au variateur.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> raisonner simultanément sur le courant de ligne, la tension réellement appliquée à chaque
+    enroulement et le couple, sans confondre les facteurs $u$, $u^2$, $k$, $k^2$ et $1/\sqrt{3}$, puis passer du point de démarrage à toute la
+    plage de vitesse pour repérer un équilibre intermédiaire. L'exemple de la section H, le schéma principal de la section F et la simulation
+    comparative sont faits pour installer ces automatismes.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Variation de vitesse des moteurs asynchrones, montre comment un variateur démarre
+    le convoyeur chargé avec $1{,}5\ C_n$ pour environ $1{,}5\ I_n$. Question à préparer : le flux du moteur est proportionnel au rapport $U/f$ ; si
+    l'on abaisse la fréquence à $5\ \mathrm{Hz}$ en gardant ce rapport, quelle tension faut-il appliquer à ce moteur de $400\ \mathrm{V}$, $50\ \mathrm{Hz}$,
+    quelle est alors la vitesse de synchronisme, et pourquoi le glissement en tours par minute nécessaire pour produire le couple nominal reste-t-il
+    à peu près le même qu'à $50\ \mathrm{Hz}$ ?
+  </p>
+
+</article>
