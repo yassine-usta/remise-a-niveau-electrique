@@ -1,0 +1,1201 @@
+<article class="cours" data-slug="variation-de-vitesse-des-moteurs-asynchrones">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/demarrage-des-moteurs-asynchrones">Démarrage des moteurs asynchrones</a> s'est achevé sur une question : le flux
+      du moteur est proportionnel au rapport $U/f$ ; si l'on abaisse la fréquence à $5\ \mathrm{Hz}$ en gardant ce rapport, quelle tension faut-il
+      appliquer à un moteur de $400\ \mathrm{V}$, $50\ \mathrm{Hz}$, quelle est la vitesse de synchronisme, et pourquoi le glissement en tours par
+      minute nécessaire au couple nominal reste-t-il à peu près le même ? La réponse tient en trois lignes : $U = 400 \times 5/50 = 40\ \mathrm{V}$ ;
+      pour un moteur à quatre pôles, $n_s = 60 \times 5/2 = 150\ \mathrm{tr/min}$ ; et à flux constant, le couple ne dépend que de la fréquence des
+      courants rotoriques, donc de l'écart de vitesse $n_s - n$, pas de $n_s$ lui-même. Cette séance démontre ce dernier point, qui est la clé de
+      toute la variation de vitesse, puis montre pourquoi les $40\ \mathrm{V}$ ne suffisent pas en pratique. Elle s'appuie aussi sur le cours
+      <a href="#/cours/schema-equivalent-du-moteur-asynchrone">Schéma équivalent du moteur asynchrone</a>, dont le circuit en T sera réutilisé à
+      fréquence variable, et sur le bus continu du variateur de la pompe du site, dimensionné dans le cours
+      <a href="#/cours/condensateurs-et-champ-electrique">Condensateurs et champ électrique</a>.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Alimenté directement par le réseau, un moteur asynchrone tourne à une vitesse presque fixe, à quelques pour cent de sa vitesse de
+    synchronisme $60f/p$. Or la plupart des machines entraînées n'ont pas besoin d'une vitesse fixe : une pompe doit fournir un débit ou une
+    pression, un ventilateur un débit d'air, un convoyeur une cadence, un enrouleur une tension de bande. Pendant des décennies, on a adapté la
+    machine au besoin par des moyens dissipatifs : vanne d'étranglement, registre, recyclage, embrayage à friction, résistances rotoriques. Le
+    variateur de fréquence a renversé la logique : il fabrique, à partir du réseau à $50\ \mathrm{Hz}$, un système triphasé de fréquence et de
+    tension réglables, et fait tourner le moteur exactement à la vitesse utile. Sur une pompe ou un ventilateur, dont la puissance varie comme le
+    cube de la vitesse, l'économie atteint couramment $30$ à $50\ \%$ de l'énergie ; sur un convoyeur ou un levage, c'est la maîtrise du couple à
+    toutes les vitesses, du démarrage doux et du freinage qui compte.
+  </p>
+  <p>
+    Encore faut-il commander correctement le moteur. Changer la fréquence sans changer la tension sature le circuit magnétique ou l'affaiblit ;
+    garder la tension proportionnelle à la fréquence ne suffit plus à très basse vitesse, où la résistance du stator prend le dessus ; et au-delà
+    de la fréquence nominale, la tension ne peut plus suivre, si bien que le couple disponible baisse. Le travail central de la séance est de
+    déterminer la fréquence et la tension à appliquer pour obtenir une consigne de vitesse sous une charge donnée, dans la zone de couple constant
+    comme dans la zone de puissance constante. Dans le projet fil rouge, il conduit à la loi de commande du variateur de la pompe du site, à ses
+    limites de fréquence en marche normale et sur groupe électrogène, et au chiffrage de l'économie d'énergie qui justifie le variateur.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Établir que, à flux constant, le couple d'un moteur asynchrone ne dépend que de la pulsation des courants rotoriques, et en déduire que les courbes couple-vitesse se translatent quand la fréquence varie.</li>
+    <li data-rang="02">Calculer la fréquence et la tension d'alimentation qui donnent une vitesse imposée sous un couple imposé, à la main par la loi linéaire du glissement, puis vérifier le résultat avec le schéma équivalent.</li>
+    <li data-rang="03">Expliquer pourquoi la loi $U/f$ constante doit être complétée par une compensation de la chute ohmique du stator à basse fréquence, et dimensionner cette compensation.</li>
+    <li data-rang="04">Distinguer la zone de couple constant, la zone de puissance constante et la zone limitée par le couple maximal, et calculer le flux, le couple disponible et le couple maximal au-delà de la fréquence de base.</li>
+    <li data-rang="05">Comparer la loi linéaire, la loi quadratique, le contrôle vectoriel et les procédés anciens de variation de vitesse, et choisir le procédé adapté à une charge.</li>
+    <li data-rang="06">Chiffrer l'économie d'énergie d'une pompe centrifuge régulée par la vitesse plutôt que par une vanne, en énonçant les hypothèses et leurs limites.</li>
+    <li data-rang="07">Diagnostiquer les défauts typiques d'un entraînement à vitesse variable : calage à basse vitesse, échauffement en marche lente prolongée, surtension du bus au freinage, surcharge au-delà de la fréquence nominale.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois acquis suffisent. Le premier, vu dans le cours <a href="#/cours/moteur-asynchrone-triphase">Moteur asynchrone triphasé</a> : la vitesse
+    de synchronisme vaut $n_s = 60f/p$, en $\mathrm{tr/min}$, avec $p$ le nombre de paires de pôles, et le glissement $g = (n_s - n)/n_s$ ; les
+    courants du rotor ont la fréquence $f_r = gf$. Le deuxième, vu dans le cours <a href="#/cours/transformateur-ideal">Transformateur idéal</a> :
+    la force électromotrice d'un enroulement de $N$ spires traversé par un flux sinusoïdal vaut $E = 4{,}44\,N f\,\hat{\varPhi}$, donc le flux
+    crête est imposé par le rapport $E/f$. Le troisième, vu dans le cours <a href="#/cours/schema-equivalent-du-moteur-asynchrone">Schéma
+    équivalent du moteur asynchrone</a> : le couple électromagnétique s'écrit $C_{em} = 3R_2'I_2'^2/(g\varOmega_s)$, et dans la zone utile le
+    glissement est à peu près proportionnel au couple. Le mini-test n'est pas noté ; la correction de chaque question reste masquée jusqu'à une
+    tentative ou un clic explicite sur "Voir la correction".
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Notation de la séance</span>
+    <p>
+      $f$ est la fréquence statorique imposée par le variateur, $f_b$ la fréquence de base, au-delà de laquelle la tension ne peut plus croître,
+      ici $50\ \mathrm{Hz}$ ; $\omega = 2\pi f$ la pulsation statorique, $\varOmega_s = \omega/p$ la vitesse angulaire de synchronisme et $\varOmega$
+      celle du rotor. $U$ est la tension composée appliquée au moteur, $V = U/\sqrt{3}$ la tension simple de l'étoile équivalente ; $E$ la force
+      électromotrice par phase, aux bornes de la branche magnétisante. $\varPsi = E/\omega$ est le flux totalisé efficace par phase, en webers,
+      proportionnel au flux d'entrefer. $f_r = gf$ est la fréquence rotorique, $\omega_r = 2\pi f_r$ sa pulsation, et $\Delta n = n_s - n = 60f_r/p$
+      l'écart de vitesse, en $\mathrm{tr/min}$, que l'on appellera glissement en vitesse. $U_0$ est la tension de compensation à fréquence nulle,
+      ou surtension de démarrage. $C_n$, $I_n$, $P_n$ et $\Delta n_n$ sont les grandeurs nominales, $C_r$ le couple résistant. Les impédances sont
+      données par phase de l'étoile équivalente, à $50\ \mathrm{Hz}$ ; une réactance $X$ devient $X\,f/50$ à la fréquence $f$. Le symbole droit
+      $\mathrm{\Omega}$ reste réservé à l'ohm.
+    </p>
+  </div>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-vitesse">Faire tourner le champ plus lentement ou plus vite</h3>
+  <p>
+    Le rotor d'un moteur asynchrone suit le champ tournant avec un léger retard : c'est ce retard qui induit les courants rotoriques et donc le
+    couple. Pour changer la vitesse du rotor, le moyen le plus direct est de changer la vitesse du champ, c'est-à-dire la fréquence des courants
+    du stator. Le réseau impose $50\ \mathrm{Hz}$ ; il faut donc un convertisseur. Le variateur de fréquence courant procède en deux temps : un
+    redresseur transforme le réseau triphasé en tension continue, stockée dans les condensateurs d'un bus continu, puis un onduleur à transistors
+    découpe cette tension continue en impulsions dont la valeur moyenne glissante reconstitue trois tensions sinusoïdales de fréquence et
+    d'amplitude choisies. Le moteur ne voit que leur fondamental, filtré par ses inductances. Le fonctionnement interne de ces convertisseurs fera
+    l'objet des cours Redresseurs triphasés et Onduleurs triphasés ; cette séance regarde le variateur comme une source triphasée idéale, de
+    fréquence et de tension réglables, et se concentre sur ce que le moteur en fait.
+  </p>
+  <figure id="d-chaine-figure">
+    <svg viewBox="0 0 760 330" role="img" aria-label="Chaîne de variation de vitesse : réseau triphasé 400 volts 50 hertz, redresseur à diodes, bus continu de 565,7 volts avec ses condensateurs, onduleur à modulation de largeur d'impulsions, moteur asynchrone alimenté en fréquence et tension variables ; sens des courants et polarités du bus">
+      <defs>
+        <marker id="fl-d-ch" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 90H120M20 120H120M20 150H120"/>
+        <rect x="120" y="70" width="100" height="100" rx="6"/>
+        <path d="M150 135l20-30l20 30zM150 105h40" stroke-width="1.6"/>
+        <path d="M220 90H470M220 150H470"/>
+        <path d="M300 90V110M300 130V150"/>
+        <path d="M284 110H316M284 130H316" stroke-width="3"/>
+        <path d="M380 90V108M380 132V150"/>
+        <rect x="372" y="108" width="16" height="24" rx="2"/>
+        <rect x="470" y="70" width="110" height="100" rx="6"/>
+        <path d="M495 120h20l8-14 8 28 8-28 8 28 8-14h10" stroke-width="1.5"/>
+        <path d="M580 90H660M580 120H648M580 150H660"/>
+        <path d="M660 90V100M660 150V140"/>
+        <circle cx="680" cy="120" r="30"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M40 66H96" marker-end="url(#fl-d-ch)" stroke-width="2.6"/>
+        <path d="M236 70H284" marker-end="url(#fl-d-ch)" stroke-width="2.6"/>
+        <path d="M594 66H640" marker-end="url(#fl-d-ch)" stroke-width="2.6"/>
+        <path d="M250 146V96" marker-end="url(#fl-d-ch)"/>
+        <path d="M525 220V178" marker-end="url(#fl-d-ch)" stroke-dasharray="6 4"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="20" y="84">L1</text>
+        <text x="20" y="114">L2</text>
+        <text x="20" y="144">L3</text>
+        <text x="12" y="232">réseau 230/400 V</text>
+        <text x="12" y="248">50 Hz fixe</text>
+        <text x="40" y="58">courants de ligne</text>
+        <text x="124" y="190">redresseur</text>
+        <text x="124" y="206">à diodes</text>
+        <text x="226" y="84">+</text>
+        <text x="226" y="166">-</text>
+        <text x="238" y="62">i_dc</text>
+        <text x="200" y="126">U_dc</text>
+        <text x="322" y="124">C</text>
+        <text x="394" y="124">R_éq</text>
+        <text x="268" y="190">bus continu</text>
+        <text x="268" y="206">565,7 V, 2,2 mF</text>
+        <text x="474" y="190">onduleur MLI</text>
+        <text x="474" y="206">transistors IGBT</text>
+        <text x="596" y="58">i_u, i_v, i_w</text>
+        <text x="596" y="84">U</text>
+        <text x="596" y="114">V</text>
+        <text x="596" y="144">W</text>
+        <text x="666" y="116">M</text>
+        <text x="666" y="132">3~</text>
+        <text x="618" y="190">f et U réglables</text>
+        <text x="618" y="206">0 à 400 V</text>
+        <text x="440" y="242">consigne de vitesse, loi U(f)</text>
+        <text x="12" y="276">référence des potentiels du bus : borne - ; la flèche de U_dc pointe vers la borne +</text>
+        <text x="12" y="298">flèches épaisses : sens positif de l'énergie en fonctionnement moteur, du réseau vers l'arbre</text>
+        <text x="12" y="320">au freinage, i_dc s'inverse ; le redresseur à diodes ne peut pas renvoyer l'énergie au réseau</text>
+      </g>
+    </svg>
+    <figcaption>
+      Chaîne de variation de vitesse, en schéma multifilaire simplifié. À gauche, le réseau triphasé à fréquence fixe ; le redresseur à diodes
+      charge le bus continu, dont la borne moins sert de référence des potentiels et dont la tension $U_{dc}$, fléchée vers la borne plus, vaut
+      environ $\sqrt{2} \times 400 = 565{,}7\ \mathrm{V}$ ; le condensateur $C$ et les résistances d'équilibrage, regroupées en $R_{\text{éq}}$, sont ceux
+      du bus de la pompe du site. L'onduleur reçoit la consigne, en tirets, et fabrique les trois tensions $U$, $V$, $W$ appliquées au moteur.
+      Les flèches épaisses donnent le sens positif des courants et de l'énergie en fonctionnement moteur, en convention récepteur côté moteur et
+      côté bus. La tension composée maximale que l'onduleur peut reconstituer, environ $U_{dc}/\sqrt{2} = 400\ \mathrm{V}$ en modulation
+      vectorielle, est celle du réseau : c'est elle qui fixera la fréquence de base.
+    </figcaption>
+  </figure>
+
+  <h3 id="d-flux-section">Le flux est fixé par le rapport de la tension à la fréquence</h3>
+  <p>
+    Un enroulement de stator n'est pas une résistance : la tension qu'on lui applique est presque entièrement équilibrée par la force
+    électromotrice due à la variation du flux, $v \approx N\,\mathrm{d}\varphi/\mathrm{d}t$. Le flux est donc l'intégrale de la tension : pour une
+    tension sinusoïdale d'amplitude donnée, plus la fréquence est basse, plus chaque alternance dure longtemps, et plus le flux a le temps de
+    monter. Le flux crête est proportionnel à $U/f$. Si l'on baisse la fréquence sans baisser la tension, le flux dépasse sa valeur nominale, le fer
+    sature, et le courant magnétisant explose, exactement comme un transformateur alimenté à $50\ \mathrm{Hz}$ par une tension prévue pour
+    $60\ \mathrm{Hz}$ trop forte. Si l'on augmente la fréquence sans augmenter la tension, le flux baisse, et avec lui le couple obtenu pour un courant
+    donné. La règle de base du variateur en découle : garder $U/f$ constant, $400/50 = 8\ \mathrm{V/Hz}$ pour un moteur $400\ \mathrm{V}$,
+    $50\ \mathrm{Hz}$, pour garder le flux à sa valeur nominale.
+  </p>
+  <p>
+    L'animation ci-dessous trace la tension simple appliquée à une phase et le flux qui en résulte, sur une fenêtre fixe de $100\ \mathrm{ms}$. Réglez
+    la fréquence et la loi de commande par les curseurs ; déplacez l'instant observé par la poignée ronde sur l'axe du temps, ou lancez la lecture.
+    Avant de manipuler, prédisez : à tension fixée à $400\ \mathrm{V}$, que devient l'amplitude du flux à $25\ \mathrm{Hz}$, et que devient le courant
+    magnétisant ? En loi $U/f$ constante, l'amplitude de la tension change-t-elle quand on passe de $50$ à $10\ \mathrm{Hz}$, et celle du flux ?
+  </p>
+  <figure id="d-flux-figure">
+    <div class="schema-vivant" id="d-flux"></div>
+    <figcaption>
+      Tension simple $v(t)$, trait fin, et flux $\varphi(t)$, trait épais, d'une phase du stator, en valeurs rapportées à leurs valeurs crête
+      nominales. Les deux droites horizontales en tirets marquent le flux crête nominal, positif et négatif, placé au coude de la courbe de saturation supposée. Le flux est en
+      quadrature retard sur la tension, puisqu'il en est l'intégrale. Le point plein suit l'instant choisi sur l'axe du temps, qui porte la poignée.
+      Le cadre de droite traduit le flux crête en courant magnétisant à l'aide d'une courbe de saturation supposée, linéaire jusqu'au flux nominal.
+    </figcaption>
+  </figure>
+  <div id="d-flux-curseurs"></div>
+  <div id="d-flux-lecteur"></div>
+  <div id="d-flux-valeurs"></div>
+  <p>
+    Interprétation : à $400\ \mathrm{V}$ fixes et $25\ \mathrm{Hz}$, le flux crête double, et le courant magnétisant, dans le modèle de saturation
+    supposé, est multiplié par dix ; le moteur chaufferait à vide. En loi $U/f$ constante, la tension crête est divisée par cinq entre $50$ et
+    $10\ \mathrm{Hz}$, mais chaque alternance dure cinq fois plus longtemps : le flux crête reste exactement à sa valeur nominale. Au-delà de
+    $50\ \mathrm{Hz}$, la loi plafonnée garde $400\ \mathrm{V}$ et le flux décroît comme $50/f$ : c'est le défluxage, qu'on étudiera en section E.
+    Retenez l'image : la tension fixe la vitesse à laquelle le flux varie, la fréquence fixe le temps pendant lequel il varie ; le flux est leur
+    produit.
+  </p>
+
+  <h3 id="d-glissement">À flux constant, le rotor glisse toujours du même nombre de tours</h3>
+  <p>
+    Le couple naît de l'interaction du flux et des courants rotoriques. Ces courants sont induits par le défilement du champ devant les barres du
+    rotor, à la vitesse relative $n_s - n$. À flux égal, la force électromotrice induite dans une barre ne dépend que de cette vitesse relative, et
+    la fréquence des courants rotoriques aussi : $f_r = p(n_s - n)/60$. Le rotor ne sait donc pas à quelle vitesse absolue tourne le champ ; il ne
+    voit que l'écart. Conséquence décisive : pour produire le couple nominal, le rotor doit retarder sur le champ d'un écart $\Delta n_n$, environ
+    $40\ \mathrm{tr/min}$ pour un moteur de $11\ \mathrm{kW}$ à quatre pôles, que le champ tourne à $1500$, à $750$ ou à $150\ \mathrm{tr/min}$. Les
+    courbes couple-vitesse ne changent pas de forme quand on baisse la fréquence à flux constant : elles glissent parallèlement à l'axe des
+    vitesses. Le glissement relatif $g$, lui, augmente quand la fréquence baisse : $40$ tours sur $1500$, c'est $2{,}7\ \%$ ; sur $150$, c'est
+    $27\ \%$. Il faut donc raisonner en écart de vitesse, pas en glissement relatif.
+  </p>
+
+  <h3 id="d-analogie">Une analogie contrôlée et ses limites</h3>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Un tapis roulant entraîné par frottement visqueux</span>
+    <p>
+      Imaginez un chariot posé sur un tapis roulant, et lié au tapis par un film d'huile : la force d'entraînement est proportionnelle à la
+      vitesse relative du tapis par rapport au chariot. Pour tirer une charge donnée, le chariot doit rester en retard sur le tapis d'un écart de
+      vitesse fixé par la viscosité du film, quelle que soit la vitesse du tapis. Accélérer ou ralentir le tapis déplace la vitesse du chariot,
+      l'écart restant constant. Le tapis est le champ tournant, sa vitesse est $n_s$ ; l'épaisseur du film d'huile joue le rôle du flux : un film
+      plus mince, un flux plus faible, oblige à un écart plus grand pour la même force. Le défluxage au-delà de la fréquence de base est un tapis
+      plus rapide mais dont le film s'amincit.
+    </p>
+    <p>
+      Les limites sont précises. L'analogie ne décrit que la zone linéaire : au-delà d'un certain écart, le couple réel passe par un maximum puis
+      décroît, à cause de la réactance de fuite du rotor, ce qu'aucun film visqueux ne fait. Elle ne dit rien du courant pris au réseau ni de la
+      chute de tension dans la résistance du stator, qui rend le flux dépendant de la charge à basse fréquence. Enfin, le tapis ne fournit son
+      énergie que dans un sens, alors que le moteur devient générateur dès que le rotor dépasse le champ : c'est ce qui se produit au freinage par
+      le variateur.
+    </p>
+  </div>
+  <p>
+    L'animation suivante montre le champ et le rotor sur un même disque, et leurs deux vitesses sur un même axe, pour une fréquence et une charge
+    choisies. La fréquence se règle par la poignée ronde sur l'axe des fréquences ou par le curseur, le couple de charge par le second curseur ;
+    la lecture fait tourner le champ et le rotor, ralentis cent fois, pour voir le retard s'accumuler. Prédisez avant de lancer : entre $10$ et $50\ \mathrm{Hz}$, l'écart $\Delta n$ entre le repère du champ et
+    celui du rotor change-t-il ? Et au-delà de $50\ \mathrm{Hz}$, à couple de charge constant ?
+  </p>
+  <figure id="d-tapis-figure">
+    <div class="schema-vivant" id="d-tapis"></div>
+    <figcaption>
+      En haut, un disque vu de face : le champ tournant, repéré par la flèche à pointe ouverte, et le rotor, repéré par la flèche pleine plus
+      courte, tournent pendant la lecture à leurs vitesses $n_s$ et $n$ divisées par cent, pour rester lisibles ; le secteur hachuré mesure l'angle
+      de retard accumulé depuis le début de la lecture, qui croît au même rythme à toutes les fréquences tant que le flux est nominal. En bas, un axe des vitesses de $0$ à $3200\ \mathrm{tr/min}$ porte le repère triangulaire de $n_s$, le repère rond de $n$,
+      et l'accolade de l'écart $\Delta n$. L'axe des fréquences, tout en bas, porte la poignée. Moteur du convoyeur de la section H, en loi
+      $U/f$ avec compensation idéale du stator jusqu'à $50\ \mathrm{Hz}$, tension plafonnée à $400\ \mathrm{V}$ au-delà.
+    </figcaption>
+  </figure>
+  <div id="d-tapis-curseurs"></div>
+  <div id="d-tapis-lecteur"></div>
+  <div id="d-tapis-valeurs"></div>
+  <p>
+    Interprétation : jusqu'à $50\ \mathrm{Hz}$, l'écart reste à $\Delta n = 33{,}2\ \mathrm{tr/min}$ pour $60\ \mathrm{N \cdot m}$, à toutes les
+    fréquences, alors que le glissement relatif passe de $2{,}2\ \%$ à $50\ \mathrm{Hz}$ à $22\ \%$ à $5\ \mathrm{Hz}$ ; la vitesse du rotor suit celle
+    du champ comme un chariot sur un tapis. Au-delà de $50\ \mathrm{Hz}$, la tension plafonne, le flux baisse et l'écart grandit plus vite que le carré
+    de la fréquence : $49\ \mathrm{tr/min}$ à $60\ \mathrm{Hz}$, $88{,}5\ \mathrm{tr/min}$ à $75\ \mathrm{Hz}$, et le moteur décroche vers
+    $86\ \mathrm{Hz}$, quand son couple maximal tombe sous les $60\ \mathrm{N \cdot m}$ demandés. À $75\ \mathrm{Hz}$, il fournirait déjà
+    $13{,}6\ \mathrm{kW}$ pour une plaque de $11\ \mathrm{kW}$ : au-delà de la fréquence de base, le couple de charge doit diminuer quand la vitesse
+    augmente, ce que la section E formalise.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-vitesse">Vitesse, fréquence et glissement</h3>
+  <p>
+    La vitesse du rotor se déduit de la fréquence imposée et de l'écart de vitesse nécessaire au couple. Par définition du glissement :
+  </p>
+  <div class="formule-cle">
+    $$n = n_s - \Delta n = \frac{60\,f}{p} - \Delta n, \qquad g = \frac{\Delta n}{n_s}, \qquad f_r = g\,f = \frac{p\,\Delta n}{60}$$
+    <p class="formule-cle-legende">
+      $n$ et $n_s$ en $\mathrm{tr/min}$, $f$ et $f_r$ en hertz, $p$ sans dimension, $g$ sans dimension. Ce sont des définitions, valables à toute
+      fréquence. Vérification dimensionnelle : $60f/p$ est un nombre de tours par seconde multiplié par $60$, donc des tours par minute. Cas limite :
+      à vide, $\Delta n \to 0$ et $n \to n_s$ ; à l'arrêt, $\Delta n = n_s$ et $f_r = f$.
+    </p>
+  </div>
+  <p>
+    Pour obtenir une vitesse $n$, il suffit donc de choisir $f = p(n + \Delta n)/60$, à condition de connaître $\Delta n$. Toute la suite consiste à
+    montrer que $\Delta n$ ne dépend que du couple et du flux, et à régler la tension pour que le flux soit celui que l'on veut.
+  </p>
+
+  <h3 id="e-flux">Le flux imposé par le rapport tension sur fréquence</h3>
+  <p>
+    Dans le schéma équivalent, la force électromotrice $E$ apparaît aux bornes de la branche magnétisante. Elle est due au flux d'entrefer qui
+    tourne à la pulsation $\omega$ devant les enroulements du stator : $E = 4{,}44\,N k_b f\,\hat{\varPhi}$, avec $N$ le nombre de spires en série par
+    phase et $k_b$ le coefficient de bobinage. Il est plus commode de grouper les constantes dans le flux totalisé efficace $\varPsi$ :
+  </p>
+  <div class="formule-cle">
+    $$E = \omega\,\varPsi = 2\pi f\,\varPsi \qquad \Longleftrightarrow \qquad \varPsi = \frac{E}{2\pi f}, \qquad \frac{\varPsi}{\varPsi_n} = \frac{E/f}{E_n/f_n}$$
+    <p class="formule-cle-legende">
+      $E$ en volts efficaces par phase, $f$ en hertz, $\varPsi$ en webers. Hypothèses : régime sinusoïdal établi, flux d'entrefer à répartition
+      sinusoïdale, fer non saturé pour que $\varPsi$ et le courant magnétisant soient proportionnels. Dérivation : $e = \mathrm{d}\psi/\mathrm{d}t$ avec
+      $\psi = \sqrt{2}\varPsi\sin\omega t$ donne $E = \omega\varPsi$. Vérification dimensionnelle : $\mathrm{V}/(\mathrm{rad/s}) = \mathrm{V \cdot s} =
+      \mathrm{Wb}$. Cas limite : à $f \to 0$, garder $\varPsi$ exige $E \to 0$ ; une tension continue, même faible, ne donne plus aucune force
+      électromotrice, et seul $R_1$ limite le courant.
+    </p>
+  </div>
+  <p>
+    Pour le moteur du convoyeur de la section H, $11\ \mathrm{kW}$, quatre pôles, $400\ \mathrm{V}$ en triangle, le schéma équivalent donne au point
+    nominal $E_n = 211{,}6\ \mathrm{V}$ par phase de l'étoile équivalente, pour $V_n = 230{,}9\ \mathrm{V}$ ; d'où $E_n/f_n = 4{,}233\ \mathrm{V/Hz}$ et
+    $\varPsi_n = 211{,}6/(2\pi \times 50) = 0{,}6737\ \mathrm{Wb}$. Tant que la chute dans $R_1 + jX_1$ est petite devant $V$, $E \approx V$, et garder
+    le flux revient à garder $U/f$ constant : c'est la loi $U/f$, ou commande scalaire. À l'inverse, à tension fixe, le flux varie comme $1/f$.
+  </p>
+
+  <h3 id="e-couple">Le couple à flux constant ne dépend que de la fréquence rotorique</h3>
+  <p>
+    Partons du schéma équivalent par phase. Le courant rotorique ramené au stator vaut $\underline{I}_2' = \underline{E}/(R_2'/g + jX_2')$, avec
+    $X_2' = \omega L_2'$ la réactance de fuite du rotor à la fréquence statorique. Multiplions numérateur et dénominateur par $g$ et remplaçons $E$
+    par $\omega\varPsi$ : $g\omega = \omega_r$, d'où $\underline{I}_2' = \omega_r\varPsi/(R_2' + j\omega_r L_2')$. Le couple électromagnétique
+    $C_{em} = 3R_2'I_2'^2/(g\varOmega_s)$, avec $g\varOmega_s = g\omega/p = \omega_r/p$, devient :
+  </p>
+  <div class="formule-cle">
+    $$C_{em} = 3p\,\varPsi^2\,\frac{\omega_r R_2'}{R_2'^2 + (\omega_r L_2')^2} \;\approx\; \frac{3p\,\varPsi^2}{R_2'}\,\omega_r \quad \text{si } \omega_r L_2' \ll R_2'$$
+    <p class="formule-cle-legende">
+      $C_{em}$ en $\mathrm{N \cdot m}$, $\varPsi$ en webers, $\omega_r = 2\pi f_r$ en $\mathrm{rad/s}$, $R_2'$ en ohms, $L_2'$ en henrys. Hypothèses :
+      schéma équivalent en T, paramètres constants, régime établi. Interprétation : à $\varPsi$ donné, $f$ a disparu de l'expression ; le couple ne
+      dépend que de la fréquence des courants rotoriques, donc de $\Delta n = 60f_r/p$. Vérification dimensionnelle de la forme linéaire :
+      $\mathrm{Wb^2}\cdot\mathrm{s^{-1}}/\mathrm{\Omega} = \mathrm{V^2 \cdot s}/\mathrm{\Omega} = \mathrm{W \cdot s} = \mathrm{J}$, soit des
+      $\mathrm{N \cdot m}$ par radian. Cas limite : $\omega_r = 0$ donne un couple nul, le rotor tourne au synchronisme et rien n'est induit.
+    </p>
+  </div>
+  <p>
+    Deux conséquences. D'abord, dans la zone utile, l'écart de vitesse est proportionnel au couple et inversement proportionnel au carré du flux :
+    $\Delta n = \Delta n_n\,(C/C_n)\,(\varPsi_n/\varPsi)^2$. Pour le moteur du convoyeur, $\Delta n_n = 1500 - 1460 = 40\ \mathrm{tr/min}$ ; la forme
+    linéaire donne, avec $L_2' = X_2'/\omega_n = 1{,}35/314{,}16 = 4{,}297\ \mathrm{mH}$, $\omega_r = C_nR_2'/(3p\varPsi_n^2) = 71{,}95 \times 0{,}313/
+    (6 \times 0{,}6737^2) = 8{,}27\ \mathrm{rad/s}$, soit $f_r = 1{,}316\ \mathrm{Hz}$ et $\Delta n = 39{,}5\ \mathrm{tr/min}$, à $1{,}3\ \%$ près de la
+    valeur exacte. Ensuite, le couple maximal à flux constant est atteint pour $\omega_r = R_2'/L_2'$ et vaut :
+  </p>
+  <div class="formule-cle">
+    $$C_{max,\varPsi} = \frac{3p\,\varPsi^2}{2L_2'}, \qquad \text{atteint pour } f_r = \frac{R_2'}{2\pi L_2'}$$
+    <p class="formule-cle-legende">
+      Indépendant de la fréquence statorique et de $R_2'$. Vérification dimensionnelle : $\mathrm{Wb^2/H} = (\mathrm{V \cdot s})^2/(\mathrm{V \cdot s/A})
+      = \mathrm{V \cdot A \cdot s} = \mathrm{J}$. Pour le moteur du convoyeur, $3 \times 2 \times 0{,}6737^2/(2 \times 4{,}297 \times 10^{-3}) =
+      317\ \mathrm{N \cdot m}$, soit $4{,}4\ C_n$ à $f_r = 11{,}6\ \mathrm{Hz}$ : c'est la limite idéale d'un flux d'entrefer parfaitement tenu. Avec
+      une simple loi $U/f$, la chute dans $X_1$ au fort courant du couple maximal fait baisser le flux, et l'on n'obtient que $162\ \mathrm{N \cdot m}$,
+      $2{,}25\ C_n$, à $50\ \mathrm{Hz}$.
+    </p>
+  </div>
+
+  <h3 id="e-schema">Le schéma équivalent à fréquence variable et la chute ohmique du stator</h3>
+  <p>
+    À la fréquence $f$, toutes les réactances du schéma sont multipliées par $f/50$, alors que les résistances ne changent pas, aux effets de la
+    température et de l'effet de peau près. La loi des mailles côté stator s'écrit $\underline{V} = \underline{E} + (R_1 + jX_1 f/50)\,\underline{I}_1$.
+    À $50\ \mathrm{Hz}$, la chute $R_1I_1$ est une petite fraction de $V$ ; à $5\ \mathrm{Hz}$, $E$ est dix fois plus petit, mais $R_1I_1$ n'a pas
+    changé, puisque le courant dépend du couple. Une loi $U/f$ strictement proportionnelle donne donc une force électromotrice trop faible à basse
+    fréquence, un flux trop faible et un couple maximal qui s'effondre.
+  </p>
+  <figure id="e-schema-figure">
+    <svg viewBox="0 0 760 300" role="img" aria-label="Schéma équivalent par phase à la fréquence f : tension simple V, résistance R1, réactance X1 multipliée par f sur 50, force électromotrice E aux bornes de la réactance magnétisante, réactance de fuite rotorique et résistance R2 prime sur g, avec les courants I1, I mu et I2 prime">
+      <defs>
+        <marker id="fl-e-sch" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="70" cy="150" r="24"/>
+        <path d="M58 150c4-9 8-9 12 0s8 9 12 0" stroke-width="1.6"/>
+        <path d="M70 126V60H130M200 60H230M300 60H400M400 60H450M520 60H560M630 60H660V110M660 190V240H70V174"/>
+        <rect x="130" y="48" width="70" height="24" rx="3"/>
+        <path d="M230 60a8.75 8.75 0 0 1 17.5 0a8.75 8.75 0 0 1 17.5 0a8.75 8.75 0 0 1 17.5 0a8.75 8.75 0 0 1 17.5 0"/>
+        <path d="M400 60V110M400 190V240"/>
+        <path d="M400 110a10 10 0 0 1 0 20a10 10 0 0 1 0 20a10 10 0 0 1 0 20a10 10 0 0 1 0 20"/>
+        <path d="M450 60a8.75 8.75 0 0 1 17.5 0a8.75 8.75 0 0 1 17.5 0a8.75 8.75 0 0 1 17.5 0a8.75 8.75 0 0 1 17.5 0"/>
+        <rect x="560" y="48" width="70" height="24" rx="3"/>
+        <rect x="646" y="110" width="28" height="80" rx="3"/>
+        <path d="M560 60H630" stroke-dasharray="1 0" opacity="0"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M86 36H124" marker-end="url(#fl-e-sch)" stroke-width="2.6"/>
+        <path d="M376 108V146" marker-end="url(#fl-e-sch)" stroke-width="2.6"/>
+        <path d="M528 36H566" marker-end="url(#fl-e-sch)" stroke-width="2.6"/>
+        <path d="M30 226V166" marker-end="url(#fl-e-sch)"/>
+        <path d="M352 226V76" marker-end="url(#fl-e-sch)" stroke-dasharray="6 4"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="16" y="110">V</text>
+        <text x="146" y="94">R1</text>
+        <text x="222" y="94">j X1 f/50</text>
+        <text x="94" y="28">I1</text>
+        <text x="414" y="154">j Xm f/50</text>
+        <text x="350" y="138" text-anchor="end">Iµ</text>
+        <text x="270" y="214">E = ω Ψ</text>
+        <text x="444" y="94">j X2' f/50</text>
+        <text x="536" y="28">I2'</text>
+        <text x="682" y="146">R2'/g</text>
+        <text x="682" y="164">= R2' f/f_r</text>
+        <text x="70" y="264">N : neutre de l'étoile équivalente, référence des potentiels</text>
+        <text x="70" y="286">V = E + (R1 + j X1 f/50) I1 : à basse fréquence, R1 I1 n'est plus négligeable devant E</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma équivalent en T d'une phase de l'étoile équivalente, à la fréquence statorique $f$, en convention récepteur, le neutre N servant de
+      référence. Les flèches épaisses horizontales donnent le sens positif de $I_1$ et de $I_2'$, la flèche épaisse verticale celui du courant
+      magnétisant $I_\mu$. La flèche fine à gauche est la tension simple $V$, la flèche en tirets la force électromotrice $E$ aux bornes de la
+      branche magnétisante, image du flux par $E = \omega\varPsi$. Les trois réactances sont proportionnelles à $f$, les résistances non ; la
+      résistance de charge s'écrit $R_2'/g = R_2'f/f_r$. Les pertes fer, faibles à basse fréquence, sont négligées dans ce modèle.
+    </figcaption>
+  </figure>
+  <p>
+    On corrige par une compensation de la chute ohmique, appelée aussi surtension de démarrage : la loi devient affine, $U = U_0 + (U_n - U_0)\,f/f_b$,
+    avec $U_0$ de l'ordre de $2$ à $6\ \%$ de $U_n$, ou bien le variateur mesure le courant et ajoute en temps réel $\sqrt{3}\,R_1I_1$ environ. Le calcul
+    exact, pour garder $\varPsi_n$ sous le couple nominal du moteur du convoyeur, donne les tensions composées suivantes, à comparer à la loi
+    proportionnelle : $208{,}3\ \mathrm{V}$ au lieu de $200\ \mathrm{V}$ à $25\ \mathrm{Hz}$, $93{,}4$ au lieu de $80\ \mathrm{V}$ à $10\ \mathrm{Hz}$,
+    $55{,}4$ au lieu de $40\ \mathrm{V}$ à $5\ \mathrm{Hz}$, et $33{,}0$ au lieu de $16\ \mathrm{V}$ à $2\ \mathrm{Hz}$. Sans compensation, le couple
+    maximal tombe à $1{,}82\ C_n$ à $25\ \mathrm{Hz}$, $1{,}06\ C_n$ à $10\ \mathrm{Hz}$, $0{,}59\ C_n$ à $5\ \mathrm{Hz}$ et $0{,}24\ C_n$ à
+    $2\ \mathrm{Hz}$ : le moteur ne peut plus porter sa charge nominale en dessous d'une dizaine de hertz. La compensation a un revers : réglée pour la
+    charge nominale, elle surexcite le moteur à vide, puisque la chute qu'elle compense n'existe plus ; le flux dépasse alors sa valeur nominale et
+    le courant magnétisant augmente. C'est pourquoi une compensation fixe se règle au plus juste, et pourquoi les variateurs modernes la font
+    dépendre du courant mesuré.
+  </p>
+  <p>
+    L'animation ci-dessous trace le diagramme de Fresnel de cette maille pour le moteur du convoyeur sous son couple nominal, avec la force
+    électromotrice comme référence des phases. Déplacez la poignée sur l'axe des fréquences, ou lancez le balayage de $2$ à $100\ \mathrm{Hz}$ ; le
+    curseur de loi choisit entre la loi proportionnelle, la loi avec compensation fixe et la compensation idéale. Prédisez d'abord : quelle part de
+    $V$ la chute $R_1I_1$ représente-t-elle à $5\ \mathrm{Hz}$ ? Que deviennent $E$ et le flux au-delà de $50\ \mathrm{Hz}$, quand $V$ ne peut plus
+    croître ?
+  </p>
+  <figure id="e-fresnel-figure">
+    <div class="schema-vivant" id="e-fresnel"></div>
+    <figcaption>
+      Diagramme de Fresnel de la maille statorique d'une phase, à l'échelle de la tension, toujours ramené à la même hauteur pour rester lisible ;
+      l'échelle effective est indiquée en haut à droite. La force électromotrice $\underline{E}$, trait épais horizontal, sert de référence des
+      phases. Le courant $\underline{I}_1$, trait fin terminé par une flèche ouverte, est dessiné à une échelle de courant indépendante. Les deux
+      chutes s'ajoutent bout à bout : $R_1\underline{I}_1$, trait plein, parallèle au courant, puis $jX_1\underline{I}_1$, trait en tirets,
+      perpendiculaire au courant. La tension $\underline{V}$ appliquée par le variateur, trait épais terminé par une flèche pleine, ferme le
+      triangle. Toutes les flèches suivent la convention récepteur.
+    </figcaption>
+  </figure>
+  <div id="e-fresnel-curseurs"></div>
+  <div id="e-fresnel-lecteur"></div>
+  <div id="e-fresnel-valeurs"></div>
+  <p>
+    Interprétation : à $50\ \mathrm{Hz}$, $R_1I_1 = 10{,}9\ \mathrm{V}$ ne représente que $4{,}7\ \%$ de $V$ ; à $5\ \mathrm{Hz}$, en compensation idéale,
+    $V = 32\ \mathrm{V}$ et la même chute en représente le tiers, presque en phase avec $E$ puisque les réactances sont devenues petites : c'est
+    pourquoi la règle approchée $V \approx E + R_1I_1$ est bonne à basse fréquence. En loi proportionnelle, $E$ tombe nettement sous sa valeur à
+    flux nominal : à $10\ \mathrm{Hz}$, le flux est déjà $28\ \%$ sous sa valeur nominale, et en dessous d'environ $9\ \mathrm{Hz}$ le moteur ne
+    peut plus porter son couple nominal, ce que l'animation signale par un calage. Au-delà de $50\ \mathrm{Hz}$, $V$ reste à
+    $230{,}9\ \mathrm{V}$, $E$ aussi à peu près, mais le flux, $E/\omega$, décroît comme $1/f$ : le triangle garde sa taille, la fréquence monte, le
+    moteur se défluxe.
+  </p>
+
+  <h3 id="e-deflux">Au-delà de la fréquence de base : le défluxage</h3>
+  <p>
+    Le variateur ne peut pas fournir plus que la tension que permet son bus continu, $U_{max} \approx U_{dc}/\sqrt{2}$, soit $400\ \mathrm{V}$ pour un
+    bus de $565{,}7\ \mathrm{V}$, et $360\ \mathrm{V}$ seulement si le réseau baisse de $10\ \%$. La fréquence à laquelle la loi $U/f$ atteint cette
+    limite est la fréquence de base $f_b$. Au-delà, $U$ reste constante, et avec $E \approx V$ :
+  </p>
+  <div class="formule-cle">
+    $$\frac{\varPsi}{\varPsi_n} \approx \frac{f_b}{f}, \qquad \Delta n \approx \Delta n_n\,\frac{C}{C_n}\left(\frac{f}{f_b}\right)^2, \qquad C_{(I_n)} \approx C_n\,\frac{f_b}{f}, \qquad C_{max} \approx C_{max,b}\left(\frac{f_b}{f}\right)^2$$
+    <p class="formule-cle-legende">
+      Approximations : chutes statoriques négligées, couple proportionnel au produit du flux par la composante active du courant. Interprétation :
+      à courant nominal, le couple disponible décroît comme $1/f$ et la puissance $C\varOmega$ reste à peu près constante, égale à $P_n$ ; c'est la
+      zone de puissance constante. Le couple maximal, lui, décroît comme $1/f^2$ ; quand il rejoint le couple de la puissance constante, vers
+      $f_b\,C_{max,b}/C_n$, environ $112\ \mathrm{Hz}$ dans cette approximation et $132\ \mathrm{Hz}$ dans le modèle complet du moteur du convoyeur, la
+      puissance disponible doit à son tour diminuer, comme $1/f$ : c'est la troisième zone. Cas limite : à $f = f_b$, on retrouve les valeurs
+      nominales.
+    </p>
+  </div>
+  <p>
+    Pour le moteur du convoyeur, le couple maximal vaut $116{,}7\ \mathrm{N \cdot m}$ à $60\ \mathrm{Hz}$, $77{,}5$ à $75\ \mathrm{Hz}$ et $45{,}2$ à
+    $100\ \mathrm{Hz}$, contre $112{,}5$, $72{,}0$ et $40{,}5\ \mathrm{N \cdot m}$ par la loi en $1/f^2$ : l'approximation est prudente de $4$ à $10\ \%$.
+    Le défluxage permet de dépasser la vitesse nominale sans surdimensionner le variateur, ce qui est précieux pour une broche de machine-outil,
+    un enrouleur ou un convoyeur à vide ; il est en revanche inutilisable pour une pompe ou un ventilateur, dont le couple augmente avec la vitesse.
+    Une variante courante consiste à coupler en triangle, sur un variateur de $400\ \mathrm{V}$, un moteur $230/400\ \mathrm{V}$ : la loi
+    $230\ \mathrm{V}/50\ \mathrm{Hz}$ atteint $400\ \mathrm{V}$ à $87\ \mathrm{Hz}$, et le moteur garde son flux nominal jusqu'à cette fréquence, avec une
+    puissance $\sqrt{3}$ fois plus grande, au prix d'un courant de ligne $\sqrt{3}$ fois plus grand pour le variateur et d'un échauffement que seul
+    le constructeur peut garantir.
+  </p>
+  <p>
+    La simulation suivante superpose la courbe couple-vitesse du moteur du convoyeur à la fréquence choisie, la courbe à $50\ \mathrm{Hz}$ sous
+    tension nominale, et le couple résistant de la charge. Réglez la fréquence, la loi de commande, la compensation, le type et le niveau de charge.
+    Avant de manipuler, prédisez : en loi proportionnelle sans compensation, en dessous de quelle fréquence le moteur ne peut-il plus porter son couple
+    nominal ? Une charge quadratique, comme une pompe, peut-elle être entraînée à $70\ \mathrm{Hz}$ ?
+  </p>
+  <figure id="e-couple-figure">
+    <div id="e-couple-trace"></div>
+    <figcaption>
+      Couple électromagnétique rapporté à $C_n$ en fonction de la vitesse : courbe à la fréquence choisie, trait épais ; courbe de référence à
+      $50\ \mathrm{Hz}$ sous $400\ \mathrm{V}$, trait fin ; couple résistant, trait moyen. La droite verticale en tirets marque la vitesse de
+      synchronisme à la fréquence choisie, le point plein le point de fonctionnement stable, le cercle creux un calage. Les noms des courbes sont
+      rappelés dans la légende du tracé, avec leur couleur réelle.
+    </figcaption>
+  </figure>
+  <div id="e-couple-curseurs"></div>
+  <div id="e-couple-valeurs"></div>
+  <p>
+    Interprétation : en loi proportionnelle sans compensation, le couple maximal passe sous $C_n$ vers $9\ \mathrm{Hz}$, et le point de fonctionnement
+    à couple nominal disparaît ; avec $U_0 = 12\ \mathrm{V}$, la courbe à $10\ \mathrm{Hz}$ retrouve $1{,}33\ C_n$ de couple maximal. Entre $10$ et
+    $50\ \mathrm{Hz}$, les courbes glissent presque sans se déformer : le point de fonctionnement se déplace à écart de vitesse constant. Au-delà de
+    $50\ \mathrm{Hz}$, la courbe s'aplatit et se décale : à $70\ \mathrm{Hz}$, la charge quadratique dimensionnée pour $C_n$ à $1460\ \mathrm{tr/min}$
+    demanderait près de $2\ C_n$ vers $2050\ \mathrm{tr/min}$, bien au-delà des $1{,}22\ C_n$ de couple maximal disponibles, et le moteur cale ; même avant le calage, la puissance demandée croît comme le cube de
+    la vitesse. Notez aussi la loi quadratique : sous une charge faible, elle réduit le courant magnétisant, mais sous une charge proche du nominal
+    elle augmente le courant et le glissement.
+  </p>
+  <p>
+    La seconde simulation trace, en fonction de la fréquence, ce que le moteur peut fournir en régime permanent sans dépasser son courant nominal :
+    tension appliquée, flux, couple et puissance disponibles, couple maximal. Le premier curseur règle la tension maximale du variateur, qui suit le
+    réseau ; le deuxième choisit le couplage du moteur. Prédisez : si le réseau baisse de $10\ \%$, à quelle fréquence commence le défluxage ? Avec
+    le couplage dit à $87\ \mathrm{Hz}$, que devient la puissance disponible à $80\ \mathrm{Hz}$ ?
+  </p>
+  <figure id="e-zones-figure">
+    <div id="e-zones-trace"></div>
+    <figcaption>
+      Grandeurs relatives en fonction de la fréquence, calculées avec le schéma équivalent du moteur du convoyeur à courant statorique égal à $I_n$ :
+      tension $U/U_n$, flux $\varPsi/\varPsi_n$, couple disponible $C/C_n$, puissance disponible $P/P_n$ et couple maximal $C_{max}/C_n$ divisé par
+      deux pour tenir sur la même échelle. Les noms et les couleurs des courbes figurent dans la légende du tracé ; la droite verticale en tirets
+      marque la fréquence de base.
+    </figcaption>
+  </figure>
+  <div id="e-zones-curseurs"></div>
+  <div id="e-zones-valeurs"></div>
+  <p>
+    Interprétation : sous $360\ \mathrm{V}$, la fréquence de base descend à $45\ \mathrm{Hz}$ ; entre $45$ et $50\ \mathrm{Hz}$, le moteur est déjà
+    défluxé, son couple disponible à courant nominal baisse d'environ $10\ \%$ à $50\ \mathrm{Hz}$, et son couple maximal de près de $20\ \%$. C'est
+    un point à vérifier pour toute machine qui doit tenir son couple nominal à pleine vitesse quand le réseau est bas. Avec le couplage à
+    $87\ \mathrm{Hz}$, le flux reste nominal jusqu'à $87\ \mathrm{Hz}$ et la puissance disponible à $80\ \mathrm{Hz}$ atteint environ $1{,}6\ P_n$ :
+    le moteur travaille comme un moteur plus puissant, à condition que sa ventilation, ses roulements et le variateur le permettent. Dans la zone
+    de couple constant, la puissance disponible croît proportionnellement à la fréquence, puisque le couple reste celui du courant nominal.
+  </p>
+
+  <h3 id="e-charges">Les charges : couple constant, couple quadratique, puissance constante</h3>
+  <p>
+    Le choix de la loi de commande dépend autant de la machine entraînée que du moteur. Un convoyeur, un levage, une extrudeuse ou un compresseur à
+    piston demandent un couple à peu près constant à toutes les vitesses : la puissance croît comme la vitesse, et le moteur doit tenir son couple
+    jusqu'à basse fréquence. Une pompe centrifuge ou un ventilateur obéissent, sur un circuit sans hauteur statique, aux lois de similitude, qui sont
+    des approximations issues de l'analyse dimensionnelle de la machine hydraulique :
+  </p>
+  <div class="formule-cle">
+    $$\frac{Q}{Q_1} = \frac{n}{n_1}, \qquad \frac{H}{H_1} = \left(\frac{n}{n_1}\right)^2, \qquad \frac{C}{C_1} = \left(\frac{n}{n_1}\right)^2, \qquad \frac{P}{P_1} = \left(\frac{n}{n_1}\right)^3$$
+    <p class="formule-cle-legende">
+      $Q$ débit, $H$ hauteur manométrique, $C$ couple et $P$ puissance sur l'arbre, au point de fonctionnement de vitesse $n$ ; indice $1$ pour le
+      point de référence. Hypothèses : rendement de la pompe constant, circuit purement résistif hydrauliquement, c'est-à-dire sans dénivelé ni
+      pression statique à vaincre. Cas limite : avec une hauteur statique $H_0$, la pompe ne débite plus rien quand $H_1(n/n_1)^2$ tombe sous $H_0$,
+      et la loi en cube surestime l'économie.
+    </p>
+  </div>
+  <p>
+    Pour une charge quadratique, le couple à basse vitesse est faible : la compensation de la chute ohmique importe peu, et l'on peut même réduire le
+    flux à charge partielle par une loi quadratique $U = U_0 + (U_n - U_0)(f/f_b)^2$, qui diminue le courant magnétisant et les pertes fer. Ce n'est un
+    gain que si la charge est vraiment faible : la section I montre qu'au point de service de la pompe du site, à $72\ \%$ du couple nominal, elle
+    augmenterait le courant. Les variateurs proposent pour cette raison une optimisation automatique du flux, qui réduit la tension tant que le courant
+    diminue. Enfin, un enrouleur à tension de bande constante ou une broche à puissance de coupe constante demandent une puissance constante : leur
+    couple diminue quand la vitesse augmente, ce qui convient exactement à la zone de défluxage.
+  </p>
+
+  <h3 id="e-rampe-section">Démarrer, ralentir et freiner au variateur</h3>
+  <p>
+    Le variateur ne démarre pas le moteur en lui appliquant d'un coup $50\ \mathrm{Hz}$ : il part d'une fréquence presque nulle et l'augmente selon une
+    rampe. Si la rampe est assez lente, le rotor suit le champ avec un écart de vitesse modéré : le moteur fonctionne en permanence dans sa zone
+    linéaire, avec un courant à peu près proportionnel au couple demandé, couple résistant plus couple d'accélération $J\,\mathrm{d}\varOmega/\mathrm{d}t$.
+    C'est ainsi qu'un variateur démarre une charge lourde avec $1{,}5\ C_n$ pour environ $1{,}5\ I_n$, ce qu'aucun démarreur à tension réduite ne
+    sait faire, comme l'a montré le cours <a href="#/cours/demarrage-des-moteurs-asynchrones">Démarrage des moteurs asynchrones</a>. Si la rampe est
+    trop raide, l'écart de vitesse grandit, le courant atteint la limite du variateur, qui gèle alors la rampe en attendant que le rotor rattrape le
+    champ. L'énergie dissipée dans le rotor devient elle aussi minimale : le rotor ne glisse plus de toute la vitesse de synchronisme, mais de quelques
+    dizaines de tours par minute seulement, à chaque instant.
+  </p>
+  <p>
+    L'animation suivante simule le démarrage du convoyeur chargé, $60\ \mathrm{N \cdot m}$ constants, $J = 0{,}6\ \mathrm{kg \cdot m^2}$ ramenés à
+    l'arbre, sur une rampe de $0$ à $50\ \mathrm{Hz}$, avec une limitation du courant à $1{,}5\ I_n$ qui gèle la rampe. Le temps se règle par la
+    poignée sur l'axe du bas, par le curseur ou par la lecture ; les curseurs du haut règlent la durée de rampe et la compensation $U_0$. Prédisez :
+    avec une rampe de $5\ \mathrm{s}$, le courant dépasse-t-il $1{,}5\ I_n$ ? Que se passe-t-il si l'on supprime presque toute la compensation, puis
+    si l'on la pousse à $30\ \mathrm{V}$ ?
+  </p>
+  <figure id="e-rampe-figure">
+    <div class="schema-vivant" id="e-rampe"></div>
+    <figcaption>
+      Démarrage du convoyeur au variateur. Panneau de gauche : vitesse de synchronisme $n_s(t)$ imposée par la rampe, trait fin, et vitesse du rotor
+      $n(t)$, trait épais ; l'écart vertical entre les deux est $\Delta n$. Panneau de droite : courant de ligne rapporté à $I_n$, trait épais, et
+      limite de $1{,}5\ I_n$, trait fin horizontal en tirets. Le point plein marque l'instant choisi, repéré sur l'axe du temps, en bas, qui porte la
+      poignée. Modèle quasi statique : régime électrique établi à chaque instant.
+    </figcaption>
+  </figure>
+  <div id="e-rampe-reglages"></div>
+  <div id="e-rampe-curseurs"></div>
+  <div id="e-rampe-lecteur"></div>
+  <div id="e-rampe-valeurs"></div>
+  <p>
+    Interprétation : avec $5\ \mathrm{s}$ de rampe et $U_0 = 20\ \mathrm{V}$, le rotor décolle en quelques centièmes de seconde, suit la rampe avec un
+    écart de $43$ à $45\ \mathrm{tr/min}$ et atteint $95\ \%$ de sa vitesse finale en $4{,}8\ \mathrm{s}$ ; le courant ne dépasse pas $1{,}09\ I_n$, à
+    comparer aux $4{,}7\ I_n$ d'un démarrage direct de ce même moteur. Avec $2\ \mathrm{s}$ de rampe, le couple d'accélération fait toucher la
+    limite de courant et gèle la rampe $0{,}19\ \mathrm{s}$ ; avec $1\ \mathrm{s}$, elle reste gelée $1{,}16\ \mathrm{s}$ au total, et le démarrage
+    dure finalement autant qu'avec $2\ \mathrm{s}$, environ $2{,}1\ \mathrm{s}$. Avec $U_0 = 12\ \mathrm{V}$, le moteur ne décolle pas :
+    à fréquence presque nulle, le flux est trop faible pour donner $60\ \mathrm{N \cdot m}$ avant d'atteindre la limite de courant, la rampe reste
+    gelée et le variateur finirait par se mettre en défaut. Avec $30\ \mathrm{V}$, c'est l'inverse : à l'arrêt, seule $R_1$ limite le courant, qui
+    dépasse aussitôt la limite. Le réglage de la compensation est un compromis étroit, que les variateurs modernes résolvent en mesurant le courant.
+  </p>
+  <p>
+    Au ralentissement, le variateur fait décroître la fréquence. Si la charge a de l'inertie et peu de couple résistant, le rotor tourne plus vite que
+    le champ : $\Delta n < 0$, $g < 0$, le moteur devient générateur et renvoie de l'énergie vers le bus continu. Le redresseur à diodes ne peut pas
+    la renvoyer au réseau ; elle charge les condensateurs. Le bus de la pompe du site, $2{,}2\ \mathrm{mF}$ à $565{,}7\ \mathrm{V}$, n'absorbe que
+    $\tfrac{1}{2}C(U_2^2 - U_1^2) = 0{,}5 \times 2{,}2 \times 10^{-3} \times (800^2 - 565{,}7^2) = 352\ \mathrm{J}$ avant d'atteindre $800\ \mathrm{V}$,
+    seuil typique de mise en défaut de surtension, alors qu'un ventilateur de $10\ \mathrm{kg \cdot m^2}$ à $1480\ \mathrm{tr/min}$ stocke
+    $\tfrac{1}{2} \times 10 \times 155^2 = 120\ \mathrm{kJ}$. Trois solutions : allonger la rampe de décélération pour que les pertes du moteur
+    absorbent l'énergie, ajouter un hacheur et une résistance de freinage, ou un redresseur actif qui renvoie l'énergie au réseau. Les quatre
+    quadrants de la machine à courant continu, vus dans le cours <a href="#/cours/machine-a-courant-continu">Machine à courant continu</a>, se
+    retrouvent ainsi : le moteur asynchrone au variateur sait tourner et freiner dans les deux sens, à condition que le convertisseur sache où mettre
+    l'énergie.
+  </p>
+
+  <h3 id="e-procedes">Commande scalaire, contrôle vectoriel et procédés anciens</h3>
+  <p>
+    La loi $U/f$ est une commande en boucle ouverte : elle impose la fréquence et la tension, et laisse le moteur trouver son glissement. Elle suffit
+    pour les pompes, les ventilateurs, les convoyeurs sans exigence de précision et les entraînements multimoteurs. Deux améliorations courantes : la
+    compensation du glissement, qui mesure le courant actif, estime $\Delta n$ et augmente $f$ d'autant pour tenir la vitesse ; et la compensation
+    automatique de la chute ohmique. Le contrôle vectoriel de flux va plus loin : à partir des courants mesurés et d'un modèle du moteur, il régule
+    séparément la composante du courant qui fait le flux et celle qui fait le couple, comme dans une machine à courant continu à excitation séparée.
+    Il donne le couple nominal à vitesse nulle, une réponse en couple de quelques millisecondes et une vitesse précise, en boucle ouverte ou avec un
+    codeur ; il exige en contrepartie les paramètres du moteur, identifiés par un autoréglage. Le contrôle direct du couple atteint un résultat
+    voisin par une autre voie. Ces commandes relèvent de l'automatique et seront reprises dans le cours Convertisseurs et moteurs.
+  </p>
+  <p>
+    Avant les variateurs, d'autres procédés existaient, et certains restent pertinents. Le moteur à deux vitesses, à enroulements séparés ou à
+    couplage Dahlander, change le nombre de pôles : deux vitesses fixes, sans électronique. La variation de la tension par gradateur, le démarreur
+    progressif du cours précédent, ne change pas $n_s$ : elle augmente le glissement, donc les pertes rotoriques $p_{jr} = g\,P_{tr}$, et ne convient
+    qu'à de petits ventilateurs. Le moteur à rotor bobiné avec résistances rotoriques fait de même, en reportant les pertes hors du moteur. Les
+    cascades et la machine asynchrone à double alimentation, où un convertisseur ne traite que la puissance de glissement, servent aux très grandes
+    puissances et aux éoliennes. Le tableau comparatif de la section F résume ces choix.
+  </p>
+
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Le modèle utilisé par les simulations</span>
+    <p>
+      Les animations et simulations de cette séance utilisent le schéma équivalent en T par phase de deux moteurs à quatre pôles, $400\ \mathrm{V}$
+      en triangle, dont les paramètres sont des hypothèses d'étude ajustées sur des plaques supposées. Moteur du convoyeur, $11\ \mathrm{kW}$,
+      $1460\ \mathrm{tr/min}$ : $R_1 = 0{,}55\ \mathrm{\Omega}$, $R_2' = 0{,}313\ \mathrm{\Omega}$, $X_1 = 1{,}05\ \mathrm{\Omega}$,
+      $X_2' = 1{,}35\ \mathrm{\Omega}$, $X_m = 32\ \mathrm{\Omega}$ à $50\ \mathrm{Hz}$, d'où $19{,}8\ \mathrm{A}$, $\cos\varphi = 0{,}87$ et
+      $C_{max} = 2{,}25\ C_n$. Moteur de la pompe du site, $30\ \mathrm{kW}$, $1475\ \mathrm{tr/min}$ : $R_1 = 0{,}115\ \mathrm{\Omega}$,
+      $R_2' = 0{,}076\ \mathrm{\Omega}$, $X_1 = 0{,}36\ \mathrm{\Omega}$, $X_2' = 0{,}48\ \mathrm{\Omega}$, $X_m = 11{,}5\ \mathrm{\Omega}$, d'où
+      $52{,}6\ \mathrm{A}$, $\cos\varphi = 0{,}86$ et $C_{max} = 2{,}6\ C_n$. Réactances proportionnelles à la fréquence, résistances constantes,
+      pertes fer et mécaniques négligées, saturation ignorée sauf dans l'animation du flux, régime électrique établi à chaque instant, tension du
+      variateur supposée sinusoïdale. Un rotor à simple cage sous-estime le couple au démarrage direct ; ce n'est pas gênant ici, puisque le moteur
+      au variateur travaille toujours à faible écart de vitesse.
+    </p>
+  </div>
+
+  <h3 id="e-statut">Loi, convention, approximation, règle de conception et donnée du constructeur</h3>
+  <ul>
+    <li><strong>Lois physiques :</strong> loi de Faraday, qui fixe le flux par $E = \omega\varPsi$ ; lois des mailles et des nœuds du schéma équivalent ; expression du couple par la puissance transmise au rotor ; principe fondamental de la dynamique de l'arbre ; conservation de l'énergie entre arbre, bus continu et réseau au freinage.</li>
+    <li><strong>Conventions :</strong> étoile équivalente et tension simple pour les calculs par phase ; convention récepteur côté moteur ; réactances données à $50\ \mathrm{Hz}$ ; glissement en vitesse $\Delta n = n_s - n$ compté positif en moteur ; fréquence de base définie comme la fin de la loi $U/f$ ; force électromotrice prise comme référence des phases dans les diagrammes de Fresnel.</li>
+    <li><strong>Approximations :</strong> $E \approx V$ quand les chutes statoriques sont faibles ; forme linéaire du couple, $C \propto \varPsi^2\omega_r$ ; lois en $1/f$ et $1/f^2$ du défluxage ; lois de similitude des pompes sans hauteur statique ; paramètres du moteur indépendants de la fréquence et de la saturation ; fondamental seul de la tension de l'onduleur.</li>
+    <li><strong>Règles de conception :</strong> loi $U/f$ avec compensation réglée au plus juste ; rampe compatible avec le courant admissible ; fréquence maximale d'une pompe ou d'un ventilateur égale à la fréquence nominale ; déclassement du couple permanent à basse vitesse pour un moteur autoventilé ; freinage dimensionné sur l'énergie cinétique à absorber ; marge sur le couple maximal en défluxage.</li>
+    <li><strong>Données du constructeur et des normes :</strong> courbe de déclassement du moteur à basse vitesse, vitesse mécanique maximale, aptitude de l'isolation aux fronts de tension de l'onduleur, tension maximale de sortie et courant de surcharge du variateur, seuil de surtension du bus, réglages de la compensation et du contrôle vectoriel, exigences des normes de machines tournantes, de variateurs et de compatibilité électromagnétique applicables, à vérifier pour chaque projet.</li>
+  </ul>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, les courbes couple-vitesse sous variation de fréquence, le diagramme des zones de
+    fonctionnement, l'organigramme de résolution et un tableau comparatif des procédés de variation de vitesse. Les autres schémas sont restés au
+    contact du passage qu'ils illustrent ; la liste de renvois figure à la fin de la section.
+  </p>
+  <p>
+    Le schéma principal trace la famille de courbes couple-vitesse du moteur du convoyeur, alimenté par un variateur en loi $U/f$ avec
+    $U_0 = 12\ \mathrm{V}$ de compensation, pour cinq fréquences. Jusqu'à $50\ \mathrm{Hz}$, les courbes se translatent : chacune s'annule à sa
+    vitesse de synchronisme, repérée $n_s$ sur l'axe, et la partie utile, presque droite près de $n_s$, garde la même pente. Au-delà, la tension
+    plafonne à $400\ \mathrm{V}$ : les courbes s'aplatissent et leur maximum décroît comme $1/f^2$.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 760 470" role="img" aria-label="Schéma principal : famille de courbes couple-vitesse d'un moteur asynchrone de 11 kW alimenté par un variateur en loi U/f, pour 10, 25, 50, 75 et 100 hertz ; translation des courbes jusqu'à 50 hertz, puis affaiblissement du couple maximal au-delà ; couple résistant constant et couple résistant quadratique superposés">
+<defs><marker id="fl-f-fam" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker></defs>
+<g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
+<path d="M70 406V28" marker-end="url(#fl-f-fam)"/>
+<path d="M64 400H730" marker-end="url(#fl-f-fam)"/>
+<path d="M70.0 400v5"/>
+<path d="M168.4 400v5"/>
+<path d="M266.9 400v5"/>
+<path d="M365.3 400v5"/>
+<path d="M463.8 400v5"/>
+<path d="M562.2 400v5"/>
+<path d="M660.6 400v5"/>
+<path d="M70 400.0h-5"/>
+<path d="M70 332.7h-5"/>
+<path d="M70 265.4h-5"/>
+<path d="M70 198.1h-5"/>
+<path d="M70 130.8h-5"/>
+<path d="M70 63.5h-5"/>
+</g>
+<g fill="none" stroke="currentColor" stroke-linejoin="round">
+<path d="M70.0 252.9 L70.4 252.4 L70.7 252.0 L71.1 251.6 L71.5 251.2 L71.8 250.8 L72.2 250.3 L72.6 249.9 L73.0 249.5 L73.3 249.0 L73.7 248.6 L74.1 248.2 L74.4 247.8 L74.8 247.3 L75.2 246.9 L75.5 246.5 L75.9 246.0 L76.3 245.6 L76.6 245.2 L77.0 244.7 L77.4 244.3 L77.8 243.9 L78.1 243.4 L78.5 243.0 L78.9 242.6 L79.2 242.1 L79.6 241.7 L80.0 241.2 L80.3 240.8 L80.7 240.4 L81.1 239.9 L81.4 239.5 L81.8 239.1 L82.2 238.6 L82.6 238.2 L82.9 237.8 L83.3 237.3 L83.7 236.9 L84.0 236.5 L84.4 236.0 L84.8 235.6 L85.1 235.2 L85.5 234.7 L85.9 234.3 L86.2 233.9 L86.6 233.5 L87.0 233.0 L87.3 232.6 L87.7 232.2 L88.1 231.8 L88.5 231.4 L88.8 231.0 L89.2 230.6 L89.6 230.2 L89.9 229.8 L90.3 229.4 L90.7 229.0 L91.0 228.6 L91.4 228.2 L91.8 227.8 L92.1 227.5 L92.5 227.1 L92.9 226.7 L93.3 226.4 L93.6 226.0 L94.0 225.7 L94.4 225.3 L94.7 225.0 L95.1 224.7 L95.5 224.4 L95.8 224.1 L96.2 223.8 L96.6 223.5 L96.9 223.2 L97.3 222.9 L97.7 222.7 L98.1 222.4 L98.4 222.2 L98.8 221.9 L99.2 221.7 L99.5 221.5 L99.9 221.3 L100.3 221.2 L100.6 221.0 L101.0 220.9 L101.4 220.7 L101.7 220.6 L102.1 220.5 L102.5 220.5 L102.9 220.4 L103.2 220.4 L103.6 220.4 L104.0 220.4 L104.3 220.4 L104.7 220.5 L105.1 220.5 L105.4 220.6 L105.8 220.8 L106.2 220.9 L106.5 221.1 L106.9 221.4 L107.3 221.6 L107.7 221.9 L108.0 222.2 L108.4 222.6 L108.8 223.0 L109.1 223.4 L109.5 223.9 L109.9 224.5 L110.2 225.0 L110.6 225.7 L111.0 226.3 L111.3 227.1 L111.7 227.8 L112.1 228.7 L112.5 229.6 L112.8 230.5 L113.2 231.5 L113.6 232.6 L113.9 233.8 L114.3 235.0 L114.7 236.3 L115.0 237.7 L115.4 239.2 L115.8 240.7 L116.1 242.4 L116.5 244.1 L116.9 246.0 L117.2 247.9 L117.6 249.9 L118.0 252.1 L118.4 254.4 L118.7 256.8 L119.1 259.3 L119.5 262.0 L119.8 264.7 L120.2 267.7 L120.6 270.8 L120.9 274.0 L121.3 277.4 L121.7 280.9 L122.0 284.7 L122.4 288.6 L122.8 292.7 L123.2 297.0 L123.5 301.5 L123.9 306.3 L124.3 311.2 L124.6 316.4 L125.0 321.8 L125.4 327.5 L125.7 333.4 L126.1 339.6 L126.5 346.1 L126.8 352.8 L127.2 359.9 L127.6 367.2 L128.0 374.9 L128.3 382.9 L128.7 391.3 L129.1 400.0 L129.1 400.0" stroke-width="2"/>
+<path d="M70.0 260.7 L70.9 260.0 L71.8 259.3 L72.8 258.7 L73.7 258.0 L74.6 257.3 L75.5 256.6 L76.5 255.9 L77.4 255.2 L78.3 254.5 L79.2 253.8 L80.2 253.1 L81.1 252.3 L82.0 251.6 L82.9 250.9 L83.8 250.1 L84.8 249.4 L85.7 248.6 L86.6 247.8 L87.5 247.1 L88.5 246.3 L89.4 245.5 L90.3 244.7 L91.2 243.9 L92.1 243.1 L93.1 242.2 L94.0 241.4 L94.9 240.6 L95.8 239.7 L96.8 238.9 L97.7 238.0 L98.6 237.2 L99.5 236.3 L100.5 235.4 L101.4 234.5 L102.3 233.6 L103.2 232.7 L104.1 231.8 L105.1 230.9 L106.0 229.9 L106.9 229.0 L107.8 228.1 L108.8 227.1 L109.7 226.1 L110.6 225.2 L111.5 224.2 L112.5 223.2 L113.4 222.2 L114.3 221.2 L115.2 220.1 L116.1 219.1 L117.1 218.1 L118.0 217.0 L118.9 216.0 L119.8 214.9 L120.8 213.8 L121.7 212.7 L122.6 211.6 L123.5 210.5 L124.4 209.4 L125.4 208.3 L126.3 207.2 L127.2 206.0 L128.1 204.9 L129.1 203.7 L130.0 202.5 L130.9 201.4 L131.8 200.2 L132.8 199.0 L133.7 197.8 L134.6 196.5 L135.5 195.3 L136.4 194.1 L137.4 192.9 L138.3 191.6 L139.2 190.3 L140.1 189.1 L141.1 187.8 L142.0 186.5 L142.9 185.2 L143.8 184.0 L144.8 182.7 L145.7 181.4 L146.6 180.1 L147.5 178.7 L148.4 177.4 L149.4 176.1 L150.3 174.8 L151.2 173.5 L152.1 172.1 L153.1 170.8 L154.0 169.5 L154.9 168.2 L155.8 166.9 L156.7 165.5 L157.7 164.2 L158.6 162.9 L159.5 161.6 L160.4 160.4 L161.4 159.1 L162.3 157.8 L163.2 156.6 L164.1 155.4 L165.1 154.2 L166.0 153.0 L166.9 151.8 L167.8 150.7 L168.7 149.6 L169.7 148.6 L170.6 147.5 L171.5 146.6 L172.4 145.6 L173.4 144.8 L174.3 143.9 L175.2 143.2 L176.1 142.5 L177.1 141.9 L178.0 141.3 L178.9 140.9 L179.8 140.5 L180.7 140.3 L181.7 140.1 L182.6 140.1 L183.5 140.2 L184.4 140.5 L185.4 140.9 L186.3 141.4 L187.2 142.2 L188.1 143.1 L189.0 144.3 L190.0 145.6 L190.9 147.2 L191.8 149.1 L192.7 151.2 L193.7 153.6 L194.6 156.3 L195.5 159.4 L196.4 162.8 L197.4 166.6 L198.3 170.8 L199.2 175.4 L200.1 180.5 L201.0 186.1 L202.0 192.2 L202.9 198.8 L203.8 206.0 L204.7 213.8 L205.7 222.2 L206.6 231.3 L207.5 241.1 L208.4 251.6 L209.4 262.8 L210.3 274.8 L211.2 287.6 L212.1 301.2 L213.0 315.6 L214.0 330.8 L214.9 346.9 L215.8 363.8 L216.7 381.5 L217.7 400.0 L217.7 400.0" stroke-width="2"/>
+<path d="M70.0 311.7 L71.8 311.1 L73.7 310.6 L75.5 310.1 L77.4 309.6 L79.2 309.0 L81.1 308.5 L82.9 308.0 L84.8 307.4 L86.6 306.8 L88.5 306.3 L90.3 305.7 L92.1 305.1 L94.0 304.5 L95.8 303.9 L97.7 303.3 L99.5 302.7 L101.4 302.1 L103.2 301.5 L105.1 300.9 L106.9 300.2 L108.8 299.6 L110.6 298.9 L112.5 298.3 L114.3 297.6 L116.1 296.9 L118.0 296.2 L119.8 295.5 L121.7 294.8 L123.5 294.1 L125.4 293.4 L127.2 292.6 L129.1 291.9 L130.9 291.1 L132.8 290.4 L134.6 289.6 L136.4 288.8 L138.3 288.0 L140.1 287.2 L142.0 286.4 L143.8 285.5 L145.7 284.7 L147.5 283.8 L149.4 283.0 L151.2 282.1 L153.1 281.2 L154.9 280.3 L156.7 279.3 L158.6 278.4 L160.4 277.5 L162.3 276.5 L164.1 275.5 L166.0 274.5 L167.8 273.5 L169.7 272.5 L171.5 271.4 L173.4 270.4 L175.2 269.3 L177.1 268.2 L178.9 267.1 L180.7 266.0 L182.6 264.8 L184.4 263.7 L186.3 262.5 L188.1 261.3 L190.0 260.1 L191.8 258.8 L193.7 257.6 L195.5 256.3 L197.4 255.0 L199.2 253.6 L201.0 252.3 L202.9 250.9 L204.7 249.5 L206.6 248.1 L208.4 246.6 L210.3 245.2 L212.1 243.7 L214.0 242.1 L215.8 240.6 L217.7 239.0 L219.5 237.4 L221.3 235.7 L223.2 234.1 L225.0 232.4 L226.9 230.6 L228.7 228.9 L230.6 227.1 L232.4 225.2 L234.3 223.4 L236.1 221.4 L238.0 219.5 L239.8 217.5 L241.7 215.5 L243.5 213.5 L245.3 211.4 L247.2 209.2 L249.0 207.1 L250.9 204.8 L252.7 202.6 L254.6 200.3 L256.4 197.9 L258.3 195.5 L260.1 193.1 L262.0 190.6 L263.8 188.1 L265.6 185.5 L267.5 182.9 L269.3 180.2 L271.2 177.5 L273.0 174.8 L274.9 172.0 L276.7 169.1 L278.6 166.2 L280.4 163.3 L282.3 160.3 L284.1 157.3 L285.9 154.2 L287.8 151.1 L289.6 148.0 L291.5 144.9 L293.3 141.7 L295.2 138.5 L297.0 135.3 L298.9 132.2 L300.7 129.0 L302.6 125.8 L304.4 122.7 L306.2 119.6 L308.1 116.6 L309.9 113.7 L311.8 110.9 L313.6 108.3 L315.5 105.8 L317.3 103.5 L319.2 101.5 L321.0 99.7 L322.9 98.4 L324.7 97.4 L326.6 96.9 L328.4 97.0 L330.2 97.7 L332.1 99.1 L333.9 101.4 L335.8 104.7 L337.6 109.0 L339.5 114.6 L341.3 121.6 L343.2 130.2 L345.0 140.4 L346.9 152.6 L348.7 166.7 L350.5 183.1 L352.4 201.8 L354.2 222.9 L356.1 246.5 L357.9 272.6 L359.8 301.2 L361.6 332.1 L363.5 365.1 L365.3 400.0 L365.3 400.0" stroke-width="3"/>
+<path d="M70.0 372.0 L72.8 371.9 L75.5 371.7 L78.3 371.5 L81.1 371.3 L83.8 371.2 L86.6 371.0 L89.4 370.8 L92.1 370.6 L94.9 370.4 L97.7 370.2 L100.5 370.1 L103.2 369.9 L106.0 369.7 L108.8 369.5 L111.5 369.3 L114.3 369.1 L117.1 368.9 L119.8 368.6 L122.6 368.4 L125.4 368.2 L128.1 368.0 L130.9 367.8 L133.7 367.6 L136.4 367.3 L139.2 367.1 L142.0 366.9 L144.8 366.6 L147.5 366.4 L150.3 366.1 L153.1 365.9 L155.8 365.6 L158.6 365.4 L161.4 365.1 L164.1 364.9 L166.9 364.6 L169.7 364.3 L172.4 364.1 L175.2 363.8 L178.0 363.5 L180.7 363.2 L183.5 362.9 L186.3 362.6 L189.0 362.3 L191.8 362.0 L194.6 361.7 L197.4 361.4 L200.1 361.1 L202.9 360.8 L205.7 360.4 L208.4 360.1 L211.2 359.7 L214.0 359.4 L216.7 359.0 L219.5 358.7 L222.3 358.3 L225.0 357.9 L227.8 357.6 L230.6 357.2 L233.3 356.8 L236.1 356.4 L238.9 356.0 L241.7 355.6 L244.4 355.1 L247.2 354.7 L250.0 354.3 L252.7 353.8 L255.5 353.4 L258.3 352.9 L261.0 352.4 L263.8 352.0 L266.6 351.5 L269.3 351.0 L272.1 350.4 L274.9 349.9 L277.6 349.4 L280.4 348.8 L283.2 348.3 L285.9 347.7 L288.7 347.1 L291.5 346.5 L294.3 345.9 L297.0 345.3 L299.8 344.7 L302.6 344.0 L305.3 343.4 L308.1 342.7 L310.9 342.0 L313.6 341.3 L316.4 340.6 L319.2 339.8 L321.9 339.1 L324.7 338.3 L327.5 337.5 L330.2 336.7 L333.0 335.8 L335.8 335.0 L338.5 334.1 L341.3 333.2 L344.1 332.2 L346.9 331.3 L349.6 330.3 L352.4 329.3 L355.2 328.3 L357.9 327.2 L360.7 326.1 L363.5 325.0 L366.2 323.8 L369.0 322.7 L371.8 321.4 L374.5 320.2 L377.3 318.9 L380.1 317.6 L382.8 316.2 L385.6 314.8 L388.4 313.3 L391.2 311.9 L393.9 310.3 L396.7 308.7 L399.5 307.1 L402.2 305.4 L405.0 303.7 L407.8 301.9 L410.5 300.1 L413.3 298.2 L416.1 296.3 L418.8 294.3 L421.6 292.3 L424.4 290.2 L427.1 288.0 L429.9 285.8 L432.7 283.6 L435.4 281.3 L438.2 279.0 L441.0 276.7 L443.8 274.3 L446.5 272.0 L449.3 269.7 L452.1 267.4 L454.8 265.1 L457.6 263.0 L460.4 260.9 L463.1 259.1 L465.9 257.5 L468.7 256.3 L471.4 255.4 L474.2 255.1 L477.0 255.4 L479.7 256.5 L482.5 258.5 L485.3 261.8 L488.1 266.4 L490.8 272.7 L493.6 280.8 L496.4 291.0 L499.1 303.5 L501.9 318.3 L504.7 335.6 L507.4 355.2 L510.2 376.8 L513.0 400.0 L513.0 400.0" stroke-width="2"/>
+<path d="M70.0 387.9 L73.7 387.8 L77.4 387.8 L81.1 387.7 L84.8 387.6 L88.5 387.5 L92.1 387.5 L95.8 387.4 L99.5 387.3 L103.2 387.2 L106.9 387.1 L110.6 387.0 L114.3 387.0 L118.0 386.9 L121.7 386.8 L125.4 386.7 L129.1 386.6 L132.8 386.5 L136.4 386.4 L140.1 386.3 L143.8 386.2 L147.5 386.1 L151.2 386.0 L154.9 385.9 L158.6 385.8 L162.3 385.7 L166.0 385.6 L169.7 385.5 L173.4 385.4 L177.1 385.3 L180.7 385.2 L184.4 385.1 L188.1 385.0 L191.8 384.9 L195.5 384.7 L199.2 384.6 L202.9 384.5 L206.6 384.4 L210.3 384.3 L214.0 384.1 L217.7 384.0 L221.3 383.9 L225.0 383.7 L228.7 383.6 L232.4 383.5 L236.1 383.3 L239.8 383.2 L243.5 383.1 L247.2 382.9 L250.9 382.8 L254.6 382.6 L258.3 382.5 L262.0 382.3 L265.6 382.1 L269.3 382.0 L273.0 381.8 L276.7 381.6 L280.4 381.5 L284.1 381.3 L287.8 381.1 L291.5 380.9 L295.2 380.8 L298.9 380.6 L302.6 380.4 L306.2 380.2 L309.9 380.0 L313.6 379.8 L317.3 379.6 L321.0 379.4 L324.7 379.2 L328.4 378.9 L332.1 378.7 L335.8 378.5 L339.5 378.2 L343.2 378.0 L346.9 377.8 L350.5 377.5 L354.2 377.3 L357.9 377.0 L361.6 376.7 L365.3 376.5 L369.0 376.2 L372.7 375.9 L376.4 375.6 L380.1 375.3 L383.8 375.0 L387.5 374.7 L391.2 374.3 L394.8 374.0 L398.5 373.7 L402.2 373.3 L405.9 373.0 L409.6 372.6 L413.3 372.2 L417.0 371.8 L420.7 371.4 L424.4 371.0 L428.1 370.6 L431.8 370.2 L435.4 369.7 L439.1 369.3 L442.8 368.8 L446.5 368.3 L450.2 367.8 L453.9 367.3 L457.6 366.8 L461.3 366.2 L465.0 365.7 L468.7 365.1 L472.4 364.5 L476.1 363.8 L479.7 363.2 L483.4 362.5 L487.1 361.8 L490.8 361.1 L494.5 360.4 L498.2 359.6 L501.9 358.8 L505.6 358.0 L509.3 357.1 L513.0 356.3 L516.7 355.3 L520.4 354.4 L524.0 353.4 L527.7 352.4 L531.4 351.3 L535.1 350.2 L538.8 349.0 L542.5 347.8 L546.2 346.5 L549.9 345.2 L553.6 343.9 L557.3 342.4 L561.0 341.0 L564.6 339.4 L568.3 337.8 L572.0 336.2 L575.7 334.5 L579.4 332.8 L583.1 331.0 L586.8 329.1 L590.5 327.3 L594.2 325.4 L597.9 323.6 L601.6 321.8 L605.3 320.0 L608.9 318.5 L612.6 317.1 L616.3 316.1 L620.0 315.5 L623.7 315.5 L627.4 316.3 L631.1 318.2 L634.8 321.4 L638.5 326.2 L642.2 332.9 L645.9 341.9 L649.6 353.2 L653.2 366.9 L656.9 382.7 L660.6 400.0 L660.6 400.0" stroke-width="2"/>
+</g>
+<g fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="7 5"><path d="M70 265.4H700"/></g>
+<g fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="2 4"><path d="M70.0 400.0 L79.8 399.8 L89.7 399.4 L99.5 398.6 L109.4 397.5 L119.2 396.1 L129.1 394.3 L138.9 392.3 L148.8 389.9 L158.6 387.2 L168.4 384.2 L178.3 380.9 L188.1 377.3 L198.0 373.3 L207.8 369.1 L217.7 364.5 L227.5 359.6 L237.3 354.4 L247.2 348.8 L257.0 343.0 L266.9 336.8 L276.7 330.4 L286.6 323.6 L296.4 316.5 L306.2 309.1 L316.1 301.3 L325.9 293.3 L335.8 284.9 L345.6 276.2 L355.5 267.2 L365.3 257.9 L375.2 248.3 L385.0 238.3 L394.8 228.1 L404.7 217.5 L414.5 206.6 L424.4 195.4 L434.2 183.9 L444.1 172.0 L453.9 159.9 L463.8 147.4 L473.6 134.6 L483.4 121.5 L493.3 108.1 L503.1 94.3 L513.0 80.3 L522.8 65.9"/></g>
+<g fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="1 5" opacity="0.8"><path d="M103.6 220.4 L182.3 140.1 L327.3 96.8 L474.4 255.1 L621.8 315.4"/></g>
+<g fill="currentColor" stroke="none"><circle cx="119.9" cy="265.4" r="4.5"/><circle cx="209.6" cy="265.4" r="4.5"/><circle cx="357.4" cy="265.4" r="4.5"/></g>
+<g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="70.0" y="420" text-anchor="middle">0</text><text x="168.4" y="420" text-anchor="middle">500</text><text x="266.9" y="420" text-anchor="middle">1000</text><text x="365.3" y="420" text-anchor="middle">1500</text><text x="463.8" y="420" text-anchor="middle">2000</text><text x="562.2" y="420" text-anchor="middle">2500</text><text x="660.6" y="420" text-anchor="middle">3000</text><text x="61" y="404.0" text-anchor="end">0</text><text x="61" y="336.7" text-anchor="end">0,5</text><text x="61" y="269.4" text-anchor="end">1</text><text x="61" y="202.1" text-anchor="end">1,5</text><text x="61" y="134.8" text-anchor="end">2</text><text x="61" y="67.5" text-anchor="end">2,5</text><text x="103.6" y="210.4" text-anchor="middle">10 Hz</text><text x="182.3" y="130.1" text-anchor="middle">25 Hz</text><text x="327.3" y="86.8" text-anchor="middle">50 Hz</text><text x="474.4" y="245.1" text-anchor="middle">75 Hz</text><text x="621.8" y="305.4" text-anchor="middle">100 Hz</text><text x="129.1" y="394" text-anchor="middle" font-size="10.5">n_s</text><text x="217.7" y="394" text-anchor="middle" font-size="10.5">n_s</text><text x="365.3" y="394" text-anchor="middle" font-size="10.5">n_s</text><text x="513.0" y="394" text-anchor="middle" font-size="10.5">n_s</text><text x="660.6" y="394" text-anchor="middle" font-size="10.5">n_s</text><text x="60" y="22">C / C_n</text><text x="730" y="438" text-anchor="end">n (tr/min)</text><text x="513.0" y="257.4">charge à couple constant C_n</text><text x="467.8" y="156.4">charge quadratique</text><text x="402.0" y="118.0">enveloppe des maxima</text><text x="99" y="458">zone à couple constant, U/f constant</text><text x="404" y="458">zone de défluxage, U plafonnée à 400 V</text></g>
+<g fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"><path d="M371.2 408V462"/></g>
+</svg>
+    <figcaption>
+      Schéma principal. Couple électromagnétique rapporté à $C_n = 71{,}95\ \mathrm{N \cdot m}$ en fonction de la vitesse, pour $10$, $25$ et
+      $50\ \mathrm{Hz}$ en loi $U/f$ compensée, puis $75$ et $100\ \mathrm{Hz}$ à $400\ \mathrm{V}$ ; la courbe à $50\ \mathrm{Hz}$ est en trait plus
+      épais. La droite horizontale en tirets est une charge à couple constant égal à $C_n$, la courbe en pointillés une charge quadratique égale à
+      $C_n$ à $1460\ \mathrm{tr/min}$, la ligne pointillée fine relie les maxima des cinq courbes. Les points pleins sont les points de fonctionnement
+      à couple constant : $253{,}5\ \mathrm{tr/min}$ à $10\ \mathrm{Hz}$, $708{,}8\ \mathrm{tr/min}$ à $25\ \mathrm{Hz}$, $1460\ \mathrm{tr/min}$ à
+      $50\ \mathrm{Hz}$, soit des écarts de $46{,}5$, $41{,}2$ et $40\ \mathrm{tr/min}$ : la compensation fixe ne tient pas tout à fait le flux à
+      $10\ \mathrm{Hz}$. À $75\ \mathrm{Hz}$, le couple maximal ne vaut plus que $1{,}08\ C_n$ : la charge à couple constant est à la limite du
+      décrochage, et à $100\ \mathrm{Hz}$, $0{,}63\ C_n$, elle est impossible.
+    </figcaption>
+  </figure>
+  <p>
+    Le diagramme des zones résume ce que le moteur peut fournir en régime permanent à courant nominal, dans le modèle idéal où les chutes
+    statoriques sont compensées. Les courbes sont désignées par leur style, rappelé dans l'explication : la tension en trait épais, le flux en
+    tirets longs, le couple disponible en trait fin, la puissance disponible en pointillés et le couple maximal en tirets mixtes.
+  </p>
+  <figure id="f-zones-figure">
+    <svg viewBox="0 0 760 450" role="img" aria-label="Diagramme des zones de fonctionnement en fonction de la fréquence : tension, flux, couple disponible à courant nominal, puissance disponible et couple maximal, en valeurs relatives, de 0 à 120 hertz">
+<defs><marker id="fl-f-zon" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker></defs>
+<g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
+<path d="M70 386V28" marker-end="url(#fl-f-zon)"/>
+<path d="M64 380H730" marker-end="url(#fl-f-zon)"/>
+<path d="M70.0 380v5"/>
+<path d="M122.5 380v5"/>
+<path d="M175.0 380v5"/>
+<path d="M227.5 380v5"/>
+<path d="M280.0 380v5"/>
+<path d="M332.5 380v5"/>
+<path d="M385.0 380v5"/>
+<path d="M437.5 380v5"/>
+<path d="M490.0 380v5"/>
+<path d="M542.5 380v5"/>
+<path d="M595.0 380v5"/>
+<path d="M647.5 380v5"/>
+<path d="M700.0 380v5"/>
+<path d="M70 380.0h-5"/>
+<path d="M70 314.0h-5"/>
+<path d="M70 248.0h-5"/>
+<path d="M70 182.0h-5"/>
+<path d="M70 116.0h-5"/>
+<path d="M70 50.0h-5"/>
+</g>
+<g fill="none" stroke="currentColor" stroke-linejoin="round">
+<path d="M70.0 372.1 L72.6 369.5 L75.2 367.0 L77.9 364.4 L80.5 361.8 L83.1 359.3 L85.8 356.7 L88.4 354.2 L91.0 351.6 L93.6 349.0 L96.2 346.5 L98.9 343.9 L101.5 341.4 L104.1 338.8 L106.8 336.2 L109.4 333.7 L112.0 331.1 L114.6 328.5 L117.2 326.0 L119.9 323.4 L122.5 320.9 L125.1 318.3 L127.8 315.7 L130.4 313.2 L133.0 310.6 L135.6 308.1 L138.2 305.5 L140.9 302.9 L143.5 300.4 L146.1 297.8 L148.8 295.3 L151.4 292.7 L154.0 290.1 L156.6 287.6 L159.2 285.0 L161.9 282.5 L164.5 279.9 L167.1 277.3 L169.8 274.8 L172.4 272.2 L175.0 269.6 L177.6 267.1 L180.2 264.5 L182.9 262.0 L185.5 259.4 L188.1 256.8 L190.8 254.3 L193.4 251.7 L196.0 249.2 L198.6 246.6 L201.2 244.0 L203.9 241.5 L206.5 238.9 L209.1 236.4 L211.8 233.8 L214.4 231.2 L217.0 228.7 L219.6 226.1 L222.2 223.6 L224.9 221.0 L227.5 218.4 L230.1 215.9 L232.8 213.3 L235.4 210.7 L238.0 208.2 L240.6 205.6 L243.2 203.1 L245.9 200.5 L248.5 197.9 L251.1 195.4 L253.8 192.8 L256.4 190.3 L259.0 187.7 L261.6 185.1 L264.2 182.6 L266.9 180.0 L269.5 177.5 L272.1 174.9 L274.8 172.3 L277.4 169.8 L280.0 167.2 L282.6 164.7 L285.2 162.1 L287.9 159.5 L290.5 157.0 L293.1 154.4 L295.8 151.9 L298.4 149.3 L301.0 146.7 L303.6 144.2 L306.2 141.6 L308.9 139.0 L311.5 136.5 L314.1 133.9 L316.8 131.4 L319.4 128.8 L322.0 126.2 L324.6 123.7 L327.2 121.1 L329.9 118.6 L332.5 116.0 L335.1 116.0 L337.8 116.0 L340.4 116.0 L343.0 116.0 L345.6 116.0 L348.2 116.0 L350.9 116.0 L353.5 116.0 L356.1 116.0 L358.8 116.0 L361.4 116.0 L364.0 116.0 L366.6 116.0 L369.2 116.0 L371.9 116.0 L374.5 116.0 L377.1 116.0 L379.8 116.0 L382.4 116.0 L385.0 116.0 L387.6 116.0 L390.2 116.0 L392.9 116.0 L395.5 116.0 L398.1 116.0 L400.8 116.0 L403.4 116.0 L406.0 116.0 L408.6 116.0 L411.2 116.0 L413.9 116.0 L416.5 116.0 L419.1 116.0 L421.8 116.0 L424.4 116.0 L427.0 116.0 L429.6 116.0 L432.2 116.0 L434.9 116.0 L437.5 116.0 L440.1 116.0 L442.8 116.0 L445.4 116.0 L448.0 116.0 L450.6 116.0 L453.2 116.0 L455.9 116.0 L458.5 116.0 L461.1 116.0 L463.8 116.0 L466.4 116.0 L469.0 116.0 L471.6 116.0 L474.3 116.0 L476.9 116.0 L479.5 116.0 L482.1 116.0 L484.8 116.0 L487.4 116.0 L490.0 116.0 L492.6 116.0 L495.2 116.0 L497.9 116.0 L500.5 116.0 L503.1 116.0 L505.8 116.0 L508.4 116.0 L511.0 116.0 L513.6 116.0 L516.2 116.0 L518.9 116.0 L521.5 116.0 L524.1 116.0 L526.8 116.0 L529.4 116.0 L532.0 116.0 L534.6 116.0 L537.2 116.0 L539.9 116.0 L542.5 116.0 L545.1 116.0 L547.8 116.0 L550.4 116.0 L553.0 116.0 L555.6 116.0 L558.2 116.0 L560.9 116.0 L563.5 116.0 L566.1 116.0 L568.8 116.0 L571.4 116.0 L574.0 116.0 L576.6 116.0 L579.2 116.0 L581.9 116.0 L584.5 116.0 L587.1 116.0 L589.8 116.0 L592.4 116.0 L595.0 116.0 L597.6 116.0 L600.2 116.0 L602.9 116.0 L605.5 116.0 L608.1 116.0 L610.8 116.0 L613.4 116.0 L616.0 116.0 L618.6 116.0 L621.2 116.0 L623.9 116.0 L626.5 116.0 L629.1 116.0 L631.8 116.0 L634.4 116.0 L637.0 116.0 L639.6 116.0 L642.2 116.0 L644.9 116.0 L647.5 116.0 L650.1 116.0 L652.8 116.0 L655.4 116.0 L658.0 116.0 L660.6 116.0 L663.2 116.0 L665.9 116.0 L668.5 116.0 L671.1 116.0 L673.8 116.0 L676.4 116.0 L679.0 116.0 L681.6 116.0 L684.2 116.0 L686.9 116.0 L689.5 116.0 L692.1 116.0 L694.8 116.0 L697.4 116.0 L700.0 116.0" stroke-width="3.2"/>
+<path d="M72.6 116.0 L75.2 116.0 L77.9 116.0 L80.5 116.0 L83.1 116.0 L85.7 116.0 L88.3 116.0 L90.9 116.0 L93.5 116.0 L96.2 116.0 L98.8 116.0 L101.4 116.0 L104.0 116.0 L106.6 116.0 L109.2 116.0 L111.8 116.0 L114.4 116.0 L117.1 116.0 L119.7 116.0 L122.3 116.0 L124.9 116.0 L127.5 116.0 L130.1 116.0 L132.7 116.0 L135.4 116.0 L138.0 116.0 L140.6 116.0 L143.2 116.0 L145.8 116.0 L148.4 116.0 L151.0 116.0 L153.7 116.0 L156.3 116.0 L158.9 116.0 L161.5 116.0 L164.1 116.0 L166.7 116.0 L169.3 116.0 L172.0 116.0 L174.6 116.0 L177.2 116.0 L179.8 116.0 L182.4 116.0 L185.0 116.0 L187.6 116.0 L190.3 116.0 L192.9 116.0 L195.5 116.0 L198.1 116.0 L200.7 116.0 L203.3 116.0 L205.9 116.0 L208.6 116.0 L211.2 116.0 L213.8 116.0 L216.4 116.0 L219.0 116.0 L221.6 116.0 L224.2 116.0 L226.9 116.0 L229.5 116.0 L232.1 116.0 L234.7 116.0 L237.3 116.0 L239.9 116.0 L242.5 116.0 L245.2 116.0 L247.8 116.0 L250.4 116.0 L253.0 116.0 L255.6 116.0 L258.2 116.0 L260.8 116.0 L263.5 116.0 L266.1 116.0 L268.7 116.0 L271.3 116.0 L273.9 116.0 L276.5 116.0 L279.1 116.0 L281.8 116.0 L284.4 116.0 L287.0 116.0 L289.6 116.0 L292.2 116.0 L294.8 116.0 L297.4 116.0 L300.0 116.0 L302.7 116.0 L305.3 116.0 L307.9 116.0 L310.5 116.0 L313.1 116.0 L315.7 116.0 L318.3 116.0 L321.0 116.0 L323.6 116.0 L326.2 116.0 L328.8 116.0 L331.4 116.0 L334.0 117.5 L336.6 120.1 L339.3 122.6 L341.9 125.1 L344.5 127.5 L347.1 129.9 L349.7 132.2 L352.3 134.5 L354.9 136.8 L357.6 139.0 L360.2 141.2 L362.8 143.3 L365.4 145.4 L368.0 147.5 L370.6 149.5 L373.2 151.5 L375.9 153.4 L378.5 155.3 L381.1 157.2 L383.7 159.1 L386.3 160.9 L388.9 162.7 L391.5 164.5 L394.2 166.2 L396.8 167.9 L399.4 169.6 L402.0 171.3 L404.6 172.9 L407.2 174.5 L409.8 176.1 L412.5 177.6 L415.1 179.2 L417.7 180.7 L420.3 182.2 L422.9 183.6 L425.5 185.1 L428.1 186.5 L430.8 187.9 L433.4 189.3 L436.0 190.6 L438.6 192.0 L441.2 193.3 L443.8 194.6 L446.4 195.9 L449.1 197.2 L451.7 198.4 L454.3 199.7 L456.9 200.9 L459.5 202.1 L462.1 203.3 L464.7 204.4 L467.3 205.6 L470.0 206.7 L472.6 207.9 L475.2 209.0 L477.8 210.1 L480.4 211.1 L483.0 212.2 L485.6 213.3 L488.3 214.3 L490.9 215.3 L493.5 216.4 L496.1 217.4 L498.7 218.4 L501.3 219.3 L503.9 220.3 L506.6 221.3 L509.2 222.2 L511.8 223.1 L514.4 224.1 L517.0 225.0 L519.6 225.9 L522.2 226.8 L524.9 227.6 L527.5 228.5 L530.1 229.4 L532.7 230.2 L535.3 231.1 L537.9 231.9 L540.5 232.7 L543.2 233.5 L545.8 234.3 L548.4 235.1 L551.0 235.9 L553.6 236.7 L556.2 237.5 L558.8 238.2 L561.5 239.0 L564.1 239.7 L566.7 240.5 L569.3 241.2 L571.9 241.9 L574.5 242.6 L577.1 243.4 L579.8 244.1 L582.4 244.7 L585.0 245.4 L587.6 246.1 L590.2 246.8 L592.8 247.5 L595.4 248.1 L598.1 248.8 L600.7 249.4 L603.3 250.0 L605.9 250.7 L608.5 251.3 L611.1 251.9 L613.7 252.5 L616.4 253.2 L619.0 253.8 L621.6 254.4 L624.2 255.0 L626.8 255.5 L629.4 256.1 L632.0 256.7 L634.6 257.3 L637.3 257.8 L639.9 258.4 L642.5 258.9 L645.1 259.5 L647.7 260.0 L650.3 260.6 L652.9 261.1 L655.6 261.7 L658.2 262.2 L660.8 262.7 L663.4 263.2 L666.0 263.7 L668.6 264.2 L671.2 264.7 L673.9 265.2 L676.5 265.7 L679.1 266.2 L681.7 266.7 L684.3 267.2 L686.9 267.7 L689.5 268.1 L692.2 268.6 L694.8 269.1 L697.4 269.5 L700.0 270.0" stroke-width="2" stroke-dasharray="8 5"/>
+<path d="M72.6 123.9 L75.2 123.9 L77.9 123.9 L80.5 123.9 L83.1 123.9 L85.7 123.9 L88.3 123.9 L90.9 123.9 L93.5 123.9 L96.2 123.9 L98.8 123.9 L101.4 123.9 L104.0 123.9 L106.6 123.9 L109.2 123.9 L111.8 123.9 L114.4 123.9 L117.1 123.9 L119.7 123.9 L122.3 123.9 L124.9 123.9 L127.5 123.9 L130.1 123.9 L132.7 123.9 L135.4 123.9 L138.0 123.9 L140.6 123.9 L143.2 123.9 L145.8 123.9 L148.4 123.9 L151.0 123.9 L153.7 123.9 L156.3 123.9 L158.9 123.9 L161.5 123.9 L164.1 123.9 L166.7 123.9 L169.3 123.9 L172.0 123.9 L174.6 123.9 L177.2 123.9 L179.8 123.9 L182.4 123.9 L185.0 123.9 L187.6 123.9 L190.3 123.9 L192.9 123.9 L195.5 123.9 L198.1 123.9 L200.7 123.9 L203.3 123.9 L205.9 123.9 L208.6 123.9 L211.2 123.9 L213.8 123.9 L216.4 123.9 L219.0 123.9 L221.6 123.9 L224.2 123.9 L226.9 123.9 L229.5 123.9 L232.1 123.9 L234.7 123.9 L237.3 123.9 L239.9 123.9 L242.5 123.9 L245.2 123.9 L247.8 123.9 L250.4 123.9 L253.0 123.9 L255.6 123.9 L258.2 123.9 L260.8 123.9 L263.5 123.9 L266.1 123.9 L268.7 123.9 L271.3 123.9 L273.9 123.9 L276.5 123.9 L279.1 123.9 L281.8 123.9 L284.4 123.9 L287.0 123.9 L289.6 123.9 L292.2 123.9 L294.8 123.9 L297.4 123.9 L300.0 123.9 L302.7 123.9 L305.3 123.9 L307.9 123.9 L310.5 123.9 L313.1 123.9 L315.7 123.9 L318.3 123.9 L321.0 123.9 L323.6 123.9 L326.2 123.9 L328.8 123.9 L331.4 123.9 L334.0 125.4 L336.6 127.9 L339.3 130.3 L341.9 132.7 L344.5 135.1 L347.1 137.4 L349.7 139.7 L352.3 141.9 L354.9 144.1 L357.6 146.2 L360.2 148.3 L362.8 150.4 L365.4 152.4 L368.0 154.4 L370.6 156.4 L373.2 158.3 L375.9 160.2 L378.5 162.1 L381.1 163.9 L383.7 165.7 L386.3 167.5 L388.9 169.2 L391.5 170.9 L394.2 172.6 L396.8 174.3 L399.4 175.9 L402.0 177.5 L404.6 179.1 L407.2 180.7 L409.8 182.2 L412.5 183.7 L415.1 185.2 L417.7 186.7 L420.3 188.1 L422.9 189.5 L425.5 190.9 L428.1 192.3 L430.8 193.7 L433.4 195.0 L436.0 196.3 L438.6 197.6 L441.2 198.9 L443.8 200.2 L446.4 201.4 L449.1 202.7 L451.7 203.9 L454.3 205.1 L456.9 206.3 L459.5 207.4 L462.1 208.6 L464.7 209.7 L467.3 210.8 L470.0 211.9 L472.6 213.0 L475.2 214.1 L477.8 215.2 L480.4 216.2 L483.0 217.3 L485.6 218.3 L488.3 219.3 L490.9 220.3 L493.5 221.3 L496.1 222.2 L498.7 223.2 L501.3 224.2 L503.9 225.1 L506.6 226.0 L509.2 226.9 L511.8 227.8 L514.4 228.7 L517.0 229.6 L519.6 230.5 L522.2 231.4 L524.9 232.2 L527.5 233.1 L530.1 233.9 L532.7 234.7 L535.3 235.5 L537.9 236.3 L540.5 237.1 L543.2 237.9 L545.8 238.7 L548.4 239.5 L551.0 240.2 L553.6 241.0 L556.2 241.7 L558.8 242.5 L561.5 243.2 L564.1 243.9 L566.7 244.7 L569.3 245.4 L571.9 246.1 L574.5 246.8 L577.1 247.5 L579.8 248.1 L582.4 248.8 L585.0 249.5 L587.6 250.1 L590.2 250.8 L592.8 251.4 L595.4 252.1 L598.1 252.7 L600.7 253.3 L603.3 253.9 L605.9 254.6 L608.5 255.2 L611.1 255.8 L613.7 256.4 L616.4 257.0 L619.0 257.5 L621.6 258.1 L624.2 258.7 L626.8 259.3 L629.4 259.8 L632.0 260.4 L634.6 261.0 L637.3 261.5 L639.9 262.0 L642.5 262.6 L645.1 263.1 L647.7 263.6 L650.3 264.2 L652.9 264.7 L655.6 265.2 L658.2 265.7 L660.8 266.2 L663.4 266.7 L666.0 267.2 L668.6 267.7 L671.2 268.2 L673.9 268.7 L676.5 269.2 L679.1 269.6 L681.7 270.1 L684.3 270.6 L686.9 271.0 L689.5 271.5 L692.2 272.0 L694.8 272.4 L697.4 272.9 L700.0 273.3" stroke-width="1.6"/>
+<path d="M70.0 380.0 L72.6 377.4 L75.2 374.7 L77.9 372.1 L80.5 369.4 L83.1 366.8 L85.8 364.2 L88.4 361.5 L91.0 358.9 L93.6 356.2 L96.2 353.6 L98.9 351.0 L101.5 348.3 L104.1 345.7 L106.8 343.0 L109.4 340.4 L112.0 337.8 L114.6 335.1 L117.2 332.5 L119.9 329.8 L122.5 327.2 L125.1 324.6 L127.8 321.9 L130.4 319.3 L133.0 316.6 L135.6 314.0 L138.2 311.4 L140.9 308.7 L143.5 306.1 L146.1 303.4 L148.8 300.8 L151.4 298.2 L154.0 295.5 L156.6 292.9 L159.2 290.2 L161.9 287.6 L164.5 285.0 L167.1 282.3 L169.8 279.7 L172.4 277.0 L175.0 274.4 L177.6 271.8 L180.2 269.1 L182.9 266.5 L185.5 263.8 L188.1 261.2 L190.8 258.6 L193.4 255.9 L196.0 253.3 L198.6 250.6 L201.2 248.0 L203.9 245.4 L206.5 242.7 L209.1 240.1 L211.8 237.4 L214.4 234.8 L217.0 232.2 L219.6 229.5 L222.2 226.9 L224.9 224.2 L227.5 221.6 L230.1 219.0 L232.8 216.3 L235.4 213.7 L238.0 211.0 L240.6 208.4 L243.2 205.8 L245.9 203.1 L248.5 200.5 L251.1 197.8 L253.8 195.2 L256.4 192.6 L259.0 189.9 L261.6 187.3 L264.2 184.6 L266.9 182.0 L269.5 179.4 L272.1 176.7 L274.8 174.1 L277.4 171.4 L280.0 168.8 L282.6 166.2 L285.2 163.5 L287.9 160.9 L290.5 158.2 L293.1 155.6 L295.8 153.0 L298.4 150.3 L301.0 147.7 L303.6 145.0 L306.2 142.4 L308.9 139.8 L311.5 137.1 L314.1 134.5 L316.8 131.8 L319.4 129.2 L322.0 126.6 L324.6 123.9 L327.2 121.3 L329.9 118.6 L332.5 116.0 L335.1 116.0 L337.8 116.0 L340.4 116.0 L343.0 116.0 L345.6 116.0 L348.2 116.0 L350.9 116.0 L353.5 116.0 L356.1 116.0 L358.8 116.0 L361.4 116.0 L364.0 116.0 L366.6 116.0 L369.2 116.0 L371.9 116.0 L374.5 116.0 L377.1 116.0 L379.8 116.0 L382.4 116.0 L385.0 116.0 L387.6 116.0 L390.2 116.0 L392.9 116.0 L395.5 116.0 L398.1 116.0 L400.8 116.0 L403.4 116.0 L406.0 116.0 L408.6 116.0 L411.2 116.0 L413.9 116.0 L416.5 116.0 L419.1 116.0 L421.8 116.0 L424.4 116.0 L427.0 116.0 L429.6 116.0 L432.2 116.0 L434.9 116.0 L437.5 116.0 L440.1 116.0 L442.8 116.0 L445.4 116.0 L448.0 116.0 L450.6 116.0 L453.2 116.0 L455.9 116.0 L458.5 116.0 L461.1 116.0 L463.8 116.0 L466.4 116.0 L469.0 116.0 L471.6 116.0 L474.3 116.0 L476.9 116.0 L479.5 116.0 L482.1 116.0 L484.8 116.0 L487.4 116.0 L490.0 116.0 L492.6 116.0 L495.2 116.0 L497.9 116.0 L500.5 116.0 L503.1 116.0 L505.8 116.0 L508.4 116.0 L511.0 116.0 L513.6 116.0 L516.2 116.0 L518.9 116.0 L521.5 116.0 L524.1 116.0 L526.8 116.0 L529.4 116.0 L532.0 116.0 L534.6 116.0 L537.2 116.0 L539.9 116.0 L542.5 116.0 L545.1 116.0 L547.8 116.0 L550.4 116.0 L553.0 116.0 L555.6 116.0 L558.2 116.0 L560.9 116.0 L563.5 116.0 L566.1 116.0 L568.8 116.0 L571.4 116.0 L574.0 116.0 L576.6 116.0 L579.2 116.0 L581.9 116.0 L584.5 116.0 L587.1 116.0 L589.8 116.0 L592.4 116.0 L595.0 116.0 L597.6 116.0 L600.2 116.0 L602.9 116.0 L605.5 116.0 L608.1 116.0 L610.8 116.0 L613.4 116.0 L616.0 116.0 L618.6 116.0 L621.2 116.0 L623.9 116.0 L626.5 116.0 L629.1 116.0 L631.8 116.0 L634.4 116.0 L637.0 116.0 L639.6 116.0 L642.2 116.0 L644.9 116.0 L647.5 116.0 L650.1 116.0 L652.8 116.0 L655.4 116.0 L658.0 116.0 L660.6 116.0 L663.2 116.0 L665.9 116.0 L668.5 116.0 L671.1 116.0 L673.8 116.0 L676.4 116.0 L679.0 116.0 L681.6 116.0 L684.2 116.0 L686.9 116.0 L689.5 116.0 L692.1 116.0 L694.8 116.0 L697.4 116.0 L700.0 116.0" stroke-width="2.2" stroke-dasharray="2 4"/>
+<path d="M72.6 116.0 L75.2 116.0 L77.9 116.0 L80.5 116.0 L83.1 116.0 L85.7 116.0 L88.3 116.0 L90.9 116.0 L93.5 116.0 L96.2 116.0 L98.8 116.0 L101.4 116.0 L104.0 116.0 L106.6 116.0 L109.2 116.0 L111.8 116.0 L114.4 116.0 L117.1 116.0 L119.7 116.0 L122.3 116.0 L124.9 116.0 L127.5 116.0 L130.1 116.0 L132.7 116.0 L135.4 116.0 L138.0 116.0 L140.6 116.0 L143.2 116.0 L145.8 116.0 L148.4 116.0 L151.0 116.0 L153.7 116.0 L156.3 116.0 L158.9 116.0 L161.5 116.0 L164.1 116.0 L166.7 116.0 L169.3 116.0 L172.0 116.0 L174.6 116.0 L177.2 116.0 L179.8 116.0 L182.4 116.0 L185.0 116.0 L187.6 116.0 L190.3 116.0 L192.9 116.0 L195.5 116.0 L198.1 116.0 L200.7 116.0 L203.3 116.0 L205.9 116.0 L208.6 116.0 L211.2 116.0 L213.8 116.0 L216.4 116.0 L219.0 116.0 L221.6 116.0 L224.2 116.0 L226.9 116.0 L229.5 116.0 L232.1 116.0 L234.7 116.0 L237.3 116.0 L239.9 116.0 L242.5 116.0 L245.2 116.0 L247.8 116.0 L250.4 116.0 L253.0 116.0 L255.6 116.0 L258.2 116.0 L260.8 116.0 L263.5 116.0 L266.1 116.0 L268.7 116.0 L271.3 116.0 L273.9 116.0 L276.5 116.0 L279.1 116.0 L281.8 116.0 L284.4 116.0 L287.0 116.0 L289.6 116.0 L292.2 116.0 L294.8 116.0 L297.4 116.0 L300.0 116.0 L302.7 116.0 L305.3 116.0 L307.9 116.0 L310.5 116.0 L313.1 116.0 L315.7 116.0 L318.3 116.0 L321.0 116.0 L323.6 116.0 L326.2 116.0 L328.8 116.0 L331.4 116.0 L334.0 119.1 L336.6 124.1 L339.3 129.1 L341.9 133.9 L344.5 138.6 L347.1 143.1 L349.7 147.5 L352.3 151.8 L354.9 156.0 L357.6 160.0 L360.2 164.0 L362.8 167.8 L365.4 171.5 L368.0 175.2 L370.6 178.7 L373.2 182.2 L375.9 185.5 L378.5 188.8 L381.1 192.0 L383.7 195.1 L386.3 198.2 L388.9 201.2 L391.5 204.0 L394.2 206.9 L396.8 209.6 L399.4 212.3 L402.0 215.0 L404.6 217.5 L407.2 220.0 L409.8 222.5 L412.5 224.9 L415.1 227.2 L417.7 229.5 L420.3 231.8 L422.9 233.9 L425.5 236.1 L428.1 238.2 L430.8 240.2 L433.4 242.2 L436.0 244.2 L438.6 246.1 L441.2 248.0 L443.8 249.8 L446.4 251.6 L449.1 253.4 L451.7 255.1 L454.3 256.8 L456.9 258.5 L459.5 260.1 L462.1 261.7 L464.7 263.3 L467.3 264.8 L470.0 266.3 L472.6 267.8 L475.2 269.2 L477.8 270.6 L480.4 272.0 L483.0 273.4 L485.6 274.7 L488.3 276.0 L490.9 277.3 L493.5 278.6 L496.1 279.8 L498.7 281.0 L501.3 282.2 L503.9 283.4 L506.6 284.6 L509.2 285.7 L511.8 286.8 L514.4 287.9 L517.0 289.0 L519.6 290.0 L522.2 291.1 L524.9 292.1 L527.5 293.1 L530.1 294.1 L532.7 295.0 L535.3 296.0 L537.9 296.9 L540.5 297.8 L543.2 298.7 L545.8 299.6 L548.4 300.5 L551.0 301.4 L553.6 302.2 L556.2 303.1 L558.8 303.9 L561.5 304.7 L564.1 305.5 L566.7 306.3 L569.3 307.0 L571.9 307.8 L574.5 308.5 L577.1 309.3 L579.8 310.0 L582.4 310.7 L585.0 311.4 L587.6 312.1 L590.2 312.8 L592.8 313.4 L595.4 314.1 L598.1 314.8 L600.7 315.4 L603.3 316.0 L605.9 316.7 L608.5 317.3 L611.1 317.9 L613.7 318.5 L616.4 319.1 L619.0 319.6 L621.6 320.2 L624.2 320.8 L626.8 321.3 L629.4 321.9 L632.0 322.4 L634.6 322.9 L637.3 323.5 L639.9 324.0 L642.5 324.5 L645.1 325.0 L647.7 325.5 L650.3 326.0 L652.9 326.5 L655.6 326.9 L658.2 327.4 L660.8 327.9 L663.4 328.3 L666.0 328.8 L668.6 329.2 L671.2 329.7 L673.9 330.1 L676.5 330.5 L679.1 331.0 L681.7 331.4 L684.3 331.8 L686.9 332.2 L689.5 332.6 L692.2 333.0 L694.8 333.4 L697.4 333.8 L700.0 334.2" stroke-width="1.6" stroke-dasharray="10 4 2 4"/>
+</g>
+<g fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="3 4" opacity="0.7"><path d="M332.5 380V50"/><path d="M660.6 380V50"/></g>
+<g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="70.0" y="400" text-anchor="middle">0</text><text x="122.5" y="400" text-anchor="middle">10</text><text x="175.0" y="400" text-anchor="middle">20</text><text x="227.5" y="400" text-anchor="middle">30</text><text x="280.0" y="400" text-anchor="middle">40</text><text x="332.5" y="400" text-anchor="middle">50</text><text x="385.0" y="400" text-anchor="middle">60</text><text x="437.5" y="400" text-anchor="middle">70</text><text x="490.0" y="400" text-anchor="middle">80</text><text x="542.5" y="400" text-anchor="middle">90</text><text x="595.0" y="400" text-anchor="middle">100</text><text x="647.5" y="400" text-anchor="middle">110</text><text x="700.0" y="400" text-anchor="middle">120</text><text x="61" y="384.0" text-anchor="end">0</text><text x="61" y="318.0" text-anchor="end">0,25</text><text x="61" y="252.0" text-anchor="end">0,5</text><text x="61" y="186.0" text-anchor="end">0,75</text><text x="61" y="120.0" text-anchor="end">1</text><text x="61" y="54.0" text-anchor="end">1,25</text><text x="60" y="22">valeur relative</text><text x="730" y="418" text-anchor="end">f (Hz)</text><text x="206.5" y="206.3">U / U_n</text><text x="227.5" y="247.6">P / P_n</text><text x="437.5" y="161.4">Φ / Φ_n et C / C_n à I_n</text><text x="469.0" y="303.7">C_max / C_max(50 Hz)</text><text x="201.2" y="60.0" text-anchor="middle">couple constant</text><text x="495.2" y="60.0" text-anchor="middle">puissance constante</text><text x="332.5" y="436.0" text-anchor="middle">fréquence de base</text><text x="646.6" y="436.0" text-anchor="middle">limite de décrochage</text></g>
+</svg>
+    <figcaption>
+      Zones de fonctionnement d'un moteur au variateur, en valeurs relatives. Trait épais : tension $U/U_n$, affine avec $U_0 = 3\ \%$ jusqu'à la
+      fréquence de base, puis constante. Tirets longs : flux $\varPsi/\varPsi_n$, constant puis en $50/f$. Trait fin, juste sous le flux : couple
+      disponible à courant nominal $C/C_n$, de même forme. Pointillés : puissance disponible $P/P_n$, proportionnelle à $f$ puis constante. Tirets
+      mixtes : couple maximal rapporté à sa valeur à $50\ \mathrm{Hz}$, en $(50/f)^2$. Les verticales en tirets marquent la fréquence de base et la
+      limite de décrochage, vers $112\ \mathrm{Hz}$ pour $C_{max,b} = 2{,}25\ C_n$ dans ce modèle idéal, au-delà de laquelle la puissance doit
+      diminuer. Le couple disponible réel à basse fréquence est en outre limité par l'échauffement d'un moteur autoventilé, non représenté ici.
+    </figcaption>
+  </figure>
+  <p>
+    L'organigramme suivant donne l'enchaînement des décisions pour passer d'une consigne de vitesse et d'un couple à la fréquence et à la tension
+    du variateur. Il se lit de haut en bas ; les losanges sont des tests, les rectangles des calculs.
+  </p>
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Consigne : n et C_r(n)"] --> B["Plaque : p, n_n, C_n, Δn_n, C_max, R1"]
+  B --> C{"n < n_n ?"}
+  C -->|"oui : couple constant"| D["Δn = Δn_n C_r / C_n"]
+  C -->|"non : défluxage"| E["Δn = Δn_n (C_r / C_n) (f / f_b)²<br/>à itérer"]
+  D --> F["f = p (n + Δn) / 60"]
+  E --> F
+  F --> G["U = U_n f / f_b + compensation<br/>plafonnée à U_max"]
+  G --> H{"C_max > 1,3 C_r ?"}
+  H -->|"non"| I["Autre moteur, réducteur<br/>ou commande"]
+  H -->|"oui"| J{"Échauffement<br/>admissible ?"}
+  J -->|"non"| K["Ventilation forcée<br/>ou moteur plus gros"]
+  J -->|"oui"| L["Courant, vitesse maximale,<br/>freinage"]
+  L --> M["Contrôle : schéma équivalent,<br/>ordre de grandeur, bilan"]</pre>
+    <figcaption>
+      Organigramme de résolution. La branche de gauche traite la zone de couple constant, où l'écart de vitesse est proportionnel au couple ; celle
+      de droite la zone de défluxage, où il croît aussi comme le carré de la fréquence, ce qui impose une itération, puisque $f$ dépend de
+      $\Delta n$. Les deux tests de fin portent l'un sur la marge au décrochage, l'autre sur l'échauffement, qui sont deux limites indépendantes.
+    </figcaption>
+  </figure>
+  <p>
+    Le tableau compare les procédés de variation de vitesse d'un moteur asynchrone. Il résume la sous-section du même nom de la section E.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <thead>
+        <tr><th>Critère</th><th>Changement de pôles</th><th>Gradateur, tension variable</th><th>Rotor bobiné, résistances</th><th>Variateur $U/f$</th><th>Contrôle vectoriel</th><th>Double alimentation</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Grandeur agie</td><td>$p$</td><td>$U$, donc $g$</td><td>$R_2'$, donc $g$</td><td>$f$ et $U$</td><td>flux et couple séparément</td><td>tension rotorique</td></tr>
+        <tr><td>Plage de vitesse</td><td>deux ou trois vitesses fixes</td><td>étroite, sous $n_s$</td><td>sous $n_s$</td><td>de $5$ à $100\ \%$ et au-delà</td><td>de $0$ à au-delà de $n_n$</td><td>environ $\pm 30\ \%$ autour de $n_s$</td></tr>
+        <tr><td>Couple à basse vitesse</td><td>nominal à chaque vitesse</td><td>faible</td><td>élevé</td><td>limité sous $5\ \mathrm{Hz}$</td><td>nominal à l'arrêt</td><td>sans objet</td></tr>
+        <tr><td>Rendement à vitesse réduite</td><td>bon</td><td>mauvais, $p_{jr} = gP_{tr}$</td><td>mauvais</td><td>bon</td><td>bon</td><td>bon</td></tr>
+        <tr><td>Précision de vitesse</td><td>celle du glissement</td><td>médiocre</td><td>médiocre</td><td>$\Delta n$ près, ou mieux avec compensation</td><td>très bonne</td><td>bonne</td></tr>
+        <tr><td>Exigences</td><td>moteur spécial</td><td>petites puissances</td><td>bagues et balais</td><td>harmoniques, fronts de tension</td><td>paramètres du moteur, autoréglage</td><td>moteur à bagues, convertisseur rotorique</td></tr>
+        <tr><td>Usage préférable</td><td>ventilateurs à deux régimes</td><td>petits ventilateurs</td><td>levage ancien</td><td>pompes, ventilateurs, convoyeurs</td><td>levage, enrouleurs, machines-outils</td><td>très grandes puissances, éoliennes</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-chaine-figure" data-renvoi="d-chaine-figure">la chaîne de variation de vitesse, du réseau au moteur</a>, <a href="#d-flux-figure" data-renvoi="d-flux-figure">l'animation du flux imposé par la tension et la fréquence</a> et <a href="#d-tapis-figure" data-renvoi="d-tapis-figure">l'animation de l'écart de vitesse constant</a>, section D ;</li>
+    <li><a href="#e-schema-figure" data-renvoi="e-schema-figure">le schéma équivalent à fréquence variable</a>, <a href="#e-fresnel-figure" data-renvoi="e-fresnel-figure">l'animation du diagramme de Fresnel de la maille statorique</a>, <a href="#e-couple-figure" data-renvoi="e-couple-figure">la simulation des courbes couple-vitesse</a>, <a href="#e-zones-figure" data-renvoi="e-zones-figure">la simulation des zones de fonctionnement</a> et <a href="#e-rampe-figure" data-renvoi="e-rampe-figure">l'animation du démarrage sur rampe</a>, section E ;</li>
+    <li><a href="#h-figure" data-renvoi="h-figure">le schéma du convoyeur et de son entraînement</a>, section H ;</li>
+    <li><a href="#i-pompe-figure" data-renvoi="i-pompe-figure">le départ de la pompe du site avec son variateur et sa régulation de pression</a> et <a href="#i-pompe-sim-figure" data-renvoi="i-pompe-sim-figure">la simulation de sa consigne de vitesse</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour déterminer la fréquence et la tension qui donnent une consigne de vitesse, et vérifier que le moteur la tient :</p>
+  <ol>
+    <li>Rassembler les données : plaque du moteur, $p$, $n_n$, $P_n$, $I_n$, d'où $C_n = P_n/\varOmega_n$ et $\Delta n_n = n_{s,n} - n_n$ ; couple maximal du catalogue ; résistance statorique par phase de l'étoile équivalente ; tension maximale du variateur et réseau minimal ; couple résistant de la machine en fonction de la vitesse et inertie ramenée à l'arbre. Noter pour chaque valeur si elle est mesurée, garantie ou supposée.</li>
+    <li>Calculer le couple demandé à la vitesse de consigne, $C_r(n)$, en ramenant au besoin la machine à l'arbre du moteur par le rapport et le rendement du réducteur.</li>
+    <li>Situer la consigne : si $n < n_n$, zone de couple constant, $\Delta n = \Delta n_n\,C_r/C_n$ ; si $n > n_n$, zone de défluxage, $\Delta n = \Delta n_n\,(C_r/C_n)(f/f_b)^2$, à résoudre par itération à partir de $f = pn/60$.</li>
+    <li>En déduire $f = p(n + \Delta n)/60$, puis la tension $U = U_nf/f_b$, augmentée de la compensation à basse fréquence, au besoin calculée par $V \approx E + R_1I_1$ avec $E = (E_n/f_n)\,f$, et plafonnée à $U_{max}$.</li>
+    <li>Vérifier le décrochage : $C_{max}(f)$, constant en zone de couple constant si la compensation est correcte, en $(f_b/f)^2$ au-delà, doit dépasser $C_r$ avec une marge de $30\ \%$ au moins, et davantage si la charge subit des à-coups.</li>
+    <li>Vérifier l'échauffement et la mécanique : couple permanent admissible à la fréquence considérée d'après la courbe de déclassement du constructeur, courant du moteur et du variateur, vitesse maximale du moteur et de la machine, résonances mécaniques.</li>
+    <li>Vérifier les transitoires : rampes compatibles avec le courant admissible, énergie à absorber au freinage, comparée à la capacité du bus, et moyen de freinage ; puis contrôler l'ensemble par le schéma équivalent, l'ordre de grandeur et le bilan de puissance.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Un convoyeur à bande d'un atelier de conditionnement est entraîné par un moteur asynchrone de $11\ \mathrm{kW}$ à travers un réducteur. En
+    chargement, la bande doit avancer à $0{,}40\ \mathrm{m/s}$, ce qui correspond à $600\ \mathrm{tr/min}$ au moteur, sous un couple de
+    $60\ \mathrm{N \cdot m}$ ramené à l'arbre. Entre deux lots, elle revient à vide à $1{,}20\ \mathrm{m/s}$, soit $1800\ \mathrm{tr/min}$, sous
+    $28{,}8\ \mathrm{N \cdot m}$. Quelles fréquence et tension le variateur doit-il appliquer dans les deux cas, et le moteur convient-il ?
+  </p>
+  <figure id="h-figure">
+    <svg viewBox="0 0 760 260" role="img" aria-label="Schéma du convoyeur : réseau 400 volts, variateur, câble, moteur asynchrone de 11 kilowatts, réducteur, tambour et bande ; vitesses et couples des deux régimes">
+      <defs>
+        <marker id="fl-h" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 100H80"/>
+        <path d="M44 92l12 16M52 92l12 16M60 92l12 16" stroke-width="1.4"/>
+        <rect x="80" y="70" width="110" height="60" rx="6"/>
+        <path d="M190 100H290"/>
+        <path d="M232 92l12 16M240 92l12 16M248 92l12 16" stroke-width="1.4"/>
+        <circle cx="320" cy="100" r="30"/>
+        <path d="M350 100H400" stroke-width="4"/>
+        <rect x="400" y="76" width="70" height="48" rx="4"/>
+        <path d="M470 100H520" stroke-width="4"/>
+        <circle cx="540" cy="100" r="20"/>
+        <circle cx="720" cy="100" r="20"/>
+        <path d="M540 80H720M540 120H720"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M30 60H70" marker-end="url(#fl-h)" stroke-width="2.6"/>
+        <path d="M200 60H240" marker-end="url(#fl-h)" stroke-width="2.6"/>
+        <path d="M600 66H680" marker-end="url(#fl-h)"/>
+        <path d="M296 150a30 30 0 0 0 48 0" marker-end="url(#fl-h)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="16" y="146">400 V, 50 Hz</text>
+        <text x="96" y="96">variateur</text>
+        <text x="96" y="112">U/f, U0 réglable</text>
+        <text x="200" y="146">f, U</text>
+        <text x="308" y="96">M</text>
+        <text x="308" y="112">3~</text>
+        <text x="270" y="190">11 kW, 400 V Δ, 19,8 A</text>
+        <text x="270" y="206">1460 tr/min, 4 pôles</text>
+        <text x="404" y="104">réducteur</text>
+        <text x="600" y="58">bande</text>
+        <text x="16" y="238">chargement : 0,40 m/s, 600 tr/min moteur, 60 N·m ; retour à vide : 1,20 m/s, 1800 tr/min, 28,8 N·m</text>
+        <text x="352" y="162">sens de rotation</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma du convoyeur en représentation unifilaire, les trois barres obliques indiquant trois conducteurs. Les flèches épaisses donnent le sens
+      positif de l'énergie, du réseau vers la bande, en fonctionnement moteur ; la flèche courbe le sens de rotation choisi comme positif, la flèche
+      fine le sens d'avance de la bande. Les couples sont donnés ramenés à l'arbre du moteur, rendement du réducteur compris.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Données : moteur $11\ \mathrm{kW}$, $400/690\ \mathrm{V}$ couplé en triangle sur $400\ \mathrm{V}$, $50\ \mathrm{Hz}$, $1460\ \mathrm{tr/min}$,
+    $19{,}8\ \mathrm{A}$, quatre pôles ; $C_{max} = 2{,}25\ C_n$ au catalogue ; schéma équivalent de la section E, en particulier
+    $R_1 = 0{,}55\ \mathrm{\Omega}$ par phase de l'étoile équivalente et $E_n/f_n = 4{,}233\ \mathrm{V/Hz}$ par phase ; variateur de
+    $400\ \mathrm{V}$ maximum, fréquence de base $50\ \mathrm{Hz}$. Hypothèse de déclassement, à remplacer par la courbe du constructeur : couple
+    permanent admissible d'un moteur autoventilé $C_{adm}/C_n = 0{,}6 + 0{,}4\,f/50$ en dessous de $50\ \mathrm{Hz}$. Inconnues : $f$ et $U$ pour
+    chaque régime, marge au décrochage, tenue thermique. Stratégie : méthode de la section G, calcul à la main par la loi linéaire du glissement, puis
+    contrôle exact par le schéma équivalent.
+  </p>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li>Couple nominal : $\varOmega_n = 1460 \times 2\pi/60 = 152{,}9\ \mathrm{rad/s}$, $C_n = 11\,000/152{,}9 = 71{,}95\ \mathrm{N \cdot m}$ ; écart nominal $\Delta n_n = 1500 - 1460 = 40\ \mathrm{tr/min}$.</li>
+    <li>Chargement, zone de couple constant : $C_r/C_n = 60/71{,}95 = 0{,}834$, donc $\Delta n = 40 \times 0{,}834 = 33{,}4\ \mathrm{tr/min}$ ; $n_s = 600 + 33{,}4 = 633{,}4\ \mathrm{tr/min}$ ; $f = 2 \times 633{,}4/60 = 21{,}11\ \mathrm{Hz}$.</li>
+    <li>Tension sans compensation : $U = 8 \times 21{,}11 = 168{,}9\ \mathrm{V}$. Avec compensation exacte, la force électromotrice à flux nominal vaut $E = 4{,}233 \times 21{,}11 = 89{,}34\ \mathrm{V}$ par phase ; le schéma équivalent donne, $E$ pris comme référence, $\underline{I}_2' = 14{,}84 - j1{,}42\ \mathrm{A}$, $\underline{I}_\mu = -j6{,}61\ \mathrm{A}$, $\underline{I}_1 = 14{,}84 - j8{,}03\ \mathrm{A}$, soit $16{,}9\ \mathrm{A}$.</li>
+    <li>Maille statorique, avec $X_1 f/50 = 1{,}05 \times 0{,}4222 = 0{,}443\ \mathrm{\Omega}$ : $\underline{V} = 89{,}34 + (0{,}55 + j0{,}443)(14{,}84 - j8{,}03) = 101{,}07 + j2{,}16\ \mathrm{V}$, soit $V = 101{,}1\ \mathrm{V}$ et $U = \sqrt{3} \times 101{,}1 = 175{,}1\ \mathrm{V}$. La compensation nécessaire est de $6{,}2\ \mathrm{V}$, soit $3{,}7\ \%$ de la tension ; la règle approchée $V \approx E + R_1I_1 = 89{,}34 + 9{,}28 = 98{,}6\ \mathrm{V}$ la sous-estime ici, car $X_1$ n'est pas encore négligeable à $21\ \mathrm{Hz}$.</li>
+    <li>Contrôle exact de la vitesse : le schéma équivalent sous $175{,}1\ \mathrm{V}$ et $21{,}108\ \mathrm{Hz}$ donne $n = 600{,}0\ \mathrm{tr/min}$, $\Delta n = 33{,}2\ \mathrm{tr/min}$ ; sans compensation, sous $168{,}9\ \mathrm{V}$, il donnerait $596{,}8\ \mathrm{tr/min}$ et un flux inférieur de $4{,}4\ \%$. Puissance utile $60 \times 62{,}83 = 3{,}77\ \mathrm{kW}$, puissance absorbée $4{,}45\ \mathrm{kW}$, $\cos\varphi = 0{,}87$.</li>
+    <li>Échauffement : $C_{adm} = (0{,}6 + 0{,}4 \times 21{,}11/50)\,C_n = 0{,}769\ C_n = 55{,}3\ \mathrm{N \cdot m}$, inférieur aux $60\ \mathrm{N \cdot m}$ demandés en permanence. Décrochage : avec une compensation correcte, $C_{max}$ reste voisin de $2{,}25\ C_n$, marge de $2{,}7$ : le décrochage n'est pas la limite, l'échauffement l'est.</li>
+    <li>Retour à vide, zone de défluxage : $C_r/C_n = 28{,}8/71{,}95 = 0{,}40$. Première estimation $f = 2 \times 1800/60 = 60\ \mathrm{Hz}$, d'où $\Delta n = 40 \times 0{,}40 \times (60/50)^2 = 23{,}0\ \mathrm{tr/min}$ et $f = 2 \times 1823{,}0/60 = 60{,}77\ \mathrm{Hz}$ ; seconde itération $\Delta n = 23{,}6\ \mathrm{tr/min}$, $f = 60{,}79\ \mathrm{Hz}$, stable. Tension : $U = U_{max} = 400\ \mathrm{V}$.</li>
+    <li>Contrôle exact : le schéma équivalent sous $400\ \mathrm{V}$ donne $f = 60{,}73\ \mathrm{Hz}$, $\Delta n = 22{,}0\ \mathrm{tr/min}$, $I = 10{,}4\ \mathrm{A}$, $P = 5{,}42\ \mathrm{kW}$, flux à $85\ \%$ du nominal. Couple maximal : $162{,}0 \times (50/60{,}79)^2 = 109{,}6\ \mathrm{N \cdot m}$ par la loi en $1/f^2$, $114{,}1\ \mathrm{N \cdot m}$ en exact, soit une marge de $3{,}8$ à $4$ sur les $28{,}8\ \mathrm{N \cdot m}$.</li>
+  </ol>
+
+  <h3 id="h-controles">Contrôles de cohérence et décision</h3>
+  <p>
+    Ordre de grandeur : $f$ est toujours un peu supérieure à $pn/60$, de l'écart de vitesse, et cet écart, $33{,}2\ \mathrm{tr/min}$ en chargement,
+    reste du même ordre que l'écart nominal de $40\ \mathrm{tr/min}$, même si le glissement relatif atteint $5{,}2\ \%$. Dimensions : $f = p(n + \Delta n)/60$ donne des hertz à
+    partir de tours par minute. Bilan de puissance en chargement : $4{,}45\ \mathrm{kW}$ absorbés, $3{,}77\ \mathrm{kW}$ utiles, $0{,}68\ \mathrm{kW}$ de
+    pertes, dont $3 \times 0{,}55 \times 16{,}9^2 = 0{,}47\ \mathrm{kW}$ au stator et $3 \times 0{,}313 \times 14{,}9^2 = 0{,}21\ \mathrm{kW}$ au rotor :
+    la somme, $0{,}68\ \mathrm{kW}$, est cohérente. Décision : les deux régimes sont électriquement faisables, mais le chargement prolongé à
+    $21\ \mathrm{Hz}$ dépasse le couple permanent admissible d'un moteur autoventilé de $8{,}5\ \%$ dans l'hypothèse de déclassement retenue. Deux
+    solutions : un motoventilateur indépendant, qui supprime le déclassement, ou un moteur de $15\ \mathrm{kW}$, pour lequel $60\ \mathrm{N \cdot m}$
+    ne représentent que $0{,}61\ C_n$. Une troisième, souvent la meilleure, consiste à changer le rapport du réducteur pour faire tourner le moteur
+    plus vite en chargement, au prix d'une fréquence plus élevée au retour, ce qui reste possible ici grâce à la marge au décrochage. Le variateur
+    doit enfin tenir $19{,}8\ \mathrm{A}$ en permanence et environ $1{,}5\ I_n$ pendant les accélérations.
+  </p>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <p>
+    Le projet fil rouge prévoit, depuis le début du parcours, un variateur de fréquence sur la pompe du site. Son bus continu, sa précharge, son
+    courant d'entrée et ses harmoniques ont été étudiés ; son moteur et sa loi de commande ne l'ont pas encore été. C'est l'objet de cette section.
+    Le bilan de puissance du cours <a href="#/cours/puissances-en-courant-alternatif">Puissances en courant alternatif</a> attribuait à la pompe
+    $10{,}97\ \mathrm{kW}$ par phase, soit $32{,}9\ \mathrm{kW}$ au réseau ; on retient ici que ce chiffre correspond à la marche à pleine vitesse.
+  </p>
+  <figure id="i-pompe-figure">
+    <svg viewBox="0 0 760 340" role="img" aria-label="Départ de la pompe du site : tableau général 400 volts, protection, self de ligne de 3 pour cent, variateur avec redresseur, bus continu de 2,2 millifarads et onduleur, câble, moteur de 30 kilowatts, pompe centrifuge, transmetteur de pression vers l'automate qui envoie la consigne de vitesse au variateur">
+      <defs>
+        <marker id="fl-i" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M30 40V120" stroke-width="5"/>
+        <path d="M30 80H70"/>
+        <rect x="70" y="66" width="40" height="28" rx="3"/>
+        <path d="M110 80H140"/>
+        <path d="M140 80a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0"/>
+        <path d="M188 80H200"/>
+        <rect x="200" y="50" width="270" height="60" rx="6"/>
+        <path d="M290 50V110M380 50V110" stroke-dasharray="4 4" stroke-width="1.2"/>
+        <path d="M470 80H500"/>
+        <circle cx="530" cy="80" r="30"/>
+        <path d="M560 80H600" stroke-width="4"/>
+        <circle cx="630" cy="80" r="30"/>
+        <path d="M630 50V20H730M660 80H730"/>
+        <circle cx="700" cy="20" r="0.1"/>
+        <path d="M690 20V150"/>
+        <circle cx="690" cy="170" r="20"/>
+        <path d="M670 170H560V250H420"/>
+        <rect x="300" y="226" width="120" height="48" rx="6"/>
+        <path d="M330 226V110" stroke-dasharray="7 5"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M44 56H64" marker-end="url(#fl-i)" stroke-width="2.6"/>
+        <path d="M472 56H498" marker-end="url(#fl-i)" stroke-width="2.6"/>
+        <path d="M680 66H720" marker-end="url(#fl-i)"/>
+        <path d="M330 150V116" marker-end="url(#fl-i)"/>
+        <path d="M530 250H440" marker-end="url(#fl-i)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="8" y="140">tableau</text>
+        <text x="8" y="156">général</text>
+        <text x="8" y="172">400 V</text>
+        <text x="70" y="60">Q</text>
+        <text x="132" y="106">self 3 %</text>
+        <text x="208" y="84">redresseur</text>
+        <text x="296" y="76">bus continu</text>
+        <text x="296" y="92">2,2 mF</text>
+        <text x="392" y="84">onduleur</text>
+        <text x="208" y="132">variateur de la pompe</text>
+        <text x="518" y="76">M</text>
+        <text x="518" y="92">3~</text>
+        <text x="496" y="132">30 kW, 52,6 A</text>
+        <text x="496" y="148">1475 tr/min</text>
+        <text x="612" y="76">pompe</text>
+        <text x="650" y="14">refoulement</text>
+        <text x="682" y="174">PT</text>
+        <text x="572" y="238">mesure de pression 0-10 V</text>
+        <text x="310" y="246">automate</text>
+        <text x="310" y="262">régulateur PI</text>
+        <text x="340" y="170">consigne de vitesse</text>
+        <text x="340" y="186">ou de fréquence</text>
+        <text x="40" y="44">I_ligne</text>
+        <text x="466" y="44">I_moteur</text>
+        <text x="16" y="306">variateur : U/f linéaire, U0 = 8 V, fréquence de 25 à 50 Hz, 40 Hz au plus sur groupe électrogène</text>
+        <text x="16" y="326">rampes de 10 s en accélération et en décélération, sans résistance de freinage</text>
+      </g>
+    </svg>
+    <figcaption>
+      Départ de la pompe du site, en représentation unifilaire. Le jeu de barres du tableau général, trait épais vertical, alimente la protection Q,
+      la self de ligne de $3\ \%$ étudiée dans le cours <a href="#/cours/impedances-en-regime-sinusoidal">Impédances en régime sinusoïdal</a>, puis le
+      variateur, dont les trois étages sont séparés par des tirets. Les flèches épaisses donnent le sens positif des courants et de l'énergie en
+      fonctionnement moteur. La boucle de régulation est en traits fins : le transmetteur de pression PT, filtré comme dans le cours
+      <a href="#/cours/filtres-passifs">Filtres passifs</a>, renvoie la mesure à l'automate, dont le régulateur envoie au variateur la consigne de
+      vitesse, en tirets.
+    </figcaption>
+  </figure>
+
+  <h3 id="i-donnees">Données et hypothèses</h3>
+  <p>
+    Plaque supposée du moteur : $30\ \mathrm{kW}$, $400/690\ \mathrm{V}$, couplage triangle sur $400\ \mathrm{V}$, $52{,}6\ \mathrm{A}$,
+    $\cos\varphi = 0{,}86$, $1475\ \mathrm{tr/min}$, rendement $94\ \%$ ; d'où $C_n = 30\,000/154{,}5 = 194{,}2\ \mathrm{N \cdot m}$ et
+    $\Delta n_n = 25\ \mathrm{tr/min}$. Pompe centrifuge sur un circuit supposé sans hauteur statique, absorbant $30\ \mathrm{kW}$ sur l'arbre à
+    $1475\ \mathrm{tr/min}$, au débit de référence $Q_1$ : $C_r = 194{,}2\,(n/1475)^2\ \mathrm{N \cdot m}$. En service normal, la régulation de
+    pression demande en moyenne $84{,}7\ \%$ du débit de référence, soit, par les lois de similitude, $1250\ \mathrm{tr/min}$. Rendement supposé du
+    variateur : $97\ \%$ ; moteur : $94\ \%$ à tous les points étudiés. Fonctionnement : $6000\ \mathrm{h}$ par an, comme dans le cours
+    <a href="#/cours/loi-d-ohm-et-resistivite">Loi d'Ohm et résistivité</a>. Ces valeurs sont des hypothèses d'étude, à remplacer par la plaque du
+    moteur retenu, la courbe de la pompe et le relevé des consignes réelles.
+  </p>
+
+  <h3 id="i-calculs">Fréquence, tension et loi de commande</h3>
+  <p>
+    Au point de service, $C_r = 194{,}2 \times (1250/1475)^2 = 139{,}5\ \mathrm{N \cdot m}$, $0{,}718\ C_n$, et la puissance sur l'arbre vaut
+    $30 \times (1250/1475)^3 = 18{,}26\ \mathrm{kW}$. L'écart de vitesse vaut $25 \times 0{,}718 = 18{,}0\ \mathrm{tr/min}$, d'où
+    $f = 2 \times 1268{,}0/60 = 42{,}27\ \mathrm{Hz}$ et, en loi linéaire, $U = 8 \times 42{,}27 = 338\ \mathrm{V}$. Avec la compensation
+    $U_0 = 8\ \mathrm{V}$ retenue plus bas, la loi devient $U = 8 + 7{,}84\,f$ et le schéma équivalent confirme : $42{,}25\ \mathrm{Hz}$,
+    $339{,}2\ \mathrm{V}$, $39{,}6\ \mathrm{A}$ au moteur, $\cos\varphi = 0{,}82$, flux à $101\ \%$ du nominal. En loi quadratique,
+    $U = 8 + 392\,(f/50)^2$, soit $291\ \mathrm{V}$ : le flux tombe à $85\ \%$, l'écart de vitesse monte, il faut $42{,}49\ \mathrm{Hz}$, et le
+    courant passe à $44{,}4\ \mathrm{A}$, avec des pertes Joule plus fortes, $0{,}24\ \mathrm{kW}$ de plus dans le modèle. À $72\ \%$ du couple
+    nominal, la pompe est encore trop chargée pour que la réduction du flux paie : la loi linéaire est retenue, avec l'optimisation automatique du
+    flux du variateur désactivée tant qu'elle n'a pas été vérifiée par une mesure de puissance. La compensation se règle à $U_0 = 8\ \mathrm{V}$,
+    $2\ \%$, suffisante pour un couple qui, à $25\ \mathrm{Hz}$, ne dépasse pas $0{,}25\ C_n$.
+  </p>
+  <p>
+    Limites de fréquence. Au-delà de $50\ \mathrm{Hz}$, la puissance demandée croîtrait comme le cube de la vitesse : à $55\ \mathrm{Hz}$, le modèle
+    donne $39{,}1\ \mathrm{kW}$ et $68{,}5\ \mathrm{A}$ pour un moteur de $30\ \mathrm{kW}$ et $52{,}6\ \mathrm{A}$ ; la fréquence maximale est donc
+    fixée à $50\ \mathrm{Hz}$. En dessous de $25\ \mathrm{Hz}$, environ $744\ \mathrm{tr/min}$ et $3{,}9\ \mathrm{kW}$, la pompe ne produit plus une
+    pression utile ; c'est le minimum. Réseau bas : sous $360\ \mathrm{V}$, la fréquence de base descend à $45\ \mathrm{Hz}$, ce qui ne change rien au
+    point de service à $42{,}25\ \mathrm{Hz}$ et $339\ \mathrm{V}$, mais défluxe le moteur de $11\ \%$ à pleine vitesse : à $50\ \mathrm{Hz}$, le
+    courant atteindrait $57{,}4\ \mathrm{A}$, $9\ \%$ au-dessus de $I_n$, pour la même pompe. L'automate abaisse donc la fréquence maximale à
+    $48\ \mathrm{Hz}$, $51{,}5\ \mathrm{A}$, quand la tension du bus continu descend sous $510\ \mathrm{V}$, signe d'un réseau sous $360\ \mathrm{V}$. Sur groupe électrogène, la
+    fréquence maximale est ramenée à $40\ \mathrm{Hz}$ par l'automate, selon la position de l'inverseur de sources déjà utilisée pour le démarreur du
+    compresseur : la pompe tourne alors au plus à $1185\ \mathrm{tr/min}$ et prélève au plus $15{,}5\ \mathrm{kW}$ sur l'arbre et $17{,}0\ \mathrm{kW}$ à
+    la source, au lieu de $32{,}9\ \mathrm{kW}$.
+  </p>
+  <p>
+    Rampes et freinage. Une rampe d'accélération de $10\ \mathrm{s}$ de $0$ à $50\ \mathrm{Hz}$ limite le courant et les surpressions, et une rampe de
+    décélération de $10\ \mathrm{s}$ limite le coup de bélier signalé dans le cours <a href="#/cours/machine-a-courant-continu">Machine à courant
+    continu</a> pour la vanne de refoulement. Le freinage ne pose pas de problème : livrée à elle-même, la pompe ralentit d'elle-même sous son couple
+    quadratique, $\mathrm{d}\varOmega/\mathrm{d}t = -C_1(\varOmega/\varOmega_1)^2/J$, et, avec $J = 0{,}5\ \mathrm{kg \cdot m^2}$ supposés, passe de
+    $1475$ à $737\ \mathrm{tr/min}$ en $J\varOmega_1/C_1 = 0{,}5 \times 154{,}5/194{,}2 = 0{,}40\ \mathrm{s}$. Une rampe de $10\ \mathrm{s}$ met
+    $5\ \mathrm{s}$ à passer de $50$ à $25\ \mathrm{Hz}$, plus de douze fois plus lentement : le moteur reste moteur pendant tout le ralentissement, et aucune énergie ne revient au bus. Pas de résistance de
+    freinage.
+  </p>
+  <p>
+    La simulation suivante calcule la fréquence, la tension, le courant et la puissance de la pompe pour une consigne de vitesse, avec l'une ou
+    l'autre loi, sur le réseau ou sur le groupe. Elle compare la puissance prise au réseau avec le variateur à celle d'une régulation par vanne
+    d'étranglement, moteur alimenté directement. Prédisez : quelle économie annuelle attendez-vous au point de service ? À quelle consigne la loi
+    quadratique devient-elle avantageuse ?
+  </p>
+  <figure id="i-pompe-sim-figure">
+    <div id="i-pompe-trace"></div>
+    <figcaption>
+      Puissance prise au réseau en fonction du débit relatif $Q/Q_1 = n/1475$ : avec le variateur, trait épais ; avec une vanne d'étranglement et un
+      moteur alimenté directement, trait fin. La seconde suit une courbe de puissance typique d'une pompe étranglée, $P = P_1(0{,}45 + 0{,}55\,Q/Q_1)$,
+      hypothèse à remplacer par la courbe du constructeur. Le point plein marque la consigne choisie, la verticale en tirets la limite de débit sur
+      groupe électrogène. Les noms et les couleurs figurent dans la légende du tracé.
+    </figcaption>
+  </figure>
+  <div id="i-pompe-curseurs"></div>
+  <div id="i-pompe-valeurs"></div>
+  <p>
+    Interprétation : au point de service, le variateur prend $20{,}0\ \mathrm{kW}$ au réseau, contre $29{,}2\ \mathrm{kW}$ avec une vanne : l'économie
+    est de $9{,}2\ \mathrm{kW}$, soit $55\ \mathrm{MWh}$ par an sur $6000\ \mathrm{h}$, ce qui justifie à lui seul le variateur. À pleine vitesse, en
+    revanche, le variateur coûte ses $3\ \%$ de pertes : il n'est rentable que si la pompe passe l'essentiel de son temps à débit réduit. La loi
+    quadratique, elle, ne devient avantageuse à aucun débit dans ce modèle : même à $50\ \%$ du débit, où le couple ne vaut plus que $0{,}25\ C_n$,
+    elle réduit trop le flux et le surcroît de courant rotorique l'emporte sur le gain de courant magnétisant. Le modèle néglige les pertes fer,
+    proportionnelles au carré du flux, qui la favoriseraient ; seule une mesure de puissance sur site tranchera. Enfin, l'économie est surestimée si le circuit réel a une hauteur statique :
+    c'est la première vérification à faire sur la courbe du réseau hydraulique.
+  </p>
+
+  <h3 id="i-compromis">Contraintes, risques et compromis</h3>
+  <p>
+    Le variateur apporte l'économie d'énergie, la régulation fine de la pression et des démarrages sans pointe de courant, mais il ajoute des
+    contraintes déjà rencontrées dans le parcours : courant d'entrée non sinusoïdal et harmoniques de rangs 5, 7, 11 et 13, étudiés dans le cours
+    <a href="#/cours/harmoniques-et-qualite-de-l-energie">Harmoniques et qualité de l'énergie</a> ; perturbation du découpage sur les mesures
+    analogiques ; échauffement supplémentaire du moteur dû aux harmoniques de courant de l'onduleur, de l'ordre de quelques pour cent ; fronts de
+    tension raides qui sollicitent l'isolation du moteur et, sur câble long, se réfléchissent et doublent presque aux bornes ; courants de palier.
+    Ces derniers points dépendent du constructeur du moteur et du variateur, de la longueur du câble et des filtres retenus ; ils seront repris dans
+    les cours Convertisseurs et moteurs et Compatibilité électromagnétique. Le risque d'exploitation principal est une consigne laissée au-dessus de
+    $50\ \mathrm{Hz}$, d'où le plafond de fréquence verrouillé dans le variateur et non dans l'automate seul. Le compromis de conception retenu est
+    simple : loi scalaire éprouvée, plutôt qu'un contrôle vectoriel dont la pompe n'a pas besoin, et sécurité de la limite de fréquence portée par
+    deux équipements indépendants.
+  </p>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Changer la fréquence sans changer la tension.</strong> À tension fixe, le flux varie comme $1/f$ : à $25\ \mathrm{Hz}$ sous $400\ \mathrm{V}$, il doublerait et le fer saturerait. Le variateur règle toujours les deux ensemble ; une loi $U(f)$ mal paramétrée, par exemple une tension nominale saisie à $230\ \mathrm{V}$ pour un moteur couplé en triangle sur $400\ \mathrm{V}$, produit les mêmes effets.</li>
+    <li><strong>Raisonner en glissement relatif constant.</strong> C'est l'écart de vitesse qui reste constant à flux et couple donnés, pas $g$. Croire que $g$ reste à $2{,}7\ \%$ à $21\ \mathrm{Hz}$ ferait calculer $\Delta n = 17\ \mathrm{tr/min}$ au lieu de $33\ \mathrm{tr/min}$ pour le convoyeur, et une vitesse fausse de $16\ \mathrm{tr/min}$.</li>
+    <li><strong>Oublier la chute ohmique du stator à basse fréquence.</strong> En loi strictement proportionnelle, le moteur du convoyeur ne porte plus son couple nominal sous $9\ \mathrm{Hz}$ environ. À l'inverse, une compensation exagérée surexcite le moteur à vide et peut faire déclencher le variateur en surintensité dès l'arrêt.</li>
+    <li><strong>Croire que le moteur garde son couple nominal au-delà de $50\ \mathrm{Hz}$.</strong> La tension plafonne : à courant nominal, le couple disponible décroît comme $f_b/f$, et le couple maximal comme $(f_b/f)^2$. Une charge à couple constant ne peut pas être entraînée à $75\ \mathrm{Hz}$ avec la marge habituelle ; une pompe ne doit jamais dépasser sa fréquence nominale, sa puissance croissant comme le cube de la vitesse.</li>
+    <li><strong>Négliger l'échauffement à basse vitesse.</strong> Un moteur autoventilé refroidit mal quand il tourne lentement : son couple permanent admissible diminue, alors que le couple d'un convoyeur ne diminue pas. L'erreur ne se voit qu'après des heures de marche, par un déclenchement thermique ou un vieillissement de l'isolation. Remède : courbe de déclassement du constructeur, motoventilateur ou moteur plus gros.</li>
+    <li><strong>Appliquer la loi en cube sans regarder la hauteur statique.</strong> Sur un circuit de relevage, où une partie de la hauteur est un dénivelé, la pompe cesse de débiter bien avant la vitesse nulle, et l'économie est bien plus faible que $(n/n_1)^3$. Les lois de similitude ne s'appliquent qu'entre points semblables, c'est-à-dire sur une courbe de réseau purement quadratique.</li>
+    <li><strong>Oublier l'énergie de freinage.</strong> Une décélération plus rapide que le ralentissement naturel de la charge fait passer le moteur en générateur ; le bus continu, qui n'absorbe que quelques centaines de joules, monte en tension et le variateur se met en défaut. Il faut une rampe plus longue, une résistance de freinage ou un redresseur actif, dimensionnés sur l'énergie cinétique.</li>
+    <li><strong>Prendre la tension maximale du variateur pour acquise.</strong> Elle dépend du bus, donc du réseau : $360\ \mathrm{V}$ seulement sous un réseau bas de $10\ \%$. La fréquence de base recule alors à $45\ \mathrm{Hz}$, et la pompe du site, à $50\ \mathrm{Hz}$, prendrait $9\ \%$ de plus que son courant nominal.</li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain. Un moteur qui ne décolle pas, ou qui oscille et se met en limitation de courant au démarrage, signale une
+    compensation insuffisante ou une charge de décollement plus forte que prévue ; un déclenchement en surintensité dès l'ordre de marche signale
+    plutôt une compensation excessive ou un défaut d'isolement. Un défaut de surtension du bus à chaque arrêt signale une rampe de décélération trop
+    courte pour l'inertie. Un échauffement anormal après une longue marche lente signale un déclassement ignoré. Une vitesse qui chute sous charge de
+    plus que l'écart attendu signale un flux trop faible, par réseau bas, loi mal paramétrée ou moteur mal couplé. Un écart de vitesse anormalement
+    grand à vide signale enfin une erreur de plaque saisie dans le variateur. Dans tous les cas, on relève fréquence, tension et courant de sortie,
+    vitesse réelle et tension du bus, puis on compare à ce que prévoit le schéma équivalent.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic industriel et une
+    question conceptuelle. Ils vont de l'application directe d'une formule au choix de la méthode, au calcul multi-étapes, au dimensionnement
+    sous contrainte et au diagnostic. La correction de chacun reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la correction",
+    puis se déroule étape par étape, accompagnée d'un schéma annoté ou d'une courbe.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Après chaque réponse,
+    l'explication s'affiche avec un petit schéma tracé pas à pas.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$n = \frac{60\,f}{p} - \Delta n, \qquad f = \frac{p\,(n + \Delta n)}{60}$$
+    $$\varPsi = \frac{E}{2\pi f} \approx \frac{V}{2\pi f} : \quad \frac{U}{f} = \text{constante} = \frac{400\ \mathrm{V}}{50\ \mathrm{Hz}} = 8\ \mathrm{V/Hz}$$
+    $$C_{em} \approx \frac{3p\,\varPsi^2}{R_2'}\,\omega_r \quad \Longrightarrow \quad \Delta n = \Delta n_n\,\frac{C}{C_n}\left(\frac{\varPsi_n}{\varPsi}\right)^2$$
+    $$U = U_0 + (U_n - U_0)\,\frac{f}{f_b}, \qquad V \approx E + R_1I_1 \text{ à basse fréquence}$$
+    $$f > f_b : \quad \frac{\varPsi}{\varPsi_n} \approx \frac{f_b}{f}, \quad C_{(I_n)} \approx C_n\frac{f_b}{f}, \quad C_{max} \approx C_{max,b}\left(\frac{f_b}{f}\right)^2, \quad P \approx P_n$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>Raisonner en écart de vitesse $\Delta n$, constant à flux et couple donnés, et non en glissement relatif.</li>
+      <li>À basse fréquence, compenser la chute $R_1I_1$ au plus juste : trop peu, le moteur cale ; trop, il est surexcité et le variateur déclenche.</li>
+      <li>Au-delà de la fréquence de base, le couple disponible baisse comme $1/f$ et le couple maximal comme $1/f^2$ : vérifier la marge au décrochage.</li>
+      <li>À basse vitesse, vérifier l'échauffement d'un moteur autoventilé ; au freinage, vérifier où va l'énergie cinétique.</li>
+      <li>Pompes et ventilateurs : jamais au-delà de la fréquence nominale, et lois de similitude seulement sans hauteur statique.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Un variateur règle la vitesse d'un moteur asynchrone en réglant la fréquence, donc la vitesse du champ tournant. Le
+    flux est fixé par le rapport $U/f$ : on le garde constant, $8\ \mathrm{V/Hz}$ pour un moteur $400\ \mathrm{V}$, $50\ \mathrm{Hz}$, en compensant
+    à basse fréquence la chute ohmique du stator. À flux constant, le couple ne dépend que de la fréquence rotorique : les courbes couple-vitesse
+    se translatent, et le rotor glisse toujours du même nombre de tours par minute sous un couple donné, d'où $f = p(n + \Delta n)/60$. Au-delà de
+    la fréquence de base, la tension plafonne, le flux baisse comme $1/f$ : c'est la zone de puissance constante, où le couple maximal décroît
+    comme $1/f^2$. Le choix de la loi dépend de la charge ; sur une pompe, la vitesse variable remplace la vanne et économise l'énergie.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent, <a href="#/cours/demarrage-des-moteurs-asynchrones">Démarrage des
+    moteurs asynchrones</a>, auquel le variateur apporte une solution nouvelle ; une sur le cours
+    <a href="#/cours/transformateurs-triphases">Transformateurs triphasés</a>, vieux d'une semaine, dont le couplage alimente le tableau qui
+    porte le variateur ; une sur le cours <a href="#/cours/regime-transitoire-rc">Régime transitoire RC</a>, vieux d'un mois, qui a dimensionné la
+    précharge du bus continu de ce même variateur.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : programmer en Python le schéma équivalent à fréquence variable, retrouver les chiffres du convoyeur et de la pompe, tracer la
+    famille de courbes couple-vitesse, puis observer dans LTspice la translation des courbes et la saturation à tension fixe. Prédictions à écrire
+    avant de commencer : fréquence nécessaire pour $600\ \mathrm{tr/min}$ sous $60\ \mathrm{N \cdot m}$ ; couple maximal à $5\ \mathrm{Hz}$ en loi
+    proportionnelle ; puissance au réseau de la pompe à $1100\ \mathrm{tr/min}$.
+  </p>
+  <ol>
+    <li>Écrire une fonction <code>etat(f, U, n)</code> qui construit, avec les nombres complexes de Python, le schéma équivalent en T du moteur du convoyeur à la fréquence $f$, réactances multipliées par $f/50$, et renvoie le courant, le couple $3R_2'I_2'^2/(g\varOmega_s)$, la puissance absorbée et le flux $E/(2\pi f)$.</li>
+    <li>Tracer avec <code>matplotlib</code> le couple en fonction de la vitesse pour $5$, $10$, $25$, $50$, $75$ et $100\ \mathrm{Hz}$, en loi proportionnelle, puis avec $U_0 = 12\ \mathrm{V}$ ; retrouver le schéma principal de la section F et le couple maximal de $2{,}25\ C_n$ à $50\ \mathrm{Hz}$.</li>
+    <li>Écrire une fonction qui, pour une vitesse et un couple donnés, cherche par dichotomie l'écart de vitesse à flux nominal, puis la tension nécessaire ; retrouver $21{,}11\ \mathrm{Hz}$ et $175{,}1\ \mathrm{V}$ pour le convoyeur, et $60{,}73\ \mathrm{Hz}$ en défluxage.</li>
+    <li>Pour la pompe, balayer les consignes de $744$ à $1475\ \mathrm{tr/min}$ et tracer la puissance prise au réseau avec le variateur et avec une vanne, sous les hypothèses de la section I ; calculer l'économie annuelle à $1250\ \mathrm{tr/min}$.</li>
+    <li>Facultatif, avec LTspice : une phase équivalente du moteur du convoyeur en régime sinusoïdal, source $V$, $R_1$, $L_1 = X_1/(2\pi \cdot 50)$, $L_m$, $L_2'$ et une résistance paramétrée $R_2'/g$ ; balayer <code>.step param f list 10 25 50</code> avec les tensions simples efficaces $52{,}2$, $118{,}2$ et $228{,}5\ \mathrm{V}$, qui tiennent le flux nominal sous $60\ \mathrm{N \cdot m}$, et $g = 33{,}2/(30f)$, soit $\Delta n = 33{,}2\ \mathrm{tr/min}$, puis mesurer par <code>.meas</code> la puissance dans $R_2'/g$ et en déduire le couple. Remplacer ensuite $L_m$ par une inductance non linéaire, avec la syntaxe de flux de LTspice, et comparer à $400\ \mathrm{V}$ fixes la forme du courant à $50$ et à $25\ \mathrm{Hz}$.</li>
+  </ol>
+  <p>
+    Résultats attendus : $21{,}11\ \mathrm{Hz}$ et $175{,}1\ \mathrm{V}$ en chargement, $60{,}73\ \mathrm{Hz}$ et $10{,}4\ \mathrm{A}$ en retour à vide ; couple
+    maximal de $0{,}59\ C_n$ à $5\ \mathrm{Hz}$ en loi proportionnelle, $1{,}06\ C_n$ à $10\ \mathrm{Hz}$ ; pompe à $1100\ \mathrm{tr/min}$ :
+    $37{,}1\ \mathrm{Hz}$, $12{,}4\ \mathrm{kW}$ sur l'arbre, environ $13{,}6\ \mathrm{kW}$ au réseau avec les rendements supposés. Dans LTspice, le couple
+    calculé doit être le même aux trois fréquences, à $1\ \%$ près, puisque ces tensions tiennent le flux. Anomalies à observer : une division par $g$
+    nul au synchronisme fait diverger le calcul, il faut s'arrêter juste avant $n_s$ ; une dichotomie sur toute la plage de vitesse peut converger
+    vers le point instable, du mauvais côté du couple maximal ; dans LTspice, l'inductance saturable donne à tension fixe et fréquence divisée par
+    deux un courant pointu, très riche en harmoniques, et un pas de calcul trop grand déforme ces pointes.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est calculé dans ce navigateur à
+    partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement pour suivre votre progression.
+    Le jalon de fin du module des machines électriques demande de comprendre les principales machines, de lire leurs modèles et de choisir une
+    solution d'entraînement : savoir régler la fréquence et la tension d'un moteur pour une vitesse et une charge données en est une pièce
+    centrale, que la séance de synthèse du module mettra en œuvre sur une pompe, un convoyeur et une centrifugeuse.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Le flux est fixé par le rapport $U/f$ ; le variateur le garde constant jusqu'à la fréquence de base, en compensant la chute ohmique du stator à basse fréquence, puis le laisse décroître comme $1/f$ quand la tension plafonne.</li>
+    <li data-rang="02">À flux constant, le couple ne dépend que de la fréquence rotorique : les courbes couple-vitesse se translatent, l'écart de vitesse sous un couple donné reste constant, et la fréquence à appliquer vaut $f = p(n + \Delta n)/60$.</li>
+    <li data-rang="03">La charge commande le choix : couple constant jusqu'à la fréquence de base, puissance constante au-delà, avec un couple maximal en $1/f^2$ ; une pompe ou un ventilateur ne dépassent jamais leur fréquence nominale, et y gagnent une économie d'énergie importante à débit réduit.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> passer de la consigne de vitesse à la fréquence sans confondre glissement relatif et écart de
+    vitesse, et savoir dans quelle zone on se trouve, couple constant ou défluxage, pour appliquer la bonne loi de l'écart de vitesse et vérifier la
+    bonne limite, échauffement à basse vitesse ou décrochage à haute vitesse. L'exemple de la section H, le schéma principal de la section F et la
+    simulation des courbes couple-vitesse sont faits pour installer ces automatismes.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Machine synchrone, étudie un moteur dont le rotor porte son propre champ, créé par
+    un enroulement alimenté en continu ou par des aimants. Question à préparer : un moteur synchrone à quatre pôles alimenté à $50\ \mathrm{Hz}$ tourne
+    exactement à $1500\ \mathrm{tr/min}$, quelle que soit sa charge ; comment peut-il produire un couple sans aucun écart de vitesse, quelle
+    grandeur prend alors la place du glissement, et que se passe-t-il si le couple résistant dépasse une certaine limite ?
+  </p>
+
+</article>
