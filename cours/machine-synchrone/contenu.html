@@ -1,0 +1,949 @@
+<article class="cours" data-slug="machine-synchrone">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/variation-de-vitesse-des-moteurs-asynchrones">Variation de vitesse des moteurs asynchrones</a> s'est achevé sur
+      une question : un moteur synchrone à quatre pôles alimenté à $50\ \mathrm{Hz}$ tourne exactement à $1500\ \mathrm{tr/min}$, quelle que soit sa
+      charge ; comment produit-il un couple sans aucun écart de vitesse, quelle grandeur prend la place du glissement, et que se passe-t-il si le
+      couple résistant dépasse une certaine limite ? Réponse en trois temps. Le moteur asynchrone a besoin d'un écart de vitesse parce que son rotor
+      n'a pas de champ propre : il faut que le champ tournant défile devant les barres pour y induire des courants. Le rotor d'une machine synchrone,
+      lui, porte son propre champ, créé par un enroulement alimenté en courant continu ou par des aimants ; il n'a rien à induire et peut tourner
+      exactement à la vitesse du champ. Le couple naît alors du décalage angulaire entre l'axe des pôles du rotor et l'axe du champ du stator, comme
+      deux aimants liés par un ressort magnétique : c'est l'angle interne $\delta$, qui joue le rôle du glissement. Et ce ressort a une limite : le
+      couple passe par un maximum à $\delta = 90^\circ$ ; au-delà, le rotor décroche, glisse de pôle en pôle, et la machine doit être déconnectée.
+    </p>
+    <p>
+      Cette séance s'appuie aussi sur le champ tournant du cours <a href="#/cours/moteur-asynchrone-triphase">Moteur asynchrone triphasé</a>, sur la
+      force électromotrice $E = K\varPhi\varOmega$ du cours <a href="#/cours/machine-a-courant-continu">Machine à courant continu</a>, sur les
+      puissances active et réactive du cours <a href="#/cours/puissance-en-triphase">Puissance en triphasé</a> et sur les essais du cours
+      <a href="#/cours/essais-a-vide-et-en-court-circuit">Essais à vide et en court-circuit</a>, que l'on transposera à l'alternateur.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Presque toute l'énergie électrique consommée dans le monde est produite par des machines synchrones : turboalternateurs des centrales
+    thermiques et nucléaires, alternateurs à pôles saillants des centrales hydrauliques, alternateurs des groupes électrogènes, et une partie des
+    éoliennes. Leur vitesse fixe la fréquence du réseau, leur excitation règle sa tension et fournit l'essentiel de la puissance réactive
+    qu'absorbent les moteurs asynchrones et les transformateurs. Comprendre la machine synchrone, c'est comprendre pourquoi la fréquence d'un réseau
+    baisse quand la consommation augmente, pourquoi un exploitant règle la tension d'un groupe par son courant d'excitation et non par son moteur
+    diesel, et pourquoi on ne ferme jamais le disjoncteur d'un alternateur sur un réseau sans l'avoir synchronisé.
+  </p>
+  <p>
+    En moteur, la machine synchrone tourne à vitesse rigoureusement constante et son facteur de puissance se règle à volonté : surexcitée, elle
+    fournit de la puissance réactive au lieu d'en absorber, ce qui en fait un compensateur pour les grands compresseurs, broyeurs et pompes
+    d'irrigation. Sous sa forme à aimants permanents, alimentée par un onduleur, elle est devenue le moteur des servomécanismes, des véhicules
+    électriques et des entraînements à haut rendement. Le travail central de la séance consiste à calculer la vitesse, la fréquence et la puissance
+    réactive d'une machine synchrone à partir de sa plaque et de son modèle. Dans le projet fil rouge, il conduit à l'étude de l'alternateur du groupe
+    électrogène du site en marche dégradée : sa fréquence, son excitation, la puissance réactive qu'il fournit, ses limites de fonctionnement et les
+    conditions de son couplage au réseau pour le retour à la normale.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Calculer la vitesse d'une machine synchrone à partir de la fréquence et du nombre de pôles, et inversement le nombre de pôles d'un alternateur entraîné à une vitesse imposée.</li>
+    <li data-rang="02">Expliquer comment le couple naît du décalage entre l'axe des pôles du rotor et le champ du stator, et pourquoi la machine décroche quand l'angle interne dépasse $90^\circ$.</li>
+    <li data-rang="03">Construire le diagramme de Fresnel simplifié d'un alternateur, modèle de Behn-Eschenburg, et en déduire la force électromotrice, l'angle interne et le courant d'excitation pour un point de fonctionnement donné.</li>
+    <li data-rang="04">Calculer les puissances active et réactive par $P = 3VE\sin\delta/X_s$ et $Q = 3V(E\cos\delta - V)/X_s$, et interpréter le rôle séparé de la puissance mécanique et de l'excitation.</li>
+    <li data-rang="05">Dimensionner la puissance réactive d'un moteur synchrone utilisé pour relever le facteur de puissance d'une installation, à l'aide des courbes en V.</li>
+    <li data-rang="06">Comparer le fonctionnement d'un alternateur couplé à un réseau puissant et celui d'un alternateur en îlotage, et énoncer les conditions de couplage.</li>
+    <li data-rang="07">Diagnostiquer une excitation mal réglée, un risque de décrochage ou un couplage mal synchronisé à partir des courants, des puissances et des tensions mesurés.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois acquis suffisent. Le premier, vu dans le cours <a href="#/cours/moteur-asynchrone-triphase">Moteur asynchrone triphasé</a> : trois
+    enroulements décalés de $120^\circ$ dans l'espace et parcourus par des courants triphasés créent un champ d'amplitude constante qui tourne à
+    $n_s = 60f/p$, en $\mathrm{tr/min}$, $p$ étant le nombre de paires de pôles. Le deuxième, vu dans le cours
+    <a href="#/cours/puissance-en-triphase">Puissance en triphasé</a> : pour une charge équilibrée, $P = 3VI\cos\varphi = \sqrt{3}\,UI\cos\varphi$
+    et $Q = 3VI\sin\varphi$, avec $V$ la tension simple, $U = \sqrt{3}\,V$ la tension composée et $\varphi$ le déphasage du courant sur la tension ;
+    la puissance complexe vaut $\underline{S} = 3\underline{V}\,\underline{I}^*$. Le troisième, vu dans le cours
+    <a href="#/cours/nombres-complexes-et-phaseurs">Nombres complexes et phaseurs</a> : multiplier un phaseur par $j$ le fait tourner de
+    $+90^\circ$ sans changer son module, ce qui permet d'ajouter une chute de tension inductive par une simple construction géométrique. Le
+    mini-test n'est pas noté ; la correction de chaque question reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la correction".
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Notation de la séance</span>
+    <p>
+      La machine est décrite par phase de l'étoile équivalente, quel que soit le couplage réel de ses enroulements. $V$ est la tension simple aux
+      bornes, prise comme référence des phases, $U = \sqrt{3}\,V$ la tension composée, $I$ le courant de ligne. $E$ est la force électromotrice à
+      vide par phase, créée par le seul courant d'excitation $I_f$ ; $I_{f0}$ est l'excitation qui donne $E = V_n$ sur la droite d'entrefer.
+      $X_s$ est la réactance synchrone et $R$ la résistance d'une phase du stator. $\delta$ est l'angle interne, angle du phaseur $E$ compté à partir
+      de $V$, positif en alternateur ; $\varphi$ est le déphasage du courant, compté positif quand $I$ est en retard sur $V$. En alternateur, on
+      utilise la convention générateur : $P$ et $Q$ positifs sont fournis au réseau ; en moteur, la convention récepteur : $P$ et $Q$ positifs sont
+      absorbés. $p$ est le nombre de paires de pôles, $n$ la vitesse en $\mathrm{tr/min}$, $\varOmega = 2\pi n/60$ la vitesse angulaire en
+      $\mathrm{rad/s}$. Les valeurs relatives sont rapportées à la puissance apparente nominale $S_n$ et à la tension nominale, l'impédance de base
+      étant $Z_b = U_n^2/S_n$. Le symbole droit $\mathrm{\Omega}$ reste réservé à l'ohm.
+    </p>
+  </div>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-structure">Un stator de moteur asynchrone, un rotor qui porte ses propres pôles</h3>
+  <p>
+    Le stator d'une machine synchrone est identique à celui d'un moteur asynchrone : un empilage de tôles encochées qui loge un enroulement
+    triphasé. Raccordé à un réseau triphasé, il crée un champ tournant à $n_s = 60f/p$. Toute la différence est au rotor, appelé roue polaire ou
+    inducteur. Il porte $2p$ pôles, aimantés par un enroulement parcouru par un courant continu $I_f$, le courant d'excitation, amené par deux
+    bagues et des balais ou fourni sans contact par une excitatrice tournante et des diodes montées sur l'arbre ; dans les petites machines, des
+    aimants permanents le remplacent. Les machines rapides, à deux ou quatre pôles, ont un rotor cylindrique, dit à pôles lisses ; les machines
+    lentes des centrales hydrauliques ont des dizaines de pôles saillants, comme sur le schéma ci-dessous, réduit à deux pôles pour la lisibilité.
+  </p>
+  <figure id="d-coupe-figure">
+    <svg viewBox="0 0 760 480" role="img" aria-label="Coupe d'une machine synchrone bipolaire à pôles saillants : stator triphasé avec le sens des courants à l'instant où le courant de la phase a est maximal, rotor inducteur alimenté en courant continu par des bagues, axe du champ statorique, axe des pôles du rotor et angle interne"><defs><marker id="fl-d-coupe" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker><marker id="fl-d-coupe-o" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10" fill="none" stroke="currentColor" stroke-width="1.6"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="200" cy="245" r="168"/><circle cx="200" cy="245" r="120"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="62.0" cy="245.0" r="7"/><circle cx="62.0" cy="245.0" r="1.8" fill="currentColor"/><circle cx="131.0" cy="364.5" r="7"/><circle cx="131.0" cy="364.5" r="1.8" fill="currentColor"/><circle cx="131.0" cy="125.5" r="7"/><circle cx="131.0" cy="125.5" r="1.8" fill="currentColor"/><circle cx="338.0" cy="245.0" r="7"/><path d="M333.1 240.1L342.9 249.9M342.9 240.1L333.1 249.9"/><circle cx="269.0" cy="125.5" r="7"/><path d="M264.1 120.6L273.9 130.4M273.9 120.6L264.1 130.4"/><circle cx="269.0" cy="364.5" r="7"/><path d="M264.1 359.6L273.9 369.4M273.9 359.6L264.1 369.4"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11"><text x="42.0" y="249.0">a</text><text x="350.0" y="249.0">a'</text><text x="273.0" y="115.6">b</text><text x="119.0" y="382.4">b'</text><text x="273.0" y="382.4">c</text><text x="119.0" y="115.6">c'</text></g><g transform="rotate(-25 200 245)"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M170 175L140 153A110 110 0 0 1 260 153L230 175L230 315L260 337A110 110 0 0 1 140 337L170 315Z"/></g><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="160.0" cy="199.0" r="6"/><circle cx="160.0" cy="199.0" r="1.8" fill="currentColor"/><circle cx="240.0" cy="199.0" r="6"/><path d="M235.8 194.8L244.2 203.2M244.2 194.8L235.8 203.2"/><circle cx="160.0" cy="291.0" r="6"/><circle cx="160.0" cy="291.0" r="1.8" fill="currentColor"/><circle cx="240.0" cy="291.0" r="6"/><path d="M235.8 286.8L244.2 295.2M244.2 286.8L235.8 295.2"/></g><g fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M200 245V145" marker-end="url(#fl-d-coupe)"/></g></g><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 5"><path d="M200 275V85" marker-end="url(#fl-d-coupe-o)"/></g><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M200.0 183.0A62 62 0 0 0 173.8 188.8"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M359.3 153.0A184 184 0 0 0 286.4 82.5" marker-end="url(#fl-d-coupe)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="138.9" y="186.6" font-size="14">N</text><text x="250.1" y="313.4" font-size="14">S</text><text x="179.6" y="168.8">δ</text><text x="210.0" y="95.0">axe du champ</text><text x="210.0" y="109.0">du stator</text><text x="337.8" y="96.4">rotation</text><text x="50.0" y="435.0">entrefer entre l'alésage et les pôles</text></g><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="440" y="40" width="170" height="64" rx="6"/><path d="M610 58H660V150M610 88H640V150"/><circle cx="640" cy="160" r="9"/><circle cx="660" cy="160" r="9"/><path d="M640 169V196H600M660 169V210H600"/><path d="M440 300H560M440 330H560M440 360H560M440 390H560"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M676 108V140" marker-end="url(#fl-d-coupe)"/><path d="M548 280H578" marker-end="url(#fl-d-coupe)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="452.0" y="64.0">source continue réglable</text><text x="452.0" y="82.0">régulateur de tension</text><text x="452.0" y="98.0" font-size="11">+ en haut, - en bas</text><text x="614.0" y="52.0">+</text><text x="614.0" y="104.0">-</text><text x="684.0" y="128.0">I_f</text><text x="676.0" y="165.0">bagues</text><text x="486.0" y="192.0">vers l'inducteur</text><text x="486.0" y="208.0">du rotor</text><text x="568.0" y="304.0">U, phase a</text><text x="568.0" y="334.0">V, phase b</text><text x="568.0" y="364.0">W, phase c</text><text x="568.0" y="394.0">N, neutre</text><text x="440.0" y="272.0">courants i_a, i_b, i_c</text><text x="440.0" y="420.0">potentiel de référence : neutre N</text></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11"><text x="20.0" y="20.0">cercle pointé : courant sortant du plan ; cercle barré : courant entrant</text><text x="20.0" y="36.0">instant choisi : i_a maximal, i_b = i_c = -i_a / 2</text><text x="20.0" y="472.0">flèche pleine : axe des pôles du rotor ; flèche ouverte en tirets : axe du champ du stator</text></g></svg>
+    <figcaption>
+      Coupe d'une machine bipolaire à pôles saillants, $p = 1$. Le stator porte les conducteurs des trois phases, notés a, b, c et leurs retours a',
+      b', c' ; les cercles pointés désignent un courant sortant du plan, les cercles barrés un courant entrant, à l'instant où $i_a$ est maximal et
+      $i_b = i_c = -i_a/2$ : tous les courants sortent à gauche et entrent à droite, et le champ du stator, flèche ouverte en tirets, est vertical. Le
+      rotor porte deux pôles, N et S, aimantés par le courant continu $I_f$ de son enroulement, dont les conducteurs suivent la même convention ; son
+      axe, la flèche pleine, est en avance de l'angle $\delta$ sur le champ du stator dans le sens de rotation : c'est le fonctionnement en
+      alternateur. À droite, la source continue réglable, borne plus en haut, alimente l'inducteur par les bagues ; les bornes U, V, W du stator
+      débitent les courants $i_a$, $i_b$, $i_c$, et le neutre N sert de potentiel de référence.
+    </figcaption>
+  </figure>
+  <p>
+    Deux fonctionnements en découlent. En alternateur, une turbine ou un moteur diesel entraîne la roue polaire ; ses pôles défilent devant les
+    conducteurs du stator et y induisent trois forces électromotrices sinusoïdales, de fréquence $f = pn/60$ et d'amplitude proportionnelle au flux
+    des pôles, donc à $I_f$ tant que le fer ne sature pas. En moteur, le stator est alimenté par le réseau ; son champ tournant attire les pôles du
+    rotor et les entraîne exactement à sa vitesse. Il n'y a ni glissement ni courant induit au rotor en régime établi : la vitesse est
+    rigoureusement $60f/p$, et elle ne varie qu'avec la fréquence.
+  </p>
+
+  <h3 id="d-accrochage">Le couple vient d'un décalage angulaire, pas d'un écart de vitesse</h3>
+  <p>
+    Imaginez deux aimants : celui du stator, qui tourne, et celui du rotor, qui le suit. Tant qu'aucun couple n'est demandé, leurs axes coïncident.
+    Si l'on freine l'arbre, le rotor prend un léger retard angulaire $\delta$ sur le champ : l'attraction entre pôles de noms contraires produit
+    alors un couple qui tire le rotor vers l'avant, et l'équilibre s'établit à l'angle où ce couple égale le couple résistant. Le rotor continue de
+    tourner à la vitesse du champ, simplement décalé. Si au contraire on pousse l'arbre, le rotor prend de l'avance, et le couple électromagnétique
+    s'oppose à la poussée : la machine reçoit de l'énergie mécanique et la renvoie au réseau, elle est devenue alternateur. Le signe de $\delta$ dit
+    donc le régime, et sa valeur dit la charge. Le couple n'est pas proportionnel à $\delta$ : il varie comme $\sin\delta$, est maximal à
+    $\delta = 90^\circ$, quand chaque pôle du rotor se trouve à mi-chemin entre deux pôles du champ, puis décroît.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Deux disques reliés par un ressort de torsion</span>
+    <p>
+      Représentez-vous deux disques montés sur le même axe, le premier entraîné à vitesse constante, le second relié au premier par un ressort de
+      torsion et chargé par un frein. Le second tourne à la même vitesse que le premier, en retard d'un angle d'autant plus grand que le freinage
+      est fort. Le ressort est le champ magnétique d'entrefer, sa raideur est proportionnelle au produit du flux du rotor par celui du stator : une
+      excitation plus forte, c'est un ressort plus raide, qui tient le même couple avec un angle plus petit. Si l'on pousse le second disque au lieu
+      de le freiner, le ressort s'inverse et retient : c'est l'alternateur.
+    </p>
+    <p>
+      Les limites sont précises. Un ressort réel donne un couple proportionnel à l'angle, aussi grand qu'on veut ; le couple magnétique varie comme
+      $\sin\delta$ et plafonne à $90^\circ$ : au-delà, il faiblit quand l'angle grandit, et le rotor ne revient plus, il décroche. Le ressort ne dit
+      rien des courants : dans la machine, changer l'excitation à couple constant modifie le courant et la puissance réactive échangés avec le
+      réseau, ce qu'aucun ressort ne montre. Enfin, un ressort sans amortissement oscille indéfiniment après un à-coup ; la machine réelle oscille
+      aussi autour de $\delta$, mais une cage amortisseuse, logée dans les pôles, freine ces oscillations.
+    </p>
+  </div>
+  <p>
+    L'animation suivante montre le champ du stator et la roue polaire d'une machine bipolaire sur un même disque, et à droite la courbe du couple
+    électromagnétique en fonction de l'angle interne. Réglez l'angle par la poignée ronde sur l'axe gradué du bas, ou par le curseur, réglez
+    l'excitation par le second curseur, et lancez la lecture pour faire tourner l'ensemble, ralenti, à la vitesse du champ. Prédisez avant de
+    manipuler : à excitation fixée, le couple double-t-il quand l'angle passe de $30^\circ$ à $60^\circ$ ? Que devient le couple au-delà de
+    $90^\circ$, et que se passerait-il si le couple résistant augmentait encore ? Que change une excitation plus faible ?
+  </p>
+  <figure id="d-roue-figure">
+    <div class="schema-vivant" id="d-roue"></div>
+    <figcaption>
+      À gauche, la machine vue de face : la flèche ouverte en tirets est l'axe du champ tournant du stator, la flèche pleine l'axe des pôles du rotor,
+      et l'arc marque l'angle interne $\delta$, positif quand le rotor est en avance, c'est-à-dire en alternateur. Pendant la lecture, les deux axes
+      tournent ensemble, ralentis, à la vitesse du synchronisme : l'angle entre eux ne change pas. À droite, le couple électromagnétique de
+      l'alternateur de la microcentrale étudiée en section H, $C = 3VE\sin\delta/(X_s\varOmega_s)$, en fonction de $\delta$ de $-180^\circ$ à
+      $+180^\circ$ ; la bande grisée entre $-90^\circ$ et $+90^\circ$ est la zone de fonctionnement stable. Le point plein suit l'angle choisi, et l'axe
+      gradué du bas porte la poignée.
+    </figcaption>
+  </figure>
+  <div id="d-roue-curseurs"></div>
+  <div id="d-roue-lecteur"></div>
+  <div id="d-roue-valeurs"></div>
+  <p>
+    Interprétation : de $30^\circ$ à $60^\circ$, le couple passe de $0{,}5$ à $0{,}866$ fois le couple maximal, il ne double pas, puisqu'il suit le
+    sinus de l'angle. À $90^\circ$, il atteint son maximum, $4212\ \mathrm{N \cdot m}$ pour l'excitation de la section H ; au-delà, il diminue.
+    Un rotor poussé au-delà de $90^\circ$ par un couple moteur trop fort reçoit un couple de retenue plus faible, prend encore de l'avance, et ainsi
+    de suite : il décroche et glisse de pôle en pôle, avec des à-coups de couple et de courant que les protections doivent interrompre. La zone de
+    $-90^\circ$ à $+90^\circ$ est la seule où un petit écart d'angle crée un couple de rappel. Une excitation plus faible écrase la courbe : le même
+    couple demande un angle plus grand et la marge avant le décrochage diminue. L'excitation fixe la raideur du ressort, le couple de la turbine ou
+    de la charge fixe l'angle.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-vitesse">Vitesse de synchronisme et fréquence</h3>
+  <p>
+    Pendant une période électrique $T = 1/f$, chaque force électromotrice du stator décrit une alternance positive et une négative : il faut pour
+    cela qu'un pôle nord puis un pôle sud passent devant le même conducteur, c'est-à-dire que la roue polaire tourne d'une paire de pôles, soit
+    $1/p$ de tour. La vitesse de rotation vaut donc $f/p$ tours par seconde. Le même raisonnement, mené à l'envers, donne la vitesse du champ
+    tournant d'un stator alimenté à la fréquence $f$ : un moteur synchrone tourne exactement à cette vitesse.
+  </p>
+  <div class="formule-cle">
+    $$n = \frac{60\,f}{p}, \qquad \varOmega_s = \frac{2\pi n}{60} = \frac{\omega}{p}, \qquad f = \frac{p\,n}{60}, \qquad \theta_e = p\,\theta_m$$
+    <p class="formule-cle-legende">
+      $n$ en $\mathrm{tr/min}$, $f$ en $\mathrm{Hz}$, $p$ nombre de paires de pôles, sans unité, $\varOmega_s$ en $\mathrm{rad/s}$,
+      $\omega = 2\pi f$ en $\mathrm{rad/s}$. Hypothèse : régime établi, rotor accroché au champ. Vérification dimensionnelle :
+      $[f/p] = \mathrm{s^{-1}}$, soit des tours par seconde, multipliés par $60\ \mathrm{s/min}$. Cas limites : $p = 1$ donne la vitesse la plus
+      élevée possible à $50\ \mathrm{Hz}$, $3000\ \mathrm{tr/min}$, celle des turboalternateurs ; une turbine hydraulique lente à
+      $100\ \mathrm{tr/min}$ demande $p = 30$, soit $60$ pôles. Un angle mécanique $\theta_m$ correspond à un angle électrique
+      $\theta_e = p\,\theta_m$ : l'angle interne $\delta$ est toujours un angle électrique, et un décalage de $40^\circ$ électriques sur une machine
+      à huit pôles ne représente que $10^\circ$ mécaniques.
+    </p>
+  </div>
+  <div class="cadre-tableau">
+    <table>
+      <thead>
+        <tr><th>Nombre de pôles $2p$</th><th>2</th><th>4</th><th>6</th><th>8</th><th>12</th><th>20</th><th>48</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Vitesse à $50\ \mathrm{Hz}$, $\mathrm{tr/min}$</td><td>3000</td><td>1500</td><td>1000</td><td>750</td><td>500</td><td>300</td><td>125</td></tr>
+        <tr><td>Vitesse à $60\ \mathrm{Hz}$, $\mathrm{tr/min}$</td><td>3600</td><td>1800</td><td>1200</td><td>900</td><td>600</td><td>360</td><td>150</td></tr>
+        <tr><td>Usage typique</td><td>turboalternateur à vapeur ou à gaz</td><td>groupe électrogène, turboalternateur nucléaire</td><td>groupe diesel lent</td><td>petite hydraulique</td><td>hydraulique de moyenne chute</td><td>hydraulique de basse chute</td><td>hydraulique au fil de l'eau</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Conséquence pratique : la fréquence d'un alternateur isolé est l'image exacte de la vitesse de son moteur d'entraînement. Un groupe électrogène
+    à quatre pôles qui ralentit de $1500$ à $1470\ \mathrm{tr/min}$ sous un appel de charge fait tomber la fréquence de $50$ à $49\ \mathrm{Hz}$ ; c'est
+    pourquoi la fréquence d'un réseau sert d'indicateur de l'équilibre entre production et consommation.
+  </p>
+
+  <h3 id="e-fem">Force électromotrice à vide et caractéristique à vide</h3>
+  <p>
+    Le cours <a href="#/cours/transformateur-ideal">Transformateur idéal</a> a établi qu'un enroulement de $N$ spires traversé par un flux
+    sinusoïdal de valeur crête $\hat{\varPhi}$ et de fréquence $f$ est le siège d'une force électromotrice efficace $E = 4{,}44\,N f\hat{\varPhi}$.
+    Dans l'alternateur, ce flux est celui d'un pôle, qui balaie les conducteurs ; les spires d'une phase étant réparties dans plusieurs encoches,
+    leurs forces électromotrices ne sont pas tout à fait en phase, ce que traduit un coefficient de bobinage $k_b$ un peu inférieur à $1$. Avec
+    $f = pn/60$, on retrouve une forme voisine de celle de la machine à courant continu : la force électromotrice est proportionnelle au flux et à
+    la vitesse.
+  </p>
+  <div class="formule-cle">
+    $$E = 4{,}44\,k_b\,N f\,\hat{\varPhi}(I_f) = K\,\hat{\varPhi}(I_f)\,n, \qquad K = 4{,}44\,k_b\,N\,\frac{p}{60}$$
+    <p class="formule-cle-legende">
+      $E$ force électromotrice efficace par phase en volts, $k_b$ coefficient de bobinage, de l'ordre de $0{,}9$ à $0{,}96$, $N$ nombre de spires en
+      série par phase, $\hat{\varPhi}$ flux crête par pôle en webers, fonction du courant d'excitation $I_f$ en ampères. Hypothèses : répartition
+      sinusoïdale du champ dans l'entrefer, machine à vide, donc aucun courant au stator. Vérification : $[N f\varPhi] =
+      \mathrm{s^{-1}} \cdot \mathrm{Wb} = \mathrm{V}$. Cas limites : à $I_f = 0$, il ne reste que la petite force électromotrice due au magnétisme
+      rémanent ; à vitesse nulle, $E = 0$ quel que soit $I_f$. Interprétation : à vitesse fixée par le réseau ou par le régulateur de vitesse,
+      l'excitation est le seul moyen de régler $E$.
+    </p>
+  </div>
+  <p>
+    La courbe $E_0(I_f)$ relevée à vide et à vitesse nominale s'appelle la caractéristique à vide. Elle est droite tant que le fer ne sature pas,
+    puis s'infléchit : c'est la courbe d'aimantation du circuit magnétique du cours <a href="#/cours/circuits-magnetiques">Circuits magnétiques</a>,
+    vue à travers l'entrefer. Son prolongement rectiligne est la droite d'entrefer. Un second essai, stator en court-circuit sur un ampèremètre
+    et excitation réduite, donne le courant de court-circuit $I_{cc}(I_f)$, rigoureusement proportionnel à $I_f$ : en court-circuit, le flux
+    résultant est faible et le fer ne sature pas. Le rapport des deux, à la même excitation, définit la réactance synchrone, exactement comme le
+    rapport tension sur courant de l'essai en court-circuit définissait l'impédance d'un transformateur.
+  </p>
+  <figure id="e-vide-figure">
+    <svg viewBox="0 0 760 360" role="img" aria-label="Caractéristique à vide et caractéristique en court-circuit d'un alternateur, en valeurs relatives : force électromotrice à vide en fonction du courant d'excitation avec sa saturation et la droite d'entrefer, courant de court-circuit proportionnel au courant d'excitation, construction de la réactance synchrone"><defs><marker id="fl-e-vide" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M80 306V30" marker-end="url(#fl-e-vide)"/><path d="M74 300H655" marker-end="url(#fl-e-vide)"/><path d="M632.0 300V30"/><path d="M195.0 300v6"/><path d="M310.0 300v6"/><path d="M425.0 300v6"/><path d="M540.0 300v6"/><path d="M80 205.0h-6"/><path d="M80 110.0h-6"/><path d="M632.0 205.0h6"/><path d="M632.0 110.0h6"/></g><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="80.0,300.0 89.2,292.4 98.4,284.8 107.6,277.2 116.8,269.6 126.0,262.0 135.2,254.4 144.4,246.8 153.6,239.2 162.8,231.6 172.0,224.1 181.2,216.5 190.4,209.0 199.6,201.6 208.8,194.2 218.0,186.9 227.2,179.7 236.4,172.6 245.6,165.7 254.8,159.0 264.0,152.6 273.2,146.4 282.4,140.5 291.6,134.9 300.8,129.7 310.0,124.9 319.2,120.4 328.4,116.3 337.6,112.6 346.8,109.2 356.0,106.2 365.2,103.4 374.4,101.0 383.6,98.9 392.8,97.0 402.0,95.3 411.2,93.8 420.4,92.5 429.6,91.3 438.8,90.3 448.0,89.4 457.2,88.6 466.4,88.0 475.6,87.3 484.8,86.8 494.0,86.3 503.2,85.9 512.4,85.5 521.6,85.2 530.8,84.9 540.0,84.6 549.2,84.4 558.4,84.2 567.6,84.0 576.8,83.8 586.0,83.6 595.2,83.5 604.4,83.4 613.6,83.3 622.8,83.2 632.0,83.1"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 5"><path d="M80 300L402.0 34.0"/></g><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 4"><path d="M80 300L632.0 46.7"/></g><g fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 3"><path d="M344.5 300V110.0H80"/><path d="M344.5 178.6H632.0"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="50.0" y="114.0">1</text><text x="42.0" y="209.0">0,5</text><text x="642.0" y="114.0">1</text><text x="642.0" y="209.0">0,5</text><text x="185.0" y="322.0">0,5</text><text x="306.0" y="322.0">1</text><text x="415.0" y="322.0">1,5</text><text x="536.0" y="322.0">2</text><text x="332.5" y="338.0">1,15</text><text x="625.0" y="322.0">I_f / I_f0</text><text x="86.0" y="22.0">E_0 / V_n, axe de gauche</text><text x="442.0" y="22.0">I_cc / I_n, axe de droite</text><text x="412.6" y="41.6">droite d'entrefer</text><text x="425.0" y="77.7">à vide E_0(I_f)</text><text x="471.0" y="132.8">court-circuit I_cc(I_f)</text><text x="371.5" y="172.4">0,64</text></g></svg>
+    <figcaption>
+      Caractéristiques à vide et en court-circuit d'un alternateur, en valeurs relatives. Axe horizontal : excitation $I_f$ rapportée à l'excitation
+      $I_{f0}$ qui donnerait la tension nominale sur la droite d'entrefer. Trait plein épais, axe de gauche : force électromotrice à vide $E_0/V_n$,
+      qui s'écarte de la droite d'entrefer, en tirets, à cause de la saturation ; la tension nominale n'est atteinte qu'à $I_f = 1{,}15\,I_{f0}$.
+      Trait pointillé, axe de droite : courant de court-circuit $I_{cc}/I_n$, droit. Les traits fins en tirets construisent la réactance synchrone :
+      à $I_f = 1{,}15\,I_{f0}$, la machine donne $E_0 = 1$ à vide et $I_{cc} = 0{,}64$ en court-circuit, d'où une réactance synchrone saturée
+      $x_s = 1/0{,}64 = 1{,}56$ ; sur la droite d'entrefer, à $I_f = I_{f0}$, $E = 1$ et $I_{cc} = 0{,}556$, d'où la réactance non saturée
+      $x_s = 1{,}8$. Courbes construites pour l'illustration.
+    </figcaption>
+  </figure>
+  <div class="formule-cle">
+    $$X_s = \frac{E_0(I_f)}{I_{cc}(I_f)} \quad \text{à } I_f \text{ égal}, \qquad x_s = \frac{X_s}{Z_b}, \quad Z_b = \frac{U_n^2}{S_n}$$
+    <p class="formule-cle-legende">
+      $X_s$ en ohms par phase, $E_0$ tension simple à vide en volts, $I_{cc}$ courant de ligne de court-circuit en ampères. Hypothèses : résistance
+      du stator négligée devant $X_s$, ce qui est très bien vérifié, et même excitation dans les deux essais. Approximation : la valeur dépend de
+      l'excitation choisie, car $E_0$ sature et $I_{cc}$ non ; on retient la réactance saturée, prise à la tension nominale, pour les calculs de
+      fonctionnement normal. Ordres de grandeur : $x_s$ de $1$ à $2{,}5$ pour les turboalternateurs et les groupes électrogènes, de $0{,}6$ à $1{,}2$
+      pour les alternateurs hydrauliques. Une réactance supérieure à $1$ signifie qu'en court-circuit établi le courant reste inférieur au courant
+      nominal, ce qui ne protège en rien des premières périodes, où la réactance transitoire $x'_d$, de l'ordre de $0{,}2$, laisse passer cinq fois
+      plus.
+    </p>
+  </div>
+
+  <h3 id="e-modele">Réaction d'induit et modèle de Behn-Eschenburg</h3>
+  <p>
+    En charge, les courants du stator créent à leur tour un champ tournant, à la même vitesse que la roue polaire, qui s'ajoute au champ des pôles :
+    c'est la réaction d'induit. Le flux réellement présent dans l'entrefer, et donc la tension induite, n'est plus celui que créerait $I_f$ seul. Si
+    le circuit magnétique est supposé linéaire, les deux champs se superposent : le champ de réaction est proportionnel au courant et induit une
+    tension en quadrature avec lui, que l'on représente par une chute dans une réactance $X_a$. On y ajoute la réactance de fuite $X_\sigma$, due au
+    flux des conducteurs du stator qui ne traverse pas l'entrefer, et la résistance $R$ d'une phase. Le tout forme la réactance synchrone
+    $X_s = X_a + X_\sigma$, et la machine se réduit, par phase, à une source sinusoïdale $E$, réglée par $I_f$, en série avec $R + jX_s$.
+  </p>
+  <div class="formule-cle">
+    $$\text{alternateur : } \underline{V} = \underline{E} - (R + jX_s)\,\underline{I} \qquad\qquad \text{moteur : } \underline{V} = \underline{E} + (R + jX_s)\,\underline{I}$$
+    <p class="formule-cle-legende">
+      $\underline{V}$, $\underline{E}$ en volts, $\underline{I}$ en ampères, $R$ et $X_s$ en ohms, par phase de l'étoile équivalente. Convention
+      générateur à gauche, le courant sortant par la borne de phase ; convention récepteur à droite, le courant entrant. Hypothèses : machine à pôles
+      lisses, circuit magnétique linéaire, régime sinusoïdal équilibré établi, vitesse égale à la vitesse de synchronisme. Dérivation : loi des
+      mailles sur le schéma ci-dessous, la tension aux bornes étant la force électromotrice diminuée, en alternateur, des chutes ohmique et inductive.
+      Cas limites : à vide, $\underline{I} = 0$ et $\underline{V} = \underline{E}$ ; en court-circuit, $\underline{V} = 0$ et
+      $\underline{I} = \underline{E}/(R + jX_s) \approx -j\underline{E}/X_s$, un courant presque en quadrature retard, limité par $X_s$.
+      Vérification : $[X_sI] = \mathrm{\Omega} \cdot \mathrm{A} = \mathrm{V}$.
+    </p>
+  </div>
+  <figure id="e-schema-figure">
+    <svg viewBox="0 0 760 330" role="img" aria-label="Schéma équivalent par phase de la machine synchrone à pôles lisses, modèle de Behn-Eschenburg : à gauche en alternateur, convention générateur ; à droite en moteur, convention récepteur ; neutre pris comme potentiel de référence"><defs><marker id="fl-e-sch" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="70" cy="150" r="26"/><path d="M58 150c4-8 8-8 12 0s8 8 12 0" stroke-width="1.6"/><path d="M70 124V80H110M150 80H175M247 80H300M70 176V240H300"/><rect x="110" y="70" width="40" height="20" rx="3"/><path d="M175 80a9 9 0 0 1 18 0a9 9 0 0 1 18 0a9 9 0 0 1 18 0a9 9 0 0 1 18 0"/><circle cx="304" cy="80" r="4"/><circle cx="304" cy="240" r="4"/><path d="M290 252H318M295 258H313M300 264H308"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M30 196V108" marker-end="url(#fl-e-sch)"/><path d="M334 232V90" marker-end="url(#fl-e-sch)"/><path d="M255 68H285" marker-end="url(#fl-e-sch)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="14.0" y="156.0">E</text><text x="118.0" y="62.0">R</text><text x="192.0" y="62.0">j X_s</text><text x="262.0" y="58.0">I</text><text x="342.0" y="165.0">V</text><text x="312.0" y="74.0">phase</text><text x="316.0" y="236.0">N</text><text x="20.0" y="290.0">alternateur, convention générateur</text><text x="20.0" y="310.0">V = E - (R + j X_s) I</text></g><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 5"><path d="M378 30V300"/></g><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="462" cy="150" r="26"/><path d="M450 150c4-8 8-8 12 0s8 8 12 0" stroke-width="1.6"/><path d="M462 124V80H502M542 80H567M639 80H692M462 176V240H692"/><rect x="502" y="70" width="40" height="20" rx="3"/><path d="M567 80a9 9 0 0 1 18 0a9 9 0 0 1 18 0a9 9 0 0 1 18 0a9 9 0 0 1 18 0"/><circle cx="696" cy="80" r="4"/><circle cx="696" cy="240" r="4"/><path d="M682 252H710M687 258H705M692 264H700"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M422 196V108" marker-end="url(#fl-e-sch)"/><path d="M726 232V90" marker-end="url(#fl-e-sch)"/><path d="M677 68H647" marker-end="url(#fl-e-sch)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="406.0" y="156.0">E</text><text x="510.0" y="62.0">R</text><text x="584.0" y="62.0">j X_s</text><text x="654.0" y="58.0">I</text><text x="734.0" y="165.0">V</text><text x="704.0" y="74.0">phase</text><text x="708.0" y="236.0">N</text><text x="412.0" y="290.0">moteur, convention récepteur</text><text x="412.0" y="310.0">V = E + (R + j X_s) I</text></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11"><text x="20.0" y="22.0">tensions fléchées vers la borne + ; N : référence des potentiels ; grandeurs par phase</text></g></svg>
+    <figcaption>
+      Schéma équivalent par phase, modèle de Behn-Eschenburg. À gauche, en alternateur et convention générateur : la flèche du courant $I$ sort de la
+      machine par la borne de phase, la force électromotrice $E$ et la tension $V$ sont fléchées vers la borne positive, et le neutre N est le
+      potentiel de référence ; la maille donne $V = E - (R + jX_s)I$. À droite, en moteur et convention récepteur : la flèche du courant entre dans la
+      machine, et la maille donne $V = E + (R + jX_s)I$. Les deux schémas décrivent la même machine ; seul change le sens choisi pour le courant, donc
+      le signe des chutes. Dans une machine de plus de quelques kilovoltampères, $R$ vaut quelques centièmes de $X_s$ et on la néglige pour le
+      diagramme de Fresnel, en la gardant pour le calcul des pertes.
+    </figcaption>
+  </figure>
+  <p>
+    Ce modèle à une seule réactance suppose un entrefer constant, c'est-à-dire des pôles lisses. Dans une machine à pôles saillants, l'entrefer est
+    faible dans l'axe des pôles, l'axe direct, et grand entre les pôles, l'axe en quadrature : la méthode de Blondel décompose alors le courant selon
+    ces deux axes, avec deux réactances $X_d > X_q$. Le modèle à une réactance $X_s = X_d$ reste une bonne première approximation pour le calcul de
+    l'excitation et des puissances au voisinage du fonctionnement nominal ; il néglige le couple de réluctance, qui ajoute une petite composante en
+    $\sin 2\delta$.
+  </p>
+
+  <h3 id="e-fresnel-section">Le diagramme de Fresnel simplifié de l'alternateur</h3>
+  <p>
+    En négligeant $R$, l'équation de l'alternateur s'écrit $\underline{E} = \underline{V} + jX_s\underline{I}$. Le diagramme se construit en quatre
+    traits : porter $\underline{V}$ horizontalement, comme référence des phases ; tracer $\underline{I}$ en retard de $\varphi$ ; à partir de
+    l'extrémité de $\underline{V}$, porter $jX_s\underline{I}$, de longueur $X_sI$ et perpendiculaire à $\underline{I}$, en avance de $90^\circ$ sur
+    lui ; joindre l'origine à l'extrémité obtenue : c'est $\underline{E}$, de module $E$ et d'argument $\delta$. Deux projections portent toute la
+    physique de la machine. La projection verticale de $\underline{E}$ vaut $E\sin\delta = X_sI\cos\varphi$ : elle est proportionnelle au courant
+    actif, donc à la puissance active. La projection horizontale vaut $E\cos\delta = V + X_sI\sin\varphi$ : son excès sur $V$ est proportionnel au
+    courant réactif, donc à la puissance réactive fournie.
+  </p>
+  <p>
+    L'animation ci-dessous construit ce diagramme pour l'alternateur de la microcentrale de la section H. Réglez le déphasage du courant par la
+    poignée ronde sur l'axe gradué du bas, de $-90^\circ$, courant en avance, charge capacitive, à $+90^\circ$, courant en retard, charge inductive ;
+    réglez l'intensité et la réactance synchrone par les curseurs, ou lancez le balayage du déphasage. Prédisez d'abord : à courant constant, la
+    force électromotrice nécessaire est-elle plus grande pour une charge inductive ou pour une charge capacitive ? Peut-elle devenir inférieure à
+    $V$ ? Comment évolue l'angle interne quand le facteur de puissance passe de $0{,}9$ à $1$ ?
+  </p>
+  <figure id="e-fresnel-figure">
+    <div class="schema-vivant" id="e-fresnel"></div>
+    <figcaption>
+      Diagramme de Fresnel de l'alternateur, convention générateur, résistance négligée. La flèche fine horizontale est la tension simple $V$,
+      $230{,}9\ \mathrm{V}$, référence des phases ; la flèche à pointe ouverte est le courant $I$, à l'échelle de droite ; le segment en tirets, issu de
+      l'extrémité de $V$ et perpendiculaire à $I$, est la chute $jX_sI$ ; la flèche pleine épaisse est la force électromotrice $E$, et l'arc près de
+      l'origine marque l'angle interne $\delta$. La droite horizontale en pointillés passe par l'extrémité de $E$ : sa hauteur est
+      $X_sI\cos\varphi$, image de la puissance active. L'axe gradué du bas porte la poignée du déphasage $\varphi$.
+    </figcaption>
+  </figure>
+  <div id="e-fresnel-curseurs"></div>
+  <div id="e-fresnel-lecteur"></div>
+  <div id="e-fresnel-valeurs"></div>
+  <p>
+    Interprétation : à $320{,}8\ \mathrm{A}$ et $\cos\varphi = 0{,}9$ en retard, il faut $E = 458\ \mathrm{V}$, près de deux fois la tension
+    simple, avec $\delta = 37{,}2^\circ$. À même courant, une charge capacitive demande une force électromotrice bien plus faible : avec un courant en
+    avance de plus de $41{,}8^\circ$, $E$ devient inférieure à $V$, l'alternateur est sous-excité et absorbe de la puissance réactive. Une charge
+    inductive, au contraire, exige une forte excitation : c'est elle qui fixe le courant d'excitation maximal à prévoir. Le passage de $\cos\varphi = 0{,}9$
+    à $1$ à courant constant augmente la puissance active, donc la hauteur de l'extrémité de $E$, et l'angle interne croît jusqu'à
+    $53{,}1^\circ$. Retenez que $E$ et $\delta$ ne sont pas des réglages indépendants : ils sont fixés ensemble par $P$ et $Q$.
+  </p>
+
+  <h3 id="e-puissance">Puissances active et réactive en fonction de l'angle interne</h3>
+  <p>
+    Reliée à un réseau de tension $V$, la machine échange une puissance complexe $\underline{S} = 3\underline{V}\,\underline{I}^*$. En
+    alternateur, résistance négligée, $\underline{I} = (\underline{E} - \underline{V})/(jX_s)$ avec $\underline{E} = E\,e^{j\delta}$ et
+    $\underline{V} = V$ réel. Le conjugué vaut $\underline{I}^* = (E\,e^{-j\delta} - V)/(-jX_s) = j(E\,e^{-j\delta} - V)/X_s$. En développant
+    $e^{-j\delta} = \cos\delta - j\sin\delta$ :
+  </p>
+  <div class="formule-cle">
+    $$\underline{S} = \frac{3V}{X_s}\,j\left(E\cos\delta - jE\sin\delta - V\right) \quad \Longrightarrow \quad P = \frac{3VE}{X_s}\sin\delta, \qquad Q = \frac{3V\,(E\cos\delta - V)}{X_s}$$
+    <p class="formule-cle-legende">
+      $P$ en watts et $Q$ en vars, fournis au réseau en convention générateur ; $V$ et $E$ tensions simples en volts ; $X_s$ en ohms ; $\delta$
+      angle électrique. Hypothèses : $R$ négligée, pôles lisses, $V$ et $E$ fixés. Vérification dimensionnelle : $[V^2/X_s] = \mathrm{V}^2/\mathrm{\Omega}
+      = \mathrm{W}$. Interprétation : $P$ dépend de $\delta$, donc du couple appliqué à l'arbre ; $Q$ dépend surtout de l'écart entre $E\cos\delta$
+      et $V$, donc de l'excitation. Cas limites : à $\delta = 0$, $P = 0$ et $Q = 3V(E - V)/X_s$, positive si $E > V$, machine surexcitée qui
+      fournit du réactif comme un condensateur, négative si $E < V$, machine sous-excitée qui en absorbe comme une bobine ; à $\delta = 90^\circ$,
+      $P$ atteint $P_{max} = 3VE/X_s$, la limite de stabilité statique. En moteur, les mêmes expressions restent valables en convention récepteur
+      avec $\delta$ compté positivement quand $E$ est en retard sur $V$.
+    </p>
+  </div>
+  <div class="formule-cle">
+    $$C_{em} = \frac{P}{\varOmega_s} = \frac{3VE}{X_s\,\varOmega_s}\sin\delta, \qquad K_s = \frac{\mathrm{d}P}{\mathrm{d}\delta} = \frac{3VE}{X_s}\cos\delta$$
+    <p class="formule-cle-legende">
+      $C_{em}$ couple électromagnétique en $\mathrm{N \cdot m}$, $\varOmega_s$ en $\mathrm{rad/s}$, $K_s$ coefficient de synchronisation en
+      $\mathrm{W/rad}$ électrique. Hypothèses : pertes du stator négligées, si bien que la puissance qui traverse l'entrefer égale la puissance
+      électrique. Interprétation : $K_s$ est la raideur du ressort magnétique. Positif tant que $\delta < 90^\circ$, il ramène le rotor après une
+      perturbation ; nul à $90^\circ$, il ne retient plus rien. En exploitation, on garde une marge : l'angle interne nominal d'un alternateur couplé
+      au réseau se situe couramment entre $20$ et $40^\circ$, et l'on évite de dépasser $60$ à $70^\circ$, car un défaut sur le réseau ou un à-coup
+      de turbine fait osciller l'angle bien au-delà de sa valeur moyenne.
+    </p>
+  </div>
+  <p>
+    La simulation suivante trace $P(\delta)$ pour l'alternateur de la microcentrale. Réglez l'excitation, rapportée à $V$, la réactance synchrone
+    et la puissance mécanique fournie par la turbine ; la droite horizontale représente cette puissance, et ses intersections avec la courbe sont les
+    points d'équilibre possibles. Prédisez avant de manipuler : combien de points d'équilibre trouve-t-on pour $200\ \mathrm{kW}$, et lequel est
+    stable ? Si l'on réduit l'excitation à puissance mécanique constante, que devient l'angle, et jusqu'où peut-on la réduire ?
+  </p>
+  <figure id="e-pdelta-figure">
+    <div id="e-pdelta-trace"></div>
+    <figcaption>
+      Puissance active de l'alternateur en fonction de l'angle interne, de $0$ à $180^\circ$ électriques. Courbe épaisse : excitation réglée par le
+      curseur ; courbe fine : excitation à vide, $E = V$, pour comparaison. La droite horizontale en tirets est la puissance mécanique de la turbine,
+      pertes négligées. Le point plein est l'équilibre stable, sur la partie montante de la courbe ; le point creux est l'équilibre instable, sur la
+      partie descendante. La verticale en tirets marque $90^\circ$, limite de stabilité statique.
+    </figcaption>
+  </figure>
+  <div id="e-pdelta-curseurs"></div>
+  <p>
+    Interprétation : la droite à $200\ \mathrm{kW}$ coupe la courbe en deux points, $37{,}2^\circ$ et $142{,}8^\circ$. Seul le premier est stable :
+    si le rotor y prend un peu d'avance, la puissance électrique renvoyée au réseau augmente, dépasse la puissance mécanique et freine le rotor ; au
+    second, une avance réduit la puissance électrique, et le rotor s'emballe. Réduire l'excitation à puissance constante écrase la courbe et fait
+    croître l'angle ; à $E = 1{,}20\,V$, le maximum de la courbe ne vaut plus que $200\ \mathrm{kW}$ et la machine est à la limite du
+    décrochage. Bien avant, l'alternateur absorbe une forte puissance réactive : la sous-excitation est limitée à la fois par la stabilité et par le
+    courant. Une réactance synchrone plus faible donne une courbe plus haute, donc une machine plus raide, au prix d'un entrefer plus grand et d'une
+    excitation plus coûteuse.
+  </p>
+
+  <h3 id="e-reseau">Couplé à un réseau puissant ou seul sur son réseau</h3>
+  <p>
+    Tout dépend de qui impose la tension et la fréquence. Sur un réseau puissant, dont la puissance de court-circuit est très supérieure à celle de
+    l'alternateur, $V$ et $f$ sont fixées de l'extérieur : c'est le réseau infini. La vitesse de l'alternateur est alors imposée, et ses deux
+    commandes ont des effets séparés. Ouvrir le vannage de la turbine ou l'injection du diesel augmente le couple moteur ; le rotor prend un peu
+    d'avance, $\delta$ croît, et la puissance active fournie augmente jusqu'à équilibrer la nouvelle puissance mécanique, sans que la vitesse
+    change en régime établi. Augmenter $I_f$ augmente $E$ ; à puissance active constante, l'extrémité de $\underline{E}$ glisse sur la droite
+    horizontale $E\sin\delta = $ constante, l'angle diminue, et la puissance réactive fournie augmente. Le diagramme de la section F montre cette
+    construction.
+  </p>
+  <p>
+    Seul sur son réseau, en îlotage, comme un groupe électrogène de secours, l'alternateur n'a plus de référence extérieure : ce sont les charges
+    qui imposent $P$ et $Q$. Le régulateur de vitesse du moteur d'entraînement ajuste le couple pour tenir la vitesse, donc la fréquence ; le
+    régulateur de tension ajuste $I_f$ pour tenir $V$. La puissance réactive n'est plus un réglage, c'est une conséquence de la charge, et
+    l'excitation nécessaire en découle par le diagramme de Fresnel. Quand plusieurs groupes fonctionnent en parallèle, leurs régulateurs se
+    partagent la charge par un statisme : la consigne de vitesse décroît légèrement quand la puissance augmente, typiquement de $3$ à $5\ \%$ entre
+    vide et pleine charge, et un statisme analogue sur la tension répartit le réactif.
+  </p>
+  <div class="formule-cle">
+    $$f = f_0 - s\,f_n\,\frac{P}{P_n}, \qquad \text{réseau infini : } P \leftarrow \text{puissance mécanique}, \quad Q \leftarrow I_f \qquad \text{îlotage : } f \leftarrow \text{régulateur de vitesse}, \quad V \leftarrow I_f$$
+    <p class="formule-cle-legende">
+      $f_0$ fréquence à vide en $\mathrm{Hz}$, $s$ statisme sans unité, par exemple $0{,}04$, $f_n$ fréquence nominale, $P_n$ puissance nominale du
+      moteur d'entraînement. Le statisme est une règle de conception des régulateurs, pas une loi physique : un régulateur isochrone, de statisme
+      nul, tient exactement $50\ \mathrm{Hz}$ en îlotage, mais deux régulateurs isochrones en parallèle se disputeraient la charge. Cas limite : avec
+      $s = 0{,}04$ et $f_0 = 52\ \mathrm{Hz}$, la fréquence vaut $50\ \mathrm{Hz}$ à pleine charge.
+    </p>
+  </div>
+  <p>
+    Pour coupler un alternateur à un réseau sous tension, il faut que la tension à ses bornes soit, au moment de la fermeture du disjoncteur,
+    identique à celle du réseau phase par phase : même ordre de succession des phases, vérifié une fois pour toutes à la mise en service, même valeur
+    efficace, même fréquence et même phase. Tout écart laisse aux bornes du disjoncteur ouvert une tension $\Delta\underline{V} =
+    \underline{V}_g - \underline{V}_r$ qui, à la fermeture, fait circuler un courant limité seulement par les réactances transitoires de
+    l'alternateur et du réseau, et un à-coup de couple sur l'arbre. Un synchroniseur mesure les deux tensions par des transformateurs de tension,
+    agit sur la vitesse et l'excitation, et ne donne l'ordre de fermeture que dans une fenêtre étroite. On règle couramment la fréquence du groupe un
+    peu au-dessus de celle du réseau, pour qu'il prenne un peu de charge active au couplage au lieu de passer en moteur.
+  </p>
+  <p>
+    L'animation suivante représente le synchroscope d'un couplage : la tension de l'alternateur tourne par rapport à celle du réseau à la vitesse de
+    l'écart de fréquence, et la tension aux bornes du disjoncteur bat. Réglez l'écart de fréquence, l'écart de tension et la phase de départ par les
+    curseurs, et faites avancer le temps par la lecture ou par la poignée ronde sur l'axe du temps. Prédisez : avec $0{,}1\ \mathrm{Hz}$ d'écart,
+    combien de secondes séparent deux coïncidences de phase ? Quelle est la tension maximale aux bornes du disjoncteur, et quel courant
+    circulerait si l'on fermait à ce moment ?
+  </p>
+  <figure id="e-synchro-figure">
+    <div class="schema-vivant" id="e-synchro"></div>
+    <figcaption>
+      À gauche, le synchroscope : la flèche fine verticale est la tension simple du réseau, fixe dans ce repère tournant à $50\ \mathrm{Hz}$ ; la flèche
+      épaisse est celle de l'alternateur, qui tourne dans le sens trigonométrique si sa fréquence est plus élevée ; le segment en tirets qui joint
+      leurs extrémités est la tension $\Delta V$ aux bornes du disjoncteur ouvert, et l'arc épais en haut marque la fenêtre de fermeture autorisée,
+      $\pm 10^\circ$. À droite, $\Delta V$ en fonction du temps sur $20\ \mathrm{s}$ : l'enveloppe de battement. Le trait vertical suit l'instant
+      choisi, et l'axe du temps porte la poignée. Groupe électrogène du site, réactance transitoire $0{,}318\ \mathrm{\Omega}$, réseau du
+      transformateur du poste, $61{,}5\ \mathrm{m\Omega}$.
+    </figcaption>
+  </figure>
+  <div id="e-synchro-curseurs"></div>
+  <div id="e-synchro-lecteur"></div>
+  <div id="e-synchro-valeurs"></div>
+  <p>
+    Interprétation : avec $\Delta f = 0{,}1\ \mathrm{Hz}$, la tension de l'alternateur fait un tour complet par rapport au réseau en
+    $1/\Delta f = 10\ \mathrm{s}$ : deux coïncidences de phase sont séparées de $10\ \mathrm{s}$, et la fenêtre de $\pm 10^\circ$ n'est ouverte que
+    pendant $0{,}56\ \mathrm{s}$ à chaque tour. En opposition de phase, $\Delta V$ atteint $2V = 462\ \mathrm{V}$, et la fermeture ferait circuler
+    environ $1220\ \mathrm{A}$, plus de huit fois le courant nominal du groupe, avec un couple d'à-coup du même ordre : de quoi endommager
+    l'accouplement. Dans la fenêtre, à $10^\circ$, le courant reste vers $106\ \mathrm{A}$. Un écart de fréquence plus grand rend la fenêtre trop
+    brève pour un disjoncteur dont le temps de fermeture est de l'ordre de $50$ à $100\ \mathrm{ms}$ : c'est pourquoi le synchroniseur exige à la
+    fois une fréquence proche et une anticipation de l'ordre de fermeture.
+  </p>
+
+  <h3 id="e-moteur">Le moteur synchrone et ses courbes en V</h3>
+  <p>
+    En moteur, convention récepteur, l'équation devient $\underline{V} = \underline{E} + jX_s\underline{I}$ : la force électromotrice est en retard
+    de $\delta$ sur la tension, et la puissance absorbée vaut encore $P = 3VE\sin\delta/X_s$. La vitesse est rigoureusement $60f/p$. Le couple n'est
+    pas l'affaire de l'excitation, qui n'agit que sur la raideur : c'est la charge mécanique qui fixe $P$, donc $E\sin\delta$. L'excitation reste
+    libre, et elle règle le facteur de puissance. À puissance constante, l'extrémité de $\underline{E}$ se déplace sur une droite parallèle à
+    $\underline{V}$, et le courant passe par un minimum quand il est en phase avec la tension, c'est-à-dire quand $E\cos\delta = V$. Sous-excité, le
+    moteur absorbe du réactif, comme un moteur asynchrone ; surexcité, il en fournit, comme une batterie de condensateurs.
+  </p>
+  <div class="formule-cle">
+    $$I = \frac{\left|\underline{V} - E\,e^{-j\delta}\right|}{X_s}, \qquad \sin\delta = \frac{P\,X_s}{3VE}, \qquad Q_{abs} = \frac{3V\,(V - E\cos\delta)}{X_s}, \qquad I_{min} = \frac{P}{3V} \text{ pour } E\cos\delta = V$$
+    <p class="formule-cle-legende">
+      Convention récepteur, $P$ et $Q_{abs}$ absorbés, en watts et vars. Hypothèses : $R$ négligée, $E$ proportionnelle à $I_f$, circuit magnétique
+      linéaire. Le tracé de $I$ en fonction de $I_f$ à $P$ constante donne les courbes en V, ou courbes de Mordey : une branche gauche sous-excitée,
+      inductive, une branche droite surexcitée, capacitive, et un minimum à $\cos\varphi = 1$. Cas limite : à gauche, la branche s'arrête quand
+      $\sin\delta$ atteindrait $1$, limite de stabilité ; à $P = 0$, la machine est un compensateur synchrone, qui absorbe ou fournit du réactif
+      selon $I_f$. Vérification : $[P/(3V)] = \mathrm{W/V} = \mathrm{A}$.
+    </p>
+  </div>
+  <p>
+    La simulation suivante trace les courbes en V d'un moteur synchrone de même construction que l'alternateur de la microcentrale, $250\ \mathrm{kVA}$,
+    $400\ \mathrm{V}$, $X_s = 0{,}96\ \mathrm{\Omega}$, $I_{f0} = 20\ \mathrm{A}$. Réglez la puissance absorbée et le courant d'excitation.
+    Prédisez : à $150\ \mathrm{kW}$, pour quelle excitation le courant est-il minimal ? De quel côté du minimum le moteur fournit-il du réactif ? Que
+    se passe-t-il si l'on réduit trop l'excitation ?
+  </p>
+  <figure id="e-courbesv-figure">
+    <div id="e-courbesv-trace"></div>
+    <figcaption>
+      Courbes en V : courant de ligne en fonction du courant d'excitation, à puissance absorbée constante. Les trois courbes fines correspondent à
+      $0$, $100$ et $200\ \mathrm{kW}$ ; la courbe épaisse à la puissance choisie par le curseur. Le point plein est le point de fonctionnement à
+      l'excitation choisie. La courbe en tirets joint les minimums, où $\cos\varphi = 1$ : à sa gauche, le moteur est sous-excité et absorbe du
+      réactif ; à sa droite, il est surexcité et en fournit. Chaque courbe s'interrompt à gauche à la limite de stabilité, $\delta = 90^\circ$.
+    </figcaption>
+  </figure>
+  <div id="e-courbesv-curseurs"></div>
+  <p>
+    Interprétation : à $150\ \mathrm{kW}$, le minimum, $I_{min} = P/(3V) = 216{,}5\ \mathrm{A}$, est atteint pour $I_f = 26{,}9\ \mathrm{A}$,
+    soit $E = 1{,}345\,V$ et $\delta = 42{,}0^\circ$. L'excitation à vide, $20\ \mathrm{A}$, laisse le moteur nettement sous-excité : il absorbe
+    $94{,}0\ \mathrm{kvar}$, prend $255{,}5\ \mathrm{A}$ et travaille à $\delta = 64{,}2^\circ$. À droite du minimum, il fournit du réactif : à
+    $I_f = 35\ \mathrm{A}$, il délivre $83{,}5\ \mathrm{kvar}$ au réseau pour un courant de $247{,}8\ \mathrm{A}$, et compense ainsi les moteurs
+    asynchrones voisins. À gauche, le courant croît, le réactif absorbé aussi, et à $I_f = 18{,}0\ \mathrm{A}$, l'angle atteint
+    $90^\circ$ : le moteur décroche. C'est la raison pour laquelle on n'utilise pas la sous-excitation profonde, et pour laquelle une perte
+    d'excitation doit déclencher le moteur.
+  </p>
+  <p>
+    Un moteur synchrone ne démarre pas seul sur le réseau. Rotor immobile, le champ du stator défile devant les pôles à $1500\ \mathrm{tr/min}$ : il
+    les attire pendant une demi-période et les repousse pendant l'autre, et le couple moyen est nul. On démarre donc en asynchrone, grâce à une cage
+    d'amortisseurs logée dans les pôles, inducteur fermé sur une résistance pour éviter une surtension, puis on applique l'excitation près du
+    synchronisme et le rotor s'accroche ; ou bien on alimente le moteur par un variateur dont la fréquence monte depuis zéro, le rotor restant
+    accroché à chaque instant. Le cours <a href="#/cours/correction-du-facteur-de-puissance">Correction du facteur de puissance</a> avait
+    relevé le facteur de puissance par des condensateurs ; le moteur synchrone surexcité, ou le compensateur synchrone, le fait de façon continue
+    et réglable, sans résonance avec les harmoniques, mais au prix d'une machine tournante à entretenir. On le réserve aux fortes puissances et aux
+    réseaux faibles, où il apporte aussi de la puissance de court-circuit.
+  </p>
+
+  <h3 id="e-aimants">Machines à aimants permanents et machines autopilotées</h3>
+  <p>
+    Remplacer l'inducteur bobiné par des aimants supprime les bagues, les pertes Joule du rotor et la source d'excitation : le rendement gagne
+    plusieurs points sur les petites et moyennes puissances, et la machine devient plus compacte. En contrepartie, $E$ n'est plus réglable : le
+    flux est fixé, et avec lui le facteur de puissance sur un réseau à tension fixe. Une telle machine ne s'emploie donc presque jamais directement
+    sur le réseau : elle est alimentée par un onduleur qui fabrique la fréquence à partir de la position mesurée du rotor, si bien que le champ du
+    stator est toujours placé à l'angle voulu par rapport aux aimants, et la machine ne peut plus décrocher. C'est la machine synchrone autopilotée,
+    ou moteur sans balais, des servomoteurs, des véhicules électriques et de nombreuses pompes à haut rendement. Au-delà de la vitesse de base, un
+    courant statorique opposé au flux des aimants permet un défluxage limité. Sa commande sera reprise dans le cours Convertisseurs et moteurs.
+  </p>
+
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Le modèle utilisé par les animations et simulations</span>
+    <p>
+      Modèle de Behn-Eschenburg par phase de l'étoile équivalente, résistance du stator négligée, réactance synchrone constante, force
+      électromotrice proportionnelle au courant d'excitation, $E = V_n\,I_f/I_{f0}$, comme si le fer ne saturait pas ; pertes mécaniques et pertes
+      fer négligées. Alternateur de la microcentrale : $250\ \mathrm{kVA}$, $400\ \mathrm{V}$, huit pôles, $750\ \mathrm{tr/min}$,
+      $X_s = 0{,}96\ \mathrm{\Omega}$, soit $x_s = 1{,}5$, $I_{f0} = 20\ \mathrm{A}$ ; le moteur des courbes en V a la même construction. Groupe
+      électrogène du site : $100\ \mathrm{kVA}$, $400\ \mathrm{V}$, quatre pôles, $X_s = 3{,}2\ \mathrm{\Omega}$, soit $x_s = 2{,}0$, réactance
+      transitoire $0{,}318\ \mathrm{\Omega}$, soit $x'_d = 0{,}2$. Toutes ces valeurs sont des hypothèses d'étude. La proportionnalité de $E$ à $I_f$
+      sous-estime l'excitation réelle en charge, de $10$ à $20\ \%$ selon la saturation ; le calcul d'un courant d'excitation garanti se fait par la
+      caractéristique à vide réelle et des méthodes qui tiennent compte de la saturation, données par le constructeur.
+    </p>
+  </div>
+
+  <h3 id="e-statut">Loi, convention, approximation, règle de conception et donnée du constructeur</h3>
+  <ul>
+    <li><strong>Lois physiques :</strong> loi de Faraday, qui donne $E = 4{,}44\,k_bNf\hat{\varPhi}$ ; relation $f = pn/60$ entre vitesse et fréquence ; lois des mailles du schéma équivalent ; conservation de l'énergie entre arbre, entrefer et réseau ; principe fondamental de la dynamique de l'arbre, qui gouverne les oscillations de l'angle.</li>
+    <li><strong>Conventions :</strong> étoile équivalente et tension simple pour les calculs par phase ; convention générateur en alternateur, récepteur en moteur ; $\underline{V}$ pris comme référence des phases ; $\varphi$ compté positif quand le courant est en retard ; $\delta$ angle électrique de $\underline{E}$ par rapport à $\underline{V}$ ; vocabulaire surexcité et sous-excité défini par le signe de la puissance réactive fournie.</li>
+    <li><strong>Approximations :</strong> modèle de Behn-Eschenburg à une réactance, valable pour les pôles lisses et acceptable pour les pôles saillants près du nominal ; résistance négligée ; réactance synchrone saturée prise constante ; $E$ proportionnelle à $I_f$ ; réseau infini ; réactance transitoire seule pour estimer le courant d'un couplage mal synchronisé.</li>
+    <li><strong>Règles de conception :</strong> angle interne nominal limité à quelques dizaines de degrés en marche couplée ; fenêtre de couplage de quelques pour cent en tension, quelques dixièmes de hertz en fréquence et une dizaine de degrés en phase ; fréquence du groupe un peu supérieure à celle du réseau au couplage ; statisme de $3$ à $5\ \%$ pour le partage de charge ; protection contre la perte d'excitation et le retour de puissance.</li>
+    <li><strong>Données du constructeur et des normes :</strong> réactances $x_d$, $x_q$, $x'_d$, $x''_d$ et constantes de temps, caractéristique à vide réelle, courant d'excitation maximal, diagramme de fonctionnement ou courbe de capacité $P$-$Q$, limite de sous-excitation, plage du régulateur de tension, réglages du synchroniseur et du statisme, et exigences des normes de machines tournantes et de raccordement au réseau applicables, à vérifier pour chaque projet.</li>
+  </ul>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, le diagramme de Fresnel simplifié de l'alternateur, puis un diagramme qui montre le rôle
+    de l'excitation à puissance active constante, l'organigramme de résolution et un tableau comparatif des machines synchrone et asynchrone. Les
+    autres schémas sont restés au contact du passage qu'ils illustrent ; la liste de renvois figure à la fin de la section.
+  </p>
+  <p>
+    Le schéma principal est le diagramme de Fresnel de l'alternateur de la microcentrale de la section H, au point $200\ \mathrm{kW}$,
+    $\cos\varphi = 0{,}9$ en retard. Il se lit à partir de la tension simple $V$, horizontale, prise comme référence : le courant $I$ est en retard
+    de $\varphi = 25{,}8^\circ$ ; la chute $jX_sI$, perpendiculaire au courant, part de l'extrémité de $V$ ; la force électromotrice $E$ ferme le
+    triangle et fait l'angle $\delta = 37{,}2^\circ$ avec $V$. La hauteur de l'extrémité de $E$, $E\sin\delta = X_sI\cos\varphi$, est l'image de la
+    puissance active ; l'excès de sa projection horizontale sur $V$, $E\cos\delta - V = X_sI\sin\varphi$, celle de la puissance réactive fournie.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 760 460" role="img" aria-label="Schéma principal : diagramme de Fresnel simplifié de l'alternateur de la microcentrale, modèle de Behn-Eschenburg, convention générateur ; tension simple prise comme référence, courant en retard de 25,8 degrés, chute dans la réactance synchrone, force électromotrice en avance de 37,2 degrés"><defs><marker id="fl-f-fr" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker><marker id="fl-f-fr-o" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10" fill="none" stroke="currentColor" stroke-width="1.6"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 4"><path d="M60 340H500"/><path d="M388.6 90.6V340"/><path d="M267.8 340V90.6H388.6" stroke-dasharray="1 5"/></g><g fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M60.0 340.0L267.8 340.0" marker-end="url(#fl-f-fr)"/></g><g fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M60.0 340.0L388.6 90.6" marker-end="url(#fl-f-fr)"/></g><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 4"><path d="M267.8 340.0L388.6 90.6" marker-end="url(#fl-f-fr)"/></g><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M60.0 340.0L204.3 409.9" marker-end="url(#fl-f-fr-o)"/></g><g fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M140.0 340.0A80 80 0 0 0 123.7 291.6"/><path d="M118.0 340.0A58 58 0 0 1 112.2 365.3"/></g><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M273.1 329.2L283.9 334.4L278.6 345.2"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="253.8" y="362.0">V</text><text x="396.6" y="84.6">E</text><text x="340.2" y="221.3">j X_s I</text><text x="212.3" y="413.9">I</text><text x="146.0" y="312.0">δ = 37,2°</text><text x="124.0" y="370.0">φ = 25,8°</text><text x="396.6" y="215.3">E sin δ = X_s I cos φ</text><text x="396.6" y="231.3">image de P</text><text x="207.8" y="80.6">E cos δ - V : image de Q</text><text x="520.0" y="60.0">microcentrale, par phase :</text><text x="520.0" y="80.0">V = 230,9 V, référence</text><text x="520.0" y="100.0">I = 320,8 A, en retard</text><text x="520.0" y="120.0">X_s = 0,96 Ω, R négligée</text><text x="520.0" y="140.0">X_s I = 307,9 V</text><text x="520.0" y="160.0">E = 458,4 V</text><text x="520.0" y="180.0">échelles : 100 V pour 90 px,</text><text x="520.0" y="196.0">100 A pour 50 px</text><text x="20.0" y="430.0">flèche pleine épaisse : E ; flèche pleine fine : V ; tirets : j X_s I ; pointe ouverte : courant I</text><text x="20.0" y="450.0">angles comptés positivement dans le sens trigonométrique à partir de V</text></g></svg>
+    <figcaption>
+      Schéma principal : diagramme de Fresnel simplifié de l'alternateur, convention générateur, résistance négligée. Flèche pleine fine : tension
+      simple $V = 230{,}9\ \mathrm{V}$, référence des phases. Flèche à pointe ouverte : courant $I = 320{,}8\ \mathrm{A}$, à l'échelle de
+      $100\ \mathrm{A}$ pour $50$ pixels. Tirets : chute $jX_sI = 307{,}9\ \mathrm{V}$, perpendiculaire au courant, l'équerre marquant l'angle droit.
+      Flèche pleine épaisse : force électromotrice $E = 458{,}4\ \mathrm{V}$. Les angles sont comptés positivement dans le sens trigonométrique à
+      partir de $V$ : $\delta$ au-dessus, $\varphi$ au-dessous puisque le courant est en retard. Les traits pointillés verticaux et horizontaux
+      projettent l'extrémité de $E$ pour lire $P$ et $Q$.
+    </figcaption>
+  </figure>
+  <p>
+    Le diagramme suivant fixe la puissance active, $0{,}8$ en valeur relative, et fait varier l'excitation. Puisque $E\sin\delta = X_sI\cos\varphi$
+    est proportionnel à $P$, l'extrémité de $E$ reste sur une droite horizontale ; puisque $I\cos\varphi$ est fixé, l'extrémité du courant reste sur une
+    droite verticale. Augmenter $I_f$ déplace $E$ vers la droite : l'angle diminue, le courant passe d'une avance à un retard, et la machine passe
+    d'une absorption à une fourniture de réactif. C'est le mécanisme commun à l'alternateur qui règle sa puissance réactive et au moteur synchrone
+    qui règle son facteur de puissance.
+  </p>
+  <figure id="f-lieu-figure">
+    <svg viewBox="0 0 760 500" role="img" aria-label="Diagramme de Fresnel à puissance active constante : trois excitations, sous-excitée, à facteur de puissance unitaire et surexcitée ; les extrémités de la force électromotrice restent sur une droite horizontale et celles du courant sur une droite verticale"><defs><marker id="fl-f-lieu" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker><marker id="fl-f-lieu-o" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10" fill="none" stroke="currentColor" stroke-width="1.6"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 4"><path d="M70 350H560"/><path d="M120.0 110.0H440.0"/><path d="M230.0 226.0V444.0"/></g><g fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M70.0 350.0L270.0 350.0" marker-end="url(#fl-f-lieu)"/></g><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 4"><path d="M70.0 350.0L190.0 110.0" marker-end="url(#fl-f-lieu)"/></g><g fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 3"><path d="M270.0 350.0L190.0 110.0"/></g><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 4"><path d="M70.0 350.0L230.0 296.7" marker-end="url(#fl-f-lieu-o)"/></g><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="9 4"><path d="M70.0 350.0L270.0 110.0" marker-end="url(#fl-f-lieu)"/></g><g fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 3"><path d="M270.0 350.0L270.0 110.0"/></g><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="9 4"><path d="M70.0 350.0L230.0 350.0" marker-end="url(#fl-f-lieu-o)"/></g><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M70.0 350.0L386.0 110.0" marker-end="url(#fl-f-lieu)"/></g><g fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 3"><path d="M270.0 350.0L386.0 110.0"/></g><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M70.0 350.0L230.0 427.3" marker-end="url(#fl-f-lieu-o)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="262.0" y="372.0">V = 1</text><text x="448.0" y="114.0">E sin δ = 1,2</text><text x="448.0" y="130.0">P constante</text><text x="130.0" y="98.0">sous-excité</text><text x="240.0" y="82.0">cos φ = 1</text><text x="376.0" y="98.0">surexcité</text><text x="238.0" y="466.0">I cos φ = 0,8 constant</text><text x="238.0" y="300.0">I en avance</text><text x="238.0" y="432.0">I en retard</text><text x="520.0" y="190.0">valeurs relatives :</text><text x="520.0" y="210.0">V = 1, X_s = 1,5</text><text x="520.0" y="230.0">P = 0,8 (200 kW)</text><text x="520.0" y="260.0">trait pointillé :</text><text x="520.0" y="276.0">sous-excité</text><text x="520.0" y="300.0">tirets longs : cos φ = 1</text><text x="520.0" y="324.0">trait plein : surexcité</text><text x="20.0" y="488.0">flèches pleines : E ; pointes ouvertes : I ; pointillés fins : chutes j X_s I</text></g></svg>
+    <figcaption>
+      Trois excitations à puissance active constante, en valeurs relatives : $V = 1$, $x_s = 1{,}5$, $P = 0{,}8$. Les trois forces électromotrices,
+      flèches pleines, ont leur extrémité sur la droite horizontale $E\sin\delta = 1{,}2$ ; leur style distingue les cas : trait pointillé pour la
+      machine sous-excitée, $E = 1{,}34$, tirets longs pour le facteur de puissance unitaire, $E = 1{,}56$, trait plein pour la machine surexcitée,
+      $E = 1{,}98$, qui est le cas de la section H. Les courants correspondants, pointes ouvertes et même style, ont leur extrémité sur la droite
+      verticale $I\cos\varphi = 0{,}8$ : en avance quand la machine est sous-excitée, en phase, puis en retard quand elle est surexcitée. Les traits fins
+      pointillés sont les chutes $jX_sI$ issues de l'extrémité de $V$.
+    </figcaption>
+  </figure>
+  <p>
+    L'organigramme suivant donne l'enchaînement des calculs pour un alternateur ou un moteur synchrone dont on connaît la plaque et la réactance
+    synchrone. Il se lit de haut en bas ; les losanges sont des tests, les rectangles des calculs.
+  </p>
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Plaque : S_n, U_n, f, 2p, x_s ou X_s, I_f0"] --> B["Vitesse n = 60 f / p<br/>V = U / √3, Z_b = U_n² / S_n"]
+  B --> C{"Régime ?"}
+  C -->|"alternateur"| D["Convention générateur<br/>E = V + j X_s I"]
+  C -->|"moteur"| E["Convention récepteur<br/>E = V - j X_s I"]
+  D --> F{"Données : P et Q,<br/>ou P et E ?"}
+  E --> F
+  F -->|"P et Q"| G["I = S / (√3 U), φ = arctan(Q / P)<br/>puis E et δ par Fresnel"]
+  F -->|"P et E"| H["sin δ = P X_s / (3 V E)<br/>puis Q = 3 V (E cos δ - V) / X_s"]
+  G --> K{"δ nettement inférieur à 90°,<br/>I ≤ I_n, I_f ≤ I_f max ?"}
+  H --> K
+  K -->|"non"| L["Changer de point de fonctionnement,<br/>d'excitation ou de machine"]
+  K -->|"oui"| M["Courant d'excitation, couple, rendement"]
+  M --> N["Contrôle : P = 3 V I cos φ,<br/>ordre de grandeur, diagramme P-Q"]</pre>
+    <figcaption>
+      Organigramme de résolution. Le premier choix porte sur la convention, qui fixe le signe de la chute $jX_sI$ ; le second sur les données :
+      $P$ et $Q$ imposés, cas d'une charge en îlotage ou d'une consigne d'exploitation, ou $P$ et $E$ imposés, cas d'une machine couplée au réseau dont on
+      a fixé l'excitation. Le test final regroupe les trois limites indépendantes : la stabilité, l'échauffement du stator et celui de l'inducteur.
+    </figcaption>
+  </figure>
+  <p>
+    Le tableau compare la machine synchrone à rotor bobiné, la machine synchrone à aimants et la machine asynchrone à cage. Il résume les
+    sections D et E et prépare le choix d'un entraînement.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <thead>
+        <tr><th>Critère</th><th>Synchrone à rotor bobiné</th><th>Synchrone à aimants, autopilotée</th><th>Asynchrone à cage</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Vitesse sur réseau à $f$ fixe</td><td>exactement $60f/p$</td><td>sans objet, toujours sur onduleur</td><td>$60f/p$ moins quelques pour cent</td></tr>
+        <tr><td>Grandeur qui porte la charge</td><td>angle interne $\delta$</td><td>angle imposé par la commande</td><td>glissement $g$</td></tr>
+        <tr><td>Facteur de puissance</td><td>réglable par $I_f$, jusqu'à fournir du réactif</td><td>fixé par la commande de l'onduleur</td><td>toujours inductif, $0{,}8$ à $0{,}9$ en charge</td></tr>
+        <tr><td>Démarrage sur réseau</td><td>impossible seul : cage ou variateur</td><td>par l'onduleur seulement</td><td>direct, au prix d'un fort courant</td></tr>
+        <tr><td>Rendement</td><td>très bon aux fortes puissances</td><td>le meilleur aux petites et moyennes puissances</td><td>bon, pertes Joule au rotor</td></tr>
+        <tr><td>Entretien et complexité</td><td>bagues, balais ou excitatrice, régulateur</td><td>aimants, capteur de position, onduleur</td><td>le plus simple et le plus robuste</td></tr>
+        <tr><td>Risque propre</td><td>décrochage, perte d'excitation, couplage mal synchronisé</td><td>démagnétisation par surintensité ou échauffement</td><td>calage par sous-tension, échauffement au démarrage</td></tr>
+        <tr><td>Usage préférable</td><td>production d'énergie, grands moteurs à vitesse fixe, compensateurs</td><td>servomécanismes, traction, pompes à haut rendement</td><td>la grande majorité des entraînements industriels</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-coupe-figure" data-renvoi="d-coupe-figure">la coupe de la machine synchrone avec ses conventions</a> et <a href="#d-roue-figure" data-renvoi="d-roue-figure">l'animation de la roue polaire accrochée au champ tournant</a>, section D ;</li>
+    <li><a href="#e-vide-figure" data-renvoi="e-vide-figure">les caractéristiques à vide et en court-circuit</a>, <a href="#e-schema-figure" data-renvoi="e-schema-figure">le schéma équivalent de Behn-Eschenburg</a>, <a href="#e-fresnel-figure" data-renvoi="e-fresnel-figure">l'animation du diagramme de Fresnel</a>, <a href="#e-pdelta-figure" data-renvoi="e-pdelta-figure">la simulation de la puissance en fonction de l'angle interne</a>, <a href="#e-synchro-figure" data-renvoi="e-synchro-figure">l'animation du synchroscope</a> et <a href="#e-courbesv-figure" data-renvoi="e-courbesv-figure">la simulation des courbes en V</a>, section E ;</li>
+    <li><a href="#h-figure" data-renvoi="h-figure">le schéma de la microcentrale hydraulique</a>, section H ;</li>
+    <li><a href="#i-groupe-figure" data-renvoi="i-groupe-figure">le schéma du site sur groupe électrogène</a> et <a href="#i-diagramme-figure" data-renvoi="i-diagramme-figure">la simulation du diagramme de fonctionnement du groupe</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour déterminer le point de fonctionnement d'une machine synchrone et vérifier qu'il est admissible :</p>
+  <ol>
+    <li>Rassembler les données : puissance apparente $S_n$, tension $U_n$ et couplage, fréquence, nombre de pôles, réactance synchrone en ohms ou en valeur relative, excitation $I_{f0}$ et caractéristique à vide si elle est connue, courant d'excitation maximal, puissance du moteur d'entraînement. Noter pour chaque valeur si elle est mesurée, garantie ou supposée.</li>
+    <li>Calculer la vitesse $n = 60f/p$ ou, à l'inverse, le nombre de pôles qu'impose une vitesse d'entraînement ; passer en grandeurs par phase de l'étoile équivalente, $V = U/\sqrt{3}$, et convertir $x_s$ en ohms par $X_s = x_s\,U_n^2/S_n$.</li>
+    <li>Choisir la convention, générateur pour un alternateur, récepteur pour un moteur, et prendre $\underline{V}$ comme référence des phases.</li>
+    <li>Si $P$ et $Q$ sont imposés : $I = \sqrt{P^2 + Q^2}/(\sqrt{3}\,U)$, $\varphi = \arctan(Q/P)$, puis $\underline{E} = \underline{V} \pm jX_s\underline{I}$, d'où $E$ et $\delta$. Si $P$ et $E$ sont imposés : $\sin\delta = PX_s/(3VE)$, puis $Q$ par $3V(E\cos\delta - V)/X_s$ et $I$.</li>
+    <li>Vérifier les limites : $\delta$ nettement inférieur à $90^\circ$ si la machine est couplée, $I \le I_n$, $E/V$ compatible avec l'excitation maximale, puissance active compatible avec le moteur d'entraînement ou la charge entraînée, limite de sous-excitation du constructeur.</li>
+    <li>En déduire le courant d'excitation, $I_f = I_{f0}\,E/V_n$ dans le modèle linéaire, majoré pour la saturation, le couple $C = P/\varOmega_s$ et, si l'on connaît $R$, les pertes et le rendement.</li>
+    <li>Contrôler : $P = 3VI\cos\varphi$ et $Q = 3VI\sin\varphi$ doivent redonner les valeurs de départ, $E$ doit vérifier la loi des cosinus dans le triangle de Fresnel, les ordres de grandeur doivent être plausibles, $E$ de $1$ à $3$ fois $V$, $\delta$ de $10$ à $45^\circ$ en charge, et le point doit être placé sur le diagramme $P$-$Q$ de la machine.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Une microcentrale hydraulique au fil de l'eau est équipée d'une turbine Francis qui tourne à $750\ \mathrm{tr/min}$ et d'un alternateur de
+    $250\ \mathrm{kVA}$, $400\ \mathrm{V}$, couplé en étoile, de réactance synchrone $x_s = 1{,}5$, dont la résistance est négligeable et dont
+    l'excitation à vide sur la droite d'entrefer vaut $I_{f0} = 20\ \mathrm{A}$. Il est couplé à un réseau de $400\ \mathrm{V}$, $50\ \mathrm{Hz}$,
+    assez puissant pour être considéré comme infini. Le débit disponible permet de fournir $200\ \mathrm{kW}$, et le gestionnaire du réseau demande un
+    facteur de puissance de $0{,}9$, l'alternateur fournissant du réactif. Quels sont le nombre de pôles, le courant, la puissance réactive, la
+    force électromotrice, l'angle interne et le courant d'excitation ? Que se passe-t-il si le débit permet ensuite $225\ \mathrm{kW}$ sans que
+    l'excitation soit retouchée ?
+  </p>
+  <figure id="h-figure">
+    <svg viewBox="0 0 760 366" role="img" aria-label="Schéma de la microcentrale hydraulique : turbine et régulateur de vitesse, alternateur à huit pôles et son excitation, disjoncteur de couplage avec synchroniseur et transformateurs de tension, réseau supposé infini ; sens du courant et des puissances en convention générateur"><defs><marker id="fl-h" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="80" cy="130" r="32"/><path d="M80 98V162M52 114L108 146M52 146L108 114" stroke-width="1.4"/><path d="M20 70H60V100" /><path d="M112 126H196M112 134H196"/><circle cx="230" cy="130" r="34"/><rect x="180" y="210" width="100" height="44" rx="6"/><rect x="30" y="210" width="100" height="44" rx="6"/><path d="M230 210V164M80 210V162"/><path d="M264 116H360M264 130H360M264 144H360"/><path d="M360 104l26-10M360 118l26-10M360 132l26-10" stroke-width="1.6"/><path d="M392 116H610M392 130H610M392 144H610"/><path d="M610 70V290" stroke-width="4"/><path d="M610 270H500M500 270v14M490 284h20M494 290h12M498 296h4"/><rect x="400" y="30" width="120" height="40" rx="6"/><path d="M330 116V60H400M540 116V60H520"/><circle cx="330" cy="88" r="7"/><circle cx="540" cy="88" r="7"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M450 104H500" marker-end="url(#fl-h)"/><path d="M420 170H496" marker-end="url(#fl-h)" stroke-width="2.6"/><path d="M420 196H496" marker-end="url(#fl-h)" stroke-width="2.6" stroke-dasharray="7 4"/><path d="M650 250V150" marker-end="url(#fl-h)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="20.0" y="62.0">conduite forcée</text><text x="56.0" y="192.0">turbine</text><text x="36.0" y="230.0">régulateur</text><text x="36.0" y="246.0">de vitesse</text><text x="216.0" y="126.0">G</text><text x="212.0" y="142.0">3~</text><text x="186.0" y="230.0">excitation</text><text x="186.0" y="246.0">et régulateur</text><text x="238.0" y="190.0">I_f</text><text x="128.0" y="118.0">arbre</text><text x="112.0" y="156.0">750 tr/min</text><text x="196.0" y="86.0">8 pôles, p = 4</text><text x="352.0" y="164.0">Q1</text><text x="410.0" y="54.0">synchroniseur</text><text x="306.0" y="82.0">TP</text><text x="552.0" y="82.0">TP</text><text x="456.0" y="98.0">I</text><text x="504.0" y="174.0">P = 200 kW</text><text x="504.0" y="200.0">Q = 96,9 kvar</text><text x="620.0" y="64.0">réseau 400 V, 50 Hz</text><text x="620.0" y="80.0">supposé infini</text><text x="660.0" y="206.0">V</text><text x="520.0" y="316.0">N, référence</text><text x="520.0" y="332.0">des potentiels</text><text x="20.0" y="356.0">convention générateur : I, P, Q positifs de l'alternateur vers le réseau ; tirets : Q</text></g></svg>
+    <figcaption>
+      Schéma de la microcentrale, en représentation simplifiée. La turbine, réglée par son régulateur de vitesse qui agit sur le vannage, entraîne
+      par l'arbre l'alternateur G à huit pôles ; l'excitation, pilotée par le régulateur de tension, fournit le courant continu $I_f$. Le disjoncteur
+      de couplage Q1 n'est fermé que sur ordre du synchroniseur, qui compare les tensions des deux côtés à travers deux transformateurs de tension TP.
+      En convention générateur, le courant $I$, la puissance active, flèche pleine épaisse, et la puissance réactive, flèche en tirets, sont comptés
+      positifs de l'alternateur vers le réseau ; la tension simple $V$ est mesurée entre une phase et le neutre N, potentiel de référence.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <ul>
+    <li><strong>Données :</strong> $S_n = 250\ \mathrm{kVA}$, $U_n = 400\ \mathrm{V}$ en étoile, $f = 50\ \mathrm{Hz}$, $n = 750\ \mathrm{tr/min}$, $x_s = 1{,}5$, $R \approx 0$, $I_{f0} = 20\ \mathrm{A}$ ; point demandé $P = 200\ \mathrm{kW}$, $\cos\varphi = 0{,}9$, courant en retard ; puis $P' = 225\ \mathrm{kW}$ à excitation inchangée.</li>
+    <li><strong>Inconnues :</strong> $2p$, $I$, $Q$, $E$, $\delta$, $I_f$, couple ; puis $\delta'$, $Q'$, $I'$, $\cos\varphi'$ ; marge de stabilité.</li>
+    <li><strong>Stratégie :</strong> vitesse et fréquence donnent $p$ ; $P$ et $\cos\varphi$ donnent $I$ et $Q$ ; le diagramme de Fresnel en convention générateur donne $E$ et $\delta$ ; la loi linéaire $E \propto I_f$ donne l'excitation ; pour le second point, $E$ est fixée, donc $P = 3VE\sin\delta/X_s$ donne $\delta'$, puis $Q'$.</li>
+  </ul>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li>Nombre de pôles : $p = 60f/n = 60 \times 50/750 = 4$ paires, soit $8$ pôles. Vitesse angulaire : $\varOmega_s = 2\pi \times 750/60 = 78{,}54\ \mathrm{rad/s}$.</li>
+    <li>Grandeurs de base : $V = 400/\sqrt{3} = 230{,}94\ \mathrm{V}$ ; $Z_b = 400^2/250\,000 = 0{,}64\ \mathrm{\Omega}$, donc $X_s = 1{,}5 \times 0{,}64 = 0{,}96\ \mathrm{\Omega}$ ; $I_n = 250\,000/(\sqrt{3} \times 400) = 360{,}8\ \mathrm{A}$.</li>
+    <li>Courant : $I = P/(\sqrt{3}\,U\cos\varphi) = 200\,000/(\sqrt{3} \times 400 \times 0{,}9) = 320{,}75\ \mathrm{A}$, soit $88{,}9\ \%$ de $I_n$. Déphasage : $\varphi = \arccos 0{,}9 = 25{,}84^\circ$.</li>
+    <li>Puissance réactive fournie : $Q = P\tan\varphi = 200 \times 0{,}4843 = 96{,}86\ \mathrm{kvar}$ ; puissance apparente $S = 200/0{,}9 = 222{,}2\ \mathrm{kVA}$.</li>
+    <li>Chute dans la réactance : $X_sI = 0{,}96 \times 320{,}75 = 307{,}92\ \mathrm{V}$, d'argument $90^\circ - 25{,}84^\circ = 64{,}16^\circ$, soit $jX_s\underline{I} = 134{,}22 + j\,277{,}13\ \mathrm{V}$.</li>
+    <li>Force électromotrice : $\underline{E} = \underline{V} + jX_s\underline{I} = 365{,}16 + j\,277{,}13\ \mathrm{V}$, d'où $E = \sqrt{365{,}16^2 + 277{,}13^2} = 458{,}41\ \mathrm{V}$ et $\delta = \arctan(277{,}13/365{,}16) = 37{,}20^\circ$.</li>
+    <li>Excitation : $E/V = 458{,}41/230{,}94 = 1{,}985$, donc $I_f = 1{,}985 \times 20 = 39{,}7\ \mathrm{A}$ dans le modèle linéaire, valeur à majorer pour la saturation.</li>
+    <li>Couple sur l'arbre, pertes négligées : $C = P/\varOmega_s = 200\,000/78{,}54 = 2546\ \mathrm{N \cdot m}$.</li>
+    <li>Second point, $E$ inchangée : $\sin\delta' = P'X_s/(3VE) = 225\,000 \times 0{,}96/(3 \times 230{,}94 \times 458{,}41) = 0{,}6801$, d'où $\delta' = 42{,}85^\circ$.</li>
+    <li>Réactif au second point : $Q' = 3V(E\cos\delta' - V)/X_s = 3 \times 230{,}94 \times (458{,}41 \times 0{,}7332 - 230{,}94)/0{,}96 = 75{,}87\ \mathrm{kvar}$ ; $S' = \sqrt{225^2 + 75{,}87^2} = 237{,}4\ \mathrm{kVA}$, $I' = 342{,}7\ \mathrm{A}$, $\cos\varphi' = 0{,}948$.</li>
+    <li>Stabilité : $P_{max} = 3VE/X_s = 3 \times 230{,}94 \times 458{,}41/0{,}96 = 330{,}8\ \mathrm{kW}$, soit une marge de $330{,}8/200 = 1{,}65$ au premier point et de $1{,}47$ au second.</li>
+  </ol>
+
+  <h3 id="h-controles">Contrôles de cohérence et décision</h3>
+  <ul>
+    <li><strong>Bilan :</strong> $3VI\cos\varphi = 3 \times 230{,}94 \times 320{,}75 \times 0{,}9 = 200{,}0\ \mathrm{kW}$, et $3VE\sin\delta/X_s = 3 \times 230{,}94 \times 458{,}41 \times 0{,}6045/0{,}96 = 200{,}0\ \mathrm{kW}$ : les deux chemins concordent. De même $3V(E\cos\delta - V)/X_s = 96{,}86\ \mathrm{kvar}$.</li>
+    <li><strong>Loi des cosinus :</strong> $E^2 = V^2 + (X_sI)^2 + 2V\,X_sI\sin\varphi = 53\,333 + 94\,815 + 61\,992 = 210\,140\ \mathrm{V^2}$, soit $E = 458{,}4\ \mathrm{V}$.</li>
+    <li><strong>Ordres de grandeur :</strong> $E$ vaut près de deux fois $V$, normal pour $x_s = 1{,}5$ et un courant inductif proche du nominal ; $\delta = 37^\circ$ se situe dans la plage usuelle.</li>
+    <li><strong>Lecture physique du second point :</strong> l'eau supplémentaire augmente $P$, donc $\delta$ ; à excitation fixe, $E\cos\delta$ diminue et le réactif fourni baisse de $96{,}9$ à $75{,}9\ \mathrm{kvar}$. Le facteur de puissance passe à $0{,}948$, hors de la consigne : pour tenir $\cos\varphi = 0{,}9$ à $225\ \mathrm{kW}$, il faudrait $Q = 109\ \mathrm{kvar}$ et relever l'excitation. C'est le rôle d'une régulation de facteur de puissance, qui agit sur $I_f$ quand le débit change.</li>
+    <li><strong>Décision :</strong> le point demandé est admissible, $I$ à $89\ \%$ de $I_n$ et marge de stabilité de $1{,}65$ ; à $225\ \mathrm{kW}$ et $\cos\varphi = 0{,}9$, le courant atteindrait $360{,}8\ \mathrm{A}$, exactement $I_n$ : c'est la puissance maximale de l'alternateur à ce facteur de puissance. Pour fonctionner au facteur de puissance unitaire à $200\ \mathrm{kW}$, il suffirait de $E = 360{,}7\ \mathrm{V}$, $I_f = 31{,}2\ \mathrm{A}$, mais l'angle monterait à $50{,}2^\circ$.</li>
+  </ul>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <p>
+    Le site du projet fil rouge peut fonctionner en mode dégradé sur son groupe électrogène, l'inverseur de sources ouvrant le départ du
+    transformateur du poste et fermant celui du groupe. Les cours précédents ont modélisé ce groupe par sa seule réactance transitoire,
+    $32 + j318\ \mathrm{m\Omega}$ par phase, pour vérifier les creux de tension au démarrage du compresseur, et ont limité la pompe à $40\ \mathrm{Hz}$
+    sur cette source. Il reste à étudier l'alternateur lui-même en régime établi : à quelle vitesse il doit tourner, quelle excitation lui demande la
+    charge du site, quelle puissance réactive il fournit, quelle est sa vraie limite, et comment revenir au réseau sans coupure.
+  </p>
+  <figure id="i-groupe-figure">
+    <svg viewBox="0 0 760 486" role="img" aria-label="Schéma du site en marche sur groupe électrogène : moteur diesel et régulateur de vitesse, alternateur de 100 kVA et régulateur de tension, inverseur de sources, jeu de barres du tableau général et quatre départs avec leurs puissances active et réactive"><defs><marker id="fl-i" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 9 4 0 8Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="20" y="30" width="120" height="50" rx="6"/><path d="M140 55H250"/><rect x="20" y="130" width="120" height="40" rx="6"/><rect x="20" y="200" width="120" height="56" rx="6"/><path d="M140 224H168M140 232H168"/><circle cx="200" cy="228" r="32"/><path d="M232 228H250"/><rect x="150" y="300" width="100" height="44" rx="6"/><path d="M250 55l26-10" stroke-width="1.6"/><path d="M250 228H282" stroke-width="1.6"/><path d="M282 55H310V228H282"/><path d="M310 140H740" stroke-width="4"/><path d="M390 140V250M500 140V250M610 140V250M710 140V250"/><rect x="360" y="250" width="60" height="40" rx="5"/><rect x="470" y="250" width="60" height="40" rx="5"/><circle cx="390" cy="330" r="22"/><circle cx="500" cy="330" r="22"/><path d="M390 290V308M500 290V308"/><path d="M500 200H460V216M452 216H468M452 224H468M460 224V236" stroke-width="1.6"/><rect x="590" y="250" width="40" height="40" rx="4"/><rect x="690" y="250" width="40" height="40" rx="4"/></g><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 4"><path d="M80 170V200"/><path d="M296 20V350"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M200 300V266" marker-end="url(#fl-i)"/><path d="M322 220V160" marker-end="url(#fl-i)"/><path d="M20 420H110" marker-end="url(#fl-i)" stroke-width="2.6"/><path d="M20 444H110" marker-end="url(#fl-i)" stroke-width="2.6" stroke-dasharray="7 4"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="30.0" y="52.0">transformateur</text><text x="30.0" y="68.0">du poste T1</text><text x="150.0" y="46.0">Q1</text><text x="30.0" y="148.0">régulateur</text><text x="30.0" y="164.0">de vitesse</text><text x="30.0" y="224.0">moteur diesel</text><text x="30.0" y="240.0">80 kW</text><text x="193.0" y="224.0">G</text><text x="190.0" y="240.0">3~</text><text x="20.0" y="372.0">alternateur 100 kVA, 400 V</text><text x="20.0" y="388.0">4 pôles, 1500 tr/min</text><text x="160.0" y="320.0">régulateur</text><text x="160.0" y="336.0">de tension</text><text x="206.0" y="290.0">I_f</text><text x="256.0" y="250.0">Q2</text><text x="300.0" y="14.0">inverseur de sources, Q1 et Q2 verrouillés</text><text x="328.0" y="196.0">I</text><text x="350.0" y="130.0">tableau général, 400 V</text><text x="366.0" y="274.0">var.</text><text x="476.0" y="274.0">dém.</text><text x="384.0" y="334.0">M</text><text x="494.0" y="334.0">M</text><text x="352.0" y="372.0">pompe</text><text x="352.0" y="388.0">17,0 kW</text><text x="352.0" y="404.0">0 kvar</text><text x="462.0" y="372.0">compresseur</text><text x="462.0" y="388.0">17,66 kW</text><text x="462.0" y="404.0">3,89 kvar net</text><text x="398.0" y="190.0">KM4, 7,44 kvar</text><text x="578.0" y="312.0">éclairage</text><text x="578.0" y="328.0">et prises</text><text x="578.0" y="344.0">10,5 kW</text><text x="578.0" y="360.0">3,45 kvar</text><text x="670.0" y="312.0">automate</text><text x="670.0" y="328.0">3,72 kW</text><text x="670.0" y="344.0">1,80 kvar</text><text x="118.0" y="424.0">P = 48,9 kW fournis par le groupe</text><text x="118.0" y="448.0">Q = 9,14 kvar fournis, tirets</text><text x="20.0" y="478.0">convention générateur côté groupe ; Q1 ouvert et Q2 fermé : marche dégradée</text></g></svg>
+    <figcaption>
+      Schéma du site en marche dégradée, en représentation unifilaire simplifiée. Le moteur diesel et son régulateur de vitesse, liaison en tirets,
+      entraînent l'alternateur G de $100\ \mathrm{kVA}$, dont le régulateur de tension fournit le courant d'excitation $I_f$. L'inverseur de sources a
+      ouvert Q1, côté transformateur du poste, et fermé Q2, côté groupe ; les deux appareils sont verrouillés pour ne jamais être fermés ensemble. Le
+      tableau général alimente la pompe par son variateur, le compresseur par son démarreur progressif avec sa batterie de condensateurs sur KM4,
+      l'éclairage et les prises, et l'armoire automate. En convention générateur côté groupe, le courant $I$, la puissance active, flèche pleine
+      épaisse, et la puissance réactive, flèche en tirets, sont comptés positifs du groupe vers le tableau ; les puissances des départs sont absorbées.
+    </figcaption>
+  </figure>
+
+  <h3 id="i-donnees">Données et hypothèses</h3>
+  <ul>
+    <li>Groupe électrogène supposé : $100\ \mathrm{kVA}$, $400\ \mathrm{V}$, $50\ \mathrm{Hz}$, $\cos\varphi$ nominal $0{,}8$, donc moteur diesel de $80\ \mathrm{kW}$ ; alternateur à quatre pôles, $x_s = 2{,}0$ saturée, $x'_d = 0{,}2$ ; régulateur de vitesse isochrone en îlotage, réglable en statisme pour la marche en parallèle ; régulateur de tension.</li>
+    <li>Grandeurs de base : $Z_b = 400^2/100\,000 = 1{,}6\ \mathrm{\Omega}$, d'où $X_s = 3{,}2\ \mathrm{\Omega}$ et $X'_d = 0{,}32\ \mathrm{\Omega}$, cohérent avec les $318\ \mathrm{m\Omega}$ retenus jusqu'ici ; $I_n = 144{,}3\ \mathrm{A}$ ; $3V^2/X_s = 50\ \mathrm{kvar}$.</li>
+    <li>Charges en marche dégradée, reprises des cours précédents : pompe au variateur limitée à $40\ \mathrm{Hz}$, $17{,}0\ \mathrm{kW}$ à la source, réactif nul au fondamental ; compresseur au point de service, $17{,}66\ \mathrm{kW}$ et $11{,}33\ \mathrm{kvar}$, compensé par $7{,}44\ \mathrm{kvar}$, soit $3{,}89\ \mathrm{kvar}$ net ; éclairage et prises, $10{,}5\ \mathrm{kW}$ et $3{,}45\ \mathrm{kvar}$ ; armoire automate, $3{,}72\ \mathrm{kW}$ et $1{,}80\ \mathrm{kvar}$. Harmoniques ignorés dans ce bilan au fondamental.</li>
+  </ul>
+
+  <h3 id="i-calculs">Vitesse, excitation et puissance réactive</h3>
+  <ol>
+    <li>Vitesse : quatre pôles, $p = 2$, donc $n = 60 \times 50/2 = 1500\ \mathrm{tr/min}$. Le régulateur isochrone tient cette vitesse quelle que soit la charge, à l'écart transitoire près. Si l'on laissait le régulateur en statisme de $4\ \%$ réglé à $52\ \mathrm{Hz}$ à vide, la fréquence se fixerait à $52 - 2 \times 48{,}88/80 = 50{,}78\ \mathrm{Hz}$ : acceptable pour les moteurs, mais à corriger avant tout couplage.</li>
+    <li>Bilan : $P = 17{,}0 + 17{,}66 + 10{,}5 + 3{,}72 = 48{,}88\ \mathrm{kW}$ ; $Q = 0 + 3{,}89 + 3{,}45 + 1{,}80 = 9{,}14\ \mathrm{kvar}$ ; $S = 49{,}73\ \mathrm{kVA}$, $\cos\varphi = 0{,}983$, $\varphi = 10{,}59^\circ$.</li>
+    <li>Courant : $I = 49\,730/(\sqrt{3} \times 400) = 71{,}78\ \mathrm{A}$, soit $49{,}7\ \%$ de $I_n$. Charge du diesel : $48{,}88/80 = 61{,}1\ \%$.</li>
+    <li>Force électromotrice : $X_sI = 3{,}2 \times 71{,}78 = 229{,}7\ \mathrm{V}$, d'argument $79{,}41^\circ$ ; $\underline{E} = 230{,}94 + 42{,}22 + j\,225{,}77 = 273{,}2 + j\,225{,}8\ \mathrm{V}$, soit $E = 354{,}4\ \mathrm{V}$, $E/V = 1{,}535$ et $\delta = 39{,}6^\circ$.</li>
+    <li>Rôle de la compensation du compresseur : si KM4 ne se fermait pas, $Q$ passerait à $16{,}58\ \mathrm{kvar}$, $I$ à $74{,}5\ \mathrm{A}$ et $E/V$ à $1{,}652$, soit $7{,}7\ \%$ d'excitation en plus. L'effet est modeste ici, parce que le site est déjà peu inductif.</li>
+    <li>Cas capacitif : si KM4 restait collé, compresseur et pompe arrêtés, le groupe ne verrait plus que $14{,}22\ \mathrm{kW}$ et $-2{,}19\ \mathrm{kvar}$ : $E/V = 0{,}998$, $\delta = 16{,}6^\circ$, le régulateur réduit légèrement l'excitation. Batterie seule, groupe à vide : $X_c = 230{,}94^2/2480 = 21{,}5\ \mathrm{\Omega}$ par phase, et il faut $E = V(1 - X_s/X_c) = 0{,}851\,V$ ; un régulateur bloqué à l'excitation à vide laisserait monter la tension de $17{,}5\ \%$. Comme $X_c$ est très supérieur à $X_s$, le critère approché d'auto-excitation, $X_c < X_s$, n'est pas atteint.</li>
+    <li>Point nominal pour comparaison : $80\ \mathrm{kW}$ et $60\ \mathrm{kvar}$ demanderaient $E/V = 2{,}72$, $\delta = 36{,}0^\circ$ : l'excitatrice et son régulateur sont dimensionnés pour ce cas, bien plus exigeant que celui du site.</li>
+  </ol>
+  <p>
+    Le diagramme de fonctionnement d'un alternateur rassemble ses limites dans le plan $P$-$Q$. Puisque $(P,\ Q + 3V^2/X_s) = (3VE/X_s)(\sin\delta,\ \cos\delta)$,
+    une excitation constante décrit un cercle centré au point $(0,\ -3V^2/X_s)$ ; le courant nominal décrit le cercle $S = S_n$ centré à l'origine ;
+    le moteur diesel impose $P \le 80\ \mathrm{kW}$. La simulation ci-dessous trace ces limites pour le groupe du site, avec une excitation maximale
+    supposée de $2{,}8\,I_{f0}$ et une limite de sous-excitation supposée à $-30\ \mathrm{kvar}$. Déplacez le point de fonctionnement avec la poignée
+    ronde, dans le plan. Prédisez : à $\cos\varphi = 0{,}98$, quelle limite le site atteint-il en premier si sa charge augmente, le courant ou le
+    moteur diesel ? Et pour une charge à $\cos\varphi = 0{,}6$ ?
+  </p>
+  <figure id="i-diagramme-figure">
+    <div class="schema-vivant" id="i-diagramme"></div>
+    <figcaption>
+      Diagramme de fonctionnement du groupe, convention générateur, mêmes échelles sur les deux axes : puissance active fournie en abscisse,
+      puissance réactive fournie en ordonnée. Arc en trait plein épais : courant nominal, $100\ \mathrm{kVA}$. Verticale en trait plein : puissance du
+      moteur diesel, $80\ \mathrm{kW}$. Arc en tirets : excitation maximale, centré au point $(0,\ -50\ \mathrm{kvar})$. Horizontale en tirets mixtes :
+      limite de sous-excitation supposée. Horizontale en pointillés fins : limite théorique de stabilité en parallèle, $\delta = 90^\circ$. Les petits
+      carrés repèrent trois points étudiés : A, marche dégradée du site ; B, point nominal ; C, KM4 resté collé. La poignée ronde est le point de
+      fonctionnement libre.
+    </figcaption>
+  </figure>
+  <div id="i-diagramme-valeurs"></div>
+  <p>
+    Interprétation : le site, au point A, n'utilise que la moitié du courant nominal mais $61\ \%$ de la puissance du diesel. Si sa charge augmentait à
+    $\cos\varphi = 0{,}98$, c'est le diesel qui plafonnerait le premier, à $80\ \mathrm{kW}$, pour un courant de $118\ \mathrm{A}$ seulement :
+    un groupe électrogène est limité en kilowatts par son moteur et en kilovoltampères par son alternateur, et la limite qui compte dépend du facteur de
+    puissance. À $\cos\varphi = 0{,}6$, c'est l'excitation maximale qui plafonne la première, vers $58\ \mathrm{kW}$ et $77\ \mathrm{kvar}$, juste avant le courant nominal et loin du diesel. Sur une
+    charge capacitive, le point descend sous l'axe et se rapproche de la limite de sous-excitation, sans risque ici puisque les condensateurs du site
+    sont faibles.
+  </p>
+
+  <h3 id="i-couplage">Revenir au réseau sans coupure</h3>
+  <p>
+    L'inverseur actuel coupe le site pendant le transfert, dans les deux sens. Pour le retour au réseau, une variante consisterait à synchroniser le
+    groupe sur le transformateur du poste, fermer Q1 pendant quelques secondes de recouvrement, transférer la charge, puis ouvrir Q2. Elle exige un
+    synchroniseur, deux transformateurs de tension, un régulateur de vitesse passé en statisme ou en contrôle de puissance pendant le recouvrement, des
+    protections de découplage, et l'accord du gestionnaire du réseau, puisque le groupe serait brièvement en parallèle avec le réseau public : ce point
+    dépend du contrat de raccordement et de la réglementation applicable. Avec une fenêtre de couplage de $\pm 5\ \%$ en tension, $\pm 0{,}2\ \mathrm{Hz}$
+    et $\pm 10^\circ$, le courant de fermeture reste vers $106\ \mathrm{A}$ à $10^\circ$ sous tensions égales, soit $0{,}73\,I_n$, et vers $113\ \mathrm{A}$ avec en plus $5\ \%$ d'écart de tension ; une fermeture
+    accidentelle en opposition de phase en ferait circuler environ $1220\ \mathrm{A}$.
+  </p>
+
+  <h3 id="i-compromis">Contraintes, risques et compromis</h3>
+  <ul>
+    <li><strong>Fréquence :</strong> en îlotage, elle n'est tenue que par le régulateur de vitesse ; un régulateur en statisme oublié décale la fréquence de près de $1\ \mathrm{Hz}$, ce que les variateurs tolèrent mais qu'un couplage ne tolère pas.</li>
+    <li><strong>Excitation :</strong> la charge du site demande $1{,}54$ fois l'excitation à vide, très en deçà du maximum ; le risque est plutôt du côté capacitif, si des batteries de condensateurs restent raccordées à faible charge. KM4, ouvert avec l'ordre d'arrêt du compresseur, doit être surveillé par un contact de position.</li>
+    <li><strong>Dimensionnement :</strong> le groupe est limité par le diesel au facteur de puissance du site ; une extension de charge se juge en kilowatts, et la marge disponible est de $31\ \mathrm{kW}$.</li>
+    <li><strong>Démarrages :</strong> la réactance transitoire, et non la réactance synchrone, fixe les creux de tension des premières périodes ; le démarreur progressif à $2{,}0\,I_n$ sur groupe reste nécessaire.</li>
+    <li><strong>Couplage :</strong> le retour sans coupure apporte un confort d'exploitation, au prix d'équipements, de protections et d'une autorisation ; l'inverseur à coupure reste la solution de base, plus simple et plus sûre.</li>
+    <li><strong>Incertitudes :</strong> réactances et puissance du groupe supposées, excitation calculée sans saturation, charges reprises des estimations précédentes ; la mise en service doit relever la plaque, le courant d'excitation en charge si le régulateur l'affiche, la fréquence et la tension sur groupe, et les puissances au point A.</li>
+  </ul>
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Projet fil rouge : alternateur du groupe électrogène</span>
+    <p>
+      Ajout de cette séance au dossier du site : fiche de l'alternateur du groupe en marche dégradée, $100\ \mathrm{kVA}$, quatre pôles,
+      $1500\ \mathrm{tr/min}$, $x_s = 2{,}0$ soit $3{,}2\ \mathrm{\Omega}$, $x'_d = 0{,}2$ ; charge du site $48{,}88\ \mathrm{kW}$ et
+      $9{,}14\ \mathrm{kvar}$, $71{,}8\ \mathrm{A}$, $\cos\varphi = 0{,}983$ ; excitation $E/V = 1{,}535$, $\delta = 39{,}6^\circ$ ; limite effective le
+      diesel, $61\ \%$ de charge et $31\ \mathrm{kW}$ de marge ; régulateur isochrone imposé en îlotage, statisme réservé au couplage ; KM4 surveillé
+      contre le cas capacitif ; retour au réseau sans coupure envisagé avec synchroniseur et fenêtre $\pm 5\ \%$, $\pm 0{,}2\ \mathrm{Hz}$, $\pm 10^\circ$,
+      sous réserve de l'accord du gestionnaire du réseau.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Croire que l'excitation règle la puissance active d'un alternateur couplé au réseau.</strong> Sur un réseau puissant, la puissance active ne vient que de l'arbre : c'est la turbine ou le diesel qui la fixe. Augmenter $I_f$ à puissance mécanique constante réduit l'angle interne et augmente la puissance réactive fournie, sans changer $P$. Dans la microcentrale, relever l'excitation ne fait pas produire un kilowatt de plus.</li>
+    <li><strong>Confondre l'angle interne $\delta$ et le déphasage $\varphi$.</strong> $\varphi$ est l'angle entre le courant et la tension, il fixe le facteur de puissance ; $\delta$ est l'angle entre la force électromotrice et la tension, il fixe la marge de stabilité. Au point de la section H, $\varphi = 25{,}8^\circ$ et $\delta = 37{,}2^\circ$ ; au facteur de puissance unitaire, $\varphi = 0$ mais $\delta = 50{,}2^\circ$. Une machine peut avoir un excellent facteur de puissance et être proche du décrochage.</li>
+    <li><strong>Se tromper de signe dans la chute $jX_sI$.</strong> En alternateur, convention générateur, $\underline{E} = \underline{V} + jX_s\underline{I}$ ; en moteur, convention récepteur, $\underline{E} = \underline{V} - jX_s\underline{I}$. Appliquer la première équation à un moteur surexcité donnerait $E$ inférieure à $V$ et un angle de mauvais signe. Le remède est de dessiner le schéma avec la flèche du courant avant d'écrire la maille.</li>
+    <li><strong>Mélanger tension composée et tension simple.</strong> Le modèle est écrit par phase de l'étoile équivalente : $V = U/\sqrt{3}$, et $P = 3VE\sin\delta/X_s$. Utiliser $U = 400\ \mathrm{V}$ comme tension de phase avec le facteur $3$ multiplie la puissance par $\sqrt{3}$ pour chaque tension mal prise, soit par $3$ si $V$ et $E$ sont toutes deux composées ; mélanger une tension composée et une tension simple dans la même formule donne une erreur de $\sqrt{3}$, plus difficile à repérer. Contrôle : $P = \sqrt{3}\,UI\cos\varphi$ doit redonner la même valeur.</li>
+    <li><strong>Prendre la réactance synchrone non saturée pour calculer l'excitation en charge.</strong> Mesurée sur la droite d'entrefer, elle est plus grande que la réactance saturée, $1{,}8$ contre $1{,}56$ sur la figure de la section E, et surestime l'excitation. À l'inverse, le modèle linéaire $E \propto I_f$ sous-estime le courant d'excitation réel à cause de la saturation. Les deux erreurs ne se compensent pas en général ; seule la caractéristique à vide réelle tranche.</li>
+    <li><strong>Croire qu'un moteur synchrone démarre seul sur le réseau.</strong> Rotor à l'arrêt, le couple moyen est nul. Sans cage d'amortisseurs ni variateur, le moteur ronfle, vibre et chauffe. L'inducteur doit en outre être fermé sur une résistance pendant le démarrage asynchrone, sinon le champ du stator y induit une forte surtension.</li>
+    <li><strong>Coupler sans synchroniser, ou avec un ordre des phases inversé.</strong> La fermeture en opposition de phase fait circuler plus de huit fois le courant nominal du groupe du site et donne un à-coup de couple qui peut rompre un accouplement. Un ordre des phases inversé ne se rattrape jamais : la fenêtre de couplage n'est jamais atteinte sur les trois phases à la fois. On vérifie l'ordre des phases à la mise en service, avec un indicateur, des deux côtés du disjoncteur.</li>
+    <li><strong>Croire qu'en îlotage l'excitation règle la puissance réactive.</strong> Seul sur son réseau, l'alternateur fournit la puissance réactive que demande la charge ; son excitation règle la tension. Pour réduire le courant d'un groupe, il faut compenser la charge, comme la batterie du compresseur, pas toucher au régulateur de tension.</li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain. Un alternateur couplé dont le courant augmente alors que la puissance active ne change pas signale une excitation
+    déréglée : on lit le signe de la puissance réactive, fournie si l'alternateur est surexcité, absorbée s'il est sous-excité. Un alternateur qui absorbe
+    du réactif et dont l'angle grandit fait craindre une perte d'excitation, à protéger par un relais dédié. Une puissance active négative signale un
+    retour de puissance : la machine fonctionne en moteur, son entraînement ne fournit plus rien, et une protection doit la découpler. Des oscillations
+    lentes de la puissance active, de l'ordre du hertz, signalent des oscillations de l'angle mal amorties, après un défaut ou un à-coup de charge.
+    En îlotage, une fréquence qui s'écarte de $50\ \mathrm{Hz}$ en charge signale un régulateur de vitesse en statisme ou saturé, une tension
+    instable un régulateur de tension mal réglé ou une charge capacitive. Dans tous les cas, on relève tension, courant, puissances active et réactive,
+    fréquence et courant d'excitation, puis on compare au diagramme de Fresnel et au diagramme $P$-$Q$.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic industriel et une
+    question conceptuelle. Ils vont de l'application directe d'une formule au choix de la méthode, au calcul multi-étapes, au dimensionnement
+    sous contrainte et au diagnostic. La correction de chacun reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la correction",
+    puis se déroule étape par étape, accompagnée d'un diagramme de Fresnel, d'une courbe ou d'un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Après chaque réponse,
+    l'explication s'affiche avec un petit schéma tracé pas à pas.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$n = \frac{60\,f}{p}, \qquad \varOmega_s = \frac{2\pi n}{60}, \qquad \theta_e = p\,\theta_m$$
+    $$\text{alternateur : } \underline{E} = \underline{V} + jX_s\underline{I}, \qquad \text{moteur : } \underline{E} = \underline{V} - jX_s\underline{I}, \qquad X_s = \frac{E_0(I_f)}{I_{cc}(I_f)}$$
+    $$P = \frac{3VE}{X_s}\sin\delta, \qquad C_{em} = \frac{P}{\varOmega_s}, \qquad P_{max} = \frac{3VE}{X_s} \text{ à } \delta = 90^\circ$$
+    $$Q_{fournie} = \frac{3V\,(E\cos\delta - V)}{X_s}, \qquad E\sin\delta = X_sI\cos\varphi, \qquad E\cos\delta = V + X_sI\sin\varphi$$
+    $$I_{min} = \frac{P}{3V} \text{ pour } E\cos\delta = V, \qquad f = f_0 - s\,f_n\frac{P}{P_n}$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>Choisir la convention avant d'écrire la maille : générateur pour un alternateur, récepteur pour un moteur ; le signe de $jX_sI$ en dépend.</li>
+      <li>Raisonner par phase de l'étoile équivalente, avec la tension simple, et contrôler par $P = \sqrt{3}\,UI\cos\varphi$.</li>
+      <li>Sur un réseau puissant, $P$ vient de l'arbre et $Q$ de l'excitation ; en îlotage, la charge impose $P$ et $Q$, le régulateur de vitesse tient $f$ et l'excitation tient $V$.</li>
+      <li>Garder l'angle interne loin de $90^\circ$ et ne jamais sous-exciter profondément une machine couplée.</li>
+      <li>Ne fermer un disjoncteur de couplage qu'après synchronisation : ordre des phases, tension, fréquence et phase.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Une machine synchrone a un stator triphasé et un rotor qui porte ses propres pôles, excités en courant continu ou par
+    des aimants. Elle tourne exactement à $n = 60f/p$ ; le couple vient de l'angle interne $\delta$ entre les pôles du rotor et le champ du stator,
+    et suit $\sin\delta$, avec un décrochage au-delà de $90^\circ$. Par phase, elle se réduit à une force électromotrice $E$, réglée par le courant
+    d'excitation, derrière la réactance synchrone $X_s$, mesurée par les essais à vide et en court-circuit. Le diagramme de Fresnel
+    $\underline{E} = \underline{V} + jX_s\underline{I}$ donne $E$ et $\delta$ ; $P = 3VE\sin\delta/X_s$ et $Q = 3V(E\cos\delta - V)/X_s$. Couplée à un
+    réseau puissant, la machine reçoit sa puissance active de l'arbre et règle son réactif par l'excitation ; en moteur surexcité, elle relève le
+    facteur de puissance. Seule, elle tient fréquence et tension par ses régulateurs.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent, <a href="#/cours/variation-de-vitesse-des-moteurs-asynchrones">Variation
+    de vitesse des moteurs asynchrones</a>, dont le variateur alimente aussi les moteurs synchrones à aimants ; une sur le cours
+    <a href="#/cours/autotransformateurs-tc-et-tp">Autotransformateurs, TC et TP</a>, vieux d'une semaine, dont les transformateurs de tension
+    alimentent le synchroniseur du groupe ; une sur le cours <a href="#/cours/regime-transitoire-rl">Régime transitoire RL</a>, vieux d'un mois,
+    puisque l'inducteur d'un alternateur est un circuit RL dont la constante de temps fixe la vitesse de réaction de l'excitation.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : programmer en Python le modèle de Behn-Eschenburg, retrouver les chiffres de la microcentrale et du groupe du site, tracer les
+    courbes en V, puis vérifier dans LTspice la loi $P = 3VE\sin\delta/X_s$ et le battement d'un couplage mal synchronisé. Prédictions à écrire avant
+    de commencer : puissance par phase pour $\delta = 30^\circ$ avec l'excitation de la section H ; excitation du courant minimal à
+    $150\ \mathrm{kW}$ ; période du battement pour $0{,}1\ \mathrm{Hz}$ d'écart.
+  </p>
+  <ol>
+    <li>Écrire une fonction <code>alternateur(P, Q, V, Xs)</code> qui renvoie, avec les nombres complexes de Python, le courant, $E$ et $\delta$ en convention générateur, et une fonction <code>point(P, E, V, Xs)</code> qui renvoie $\delta$, $Q$ et $I$ pour une excitation fixée. Retrouver $E = 458{,}4\ \mathrm{V}$, $\delta = 37{,}20^\circ$, puis $\delta' = 42{,}85^\circ$ et $Q' = 75{,}87\ \mathrm{kvar}$ à $225\ \mathrm{kW}$.</li>
+    <li>Tracer avec <code>matplotlib</code> la courbe $P(\delta)$ de $0$ à $180^\circ$ pour $E/V = 1$, $1{,}5$ et $1{,}985$ ; repérer $P_{max}$ et les deux points d'équilibre à $200\ \mathrm{kW}$.</li>
+    <li>En convention récepteur, tracer les courbes en V du moteur de même construction, $I$ en fonction de $I_f$ de $10$ à $60\ \mathrm{A}$, pour $P = 0$, $50$, $100$, $150$ et $200\ \mathrm{kW}$, et la courbe des minimums ; vérifier $I_{min} = 216{,}5\ \mathrm{A}$ à $I_f = 26{,}9\ \mathrm{A}$ pour $150\ \mathrm{kW}$ et le décrochage à $18{,}0\ \mathrm{A}$.</li>
+    <li>Pour le groupe du site, calculer $E/V$ et $\delta$ au point A, $48{,}88\ \mathrm{kW}$ et $9{,}14\ \mathrm{kvar}$, puis tracer le diagramme $P$-$Q$ avec ses limites, cercle de courant nominal, droite du diesel, cercle d'excitation maximale à $2{,}8\,I_{f0}$.</li>
+    <li>Facultatif, avec LTspice : une phase de la microcentrale, source sinusoïdale $V$ de $326{,}6\ \mathrm{V}$ crête, phase nulle, reliée par une inductance $L = X_s/(2\pi \times 50) = 3{,}056\ \mathrm{mH}$ en série avec $8\ \mathrm{m\Omega}$ à une source $E$ de $648{,}3\ \mathrm{V}$ crête et de phase paramétrée ; balayer <code>.step param d list 0 30 37.2 60 90 120</code>, simuler $2\ \mathrm{s}$ et mesurer par <code>.meas tran P avg -V(e)*I(L1) from 1.8 to 2</code>, au signe près selon le sens de <code>I(L1)</code>, la puissance fournie par la source $E$. Dans un second fichier, remplacer la source $E$ par une source de $326{,}6\ \mathrm{V}$ crête à $50{,}1\ \mathrm{Hz}$ et observer pendant $20\ \mathrm{s}$ la tension entre les deux sources.</li>
+  </ol>
+  <p>
+    Résultats attendus : $P$ par phase de $0$, $55{,}1$, $66{,}7$, $95{,}5$, $110{,}3$ et $95{,}5\ \mathrm{kW}$ pour les six angles, soit
+    $200\ \mathrm{kW}$ sur trois phases à $37{,}2^\circ$, et une puissance réactive par phase de $32{,}3\ \mathrm{kvar}$ en ce point ; un battement de
+    période $10\ \mathrm{s}$ et d'amplitude crête maximale $653\ \mathrm{V}$, soit $462\ \mathrm{V}$ efficaces. Anomalies à observer : avec une
+    inductance pure et des sources appliquées brutalement à $t = 0$, le courant garde une composante continue qui ne s'amortit jamais, ce qui fausse
+    la moyenne ; les $8\ \mathrm{m\Omega}$ l'amortissent avec une constante de temps $L/R = 0{,}38\ \mathrm{s}$, d'où la mesure après $1{,}8\ \mathrm{s}$.
+    Un pas de calcul trop grand déforme le battement ; imposez un pas maximal de $0{,}1\ \mathrm{ms}$. Dans Python, un $\arcsin$ d'un argument
+    supérieur à $1$ signale un point au-delà du décrochage, à traiter comme absence de solution et non comme une erreur numérique.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est calculé dans ce navigateur à
+    partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement pour suivre votre progression.
+    Le jalon de fin du module des machines électriques demande de comprendre les transformateurs et les principales machines, de lire leurs modèles,
+    d'interpréter une plaque signalétique et de choisir une solution d'entraînement : la machine synchrone complète le panorama, et la séance de
+    synthèse du module mettra ces acquis en œuvre sur une pompe, un convoyeur et une centrifugeuse.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Une machine synchrone tourne exactement à $60f/p$ : le couple ne vient pas d'un écart de vitesse mais de l'angle interne $\delta$ entre les pôles du rotor et le champ du stator, avec $P = 3VE\sin\delta/X_s$ et un décrochage au-delà de $90^\circ$.</li>
+    <li data-rang="02">Par phase, la machine est une force électromotrice $E$ réglée par l'excitation derrière la réactance synchrone ; le diagramme de Fresnel $\underline{E} = \underline{V} + jX_s\underline{I}$ en alternateur, $\underline{E} = \underline{V} - jX_s\underline{I}$ en moteur, donne $E$ et $\delta$ à partir de $P$ et $Q$.</li>
+    <li data-rang="03">Sur un réseau puissant, l'arbre fixe la puissance active et l'excitation la puissance réactive : une machine surexcitée fournit du réactif, ce qui fait du moteur synchrone un compensateur ; en îlotage, la charge fixe $P$ et $Q$, le régulateur de vitesse tient la fréquence et l'excitation la tension.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> tenir ensemble deux angles et deux réglages, $\varphi$ et $\delta$, puissance mécanique et
+    excitation, sans confondre leurs rôles, et choisir la bonne convention avant de construire le diagramme. Le schéma principal de la section F,
+    l'animation du diagramme de Fresnel et le diagramme à puissance constante sont faits pour installer ces automatismes.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Révision 6 et sélection d'un entraînement, rassemble les machines du module pour
+    choisir un entraînement. Question à préparer : pour une pompe centrifuge de $30\ \mathrm{kW}$ à débit variable, un convoyeur à couple constant
+    démarrant en charge et une centrifugeuse à forte inertie qui doit atteindre $3000\ \mathrm{tr/min}$, quel moteur retiendriez-vous, asynchrone à
+    cage, synchrone à aimants ou à courant continu, avec quel mode de démarrage ou de variation de vitesse, et quels sont les trois critères qui
+    emportent la décision dans chaque cas ?
+  </p>
+
+</article>
