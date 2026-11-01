@@ -1,0 +1,1274 @@
+<article class="cours" data-slug="revision-6-et-selection-d-un-entrainement">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/machine-synchrone">Machine synchrone</a> s'est achevé sur une question : pour une pompe centrifuge de
+      $30\ \mathrm{kW}$ à débit variable, un convoyeur à couple constant qui démarre en charge et une centrifugeuse à forte inertie qui doit
+      atteindre $3000\ \mathrm{tr/min}$, quel moteur retenir, avec quel mode de démarrage ou de variation de vitesse, et quels critères emportent la
+      décision ? Réponse courte, que la séance va justifier chiffres à l'appui. La pompe prend un moteur asynchrone à cage sur variateur : son couple
+      résistant croît comme le carré de la vitesse, sa puissance comme le cube, et ralentir la pompe au lieu d'étrangler la vanne économise plus que
+      n'importe quel gain de rendement du moteur. Le convoyeur prend un moteur asynchrone à cage démarré en direct ou par variateur, jamais en
+      étoile-triangle ni par démarreur progressif : ces deux procédés réduisent la tension, donc le couple comme son carré, alors que la bande chargée
+      réclame plus que son couple de régime pour décoller. La centrifugeuse prend un moteur asynchrone sur variateur avec résistance de freinage :
+      son énergie cinétique, près de $600\ \mathrm{kJ}$, se retrouverait intégralement en chaleur dans le rotor en démarrage direct, et elle doit
+      être évacuée à chaque arrêt. Les trois critères décisifs sont donc la loi de couple de la charge, son inertie et son cycle, avant la
+      puissance.
+    </p>
+    <p>
+      Cette séance de révision rassemble tout le module : la force électromotrice et le couple du cours
+      <a href="#/cours/machine-a-courant-continu">Machine à courant continu</a>, le glissement et la courbe couple-vitesse du cours
+      <a href="#/cours/moteur-asynchrone-triphase">Moteur asynchrone triphasé</a>, le partage des puissances du cours
+      <a href="#/cours/schema-equivalent-du-moteur-asynchrone">Schéma équivalent du moteur asynchrone</a>, les procédés du cours
+      <a href="#/cours/demarrage-des-moteurs-asynchrones">Démarrage des moteurs asynchrones</a>, la loi $U/f$ du cours
+      <a href="#/cours/variation-de-vitesse-des-moteurs-asynchrones">Variation de vitesse des moteurs asynchrones</a>, l'angle interne du cours
+      <a href="#/cours/machine-synchrone">Machine synchrone</a>, et, en amont, la source étudiée dans le cours
+      <a href="#/cours/revision-5-et-etude-de-cas-transformateur">Révision 5 et étude de cas transformateur</a>.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Les moteurs électriques absorbent la plus grande part de l'électricité consommée par l'industrie. Chacun d'eux a été choisi un jour, souvent
+    par un raisonnement trop court : "la machine demande $15\ \mathrm{kW}$, on prend un moteur de $15\ \mathrm{kW}$ démarré en étoile-triangle". Les
+    conséquences d'un mauvais choix sont connues de tous les exploitants : un convoyeur qui ne décolle pas le lundi matin, bande chargée ; un
+    disjoncteur qui déclenche pendant le démarrage d'une centrifugeuse ; un variateur qui se met en défaut de surtension à chaque ralentissement ;
+    un moteur surdimensionné qui tourne toute l'année à $30\ \%$ de charge avec un mauvais rendement et un mauvais facteur de puissance ; un
+    groupe électrogène qui s'effondre au démarrage d'un compresseur. Aucune de ces pannes ne vient d'un défaut de la machine : toutes viennent d'une
+    charge mal décrite.
+  </p>
+  <p>
+    Sélectionner un entraînement consiste à mettre en face l'une de l'autre deux courbes et deux bilans : la courbe couple-vitesse de la charge et
+    celle du moteur muni de son démarreur ou de son variateur, le bilan énergétique d'un cycle et le bilan thermique du moteur. C'est la synthèse
+    naturelle du module : chaque machine étudiée apporte une courbe, une limite et un coût, et le choix consiste à les confronter. Le travail
+    central de la séance est la sélection argumentée d'un entraînement pour une pompe, un convoyeur et une centrifugeuse. Dans le projet fil rouge,
+    il aboutit à la fiche de sélection des entraînements du site : la pompe, le compresseur et l'actionneur de vanne sont repassés au crible de
+    l'arbre de décision, deux évolutions sont chiffrées, et l'ordre de reprise des moteurs sur groupe électrogène est fixé. La séance clôt le
+    module des machines électriques ; son jalon demande précisément de lire les modèles, d'interpréter une plaque et de choisir une solution
+    d'entraînement.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Caractériser une charge par sa loi de couple, son couple de décollement, son inertie, son cycle et ses quadrants de fonctionnement, et classer une machine entraînée dans l'une des trois familles : couple constant, couple quadratique, puissance constante.</li>
+    <li data-rang="02">Ramener un couple et une inertie à l'arbre du moteur à travers un réducteur ou une courroie, et expliquer pourquoi l'inertie se transforme avec le carré du rapport de vitesse.</li>
+    <li data-rang="03">Calculer le temps d'accélération d'une charge à partir de l'équation mécanique $J\,\mathrm{d}\varOmega/\mathrm{d}t = C_m - C_r$, et l'énergie dissipée dans le rotor d'un moteur asynchrone en démarrage direct.</li>
+    <li data-rang="04">Dimensionner un moteur par son couple efficace sur un cycle, et vérifier la surcharge de son variateur et l'échauffement à basse vitesse.</li>
+    <li data-rang="05">Comparer les machines du module et les modes de démarrage ou de variation de vitesse par le couple disponible, le courant appelé, le rendement, la maintenance et le coût, puis choisir à l'aide d'un arbre de décision.</li>
+    <li data-rang="06">Dimensionner la résistance de freinage d'un variateur à partir de l'énergie cinétique et de la puissance de pointe renvoyées au bus continu.</li>
+    <li data-rang="07">Diagnostiquer un défaut de démarrage, un échauffement ou un déclenchement de variateur en remontant à une erreur de sélection.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Quatre acquis du module suffisent. Le premier, vu dans le cours <a href="#/cours/moteur-asynchrone-triphase">Moteur asynchrone triphasé</a> :
+    la vitesse de synchronisme vaut $n_s = 60f/p$ en $\mathrm{tr/min}$ et le glissement $g = (n_s - n)/n_s$, de quelques pour cent en charge. Le
+    deuxième, vu dans les cours <a href="#/cours/machine-a-courant-continu">Machine à courant continu</a> et
+    <a href="#/cours/schema-equivalent-du-moteur-asynchrone">Schéma équivalent du moteur asynchrone</a> : la puissance mécanique est le produit du
+    couple par la vitesse angulaire, $P = C\,\varOmega$ avec $\varOmega = 2\pi n/60$, et dans un moteur asynchrone la puissance transmise au rotor
+    se partage en $g\,P_{tr}$ de pertes Joule rotoriques et $(1 - g)\,P_{tr}$ de puissance mécanique. Le troisième, vu dans le cours
+    <a href="#/cours/demarrage-des-moteurs-asynchrones">Démarrage des moteurs asynchrones</a> : sous tension réduite, le courant varie comme la
+    tension et le couple comme son carré ; l'étoile-triangle divise donc le couple de démarrage par trois. Le quatrième, vu dans le cours
+    <a href="#/cours/variation-de-vitesse-des-moteurs-asynchrones">Variation de vitesse des moteurs asynchrones</a> : à rapport $U/f$ constant,
+    le flux est constant et le moteur peut fournir son couple nominal à toute vitesse, avec le même écart de vitesse qu'à $50\ \mathrm{Hz}$. Le
+    mini-test n'est pas noté ; la correction de chaque question reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la
+    correction".
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Notation de la séance</span>
+    <p>
+      $C_m$ est le couple électromagnétique du moteur et $C_r$ le couple résistant de la charge, tous deux ramenés à l'arbre du moteur, en
+      $\mathrm{N\cdot m}$. $\varOmega$ est la vitesse angulaire du moteur en $\mathrm{rad/s}$, $n$ sa vitesse en $\mathrm{tr/min}$. $J$ est le moment
+      d'inertie total ramené à l'arbre du moteur, en $\mathrm{kg\cdot m^2}$ ; $J_m$ celui du rotor et $J_c$ celui de la charge sur son propre
+      arbre. Le rapport de transmission est $k = n_m/n_c$, vitesse du moteur sur vitesse de la charge, et $\eta_t$ le rendement de la
+      transmission. $C_n$, $P_n$ et $I_n$ sont les valeurs nominales de la plaque. Convention moteur : $C_m$ et $\varOmega$ sont comptés positifs
+      dans le sens de marche avant ; leur produit $P_m = C_m\varOmega$ est positif quand le moteur fournit de l'énergie à la charge. Le plan des
+      quatre quadrants porte le couple en abscisse et la vitesse en ordonnée. Le symbole droit $\mathrm{\Omega}$ reste réservé à l'ohm.
+    </p>
+  </div>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-charge">La charge commande, le moteur répond</h3>
+  <p>
+    Un moteur ne "délivre" pas sa puissance nominale : il fournit le couple que la charge lui oppose, plus celui qu'il faut pour l'accélérer. Tant
+    que le couple moteur dépasse le couple résistant, l'excédent accélère l'ensemble des masses tournantes ; quand les deux couples s'égalisent, la
+    vitesse se stabilise. Le point de fonctionnement est donc l'intersection de deux courbes couple-vitesse, celle du moteur et celle de la
+    charge, et tout le travail de sélection consiste à placer cette intersection au bon endroit, à garantir qu'elle sera atteinte depuis l'arrêt,
+    et à vérifier que le moteur supporte le chemin parcouru pour y arriver.
+  </p>
+  <p>
+    Le schéma suivant présente la chaîne d'entraînement complète que l'on dimensionne. L'énergie électrique du réseau traverse la protection, le
+    démarreur ou le variateur, puis le moteur, qui la convertit en énergie mécanique ; la transmission adapte la vitesse et le couple ; la charge
+    consomme l'énergie, la stocke sous forme cinétique ou, en freinage, la renvoie vers l'amont. Chaque maillon a une limite : le réseau un creux
+    de tension admissible, le variateur un courant maximal pendant une durée donnée, le moteur une température, la transmission un couple et un
+    rendement.
+  </p>
+  <figure id="d-chaine-figure">
+    <svg viewBox="0 0 760 300" role="img" aria-label="Chaîne d'entraînement : réseau, protection, démarreur ou variateur, moteur, transmission et charge, avec le sens de l'énergie en marche en moteur et en freinage et la convention de signe du couple et de la vitesse">
+      <defs>
+        <marker id="fl-d-chaine" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="16" y="90" width="104" height="70" rx="8"/>
+        <rect x="140" y="90" width="112" height="70" rx="8"/>
+        <rect x="272" y="90" width="130" height="70" rx="8"/>
+        <circle cx="470" cy="125" r="36"/>
+        <rect x="560" y="90" width="88" height="70" rx="8"/>
+        <rect x="668" y="90" width="80" height="70" rx="8"/>
+        <path d="M120 125H140"/>
+        <path d="M252 125H272"/>
+        <path d="M402 125H434"/>
+        <path d="M506 121H560M506 129H560"/>
+        <path d="M648 121H668M648 129H668"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M524 108A12 12 0 1 1 540 108" marker-end="url(#fl-d-chaine)"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+        <path d="M30 62H728" marker-end="url(#fl-d-chaine)"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="8 5">
+        <path d="M728 198H300" marker-end="url(#fl-d-chaine)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="68" y="120" text-anchor="middle">Réseau</text>
+        <text x="68" y="138" text-anchor="middle">400 V, 50 Hz</text>
+        <text x="196" y="120" text-anchor="middle">Protection</text>
+        <text x="196" y="138" text-anchor="middle">disjoncteur</text>
+        <text x="337" y="120" text-anchor="middle">Démarreur</text>
+        <text x="337" y="138" text-anchor="middle">ou variateur</text>
+        <text x="470" y="122" text-anchor="middle">M</text>
+        <text x="470" y="138" text-anchor="middle">3~</text>
+        <text x="604" y="120" text-anchor="middle">Réducteur</text>
+        <text x="604" y="138" text-anchor="middle">k, η_t</text>
+        <text x="708" y="120" text-anchor="middle">Charge</text>
+        <text x="708" y="138" text-anchor="middle">C_c, J_c</text>
+        <text x="30" y="50">marche en moteur : énergie du réseau vers la charge, P_m = C_m Ω &gt; 0</text>
+        <text x="300" y="220">freinage : énergie renvoyée vers l'amont, P_m &lt; 0</text>
+        <text x="40" y="182">U, I, cos φ</text>
+        <text x="282" y="182">f et U réglés</text>
+        <text x="470" y="82" text-anchor="middle">C_m, Ω</text>
+        <text x="562" y="182">Ω_c = Ω / k</text>
+        <text x="20" y="262">convention moteur : C_m et Ω comptés positifs dans le sens de marche avant (flèche courbe)</text>
+        <text x="20" y="282">C_r et J : couple résistant et inertie totale, ramenés à l'arbre du moteur</text>
+      </g>
+    </svg>
+    <figcaption>
+      Chaîne d'entraînement. Les rectangles sont les maillons, le cercle le moteur triphasé, le double trait l'arbre. La flèche pleine du haut donne
+      le sens de l'énergie en marche en moteur, la flèche en tirets du bas son sens en freinage, quand la charge restitue son énergie cinétique.
+      La flèche courbe sur l'arbre fixe le sens positif commun du couple moteur et de la vitesse : c'est la convention moteur de la séance.
+      Les grandeurs électriques sont relevées à l'entrée, la fréquence et la tension sont réglées par le variateur, le couple et la vitesse sont
+      ceux de l'arbre du moteur, et la charge tourne à $\varOmega/k$.
+    </figcaption>
+  </figure>
+
+  <h3 id="d-quadrants-section">Quatre quadrants : qui fournit l'énergie ?</h3>
+  <p>
+    Le signe du produit $C_m\varOmega$ dit qui fournit l'énergie. Quand couple et vitesse ont le même signe, le moteur entraîne la charge : c'est le
+    fonctionnement en moteur, en marche avant dans le quadrant I, en marche arrière dans le quadrant III. Quand ils sont de signes opposés, la
+    charge entraîne la machine, qui freine en fonctionnant en génératrice : quadrant II en marche avant, quand une centrifugeuse ralentit,
+    quadrant IV en marche arrière, quand un treuil retient une charge qui descend. Une pompe ne quitte jamais le quadrant I ; une centrifugeuse
+    parcourt les quadrants I et II à chaque cycle ; un pont roulant les parcourt tous. Or un démarreur, un pont de diodes ou un groupe
+    électrogène ne savent pas faire remonter l'énergie : le quadrant II doit donc être prévu dès la sélection.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Prédiction avant de manipuler</span>
+    <p>
+      Avant de lancer le cycle de la centrifugeuse, écrivez dans quel quadrant elle passe pendant le palier à vitesse constante, puis pendant son
+      freinage, et dans quel sens circule l'énergie à chacune de ces deux phases. Demandez-vous aussi où se trouve le point quand la centrifugeuse
+      atteint sa vitesse : le couple moteur tombe-t-il à zéro ?
+    </p>
+  </div>
+  <figure id="d-quadrants-figure">
+    <div class="schema-vivant" id="d-quadrants"></div>
+    <figcaption>
+      Plan des quatre quadrants, couple ramené au couple nominal en abscisse, vitesse ramenée à $3000\ \mathrm{tr/min}$ en ordonnée. Les quadrants
+      de freinage II et IV sont ombrés. La poignée ronde se déplace à la souris, au doigt ou au clavier ; le bouton de lecture la fait parcourir le
+      cycle de la centrifugeuse de la section H, tracé en pointillés : accélération, palier, freinage, arrêt. À droite, la chaîne simplifiée
+      indique le sens de l'énergie par des flèches pleines ; la branche de la résistance de freinage n'est tracée en trait plein que lorsque la
+      puissance mécanique est négative.
+    </figcaption>
+  </figure>
+  <div id="d-quadrants-lecteur"></div>
+  <div id="d-quadrants-valeurs"></div>
+  <p>
+    Interprétation. Pendant l'accélération, le point monte le long de la verticale $C_m = 1{,}44\,C_n$ : le moteur fournit un couple constant,
+    imposé par la limite du variateur, et la puissance croît avec la vitesse jusqu'à $22\ \mathrm{kW}$. Au palier, le couple ne tombe pas à zéro :
+    il reste égal au couple de ventilation, $10\ \mathrm{N\cdot m}$, soit $0{,}21\,C_n$, car il faut entretenir la rotation contre l'air et les
+    frottements. Au freinage, le point passe à gauche de l'axe vertical, dans le quadrant II : la vitesse est encore positive mais le couple
+    s'oppose au mouvement, la puissance mécanique devient négative et l'énergie cinétique reflue vers le bus continu du variateur, où une
+    résistance doit la dissiper. Le quadrant IV, que la centrifugeuse ne visite jamais, est celui d'un levage en descente.
+  </p>
+
+  <h3 id="d-analogie">Une analogie contrôlée et ses limites</h3>
+  <p>
+    Un véhicule donne une image juste de la sélection. Le moteur électrique est le moteur du véhicule, la transmission sa boîte de vitesses, la
+    pente une charge à couple constant, la résistance de l'air une charge quadratique, la masse du véhicule l'inertie. Monter une côte chargé
+    demande du couple dès l'arrêt, comme le convoyeur ; rouler vite demande de la puissance contre l'air, comme la pompe ; lancer un véhicule
+    lourd puis le freiner en descente fait passer de l'énergie dans un sens puis dans l'autre, comme la centrifugeuse. Choisir la boîte de vitesses
+    revient à choisir le rapport $k$ : le moteur voit alors une masse et une pente transformées.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie</span>
+    <p>
+      L'analogie trompe sur trois points. D'abord, la limite d'un moteur électrique n'est pas mécanique mais thermique : il peut fournir deux à
+      trois fois son couple nominal pendant quelques secondes, et la question est de savoir combien de temps, ce qu'un moteur thermique ne permet
+      pas. Ensuite, sur variateur, le moteur électrique fournit son couple nominal à l'arrêt, sans embrayage ni patinage ; c'est le moteur
+      thermique qui a besoin d'une vitesse minimale. Enfin, l'énergie de freinage d'un entraînement électrique peut être renvoyée au réseau ou
+      réutilisée, alors que les freins d'un véhicule la perdent toujours ; à l'inverse, un réseau insulaire alimenté par un groupe électrogène ne
+      peut pas l'accepter, ce que l'analogie ne laisse pas deviner.
+    </p>
+  </div>
+
+  <h3 id="d-chaleur">Ce qui dimensionne vraiment un moteur : sa température</h3>
+  <p>
+    La plaque d'un moteur n'indique pas ce qu'il peut faire, mais ce qu'il peut faire en permanence sans dépasser la température de sa classe
+    d'isolation. Ses pertes Joule croissent comme le carré du courant, donc à peu près comme le carré du couple, et sa masse de fer et de cuivre
+    les intègre avec une constante de temps thermique de plusieurs dizaines de minutes. Un cycle de quelques minutes est donc vu par le moteur
+    comme une moyenne : celle du carré du couple. Une centrifugeuse qui demande $70\ \mathrm{N\cdot m}$ pendant une minute puis $10\ \mathrm{N\cdot m}$
+    pendant trois minutes chauffe le moteur comme un couple permanent d'environ $36\ \mathrm{N\cdot m}$, et non comme la moyenne arithmétique,
+    $25\ \mathrm{N\cdot m}$.
+    Deux autres limites viennent s'ajouter : le couple maximal du moteur, qui borne les pointes, et le courant maximal du variateur, dont les
+    composants ont une constante de temps de quelques secondes seulement.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-synthese">Synthèse du module : cinq machines, cinq relations</h3>
+  <p>
+    Le module a étudié cinq machines. Pour choisir, il suffit de garder de chacune la relation qui fixe sa vitesse, celle qui fixe son couple et
+    la limite qui la caractérise. Le tableau rassemble ces relations ; chacune a été dérivée dans le cours indiqué.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <thead>
+        <tr><th>Machine</th><th>Vitesse</th><th>Couple</th><th>Limite propre</th><th>Cours</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Transformateur, source du site</td><td>sans objet</td><td>chute $\Delta U \approx R_{cc}I\cos\varphi + X_{cc}I\sin\varphi$</td><td>creux au démarrage, courant de court-circuit</td><td><a href="#/cours/revision-5-et-etude-de-cas-transformateur">Révision 5 et étude de cas transformateur</a></td></tr>
+        <tr><td>Courant continu à excitation séparée</td><td>$\varOmega = (U - RI)/(K\varPhi)$</td><td>$C = K\varPhi\,I$</td><td>commutation, balais, collecteur</td><td><a href="#/cours/machine-a-courant-continu">Machine à courant continu</a></td></tr>
+        <tr><td>Asynchrone à cage sur réseau</td><td>$n = n_s(1 - g)$, $n_s = 60f/p$</td><td>$C \approx 3V^2 g/(R_2'\varOmega_s)$ aux faibles glissements</td><td>courant de démarrage $5$ à $8\,I_n$, énergie rotorique</td><td><a href="#/cours/schema-equivalent-du-moteur-asynchrone">Schéma équivalent du moteur asynchrone</a></td></tr>
+        <tr><td>Asynchrone à cage sur variateur</td><td>$n = 60f/p - \Delta n$, $\Delta n$ fixé par le couple</td><td>$C_n$ à toute vitesse à $U/f$ constant</td><td>ventilation à basse vitesse, défluxage au-delà de $f_b$</td><td><a href="#/cours/variation-de-vitesse-des-moteurs-asynchrones">Variation de vitesse des moteurs asynchrones</a></td></tr>
+        <tr><td>Synchrone</td><td>$n = 60f/p$ exactement</td><td>$C = 3VE\sin\delta/(X_s\varOmega_s)$</td><td>décrochage à $\delta = 90^\circ$, pas de démarrage seul sur réseau</td><td><a href="#/cours/machine-synchrone">Machine synchrone</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Trois constats en découlent pour la sélection. Seule la machine asynchrone à cage démarre seule sur le réseau, au prix d'un fort courant ; c'est
+    pourquoi elle équipe la grande majorité des entraînements à vitesse fixe. Dès qu'un variateur est présent, les trois machines tournantes
+    deviennent des machines à couple réglé : le choix se fait alors sur le rendement, la compacité, le couple à l'arrêt et la maintenance, plus sur
+    le démarrage. Enfin, la machine à courant continu reste pertinente là où la source est elle-même continue et secourue, comme l'actionneur de
+    vanne du site, et la machine synchrone à rotor bobiné là où la puissance est grande et le réactif utile.
+  </p>
+
+  <h3 id="e-charges">Caractériser la charge : trois lois de couple</h3>
+  <p>
+    La première donnée d'une sélection est la loi $C_r(n)$ de la machine entraînée, relevée sur son arbre. Trois familles couvrent l'essentiel
+    des cas industriels.
+  </p>
+  <p>
+    Couple constant, $C_r = C_0$ : le couple ne dépend pas de la vitesse, la puissance lui est proportionnelle, $P = C_0\varOmega$. C'est le cas d'un
+    convoyeur, dont le couple vient du frottement et de l'élévation de la matière, d'un levage, dont le couple vient du poids, d'un compresseur
+    volumétrique à pression de refoulement fixée, d'une pompe volumétrique. Ces machines présentent souvent un couple de décollement supérieur au
+    couple de régime, parce que le frottement statique dépasse le frottement dynamique et que la graisse est froide.
+  </p>
+  <p>
+    Couple quadratique, $C_r = k_q\,n^2$ : c'est la loi des machines qui mettent un fluide en vitesse, pompes centrifuges et ventilateurs. Elle
+    se dérive des lois de similitude. Pour une même machine et un même fluide, le débit est proportionnel à la vitesse, $Q \propto n$, et la
+    hauteur à son carré, $H \propto n^2$, parce que la pression dynamique est en $\rho v^2/2$ et que la vitesse du fluide suit celle de la roue. La
+    puissance hydraulique $\rho g Q H$ varie donc comme $n^3$, et le couple $C = P/\varOmega$ comme $n^2$, si le rendement de la machine reste
+    constant. Hypothèse essentielle : le réseau hydraulique n'a pas de hauteur statique, toute la hauteur sert à vaincre les pertes de charge,
+    elles-mêmes en $Q^2$. Cas limite instructif : à mi-vitesse, une pompe centrifuge ne demande que $1/8$ de sa puissance. Vérification
+    dimensionnelle : $\rho g Q H$ s'exprime en $\mathrm{kg/m^3} \times \mathrm{m/s^2} \times \mathrm{m^3/s} \times \mathrm{m} = \mathrm{kg\cdot m^2/s^3} = \mathrm{W}$.
+  </p>
+  <p>
+    Puissance constante, $C_r = P_0/\varOmega$ : le couple décroît quand la vitesse augmente. C'est le cas d'un enrouleur à tension et vitesse de
+    bande constantes, dont le rayon de bobine grandit, ou d'une broche de machine-outil qui travaille à vitesse de coupe constante. La loi ne peut
+    pas tenir jusqu'à l'arrêt, où elle demanderait un couple infini ; la machine plafonne le couple sous une vitesse minimale.
+  </p>
+  <figure id="e-charges-figure">
+    <svg viewBox="0 0 760 320" role="img" aria-label="Couple et puissance en fonction de la vitesse pour les trois familles de charges : couple constant, couple quadratique et puissance constante">
+      <g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity="0.7">
+        <path d="M60 268V36M52 260H344"/>
+        <path d="M440 268V36M432 260H724"/>
+        <path d="M320 256V264M700 256V264M56 150H64M436 150H444"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M60 150H330"/>
+        <path d="M440 260L710 145.8"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 5">
+        <polyline points="60.0,260.0 73.5,259.7 87.0,258.8 100.5,257.3 114.0,255.3 127.5,252.6 141.0,249.3 154.5,245.5 168.0,241.0 181.5,236.0 195.0,230.3 208.5,224.1 222.0,217.3 235.5,209.9 249.0,201.9 262.5,193.3 276.0,184.1 289.5,174.3 303.0,163.9 316.5,152.9 330.0,141.4"/>
+        <polyline points="440.0,260.0 453.5,260.0 467.0,259.9 480.5,259.6 494.0,259.0 507.5,258.1 521.0,256.7 534.5,254.7 548.0,252.1 561.5,248.8 575.0,244.6 588.5,239.5 602.0,233.4 615.5,226.2 629.0,217.7 642.5,208.0 656.0,196.9 669.5,184.3 683.0,170.2 696.5,154.4 710.0,136.8"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 5">
+        <path d="M60 40H190"/>
+        <polyline points="190.0,40.0 199.3,54.7 208.7,67.6 218.0,79.0 227.3,89.1 236.7,98.1 246.0,106.2 255.3,113.6 264.7,120.3 274.0,126.4 283.3,131.9 292.7,137.1 302.0,141.8 311.3,146.2 320.7,150.3 330.0,154.1"/>
+        <path d="M440 260L570 150H710"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="66" y="30">couple C_r</text>
+        <text x="350" y="264">n</text>
+        <text x="446" y="30">puissance P</text>
+        <text x="730" y="264">n</text>
+        <text x="320" y="282" text-anchor="middle">n_n</text>
+        <text x="700" y="282" text-anchor="middle">n_n</text>
+        <text x="50" y="154" text-anchor="end">C_n</text>
+        <text x="430" y="154" text-anchor="end">P_n</text>
+        <text x="200" y="36">C_r = P_0 / Ω au-delà de n_n / 2</text>
+        <text x="20" y="300">trait plein : couple constant (convoyeur, levage) ; tirets : quadratique (pompe, ventilateur)</text>
+        <text x="20" y="316">pointillés : puissance constante au-delà de n_n / 2, couple plafonné en dessous (enrouleur, broche)</text>
+      </g>
+    </svg>
+    <figcaption>
+      Les trois familles de charges, à gauche en couple, à droite en puissance, toutes ramenées à leur valeur au point nominal $n_n$. Le trait
+      plein est la charge à couple constant, dont la puissance croît linéairement. Les tirets sont la charge quadratique : couple en $n^2$,
+      puissance en $n^3$, presque nulle à basse vitesse. Les pointillés sont la charge à puissance constante, dont le couple est plafonné à
+      $2\,C_n$ sous la mi-vitesse : c'est elle qui demande le plus de couple à basse vitesse, donc le plus gros moteur pour une même puissance.
+    </figcaption>
+  </figure>
+  <p>
+    Au-delà de la loi de couple, la fiche d'une charge comporte cinq autres rubriques : le couple de décollement, rapporté au couple de régime ;
+    l'inertie, ramenée à l'arbre du moteur ; la plage de vitesse et sa précision ; le cycle, avec ses durées, ses couples et le nombre de démarrages
+    par heure ; les quadrants parcourus. L'environnement, température, altitude, poussières, atmosphère explosible, complète la fiche et peut à lui
+    seul imposer une technologie. Une charge mal décrite sur l'une de ces rubriques conduit à l'une des pannes citées en section A.
+  </p>
+
+  <h3 id="e-mecanique">L'équation mécanique et la transmission</h3>
+  <p>
+    Toute la dynamique d'un entraînement tient dans le principe fondamental de la dynamique en rotation, appliqué à l'ensemble des masses
+    tournantes ramenées à l'arbre du moteur.
+  </p>
+  <div class="formule-cle">
+    $$J\,\frac{\mathrm{d}\varOmega}{\mathrm{d}t} = C_m(\varOmega) - C_r(\varOmega)$$
+    <p class="formule-cle-legende">
+      $J$ en $\mathrm{kg\cdot m^2}$, $\varOmega$ en $\mathrm{rad/s}$, couples en $\mathrm{N\cdot m}$. Loi physique, valable pour un ensemble rigide.
+      Dérivation : l'énergie cinétique vaut $W_c = \tfrac{1}{2}J\varOmega^2$ ; sa dérivée $J\varOmega\,\mathrm{d}\varOmega/\mathrm{d}t$ est égale à la
+      puissance nette reçue, $(C_m - C_r)\varOmega$ ; on divise par $\varOmega$. Vérification dimensionnelle :
+      $\mathrm{kg\cdot m^2} \times \mathrm{rad/s^2} = \mathrm{kg\cdot m^2/s^2} = \mathrm{N\cdot m}$. Cas limite : à couples égaux, la vitesse est
+      constante, c'est le point de fonctionnement.
+    </p>
+  </div>
+  <p>
+    Quand un réducteur ou une courroie sépare le moteur de la charge, on ramène tout à l'arbre du moteur par conservation de la puissance et de
+    l'énergie cinétique. Avec $k = n_m/n_c$, la charge tourne à $\varOmega/k$. La puissance qu'elle reçoit, $C_c\,\varOmega/k$, doit être fournie par
+    le moteur à travers la transmission de rendement $\eta_t$ : $C_r\,\varOmega\,\eta_t = C_c\,\varOmega/k$. Son énergie cinétique,
+    $\tfrac{1}{2}J_c(\varOmega/k)^2$, doit être écrite $\tfrac{1}{2}J_{eq,c}\varOmega^2$ vue du moteur.
+  </p>
+  <div class="formule-cle">
+    $$C_r = \frac{C_c}{k\,\eta_t}, \qquad J = J_m + \frac{J_c}{k^2}$$
+    <p class="formule-cle-legende">
+      Hypothèses : transmission sans glissement ni élasticité, rendement constant ; en freinage, la charge entraîne le moteur et $C_r = C_c\,\eta_t/k$.
+      Interprétation : un réducteur, $k > 1$, divise le couple vu par le moteur par $k$ mais l'inertie par $k^2$ ; une courroie multiplicatrice,
+      $k \lt 1$, fait l'inverse. Cas limite : $k = 1$ et $\eta_t = 1$, transmission directe. Vérification : $J_c/k^2$ a bien la dimension d'une
+      inertie puisque $k$ est sans dimension.
+    </p>
+  </div>
+  <p>
+    L'inertie se transforme avec le carré du rapport parce que l'énergie cinétique dépend du carré de la vitesse. C'est une source d'erreurs
+    fréquente et une source de solutions : pour une centrifugeuse de $12\ \mathrm{kg\cdot m^2}$ à $3000\ \mathrm{tr/min}$, un moteur à quatre pôles
+    à $1500\ \mathrm{tr/min}$ avec une courroie multiplicatrice, $k = 0{,}5$, voit $48\ \mathrm{kg\cdot m^2}$ et doit fournir un couple double, pour
+    une puissance identique. En servomécanisme, où l'inertie du moteur n'est pas négligeable, on montre que le temps d'accélération est minimal pour
+    $k = \sqrt{J_c/J_m}$ : c'est l'adaptation d'inertie. Pour une centrifugeuse, elle donnerait un moteur tournant à plus de
+    $45\,000\ \mathrm{tr/min}$ : la vitesse admissible du moteur décide avant l'optimum théorique.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Prédiction avant de manipuler</span>
+    <p>
+      Vous allez faire varier le rapport $k$ entre la poulie du moteur et celle de la centrifugeuse. Prévoyez d'abord, pour un passage de $k = 1$ à
+      $k = 0{,}5$, si l'inertie vue par le moteur est multipliée par $2$ ou par $4$, comment évolue le couple que doit fournir le moteur pour
+      accélérer en $60\ \mathrm{s}$, et si la puissance de pointe change.
+    </p>
+  </div>
+  <figure id="e-reducteur-figure">
+    <div class="schema-vivant" id="e-reducteur"></div>
+    <figcaption>
+      Transmission par courroie entre le moteur, poulie de gauche, et la centrifugeuse, poulie de droite. La poignée ronde glisse sur l'axe gradué
+      du bas et règle $k = n_m/n_c$ de $0{,}5$ à $3$ ; le rayon des poulies suit, dans le rapport $k$. Le bouton de lecture fait tourner les
+      deux poulies, ralenties, chacune repérée par un rayon : celui du moteur fait $k$ tours pendant que celui de la charge en fait un. Les valeurs
+      affichées sous la figure sont calculées pour une accélération de $0$ à $3000\ \mathrm{tr/min}$ côté charge en $60\ \mathrm{s}$, couple de
+      ventilation négligé.
+    </figcaption>
+  </figure>
+  <div id="e-reducteur-lecteur"></div>
+  <div id="e-reducteur-valeurs"></div>
+  <p>
+    Interprétation. L'inertie vue par le moteur suit $12/k^2$ : elle quadruple de $k = 1$ à $k = 0{,}5$ et tombe à $1{,}38\ \mathrm{kg\cdot m^2}$ pour
+    $k = 3$. Le couple d'accélération, lui, ne varie que comme $1/k$, parce que le moteur doit aussi tourner $k$ fois plus vite ; la puissance de
+    pointe, produit des deux, reste presque constante, autour de $19{,}8\ \mathrm{kW}$, tant que l'inertie du rotor reste négligeable. Le rapport ne
+    crée donc pas de puissance : il échange du couple contre de la vitesse. Il se choisit par la vitesse que le moteur peut atteindre et par le
+    couple que le variateur peut fournir, ici un moteur à deux pôles et $k = 1$.
+  </p>
+
+  <h3 id="e-point">Point de fonctionnement, démarrage et stabilité</h3>
+  <p>
+    En régime établi, $C_m(\varOmega) = C_r(\varOmega)$. Ce point est stable si une petite augmentation de vitesse fait apparaître un couple net
+    qui la freine, soit :
+  </p>
+  <div class="formule-cle">
+    $$\frac{\mathrm{d}C_m}{\mathrm{d}\varOmega} \lt \frac{\mathrm{d}C_r}{\mathrm{d}\varOmega} \qquad \text{et, au démarrage,} \qquad C_m(\varOmega) \gt C_r(\varOmega) \ \text{pour tout } 0 \le \varOmega \lt \varOmega_{eq}$$
+    <p class="formule-cle-legende">
+      Conditions déduites de l'équation mécanique : au voisinage de l'équilibre, $J\,\mathrm{d}(\Delta\varOmega)/\mathrm{d}t = (C_m' - C_r')\,\Delta\varOmega$,
+      qui décroît si le coefficient est négatif. Sur la partie utile de sa courbe, au-delà du couple maximal, le moteur asynchrone a une pente
+      fortement négative : le point est stable avec toutes les charges usuelles. La seconde condition demande un couple accélérateur positif sur
+      tout le chemin ; en pratique, on exige une marge, souvent de $10$ à $30\ \%$ selon la confiance dans les données, c'est une règle de
+      conception et non une loi.
+    </p>
+  </div>
+  <p>
+    Sur le réseau, le couple du moteur asynchrone varie comme le carré de la tension. Un creux de $10\ \%$ retire $19\ \%$ du couple ; un
+    démarrage en étoile en retire $67\ \%$. La simulation suivante place la courbe du moteur du convoyeur de la section I, $4\ \mathrm{kW}$, quatre
+    pôles, $C_d = 2{,}3\,C_n$, $C_{max} = 2{,}8\,C_n$, face aux trois familles de charges. La courbe du moteur est reconstituée à partir de ces trois
+    valeurs de catalogue par une formule de Kloss à glissement critique variable, approximation qui suffit pour juger un démarrage.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Prédiction avant de simuler</span>
+    <p>
+      La charge à couple constant est réglée sur le convoyeur : $87\ \%$ de $C_n$ en régime et $150\ \%$ de ce couple au décollement. Prévoyez si le
+      convoyeur démarre en étoile, c'est-à-dire pour $U/U_n = 0{,}58$, puis quelle tension minimale permet le démarrage. Faites la même prédiction
+      pour la pompe, charge quadratique au même couple nominal.
+    </p>
+  </div>
+  <figure id="e-point-figure">
+    <div id="e-point-trace"></div>
+    <figcaption>
+      Couple du moteur et couple résistant en fonction de la vitesse, sur le réseau. Le point plein marque l'équilibre stable ; les mesures donnent
+      le couple disponible et le couple demandé à l'arrêt, le couple accélérateur minimal sur le chemin et la vitesse d'équilibre. Les curseurs
+      choisissent la famille de charge, son couple au régime nominal, son surcouple de décollement, appliqué aux deux premières familles, et la
+      tension appliquée au moteur.
+    </figcaption>
+  </figure>
+  <div id="e-point-curseurs"></div>
+  <p>
+    Interprétation. En étoile, le moteur ne dispose plus que de $0{,}77\,C_n$ à l'arrêt face à $1{,}31\,C_n$ demandés : le convoyeur ne décolle pas.
+    Il faut environ $U/U_n = 0{,}75$ pour que le couple disponible égale tout juste le couple de décollement, et $0{,}81$ avec une marge de
+    $15\ \%$ : le courant appelé vaut alors $81\ \%$ de celui du démarrage direct, soit $5{,}7\,I_n$, et la réduction de tension n'apporte presque
+    rien. La pompe, elle, décolle et accélère dès $0{,}5\,U_n$ : son couple résistant est presque nul à basse vitesse, et un démarreur progressif n'a
+    plus qu'à monter la tension à mesure que la vitesse croît. La
+    loi de couple de la charge décide donc du mode de démarrage, avant la puissance. Remarquez aussi qu'à tension réduite la vitesse d'équilibre
+    baisse et le glissement augmente : un moteur maintenu sous tension réduite en charge chauffe.
+  </p>
+
+  <h3 id="e-demarrage">Temps d'accélération et énergie dissipée dans le rotor</h3>
+  <p>
+    L'équation mécanique, séparée en variables, donne le temps nécessaire pour passer de $\varOmega_1$ à $\varOmega_2$ :
+  </p>
+  <div class="formule-cle">
+    $$t_a = J\int_{\varOmega_1}^{\varOmega_2}\frac{\mathrm{d}\varOmega}{C_m(\varOmega) - C_r(\varOmega)} \qquad \text{et, à couple accélérateur constant,} \qquad t_a = \frac{J\,\Delta\varOmega}{C_{acc}}$$
+    <p class="formule-cle-legende">
+      $t_a$ en secondes. Vérification : $\mathrm{kg\cdot m^2} \times \mathrm{rad/s} / (\mathrm{N\cdot m}) = \mathrm{s}$. La forme simple suppose un
+      couple accélérateur constant : c'est le cas d'un variateur qui limite son courant, approximativement celui d'un démarrage direct si l'on prend
+      un couple moyen, souvent estimé à $(C_d + C_{max})/2$, approximation à vérifier sur la courbe réelle. Avec une charge quadratique
+      $C_r = a\varOmega^2$ et un couple moteur constant $C$, l'intégrale est exacte :
+      $t_a = \dfrac{J}{2\sqrt{aC}}\ln\dfrac{\sqrt{C} + \sqrt{a}\,\varOmega_2}{\sqrt{C} - \sqrt{a}\,\varOmega_2}$ en partant de l'arrêt, et le freinage
+      à couple $-C$ dure $t_f = \dfrac{J}{\sqrt{aC}}\arctan\dfrac{\sqrt{a}\,\varOmega_2}{\sqrt{C}}$.
+    </p>
+  </div>
+  <p>
+    Le démarrage direct d'un moteur asynchrone a un coût caché, que le cours
+    <a href="#/cours/demarrage-des-moteurs-asynchrones">Démarrage des moteurs asynchrones</a> a mesuré sur le compresseur : l'énergie dissipée dans
+    le rotor. Les pertes Joule rotoriques valent $g\,P_{tr} = g\,C_m\varOmega_s$. Si la charge n'oppose aucun couple, $C_m = J\,\mathrm{d}\varOmega/\mathrm{d}t$,
+    et avec $g = 1 - \varOmega/\varOmega_s$ :
+  </p>
+  <div class="formule-cle">
+    $$W_{rotor} = \int_0^{t_a} g\,C_m\,\varOmega_s\,\mathrm{d}t = \int_0^{\varOmega_s} J\,(\varOmega_s - \varOmega)\,\mathrm{d}\varOmega = \frac{1}{2}J\varOmega_s^2$$
+    <p class="formule-cle-legende">
+      Loi exacte dans ses hypothèses : alimentation à fréquence fixe, charge sans couple résistant, démarrage de l'arrêt au synchronisme. Le
+      rotor dissipe exactement l'énergie cinétique finale, quelle que soit la forme de la courbe du moteur et quel que soit le mode de démarrage à
+      tension réduite : étoile-triangle et démarreur progressif allongent le démarrage sans réduire cette énergie, et l'augmentent même dès qu'une
+      charge s'oppose au mouvement, d'un terme $\int C_r(\varOmega_s - \varOmega)\,\mathrm{d}t$. Vérification : $\mathrm{kg\cdot m^2} \times \mathrm{rad^2/s^2} = \mathrm{J}$.
+    </p>
+  </div>
+  <p>
+    Le variateur, lui, change la nature du démarrage : il fait monter la fréquence avec la vitesse et maintient le glissement à sa faible valeur de
+    régime. Les pertes rotoriques valent alors $C_m\,\varOmega_{gl}$, avec une vitesse de glissement de quelques dizaines de $\mathrm{tr/min}$ au lieu
+    de plusieurs milliers. Pour la centrifugeuse de la section H, le rotor dissipe environ $36\ \mathrm{kJ}$ sur variateur au lieu de
+    $595\ \mathrm{kJ}$ en direct. C'est le seul procédé qui réduise à la fois le courant et l'énergie rotorique.
+  </p>
+
+  <h3 id="e-thermique">Échauffement : le couple efficace et la ventilation</h3>
+  <p>
+    Si le flux est constant, le courant actif du moteur est proportionnel au couple, et le courant total s'en écarte surtout aux faibles charges, à
+    cause du courant magnétisant. En négligeant cet écart, les pertes Joule sont proportionnelles à $C^2$. Si la constante de temps thermique du
+    moteur est grande devant la durée du cycle, sa température ne dépend que de la moyenne de ces pertes : le moteur est équivalent à un moteur qui
+    fournirait en permanence le couple efficace du cycle.
+  </p>
+  <div class="formule-cle">
+    $$C_{eq} = \sqrt{\frac{\sum_i C_i^2\,t_i}{\sum_i \beta_i\,t_i}} \le C_n, \qquad \beta_i = 1 \text{ en marche}, \quad \beta_i = \beta_0 \text{ à l'arrêt}, \quad \beta_i = \tfrac{1 + \beta_0}{2} \text{ en accélération et en freinage}$$
+    <p class="formule-cle-legende">
+      Approximations : pertes proportionnelles à $C^2$, pertes fer et mécaniques supposées couvertes par la marge, cycle court devant la constante
+      de temps thermique. Les coefficients $\beta_i$ traduisent la ventilation réduite d'un moteur autoventilé à l'arrêt et à basse vitesse ; $\beta_0$
+      est une donnée du constructeur, souvent de l'ordre de $0{,}3$ à $0{,}5$ ; avec $\beta_i = 1$ partout, on retrouve la moyenne quadratique simple,
+      optimiste. Cas limite : un couple constant $C$ donne $C_{eq} = C$.
+    </p>
+  </div>
+  <p>
+    Deux vérifications complètent le couple efficace. La pointe de couple doit rester inférieure au couple maximal du moteur avec une marge, et
+    inférieure au couple que le courant maximal du variateur permet de produire, typiquement $1{,}5\,I_n$ pendant $60\ \mathrm{s}$ pour un variateur
+    de service dit "fort", $1{,}1\,I_n$ pour un service "faible" de pompe ou de ventilateur ; ces valeurs dépendent du constructeur. Ensuite, un
+    moteur autoventilé qui tourne longtemps à basse vitesse et à fort couple chauffe, puisque son ventilateur est calé sur l'arbre : la courbe de
+    déclassement du constructeur ou une ventilation forcée s'impose pour un convoyeur lent, jamais pour une pompe, dont le couple chute avec la
+    vitesse.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Prédiction avant de manipuler</span>
+    <p>
+      Le chronogramme reprend le cycle de la centrifugeuse. Avant de toucher aux curseurs, prévoyez l'effet sur le couple efficace d'un palier
+      deux fois plus long, puis d'un couple d'accélération plus fort : le cycle devient-il plus ou moins sévère pour le moteur ? Que devient le
+      couple efficace si l'arrêt est mal ventilé, $\beta_0$ faible ?
+    </p>
+  </div>
+  <figure id="e-cycle-figure">
+    <div class="schema-vivant" id="e-cycle"></div>
+    <figcaption>
+      Chronogramme d'un cycle de la centrifugeuse : en haut la vitesse, en bas le couple moteur, positif en accélération et au palier, négatif au
+      freinage. Le trait vertical est l'instant courant, piloté par le lecteur ou par la poignée de l'axe des temps ; les valeurs affichées donnent
+      le couple efficace cumulé jusqu'à cet instant. Les tirets horizontaux du bas encadrent le couple efficace du cycle complet, les pointillés
+      le couple nominal du moteur de $15\ \mathrm{kW}$, $48{,}7\ \mathrm{N\cdot m}$.
+    </figcaption>
+  </figure>
+  <div id="e-cycle-curseurs"></div>
+  <div id="e-cycle-lecteur"></div>
+  <div id="e-cycle-valeurs"></div>
+  <p>
+    Interprétation. Allonger le palier abaisse le couple efficace : on ajoute du temps à faible couple, le moteur a plus de temps pour évacuer la
+    chaleur des phases d'accélération et de freinage. Un couple d'accélération plus fort raccourcit ces phases mais en élève le carré : le produit
+    $C^2 t$ croît à peu près comme $C$, donc le cycle devient plus sévère, et la puissance de pointe augmente. Un arrêt mal ventilé fait monter le
+    couple efficace de $36{,}7$ à $41{,}4\ \mathrm{N\cdot m}$ pour $\beta_0 = 0{,}5$ : ignorer la ventilation, c'est sous-estimer l'échauffement de
+    plus de $10\ \%$ en couple, de plus de $25\ \%$ en pertes.
+  </p>
+
+  <h3 id="e-freinage">Freiner : où va l'énergie ?</h3>
+  <p>
+    Dans le quadrant II, la machine renvoie de l'énergie. Cinq solutions existent. Le ralentissement naturel laisse la charge dissiper son énergie
+    dans ses propres frottements : gratuit, mais lent, et acceptable pour une pompe, qui s'arrête en une fraction de seconde. L'injection de courant
+    continu dans le stator crée un champ fixe qui freine le rotor ; l'énergie cinétique est alors dissipée dans le rotor, exactement comme au
+    démarrage direct : procédé simple pour les petites inerties, à proscrire pour une centrifugeuse. Sur variateur, l'énergie remonte par les
+    diodes de roue libre de l'onduleur vers le bus continu ; le pont d'entrée à diodes ne peut pas la renvoyer au réseau, la tension du bus
+    monte, et un hacheur la déverse dans une résistance de freinage au-delà d'un seuil. Un redresseur actif, à transistors, renvoie au contraire
+    l'énergie au réseau. Enfin, un bus continu commun à plusieurs variateurs permet à un entraînement qui freine d'alimenter un entraînement qui
+    accélère.
+  </p>
+  <div class="formule-cle">
+    $$W_f \approx \eta_m\,\eta_o\left(\tfrac{1}{2}J\varOmega_1^2 - W_{charge}\right), \qquad P_{pic} = \eta_m\,\eta_o\,|C_f|\,\varOmega_1, \qquad R_f \le \frac{U_{dc,max}^2}{P_{pic}}$$
+    <p class="formule-cle-legende">
+      $W_f$ énergie reçue par le bus continu pendant un freinage depuis $\varOmega_1$, $W_{charge}$ énergie dissipée par la charge pendant le freinage,
+      $\eta_m$ et $\eta_o$ rendements du moteur en génératrice et de l'onduleur, supposés constants. $U_{dc,max}$ est le seuil de déclenchement du
+      hacheur, donnée du constructeur. La résistance doit être assez faible pour absorber la puissance de pointe sous ce seuil, et sa puissance
+      thermique doit couvrir la puissance moyenne sur le cycle, avec une tenue en impulsion égale à $W_f$.
+    </p>
+  </div>
+  <p>
+    Le choix entre résistance et redresseur actif est un compromis : la résistance est simple et fonctionne sur toute source, le redresseur
+    actif récupère l'énergie et absorbe un courant presque sinusoïdal, mais coûte plus cher et ne peut pas renvoyer d'énergie à un groupe
+    électrogène, dont l'alternateur passerait en moteur. Le cours <a href="#/cours/machine-synchrone">Machine synchrone</a> a montré qu'un
+    retour de puissance active sur un alternateur fait fonctionner sa machine en moteur et doit être découplé par une protection.
+  </p>
+
+  <h3 id="e-comparaison">Comparer les modes de démarrage et de variation</h3>
+  <p>
+    Le cours <a href="#/cours/demarrage-des-moteurs-asynchrones">Démarrage des moteurs asynchrones</a> a introduit un indicateur commode : le
+    couple obtenu par ampère appelé. Le démarrage direct, l'étoile-triangle et l'autotransformateur donnent tous le même rapport, environ
+    $0{,}33\,C_n$ par $I_n$ pour un moteur à $C_d = 2{,}3\,C_n$ et $I_d = 7\,I_n$ : dans les deux derniers, la tension du moteur est réduite d'un
+    facteur $x$, son couple de $x^2$, et le courant de ligne aussi de $x^2$ grâce à la transformation. Le démarreur progressif réduit la tension sans
+    transformer le courant : le courant de ligne ne baisse que de $x$, et le rapport tombe à environ $0{,}14\,C_n$ par $I_n$ pour une limite de $3\,I_n$. Le
+    variateur dépasse $1\,C_n$ par $I_n$ : il fournit le couple nominal à l'arrêt pour un courant voisin du courant nominal, puisqu'il travaille
+    à faible glissement à toute vitesse. Le diagramme comparatif de la section F met ces valeurs face aux couples de décollement des trois charges.
+  </p>
+  <p>
+    Ce critère ne suffit pas : le variateur coûte plus cher, injecte des courants harmoniques, impose des contraintes de tension rapides aux
+    enroulements et des courants de palier sur les grandes longueurs de câble, et sa propre fiabilité entre en compte. Il s'impose quand la vitesse
+    doit varier, quand la charge demande du couple au décollement avec un courant limité, quand l'inertie est forte ou quand il faut freiner. Le
+    démarreur progressif s'impose pour les charges quadratiques à vitesse fixe, pour adoucir les à-coups hydrauliques et mécaniques. Le démarrage
+    direct reste la solution la plus simple et la plus fiable dès que la source l'accepte.
+  </p>
+
+  <h3 id="e-energie">Rendement, maintenance et coût sur la durée de vie</h3>
+  <p>
+    Pour un moteur qui tourne plusieurs milliers d'heures par an, le coût de l'énergie consommée dépasse en quelques mois son prix d'achat. La
+    comparaison de deux solutions se fait donc sur l'énergie : à puissance utile $P_u$ égale, la différence de puissance absorbée vaut
+  </p>
+  <div class="formule-cle">
+    $$\Delta P = P_u\left(\frac{1}{\eta_1} - \frac{1}{\eta_2}\right), \qquad \Delta W = \Delta P \times h, \qquad t_{retour} = \frac{\text{surcoût}}{\Delta W \times \text{prix du kWh}}$$
+    <p class="formule-cle-legende">
+      $\eta_1$ et $\eta_2$ rendements de chaîne, variateur et moteur compris, au point de service réel et non au point nominal ; $h$ heures de
+      fonctionnement par an. Le prix du kWh et le surcoût sont des données économiques du site. Interprétation : un point de rendement compte
+      d'autant plus que la puissance et la durée de fonctionnement sont grandes.
+    </p>
+  </div>
+  <p>
+    Les classes de rendement normalisées des moteurs, notées IE, et l'apparition des moteurs synchrones à aimants et à réluctance sur variateur
+    ont élevé les rendements de quelques points. Mais l'ordre des priorités reste celui de la physique de la charge : sur la pompe du site,
+    la variation de vitesse a supprimé $9{,}2\ \mathrm{kW}$ de pertes d'étranglement, alors qu'un moteur à aimants ne gagnerait que
+    $0{,}35\ \mathrm{kW}$ au même point, comme on le verra en section I. Côté maintenance, la machine à courant continu demande le remplacement de
+    ses balais et l'entretien de son collecteur, la machine synchrone à rotor bobiné celui de ses bagues ou de son excitatrice, la machine
+    asynchrone à cage seulement celui de ses roulements ; le variateur ajoute ses ventilateurs et ses condensateurs, dont la durée de vie dépend
+    de la température de l'armoire.
+  </p>
+
+  <h3 id="e-statut">Loi, convention, approximation, règle de conception et donnée du constructeur</h3>
+  <ul>
+    <li><strong>Lois physiques :</strong> l'équation mécanique $J\,\mathrm{d}\varOmega/\mathrm{d}t = C_m - C_r$ ; la conservation de la puissance et de l'énergie cinétique à travers une transmission ; l'égalité $W_{rotor} = \tfrac{1}{2}J\varOmega_s^2$ dans ses hypothèses ; $P = C\varOmega$.</li>
+    <li><strong>Conventions :</strong> la convention moteur pour les signes de $C_m$ et $\varOmega$, la numérotation des quadrants, le rapport $k = n_m/n_c$, que certains ouvrages définissent à l'inverse.</li>
+    <li><strong>Approximations :</strong> les lois de similitude des pompes, valables sans hauteur statique et à rendement constant ; le couple efficace, qui suppose des pertes en $C^2$ ; la courbe de Kloss reconstituée ; le couple moyen $(C_d + C_{max})/2$ en démarrage direct ; les rendements constants dans le calcul du freinage.</li>
+    <li><strong>Règles de conception :</strong> une marge de $10$ à $30\ \%$ sur le couple de décollement ; un temps d'accélération inférieur à la durée de surcharge du variateur ; un couple efficace inférieur au couple nominal ; un creux de tension limité par le cahier des charges, comme les $5\ \%$ sur transformateur retenus pour le compresseur du site.</li>
+    <li><strong>Données du constructeur ou de la norme :</strong> $C_d/C_n$, $C_{max}/C_n$, $I_d/I_n$, le temps de démarrage admissible et le nombre de démarrages par heure, la courbe de déclassement à basse vitesse et le coefficient $\beta_0$, la surcharge et le seuil du hacheur du variateur, la classe de rendement.</li>
+  </ul>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, l'arbre de décision pour choisir un moteur et son mode de démarrage, puis un diagramme
+    comparatif des couples de démarrage, l'organigramme de résolution et un tableau comparatif des solutions d'entraînement. Les autres schémas
+    sont restés au contact du passage qu'ils illustrent ; la liste de renvois figure à la fin de la section.
+  </p>
+  <p>
+    L'arbre se lit de haut en bas. Les losanges sont des questions posées à la charge, les rectangles des solutions. La première question porte
+    sur la vitesse : fixe ou variable. À vitesse fixe, on teste d'abord le démarrage direct, solution la plus simple et la plus robuste, sur ses
+    trois critères : creux de tension sur la source, durée du démarrage et énergie dissipée dans le rotor. S'il est refusé, le couple de
+    décollement tranche entre tension réduite et variateur. À vitesse variable, l'exigence dominante tranche entre la loi $U/f$, le freinage
+    et la commande vectorielle d'une machine à aimants. Deux branches traitent les cas particuliers du module. Toutes les feuilles aboutissent à
+    la même série de vérifications, parce qu'aucune présélection ne dispense du bilan thermique et du bilan de la source.
+  </p>
+  <figure id="f-schema-principal">
+    <pre class="mermaid">flowchart TD
+  A["Fiche de la charge : loi de couple, décollement,<br/>inertie, cycle, quadrants, plage de vitesse"] --> B{"Vitesse variable<br/>demandée ?"}
+  B -->|"non"| C{"Démarrage direct admissible ?<br/>creux, durée, énergie rotorique"}
+  C -->|"oui"| D["Asynchrone à cage<br/>démarrage direct"]
+  C -->|"non"| E{"Couple de décollement<br/>de la charge ?"}
+  E -->|"faible : pompe, ventilateur,<br/>compresseur à vide"| F["Asynchrone à cage<br/>démarreur progressif<br/>ou étoile-triangle"]
+  E -->|"élevé ou forte inertie :<br/>convoyeur chargé, broyeur, centrifugeuse"| G["Asynchrone à cage<br/>variateur de fréquence"]
+  B -->|"oui"| H{"Exigence dominante ?"}
+  H -->|"économie d'énergie,<br/>dynamique modérée"| I["Asynchrone à cage<br/>variateur U/f"]
+  H -->|"forte inertie,<br/>freinages fréquents"| J["Asynchrone à cage, variateur<br/>et résistance de freinage<br/>ou redresseur actif"]
+  H -->|"couple à l'arrêt, précision,<br/>compacité, rendement"| K["Synchrone à aimants<br/>commande vectorielle"]
+  A --> L{"Cas particuliers"}
+  L -->|"grande puissance à vitesse fixe,<br/>réactif utile"| M["Synchrone à rotor bobiné<br/>démarrage par cage ou variateur"]
+  L -->|"petite puissance<br/>sur source continue secourue"| N["Courant continu à aimants"]
+  D --> Z["Vérifications : couple efficace, échauffement à basse vitesse,<br/>temps d'accélération, freinage, source ou groupe,<br/>harmoniques, rendement, maintenance"]
+  F --> Z
+  G --> Z
+  I --> Z
+  J --> Z
+  K --> Z
+  M --> Z
+  N --> Z</pre>
+    <figcaption>
+      Schéma principal : arbre de décision pour choisir un moteur et son mode de démarrage ou de variation de vitesse. Les flèches portent la
+      réponse à la question du losange d'où elles partent. Les exemples cités sur les flèches sont ceux de la séance : la pompe et le compresseur
+      du site, le convoyeur et la centrifugeuse. L'arbre est une règle de conception, pas une loi : il oriente la présélection, que les calculs de
+      la section G confirment ou infirment.
+    </figcaption>
+  </figure>
+  <p>
+    Le diagramme suivant compare le couple de démarrage que chaque procédé offre à un moteur asynchrone de catalogue, $C_d = 2{,}3\,C_n$ et
+    $I_d = 7\,I_n$, avec le courant de ligne correspondant, et le met face au couple de décollement de deux charges : la pompe centrifuge, environ
+    $0{,}15\,C_n$, et le convoyeur, $1{,}31\,C_n$. La centrifugeuse n'y figure pas : son couple de décollement est négligeable, c'est son inertie
+    qui décide.
+  </p>
+  <figure id="f-couples-figure">
+    <svg viewBox="0 0 760 360" role="img" aria-label="Diagramme comparatif du couple de démarrage et du courant de ligne pour le démarrage direct, l'étoile-triangle, l'autotransformateur, le démarreur progressif et le variateur, face aux couples de décollement d'une pompe et d'un convoyeur">
+      <g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity="0.75">
+        <path d="M230 44V290H580"/>
+        <path d="M300 290V296M370 290V296M440 290V296M510 290V296M580 290V296"/>
+      </g>
+      <g stroke="none" fill="currentColor">
+        <rect x="230" y="60" width="322" height="20" rx="2" opacity="0.22"/>
+        <rect x="230" y="110" width="107.3" height="20" rx="2" opacity="0.22"/>
+        <rect x="230" y="160" width="136.1" height="20" rx="2" opacity="0.22"/>
+        <rect x="230" y="210" width="59.1" height="20" rx="2" opacity="0.22"/>
+        <rect x="230" y="260" width="210" height="20" rx="2" opacity="0.22"/>
+      </g>
+      <g stroke="currentColor" stroke-width="1.4" fill="none">
+        <rect x="230" y="60" width="322" height="20" rx="2"/>
+        <rect x="230" y="110" width="107.3" height="20" rx="2"/>
+        <rect x="230" y="160" width="136.1" height="20" rx="2"/>
+        <rect x="230" y="210" width="59.1" height="20" rx="2"/>
+        <rect x="230" y="260" width="210" height="20" rx="2"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="6 4">
+        <path d="M251 44V290"/>
+        <path d="M413.3 44V290"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="16" y="75">démarrage direct</text>
+        <text x="16" y="125">étoile-triangle</text>
+        <text x="16" y="175">autotransfo à 65 %</text>
+        <text x="16" y="225">progressif à 3 I_n</text>
+        <text x="16" y="275">variateur</text>
+        <text x="600" y="75">2,3 C_n ; 7 I_n</text>
+        <text x="600" y="125">0,77 C_n ; 2,3 I_n</text>
+        <text x="600" y="175">0,97 C_n ; 3,0 I_n</text>
+        <text x="600" y="225">0,42 C_n ; 3 I_n</text>
+        <text x="600" y="275">1,5 C_n ; 1,4 I_n</text>
+        <text x="251" y="36" text-anchor="middle">pompe 0,15 C_n</text>
+        <text x="413" y="36" text-anchor="middle">convoyeur 1,31 C_n</text>
+        <text x="230" y="312" text-anchor="middle">0</text>
+        <text x="300" y="312" text-anchor="middle">0,5</text>
+        <text x="370" y="312" text-anchor="middle">1</text>
+        <text x="440" y="312" text-anchor="middle">1,5</text>
+        <text x="510" y="312" text-anchor="middle">2</text>
+        <text x="580" y="312" text-anchor="middle">2,5</text>
+        <text x="230" y="332">couple de démarrage disponible, en multiples de C_n</text>
+        <text x="16" y="352">barres : couple au démarrage ; tirets verticaux : couple de décollement demandé par la charge</text>
+      </g>
+    </svg>
+    <figcaption>
+      Diagramme comparatif. Chaque barre a pour longueur le couple de démarrage, en multiples de $C_n$ ; la colonne de droite rappelle ce couple
+      et le courant de ligne appelé. Les deux tirets verticaux sont les couples de décollement de la pompe et du convoyeur. Toute barre qui
+      s'arrête avant un tiret désigne un procédé qui ne démarre pas cette charge : l'étoile-triangle, l'autotransformateur à $65\ \%$ et le
+      démarreur progressif limité à $3\,I_n$ sont exclus pour le convoyeur, tous conviennent pour la pompe. Le variateur est le seul procédé dont
+      le couple dépasse le courant : $1{,}5\,C_n$ pour environ $1{,}4\,I_n$.
+    </figcaption>
+  </figure>
+  <p>
+    L'organigramme suivant donne l'enchaînement des calculs, de la fiche de la charge à la décision. Il se lit de haut en bas ; les losanges sont des
+    tests, et chaque réponse négative renvoie à une étape antérieure.
+  </p>
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Relever la charge : C_c(n), décollement, J_c,<br/>cycle, quadrants, démarrages par heure"] --> B["Ramener à l'arbre du moteur :<br/>C_r = C_c / (k η_t), J = J_m + J_c / k²"]
+  B --> C["Point de service : P = C Ω,<br/>nombre de pôles et rapport k"]
+  C --> D["Présélection de la machine et du mode<br/>par l'arbre de décision"]
+  D --> E{"Démarrage : C_m &gt; C_r sur tout le chemin,<br/>durée et énergie rotorique admissibles ?"}
+  E -->|"non"| D
+  E -->|"oui"| F{"Thermique : C_eq ≤ C_n, basse vitesse,<br/>surcharge du variateur ?"}
+  F -->|"non"| G["Moteur ou variateur plus gros,<br/>ventilation forcée ou cycle modifié"]
+  G --> F
+  F -->|"oui"| H["Freinage : énergie et puissance de pointe,<br/>résistance ou redresseur actif"]
+  H --> I["Source : creux de tension, groupe électrogène,<br/>harmoniques, protections"]
+  I --> J["Bilan : rendement de chaîne, énergie annuelle,<br/>maintenance, coût, décision argumentée"]</pre>
+    <figcaption>
+      Organigramme de résolution. Les deux boucles traduisent le caractère itératif de la sélection : un démarrage impossible fait changer de mode
+      ou de machine, un échauffement excessif fait changer de taille ou de cycle. Le freinage et la source viennent après, parce qu'ils dépendent
+      de la puissance retenue, mais ils peuvent à leur tour remettre en cause la présélection, par exemple si la source est un groupe électrogène.
+    </figcaption>
+  </figure>
+  <p>
+    Le tableau compare les cinq solutions d'entraînement du module sur les critères de la sélection. Il résume les sections D et E et sert de
+    référence pour les exercices.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <thead>
+        <tr><th>Critère</th><th>Asynchrone à cage, direct ou tension réduite</th><th>Asynchrone à cage sur variateur</th><th>Synchrone à aimants sur variateur</th><th>Synchrone à rotor bobiné</th><th>Courant continu</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Vitesse</td><td>fixe, $60f/p$ moins le glissement</td><td>variable, environ $10$ à $150\ \%$ de $n_n$</td><td>variable, exacte, jusqu'à l'arrêt</td><td>fixe, exactement $60f/p$</td><td>variable par la tension d'induit</td></tr>
+        <tr><td>Couple au démarrage</td><td>$C_d$ réduit comme $U^2$</td><td>$1{,}5\,C_n$ environ, sous $1{,}4\,I_n$</td><td>couple nominal à l'arrêt, maintenu</td><td>faible, par la cage d'amortisseurs</td><td>élevé, limité par la commutation</td></tr>
+        <tr><td>Courant appelé au démarrage</td><td>$5$ à $8\,I_n$ en direct, $2$ à $4\,I_n$ réduit</td><td>proche de $I_n$</td><td>proche de $I_n$</td><td>élevé sans variateur</td><td>limité par le convertisseur</td></tr>
+        <tr><td>Freinage, quadrants</td><td>ralentissement naturel ou injection de continu</td><td>quatre quadrants avec résistance ou redresseur actif</td><td>quatre quadrants, idem</td><td>génératrice sur réseau</td><td>quatre quadrants, récupération simple</td></tr>
+        <tr><td>Facteur de puissance vu de la source</td><td>$0{,}8$ à $0{,}9$ en charge, plus faible à vide</td><td>proche de $1$ en fondamental, harmoniques</td><td>idem</td><td>réglable par l'excitation</td><td>variable avec la vitesse si redresseur à thyristors</td></tr>
+        <tr><td>Rendement</td><td>bon à pleine charge</td><td>bon, variateur $97$ à $98\ \%$</td><td>le meilleur aux petites et moyennes puissances</td><td>très bon aux grandes puissances</td><td>moyen, pertes d'excitation et de balais</td></tr>
+        <tr><td>Maintenance</td><td>roulements seulement</td><td>roulements, ventilateurs et condensateurs du variateur</td><td>idem, aimants sensibles à la chaleur</td><td>bagues ou excitatrice, régulateur</td><td>balais et collecteur</td></tr>
+        <tr><td>Usage préférable</td><td>vitesse fixe, source suffisante</td><td>pompes, ventilateurs, convoyeurs, centrifugeuses</td><td>servomécanismes, traction, haut rendement</td><td>grandes puissances, compensation</td><td>petits actionneurs sur batterie, installations existantes</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-chaine-figure" data-renvoi="d-chaine-figure">la chaîne d'entraînement avec ses conventions</a> et <a href="#d-quadrants-figure" data-renvoi="d-quadrants-figure">l'animation des quatre quadrants</a>, section D ;</li>
+    <li><a href="#e-charges-figure" data-renvoi="e-charges-figure">les trois familles de charges</a>, <a href="#e-reducteur-figure" data-renvoi="e-reducteur-figure">l'animation de la transmission par courroie</a>, <a href="#e-point-figure" data-renvoi="e-point-figure">la simulation du point de fonctionnement</a> et <a href="#e-cycle-figure" data-renvoi="e-cycle-figure">l'animation du cycle et du couple efficace</a>, section E ;</li>
+    <li><a href="#h-figure" data-renvoi="h-figure">le schéma de l'entraînement de la centrifugeuse</a> et <a href="#h-sim-figure" data-renvoi="h-sim-figure">la simulation de son démarrage</a>, section H ;</li>
+    <li><a href="#i-site-figure" data-renvoi="i-site-figure">le schéma des entraînements du site</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour sélectionner un entraînement et justifier le choix :</p>
+  <ol>
+    <li>Établir la fiche de la charge : loi $C_c(n)$, couple de décollement, inertie $J_c$, vitesse ou plage de vitesse, cycle avec ses durées, nombre de démarrages par heure, quadrants parcourus, environnement. Noter pour chaque donnée si elle est mesurée, garantie par le fabricant de la machine ou supposée.</li>
+    <li>Choisir le nombre de pôles et le rapport de transmission $k = n_m/n_c$ pour que le moteur tourne à une vitesse normalisée, puis ramener la charge à l'arbre du moteur : $C_r = C_c/(k\eta_t)$, $J = J_m + J_c/k^2$.</li>
+    <li>Calculer la puissance au point de service, $P = C_r\varOmega$, et retenir une première taille de moteur dans la gamme normalisée, sans encore conclure.</li>
+    <li>Présélectionner la machine et le mode de démarrage ou de variation par l'arbre de décision de la section F.</li>
+    <li>Vérifier le démarrage : couple accélérateur positif avec marge sur tout le chemin, à la tension minimale de la source ; temps d'accélération par $t_a = J\int\mathrm{d}\varOmega/(C_m - C_r)$ ; en démarrage direct, énergie rotorique au moins égale à $\tfrac{1}{2}J\varOmega_s^2$ et temps comparés aux données du constructeur ; creux de tension sur la source.</li>
+    <li>Vérifier l'échauffement : couple efficace du cycle, pondéré par la ventilation, inférieur au couple nominal ; pointe inférieure au couple maximal et au couple permis par la surcharge du variateur, pendant une durée admise ; déclassement à basse vitesse pour un moteur autoventilé.</li>
+    <li>Traiter le freinage : énergie et puissance de pointe renvoyées, choix entre ralentissement naturel, résistance, redresseur actif ou bus commun ; dimensionner la résistance par $R_f \le U_{dc,max}^2/P_{pic}$ et sa puissance moyenne.</li>
+    <li>Vérifier la source et l'environnement électrique : groupe électrogène, harmoniques du variateur, compensation, protections, longueur de câble.</li>
+    <li>Conclure par un bilan : rendement de chaîne au point de service, énergie annuelle, maintenance, coût, risques ; contrôler l'ordre de grandeur, le bilan énergétique du cycle et la cohérence des unités ; lister les hypothèses à remplacer par les données des constructeurs.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Une essoreuse centrifuge discontinue doit être motorisée. Son panier chargé est entraîné en prise directe ; il accélère jusqu'à
+    $3000\ \mathrm{tr/min}$, essore pendant trois minutes, freine, puis il est déchargé et rechargé à l'arrêt. Il s'agit de choisir le moteur, son mode
+    de démarrage et son freinage, et de justifier chaque choix.
+  </p>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Données, toutes supposées pour l'exercice. Panier chargé : $J_c = 12{,}0\ \mathrm{kg\cdot m^2}$, prise directe, $k = 1$. Couple résistant de
+    ventilation et de frottement : $C_r = 10\,(n/3000)^2\ \mathrm{N\cdot m}$, soit $3{,}14\ \mathrm{kW}$ à $3000\ \mathrm{tr/min}$. Cycle : accélération en
+    $60\ \mathrm{s}$ au plus, palier de $180\ \mathrm{s}$, freinage en $60\ \mathrm{s}$ au plus, arrêt de $120\ \mathrm{s}$. Réseau $400\ \mathrm{V}$,
+    $50\ \mathrm{Hz}$. Moteur candidat, catalogue supposé : $15\ \mathrm{kW}$, deux pôles, $400\ \mathrm{V}$ en triangle, $26{,}7\ \mathrm{A}$,
+    $\cos\varphi = 0{,}88$, rendement $92{,}0\ \%$, $2940\ \mathrm{tr/min}$, $C_d/C_n = 2{,}4$, $C_{max}/C_n = 3{,}0$, $I_d/I_n = 7{,}5$,
+    $J_m = 0{,}05\ \mathrm{kg\cdot m^2}$. Variateur supposé : surcharge de $150\ \%$ de $I_n$ pendant $60\ \mathrm{s}$, hacheur de freinage déclenché à
+    $U_{dc,max} = 760\ \mathrm{V}$. Coefficient de ventilation à l'arrêt $\beta_0 = 0{,}5$, supposé.
+  </p>
+  <p>
+    Inconnues : le mode de démarrage, la taille du moteur, les durées d'accélération et de freinage, le couple efficace, la résistance de
+    freinage et l'énergie renvoyée par cycle. Stratégie : écarter ou retenir le démarrage direct par son énergie rotorique et sa durée ; avec un
+    variateur, choisir le couple d'accélération qui tient les $60\ \mathrm{s}$ ; vérifier le moteur par son couple efficace et le variateur par sa
+    surcharge ; dimensionner le freinage ; contrôler par le bilan énergétique.
+  </p>
+  <p>
+    Le schéma suivant présente l'entraînement retenu à l'issue du calcul, avec le sens de l'énergie dans les deux phases du cycle. Le bus continu
+    du variateur est l'endroit où se décide le freinage : le pont à diodes ne laisse passer l'énergie que du réseau vers le bus, le hacheur la
+    déverse dans la résistance quand la tension du bus dépasse son seuil.
+  </p>
+  <figure id="h-figure">
+    <svg viewBox="0 0 760 340" role="img" aria-label="Entraînement de la centrifugeuse : réseau triphasé, variateur avec pont à diodes, bus continu, condensateur, hacheur et résistance de freinage, onduleur, moteur de 15 kW à deux pôles et panier ; sens de l'énergie à l'accélération et au freinage">
+      <defs>
+        <marker id="fl-h-fig" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="100" y="70" width="370" height="130" rx="10" stroke-dasharray="3 4"/>
+        <path d="M20 118H120M20 134H120M20 150H120"/>
+        <rect x="120" y="104" width="76" height="60" rx="4"/>
+        <path d="M196 104H380M196 164H380"/>
+        <path d="M236 104V128M224 128H248M224 140H248M236 140V164"/>
+        <path d="M300 104V110M300 130V136M300 156V164"/>
+        <rect x="292" y="110" width="16" height="20" rx="2"/>
+        <rect x="286" y="136" width="28" height="20" rx="3"/>
+        <rect x="380" y="104" width="76" height="60" rx="4"/>
+        <path d="M456 118H508M456 134H506M456 150H508"/>
+        <circle cx="540" cy="134" r="34"/>
+        <path d="M574 130H640M574 138H640"/>
+        <rect x="640" y="84" width="104" height="100" rx="10"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M268 160V110" marker-end="url(#fl-h-fig)"/>
+        <path d="M598 122A10 10 0 1 1 612 122" marker-end="url(#fl-h-fig)"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+        <path d="M30 48H730" marker-end="url(#fl-h-fig)"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="8 5">
+        <path d="M720 232H306" marker-end="url(#fl-h-fig)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="110" y="84">variateur de fréquence</text>
+        <text x="22" y="114">L1</text>
+        <text x="22" y="130">L2</text>
+        <text x="22" y="146">L3</text>
+        <text x="158" y="130" text-anchor="middle">pont à</text>
+        <text x="158" y="146" text-anchor="middle">diodes</text>
+        <text x="202" y="100">+</text>
+        <text x="202" y="182">−</text>
+        <text x="252" y="100">U_dc</text>
+        <text x="216" y="138">C</text>
+        <text x="314" y="124">R_f 27 Ω</text>
+        <text x="318" y="152">hacheur</text>
+        <text x="418" y="130" text-anchor="middle">onduleur</text>
+        <text x="418" y="146" text-anchor="middle">IGBT</text>
+        <text x="540" y="130" text-anchor="middle">M</text>
+        <text x="540" y="146" text-anchor="middle">3~</text>
+        <text x="692" y="120" text-anchor="middle">panier</text>
+        <text x="692" y="138" text-anchor="middle">J = 12 kg·m²</text>
+        <text x="692" y="156" text-anchor="middle">3000 tr/min</text>
+        <text x="30" y="38">accélération, quadrant I : du réseau vers le panier, jusqu'à 22,0 kW sur l'arbre</text>
+        <text x="190" y="254">freinage, quadrant II : du panier vers la résistance, 19,8 kW au bus</text>
+        <text x="20" y="290">moteur 15 kW, 2 pôles, 2940 tr/min ; couple limité par le variateur à 70 N·m, soit 1,44 C_n</text>
+        <text x="20" y="310">flèche pleine : énergie à l'accélération ; tirets : au freinage ; flèche courbe : sens positif</text>
+        <text x="20" y="330">référence des potentiels du bus : rail négatif ; U_dc environ 540 V en service, 760 V au seuil</text>
+      </g>
+    </svg>
+    <figcaption>
+      Entraînement de la centrifugeuse. Le cadre en tirets délimite le variateur : pont à diodes, bus continu entre le rail positif et le rail
+      négatif, condensateur $C$, branche de freinage formée de la résistance $R_f$ en série avec le transistor du hacheur, onduleur à IGBT. La
+      flèche verticale entre les rails est la tension $U_{dc}$, orientée du rail négatif, référence des potentiels, vers le rail positif. La
+      flèche pleine du haut suit l'énergie pendant l'accélération, la flèche en tirets du bas pendant le freinage : elle s'arrête à la branche de
+      freinage, puisque le pont à diodes ne peut pas renvoyer l'énergie au réseau.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li><strong>Inertie et énergie cinétique.</strong> $\varOmega_f = 2\pi \times 3000/60 = 314{,}16\ \mathrm{rad/s}$. Inertie totale vue du moteur : $J = J_m + J_c = 0{,}05 + 12{,}0 = 12{,}05\ \mathrm{kg\cdot m^2}$. Énergie cinétique au palier : $W_c = \tfrac{1}{2}J\varOmega_f^2 = 0{,}5 \times 12{,}05 \times 314{,}16^2 = 594{,}6\ \mathrm{kJ}$. Couple résistant : $C_r = a\varOmega^2$ avec $a = 10/314{,}16^2 = 1{,}013 \times 10^{-4}\ \mathrm{N\cdot m\cdot s^2}$.</li>
+    <li><strong>Démarrage direct.</strong> Couple nominal : $C_n = 15\,000/(2\pi \times 2940/60) = 15\,000/307{,}88 = 48{,}72\ \mathrm{N\cdot m}$. Couple moyen estimé : $C_{moy} \approx \tfrac{1}{2}(2{,}4 + 3{,}0) \times 48{,}72 = 131{,}5\ \mathrm{N\cdot m}$ ; couple résistant moyen, moyenne de $a\varOmega^2$ sur la montée, $10/3 = 3{,}33\ \mathrm{N\cdot m}$. Durée jusqu'à la vitesse nominale : $t_a \approx J\varOmega_n/(C_{moy} - C_{r,moy}) = 12{,}05 \times 307{,}88/128{,}2 = 28{,}9\ \mathrm{s}$. Énergie rotorique : au moins $\tfrac{1}{2}J\varOmega_s^2 = 594{,}6\ \mathrm{kJ}$, avec $\varOmega_s = 314{,}16\ \mathrm{rad/s}$. Pendant près de $30\ \mathrm{s}$, le moteur appellerait $6$ à $7{,}5\,I_n$, soit jusqu'à $200\ \mathrm{A}$, et son rotor recevrait cent fois l'énergie du démarrage direct du compresseur du site, $5{,}9\ \mathrm{kJ}$. Les temps de démarrage admissibles en direct se comptent typiquement en secondes ou en dizaines de secondes selon le constructeur, pour des énergies sans commune mesure : démarrage direct refusé, et pour la même raison étoile-triangle et démarreur progressif, qui n'abaissent pas l'énergie rotorique.</li>
+    <li><strong>Variateur à couple constant.</strong> Le variateur limite le couple à $C$ pendant toute la montée. Avec $C_r = a\varOmega^2$, l'intégrale de la section E donne, pour $C = 70\ \mathrm{N\cdot m}$ : $\sqrt{a}\,\varOmega_f = \sqrt{10} = 3{,}162$, $\sqrt{C} = 8{,}367$, $\ln\dfrac{8{,}367 + 3{,}162}{8{,}367 - 3{,}162} = \ln 2{,}2153 = 0{,}7954$, $2\sqrt{aC} = 0{,}16843$, d'où $t_a = 12{,}05 \times 0{,}7954/0{,}16843 = 56{,}9\ \mathrm{s}$, inférieur aux $60\ \mathrm{s}$ demandées. Cas limite sans ventilation, $a \to 0$ : $t_a = J\varOmega_f/C = 54{,}1\ \mathrm{s}$ ; la ventilation ne coûte que $2{,}8\ \mathrm{s}$.</li>
+    <li><strong>Moteur et variateur.</strong> $C/C_n = 70/48{,}72 = 1{,}44$, sous la limite de $1{,}5$. Courant estimé en séparant le courant magnétisant, pris à $40\ \%$ de $I_n$ : $I \approx I_n\sqrt{0{,}40^2 + (1 - 0{,}40^2) \times 1{,}44^2} = 1{,}38\,I_n = 36{,}8\ \mathrm{A}$, sous les $40{,}1\ \mathrm{A}$ de la surcharge à $150\ \%$, pendant $56{,}9\ \mathrm{s}$ pour $60\ \mathrm{s}$ admises : marge faible mais suffisante. Un moteur de $11\ \mathrm{kW}$, $C_n = 35{,}85\ \mathrm{N\cdot m}$, devrait fournir $1{,}95\,C_n$ ; limité à $1{,}5\,C_n$, il mettrait $75{,}3\ \mathrm{s}$ : refusé. En fin de montée, le glissement vaut environ $60 \times 1{,}44 = 86\ \mathrm{tr/min}$ et la fréquence $51{,}4\ \mathrm{Hz}$, légèrement au-delà de la fréquence de base : le flux tombe à $97\ \%$, sans conséquence avec un couple maximal proche de $138\ \mathrm{N\cdot m}$.</li>
+    <li><strong>Freinage.</strong> Le variateur impose $-70\ \mathrm{N\cdot m}$ et la ventilation aide : $t_f = \dfrac{J}{\sqrt{aC}}\arctan\dfrac{\sqrt{a}\,\varOmega_f}{\sqrt{C}} = \dfrac{12{,}05}{0{,}08421}\arctan 0{,}3780 = 143{,}1 \times 0{,}3614 = 51{,}7\ \mathrm{s}$, inférieur à $60\ \mathrm{s}$.</li>
+    <li><strong>Énergies du cycle.</strong> L'angle parcouru en accélération vaut $\theta_a = \dfrac{J}{2a}\ln\dfrac{1}{1 - a\varOmega_f^2/C} = 59\,465 \times \ln 1{,}1667 = 9167\ \mathrm{rad}$, et en freinage $\theta_f = \dfrac{J}{2a}\ln\left(1 + \dfrac{a\varOmega_f^2}{C}\right) = 59\,465 \times \ln 1{,}1429 = 7940\ \mathrm{rad}$. L'arbre fournit $C\theta_a = 641{,}7\ \mathrm{kJ}$ à l'accélération, dont $594{,}6\ \mathrm{kJ}$ stockés et $47{,}0\ \mathrm{kJ}$ dissipés par la ventilation ; il reçoit $C\theta_f = 555{,}8\ \mathrm{kJ}$ au freinage, la ventilation dissipant les $38{,}8\ \mathrm{kJ}$ restants. Le palier consomme $3{,}14\ \mathrm{kW} \times 180\ \mathrm{s} = 565{,}5\ \mathrm{kJ}$.</li>
+    <li><strong>Résistance de freinage.</strong> Énergie reçue par le bus : $W_f = 555{,}8 \times 0{,}92 \times 0{,}98 = 501{,}1\ \mathrm{kJ}$ par freinage, rendements du moteur en génératrice et de l'onduleur supposés égaux à leurs valeurs en moteur. Puissance de pointe, au début du freinage : $70 \times 314{,}16 = 21{,}99\ \mathrm{kW}$ sur l'arbre, $21{,}99 \times 0{,}9016 = 19{,}83\ \mathrm{kW}$ au bus. Résistance maximale : $R_f \le 760^2/19\,830 = 29{,}1\ \mathrm{\Omega}$ ; on retient $27\ \mathrm{\Omega}$, qui absorbe $21{,}4\ \mathrm{kW}$ au seuil. Durée du cycle : $56{,}9 + 180 + 51{,}7 + 120 = 408{,}6\ \mathrm{s}$, soit $8{,}81$ cycles par heure ; puissance moyenne : $501{,}1/408{,}6 = 1{,}23\ \mathrm{kW}$. Résistance retenue : $27\ \mathrm{\Omega}$, $2\ \mathrm{kW}$ en permanence, tenue d'au moins $501\ \mathrm{kJ}$ en impulsion, valeurs à confirmer par le constructeur du variateur.</li>
+    <li><strong>Couple efficace.</strong> Sans pondération : $C_{eq} = \sqrt{\dfrac{70^2 \times 56{,}9 + 10^2 \times 180 + 70^2 \times 51{,}7}{408{,}6}} = \sqrt{\dfrac{550\,180}{408{,}6}} = 36{,}7\ \mathrm{N\cdot m}$, soit $0{,}75\,C_n$. Avec $\beta_0 = 0{,}5$, le dénominateur devient $180 + (56{,}9 + 51{,}7) \times 0{,}75 + 120 \times 0{,}5 = 321{,}5\ \mathrm{s}$ et $C_{eq} = 41{,}4\ \mathrm{N\cdot m}$, soit $0{,}85\,C_n$ : le moteur de $15\ \mathrm{kW}$ convient thermiquement, avec $15\ \%$ de marge.</li>
+  </ol>
+
+  <h3 id="h-sim-section">Simulation interactive : démarrer la centrifugeuse</h3>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Prédiction avant de simuler</span>
+    <p>
+      La simulation intègre l'équation mécanique pour les deux modes, démarrage direct et variateur à couple limité, avec le moteur de
+      $15\ \mathrm{kW}$. Avant de bouger les curseurs, prévoyez ce que deviennent, si l'inertie double, le temps de démarrage direct, l'énergie
+      dissipée dans le rotor et le temps d'accélération sur variateur. Prévoyez aussi ce qui se passe si l'on règle la limite du variateur sous
+      $25\ \%$ de $C_n$ avec un fort couple de ventilation.
+    </p>
+  </div>
+  <figure id="h-sim-figure">
+    <div id="h-sim-trace"></div>
+    <figcaption>
+      Vitesse du panier en fonction du temps, pour le démarrage direct, dont la courbe de couple est reconstituée par une formule de Kloss à
+      glissement critique variable, et pour le variateur à couple constant. Les mesures donnent les durées, les énergies dissipées dans le rotor,
+      le courant et un verdict pour chaque mode. Le verdict du démarrage direct compare la durée à une limite de $15\ \mathrm{s}$, hypothèse
+      d'étude à remplacer par la donnée du constructeur ; celui du variateur compare la durée aux $60\ \mathrm{s}$ de surcharge et le couple à
+      $1{,}5\,C_n$.
+    </figcaption>
+  </figure>
+  <div id="h-sim-curseurs"></div>
+  <p>
+    Interprétation. Doubler l'inertie double le temps de démarrage dans les deux modes, puisque $t_a$ est proportionnel à $J$, et double l'énergie
+    rotorique, puisque $\tfrac{1}{2}J\varOmega_s^2$ l'est aussi ; mais en direct l'énergie passe de $600$ à $1200\ \mathrm{kJ}$, sur variateur de
+    $36$ à $72\ \mathrm{kJ}$. Le modèle complet du démarrage direct donne $30{,}4\ \mathrm{s}$ jusqu'à $2940\ \mathrm{tr/min}$ et $602\ \mathrm{kJ}$, à
+    $5\ \%$ près de l'estimation par couple moyen : l'approximation suffisait pour décider. Si la limite du variateur descend sous le couple de
+    ventilation à $3000\ \mathrm{tr/min}$, la vitesse plafonne là où les deux couples s'égalisent : la consigne n'est jamais atteinte, et le
+    variateur, réglé en limitation, tourne indéfiniment à courant maximal. Enfin, sur variateur, l'énergie rotorique reste environ seize fois plus
+    faible qu'en direct, parce que la vitesse de glissement reste de quelques dizaines de $\mathrm{tr/min}$ au lieu de plusieurs milliers.
+  </p>
+
+  <h3 id="h-controles">Contrôles de cohérence et décision</h3>
+  <ul>
+    <li>Bilan énergétique de l'accélération : $641{,}7 = 594{,}6 + 47{,}0\ \mathrm{kJ}$, à l'arrondi près ; du freinage : $594{,}6 = 555{,}8 + 38{,}8\ \mathrm{kJ}$. Les énergies se referment.</li>
+    <li>Ordre de grandeur : la puissance moyenne d'accélération vaut $641{,}7/56{,}9 = 11{,}3\ \mathrm{kW}$, entre la puissance de ventilation, $3{,}14\ \mathrm{kW}$, et la pointe, $22{,}0\ \mathrm{kW}$ : cohérent.</li>
+    <li>Unités : $J\varOmega/C$ en $\mathrm{kg\cdot m^2 \cdot rad/s/(N\cdot m)} = \mathrm{s}$ ; $U^2/P$ en $\mathrm{V^2/W} = \mathrm{\Omega}$.</li>
+    <li>La puissance du moteur est fixée par l'inertie et le cycle, pas par le régime établi : $15\ \mathrm{kW}$ pour $3{,}14\ \mathrm{kW}$ au palier. C'est la leçon principale de l'exemple.</li>
+    <li>Décision : moteur asynchrone à cage de $15\ \mathrm{kW}$, deux pôles, en prise directe, sur variateur de calibre au moins égal à $26{,}7\ \mathrm{A}$ avec surcharge de $150\ \%$ pendant $60\ \mathrm{s}$, couple limité à $70\ \mathrm{N\cdot m}$, résistance de freinage de $27\ \mathrm{\Omega}$ et $2\ \mathrm{kW}$. Le redresseur actif récupérerait $501\ \mathrm{kJ}$ par cycle, soit $1{,}23\ \mathrm{kWh}$ par heure et $7{,}4\ \mathrm{MWh}$ par an sur $6000\ \mathrm{h}$ : à étudier si le prix du kWh justifie son surcoût, et à condition de garder une résistance pour un fonctionnement sur groupe électrogène.</li>
+  </ul>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <p>
+    Deux applications complètent l'exemple. La première met côte à côte les trois charges du travail central, la centrifugeuse de la section H,
+    un convoyeur de conditionnement et la pompe du site, pour montrer que trois charges de puissances voisines conduisent à trois décisions
+    différentes. La seconde est l'étape du projet fil rouge : la fiche de sélection des entraînements du site.
+  </p>
+
+  <h3 id="i-trois">Pompe, convoyeur, centrifugeuse : trois décisions côte à côte</h3>
+  <p>
+    Le convoyeur à bande, données supposées : effort tangentiel au tambour $F = 2{,}2\ \mathrm{kN}$, frottements et élévation compris, vitesse de
+    bande $v = 1{,}5\ \mathrm{m/s}$, tambour de $0{,}5\ \mathrm{m}$ de diamètre, réducteur de rendement $0{,}95$, couple de décollement égal à
+    $1{,}5$ fois le couple de régime, bande chargée. Puissance au tambour : $Fv = 3{,}30\ \mathrm{kW}$ ; au moteur : $3{,}30/0{,}95 = 3{,}47\ \mathrm{kW}$,
+    d'où un moteur de $4\ \mathrm{kW}$ à quatre pôles, $1440\ \mathrm{tr/min}$, $C_n = 4000/150{,}80 = 26{,}5\ \mathrm{N\cdot m}$. Le tambour tourne à
+    $60v/(\pi D) = 57{,}3\ \mathrm{tr/min}$ ; le rapport exact serait $25{,}1$, on retient un réducteur normalisé de rapport $25$, qui donne
+    $1{,}508\ \mathrm{m/s}$. Couple au tambour : $F D/2 = 550\ \mathrm{N\cdot m}$ ; ramené au moteur : $550/(25 \times 0{,}95) = 23{,}2\ \mathrm{N\cdot m}$,
+    soit $0{,}87\,C_n$ ; au décollement : $34{,}7\ \mathrm{N\cdot m}$, soit $1{,}31\,C_n$. L'étoile-triangle n'offre que $2{,}3/3 = 0{,}77\,C_n$ : exclu.
+    Le démarreur progressif devrait appliquer au moins $\sqrt{1{,}31 \times 1{,}15/2{,}3} = 0{,}81\,U_n$ avec $15\ \%$ de marge, donc appeler
+    $5{,}7\,I_n$ contre $7\,I_n$ en direct : aucun intérêt. Reste le démarrage direct, qui appelle environ $57\ \mathrm{A}$ pour un courant nominal
+    supposé de $8{,}2\ \mathrm{A}$, sans difficulté sur le transformateur du poste, ou le variateur, qui fournit $1{,}5\,C_n$ sous $1{,}4\,I_n$, avec
+    $15\ \%$ de marge au décollement. Le variateur l'emporte si la bande est longue et sensible aux à-coups ou si la cadence doit varier ; dans ce
+    cas, un fonctionnement prolongé sous la moitié de la vitesse à $0{,}87\,C_n$ demande de consulter la courbe de déclassement du moteur
+    autoventilé, ou une ventilation forcée.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <thead>
+        <tr><th>Rubrique</th><th>Pompe du site</th><th>Convoyeur</th><th>Centrifugeuse</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Loi de couple</td><td>quadratique</td><td>constante</td><td>quadratique faible, $3{,}14\ \mathrm{kW}$ au palier</td></tr>
+        <tr><td>Décollement</td><td>faible, environ $0{,}15\,C_n$</td><td>$1{,}31\,C_n$</td><td>négligeable</td></tr>
+        <tr><td>Inertie ramenée</td><td>faible, $0{,}5\ \mathrm{kg\cdot m^2}$ supposés</td><td>faible derrière le réducteur</td><td>$12{,}05\ \mathrm{kg\cdot m^2}$, $595\ \mathrm{kJ}$ au palier</td></tr>
+        <tr><td>Vitesse</td><td>variable, $25$ à $50\ \mathrm{Hz}$</td><td>fixe ou réglable</td><td>cycle de $0$ à $3000\ \mathrm{tr/min}$</td></tr>
+        <tr><td>Quadrants</td><td>I, ralentissement naturel en $0{,}40\ \mathrm{s}$</td><td>I</td><td>I et II à chaque cycle</td></tr>
+        <tr><td>Critère décisif</td><td>énergie : $9{,}2\ \mathrm{kW}$ gagnés sur la vanne</td><td>couple de décollement</td><td>inertie et freinage</td></tr>
+        <tr><td>Solution retenue</td><td>asynchrone $30\ \mathrm{kW}$, variateur $U/f$</td><td>asynchrone $4\ \mathrm{kW}$, réducteur $25$, direct ou variateur</td><td>asynchrone $15\ \mathrm{kW}$ deux pôles, variateur, $27\ \mathrm{\Omega}$</td></tr>
+        <tr><td>Solution écartée</td><td>démarreur progressif et vanne</td><td>étoile-triangle, démarreur progressif</td><td>direct, étoile-triangle, progressif, $11\ \mathrm{kW}$</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="i-site">Fil rouge : fiche de sélection des entraînements du site</h3>
+  <p>
+    Le site compte trois entraînements, étudiés un à un pendant le module : la pompe de $30\ \mathrm{kW}$ sur variateur, le compresseur de
+    $18{,}5\ \mathrm{kW}$ sur démarreur progressif et l'actionneur de la vanne de refoulement, moteur à courant continu sur le bus $24\ \mathrm{V}$
+    secouru. Le groupe électrogène, dont l'alternateur est une machine synchrone, les alimente en marche dégradée. La fiche de sélection les
+    repasse au crible de l'arbre de décision, chiffre deux évolutions et fixe l'ordre de reprise sur groupe. Le schéma suivant situe ces
+    départs sur le tableau général.
+  </p>
+  <figure id="i-site-figure">
+    <svg viewBox="0 0 760 424" role="img" aria-label="Schéma unifilaire des entraînements du site : transformateur et groupe électrogène par l'inverseur de sources, tableau général, départ pompe sur variateur, départ compresseur sur démarreur progressif avec batterie de condensateurs sur KM4, éclairage et prises, armoire automate et actionneur de vanne à courant continu ; ordre de reprise sur groupe">
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="150" cy="40" r="14"/>
+        <circle cx="150" cy="58" r="14"/>
+        <circle cx="520" cy="48" r="18"/>
+        <path d="M150 72V112H300M520 66V112H460"/>
+        <rect x="300" y="96" width="160" height="32" rx="6"/>
+        <path d="M380 128V160"/>
+        <path d="M100 160V180M100 196V214M100 250V274"/>
+        <path d="M280 160V180M280 196V214M280 250V274M280 205H390V214"/>
+        <path d="M500 160V180M500 196V214"/>
+        <path d="M650 160V180M650 196V214M650 250V274"/>
+        <rect x="92" y="180" width="16" height="16"/>
+        <rect x="272" y="180" width="16" height="16"/>
+        <rect x="492" y="180" width="16" height="16"/>
+        <rect x="642" y="180" width="16" height="16"/>
+        <rect x="50" y="214" width="100" height="36" rx="5"/>
+        <rect x="226" y="214" width="108" height="36" rx="5"/>
+        <rect x="350" y="214" width="80" height="36" rx="5"/>
+        <rect x="455" y="214" width="90" height="36" rx="5"/>
+        <rect x="600" y="214" width="100" height="36" rx="5"/>
+        <circle cx="100" cy="298" r="24"/>
+        <circle cx="280" cy="298" r="24"/>
+        <circle cx="650" cy="298" r="24"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round">
+        <path d="M40 160H720"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="694" cy="188" r="10"/>
+        <circle cx="544" cy="188" r="10"/>
+        <circle cx="324" cy="188" r="10"/>
+        <circle cx="144" cy="188" r="10"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11">
+        <text x="172" y="36">T1 100 kVA, 20 kV / 410 V, Dyn11</text>
+        <text x="520" y="52" text-anchor="middle">G</text>
+        <text x="544" y="40">groupe 100 kVA, diesel 80 kW</text>
+        <text x="380" y="116" text-anchor="middle">inverseur de sources</text>
+        <text x="44" y="152">tableau général 230/400 V</text>
+        <text x="88" y="192" text-anchor="end">Q1</text>
+        <text x="268" y="192" text-anchor="end">Q2</text>
+        <text x="488" y="192" text-anchor="end">Q3</text>
+        <text x="638" y="192" text-anchor="end">Q4</text>
+        <text x="694" y="192" text-anchor="middle">1</text>
+        <text x="544" y="192" text-anchor="middle">2</text>
+        <text x="324" y="192" text-anchor="middle">3</text>
+        <text x="144" y="192" text-anchor="middle">4</text>
+        <text x="100" y="236" text-anchor="middle">variateur U/f</text>
+        <text x="280" y="229" text-anchor="middle">démarreur</text>
+        <text x="280" y="244" text-anchor="middle">progressif</text>
+        <text x="390" y="229" text-anchor="middle">KM4</text>
+        <text x="390" y="244" text-anchor="middle">7,44 kvar</text>
+        <text x="500" y="229" text-anchor="middle">éclairage</text>
+        <text x="500" y="244" text-anchor="middle">et prises</text>
+        <text x="650" y="229" text-anchor="middle">armoire</text>
+        <text x="650" y="244" text-anchor="middle">automate</text>
+        <text x="500" y="272" text-anchor="middle">10,5 kW, 3,45 kvar</text>
+        <text x="658" y="266">24 V secouru</text>
+        <text x="100" y="302" text-anchor="middle">M1</text>
+        <text x="280" y="302" text-anchor="middle">M2</text>
+        <text x="650" y="296" text-anchor="middle">M3</text>
+        <text x="650" y="310" text-anchor="middle">=</text>
+        <text x="100" y="344" text-anchor="middle">pompe 30 kW</text>
+        <text x="100" y="360" text-anchor="middle">asynchrone à cage</text>
+        <text x="100" y="376" text-anchor="middle">40 Hz sur groupe</text>
+        <text x="280" y="344" text-anchor="middle">compresseur 18,5 kW</text>
+        <text x="280" y="360" text-anchor="middle">asynchrone à cage</text>
+        <text x="280" y="376" text-anchor="middle">2,0 I_n sur groupe</text>
+        <text x="650" y="344" text-anchor="middle">vanne : courant continu</text>
+        <text x="650" y="360" text-anchor="middle">24 V, aimants, réducteur</text>
+        <text x="650" y="376" text-anchor="middle">irréversible</text>
+        <text x="20" y="402">Q1 à Q4 : disjoncteurs de départ ; numéros cerclés : ordre de reprise sur groupe électrogène</text>
+        <text x="20" y="418">trait épais : jeu de barres ; cercles M : moteurs triphasés ; M3 marqué = : moteur à courant continu</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma unifilaire des entraînements du site. La source est le transformateur T1 en service normal, le groupe électrogène en marche
+      dégradée, sélectionnée par l'inverseur. Chaque départ part du jeu de barres, trait épais, par son disjoncteur. La batterie de condensateurs
+      du compresseur, avec sa self, est raccordée en amont du démarreur par son propre contacteur KM4. L'actionneur de vanne est alimenté par le
+      bus $24\ \mathrm{V}$ secouru de l'armoire automate. Les numéros cerclés donnent l'ordre de reprise des départs sur groupe électrogène, établi
+      plus bas.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Pompe.</strong> La charge est quadratique, à débit variable, dans le seul quadrant I : l'arbre de décision mène à un moteur asynchrone à
+    cage sur variateur $U/f$, la solution du cours <a href="#/cours/variation-de-vitesse-des-moteurs-asynchrones">Variation de vitesse des moteurs
+    asynchrones</a>, confirmée. Évolution chiffrée : un moteur synchrone à aimants sur le même variateur. Au point de service, $18{,}26\ \mathrm{kW}$
+    sur l'arbre et $20{,}0\ \mathrm{kW}$ au réseau, le rendement du moteur actuel vaut $18{,}26/(20{,}0 \times 0{,}97) = 0{,}941$ avec un variateur
+    supposé à $97\ \%$. Un moteur à aimants supposé à $95{,}8\ \%$ au même point absorberait $18{,}26/(0{,}97 \times 0{,}958) = 19{,}65\ \mathrm{kW}$ :
+    $0{,}35\ \mathrm{kW}$ et $2{,}1\ \mathrm{MWh}$ par an sur $6000\ \mathrm{h}$, vingt-six fois moins que les $55\ \mathrm{MWh}$ gagnés en remplaçant la
+    vanne d'étranglement par le variateur. Décision : conserver le moteur asynchrone, réexaminer l'aimant permanent à son remplacement, quand le
+    surcoût se réduit à la différence de prix entre deux moteurs neufs.
+  </p>
+  <p>
+    <strong>Compresseur.</strong> Le compresseur à vis démarre à vide, couple de décollement faible : l'arbre de décision mène au démarreur
+    progressif, retenu dans le cours <a href="#/cours/demarrage-des-moteurs-asynchrones">Démarrage des moteurs asynchrones</a>. Évolution chiffrée :
+    un variateur qui ajuste la vitesse au débit d'air au lieu de la régulation par marche en charge et marche à vide. Hypothèses d'étude : besoin
+    d'air moyen égal à $60\ \%$ de la capacité, marche à vide à $28\ \%$ de la puissance en charge, $17{,}66\ \mathrm{kW}$, puissance proportionnelle
+    au débit sur variateur, variateur à $97\ \%$. En charge et à vide : $0{,}6 \times 17{,}66 + 0{,}4 \times 4{,}94 = 12{,}57\ \mathrm{kW}$ en moyenne ;
+    sur variateur : $0{,}6 \times 17{,}66/0{,}97 = 10{,}92\ \mathrm{kW}$ ; écart de $1{,}65\ \mathrm{kW}$, soit $9{,}9\ \mathrm{MWh}$ par an sur
+    $6000\ \mathrm{h}$. L'écart s'annule quand le compresseur est en charge $90\ \%$ du temps : tout dépend du profil d'air réel. Le variateur aurait
+    deux autres effets : il rendrait inutile la batterie de $7{,}44\ \mathrm{kvar}$, puisqu'un variateur à pont de diodes absorbe un fondamental presque
+    en phase, mais il ajouterait des courants harmoniques à un tableau dont la campagne de qualité de l'énergie a déjà montré la sensibilité ; et il
+    réduirait l'appel sur groupe à environ $I_n$. Décision : l'automate compte pendant un mois les heures en charge et à vide à partir des contacts
+    du compresseur ; si la fraction en charge descend sous $75\ \%$, soit environ $5\ \mathrm{MWh}$ par an d'économie, on étudie un
+    compresseur à vitesse variable complet, avec son filtrage.
+  </p>
+  <p>
+    <strong>Actionneur de vanne.</strong> Petite puissance, alimentation continue secourue, besoin de manœuvrer la vanne pendant une coupure :
+    l'arbre de décision mène au moteur à courant continu à aimants du cours <a href="#/cours/machine-a-courant-continu">Machine à courant continu</a>,
+    confirmé. Un moteur asynchrone demanderait un onduleur sur le bus secouru, plus complexe et moins sûr pour une fonction de sécurité.
+  </p>
+  <p>
+    <strong>Ordre de reprise sur groupe électrogène.</strong> Le diesel de $80\ \mathrm{kW}$ prend la charge par paliers ; on charge d'abord ce qui ne
+    peut pas attendre, puis le plus gros appel de courant pendant que le variateur est encore arrêté. Premier palier : l'armoire automate et le
+    bus secouru, $3{,}72\ \mathrm{kW}$, $4{,}7\ \%$ du diesel. Deuxième : l'éclairage et les prises, $10{,}5\ \mathrm{kW}$, cumul $14{,}22\ \mathrm{kW}$, $17{,}8\ \%$.
+    Troisième : le compresseur, par le démarreur progressif réglé à $2{,}0\,I_n$, KM4 fermé après le bypass, cumul $31{,}88\ \mathrm{kW}$, $39{,}9\ \%$ ;
+    c'est le plus gros palier, $17{,}66\ \mathrm{kW}$, $22{,}1\ \%$ du diesel. Quatrième : la pompe, en rampe de $10\ \mathrm{s}$ jusqu'à $40\ \mathrm{Hz}$,
+    cumul $48{,}88\ \mathrm{kW}$, $61{,}1\ \%$, le point étudié dans le cours <a href="#/cours/machine-synchrone">Machine synchrone</a>. Démarrer le
+    compresseur après la pompe imposerait au variateur le creux de $8{,}9\ \%$ du démarrage : son bus continu descendrait d'environ $540$ à $492\ \mathrm{V}$,
+    sous le seuil de $510\ \mathrm{V}$ qui déclenche son repli de fréquence. Un intervalle de $20\ \mathrm{s}$ entre paliers, supposé, laisse revenir
+    la fréquence et la tension ; la tenue du diesel à un palier de $22\ \%$ est à confirmer par le constructeur du groupe.
+  </p>
+
+  <h3 id="i-compromis">Contraintes, risques et compromis</h3>
+  <ul>
+    <li><strong>Surdimensionner ou non.</strong> Le moteur de la centrifugeuse est trois fois plus gros que son régime établi ne l'exige, parce que l'inertie et le cycle le demandent ; à l'inverse, surdimensionner la pompe dégraderait rendement et facteur de puissance pendant $6000\ \mathrm{h}$ par an. La marge se justifie par une contrainte identifiée, jamais par principe.</li>
+    <li><strong>Simplicité contre performance.</strong> Chaque variateur ajouté apporte souplesse et économie, mais aussi harmoniques, contraintes d'isolation, ventilation d'armoire et un équipement électronique de plus à maintenir. Sur le site, la qualité de l'énergie du tableau général limite le nombre de variateurs sans filtrage.</li>
+    <li><strong>Freinage et source.</strong> Une énergie renvoyée doit toujours trouver un consommateur : résistance, réseau ou autre entraînement. Sur groupe électrogène, seule la résistance convient ; un redresseur actif doit alors être bridé en récupération.</li>
+    <li><strong>Données incertaines.</strong> Inertie, couple de décollement et profil d'air sont les données les moins sûres de la séance ; ce sont aussi celles qui décident. On les mesure avant d'acheter : courbe de lancement libre pour l'inertie, essai de décollement au dynamomètre, comptage des heures en charge.</li>
+    <li><strong>Fonctionnement dégradé.</strong> Chaque entraînement a un réglage pour le groupe électrogène, fréquence de $40\ \mathrm{Hz}$ pour la pompe, $2{,}0\,I_n$ pour le compresseur, et l'automate applique l'ordre de reprise selon la position de l'inverseur de sources.</li>
+  </ul>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Fiche du projet fil rouge</span>
+    <p>
+      Entraînements du site confirmés par l'arbre de décision : pompe asynchrone sur variateur $U/f$, compresseur asynchrone sur démarreur
+      progressif, actionneur de vanne à courant continu sur bus secouru. Moteur à aimants pour la pompe : $0{,}35\ \mathrm{kW}$ et $2{,}1\ \mathrm{MWh}$
+      par an, écarté jusqu'au remplacement. Variateur pour le compresseur : $1{,}65\ \mathrm{kW}$ et $9{,}9\ \mathrm{MWh}$ par an à $60\ \%$ de charge,
+      nul à $90\ \%$, décision suspendue au comptage des heures en charge. Ordre de reprise sur groupe : automate, éclairage, compresseur, pompe,
+      de $4{,}7$ à $61{,}1\ \%$ du diesel, plus gros palier $22{,}1\ \%$. Hypothèses à remplacer par les plaques, les données des constructeurs du
+      compresseur et du groupe, et les comptages sur site.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Choisir le moteur sur la puissance en régime établi.</strong> La centrifugeuse ne demande que $3{,}14\ \mathrm{kW}$ au palier, mais il faut $15\ \mathrm{kW}$ pour l'accélérer en moins d'une minute sans surchauffer. La puissance d'un moteur se déduit du couple efficace du cycle et des pointes, pas du seul point de service.</li>
+    <li><strong>Croire qu'un démarreur progressif augmente le couple.</strong> Il ne fait que réduire la tension, donc le couple comme son carré. Un convoyeur qui réclame $1{,}31\,C_n$ au décollement ne démarre pas sous un démarreur réglé à $3\,I_n$, qui n'offre que $0{,}42\,C_n$. Seul le variateur fournit plus de couple par ampère qu'un démarrage direct.</li>
+    <li><strong>Ramener l'inertie avec le rapport au lieu de son carré.</strong> Une courroie multiplicatrice de rapport $k = 0{,}5$ fait voir au moteur $4 \times 12 = 48\ \mathrm{kg\cdot m^2}$, pas $24$. L'erreur divise par deux le temps d'accélération calculé et l'énergie rotorique.</li>
+    <li><strong>Oublier le freinage.</strong> Un variateur sans résistance qui ralentit une forte inertie voit monter la tension de son bus continu et se met en défaut de surtension ; s'il est réglé pour éviter ce défaut, il allonge seul la rampe, et le cycle n'est plus tenu. Le quadrant II se prévoit à la sélection.</li>
+    <li><strong>Supposer le couple nominal permanent à basse vitesse.</strong> Un moteur autoventilé qui fournit son couple nominal à $15\ \mathrm{Hz}$ voit son ventilateur tourner trois fois moins vite : il chauffe. Pompes et ventilateurs ne posent pas ce problème, convoyeurs lents et extrudeuses oui.</li>
+    <li><strong>Croire que le démarrage à tension réduite ménage le rotor.</strong> L'énergie rotorique d'un démarrage à vide vaut $\tfrac{1}{2}J\varOmega_s^2$ quel que soit le procédé à fréquence fixe ; l'étoile-triangle et le démarreur progressif l'allongent et l'augmentent même en présence d'un couple résistant. Seul le variateur la réduit.</li>
+    <li><strong>Calculer le couple efficace sans tenir compte de la ventilation.</strong> Sur la centrifugeuse, la moyenne quadratique simple donne $36{,}7\ \mathrm{N\cdot m}$, la pondération par $\beta_0 = 0{,}5$ donne $41{,}4\ \mathrm{N\cdot m}$ : l'erreur sous-estime les pertes de plus d'un quart.</li>
+    <li><strong>Optimiser le moteur avant la charge.</strong> Sur la pompe du site, un moteur à aimants gagnerait $2{,}1\ \mathrm{MWh}$ par an, la suppression de l'étranglement en a gagné $55$. On commence par la loi de la charge et le procédé de réglage, on finit par le rendement du moteur.</li>
+    <li><strong>Oublier la source.</strong> Un démarrage accepté sur transformateur peut être refusé sur groupe électrogène, comme le démarrage direct du compresseur ; une énergie renvoyée acceptée par le réseau ne l'est pas par un alternateur, qui passerait en moteur.</li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain. Un moteur qui ronfle sans démarrer ou démarre puis cale à basse vitesse signale un couple disponible insuffisant :
+    tension trop faible, couplage étoile oublié, démarreur trop limité, ou couple de décollement sous-estimé ; on mesure la tension aux bornes
+    pendant la tentative et le courant. Un démarrage qui dure et fait déclencher le relais thermique signale une inertie sous-estimée ; on mesure
+    la durée et on la compare à $J\varOmega/C_{acc}$. Un moteur qui chauffe en service normal alors que son courant moyen reste sous $I_n$ signale un
+    cycle sévère ou une ventilation insuffisante à basse vitesse : on enregistre le courant sur un cycle et on calcule sa valeur efficace. Un
+    variateur qui se met en défaut de surtension au ralentissement signale un freinage non traité ; un défaut de surintensité à l'accélération,
+    une rampe trop courte pour l'inertie. Dans tous les cas, on revient à la fiche de la charge et on vérifie la donnée qui manquait.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic industriel et une
+    question conceptuelle. Ils vont de l'application directe d'une formule au choix d'une méthode, au calcul multi-étapes, au dimensionnement sous
+    contrainte, au diagnostic et à l'analyse de compromis. La correction de chacun reste masquée jusqu'à une tentative ou un clic explicite sur
+    "Voir la correction", puis se déroule étape par étape, accompagnée d'une courbe, d'un diagramme ou d'un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Après chaque réponse,
+    l'explication s'affiche avec un petit schéma tracé pas à pas.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$J\,\frac{\mathrm{d}\varOmega}{\mathrm{d}t} = C_m - C_r, \qquad P = C\,\varOmega, \qquad \varOmega = \frac{2\pi n}{60}$$
+    $$C_r = \frac{C_c}{k\,\eta_t}, \qquad J = J_m + \frac{J_c}{k^2}, \qquad k = \frac{n_m}{n_c}$$
+    $$t_a = J\int\frac{\mathrm{d}\varOmega}{C_m - C_r} \approx \frac{J\,\Delta\varOmega}{C_{acc}}, \qquad W_{rotor} = \frac{1}{2}J\varOmega_s^2 \text{ en direct, à vide}$$
+    $$C_{eq} = \sqrt{\frac{\sum C_i^2\,t_i}{\sum \beta_i\,t_i}} \le C_n$$
+    $$R_f \le \frac{U_{dc,max}^2}{P_{pic}}, \qquad W_f \approx \eta_m\eta_o\left(\tfrac{1}{2}J\varOmega^2 - W_{charge}\right), \qquad \Delta P = P_u\left(\frac{1}{\eta_1} - \frac{1}{\eta_2}\right)$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>Décrire la charge avant de choisir le moteur : loi de couple, décollement, inertie, cycle, quadrants, source.</li>
+      <li>Ramener l'inertie avec le carré du rapport de vitesse, et le couple avec le rapport et le rendement.</li>
+      <li>Ne jamais compter sur une tension réduite pour démarrer une charge qui demande du couple au décollement.</li>
+      <li>Dimensionner le moteur par son couple efficace pondéré par la ventilation, et le variateur par sa surcharge et sa durée.</li>
+      <li>Prévoir le freinage dès la sélection, et vérifier chaque choix sur la source la plus faible, groupe électrogène compris.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Sélectionner un entraînement, c'est confronter la courbe couple-vitesse de la charge à celle du moteur muni de son
+    démarreur ou de son variateur. L'équation $J\,\mathrm{d}\varOmega/\mathrm{d}t = C_m - C_r$ donne le point de fonctionnement et le temps
+    d'accélération ; une transmission divise le couple par $k$ et l'inertie par $k^2$. Le couple de décollement décide du mode de démarrage, car
+    une tension réduite réduit le couple comme son carré. L'inertie décide de l'énergie : en démarrage direct, le rotor dissipe
+    $\tfrac{1}{2}J\varOmega_s^2$ ; seul le variateur la réduit, et il faut évacuer la même énergie au freinage. La taille du moteur se fixe par le
+    couple efficace du cycle, pondéré par la ventilation, et le variateur par sa surcharge. Enfin, l'énergie annuelle classe les solutions : la
+    loi de la charge et le réglage priment sur le rendement du moteur.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent, <a href="#/cours/machine-synchrone">Machine synchrone</a>, dont la
+    machine à aimants figure dans l'arbre de décision ; une sur le cours <a href="#/cours/revision-5-et-etude-de-cas-transformateur">Révision 5 et
+    étude de cas transformateur</a>, vieux d'une semaine, puisque le transformateur du poste est la source de tous les démarrages ; une sur le
+    cours <a href="#/cours/regime-transitoire-rlc">Régime transitoire RLC</a>, vieux d'un mois, puisqu'un moteur et sa charge reliés par un
+    accouplement élastique forment un système du second ordre de même structure, dont la résonance de torsion peut être excitée par un variateur.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : programmer en Python la sélection de l'entraînement de la centrifugeuse, retrouver les chiffres de la section H, puis vérifier dans
+    LTspice le temps d'accélération par l'analogie électrique de l'équation mécanique. Prédictions à écrire avant de commencer : temps
+    d'accélération sur variateur si l'on porte le couple limite à $80\ \mathrm{N\cdot m}$ ; couple efficace si le palier passe à $300\ \mathrm{s}$ ;
+    tension finale du condensateur équivalent dans LTspice.
+  </p>
+  <ol>
+    <li>Écrire une fonction <code>acceleration(J, C, a, w_f)</code> qui intègre $J\,\mathrm{d}\varOmega/\mathrm{d}t = C - a\varOmega^2$ par un pas fixe de $1\ \mathrm{ms}$ et renvoie le temps d'accélération, l'angle parcouru et l'énergie fournie par l'arbre. Retrouver $t_a = 56{,}9\ \mathrm{s}$, $\theta_a = 9167\ \mathrm{rad}$ et $641{,}7\ \mathrm{kJ}$, puis comparer à la formule exacte de la section E.</li>
+    <li>Écrire la même fonction pour le freinage à couple $-C$ et retrouver $t_f = 51{,}7\ \mathrm{s}$ et $555{,}8\ \mathrm{kJ}$ reçus par l'arbre.</li>
+    <li>Modéliser le démarrage direct avec la courbe de Kloss à glissement critique variable, $C = 2C_{max}/(g/g_k + g_k/g)$ avec $g_k = g_{k0} + (g_{k1} - g_{k0})\,g$, en choisissant $g_{k1} = 0{,}5$ pour obtenir $C_d = 2{,}4\,C_n$ et $g_{k0} = 0{,}1087$ pour obtenir $C_n$ à $2\ \%$ de glissement. Retrouver environ $30\ \mathrm{s}$ jusqu'à $2940\ \mathrm{tr/min}$ et $602\ \mathrm{kJ}$ dissipés dans le rotor, en intégrant $g\,C\,\varOmega_s$.</li>
+    <li>Calculer le couple efficace du cycle avec et sans pondération, puis tracer avec <code>matplotlib</code> le couple efficace en fonction du couple limite, de $40$ à $100\ \mathrm{N\cdot m}$, avec et sans pondération, ainsi que $t_a$. Repérer la plage de couple limite qui respecte à la fois $t_a \le 60\ \mathrm{s}$, $C_{eq} \le C_n$ et la surcharge de $1{,}5\,C_n$ du variateur.</li>
+    <li>Facultatif, avec LTspice : l'analogie couple et courant, vitesse et tension, inertie et capacité. Placer un condensateur de $12{,}05\ \mathrm{F}$, image de $J$, alimenté par une source de courant de $70\ \mathrm{A}$, image du couple moteur, en parallèle avec une source de courant comportementale <code>B1 n 0 I=1.0132e-4*V(n)*V(n)</code>, image du couple de ventilation. Simuler $70\ \mathrm{s}$ avec la condition initiale nulle, et mesurer par <code>.meas tran ta WHEN V(n)=314.16</code> l'instant où la tension, image de la vitesse en $\mathrm{rad/s}$, atteint $314{,}16\ \mathrm{V}$. Remplacer ensuite la source de $70\ \mathrm{A}$ par $-70\ \mathrm{A}$, partir de $314{,}16\ \mathrm{V}$ et mesurer le freinage.</li>
+  </ol>
+  <p>
+    Résultats attendus : $t_a = 56{,}9\ \mathrm{s}$ et $t_f = 51{,}7\ \mathrm{s}$ dans les deux outils ; avec $80\ \mathrm{N\cdot m}$, $t_a$ tombe à
+    $49{,}5\ \mathrm{s}$ ; avec un palier de $300\ \mathrm{s}$, le couple efficace descend à $32{,}6\ \mathrm{N\cdot m}$ sans pondération et $35{,}7\ \mathrm{N\cdot m}$ avec ; dans LTspice, la tension
+    tend vers $\sqrt{70/1{,}0132 \times 10^{-4}} = 831\ \mathrm{V}$ si on laisse la simulation courir, vitesse d'équilibre que le variateur n'atteint
+    jamais puisqu'il limite la fréquence. Anomalies à observer : un pas de calcul trop grand rend l'intégration d'Euler instable au freinage
+    quand la vitesse approche de zéro ; sans condition initiale explicite, LTspice calcule un point de fonctionnement continu absurde pour un
+    condensateur alimenté par une source de courant, d'où l'option <code>uic</code> ou une instruction <code>.ic V(n)=0</code>. Dans Python, le
+    couple efficace croît avec le couple limite, de $25{,}7$ à $45{,}5\ \mathrm{N\cdot m}$ sans pondération entre $40$ et $100\ \mathrm{N\cdot m}$ :
+    un couple fort raccourcit les phases dynamiques mais en élève le carré, et le second effet l'emporte. La durée impose au moins
+    $66{,}6\ \mathrm{N\cdot m}$, l'échauffement pondéré au plus $92\ \mathrm{N\cdot m}$, et le variateur au plus $73{,}1\ \mathrm{N\cdot m}$ : la
+    plage utile est étroite, de $67$ à $73\ \mathrm{N\cdot m}$, ce qui justifie les $70\ \mathrm{N\cdot m}$ retenus.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est calculé dans ce navigateur à
+    partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement pour suivre votre progression.
+    Le jalon de fin du module des machines électriques demande de comprendre les transformateurs et les principales machines électriques, de lire
+    leurs modèles, d'interpréter une plaque signalétique et de choisir une solution d'entraînement. Pour le vérifier honnêtement, reprenez sans
+    aide trois tâches : identifier le schéma équivalent d'un moteur asynchrone à partir de sa plaque, construire le diagramme de Fresnel d'un
+    alternateur, et refaire la section H avec un palier de $300\ \mathrm{s}$ et un couple limite de $80\ \mathrm{N\cdot m}$. Une tâche qui résiste
+    désigne le cours à reprendre.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">La charge commande : son point de fonctionnement est l'intersection des courbes couple-vitesse, sa dynamique suit $J\,\mathrm{d}\varOmega/\mathrm{d}t = C_m - C_r$, et une transmission divise le couple par $k$ et l'inertie par $k^2$.</li>
+    <li data-rang="02">Le couple de décollement choisit le mode de démarrage, parce qu'une tension réduite réduit le couple comme son carré ; l'inertie choisit le variateur et le freinage, parce que le rotor dissipe $\tfrac{1}{2}J\varOmega_s^2$ en démarrage direct et que la même énergie revient au freinage.</li>
+    <li data-rang="03">La taille du moteur se fixe par le couple efficace du cycle, pondéré par la ventilation, et celle du variateur par sa surcharge ; le classement final se fait sur l'énergie annuelle, où la loi de la charge et le procédé de réglage pèsent plus que le rendement du moteur.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> abandonner le réflexe "puissance de la machine, donc puissance du moteur", et penser
+    successivement en couple au décollement, en inertie et en cycle thermique. La centrifugeuse de la section H, qui demande un moteur de
+    $15\ \mathrm{kW}$ pour $3{,}14\ \mathrm{kW}$ de régime établi, et le diagramme comparatif des couples de démarrage de la section F sont faits pour
+    installer ce changement de point de vue.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Diodes de puissance, ouvre le module des semi-conducteurs et de la conversion.
+    Question à préparer : le variateur de la centrifugeuse renvoie $501\ \mathrm{kJ}$ vers son bus continu à chaque freinage, mais son pont d'entrée
+    à six diodes ne peut pas les renvoyer au réseau. Pourquoi une diode ne conduit-elle que dans un sens, quelle tension moyenne ce pont donne-t-il
+    sur le bus à partir d'un réseau de $400\ \mathrm{V}$, et quelles pertes ses diodes dissipent-elles quand le variateur fournit $22\ \mathrm{kW}$ en
+    fin d'accélération ?
+  </p>
+
+</article>
