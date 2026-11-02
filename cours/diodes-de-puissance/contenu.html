@@ -1,0 +1,836 @@
+<article class="cours" data-slug="diodes-de-puissance">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/revision-6-et-selection-d-un-entrainement">Révision 6 et sélection d'un entraînement</a> s'est achevé sur une
+      question : le variateur de la centrifugeuse renvoie $501\ \mathrm{kJ}$ vers son bus continu à chaque freinage, mais son pont d'entrée à six
+      diodes ne peut pas les renvoyer au réseau ; pourquoi une diode ne conduit-elle que dans un sens, quelle tension moyenne ce pont donne-t-il à
+      partir d'un réseau de $400\ \mathrm{V}$, et quelles pertes ses diodes dissipent-elles quand le variateur fournit $22\ \mathrm{kW}$ ? Réponse
+      en trois temps. Une diode est une jonction entre une zone dopée P et une zone dopée N : une barrière de potentiel interne s'oppose au passage
+      des porteurs ; une tension directe de quelques dixièmes de volt l'abaisse et le courant croît exponentiellement, une tension inverse la
+      renforce et seul un courant de fuite infime passe. Le courant d'une diode ne s'inverse donc jamais en régime établi. Le pont de six diodes
+      sur $400\ \mathrm{V}$ donne, avec un courant continu bien lissé, $U_{d0} = \frac{3\sqrt{2}}{\pi}\,U = 1{,}35 \times 400 = 540{,}2\ \mathrm{V}$ ;
+      comme ni la tension moyenne ni le courant du pont ne peuvent changer de signe, la puissance $U_d I_d$ ne peut aller que du réseau vers le
+      bus : l'énergie de freinage doit être dissipée dans une résistance ou renvoyée par un pont actif. Enfin, à $22\ \mathrm{kW}$, le bus débite
+      $I_d = 22\,000/540{,}2 = 40{,}7\ \mathrm{A}$ ; chaque diode conduit un tiers de période, soit $13{,}6\ \mathrm{A}$ en moyenne et
+      $23{,}5\ \mathrm{A}$ efficaces. Avec une tension de seuil de $0{,}85\ \mathrm{V}$ et une résistance dynamique de $5\ \mathrm{m\Omega}$,
+      valeurs supposées pour un module courant, chaque diode dissipe $14{,}3\ \mathrm{W}$ et le pont $85{,}8\ \mathrm{W}$, soit $0{,}39\ \%$ de la
+      puissance transmise. Toute cette séance sert à justifier ces trois réponses.
+    </p>
+    <p>
+      Elle s'appuie aussi sur les valeurs moyenne et efficace du cours <a href="#/cours/signaux-periodiques-et-sinusoides">Signaux périodiques et
+      sinusoïdes</a>, sur la convention récepteur du cours <a href="#/cours/tension-courant-charge-et-puissance">Tension, courant, charge et
+      puissance</a>, sur la diode de roue libre et la surtension de coupure du cours <a href="#/cours/regime-transitoire-rl">Régime transitoire
+      RL</a>, sur la précharge du bus du cours <a href="#/cours/regime-transitoire-rc">Régime transitoire RC</a>, et sur les courants en créneaux
+      du cours <a href="#/cours/harmoniques-et-qualite-de-l-energie">Harmoniques et qualité de l'énergie</a>.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    La diode de puissance est le composant le plus simple et le plus répandu de l'électronique de puissance. Elle redresse le réseau à l'entrée de
+    presque tous les variateurs de fréquence, alimentations à découpage, chargeurs de batteries, postes de soudage et alimentations de freins de
+    moteurs. Elle assure la roue libre dans tous les hacheurs et onduleurs, où elle offre un chemin au courant d'une charge inductive quand le
+    transistor s'ouvre. Elle protège les bobines de contacteurs et d'électrovannes contre leurs surtensions de coupure, elle découple les sources
+    redondantes d'un bus 24 V secouru, elle empêche une batterie de se décharger dans un panneau photovoltaïque la nuit.
+  </p>
+  <p>
+    Son comportement paraît élémentaire, un clapet qui laisse passer le courant dans un sens, mais trois de ses propriétés gouvernent le
+    dimensionnement d'un convertisseur : sa tension de conduction, qui fixe ses pertes et donc son dissipateur ; sa tension inverse admissible,
+    qui fixe sa robustesse face aux surtensions du réseau ; et son comportement à la coupure, la récupération inverse, qui fixe les pertes de
+    commutation du transistor associé et une partie des perturbations électromagnétiques. Une diode mal choisie claque sur la première surtension,
+    surchauffe parce que l'on a calculé ses pertes avec le courant moyen seul, ou ruine le rendement d'un hacheur rapide parce qu'elle est trop
+    lente. Le travail central de la séance consiste à calculer la tension moyenne, le courant et les pertes d'une diode ; dans le projet fil rouge,
+    il conduit au pont d'entrée du variateur de la pompe : tenue en tension, pertes, température de jonction et protections.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Expliquer, à partir de la jonction PN et de la structure P+ N- N+, pourquoi une diode conduit dans un sens, bloque dans l'autre et stocke une charge pendant la conduction.</li>
+    <li data-rang="02">Interpréter la caractéristique courant-tension d'une diode de puissance : seuil, résistance dynamique, effet de la température, courant de fuite, tension inverse répétitive et avalanche.</li>
+    <li data-rang="03">Calculer la tension moyenne, la tension efficace et les courants moyen, efficace et de crête d'un redresseur simple alternance sur charge résistive, inductive, avec diode de roue libre ou sur force électromotrice.</li>
+    <li data-rang="04">Calculer les pertes de conduction d'une diode par $P = V_{F0}\,I_{moy} + r_F\,I_{eff}^2$ et en déduire une température de jonction.</li>
+    <li data-rang="05">Estimer le courant inverse de recouvrement, la durée de recouvrement et les pertes qui en résultent, et comparer diodes standard, rapides, Schottky et Schottky au carbure de silicium.</li>
+    <li data-rang="06">Dimensionner une diode pour un cahier des charges : tension inverse, courant moyen et efficace, surcharge, contrainte $I^2t$ et protections associées.</li>
+    <li data-rang="07">Diagnostiquer une diode en court-circuit ou ouverte à partir des symptômes d'un redresseur et d'une mesure au multimètre.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois acquis suffisent. Le premier, vu dans le cours <a href="#/cours/signaux-periodiques-et-sinusoides">Signaux périodiques et sinusoïdes</a> :
+    la valeur moyenne d'un signal périodique est $\langle x\rangle = \frac{1}{T}\int_0^T x(t)\,\mathrm{d}t$, sa valeur efficace
+    $X_{eff} = \sqrt{\frac{1}{T}\int_0^T x^2(t)\,\mathrm{d}t}$ ; pour une sinusoïde d'amplitude $X_m$, $X_{eff} = X_m/\sqrt{2}$ et la moyenne est nulle.
+    Le deuxième, vu dans le cours <a href="#/cours/tension-courant-charge-et-puissance">Tension, courant, charge et puissance</a> : en convention
+    récepteur, flèches de tension et de courant opposées, $p = u\,i$ est la puissance absorbée, et la puissance moyenne est la moyenne de $p$, pas
+    le produit des moyennes. Le troisième, vu dans le cours <a href="#/cours/regime-transitoire-rl">Régime transitoire RL</a> : le courant d'une
+    inductance est continu, une inductance parcourue par $I$ stocke $\frac{1}{2}LI^2$, et l'ouvrir brutalement crée une surtension $L\,\mathrm{d}i/\mathrm{d}t$
+    qu'il faut canaliser. La correction de chaque question reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la correction".
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Notation de la séance</span>
+    <p>
+      $v_F$ et $i_F$ sont la tension et le courant directs de la diode, en convention récepteur : $v_F = v_A - v_K$, anode moins cathode, et $i_F$
+      entre par l'anode. $v_R = -v_F$ et $i_R$ désignent la tension et le courant inverses. $V_{F0}$ est la tension de seuil du modèle linéaire et
+      $r_F$ sa résistance dynamique ; $I_S$ le courant de saturation de l'équation de Shockley, $n$ son coefficient d'idéalité,
+      $V_{th} = kT/q$ la tension thermique. $V_{RRM}$ est la tension inverse répétitive maximale de la fiche technique, $I_{F(AV)}$ le courant moyen
+      assigné, $I_{FSM}$ le courant de surcharge accidentelle sur une demi-sinusoïde de $10\ \mathrm{ms}$. $Q_{rr}$, $t_{rr}$ et $I_{RRM}$ sont la
+      charge, la durée et le courant inverse maximal de recouvrement. Pour le redresseur, $v_s = V_m\sin\theta$ est la tension de source, avec
+      $\theta = \omega t$ et $V_m = \sqrt{2}\,V_s$, et l'indice "moy" désigne une valeur moyenne, "eff" une valeur efficace. $T_j$ est la température
+      de jonction et $R_{th}$ une résistance thermique en $\mathrm{K/W}$.
+    </p>
+  </div>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-jonction-texte">Une barrière que l'on abaisse ou que l'on renforce</h3>
+  <p>
+    Mettez en contact un silicium dopé P, riche en trous mobiles, et un silicium dopé N, riche en électrons mobiles. Les porteurs diffusent de la
+    zone où ils abondent vers celle où ils manquent et se recombinent au voisinage de la frontière. Ils laissent derrière eux les ions fixes des
+    dopants, négatifs côté P, positifs côté N : une zone vidée de porteurs mobiles, la zone de charge d'espace, apparaît, et ses charges fixes
+    créent un champ électrique qui repousse les porteurs. L'équilibre s'établit quand ce champ compense exactement la diffusion ; il correspond à
+    une différence de potentiel interne, la barrière, d'environ $0{,}7\ \mathrm{V}$ dans le silicium. Elle ne se mesure pas au voltmètre aux
+    bornes d'une diode au repos, car les potentiels de contact des connexions métalliques la compensent.
+  </p>
+  <p>
+    Appliquez une tension directe, anode positive : elle s'oppose à la barrière, la zone de charge d'espace se rétrécit, et une fraction des
+    porteurs, qui suit la loi de Boltzmann, franchit la barrière. Cette fraction est multipliée par $e$ chaque fois que la tension augmente de
+    $kT/q \approx 26\ \mathrm{mV}$ : le courant croît exponentiellement et, en pratique, la diode semble "s'ouvrir" vers $0{,}6$ à $0{,}8\ \mathrm{V}$.
+    Appliquez une tension inverse : elle renforce la barrière, la zone de charge d'espace s'élargit, et seuls les rares porteurs minoritaires créés
+    thermiquement la traversent : c'est le courant de fuite, de l'ordre du microampère au milliampère selon la taille et la température.
+  </p>
+  <p>
+    L'animation suivante représente une jonction PN. Réglez la tension appliquée par la poignée ronde sur l'axe gradué, par le curseur ou par la
+    lecture, qui balaie la tension de $-20$ à $+0{,}8\ \mathrm{V}$. Prédisez avant de manipuler : quand la tension inverse passe de $5$ à
+    $20\ \mathrm{V}$, la largeur de la zone de charge d'espace quadruple-t-elle, double-t-elle, ou reste-t-elle la même ? Et que devient le courant
+    direct entre $0{,}6$ et $0{,}72\ \mathrm{V}$ ?
+  </p>
+  <figure id="d-jonction-figure">
+    <div class="schema-vivant" id="d-jonction"></div>
+    <figcaption>
+      Jonction PN vue en coupe, anode à gauche. Le rectangle en tirets est la zone de charge d'espace, dont la largeur suit
+      $W \propto \sqrt{V_{bi} - v}$, avec $V_{bi} = 0{,}7\ \mathrm{V}$ la barrière interne ; les signes moins et plus qui la remplissent sont les
+      ions fixes des dopants. Les petits disques pleins, côté P, sont des trous, les petits cercles creux, côté N, des électrons ; en direct, des
+      flèches montrent les porteurs qui franchissent la barrière, d'autant plus nombreuses que le courant est grand. Le sens du courant
+      conventionnel, de l'anode vers la cathode, est indiqué en haut ; l'axe gradué du bas porte la poignée de la tension appliquée
+      $v = v_A - v_K$, la cathode étant prise comme potentiel de référence.
+    </figcaption>
+  </figure>
+  <div id="d-jonction-curseurs"></div>
+  <div id="d-jonction-lecteur"></div>
+  <div id="d-jonction-valeurs"></div>
+  <p>
+    Interprétation : la largeur suit la racine de $V_{bi} - v$ ; de $-5$ à $-20\ \mathrm{V}$, elle passe de $\sqrt{5{,}7}$ à $\sqrt{20{,}7}$, soit
+    un facteur $1{,}91$ : elle double à peu près, elle ne quadruple pas. Le courant, lui, change de nature : en inverse, il plafonne à $-I_S$ quelle
+    que soit la tension, jusqu'à l'avalanche ; en direct, il est multiplié par $e^{0{,}12/0{,}02585} \approx 100$ entre $0{,}6$ et
+    $0{,}72\ \mathrm{V}$ pour une diode idéale, $n = 1$. C'est cette exponentielle qui donne l'impression d'un seuil : sur une échelle en ampères, rien
+    ne se voit avant $0{,}6\ \mathrm{V}$, puis tout passe.
+  </p>
+
+  <h3 id="d-structure-texte">La diode de puissance : une zone épaisse pour tenir la tension</h3>
+  <p>
+    Une jonction PN simple ne tient que quelques dizaines de volts : la zone de charge d'espace y est mince et le champ y atteint vite la valeur
+    critique du silicium, environ $20\ \mathrm{V/\mu m}$, au-delà de laquelle les porteurs, accélérés, arrachent d'autres électrons en cascade :
+    c'est l'avalanche. Pour tenir des centaines ou des milliers de volts, on intercale entre la zone P+ fortement dopée et la zone N+ fortement
+    dopée une épaisse zone N- faiblement dopée, dans laquelle la zone de charge d'espace peut s'étaler en inverse : c'est la structure PiN. Plus
+    la tension à tenir est élevée, plus cette zone est épaisse et peu dopée.
+  </p>
+  <figure id="d-structure-figure">
+    <svg viewBox="0 0 760 316" role="img" aria-label="Structure P+ N- N+ d'une diode de puissance, zone de charge d'espace en inverse, injection de porteurs en direct, et symbole de la diode en convention récepteur"><defs><marker id="fl-d-pin" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker><marker id="fl-d-pin-o" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10" fill="none" stroke="currentColor" stroke-width="1.6"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="60" y="70" width="16" height="100" rx="1"/><rect x="76" y="70" width="70" height="100"/><rect x="146" y="70" width="300" height="100"/><rect x="446" y="70" width="60" height="100"/><rect x="506" y="70" width="16" height="100" rx="1"/><path d="M68 70V44"/><path d="M514 70V44"/></g><g fill="currentColor" fill-opacity="0.3" stroke="none"><rect x="60" y="70" width="16" height="100"/><rect x="506" y="70" width="16" height="100"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="6 4"><rect x="138" y="62" width="196" height="116" rx="4"/></g><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M152 96H246" marker-end="url(#fl-d-pin)"/><path d="M440 146H346" marker-end="url(#fl-d-pin-o)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="40" y="34">A, anode</text><text x="486" y="34">K, cathode</text><text x="98" y="126">P+</text><text x="206" y="128">N-, zone de tenue</text><text x="212" y="146">faiblement dopée</text><text x="462" y="126">N+</text><text x="160" y="88" font-size="11">trous injectés</text><text x="300" y="164" font-size="11">électrons injectés</text></g><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M570 110H636.6M653.4 110H720"/><path d="M636.6 98L653.4 110L636.6 122Z"/><path d="M653.4 98V122"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M582 110H606" marker-end="url(#fl-d-pin)"/><path d="M706 150H586" marker-end="url(#fl-d-pin-o)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="552" y="98">A</text><text x="724" y="98">K</text><text x="572" y="136">+</text><text x="706" y="136">-</text><text x="584" y="98">i_F</text><text x="598" y="172">v_F = v_A - v_K</text></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11.5"><text x="40" y="204">Rectangle en tirets : zone de charge d'espace en polarisation inverse, elle s'étale dans N-.</text><text x="40" y="222">Flèches pleine et ouverte : en direct, P+ injecte des trous et N+ des électrons dans N-,</text><text x="40" y="240">qui devient conductrice.</text><text x="40" y="258">Épaisseur de N- : de l'ordre de 0,1 mm pour une tenue de 1000 V dans le silicium.</text><text x="40" y="284">Symbole à droite, convention récepteur : flèche de i_F vers la cathode, flèche de v_F vers l'anode,</text><text x="40" y="302">les deux flèches opposées ; p = v_F i_F est la puissance absorbée, toujours positive pour une diode.</text></g></svg>
+    <figcaption>
+      Structure P+ N- N+ d'une diode de puissance et son symbole. En inverse, la zone de charge d'espace, rectangle en tirets, s'étale dans la zone
+      N- et tient la tension. En direct, la zone P+ injecte des trous, flèche pleine, et la zone N+ des électrons, flèche ouverte, dans la zone N- :
+      ces porteurs en excès la rendent conductrice, c'est la modulation de conductivité. À droite, le symbole en convention récepteur : le courant
+      $i_F$ entre par l'anode A, la tension $v_F = v_A - v_K$ est fléchée vers l'anode, et la cathode K est repérée par la barre.
+    </figcaption>
+  </figure>
+  <p>
+    En conduction, cette zone épaisse et peu dopée devrait présenter une forte résistance. Elle n'en présente pas, parce que les deux zones
+    extrêmes y injectent massivement des porteurs : la zone N- est inondée de trous et d'électrons en excès, en quantité bien supérieure à son
+    dopage, et devient bonne conductrice. Cette modulation de conductivité a un prix. Ces porteurs en excès forment une charge stockée,
+    proportionnelle au courant et à leur durée de vie ; pour bloquer la diode, il faut d'abord les évacuer. Pendant ce temps, la diode conduit en
+    inverse : c'est la récupération inverse, ou recouvrement. On peut réduire la durée de vie des porteurs par des centres de recombinaison, ce qui
+    rend la diode rapide, mais réduit la modulation et augmente la tension de conduction : tenue en tension, chute directe et rapidité forment un
+    compromis que chaque famille de diodes règle différemment.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Un clapet anti-retour sur une conduite d'eau</span>
+    <p>
+      La diode se comporte comme un clapet anti-retour à ressort : il faut une petite différence de pression pour décoller le clapet, c'est le
+      seuil ; une fois ouvert, le débit croît avec la pression, la conduite présentant une résistance hydraulique, c'est $r_F$ ; une contre-pression
+      le plaque sur son siège, et seule une fuite minime subsiste, c'est le courant de fuite. Un clapet lourd ne se ferme pas instantanément quand le
+      débit s'inverse : un peu d'eau repart en arrière, puis le clapet claque, et la brusque annulation de ce reflux crée un coup de bélier. C'est
+      exactement la récupération inverse et la surtension $L\,\mathrm{d}i/\mathrm{d}t$ qui l'accompagne quand le recouvrement est brutal.
+    </p>
+    <p>
+      Les limites sont précises. Le clapet a un seuil net, la diode n'a qu'une exponentielle, qui n'a pas de seuil au sens strict. Le clapet ne
+      change pas avec la température, alors que la tension de conduction de la diode diminue d'environ $2\ \mathrm{mV/K}$ à faible courant. Le
+      reflux du clapet vient de l'inertie de la pièce mobile, celui de la diode de la charge stockée, qui dépend du courant conduit juste avant.
+      Enfin, un clapet surpressé se déforme progressivement, alors que la diode passe brutalement en avalanche au-delà de sa tension de claquage,
+      et se détruit si l'énergie n'est pas limitée.
+    </p>
+  </div>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-shockley">L'équation de Shockley et la tension thermique</h3>
+  <p>
+    Pour une jonction idéale, le nombre de porteurs qui franchissent la barrière abaissée de $v$ est proportionnel au facteur de Boltzmann
+    $e^{qv/kT}$ ; le courant inverse des porteurs minoritaires, lui, ne dépend pas de $v$. Le courant net est la différence des deux, ce qui donne
+    l'équation de Shockley, à laquelle on ajoute un coefficient d'idéalité $n$ compris entre $1$ et $2$ pour rendre compte des recombinaisons dans
+    la zone de charge d'espace et de la forte injection :
+  </p>
+  <div class="formule-cle">
+    $$i_F = I_S\left(e^{\,v_F/(n V_{th})} - 1\right), \qquad V_{th} = \frac{kT}{q} = 25{,}85\ \mathrm{mV} \text{ à } 300\ \mathrm{K}$$
+    <p class="formule-cle-legende">
+      $i_F$ en ampères ; $I_S$, courant de saturation, en ampères, de $10^{-15}$ à $10^{-8}\ \mathrm{A}$ selon la surface et la technologie ;
+      $v_F$ en volts ; $k = 1{,}381 \times 10^{-23}\ \mathrm{J/K}$ ; $q = 1{,}602 \times 10^{-19}\ \mathrm{C}$ ; $T$ en kelvins ; $n$ sans dimension.
+      Hypothèses : jonction en régime permanent, courant assez faible pour négliger les résistances des zones neutres. Dimension :
+      $[kT/q] = \mathrm{J/C} = \mathrm{V}$, donc l'exposant est sans dimension, comme il se doit. Cas limites : pour $v_F \ll -nV_{th}$, $i_F \to -I_S$,
+      le courant de fuite théorique ; pour $v_F \gg nV_{th}$, $i_F \approx I_S e^{v_F/(nV_{th})}$, et la tension n'augmente que de
+      $nV_{th}\ln 10 = 60\,n\ \mathrm{mV}$ par décade de courant.
+    </p>
+  </div>
+  <p>
+    Interprétation : il n'existe pas de seuil physique ; la "tension de seuil" n'est que la tension à laquelle le courant devient significatif à
+    l'échelle de l'application. Pour une diode de $40\ \mathrm{A}$, $1\ \mathrm{A}$ et $10\ \mathrm{A}$ ne sont séparés que de $0{,}12\ \mathrm{V}$ environ.
+    Aux forts courants, la résistance des zones neutres, des soudures et des fils de connexion ajoute un terme $r_s\,i_F$ : la tension ne croît plus
+    comme un logarithme mais presque linéairement, ce que montre la partie haute de la caractéristique.
+  </p>
+  <p>
+    La température agit de deux façons opposées. $I_S$ croît très vite avec $T$, à peu près comme $T^3 e^{-E_g/(nkT)}$, avec
+    $E_g = 1{,}11\ \mathrm{eV}$ pour le silicium : à courant donné, la tension diminue, d'environ $2\ \mathrm{mV/K}$ aux faibles courants. La
+    résistance série, elle, augmente avec $T$ : aux forts courants, la tension augmente. Les deux effets se compensent en un point, le point
+    d'inversion du coefficient de température, que les fiches techniques montrent comme le croisement des courbes à $25$ et à $125$ ou
+    $150\ ^\circ\mathrm{C}$. Sa position compte pour la mise en parallèle : en dessous, la diode la plus chaude prend plus de courant et chauffe
+    davantage, ce qui peut emballer le partage.
+  </p>
+
+  <h3 id="e-caracteristique">La caractéristique complète et ses grandeurs de fiche technique</h3>
+  <p>
+    La caractéristique d'une diode de puissance se lit en trois zones. En conduction, le courant croît d'abord exponentiellement, puis presque
+    linéairement. En blocage, un courant de fuite $I_R$, de l'ordre du milliampère pour une diode de puissance chaude, croît lentement avec la tension
+    inverse. Au-delà de la tension de claquage $V_{BR}$, l'avalanche fait croître le courant inverse brutalement. Le constructeur garantit une
+    tension inverse répétitive $V_{RRM}$, en dessous de $V_{BR}$, que la diode peut supporter à chaque période, et parfois une tension non répétitive
+    $V_{RSM}$, un peu plus élevée, pour des surtensions accidentelles.
+  </p>
+  <figure id="e-carac-figure">
+    <svg viewBox="0 0 760 430" role="img" aria-label="Caractéristique courant-tension complète d'une diode de puissance de 1200 V : conduction directe avec seuil, modèle linéaire, blocage avec courant de fuite et avalanche au-delà de la tension de claquage"><defs><marker id="fl-e-car" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M110 240H735" marker-end="url(#fl-e-car)"/><path d="M470 410V36" marker-end="url(#fl-e-car)"/></g><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M550 236v8"/><path d="M630 236v8"/><path d="M710 236v8"/><path d="M466 150h8"/><path d="M466 60h8"/><path d="M370 236v8"/><path d="M270 236v8"/><path d="M170 236v8"/><path d="M466 300h8"/><path d="M466 360h8"/></g><g fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M470 240L542 240L557 240L557.7 240L558.4 240L559.1 240L559.9 240L560.6 240L561.3 240L562 240L562.7 240L563.4 239.9L564.1 239.9L564.8 239.9L565.5 239.9L566.3 239.9L567 239.9L567.7 239.9L568.4 239.9L569.1 239.9L569.8 239.9L570.6 239.8L571.3 239.8L572 239.8L572.7 239.8L573.4 239.7L574.1 239.7L574.9 239.7L575.6 239.6L576.3 239.6L577 239.5L577.8 239.5L578.5 239.4L579.2 239.4L580 239.3L580.7 239.2L581.5 239.1L582.2 239L583 238.9L583.7 238.7L584.5 238.6L585.3 238.4L586 238.2L586.8 238L587.6 237.7L588.4 237.5L589.3 237.1L590.1 236.8L590.9 236.4L591.8 236L592.7 235.5L593.6 234.9L594.5 234.3L595.5 233.6L596.5 232.8L597.5 232L598.5 231L599.6 229.9L600.8 228.6L602 227.3L603.3 225.7L604.6 224L606 222L607.5 219.8L609.1 217.3L610.8 214.6L612.6 211.5L614.5 208L616.6 204.1L618.9 199.7L621.4 194.8L624 189.3L626.9 183.1L630.1 176.1L633.6 168.3L637.4 159.6L641.6 149.8L646.2 138.8L651.3 126.4L657 112.6L663.2 97L670.1 79.6L677.8 60"/></g><g fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M470 240L470 240.2L462.5 240.3L455 240.4L447.5 240.5L440 240.6L432.5 240.8L425 240.9L417.5 241.1L410 241.3L402.5 241.5L395 241.7L387.5 241.9L380 242.2L372.5 242.4L365 242.7L357.5 242.9L350 243.2L342.5 243.5L335 243.8L327.5 244.1L320 244.4L312.5 244.7L305 245L297.5 245.4L290 245.7L282.5 246.1L275 246.4L267.5 246.8L260 247.1L252.5 247.5L245 247.9L237.5 248.3L230 248.7L222.5 249.1L215 249.5L207.5 249.9L200 250.3L192.5 250.7L185 251.1L177.5 251.6L170 252L145 259.2L135 278.4L132 336L131 402"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 5"><path d="M601 240L683.2 51"/></g><g fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 4"><path d="M170 240V396"/><path d="M131 240V396"/><path d="M470 252H170"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="538" y="260">0,5</text><text x="626" y="260">1</text><text x="698" y="260">1,5</text><text x="700" y="230">v (V)</text><text x="436" y="154">50</text><text x="428" y="64">100</text><text x="478" y="46">i_F (A), courant direct</text><text x="352" y="230">-400</text><text x="252" y="230">-800</text><text x="148" y="230">-1200</text><text x="478" y="304">-5 mA</text><text x="478" y="364">-10 mA</text><text x="118" y="412">V_BR</text><text x="158" y="412">V_RRM</text><text x="186" y="270">I_R, courant de fuite</text><text x="579" y="276">V_F0</text><text x="484" y="96">modèle linéaire</text><text x="484" y="112">V_F0 + r_F i</text><text x="520" y="170">conduction</text><text x="250" y="300">blocage</text><text x="186" y="330">avalanche : destructive si</text><text x="186" y="346">l'énergie n'est pas limitée</text></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11"><text x="118" y="30">côté inverse : volts compressés,</text><text x="118" y="46">courant dilaté en mA</text><text x="520" y="330">côté direct : volts et ampères</text></g></svg>
+    <figcaption>
+      Caractéristique courant-tension d'une diode de $1200\ \mathrm{V}$, tracée en trait plein épais. Les deux demi-plans n'ont pas la même
+      échelle : à droite, la tension directe en volts et le courant direct en ampères ; à gauche, la tension inverse en centaines de volts, et vers le
+      bas le courant inverse en milliampères, dilaté pour être visible. Les pointillés verticaux repèrent $V_{RRM}$ et $V_{BR}$, le pointillé
+      horizontal le courant de fuite $I_R$ à $V_{RRM}$. La droite en tirets est le modèle linéaire $V_{F0} + r_F\,i$, qui coupe l'axe des tensions en
+      $V_{F0}$. La convention est la convention récepteur du symbole de la section D.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-modeles">Trois modèles statiques, et le choix entre eux</h3>
+  <p>
+    On remplace l'exponentielle par un modèle linéaire par morceaux. Le modèle idéal, interrupteur parfait, suffit pour analyser les formes d'onde
+    d'un convertisseur dont les tensions sont grandes devant $1\ \mathrm{V}$. Le modèle à seuil, une source $V_{F0}$ en série avec la diode idéale,
+    suffit pour les bilans de tension en basse tension, un chargeur de $12\ \mathrm{V}$ par exemple. Le modèle à seuil et résistance,
+    $v_F = V_{F0} + r_F\,i_F$ pour $i_F > 0$, est celui des calculs de pertes ; ses deux paramètres se lisent sur la fiche technique, à la température
+    de jonction maximale, ou se déduisent de deux points de la caractéristique $(i_1, v_1)$ et $(i_2, v_2)$ :
+    $r_F = (v_2 - v_1)/(i_2 - i_1)$ et $V_{F0} = v_1 - r_F\,i_1$. Pour la diode de la figure, entre $20$ et $80\ \mathrm{A}$ à $25\ ^\circ\mathrm{C}$,
+    on obtient $V_{F0} = 0{,}819\ \mathrm{V}$ et $r_F = 4{,}89\ \mathrm{m\Omega}$ ; à $125\ ^\circ\mathrm{C}$, $0{,}692\ \mathrm{V}$ et
+    $7{,}59\ \mathrm{m\Omega}$. Le modèle est faux aux faibles courants, où il prédit un courant nul en dessous de $V_{F0}$, mais l'erreur n'y porte
+    que sur des pertes négligeables.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Modèle</th><th>Équation en conduction</th><th>Usage préférable</th><th>Limite</th></tr></thead>
+      <tbody>
+        <tr><td>Idéal</td><td>$v_F = 0$</td><td>formes d'onde, tensions moyennes, tensions de quelques centaines de volts</td><td>pertes nulles, inutilisable pour la thermique</td></tr>
+        <tr><td>À seuil</td><td>$v_F = V_{F0}$</td><td>bilans de tension en basse tension, chute d'un pont</td><td>ignore la croissance de $v_F$ avec le courant</td></tr>
+        <tr><td>Seuil et résistance</td><td>$v_F = V_{F0} + r_F\,i_F$</td><td>pertes de conduction, température de jonction</td><td>faux aux faibles courants, paramètres liés à $T_j$</td></tr>
+        <tr><td>Exponentiel</td><td>$i_F = I_S(e^{v_F/(nV_{th})} - 1)$</td><td>petits signaux, mesure de température, simulation</td><td>calculs manuels lourds, résistance série à ajouter</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    La simulation suivante trace la caractéristique directe de la même diode à $25\ ^\circ\mathrm{C}$, en tirets, et à la température de jonction
+    choisie, en trait plein, avec la droite du modèle linéaire à cette température, en pointillés. Faites glisser la poignée ronde le long de
+    l'axe des courants, ou utilisez les curseurs. Prédisez avant de manipuler : à $5\ \mathrm{A}$, la tension directe est-elle plus forte ou plus
+    faible à $125\ ^\circ\mathrm{C}$ qu'à $25\ ^\circ\mathrm{C}$, et à $100\ \mathrm{A}$ ? Le modèle linéaire tiré entre $20$ et $80\ \mathrm{A}$
+    est-il pessimiste ou optimiste à $5\ \mathrm{A}$ ?
+  </p>
+  <figure id="e-carac-sim-figure">
+    <div class="schema-vivant" id="e-carac-sim"></div>
+    <figcaption>
+      Caractéristique directe de la diode de $1200\ \mathrm{V}$ et $40\ \mathrm{A}$ de la séance : courant en abscisse cette fois, de $0$ à
+      $120\ \mathrm{A}$, tension directe en ordonnée, de $0{,}3$ à $1{,}8\ \mathrm{V}$. Tirets : $25\ ^\circ\mathrm{C}$ ; trait plein épais :
+      température choisie ; pointillés : modèle linéaire à la température choisie. La poignée glisse sur l'axe des courants ; le point plein se
+      place sur la courbe en trait plein, le cercle creux sur la courbe à $25\ ^\circ\mathrm{C}$.
+    </figcaption>
+  </figure>
+  <div id="e-carac-curseurs"></div>
+  <div id="e-carac-valeurs"></div>
+  <p>
+    Interprétation : à $5\ \mathrm{A}$, la diode chaude conduit avec une tension plus faible, d'environ $0{,}13\ \mathrm{V}$ à $125\ ^\circ\mathrm{C}$ ;
+    à $100\ \mathrm{A}$, c'est l'inverse, la tension est plus forte d'environ $0{,}14\ \mathrm{V}$. Le croisement se trouve vers $45\ \mathrm{A}$
+    pour ce modèle. Sous ce courant, deux diodes en parallèle ne se partagent pas bien le courant : la plus chaude en prend davantage ; au-dessus, la
+    plus chaude en prend moins, et le partage se stabilise. Le modèle linéaire tiré entre $20$ et $80\ \mathrm{A}$ sous-estime la tension en dessous
+    de $20\ \mathrm{A}$ et l'annule sous $V_{F0}$ : il est légèrement optimiste aux faibles courants, ce qui ne pèse presque rien dans les pertes
+    puisque le courant y est petit. Enfin, pour un calcul de pertes, on prend les paramètres à la température de jonction attendue, et non à
+    $25\ ^\circ\mathrm{C}$ : c'est la règle des fiches techniques, qui donnent $V_{F0}$ et $r_F$ à $T_{j\,max}$.
+  </p>
+
+  <h3 id="e-pertes">Pertes de conduction : la moyenne ne suffit pas</h3>
+  <p>
+    La puissance instantanée absorbée par la diode en conduction vaut $p(t) = v_F\,i_F = V_{F0}\,i_F + r_F\,i_F^2$. Sa moyenne sur une période
+    donne les pertes de conduction. Le premier terme fait apparaître la moyenne du courant, le second la moyenne de son carré, c'est-à-dire le carré
+    de sa valeur efficace :
+  </p>
+  <div class="formule-cle">
+    $$P_{cond} = \frac{1}{T}\int_0^T \left(V_{F0}\,i_F + r_F\,i_F^2\right)\mathrm{d}t = V_{F0}\,I_{F,moy} + r_F\,I_{F,eff}^2$$
+    <p class="formule-cle-legende">
+      $P_{cond}$ en watts, $V_{F0}$ en volts, $r_F$ en ohms, courants en ampères. Hypothèses : modèle linéaire valable sur toute la plage de courant,
+      paramètres pris à la température de jonction de fonctionnement, pertes de fuite en blocage négligées. Dimension :
+      $\mathrm{V \cdot A} = \mathrm{W}$ et $\mathrm{\Omega \cdot A^2} = \mathrm{W}$. Cas limites : courant continu, $I_{eff} = I_{moy}$ et
+      $P = V_F\,I$ ; diode idéale, $V_{F0} = r_F = 0$, pertes nulles.
+    </p>
+  </div>
+  <p>
+    Deux courants de même valeur moyenne ne donnent donc pas les mêmes pertes : plus le courant est concentré dans le temps, plus sa valeur
+    efficace est grande devant sa moyenne. On note $F = I_{eff}/I_{moy}$ le facteur de forme ; le terme résistif est multiplié par $F^2$.
+  </p>
+  <figure id="e-formes-figure">
+    <svg viewBox="0 0 760 272" role="img" aria-label="Trois formes de courant de même valeur moyenne : continu, demi-sinusoïde et créneau d'un tiers de période, avec leur valeur efficace et le poids du terme résistif des pertes"><g fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M30 190H240"/><path d="M30 196V40"/></g><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M30 150L31.7 150L33.3 150L35 150L36.7 150L38.3 150L40 150L41.7 150L43.3 150L45 150L46.7 150L48.3 150L50 150L51.7 150L53.3 150L55 150L56.7 150L58.3 150L60 150L61.7 150L63.3 150L65 150L66.7 150L68.3 150L70 150L71.7 150L73.3 150L75 150L76.7 150L78.3 150L80 150L81.7 150L83.3 150L85 150L86.7 150L88.3 150L90 150L91.7 150L93.3 150L95 150L96.7 150L98.3 150L100 150L101.7 150L103.3 150L105 150L106.7 150L108.3 150L110 150L111.7 150L113.3 150L115 150L116.7 150L118.3 150L120 150L121.7 150L123.3 150L125 150L126.7 150L128.3 150L130 150L131.7 150L133.3 150L135 150L136.7 150L138.3 150L140 150L141.7 150L143.3 150L145 150L146.7 150L148.3 150L150 150L151.7 150L153.3 150L155 150L156.7 150L158.3 150L160 150L161.7 150L163.3 150L165 150L166.7 150L168.3 150L170 150L171.7 150L173.3 150L175 150L176.7 150L178.3 150L180 150L181.7 150L183.3 150L185 150L186.7 150L188.3 150L190 150L191.7 150L193.3 150L195 150L196.7 150L198.3 150L200 150L201.7 150L203.3 150L205 150L206.7 150L208.3 150L210 150L211.7 150L213.3 150L215 150L216.7 150L218.3 150L220 150L221.7 150L223.3 150L225 150L226.7 150L228.3 150L230 150"/></g><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="6 4"><path d="M30 150H230"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="30" y="26">continu</text><text x="164" y="144">I_moy</text><text x="30" y="212">I_eff = I_moy</text><text x="30" y="230">terme r_F I² : x 1</text><text x="224" y="206">t</text></g><g fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M280 190H490"/><path d="M280 196V40"/></g><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M280 190L281.7 183.4L283.3 176.9L285 170.3L286.7 163.9L288.3 157.5L290 151.2L291.7 145L293.3 138.9L295 132.9L296.7 127.2L298.3 121.6L300 116.1L301.7 110.9L303.3 105.9L305 101.1L306.7 96.6L308.3 92.3L310 88.3L311.7 84.6L313.3 81.2L315 78L316.7 75.2L318.3 72.7L320 70.5L321.7 68.6L323.3 67.1L325 65.9L326.7 65L328.3 64.5L330 64.3L331.7 64.5L333.3 65L335 65.9L336.7 67.1L338.3 68.6L340 70.5L341.7 72.7L343.3 75.2L345 78L346.7 81.2L348.3 84.6L350 88.3L351.7 92.3L353.3 96.6L355 101.1L356.7 105.9L358.3 110.9L360 116.1L361.7 121.6L363.3 127.2L365 132.9L366.7 138.9L368.3 145L370 151.2L371.7 157.5L373.3 163.9L375 170.3L376.7 176.9L378.3 183.4L380 190L381.7 190L383.3 190L385 190L386.7 190L388.3 190L390 190L391.7 190L393.3 190L395 190L396.7 190L398.3 190L400 190L401.7 190L403.3 190L405 190L406.7 190L408.3 190L410 190L411.7 190L413.3 190L415 190L416.7 190L418.3 190L420 190L421.7 190L423.3 190L425 190L426.7 190L428.3 190L430 190L431.7 190L433.3 190L435 190L436.7 190L438.3 190L440 190L441.7 190L443.3 190L445 190L446.7 190L448.3 190L450 190L451.7 190L453.3 190L455 190L456.7 190L458.3 190L460 190L461.7 190L463.3 190L465 190L466.7 190L468.3 190L470 190L471.7 190L473.3 190L475 190L476.7 190L478.3 190L480 190"/></g><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="6 4"><path d="M280 150H480"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="280" y="26">demi-sinusoïde</text><text x="414" y="144">I_moy</text><text x="280" y="212">I_eff = 1,571 I_moy</text><text x="280" y="230">terme r_F I² : x 2,47</text><text x="474" y="206">t</text></g><g fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M530 190H740"/><path d="M530 196V40"/></g><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M530 190V70H596.7V190H730"/></g><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="6 4"><path d="M530 150H730"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="530" y="26">créneau d'un tiers</text><text x="664" y="144">I_moy</text><text x="530" y="212">I_eff = 1,732 I_moy</text><text x="530" y="230">terme r_F I² : x 3</text><text x="724" y="206">t</text></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11.5"><text x="30" y="260">Trait plein : courant i(t) sur une période ; tirets : valeur moyenne, la même pour les trois formes.</text></g></svg>
+    <figcaption>
+      Trois courants de diode de même valeur moyenne, en tirets. Courant continu : $F = 1$. Demi-sinusoïde sur une période, cas du redresseur
+      simple alternance : $I_{moy} = I_m/\pi$, $I_{eff} = I_m/2$, $F = \pi/2 = 1{,}571$. Créneau d'un tiers de période, cas d'une diode d'un pont
+      triphasé à courant lissé : $I_{moy} = I_d/3$, $I_{eff} = I_d/\sqrt{3}$, $F = \sqrt{3} = 1{,}732$. Le terme $r_F\,I_{eff}^2$ est multiplié par
+      $1$, $2{,}47$ et $3$.
+    </figcaption>
+  </figure>
+  <p>
+    La puissance se transforme en chaleur dans la jonction et doit traverser le boîtier, l'interface et le dissipateur. En régime permanent, on
+    écrit cette chaîne comme une loi d'Ohm thermique, qui sera détaillée dans le cours Thermique des composants de puissance :
+  </p>
+  <div class="formule-cle">
+    $$T_j = T_a + P\left(R_{th,jc} + R_{th,cs} + R_{th,sa}\right)$$
+    <p class="formule-cle-legende">
+      $T_j$ et $T_a$, températures de jonction et ambiante, en degrés Celsius ou en kelvins, puisque seule la différence compte ; $P$ en watts ;
+      résistances thermiques jonction-boîtier, boîtier-dissipateur et dissipateur-air en $\mathrm{K/W}$. Hypothèses : régime établi, flux de
+      chaleur unique, résistances indépendantes de la température. Dimension : $\mathrm{W \cdot K/W} = \mathrm{K}$. Cas limite : $P = 0$ donne
+      $T_j = T_a$. Le résultat doit rester sous $T_{j\,max}$, $150$ à $175\ ^\circ\mathrm{C}$ selon le constructeur, avec une marge.
+    </p>
+  </div>
+
+  <h3 id="e-redresseur-texte">Le redresseur simple alternance</h3>
+  <p>
+    Le montage le plus simple place une diode $D$ entre une source sinusoïdale $v_s = V_m\sin\theta$ et une charge. Sur charge résistive, avec une
+    diode idéale, la diode conduit tant que $v_s > 0$ et bloque quand $v_s < 0$ : la charge reçoit les alternances positives seules, la diode
+    supporte les négatives. Les valeurs moyenne et efficace se calculent sur une période, l'intégrale étant nulle sur la seconde moitié :
+  </p>
+  <div class="formule-cle">
+    $$V_{moy} = \frac{1}{2\pi}\int_0^{\pi} V_m\sin\theta\,\mathrm{d}\theta = \frac{V_m}{\pi}, \qquad V_{eff} = \sqrt{\frac{1}{2\pi}\int_0^{\pi} V_m^2\sin^2\theta\,\mathrm{d}\theta} = \frac{V_m}{2}, \qquad V_{RM} = V_m$$
+    <p class="formule-cle-legende">
+      Tensions en volts, $\theta = \omega t$ en radians. Hypothèses : diode idéale, source sans impédance, charge résistive pure. Calcul :
+      $\int_0^\pi \sin\theta\,\mathrm{d}\theta = 2$ et $\int_0^\pi \sin^2\theta\,\mathrm{d}\theta = \pi/2$. Le courant suit la même forme :
+      $I_{moy} = V_m/(\pi R)$, $I_{eff} = V_m/(2R)$, $I_m = V_m/R$. La diode bloquée supporte $-v_s$, d'où une tension inverse maximale égale à
+      $V_m$. La puissance de la charge vaut $V_{eff}^2/R = V_m^2/(4R)$, la moitié de celle qu'elle recevrait sans diode. Cas limite : avec un seuil
+      $V_{F0}$ non négligeable, $V_{moy} \approx (V_m - V_{F0})/\pi$ pour $V_{F0} \ll V_m$.
+    </p>
+  </div>
+  <p>
+    La charge change tout. Avec une inductance en série, le courant ne peut pas s'annuler quand $v_s$ s'annule : la diode reste passante au-delà
+    de $\theta = \pi$, jusqu'à un angle d'extinction $\beta$ où le courant s'annule, et la charge reçoit pendant ce temps une tension négative. La
+    tension moyenne baisse : $V_{moy} = V_m(1 - \cos\beta)/(2\pi)$. Une diode de roue libre $D_{RL}$, placée en inverse aux bornes de la charge,
+    supprime cette partie négative : dès que $v_s$ devient négative, le courant de l'inductance passe par elle, la tension de la charge reste
+    voisine de zéro, et $V_{moy}$ revient à $V_m/\pi$. C'est le montage de l'alimentation d'un frein de moteur. Avec une force électromotrice $E$,
+    une batterie par exemple, la diode ne conduit que lorsque $v_s > E$, entre $\theta_1 = \arcsin(E/V_m)$ et $\pi - \theta_1$, et la tension
+    inverse vaut $V_m + E$. Avec un condensateur de filtrage, celui-ci reste chargé près de $V_m$ pendant l'alternance négative : la diode doit
+    alors tenir près de $2V_m$, un piège classique.
+  </p>
+  <p>
+    La simulation suivante calcule le redresseur en régime établi, avec une diode à seuil de $0{,}8\ \mathrm{V}$ et $10\ \mathrm{m\Omega}$. Choisissez la
+    charge par le premier curseur, réglez la tension efficace de la source et les éléments de la charge, puis déplacez l'instant d'observation par la
+    poignée ronde de l'axe des temps ou par la lecture. Prédisez avant de manipuler : quand on ajoute une inductance de $0{,}1\ \mathrm{H}$ à une
+    charge de $20\ \Omega$, la tension moyenne augmente-t-elle ou diminue-t-elle ? Et quand on ajoute ensuite la diode de roue libre ? Sur la
+    charge à condensateur, quelle tension inverse maximale la diode voit-elle ?
+  </p>
+  <figure id="e-redresseur-figure">
+    <div class="schema-vivant" id="e-redresseur"></div>
+    <div id="e-redresseur-tensions"></div>
+    <div id="e-redresseur-courants"></div>
+    <figcaption>
+      Schéma du redresseur pour la charge choisie, en convention récepteur pour la diode et la charge, le neutre de la source étant le potentiel de
+      référence. À l'instant choisi, les branches parcourues par le courant sont en trait épais, les branches sans courant en trait fin, et une
+      diode bloquée porte la mention "bloquée". En dessous, sur deux périodes : la tension de source $v_s$ en tirets, la tension de la charge
+      $v_{ch}$ en trait plein épais, la tension de la diode $v_D$ en pointillés ; puis le courant de la diode $D$ en trait plein et, s'il existe, le
+      courant de la charge en tirets. Le trait vertical fin marque l'instant d'observation, réglé par la poignée sur l'axe des temps.
+    </figcaption>
+  </figure>
+  <div id="e-redresseur-curseurs"></div>
+  <div id="e-redresseur-lecteur"></div>
+  <div id="e-redresseur-valeurs"></div>
+  <p>
+    Interprétation : avec $230\ \mathrm{V}$, $20\ \Omega$ et $0{,}1\ \mathrm{H}$, la diode conduit sur environ $240^\circ$ au lieu de $180^\circ$ et
+    la tension moyenne tombe de $103\ \mathrm{V}$ à $77\ \mathrm{V}$ : la charge reçoit une tension négative après le passage par zéro de la source,
+    tant que l'inductance restitue son énergie. La diode de roue libre ramène la tension moyenne à $103\ \mathrm{V}$ et rend le courant de la charge
+    continu, compris entre $1{,}1$ et $10{,}4\ \mathrm{A}$ ; la diode principale ne porte plus que $3{,}3\ \mathrm{A}$ moyens et dissipe moins. Sur la
+    charge à condensateur, la tension inverse maximale atteint environ $61\ \mathrm{V}$ pour une source de $24\ \mathrm{V}$ efficaces, soit près de
+    $2V_m = 67{,}9\ \mathrm{V}$, alors que le courant n'est plus qu'une impulsion étroite, d'une crête près de huit fois sa moyenne. La méthode est
+    toujours la même : écrire l'état de chaque diode, passante ou bloquée, vérifier la cohérence, $i_F > 0$ pour une diode passante,
+    $v_F < 0$ pour une diode bloquée, et changer d'état quand une condition est violée.
+  </p>
+
+  <h3 id="e-recouvrement-texte">Mise en conduction et récupération inverse</h3>
+  <p>
+    À la mise en conduction, la zone N- n'est pas encore inondée de porteurs : sa résistance est d'abord élevée et la tension directe passe par une
+    pointe, la surtension de mise en conduction $V_{FR}$, de quelques volts à quelques dizaines de volts pendant quelques centaines de nanosecondes.
+    Elle compte dans les montages très rapides et pour les diodes de protection, qui doivent réagir avant que la surtension ne s'installe.
+  </p>
+  <p>
+    Au blocage, le circuit extérieur, en général un transistor qui se ferme dans un hacheur ou un onduleur, impose une décroissance du courant avec
+    une pente $\mathrm{d}i/\mathrm{d}t$ fixée par la tension et l'inductance de la maille. Le courant passe par zéro, mais la diode, encore pleine de
+    charge stockée, continue de conduire en inverse : sa tension reste faible pendant la durée $t_a$, le courant inverse atteint le maximum
+    $I_{RRM}$, puis la zone de charge d'espace se reforme, la tension inverse s'établit et le courant revient à zéro pendant $t_b$. La charge
+    évacuée est la charge de recouvrement $Q_{rr}$, la durée totale $t_{rr} = t_a + t_b$, et le rapport $S = t_b/t_a$ est la douceur du
+    recouvrement : $S$ petit, la diode "claque" ; $S$ voisin de $1$, elle est douce. Avec un modèle triangulaire du courant inverse :
+  </p>
+  <div class="formule-cle">
+    $$t_a = \frac{I_{RRM}}{\mathrm{d}i/\mathrm{d}t}, \qquad Q_{rr} = \frac{1}{2}\,I_{RRM}\,(t_a + t_b) = \frac{I_{RRM}^2\,(1 + S)}{2\,\mathrm{d}i/\mathrm{d}t} \quad \Longrightarrow \quad I_{RRM} = \sqrt{\frac{2\,Q_{rr}\,\mathrm{d}i/\mathrm{d}t}{1 + S}}$$
+    <p class="formule-cle-legende">
+      $I_{RRM}$ en ampères, $Q_{rr}$ en coulombs, $\mathrm{d}i/\mathrm{d}t$ en ampères par seconde, $t_a$, $t_b$ en secondes, $S$ sans dimension.
+      Hypothèses : courant inverse triangulaire, $Q_{rr}$ supposée constante alors qu'elle augmente en réalité avec le courant direct, la pente et la
+      température. Dimension : $\sqrt{\mathrm{C \cdot A/s}} = \sqrt{\mathrm{A^2}} = \mathrm{A}$. Cas limites : $Q_{rr} = 0$, diode Schottky
+      idéale, pas de courant inverse ; pente doublée, $I_{RRM}$ multiplié par $\sqrt{2}$ et $t_{rr}$ divisé par $\sqrt{2}$.
+    </p>
+  </div>
+  <p>
+    Le recouvrement coûte de l'énergie à deux endroits. Le transistor qui se ferme porte, pendant $t_a$, le courant de charge plus le courant
+    inverse de la diode sous la pleine tension du bus : on admet comme ordre de grandeur un supplément d'énergie de mise en conduction de
+    $V_R\,Q_{rr}$. La diode, elle, dissipe pendant $t_b$, quand la tension inverse monte alors que le courant inverse décroît ; avec une montée
+    linéaire de la tension jusqu'à $V_R$, l'énergie vaut $V_R\,I_{RRM}\,t_b/6$. Ces pertes sont multipliées par la fréquence de découpage. Enfin, la
+    décroissance rapide du courant pendant $t_b$ crée, dans l'inductance parasite $L_\sigma$ de la maille, une surtension
+    $L_\sigma\,I_{RRM}/t_b$ qui s'ajoute à $V_R$ : un recouvrement brutal est à la fois une contrainte en tension et une source de perturbations.
+    Dans les fiches techniques, $Q_{rr}$, $t_{rr}$, $I_{RRM}$ et souvent l'énergie $E_{rec}$ sont donnés pour des conditions de mesure précises ;
+    les formules ci-dessus servent à extrapoler et à comprendre, pas à remplacer ces valeurs.
+  </p>
+  <p>
+    L'animation suivante trace le courant et la tension de la diode pendant le blocage, à partir d'un courant direct de $30\ \mathrm{A}$ sous une
+    tension inverse de $400\ \mathrm{V}$. Réglez la pente, la charge de recouvrement, la douceur et l'inductance de maille, puis parcourez le temps
+    par la poignée ronde de l'axe ou par la lecture. Prédisez avant de manipuler : à charge de recouvrement fixée, que deviennent $I_{RRM}$ et la
+    surtension quand on divise la douceur par quatre ? Et quand on double la pente ?
+  </p>
+  <figure id="e-recouvrement-figure">
+    <div class="schema-vivant" id="e-recouvrement"></div>
+    <figcaption>
+      Chronogramme du blocage, modèle triangulaire. En haut, le courant de la diode $i_F$ en trait plein épais : décroissance à pente imposée,
+      passage par zéro, pointe inverse $-I_{RRM}$ à la fin de $t_a$, retour à zéro pendant $t_b$ ; l'aire grisée sous l'axe est la charge
+      $Q_{rr}$. En bas, la tension $v_F$ en trait plein : quasi nulle pendant $t_a$, puis tension inverse $-V_R$ atteinte avec la surtension
+      $L_\sigma\,I_{RRM}/t_b$, suivie d'une oscillation amortie de forme qualitative ; la droite en tirets marque $-V_R$. Le trait vertical fin et le point plein suivent l'instant choisi, réglé par la
+      poignée sur l'axe du temps, en nanosecondes depuis le passage par zéro du courant.
+    </figcaption>
+  </figure>
+  <div id="e-recouvrement-curseurs"></div>
+  <div id="e-recouvrement-lecteur"></div>
+  <div id="e-recouvrement-valeurs"></div>
+  <p>
+    Interprétation : avec $Q_{rr} = 3\ \mathrm{\mu C}$ et $200\ \mathrm{A/\mu s}$, une diode douce, $S = 1$, donne $I_{RRM} = 24{,}5\ \mathrm{A}$,
+    $t_{rr} = 245\ \mathrm{ns}$ et $20\ \mathrm{V}$ de surtension avec $100\ \mathrm{nH}$ de maille. Avec $S = 0{,}25$, $I_{RRM}$ monte à
+    $31{,}0\ \mathrm{A}$, le retour à zéro dure $39\ \mathrm{ns}$ au lieu de $122$, et la surtension quadruple, $80\ \mathrm{V}$ : à charge égale, une
+    diode brutale est plus agressive. Doubler la pente multiplie $I_{RRM}$ par $\sqrt{2}$ : commuter plus vite réduit les pertes du transistor à la
+    commutation, mais augmente le courant inverse et la surtension. Le supplément pour le transistor, $V_R\,Q_{rr} = 1{,}2\ \mathrm{mJ}$, est six fois
+    l'énergie de la diode, $0{,}2\ \mathrm{mJ}$ pour $S = 1$ : une diode lente pénalise surtout son transistor.
+  </p>
+
+  <h3 id="e-familles">Familles de diodes de puissance</h3>
+  <p>
+    Les diodes de redressement standard, optimisées pour une faible chute et une forte tenue, ont une charge stockée importante, de l'ordre de la
+    dizaine de microcoulombs : elles conviennent au réseau à $50\ \mathrm{Hz}$, où la pente de blocage est faible. Les diodes rapides et ultrarapides,
+    à durée de vie réduite, descendent à quelques centaines de nanocoulombs au prix d'une chute plus forte : ce sont les diodes de roue libre des
+    hacheurs et des onduleurs, souvent intégrées aux modules d'IGBT. Les diodes Schottky au silicium, jonction métal-semiconducteur sans injection de
+    porteurs minoritaires, n'ont pas de charge stockée et une chute de $0{,}3$ à $0{,}6\ \mathrm{V}$, mais leur tenue ne dépasse guère
+    $200\ \mathrm{V}$ et leur courant de fuite est élevé à chaud. Les diodes Schottky au carbure de silicium tiennent $650$ à $1700\ \mathrm{V}$ sans
+    recouvrement, seule leur capacité de jonction se charge, mais leur chute est plus élevée, $1{,}3$ à $1{,}7\ \mathrm{V}$, et leur coût supérieur. Le
+    tableau comparatif figure en section F.
+  </p>
+
+  <h3 id="e-dimensionnement">Grandeurs de dimensionnement et protections</h3>
+  <p>
+    Le choix d'une diode passe par cinq contrôles. La tension : $V_{RRM}$ doit dépasser la tension inverse maximale du montage avec une marge, en
+    pratique un facteur $1{,}5$ à $2{,}5$ selon l'exposition aux surtensions, ce qui est une règle de conception et non une loi. Le courant moyen et
+    le courant efficace, comparés à $I_{F(AV)}$ et $I_{F(RMS)}$, dans les conditions de refroidissement de la fiche. La surcharge : le courant de
+    surcharge accidentelle $I_{FSM}$, donné pour une demi-sinusoïde de $10\ \mathrm{ms}$, et la contrainte thermique $I^2t = I_{FSM}^2 \times 0{,}005\ \mathrm{s}$
+    qui s'en déduit, doivent couvrir la pointe de mise sous tension et le défaut jusqu'à la coupure par la protection. La thermique : $T_j$ calculée
+    avec les pertes doit rester sous $T_{j\,max}$ avec une marge. Le comportement dynamique, enfin, si la diode commute à haute fréquence.
+  </p>
+  <p>
+    Les protections découlent de ces contrôles. Un fusible ultrarapide, de classe aR, protège une diode contre les courts-circuits s'il coupe avec
+    une contrainte $I^2t$ de coupure inférieure à celle de la diode : c'est la seule protection assez rapide, un disjoncteur ordinaire laisse passer
+    plusieurs fois l'$I^2t$ de la diode. Des varistances entre phases écrêtent les surtensions venues du réseau. Un circuit RC en parallèle sur la
+    diode, l'amortisseur ou snubber, ralentit la remontée de tension et amortit l'oscillation entre $L_\sigma$ et la capacité de la diode après le
+    recouvrement. Une diode de roue libre protège, à l'inverse, les autres composants contre la surtension d'une charge inductive. Pour les forts
+    courants, la mise en parallèle impose un déclassement et des diodes appairées, montées sur le même dissipateur ; pour les fortes tensions, la mise
+    en série impose des résistances d'équilibrage contre les différences de courant de fuite et des condensateurs contre les différences de
+    recouvrement. L'application de la section I réunit ces protections autour d'un pont de diodes.
+  </p>
+
+  <h3 id="e-statut">Loi, convention, approximation, règle de conception et donnée du constructeur</h3>
+  <ul>
+    <li><strong>Lois physiques :</strong> la statistique de Boltzmann qui fonde l'équation de Shockley, la conservation de la charge qui impose l'évacuation de $Q_{rr}$, la loi de Faraday qui donne la surtension $L_\sigma\,\mathrm{d}i/\mathrm{d}t$, la conservation de l'énergie qui fonde le bilan thermique.</li>
+    <li><strong>Conventions :</strong> la convention récepteur $v_F = v_A - v_K$ avec $i_F$ entrant par l'anode ; le signe négatif du courant de recouvrement ; la définition de $t_{rr}$ entre le passage par zéro et un seuil conventionnel du courant inverse, qui varie selon les constructeurs.</li>
+    <li><strong>Approximations :</strong> le modèle linéaire $V_{F0} + r_F\,i$, le recouvrement triangulaire, l'énergie $V_R\,Q_{rr}$ du transistor, la résistance thermique constante, la source sans impédance du redresseur.</li>
+    <li><strong>Règles de conception :</strong> la marge de $1{,}5$ à $2{,}5$ sur $V_{RRM}$, la marge sur $T_{j\,max}$, le déclassement des diodes en parallèle, le choix d'une diode rapide pour toute roue libre commutée à plus de quelques kilohertz.</li>
+    <li><strong>Données du constructeur :</strong> $V_{RRM}$, $I_{F(AV)}$, $I_{FSM}$, $I^2t$, $V_{F0}$ et $r_F$ à $T_{j\,max}$, $Q_{rr}$ et $t_{rr}$ dans leurs conditions de mesure, $R_{th,jc}$, et pour les fusibles l'$I^2t$ de coupure, qui dépend de la tension et du facteur de puissance du circuit. Les exigences de raccordement, sur la composante continue injectée au réseau par exemple, relèvent du gestionnaire du réseau et des textes applicables au site.</li>
+  </ul>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, le redresseur simple alternance sur charge résistive avec ses chronogrammes,
+    l'organigramme de choix et de vérification d'une diode, et le tableau comparatif des familles de diodes. Les autres schémas sont restés au
+    contact du passage qu'ils illustrent ; la liste de renvois figure à la fin de la section.
+  </p>
+  <p>
+    Le schéma principal se lit en deux parties. En haut, le circuit : la source $v_s$, fléchée vers sa borne repérée $+$, la diode $D$, anode à
+    gauche, la résistance $R$ ; le courant $i$ circule dans le sens horaire, de l'anode vers la cathode, et la borne inférieure, reliée au neutre,
+    est le potentiel de référence. En bas, trois chronogrammes alignés sur le même axe des temps, sur deux périodes $T$ : la tension de source et
+    celle de la charge, la tension de la diode, puis le courant. Les traits verticaux pointillés séparent les intervalles de conduction et de
+    blocage. Pendant les alternances positives, la charge reçoit $v_s$ et la diode ne supporte rien ; pendant les alternances négatives, le courant
+    est nul et la diode supporte toute la tension inverse.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 760 672" role="img" aria-label="Schéma principal : redresseur simple alternance sur charge résistive avec ses conventions, puis chronogrammes de la tension de source, de la tension de la charge, de la tension de la diode et du courant sur deux périodes"><defs><marker id="fl-f-pr" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker><marker id="fl-f-pr-o" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10" fill="none" stroke="currentColor" stroke-width="1.6"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="110" cy="115" r="24"/><path d="M98 115c4 -10 8 -10 12 0s8 10 12 0"/><path d="M110 91V50H250"/><path d="M250 50H291.6M308.4 50H350"/><path d="M291.6 38L308.4 50L291.6 62Z"/><path d="M308.4 38V62"/><path d="M350 50H520V70"/><path d="M520 70V92M520 148V170"/><rect x="512" y="92" width="16" height="56" rx="2"/><path d="M520 170V180H110V139"/><path d="M110 180V196M96 196H124M101 202H119M106 208H114"/></g><circle cx="110" cy="180" r="3.2" fill="currentColor"/><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M58 150V84" marker-end="url(#fl-f-pr)"/><path d="M390 50H430" marker-end="url(#fl-f-pr)"/><path d="M336 26H266" marker-end="url(#fl-f-pr-o)"/><path d="M566 150V90" marker-end="url(#fl-f-pr-o)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="24" y="80">v_s</text><text x="122" y="84">+</text><text x="142" y="104">réseau ou</text><text x="142" y="118">secondaire</text><text x="392" y="40">i</text><text x="276" y="18">v_D</text><text x="250" y="80">D, anode à gauche</text><text x="538" y="116">R</text><text x="580" y="116">v_R</text><text x="534" y="82">+</text><text x="130" y="214">potentiel de référence</text></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11"><text x="620" y="40">flèches pleines :</text><text x="620" y="56">v_s et i</text><text x="620" y="80">flèches ouvertes :</text><text x="620" y="96">v_D et v_R,</text><text x="620" y="112">convention</text><text x="620" y="128">récepteur</text></g><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M110 330H730" marker-end="url(#fl-f-pr)"/><path d="M110 396V258"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="20" y="334">v_s, v_R</text><text x="720" y="348">t</text></g><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="6 4"><path d="M110 330L112.5 327L115 323.9L117.5 320.9L120 317.9L122.5 315L125 312.1L127.5 309.2L130 306.4L132.5 303.7L135 301L137.5 298.4L140 295.9L142.5 293.5L145 291.2L147.5 289L150 286.9L152.5 284.9L155 283.1L157.5 281.4L160 279.8L162.5 278.3L165 277L167.5 275.9L170 274.8L172.5 274L175 273.3L177.5 272.7L180 272.3L182.5 272.1L185 272L187.5 272.1L190 272.3L192.5 272.7L195 273.3L197.5 274L200 274.8L202.5 275.9L205 277L207.5 278.3L210 279.8L212.5 281.4L215 283.1L217.5 284.9L220 286.9L222.5 289L225 291.2L227.5 293.5L230 295.9L232.5 298.4L235 301L237.5 303.7L240 306.4L242.5 309.2L245 312.1L247.5 315L250 317.9L252.5 320.9L255 323.9L257.5 327L260 330L262.5 333L265 336.1L267.5 339.1L270 342.1L272.5 345L275 347.9L277.5 350.8L280 353.6L282.5 356.3L285 359L287.5 361.6L290 364.1L292.5 366.5L295 368.8L297.5 371L300 373.1L302.5 375.1L305 376.9L307.5 378.6L310 380.2L312.5 381.7L315 383L317.5 384.1L320 385.2L322.5 386L325 386.7L327.5 387.3L330 387.7L332.5 387.9L335 388L337.5 387.9L340 387.7L342.5 387.3L345 386.7L347.5 386L350 385.2L352.5 384.1L355 383L357.5 381.7L360 380.2L362.5 378.6L365 376.9L367.5 375.1L370 373.1L372.5 371L375 368.8L377.5 366.5L380 364.1L382.5 361.6L385 359L387.5 356.3L390 353.6L392.5 350.8L395 347.9L397.5 345L400 342.1L402.5 339.1L405 336.1L407.5 333L410 330L412.5 327L415 323.9L417.5 320.9L420 317.9L422.5 315L425 312.1L427.5 309.2L430 306.4L432.5 303.7L435 301L437.5 298.4L440 295.9L442.5 293.5L445 291.2L447.5 289L450 286.9L452.5 284.9L455 283.1L457.5 281.4L460 279.8L462.5 278.3L465 277L467.5 275.9L470 274.8L472.5 274L475 273.3L477.5 272.7L480 272.3L482.5 272.1L485 272L487.5 272.1L490 272.3L492.5 272.7L495 273.3L497.5 274L500 274.8L502.5 275.9L505 277L507.5 278.3L510 279.8L512.5 281.4L515 283.1L517.5 284.9L520 286.9L522.5 289L525 291.2L527.5 293.5L530 295.9L532.5 298.4L535 301L537.5 303.7L540 306.4L542.5 309.2L545 312.1L547.5 315L550 317.9L552.5 320.9L555 323.9L557.5 327L560 330L562.5 333L565 336.1L567.5 339.1L570 342.1L572.5 345L575 347.9L577.5 350.8L580 353.6L582.5 356.3L585 359L587.5 361.6L590 364.1L592.5 366.5L595 368.8L597.5 371L600 373.1L602.5 375.1L605 376.9L607.5 378.6L610 380.2L612.5 381.7L615 383L617.5 384.1L620 385.2L622.5 386L625 386.7L627.5 387.3L630 387.7L632.5 387.9L635 388L637.5 387.9L640 387.7L642.5 387.3L645 386.7L647.5 386L650 385.2L652.5 384.1L655 383L657.5 381.7L660 380.2L662.5 378.6L665 376.9L667.5 375.1L670 373.1L672.5 371L675 368.8L677.5 366.5L680 364.1L682.5 361.6L685 359L687.5 356.3L690 353.6L692.5 350.8L695 347.9L697.5 345L700 342.1L702.5 339.1L705 336.1L707.5 333L710 330"/></g><g fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M110 330L112.5 327L115 323.9L117.5 320.9L120 317.9L122.5 315L125 312.1L127.5 309.2L130 306.4L132.5 303.7L135 301L137.5 298.4L140 295.9L142.5 293.5L145 291.2L147.5 289L150 286.9L152.5 284.9L155 283.1L157.5 281.4L160 279.8L162.5 278.3L165 277L167.5 275.9L170 274.8L172.5 274L175 273.3L177.5 272.7L180 272.3L182.5 272.1L185 272L187.5 272.1L190 272.3L192.5 272.7L195 273.3L197.5 274L200 274.8L202.5 275.9L205 277L207.5 278.3L210 279.8L212.5 281.4L215 283.1L217.5 284.9L220 286.9L222.5 289L225 291.2L227.5 293.5L230 295.9L232.5 298.4L235 301L237.5 303.7L240 306.4L242.5 309.2L245 312.1L247.5 315L250 317.9L252.5 320.9L255 323.9L257.5 327L260 330L262.5 330L265 330L267.5 330L270 330L272.5 330L275 330L277.5 330L280 330L282.5 330L285 330L287.5 330L290 330L292.5 330L295 330L297.5 330L300 330L302.5 330L305 330L307.5 330L310 330L312.5 330L315 330L317.5 330L320 330L322.5 330L325 330L327.5 330L330 330L332.5 330L335 330L337.5 330L340 330L342.5 330L345 330L347.5 330L350 330L352.5 330L355 330L357.5 330L360 330L362.5 330L365 330L367.5 330L370 330L372.5 330L375 330L377.5 330L380 330L382.5 330L385 330L387.5 330L390 330L392.5 330L395 330L397.5 330L400 330L402.5 330L405 330L407.5 330L410 330L412.5 327L415 323.9L417.5 320.9L420 317.9L422.5 315L425 312.1L427.5 309.2L430 306.4L432.5 303.7L435 301L437.5 298.4L440 295.9L442.5 293.5L445 291.2L447.5 289L450 286.9L452.5 284.9L455 283.1L457.5 281.4L460 279.8L462.5 278.3L465 277L467.5 275.9L470 274.8L472.5 274L475 273.3L477.5 272.7L480 272.3L482.5 272.1L485 272L487.5 272.1L490 272.3L492.5 272.7L495 273.3L497.5 274L500 274.8L502.5 275.9L505 277L507.5 278.3L510 279.8L512.5 281.4L515 283.1L517.5 284.9L520 286.9L522.5 289L525 291.2L527.5 293.5L530 295.9L532.5 298.4L535 301L537.5 303.7L540 306.4L542.5 309.2L545 312.1L547.5 315L550 317.9L552.5 320.9L555 323.9L557.5 327L560 330L562.5 330L565 330L567.5 330L570 330L572.5 330L575 330L577.5 330L580 330L582.5 330L585 330L587.5 330L590 330L592.5 330L595 330L597.5 330L600 330L602.5 330L605 330L607.5 330L610 330L612.5 330L615 330L617.5 330L620 330L622.5 330L625 330L627.5 330L630 330L632.5 330L635 330L637.5 330L640 330L642.5 330L645 330L647.5 330L650 330L652.5 330L655 330L657.5 330L660 330L662.5 330L665 330L667.5 330L670 330L672.5 330L675 330L677.5 330L680 330L682.5 330L685 330L687.5 330L690 330L692.5 330L695 330L697.5 330L700 330L702.5 330L705 330L707.5 330L710 330"/></g><g fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 4"><path d="M110 311.5H710"/><path d="M260 262V616"/><path d="M410 262V616"/><path d="M560 262V616"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11.5"><text x="116" y="268">V_m</text><text x="590" y="305.5">V_moy = V_m / π</text><text x="144" y="250">D conduit</text><text x="290" y="250">D bloquée</text><text x="444" y="250">D conduit</text><text x="590" y="250">D bloquée</text></g><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M110 470H730" marker-end="url(#fl-f-pr)"/><path d="M110 536V398"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="20" y="474">v_D</text><text x="720" y="488">t</text></g><g fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M110 470L112.5 470L115 470L117.5 470L120 470L122.5 470L125 470L127.5 470L130 470L132.5 470L135 470L137.5 470L140 470L142.5 470L145 470L147.5 470L150 470L152.5 470L155 470L157.5 470L160 470L162.5 470L165 470L167.5 470L170 470L172.5 470L175 470L177.5 470L180 470L182.5 470L185 470L187.5 470L190 470L192.5 470L195 470L197.5 470L200 470L202.5 470L205 470L207.5 470L210 470L212.5 470L215 470L217.5 470L220 470L222.5 470L225 470L227.5 470L230 470L232.5 470L235 470L237.5 470L240 470L242.5 470L245 470L247.5 470L250 470L252.5 470L255 470L257.5 470L260 470L262.5 473L265 476.1L267.5 479.1L270 482.1L272.5 485L275 487.9L277.5 490.8L280 493.6L282.5 496.3L285 499L287.5 501.6L290 504.1L292.5 506.5L295 508.8L297.5 511L300 513.1L302.5 515.1L305 516.9L307.5 518.6L310 520.2L312.5 521.7L315 523L317.5 524.1L320 525.2L322.5 526L325 526.7L327.5 527.3L330 527.7L332.5 527.9L335 528L337.5 527.9L340 527.7L342.5 527.3L345 526.7L347.5 526L350 525.2L352.5 524.1L355 523L357.5 521.7L360 520.2L362.5 518.6L365 516.9L367.5 515.1L370 513.1L372.5 511L375 508.8L377.5 506.5L380 504.1L382.5 501.6L385 499L387.5 496.3L390 493.6L392.5 490.8L395 487.9L397.5 485L400 482.1L402.5 479.1L405 476.1L407.5 473L410 470L412.5 470L415 470L417.5 470L420 470L422.5 470L425 470L427.5 470L430 470L432.5 470L435 470L437.5 470L440 470L442.5 470L445 470L447.5 470L450 470L452.5 470L455 470L457.5 470L460 470L462.5 470L465 470L467.5 470L470 470L472.5 470L475 470L477.5 470L480 470L482.5 470L485 470L487.5 470L490 470L492.5 470L495 470L497.5 470L500 470L502.5 470L505 470L507.5 470L510 470L512.5 470L515 470L517.5 470L520 470L522.5 470L525 470L527.5 470L530 470L532.5 470L535 470L537.5 470L540 470L542.5 470L545 470L547.5 470L550 470L552.5 470L555 470L557.5 470L560 470L562.5 473L565 476.1L567.5 479.1L570 482.1L572.5 485L575 487.9L577.5 490.8L580 493.6L582.5 496.3L585 499L587.5 501.6L590 504.1L592.5 506.5L595 508.8L597.5 511L600 513.1L602.5 515.1L605 516.9L607.5 518.6L610 520.2L612.5 521.7L615 523L617.5 524.1L620 525.2L622.5 526L625 526.7L627.5 527.3L630 527.7L632.5 527.9L635 528L637.5 527.9L640 527.7L642.5 527.3L645 526.7L647.5 526L650 525.2L652.5 524.1L655 523L657.5 521.7L660 520.2L662.5 518.6L665 516.9L667.5 515.1L670 513.1L672.5 511L675 508.8L677.5 506.5L680 504.1L682.5 501.6L685 499L687.5 496.3L690 493.6L692.5 490.8L695 487.9L697.5 485L700 482.1L702.5 479.1L705 476.1L707.5 473L710 470"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11.5"><text x="305" y="544">-V_m : tension inverse maximale</text></g><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M110 610H730" marker-end="url(#fl-f-pr)"/><path d="M110 676V538"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="20" y="614">i</text><text x="720" y="628">t</text></g><g fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M110 610L112.5 607.7L115 605.5L117.5 603.2L120 601L122.5 598.7L125 596.6L127.5 594.4L130 592.3L132.5 590.3L135 588.3L137.5 586.3L140 584.4L142.5 582.6L145 580.9L147.5 579.2L150 577.7L152.5 576.2L155 574.8L157.5 573.5L160 572.3L162.5 571.2L165 570.3L167.5 569.4L170 568.6L172.5 568L175 567.5L177.5 567L180 566.7L182.5 566.6L185 566.5L187.5 566.6L190 566.7L192.5 567L195 567.5L197.5 568L200 568.6L202.5 569.4L205 570.3L207.5 571.2L210 572.3L212.5 573.5L215 574.8L217.5 576.2L220 577.7L222.5 579.2L225 580.9L227.5 582.6L230 584.4L232.5 586.3L235 588.3L237.5 590.3L240 592.3L242.5 594.4L245 596.6L247.5 598.7L250 601L252.5 603.2L255 605.5L257.5 607.7L260 610L262.5 610L265 610L267.5 610L270 610L272.5 610L275 610L277.5 610L280 610L282.5 610L285 610L287.5 610L290 610L292.5 610L295 610L297.5 610L300 610L302.5 610L305 610L307.5 610L310 610L312.5 610L315 610L317.5 610L320 610L322.5 610L325 610L327.5 610L330 610L332.5 610L335 610L337.5 610L340 610L342.5 610L345 610L347.5 610L350 610L352.5 610L355 610L357.5 610L360 610L362.5 610L365 610L367.5 610L370 610L372.5 610L375 610L377.5 610L380 610L382.5 610L385 610L387.5 610L390 610L392.5 610L395 610L397.5 610L400 610L402.5 610L405 610L407.5 610L410 610L412.5 607.7L415 605.5L417.5 603.2L420 601L422.5 598.7L425 596.6L427.5 594.4L430 592.3L432.5 590.3L435 588.3L437.5 586.3L440 584.4L442.5 582.6L445 580.9L447.5 579.2L450 577.7L452.5 576.2L455 574.8L457.5 573.5L460 572.3L462.5 571.2L465 570.3L467.5 569.4L470 568.6L472.5 568L475 567.5L477.5 567L480 566.7L482.5 566.6L485 566.5L487.5 566.6L490 566.7L492.5 567L495 567.5L497.5 568L500 568.6L502.5 569.4L505 570.3L507.5 571.2L510 572.3L512.5 573.5L515 574.8L517.5 576.2L520 577.7L522.5 579.2L525 580.9L527.5 582.6L530 584.4L532.5 586.3L535 588.3L537.5 590.3L540 592.3L542.5 594.4L545 596.6L547.5 598.7L550 601L552.5 603.2L555 605.5L557.5 607.7L560 610L562.5 610L565 610L567.5 610L570 610L572.5 610L575 610L577.5 610L580 610L582.5 610L585 610L587.5 610L590 610L592.5 610L595 610L597.5 610L600 610L602.5 610L605 610L607.5 610L610 610L612.5 610L615 610L617.5 610L620 610L622.5 610L625 610L627.5 610L630 610L632.5 610L635 610L637.5 610L640 610L642.5 610L645 610L647.5 610L650 610L652.5 610L655 610L657.5 610L660 610L662.5 610L665 610L667.5 610L670 610L672.5 610L675 610L677.5 610L680 610L682.5 610L685 610L687.5 610L690 610L692.5 610L695 610L697.5 610L700 610L702.5 610L705 610L707.5 610L710 610"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11.5"><text x="195" y="562.5">I_m = V_m / R</text><text x="116" y="660">0</text><text x="402" y="660">T</text><text x="698" y="660">2T</text></g></svg>
+    <figcaption>
+      Schéma principal : redresseur simple alternance sur charge résistive, diode idéale. Flèches pleines : tension de source $v_s$ et courant $i$ ;
+      flèches ouvertes : tensions $v_D$ de la diode et $v_R$ de la charge, en convention récepteur. Premier chronogramme : $v_s$ en tirets, $v_R$ en
+      trait plein épais, et en pointillés horizontaux la valeur moyenne $V_m/\pi$. Deuxième : $v_D$, nulle en conduction, égale à $v_s$ en blocage,
+      jusqu'à $-V_m$. Troisième : $i$, demi-sinusoïdes de crête $I_m = V_m/R$. Les trois courbes vérifient à chaque instant $v_s = v_D + v_R$.
+    </figcaption>
+  </figure>
+  <p>
+    L'organigramme suivant donne la démarche de choix et de vérification d'une diode dans un montage connu. Il se lit de haut en bas ; les
+    losanges sont des tests, les rectangles des calculs ou des décisions.
+  </p>
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Montage, source, charge, fréquence de commutation"] --> B["Formes d'onde avec diodes idéales :<br/>intervalles de conduction et de blocage"]
+  B --> C["Tension inverse maximale V_inv,<br/>réseau à +10 % et surtensions"]
+  C --> D["V_RRM ≥ 1,5 à 2,5 × V_inv"]
+  B --> E["Courants : I_moy, I_eff, I_crête, pointe d'appel"]
+  E --> F["Pertes de conduction : V_F0 I_moy + r_F I_eff²<br/>paramètres à T_j max"]
+  D --> G{"Commutation forcée<br/>à plus de quelques kHz ?"}
+  F --> G
+  G -->|"oui"| H["Diode rapide, Schottky ou SiC :<br/>pertes de recouvrement × f"]
+  G -->|"non"| K["Diode de redressement standard"]
+  H --> L["T_j = T_a + P × somme des R_th"]
+  K --> L
+  L --> M{"T_j sous T_j max avec marge,<br/>I_FSM et I²t couvrent appel et défaut ?"}
+  M -->|"non"| N["Diode plus grosse, meilleur dissipateur<br/>ou montage différent"]
+  N --> E
+  M -->|"oui"| P["Protections : fusible aR, varistance,<br/>amortisseur RC, roue libre"]</pre>
+    <figcaption>
+      Organigramme de choix d'une diode. Les deux branches issues des formes d'onde, tension et courant, sont indépendantes et se rejoignent au test
+      de commutation ; la boucle de retour traduit le caractère itératif du choix : les paramètres de pertes dépendent de la diode retenue et de sa
+      température.
+    </figcaption>
+  </figure>
+  <p>
+    Le tableau compare les quatre familles. Les valeurs sont des ordres de grandeur pour des composants de quelques dizaines d'ampères ; elles
+    dépendent du constructeur et de la gamme.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <thead>
+        <tr><th>Critère</th><th>Redressement standard</th><th>Rapide ou ultrarapide</th><th>Schottky silicium</th><th>Schottky SiC</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Tenue en tension usuelle</td><td>$400$ à $2200\ \mathrm{V}$</td><td>$200$ à $1700\ \mathrm{V}$</td><td>$20$ à $200\ \mathrm{V}$</td><td>$650$ à $1700\ \mathrm{V}$</td></tr>
+        <tr><td>Chute directe au courant assigné</td><td>$0{,}9$ à $1{,}2\ \mathrm{V}$</td><td>$1{,}2$ à $2{,}2\ \mathrm{V}$</td><td>$0{,}3$ à $0{,}6\ \mathrm{V}$</td><td>$1{,}3$ à $1{,}7\ \mathrm{V}$</td></tr>
+        <tr><td>Recouvrement</td><td>lent, $Q_{rr}$ de l'ordre de $10\ \mathrm{\mu C}$, $t_{rr}$ de quelques microsecondes</td><td>$Q_{rr}$ de $0{,}1$ à $3\ \mathrm{\mu C}$, $t_{rr}$ de $30$ à $300\ \mathrm{ns}$</td><td>pas de charge stockée, capacité seule</td><td>pas de charge stockée, capacité seule</td></tr>
+        <tr><td>Courant de fuite à chaud</td><td>faible</td><td>faible</td><td>élevé, risque d'emballement thermique</td><td>faible</td></tr>
+        <tr><td>Usage préférable</td><td>redresseurs réseau à $50$ ou $60\ \mathrm{Hz}$</td><td>roue libre des hacheurs, onduleurs à IGBT</td><td>sorties basse tension des alimentations</td><td>correcteurs de facteur de puissance, onduleurs rapides</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-jonction-figure" data-renvoi="d-jonction-figure">l'animation de la jonction PN</a> et <a href="#d-structure-figure" data-renvoi="d-structure-figure">la structure P+ N- N+ avec le symbole en convention récepteur</a>, section D ;</li>
+    <li><a href="#e-carac-figure" data-renvoi="e-carac-figure">la caractéristique complète</a>, <a href="#e-carac-sim-figure" data-renvoi="e-carac-sim-figure">la simulation de la caractéristique en température</a>, <a href="#e-formes-figure" data-renvoi="e-formes-figure">les formes de courant de même moyenne</a>, <a href="#e-redresseur-figure" data-renvoi="e-redresseur-figure">la simulation du redresseur simple alternance</a> et <a href="#e-recouvrement-figure" data-renvoi="e-recouvrement-figure">l'animation de la récupération inverse</a>, section E ;</li>
+    <li><a href="#h-figure" data-renvoi="h-figure">le réchauffeur à allure réduite</a>, section H ;</li>
+    <li><a href="#i-variateur-figure" data-renvoi="i-variateur-figure">l'étage d'entrée du variateur de la pompe</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour déterminer la tension moyenne, les courants et les pertes d'une diode dans un montage donné :</p>
+  <ol>
+    <li>Rassembler les données : tension efficace et fréquence de la source, nature de la charge, paramètres de la diode $V_{F0}$ et $r_F$ à la température attendue, résistances thermiques, température ambiante. Noter pour chaque valeur si elle est mesurée, garantie par le constructeur ou supposée.</li>
+    <li>Analyser le montage avec des diodes idéales : supposer un état pour chaque diode, écrire les mailles, vérifier $i_F > 0$ pour une diode passante et $v_F < 0$ pour une diode bloquée, en déduire les intervalles de conduction. Tracer les chronogrammes de la tension de charge, du courant et de la tension de chaque diode.</li>
+    <li>Calculer la tension moyenne de la charge par intégration sur une période, puis les grandeurs de la diode : $I_{moy}$, $I_{eff}$, courant de crête et tension inverse maximale. Utiliser les formes connues, demi-sinusoïde, créneau, et leurs facteurs de forme.</li>
+    <li>Corriger si nécessaire pour la chute de la diode : $V_{moy}$ diminue d'environ $V_{F0}$ multiplié par la fraction de période de conduction, ce qui ne compte qu'en basse tension.</li>
+    <li>Calculer les pertes de conduction $V_{F0}\,I_{moy} + r_F\,I_{eff}^2$, ajouter les pertes de recouvrement $f\,(E_{rec})$ si la diode commute à haute fréquence, puis la température de jonction $T_j = T_a + P\sum R_{th}$.</li>
+    <li>Vérifier les limites : $V_{RRM}$ au moins $1{,}5$ à $2{,}5$ fois la tension inverse maximale au réseau haut, $I_{moy}$ et $I_{eff}$ sous les valeurs assignées dans les conditions de refroidissement réelles, $I_{FSM}$ et $I^2t$ suffisants pour la pointe d'appel et le défaut, $T_j$ sous $T_{j\,max}$ avec une marge.</li>
+    <li>Contrôler : bilan de puissance entre source, charge et diode ; ordre de grandeur des pertes, de l'ordre de $1\ \%$ de la puissance transmise ou moins en redressement réseau ; cohérence des chronogrammes avec $v_s = v_D + v_{ch}$ à chaque instant.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Un réchauffeur d'armoire de $20\ \Omega$, alimenté en $230\ \mathrm{V}$, $50\ \mathrm{Hz}$, dispose de deux allures : pleine puissance quand
+    l'interrupteur $S$ est fermé, allure réduite quand $S$ s'ouvre et que le courant ne passe plus que par la diode $D$. La diode retenue est une
+    diode de redressement de $1000\ \mathrm{V}$, $12\ \mathrm{A}$ en boîtier à languette, de paramètres $V_{F0} = 0{,}9\ \mathrm{V}$ et
+    $r_F = 12\ \mathrm{m\Omega}$ à chaud, $R_{th,jc} = 1{,}5\ \mathrm{K/W}$, montée sur un petit dissipateur de $6\ \mathrm{K/W}$ interface comprise,
+    dans une armoire à $40\ ^\circ\mathrm{C}$. Ces valeurs sont des hypothèses d'étude, à remplacer par celles du composant réellement choisi.
+  </p>
+  <figure id="h-figure">
+    <svg viewBox="0 0 760 290" role="img" aria-label="Réchauffeur de 20 ohms alimenté en 230 volts par une diode en série, court-circuitée par l'interrupteur S pour la pleine puissance, avec le sens du courant et les flèches de tension"><defs><marker id="fl-h-ch" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker><marker id="fl-h-ch-o" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10" fill="none" stroke="currentColor" stroke-width="1.6"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="90" cy="140" r="24"/><path d="M78 140c4 -10 8 -10 12 0s8 10 12 0"/><path d="M90 116V60H220"/><path d="M220 60H271.6M288.4 60H340"/><path d="M271.6 48L288.4 60L271.6 72Z"/><path d="M288.4 48V72"/><path d="M340 60H470V90"/><path d="M470 90V115M470 175V200"/><rect x="462" y="115" width="16" height="60" rx="2"/><path d="M470 200V230H90V164"/></g><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M220 60V120H252"/><path d="M300 120H340V60"/><path d="M252 120L294 104"/><circle cx="252" cy="120" r="3"/><circle cx="300" cy="120" r="3"/></g><circle cx="220" cy="60" r="3.2" fill="currentColor"/><circle cx="340" cy="60" r="3.2" fill="currentColor"/><circle cx="90" cy="230" r="3.2" fill="currentColor"/><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M90 230V246M76 246H104M81 252H99M86 258H94"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M40 180V100" marker-end="url(#fl-h-ch)"/><path d="M380 60H420" marker-end="url(#fl-h-ch)"/><path d="M520 190V110" marker-end="url(#fl-h-ch-o)"/><path d="M326 34H234" marker-end="url(#fl-h-ch-o)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="20" y="96">v_s</text><text x="104" y="112">+</text><text x="124" y="150">230 V</text><text x="124" y="166">50 Hz</text><text x="270" y="28">v_D</text><text x="250" y="92">D</text><text x="258" y="146">S</text><text x="384" y="50">i</text><text x="488" y="150">R</text><text x="488" y="166">20 Ω</text><text x="530" y="156">v_R</text><text x="106" y="276">potentiel de référence : neutre</text></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11.5"><text x="570" y="60">S fermé :</text><text x="570" y="76">pleine puissance,</text><text x="570" y="92">2645 W</text><text x="570" y="124">S ouvert :</text><text x="570" y="140">allure réduite</text><text x="570" y="156">par la diode D</text><text x="570" y="196">D : 1000 V, 12 A</text><text x="570" y="212">V_F0 = 0,9 V</text><text x="570" y="228">r_F = 12 mΩ</text></g></svg>
+    <figcaption>
+      Réchauffeur à deux allures. Flèche pleine : courant $i$, de l'anode vers la cathode quand $S$ est ouvert ; flèches ouvertes : tensions $v_D$
+      et $v_R$ en convention récepteur ; la source $v_s$ est fléchée vers sa borne $+$, le neutre est le potentiel de référence. L'interrupteur $S$,
+      en parallèle sur la diode, la court-circuite pour la pleine puissance.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Données : $V_s = 230\ \mathrm{V}$, $R = 20\ \Omega$, $V_{F0} = 0{,}9\ \mathrm{V}$, $r_F = 12\ \mathrm{m\Omega}$, $R_{th,jc} + R_{th,ca} = 7{,}5\ \mathrm{K/W}$,
+    $T_a = 40\ ^\circ\mathrm{C}$. Inconnues : tension moyenne et efficace de la charge, puissance en allure réduite, courants moyen, efficace et de
+    crête de la diode, pertes, température de jonction, tension inverse à tenir. Stratégie : analyser d'abord avec une diode idéale, car
+    $V_{F0} \ll V_m$, puis calculer les pertes avec le modèle linéaire, et enfin vérifier l'effet de la chute par un calcul exact.
+  </p>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li>Amplitude de la source : $V_m = \sqrt{2} \times 230 = 325{,}3\ \mathrm{V}$.</li>
+    <li>Tension moyenne de la charge : $V_{moy} = V_m/\pi = 325{,}3/3{,}1416 = 103{,}5\ \mathrm{V}$. Tension efficace : $V_{eff} = V_m/2 = 162{,}6\ \mathrm{V}$.</li>
+    <li>Puissance en allure réduite : $P = V_{eff}^2/R = 162{,}6^2/20 = 1322\ \mathrm{W}$, exactement la moitié des $230^2/20 = 2645\ \mathrm{W}$ de la pleine puissance, puisque la charge reçoit une alternance sur deux.</li>
+    <li>Courants de la diode : crête $I_m = V_m/R = 16{,}26\ \mathrm{A}$ ; moyenne $I_{moy} = I_m/\pi = 5{,}18\ \mathrm{A}$ ; efficace $I_{eff} = I_m/2 = 8{,}13\ \mathrm{A}$.</li>
+    <li>Pertes de conduction : $P_D = V_{F0}\,I_{moy} + r_F\,I_{eff}^2 = 0{,}9 \times 5{,}177 + 0{,}012 \times 8{,}132^2 = 4{,}66 + 0{,}79 = 5{,}45\ \mathrm{W}$. Le terme de seuil représente $85\ \%$ des pertes.</li>
+    <li>Température de jonction : $T_j = 40 + 5{,}45 \times (1{,}5 + 6{,}0) = 40 + 40{,}9 = 80{,}9\ ^\circ\mathrm{C}$.</li>
+    <li>Tension inverse : la diode bloquée supporte $-v_s$, soit $V_m = 325{,}3\ \mathrm{V}$, et $357{,}8\ \mathrm{V}$ au réseau à $+10\ \%$ ; avec une marge de $2$, il faut $716\ \mathrm{V}$ : la classe $1000\ \mathrm{V}$ convient, la classe $800\ \mathrm{V}$ serait juste.</li>
+    <li>Calcul exact avec la chute : la diode conduit tant que $V_m\sin\theta > V_{F0}$, c'est-à-dire de $\theta_1 = \arcsin(0{,}9/325{,}3) = 0{,}16^\circ$ à $180^\circ - 0{,}16^\circ$, avec $i = (V_m\sin\theta - V_{F0})/(R + r_F)$. L'intégration numérique donne $I_{moy} = 5{,}15\ \mathrm{A}$, $I_{eff} = 8{,}10\ \mathrm{A}$, $V_{moy} = 103{,}0\ \mathrm{V}$, $P = 1312\ \mathrm{W}$ et $P_D = 5{,}42\ \mathrm{W}$ : moins de $1\ \%$ d'écart sur toutes les grandeurs.</li>
+  </ol>
+
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <p>
+    Dimensions : $\mathrm{V^2/\Omega} = \mathrm{W}$, $\mathrm{V \cdot A} = \mathrm{W}$, $\mathrm{W \cdot K/W} = \mathrm{K}$. Facteur de forme :
+    $I_{eff}/I_{moy} = 8{,}13/5{,}18 = 1{,}571 = \pi/2$, celui d'une demi-sinusoïde. Bilan : la source fournit $1312 + 5{,}4 = 1317\ \mathrm{W}$ dans le
+    calcul exact, la diode en consomme $0{,}41\ \%$, rendement $99{,}6\ \%$, ordre de grandeur attendu pour une diode sous plusieurs centaines de
+    volts. Courant moyen : $5{,}18\ \mathrm{A}$ sur une diode de $12\ \mathrm{A}$, soit $43\ \%$ de la valeur assignée, et $T_j$ à $81\ ^\circ\mathrm{C}$,
+    loin de $150\ ^\circ\mathrm{C}$ : la diode est largement dimensionnée, ce qui est sage dans une armoire chaude. Une conséquence à ne pas oublier :
+    en allure réduite, le réchauffeur prélève sur la phase un courant de valeur moyenne $5{,}2\ \mathrm{A}$, une composante continue qui peut
+    saturer un transformateur en amont et fausser certains différentiels ; c'est acceptable pour quelques centaines de watts, à proscrire pour des
+    kilowatts, où l'on préfère deux résistances commutées ou un gradateur.
+  </p>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <p>
+    Projet fil rouge : le pont d'entrée du variateur de la pompe. Le variateur redresse le réseau $400\ \mathrm{V}$ par un pont de six diodes, charge
+    son bus continu de $2{,}2\ \mathrm{mF}$ à travers la résistance de précharge de $47\ \Omega$, court-circuitée ensuite par le contacteur KM2, puis
+    alimente le moteur de $30\ \mathrm{kW}$ par son onduleur. Il s'agit de vérifier la tenue en tension, les pertes et la température des diodes,
+    et de définir leurs protections.
+  </p>
+  <figure id="i-variateur-figure">
+    <svg viewBox="0 0 760 400" role="img" aria-label="Étage d'entrée du variateur de la pompe : fusibles ultrarapides, self de ligne, varistances, pont de six diodes D1 à D6, précharge par résistance et contacteur KM2, condensateur du bus continu et onduleur"><defs><marker id="fl-i-va" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker><marker id="fl-i-va-o" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10" fill="none" stroke="currentColor" stroke-width="1.6"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M30 150H70"/><rect x="70" y="143" width="34" height="14" rx="2"/><path d="M78 150H96"/><path d="M104 150H140"/><path d="M140 150c0 -12 14 -12 14 0c0 -12 14 -12 14 0c0 -12 14 -12 14 0"/><path d="M182 150H330"/><path d="M30 200H70"/><rect x="70" y="193" width="34" height="14" rx="2"/><path d="M78 200H96"/><path d="M104 200H140"/><path d="M140 200c0 -12 14 -12 14 0c0 -12 14 -12 14 0c0 -12 14 -12 14 0"/><path d="M182 200H400"/><path d="M30 250H70"/><rect x="70" y="243" width="34" height="14" rx="2"/><path d="M78 250H96"/><path d="M104 250H140"/><path d="M140 250c0 -12 14 -12 14 0c0 -12 14 -12 14 0c0 -12 14 -12 14 0"/><path d="M182 250H470"/><path d="M236 150V162"/><rect x="229" y="162" width="14" height="26" rx="2"/><path d="M236 188V200"/><path d="M262 200V212"/><rect x="255" y="212" width="14" height="26" rx="2"/><path d="M262 238V250"/><path d="M226 186L246 156M252 236L272 206"/><path d="M330 150V112.7M330 97.3V60"/><path d="M319 112.7L330 97.3L341 112.7Z"/><path d="M319 97.3H341"/><path d="M330 340V252.7M330 237.3V150"/><path d="M319 252.7L330 237.3L341 252.7Z"/><path d="M319 237.3H341"/><path d="M400 200V137.7M400 122.3V60"/><path d="M389 137.7L400 122.3L411 137.7Z"/><path d="M389 122.3H411"/><path d="M400 340V277.7M400 262.3V200"/><path d="M389 277.7L400 262.3L411 277.7Z"/><path d="M389 262.3H411"/><path d="M470 250V162.7M470 147.3V60"/><path d="M459 162.7L470 147.3L481 162.7Z"/><path d="M459 147.3H481"/><path d="M470 340V302.7M470 287.3V250"/><path d="M459 302.7L470 287.3L481 302.7Z"/><path d="M459 287.3H481"/><path d="M330 60H560"/><path d="M330 340H700"/><path d="M560 60H580M620 60H640"/><rect x="580" y="52" width="40" height="16" rx="2"/><path d="M560 60V24H586"/><path d="M614 24H640V60"/><path d="M586 24L612 12"/><circle cx="586" cy="24" r="3"/><circle cx="614" cy="24" r="3"/><path d="M640 60H700"/><path d="M660 60V190M644 190H676M644 206H676M660 206V340"/><rect x="700" y="130" width="50" height="150" rx="6"/><path d="M700 60H725V130"/><path d="M725 280V340H700"/></g><g fill="currentColor" stroke="none"><circle cx="330" cy="150" r="3.2"/><circle cx="330" cy="60" r="3.2"/><circle cx="330" cy="340" r="3.2"/><circle cx="400" cy="200" r="3.2"/><circle cx="400" cy="60" r="3.2"/><circle cx="400" cy="340" r="3.2"/><circle cx="470" cy="250" r="3.2"/><circle cx="470" cy="60" r="3.2"/><circle cx="470" cy="340" r="3.2"/><circle cx="236" cy="150" r="3.2"/><circle cx="236" cy="200" r="3.2"/><circle cx="262" cy="200" r="3.2"/><circle cx="262" cy="250" r="3.2"/><circle cx="660" cy="60" r="3.2"/><circle cx="660" cy="340" r="3.2"/><circle cx="560" cy="60" r="3.2"/><circle cx="640" cy="60" r="3.2"/></g><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M300 340V356M286 356H314M291 362H309M296 368H304"/><path d="M300 340H330"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M36 136H62" marker-end="url(#fl-i-va)"/><path d="M500 44H540" marker-end="url(#fl-i-va)"/><path d="M690 320V80" marker-end="url(#fl-i-va-o)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="30" y="130">i_1</text><text x="8" y="154">L1</text><text x="8" y="204">L2</text><text x="8" y="254">L3</text><text x="40" y="280">fusibles aR</text><text x="118" y="300">self de ligne</text><text x="206" y="136">varistances</text><text x="344" y="112">D1</text><text x="414" y="140">D3</text><text x="484" y="168">D5</text><text x="344" y="260">D4</text><text x="414" y="300">D6</text><text x="484" y="312">D2</text><text x="500" y="38">I_d</text><text x="560" y="100">R_p = 47 Ω</text><text x="578" y="12">KM2</text><text x="600" y="220">C</text><text x="586" y="236">2,2 mF</text><text x="668" y="136">U_d</text><text x="703" y="210" font-size="10">onduleur</text><text x="720" y="226" font-size="10">et</text><text x="707" y="242" font-size="10">moteur</text><text x="548" y="52">+</text><text x="548" y="332">-</text><text x="234" y="384">potentiel de référence : barre -</text></g></svg>
+    <figcaption>
+      Étage d'entrée du variateur. Les trois phases L1, L2, L3 traversent les fusibles aR et la self de ligne ; deux varistances écrêtent les
+      surtensions entre phases. Le pont comprend les diodes D1, D3 et D5, cathodes reliées à la barre $+$, et D4, D6 et D2, anodes reliées à la barre
+      $-$, qui est le potentiel de référence. La résistance de précharge $R_p$, shuntée par KM2, précède le condensateur $C$ du bus. Flèche pleine :
+      courant $I_d$ du bus et courant $i_1$ de la phase L1 ; flèche ouverte : tension $U_d$ du bus, fléchée vers la barre $+$. Les diodes conduisent
+      deux par deux, une du groupe haut et une du groupe bas, chacune pendant un tiers de période ; la séquence détaillée sera établie dans le cours
+      Redresseurs triphasés.
+    </figcaption>
+  </figure>
+
+  <h3 id="i-donnees">Données et hypothèses</h3>
+  <p>
+    Réseau $400\ \mathrm{V}$ à $\pm 10\ \%$, $50\ \mathrm{Hz}$. À pleine vitesse, le variateur absorbe environ $32{,}9\ \mathrm{kW}$ ; au point de
+    service, $84{,}7\ \%$ du débit, $20{,}0\ \mathrm{kW}$, valeurs établies dans le cours
+    <a href="#/cours/variation-de-vitesse-des-moteurs-asynchrones">Variation de vitesse des moteurs asynchrones</a>. On adopte le modèle à courant
+    du bus lissé déjà utilisé dans le cours <a href="#/cours/harmoniques-et-qualite-de-l-energie">Harmoniques et qualité de l'énergie</a>, avec
+    $U_{d0} = 1{,}35\,U = 540{,}2\ \mathrm{V}$. Module de diodes supposé : $1600\ \mathrm{V}$, $V_{F0} = 0{,}85\ \mathrm{V}$ et
+    $r_F = 5\ \mathrm{m\Omega}$ à chaud, $I_{FSM} = 1000\ \mathrm{A}$, $R_{th}$ jonction-dissipateur de $1{,}0\ \mathrm{K/W}$ par diode, dissipateur
+    commun avec l'onduleur supposé à $70\ ^\circ\mathrm{C}$.
+  </p>
+
+  <h3 id="i-calculs">Courants, pertes et température</h3>
+  <p>
+    Pleine vitesse : $I_d = 32\,950/540{,}2 = 61{,}0\ \mathrm{A}$, cohérent avec le fondamental de $47{,}6\ \mathrm{A}$ par phase du modèle en
+    créneaux, $I_1 = \frac{\sqrt{6}}{\pi}I_d$. Chaque diode conduit un tiers de période : $I_{moy} = 61{,}0/3 = 20{,}3\ \mathrm{A}$ et
+    $I_{eff} = 61{,}0/\sqrt{3} = 35{,}2\ \mathrm{A}$. Pertes par diode : $0{,}85 \times 20{,}33 + 0{,}005 \times 35{,}22^2 = 17{,}28 + 6{,}20 = 23{,}5\ \mathrm{W}$ ;
+    pour le pont, $141\ \mathrm{W}$, soit $0{,}43\ \%$ de la puissance. Température de jonction : $70 + 23{,}5 \times 1{,}0 = 93{,}5\ ^\circ\mathrm{C}$. Au
+    point de service, $I_d = 37{,}0\ \mathrm{A}$, $12{,}8\ \mathrm{W}$ par diode et $76{,}6\ \mathrm{W}$ pour le pont. La chute de deux diodes en série
+    retire $2 \times (0{,}85 + 0{,}005 \times 61) = 2{,}3\ \mathrm{V}$ au bus, $0{,}4\ \%$ : négligeable pour la commande du moteur.
+  </p>
+  <p>
+    Le modèle à courant lissé sous-estime un peu les pertes. Avec le condensateur et la self de ligne, le courant réel est fait de deux bosses par
+    alternance : son taux de distorsion, $35$ à $45\ \%$ au lieu de $31\ \%$, augmente la valeur efficace d'environ $3\ \%$ et le terme résistif de
+    $6\ \%$, soit $0{,}4\ \mathrm{W}$ par diode. Sans self, avec un taux de l'ordre de $90\ \%$, le terme résistif serait multiplié par $1{,}65$ :
+    $4\ \mathrm{W}$ de plus par diode, et une pointe de courant bien plus élevée. Les pertes de recouvrement, elles, sont négligeables à
+    $50\ \mathrm{Hz}$ : avec $20\ \mu\mathrm{C}$ sous $622\ \mathrm{V}$, environ $2\ \mathrm{mJ}$ par blocage, soit $0{,}1\ \mathrm{W}$.
+  </p>
+
+  <h3 id="i-protections">Tenue en tension et protections</h3>
+  <p>
+    Chaque diode bloquée supporte au plus la tension composée de crête, $400\sqrt{2} = 565{,}7\ \mathrm{V}$, et $622\ \mathrm{V}$ au réseau à
+    $+10\ \%$. La classe $1600\ \mathrm{V}$ offre un facteur $2{,}57$, choix courant pour un réseau industriel exposé aux manœuvres et à la foudre ;
+    la classe $1200\ \mathrm{V}$, avec un facteur $1{,}93$, ne se justifierait qu'avec des varistances efficaces. La précharge limite l'appel à
+    $565{,}7/47 = 12{,}0\ \mathrm{A}$, très loin des $1000\ \mathrm{A}$ de $I_{FSM}$. La contrainte thermique de la diode vaut
+    $I^2t = 1000^2 \times 0{,}005 = 5000\ \mathrm{A^2s}$ : les fusibles aR doivent présenter une contrainte de coupure inférieure sous
+    $440\ \mathrm{V}$, valeur à lire sur la courbe du fabricant de fusibles ; un disjoncteur seul ne protégerait pas les diodes d'un court-circuit
+    du bus. Enfin, le pont est unidirectionnel : l'énergie de freinage de la pompe ne peut pas revenir au réseau, ce qui est sans conséquence ici
+    puisque la pompe ralentit d'elle-même, sans résistance de freinage.
+  </p>
+
+  <h3 id="i-compromis">Contraintes, risques et compromis</h3>
+  <p>
+    Le premier compromis porte sur la tension : une classe plus élevée coûte peu sur un pont de diodes et améliore nettement la robustesse, à
+    l'inverse des transistors, où la tenue se paie en pertes. Le deuxième porte sur la self de ligne : elle coûte de la place et un peu de chute de
+    tension, mais réduit les harmoniques, la pointe de courant et les pertes des diodes. Le troisième porte sur la thermique : le dissipateur est
+    commun avec l'onduleur, et ses $70\ ^\circ\mathrm{C}$ supposés dépendent de la ventilation de l'armoire ; un ventilateur en panne fait monter
+    toutes les jonctions à la fois. Le risque principal est le court-circuit d'une diode, après une surtension ou un échauffement : il met deux
+    phases en court-circuit à travers la diode saine de la même demi-onde, et seuls les fusibles aR limitent les dégâts. Les hypothèses du module,
+    du dissipateur et du taux de distorsion sont à remplacer par la documentation du variateur et une mesure du courant d'entrée sur site.
+  </p>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Ajout au projet fil rouge</span>
+    <p>
+      Pont d'entrée du variateur de la pompe : six diodes en module $1600\ \mathrm{V}$ supposé ($V_{F0} = 0{,}85\ \mathrm{V}$, $r_F = 5\ \mathrm{m\Omega}$,
+      $1{,}0\ \mathrm{K/W}$ par diode), $61{,}0\ \mathrm{A}$ sur le bus à pleine vitesse, $23{,}5\ \mathrm{W}$ par diode, $141\ \mathrm{W}$ pour le pont,
+      $T_j = 93{,}5\ ^\circ\mathrm{C}$ avec un dissipateur à $70\ ^\circ\mathrm{C}$ ; $76{,}6\ \mathrm{W}$ au point de service ; facteur $2{,}57$ sur la
+      tension inverse au réseau haut ; fusibles aR à $I^2t$ de coupure inférieur à $5000\ \mathrm{A^2s}$, varistances entre phases et self de ligne
+      conservées.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Calculer les pertes avec le courant moyen seul.</strong> $P = V_F\,I_{moy}$ ignore le terme $r_F\,I_{eff}^2$, qui pèse d'autant plus que le courant est impulsionnel. Sur la diode du redresseur à condensateur de la simulation, le facteur de forme vaut $3{,}43/1{,}35 = 2{,}54$ : le terme résistif réel est $6{,}4$ fois celui que l'on calculerait avec le seul courant moyen. Il faut toujours les deux valeurs, moyenne et efficace.</li>
+    <li><strong>Prendre la tension de seuil comme un seuil physique.</strong> Une diode ne "s'ouvre" pas à $0{,}7\ \mathrm{V}$ : son courant est exponentiel. Croire qu'elle ne conduit pas à $0{,}5\ \mathrm{V}$ conduit à oublier des courants de quelques milliampères, gênants dans une mesure, et à mal comprendre la mise en parallèle.</li>
+    <li><strong>Dimensionner la tension inverse sur $V_m$ quand un condensateur est présent.</strong> Dans un redresseur simple alternance filtré, le condensateur reste chargé à $V_m$ pendant l'alternance négative : la diode voit $2V_m$, soit $650\ \mathrm{V}$ sur $230\ \mathrm{V}$. Même piège avec une batterie : $V_m + E$.</li>
+    <li><strong>Utiliser les paramètres à $25\ ^\circ\mathrm{C}$ pour un calcul de pertes.</strong> À chaud, $V_{F0}$ baisse mais $r_F$ augmente : pour la diode de la séance, $0{,}819\ \mathrm{V}$ et $4{,}89\ \mathrm{m\Omega}$ à $25\ ^\circ\mathrm{C}$ deviennent $0{,}692\ \mathrm{V}$ et $7{,}59\ \mathrm{m\Omega}$ à $125\ ^\circ\mathrm{C}$. Les fiches donnent ces paramètres à $T_{j\,max}$ pour cette raison.</li>
+    <li><strong>Mettre en roue libre une diode de redressement standard dans un hacheur.</strong> Sa charge stockée, des microcoulombs, se traduit à chaque commutation par un fort courant inverse dans le transistor et par des pertes multipliées par la fréquence : à $16\ \mathrm{kHz}$, quelques microcoulombs coûtent plusieurs dizaines de watts. Une diode rapide ou Schottky est obligatoire.</li>
+    <li><strong>Brancher deux diodes en parallèle pour doubler le courant.</strong> Leurs caractéristiques ne sont jamais identiques ; sous le point d'inversion du coefficient de température, la plus chaude prend plus de courant et s'échauffe encore. On déclasse, on appaire, on monte sur le même dissipateur, ou l'on choisit une seule diode plus grosse.</li>
+    <li><strong>Protéger un pont de diodes par un disjoncteur ordinaire.</strong> Sa contrainte $I^2t$ de coupure dépasse de loin celle des diodes : il protège le câble, pas le semi-conducteur. Seul un fusible ultrarapide coordonné par son $I^2t$ protège la diode.</li>
+    <li><strong>Oublier la diode de roue libre sur une charge inductive.</strong> Le courant de l'inductance doit continuer quelque part : sans chemin, la surtension $L\,\mathrm{d}i/\mathrm{d}t$ claque la diode de redressement ou l'interrupteur. À l'inverse, une roue libre seule ralentit la décroissance du courant, ce qui retarde par exemple la retombée d'un frein.</li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain. Hors tension et condensateurs déchargés, le multimètre en position test de diode affiche entre $0{,}3$ et
+    $0{,}6\ \mathrm{V}$ dans le sens direct d'une diode de puissance saine, la mesure se faisant sous un très faible courant, et un dépassement de
+    gamme dans le sens inverse. Une diode en court-circuit affiche près de $0\ \mathrm{V}$ dans les deux sens ; une diode coupée affiche un
+    dépassement dans les deux sens. Sur un pont triphasé, on mesure entre chaque phase et les barres $+$ et $-$ : six mesures dans un sens, six dans
+    l'autre. En service, une diode coupée se trahit par une ondulation du bus plus forte, où une composante à $50\ \mathrm{Hz}$ s'ajoute à celle de $300\ \mathrm{Hz}$, un courant de
+    phase déséquilibré portant une composante continue, et un défaut "perte de phase d'entrée" à forte charge ; une diode en court-circuit fait
+    fondre les fusibles de deux phases dès la mise sous tension. Une diode qui chauffe anormalement signale un dissipateur encrassé, une
+    ventilation en panne ou un courant plus impulsionnel que prévu, une self de ligne court-circuitée par exemple.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic industriel et une
+    question conceptuelle. Ils vont de l'application directe d'une formule au choix de la méthode, au calcul multi-étapes, au dimensionnement sous
+    contrainte et au diagnostic. La correction de chacun reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la correction", puis se
+    déroule étape par étape, accompagnée d'une courbe ou d'un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Après chaque réponse,
+    l'explication s'affiche avec un petit schéma tracé pas à pas.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$i_F = I_S\left(e^{\,v_F/(nV_{th})} - 1\right), \qquad V_{th} = \frac{kT}{q} \approx 26\ \mathrm{mV}, \qquad v_F \approx V_{F0} + r_F\,i_F$$
+    $$P_{cond} = V_{F0}\,I_{F,moy} + r_F\,I_{F,eff}^2$$
+    $$\text{simple alternance, charge } R : \quad V_{moy} = \frac{V_m}{\pi}, \qquad V_{eff} = \frac{V_m}{2}, \qquad V_{inv,max} = V_m \ (2V_m \text{ avec condensateur})$$
+    $$I_{RRM} = \sqrt{\frac{2\,Q_{rr}\,\mathrm{d}i/\mathrm{d}t}{1 + S}}, \qquad t_{rr} = t_a + t_b, \qquad \Delta V = L_\sigma\,\frac{I_{RRM}}{t_b}$$
+    $$T_j = T_a + P\sum R_{th}, \qquad I^2t = I_{FSM}^2 \times 0{,}005\ \mathrm{s}$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>Calculer les pertes avec la moyenne et la valeur efficace du courant, et avec les paramètres à chaud.</li>
+      <li>Chercher la tension inverse maximale réelle : $V_m$ sur charge résistive, $V_m + E$ sur batterie, $2V_m$ avec un condensateur, au réseau haut.</li>
+      <li>Toute charge inductive commutée demande un chemin de roue libre ; toute roue libre commutée à haute fréquence demande une diode rapide.</li>
+      <li>Ne pas mettre de diodes en parallèle sans déclassement ni appairage.</li>
+      <li>Protéger une diode contre le court-circuit par un fusible ultrarapide dont l'$I^2t$ de coupure est inférieur au sien.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Une diode est une jonction PN : la tension directe abaisse la barrière et le courant croît exponentiellement,
+    la tension inverse l'élargit et seul un faible courant de fuite passe, jusqu'à l'avalanche. La diode de puissance ajoute une zone N- épaisse
+    qui tient la tension et que la conduction inonde de porteurs ; leur charge stockée doit être évacuée au blocage, d'où la récupération inverse,
+    ses pertes et ses surtensions. Pour les calculs, on utilise le modèle $V_{F0} + r_F\,i$ à chaud, et les pertes valent
+    $V_{F0}\,I_{moy} + r_F\,I_{eff}^2$. Le redresseur simple alternance donne $V_m/\pi$ sur charge résistive ; une inductance prolonge la conduction et
+    abaisse cette tension, une roue libre la rétablit. On choisit une diode par sa tension inverse avec marge, ses courants, sa surcharge, sa
+    température de jonction et sa rapidité.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent, <a href="#/cours/revision-6-et-selection-d-un-entrainement">Révision 6
+    et sélection d'un entraînement</a>, dont les variateurs commencent tous par un pont de diodes ; une sur le cours
+    <a href="#/cours/machine-a-courant-continu">Machine à courant continu</a>, vieux d'une semaine, dont l'induit sera bientôt alimenté par des
+    redresseurs et des hacheurs ; une sur le cours <a href="#/cours/methodes-de-resolution-systematique">Méthodes de résolution systématique</a>,
+    vieux d'un mois, appliquée à un réseau qui contient une diode linéarisée.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : simuler dans LTspice un redresseur simple alternance sur les trois charges de la séance et la récupération inverse de deux diodes,
+    puis vérifier en Python les pertes et l'extraction des paramètres du modèle linéaire. Prédictions à écrire avant de commencer : tension moyenne
+    sur $20\ \Omega$ sous $230\ \mathrm{V}$ ; effet de $0{,}1\ \mathrm{H}$ en série ; durée pendant laquelle une diode lente conduit en inverse.
+  </p>
+  <ol>
+    <li>Dans LTspice, définir deux modèles de diode par des directives : <code>.model DSTD D(Is=7.4n N=1.5 Rs=4m TT=5u Cjo=200p BV=1200)</code> pour une diode de redressement et <code>.model DFAST D(Is=7.4n N=1.5 Rs=4m TT=50n Cjo=100p BV=1200)</code> pour une diode rapide. Le paramètre <code>TT</code> est la durée de transit, image de la durée de vie des porteurs.</li>
+    <li>Monter une source <code>SINE(0 325.27 50)</code>, la diode DSTD et une résistance de $20\ \Omega$ ; lancer <code>.tran 0 200m 100m 10u</code> et mesurer par <code>.meas</code> la moyenne de la tension de charge, la moyenne et la valeur efficace du courant, et la puissance moyenne de la diode, <code>AVG V(a,k)*I(D1)</code>.</li>
+    <li>Ajouter $0{,}1\ \mathrm{H}$ en série avec la charge, mesurer l'angle de conduction, puis placer une diode DSTD en roue libre aux bornes de la charge et comparer les trois tensions moyennes.</li>
+    <li>Récupération inverse : alimenter la diode par une source <code>PULSE(10 -10 1u 10n 10n 20u 40u)</code> à travers $10\ \Omega$, de sorte que le courant passe de $+1\ \mathrm{A}$ à $-1\ \mathrm{A}$ imposé, et tracer le courant de la diode pour DSTD puis DFAST.</li>
+    <li>En Python, écrire une fonction qui extrait $V_{F0}$ et $r_F$ de deux points d'une caractéristique, l'appliquer aux points $(20\ \mathrm{A} ; 0{,}917\ \mathrm{V})$ et $(80\ \mathrm{A} ; 1{,}210\ \mathrm{V})$, puis calculer par intégration numérique les pertes de la diode du redresseur de la section H et les comparer à la formule $V_{F0}\,I_{moy} + r_F\,I_{eff}^2$.</li>
+  </ol>
+  <p>
+    Résultats attendus : environ $103\ \mathrm{V}$ moyens et $5{,}2\ \mathrm{A}$ sur charge résistive, avec une diode qui dissipe de l'ordre de
+    $4\ \mathrm{W}$ pour ces paramètres de modèle ; environ $77\ \mathrm{V}$ et $240^\circ$ de conduction avec l'inductance ; $103\ \mathrm{V}$ et un
+    courant continu ondulé avec la roue libre. Pour la récupération, le modèle à contrôle de charge prédit que la diode reste conductrice en inverse
+    pendant $t_s = TT\,\ln(1 + I_F/I_R) = TT \ln 2$, soit environ $3{,}5\ \mathrm{\mu s}$ pour DSTD et $35\ \mathrm{ns}$ pour DFAST, sous un courant
+    inverse de $1\ \mathrm{A}$ limité par la résistance. En Python : $V_{F0} = 0{,}819\ \mathrm{V}$, $r_F = 4{,}88\ \mathrm{m\Omega}$, et un écart de
+    moins de $1\ \%$ entre l'intégration et la formule. Anomalies à observer : sans <code>TT</code>, LTspice ne montre aucun recouvrement, ce qui
+    n'est pas une propriété de la diode mais une lacune du modèle ; un pas de calcul trop grand arrondit les fronts et fausse la durée mesurée ;
+    les premières périodes avec inductance sont un transitoire, d'où le début de la mesure à $100\ \mathrm{ms}$. Le modèle SPICE n'inclut ni la
+    surtension de mise en conduction ni la douceur réelle : pour un choix de composant, seuls les modèles et mesures du constructeur font foi.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est calculé dans ce navigateur à
+    partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement pour suivre votre progression.
+    Cette séance ouvre le module des semi-conducteurs et de la conversion, dont le jalon, au terme du module suivant, demande d'analyser les
+    principaux convertisseurs de puissance, leurs formes d'onde, leurs pertes, leurs protections et leur intégration dans un variateur : la diode
+    en est la première brique.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Une diode conduit dans un sens parce que la tension directe abaisse la barrière de la jonction et que le courant croît exponentiellement ; la diode de puissance tient la tension par une zone N- épaisse, rendue conductrice par une charge stockée qu'il faut évacuer au blocage.</li>
+    <li data-rang="02">Les pertes de conduction valent $V_{F0}\,I_{moy} + r_F\,I_{eff}^2$ avec les paramètres à chaud ; la moyenne seule ne suffit jamais, et la température de jonction s'en déduit par $T_j = T_a + P\sum R_{th}$.</li>
+    <li data-rang="03">Le redresseur simple alternance donne $V_m/\pi$ sur charge résistive et impose $V_m$ en inverse ; une inductance, une batterie ou un condensateur changent la conduction, la tension moyenne et la tension inverse, qu'il faut toujours recalculer.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> raisonner sur l'état de chaque diode, passante ou bloquée, au lieu de supposer un
+    comportement, en particulier avec une charge inductive ou un condensateur, et distinguer les grandeurs moyennes, efficaces et de crête dans les
+    calculs de pertes. La simulation du redresseur et l'organigramme de la section F sont faits pour installer ce réflexe.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Redresseurs monophasés, passe au pont de Graetz et au filtrage capacitif. Question
+    à préparer : une alimentation de $24\ \mathrm{V}$ continus doit fournir $2\ \mathrm{A}$ à partir d'un transformateur de $230/18\ \mathrm{V}$ ;
+    avec un pont de quatre diodes, quelle tension de crête obtient-on aux bornes du condensateur, combien de diodes conduisent à la fois, à quelle
+    fréquence le condensateur se recharge-t-il, et quelle capacité faut-il pour que l'ondulation ne dépasse pas $1\ \mathrm{V}$ ?
+  </p>
+
+</article>
