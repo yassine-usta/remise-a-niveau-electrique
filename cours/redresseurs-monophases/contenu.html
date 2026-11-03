@@ -1,0 +1,787 @@
+<article class="cours" data-slug="redresseurs-monophases">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/diodes-de-puissance">Diodes de puissance</a> s'est achevé sur une question : une alimentation de
+      $24\ \mathrm{V}$ continus doit fournir $2\ \mathrm{A}$ à partir d'un transformateur de $230/18\ \mathrm{V}$ ; avec un pont de quatre
+      diodes, quelle tension de crête obtient-on aux bornes du condensateur, combien de diodes conduisent à la fois, à quelle fréquence le
+      condensateur se recharge-t-il, et quelle capacité faut-il pour que l'ondulation ne dépasse pas $1\ \mathrm{V}$ ? Réponse en quatre
+      temps. La crête du secondaire vaut $V_m = 18\sqrt{2} = 25{,}46\ \mathrm{V}$ ; le courant traverse toujours deux diodes en série, et avec
+      environ $1\ \mathrm{V}$ par diode au courant de crête, le condensateur se charge au mieux à $23{,}5\ \mathrm{V}$. Deux diodes conduisent à
+      la fois, une paire pendant l'alternance positive, l'autre pendant l'alternance négative. Le condensateur reçoit donc une impulsion de
+      recharge à chaque alternance, soit à $100\ \mathrm{Hz}$, et se décharge dans la charge pendant presque $10\ \mathrm{ms}$. Enfin, la
+      charge perdue entre deux recharges vaut $Q = I\,\Delta t \approx 2 \times 0{,}01 = 0{,}02\ \mathrm{C}$, et $\Delta V = Q/C$ impose
+      $C \geq 20\ \mathrm{mF}$ pour $1\ \mathrm{V}$. Cette séance justifie ces quatre réponses, puis montre ce qu'elles oublient : la durée réelle
+      de la décharge, les pointes de courant, la résistance du transformateur, qui abaisse nettement la tension obtenue, et le facteur de
+      puissance médiocre de ce montage.
+    </p>
+    <p>
+      Elle s'appuie aussi sur les valeurs moyenne et efficace du cours <a href="#/cours/signaux-periodiques-et-sinusoides">Signaux périodiques
+      et sinusoïdes</a>, sur la relation $i = C\,\mathrm{d}v/\mathrm{d}t$ du cours <a href="#/cours/condensateurs-et-champ-electrique">Condensateurs
+      et champ électrique</a>, sur la précharge du cours <a href="#/cours/regime-transitoire-rc">Régime transitoire RC</a>, sur le facteur de
+      puissance d'un courant déformé du cours <a href="#/cours/harmoniques-et-qualite-de-l-energie">Harmoniques et qualité de l'énergie</a> et
+      sur la décomposition en série de Fourier du cours <a href="#/cours/introduction-a-fourier">Introduction à Fourier</a>.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Presque tout appareil électronique alimenté par le réseau commence par un redresseur monophasé : alimentations d'automates et de
+    capteurs, chargeurs de batteries, alimentations à découpage des ordinateurs et des éclairages à LED, petits variateurs de vitesse
+    monophasés, alimentations des bobines de freins et d'électroaimants, postes de soudage de faible puissance. Le montage est toujours le
+    même ou presque : un pont de quatre diodes, le pont de Graetz, suivi d'un condensateur de filtrage, ou d'une inductance quand la
+    puissance augmente. Il transforme une tension alternative de valeur moyenne nulle en une tension de valeur moyenne positive, que le
+    filtrage rend à peu près constante.
+  </p>
+  <p>
+    Trois décisions de conception en découlent, et elles se prennent toutes avec les notions de cette séance. La première est la capacité du
+    condensateur, qui fixe l'ondulation de la tension continue et donc la marge des régulateurs placés en aval. La deuxième est le choix du
+    transformateur et des diodes : le courant prélevé par un redresseur à condensateur n'est pas sinusoïdal, mais formé d'impulsions brèves et
+    intenses, dont la valeur efficace dépasse largement le courant continu ; c'est elle qui chauffe le transformateur, les diodes et le
+    condensateur. La troisième est l'effet sur le réseau : ces impulsions sont riches en harmoniques de rang 3, qui s'additionnent dans le
+    neutre, et le facteur de puissance d'un tel montage tombe vers $0{,}6$ à $0{,}7$ alors que le courant est en phase avec la tension.
+    Le travail central de la séance consiste à dimensionner un condensateur de filtrage ; dans le projet fil rouge, il conduit à l'étage
+    d'entrée du chargeur du bus 24 V secouru de l'armoire automate.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Expliquer le fonctionnement du redresseur double alternance à point milieu et du pont de Graetz en identifiant, à chaque instant, les diodes passantes et bloquées et le chemin du courant.</li>
+    <li data-rang="02">Calculer la tension moyenne, la tension efficace, l'ondulation et les courants moyen, efficace et de crête des diodes et de la source pour une charge résistive et pour une charge fortement inductive.</li>
+    <li data-rang="03">Dimensionner un condensateur de filtrage pour une ondulation imposée, par la formule simplifiée puis par la méthode affinée de l'angle de reprise de conduction, et vérifier sa tension et son courant efficace.</li>
+    <li data-rang="04">Comparer les montages simple alternance, double alternance à point milieu et en pont selon la tension inverse des diodes, le nombre de chutes de tension, l'utilisation du transformateur et l'ondulation.</li>
+    <li data-rang="05">Interpréter le courant de ligne d'un redresseur à condensateur : pointes, angle de conduction, spectre harmonique, facteur de puissance, et l'effet de l'impédance de la source.</li>
+    <li data-rang="06">Diagnostiquer une diode coupée ou en court-circuit, un condensateur dégradé ou un défaut de précharge à partir de l'ondulation, des courants et des mesures.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois acquis suffisent. Le premier, vu dans le cours <a href="#/cours/signaux-periodiques-et-sinusoides">Signaux périodiques et
+    sinusoïdes</a> et repris dans le cours <a href="#/cours/diodes-de-puissance">Diodes de puissance</a> : la valeur moyenne d'un signal
+    périodique est $\langle x\rangle = \frac{1}{T}\int_0^T x\,\mathrm{d}t$ ; une alternance positive seule de crête $V_m$ a pour moyenne
+    $V_m/\pi$ sur une période. Le deuxième, vu dans le cours <a href="#/cours/condensateurs-et-champ-electrique">Condensateurs et champ
+    électrique</a> : un condensateur traversé par un courant $i$ voit sa tension varier de $\mathrm{d}v = i\,\mathrm{d}t/C$ ; s'il fournit un
+    courant constant $I$ pendant $\Delta t$, sa tension baisse de $\Delta V = I\,\Delta t/C$. Le troisième, vu dans le cours
+    <a href="#/cours/harmoniques-et-qualite-de-l-energie">Harmoniques et qualité de l'énergie</a> : avec une tension sinusoïdale et un courant
+    déformé, seul le fondamental du courant transporte la puissance active, et le facteur de puissance vaut
+    $\lambda = P/S = (I_1/I_{eff})\cos\varphi_1$. La correction de chaque question reste masquée jusqu'à une tentative ou un clic explicite sur
+    "Voir la correction".
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Notation de la séance</span>
+    <p>
+      $v_s = V_m\sin\theta$ est la tension de la source alternative, en pratique le secondaire d'un transformateur, avec $\theta = \omega t$,
+      $\omega = 2\pi f$ et $V_m = \sqrt{2}\,V_s$, où $V_s$ est sa valeur efficace. $i_s$ est le courant de la source, compté positivement quand il
+      sort de sa borne repérée $+$ ou A (convention générateur). $v_{ch}$ est la tension redressée aux bornes de la charge, $i_{ch}$ son courant,
+      en convention récepteur ; $V_{moy}$ et $V_{eff}$ sont sa valeur moyenne et sa valeur efficace. Avec un condensateur, $v_C$ est sa tension,
+      $\hat V_C$ son maximum, $\Delta V$ son ondulation crête à crête et $I$ le courant continu de la charge. Les diodes du pont sont $D_1$ à
+      $D_4$ ; $v_{D1} = v_A - v_P$ est la tension de $D_1$, anode moins cathode. $V_F$ est la chute d'une diode passante, $V_{F0}$ et $r_F$ ses
+      paramètres de modèle linéaire, $R_s$ la résistance totale de la source vue du pont, enroulements et diodes compris. $\theta_1$ est l'angle
+      de reprise de conduction et $t_d$ la durée de décharge du condensateur. L'indice 1 désigne le fondamental, $\lambda$ le facteur de puissance.
+    </p>
+  </div>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-aiguillage-texte">Le pont, un aiguillage qui retourne l'alternance négative</h3>
+  <p>
+    Une diode seule laisse passer l'alternance positive et jette l'autre : c'est le redresseur simple alternance du cours précédent. Le pont
+    de Graetz récupère aussi l'alternance négative en la retournant. Imaginez quatre clapets disposés autour de la source : quelle que soit la
+    borne de la source qui est positive, il existe un chemin qui part de cette borne, traverse un clapet vers la borne $+$ de la charge,
+    parcourt la charge toujours dans le même sens, revient par la borne $-$ et rejoint l'autre borne de la source par un second clapet. Les
+    deux autres clapets sont plaqués sur leur siège par la tension de la source. La charge reçoit donc $|v_s|$, la valeur absolue de la
+    tension de source : deux bosses par période au lieu d'une.
+  </p>
+  <p>
+    Deux conséquences se lisent déjà. Le courant traverse toujours deux diodes en série, d'où deux chutes de tension, environ
+    $1{,}6$ à $2\ \mathrm{V}$, négligeables sur le réseau, sensibles sur un secondaire de $12\ \mathrm{V}$. Et une diode bloquée voit la tension de
+    la source par l'intermédiaire de la diode passante de sa branche : sa tension inverse maximale est $V_m$, pas davantage.
+  </p>
+  <p>
+    L'animation suivante montre le pont alimenté par une source sinusoïdale et chargé par une résistance. Déplacez la poignée ronde le long de
+    l'axe des temps, ou lancez la lecture. Prédisez avant de manipuler : pendant l'alternance négative, la tension de la charge change-t-elle de
+    signe ? Quelles diodes conduisent quand $v_s$ est négative, et que vaut alors la tension aux bornes de $D_1$ ?
+  </p>
+  <figure id="d-aiguillage-figure">
+    <div class="schema-vivant" id="d-aiguillage"></div>
+    <figcaption>
+      Pont de Graetz sur charge résistive. En haut, le schéma : la source $v_s$, fléchée vers sa borne A repérée $+$, entre les deux branches ;
+      $D_1$ et $D_2$ sur la branche de gauche, $D_3$ et $D_4$ sur celle de droite ; la charge $R$ entre la barre P, borne $+$, et la barre N, borne
+      $-$, prise comme référence des potentiels. Les diodes passantes et les fils parcourus par le courant sont tracés en trait épais, et des
+      flèches indiquent le sens réel du courant ; les signes $+$ et $-$ près de la source suivent la polarité instantanée. En bas, les
+      chronogrammes sur deux périodes : $v_s$ en tirets, $v_{ch}$ en trait plein ; la poignée ronde, sur l'axe des temps, fixe l'instant observé,
+      repéré par un trait vertical.
+    </figcaption>
+  </figure>
+  <div id="d-aiguillage-lecteur"></div>
+  <div id="d-aiguillage-valeurs"></div>
+  <p>
+    Interprétation : $v_{ch}$ reste positive ou nulle à chaque instant ; pendant l'alternance négative, $D_3$ et $D_2$ conduisent, le courant
+    entre dans la charge par la même borne P, et $D_1$, dont l'anode est ramenée au potentiel de N par $D_2$ et la cathode au potentiel de P,
+    supporte $v_{D1} = -v_{ch} = v_s$, jusqu'à $-V_m$ au creux de l'alternance. Le courant de la source, lui, change de signe à chaque
+    alternance : il reste alternatif, sans composante continue, ce qui ménage le transformateur.
+  </p>
+
+  <h3 id="d-reservoir-texte">Le condensateur, un réservoir rempli par à-coups</h3>
+  <p>
+    Pour lisser $|v_s|$, on place un condensateur en parallèle sur la charge. Il se comporte comme un réservoir d'eau alimenté par une pompe
+    qui ne refoule que pendant les crêtes de pression : tant que la pression de la pompe, $|v_s|$ diminuée des chutes des diodes, reste
+    inférieure au niveau du réservoir, $v_C$, le clapet reste fermé et le réservoir se vide seul dans l'utilisation ; son niveau baisse
+    lentement. Peu avant la crête, la pression de la pompe dépasse le niveau, le clapet s'ouvre, et en peu de temps la pompe doit remplacer
+    toute l'eau consommée depuis la recharge précédente, en plus de celle que l'utilisation prend pendant ce temps.
+  </p>
+  <p>
+    Toute la physique du filtrage capacitif tient dans cette image. Plus le réservoir est grand, moins son niveau baisse entre deux recharges,
+    mais plus la fenêtre de recharge est courte, et plus le débit de recharge est intense : la même charge $Q = I\,T/2$ doit entrer en moins
+    de temps. Un gros condensateur donne une tension plus lisse, mais des impulsions de courant plus hautes et plus étroites, que la source,
+    les diodes et le condensateur lui-même doivent supporter.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie du réservoir</span>
+    <p>
+      L'analogie suppose une pompe idéale, capable de n'importe quel débit : avec une source parfaite, la pointe de courant ne serait limitée
+      que par la vitesse de montée de $|v_s|$. En réalité, la résistance et l'inductance de fuite du transformateur limitent le débit, élargissent
+      la fenêtre de recharge et abaissent le niveau maximal : c'est un effet du premier ordre, pas une correction marginale. L'analogie ne dit
+      rien non plus de la tension inverse des diodes ni du spectre du courant, et un réservoir n'a pas de résistance série qui chauffe : le
+      condensateur réel en a une, et le courant efficace qui la traverse détermine sa durée de vie.
+    </p>
+  </div>
+  <p>
+    L'animation suivante représente ce réservoir pour l'alimentation de la question d'ouverture, secondaire de $18\ \mathrm{V}$, condensateur
+    de $30\ \mathrm{mF}$ et résistance de source de $0{,}3\ \Omega$. Réglez l'instant par la poignée ronde sur l'axe des temps ou par la lecture,
+    et le courant de la charge par le curseur. Prédisez avant de manipuler : si le courant de la charge double, l'ondulation double-t-elle ? La
+    fenêtre de recharge s'élargit-elle ou se rétrécit-elle ?
+  </p>
+  <figure id="d-reservoir-figure">
+    <div class="schema-vivant" id="d-reservoir"></div>
+    <figcaption>
+      Le réservoir en fonctionnement, sur deux périodes. Tirets : $|v_s| - 2V_F$, la "pression" disponible après les deux diodes ; trait plein
+      épais : $v_C$, le niveau du réservoir ; bandes grisées : fenêtres de recharge, où les diodes conduisent ; courbe du bas, en trait plein :
+      le courant $i_b$ qui sort du pont, en impulsions. À droite, la jauge figure le niveau du condensateur entre $0$ et $25\ \mathrm{V}$, avec
+      une flèche quand le pont le recharge. La référence des potentiels est la borne $-$ du pont.
+    </figcaption>
+  </figure>
+  <div id="d-reservoir-curseurs"></div>
+  <div id="d-reservoir-lecteur"></div>
+  <div id="d-reservoir-valeurs"></div>
+  <p>
+    Interprétation : en doublant le courant de $2$ à $4\ \mathrm{A}$, l'ondulation passe de $0{,}47$ à $0{,}85\ \mathrm{V}$ : elle fait un peu moins
+    que doubler, et la fenêtre de recharge s'élargit, d'environ $56$ à $70^\circ$ par alternance, car le pont doit livrer deux fois plus de charge.
+    Le niveau moyen descend nettement, de $20{,}5$ à $18{,}8\ \mathrm{V}$, parce que la résistance de la source prélève sa chute sur des pointes de
+    courant plus fortes. Ce lien entre courant, ondulation et pointes guide tout le dimensionnement.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-p2">Double alternance à transformateur à point milieu</h3>
+  <p>
+    Le premier montage double alternance utilise un transformateur dont le secondaire est divisé en deux moitiés identiques reliées en un point
+    milieu O, pris comme référence. Les deux moitiés ayant le même sens d'enroulement, $v_a = v_s$ et $v_b = -v_s$ par rapport à O. Pendant
+    l'alternance positive, $D_a$ conduit et la charge reçoit $v_a$ ; pendant l'alternance négative, $D_b$ conduit et la charge reçoit
+    $v_b = -v_s > 0$. La charge voit $|v_s|$ comme avec un pont, mais avec une seule diode dans le chemin du courant.
+  </p>
+  <figure id="e-p2-figure">
+    <svg viewBox="0 0 760 344" role="img" aria-label="Redresseur double alternance à transformateur à point milieu : deux diodes, deux demi-secondaires, charge référencée au point milieu"><defs><marker id="fl-e-p2" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker><marker id="fl-e-p2-o" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10" fill="none" stroke="currentColor" stroke-width="1.6"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M30 80H90M30 200H90M90 80V90M90 190V200"/><path d="M90 90 a12 12 0 0 1 0 25"/><path d="M90 115 a12 12 0 0 1 0 25"/><path d="M90 140 a12 12 0 0 1 0 25"/><path d="M90 165 a12 12 0 0 1 0 25"/><path d="M120 76V204M126 76V204"/><path d="M156 40V40"/><path d="M156 40 a12 12 0 0 0 0 25"/><path d="M156 65 a12 12 0 0 0 0 25"/><path d="M156 90 a12 12 0 0 0 0 25"/><path d="M156 115 a12 12 0 0 0 0 25"/><path d="M156 140 a12 12 0 0 0 0 25"/><path d="M156 165 a12 12 0 0 0 0 25"/><path d="M156 190 a12 12 0 0 0 0 25"/><path d="M156 215 a12 12 0 0 0 0 25"/><path d="M156 40H230M156 240H230"/><path d="M230 40H263M277 40H310"/><path d="M263 30L277 40L263 50Z"/><path d="M277 30V50"/><path d="M230 240H263M277 240H310"/><path d="M263 230L277 240L263 250Z"/><path d="M277 230V250"/><path d="M310 40H560M310 240H560V40"/><path d="M156 140H440"/><path d="M440 40V65M440 115V140"/><rect x="432" y="65" width="16" height="50" rx="2"/><path d="M330 140V152M316 152H344M321 158H339M326 164H334"/></g><g fill="currentColor" stroke="none"><circle cx="156" cy="140" r="3.2"/><circle cx="440" cy="40" r="3.2"/><circle cx="440" cy="140" r="3.2"/><circle cx="560" cy="40" r="3.2"/><circle cx="330" cy="140" r="3.2"/></g><g fill="currentColor" stroke="none"><circle cx="78" cy="96" r="3.5"/><circle cx="170" cy="48" r="3.5"/><circle cx="170" cy="148" r="3.5"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M196 128L196 54" marker-end="url(#fl-e-p2-o)"/><path d="M196 152L196 226" marker-end="url(#fl-e-p2-o)"/><path d="M330 40L366 40" marker-end="url(#fl-e-p2)"/><path d="M330 240L366 240" marker-end="url(#fl-e-p2)"/><path d="M490 130L490 52" marker-end="url(#fl-e-p2-o)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="30" y="70">L</text><text x="30" y="220">N</text><text x="10" y="145">230 V</text><text x="146" y="30">a</text><text x="146" y="262">b</text><text x="130" y="136">O</text><text x="204" y="96">v_a = v_s</text><text x="204" y="196">v_b = -v_s</text><text x="256" y="24">Da</text><text x="256" y="270">Db</text><text x="340" y="30">i_a</text><text x="340" y="262">i_b</text><text x="564" y="34">P</text><text x="454" y="96">R</text><text x="500" y="96">v_ch</text><text x="346" y="176">référence : point milieu O</text></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11.5"><text x="30" y="296">Points : bornes homologues ; les deux demi-secondaires ont le même sens.</text><text x="30" y="314">v_s > 0 : Da conduit ; v_s < 0 : Db conduit. Tensions v_a et v_b référencées au point milieu O.</text><text x="30" y="332">Da bloquée (v_s < 0) supporte v_a - v_P = v_s - |v_s| = 2v_s, soit -2V_m au creux.</text></g></svg>
+    <figcaption>
+      Montage à point milieu. Les points marquent les bornes homologues : les deux demi-secondaires, de même sens, donnent des tensions opposées
+      par rapport à O. Flèches ouvertes : tensions $v_a$, $v_b$ et $v_{ch}$, chacune pointant vers la borne dont elle mesure le potentiel ; flèches
+      pleines : sens des courants $i_a$ et $i_b$, chacun ne circulant que pendant une alternance. La charge $R$ est reliée entre P et O.
+    </figcaption>
+  </figure>
+  <p>
+    Le prix de cette économie de diodes est double. D'abord, la diode bloquée voit la tension de sa demi-bobine plus celle de la charge :
+    quand $D_b$ conduit, $v_P = -v_s$ et $v_{Da} = v_a - v_P = 2v_s$, soit $-2V_m$ au creux. Ensuite, chaque demi-secondaire ne travaille qu'une
+    alternance sur deux : à puissance égale, le cuivre du secondaire est moins bien utilisé qu'avec un pont. Ce montage reste intéressant en
+    très basse tension et fort courant, où l'économie d'une chute de diode compte plus que le coût du transformateur.
+  </p>
+
+  <h3 id="e-graetz">Le pont de Graetz sur charge résistive</h3>
+  <p>
+    Dans le pont, la tension de la charge vaut $|v_s|$ aux chutes des diodes près. Sa valeur moyenne s'obtient en intégrant sur une demi-période,
+    puisque le signal est périodique de période $T/2$ :
+  </p>
+  <div class="formule-cle">
+    $$V_{moy} = \frac{1}{\pi}\int_0^{\pi} V_m\sin\theta\,\mathrm{d}\theta = \frac{V_m}{\pi}\big[-\cos\theta\big]_0^{\pi} = \frac{2V_m}{\pi} = \frac{2\sqrt{2}}{\pi}\,V_s \approx 0{,}900\,V_s$$
+    <p class="formule-cle-legende">
+      $V_{moy}$ et $V_m$ en volts, $\theta$ en radians. Hypothèses : diodes idéales, source sans impédance, charge résistive ou, plus généralement,
+      conduction continue sans condensateur. Dimension : l'intégrale d'une tension sur un angle sans dimension, divisée par un angle, est une
+      tension. Cas limites : le simple alternance donne la moitié, $V_m/\pi$ ; avec deux chutes $V_F$, $V_{moy} \approx 2V_m/\pi - 2V_F$, ce qui fait
+      perdre $17\ \%$ sur un secondaire de $12\ \mathrm{V}$ ($V_{moy}$ passe de $10{,}8$ à $9{,}0\ \mathrm{V}$ environ avec $V_F = 0{,}9\ \mathrm{V}$)
+      et $0{,}9\ \%$ sur $230\ \mathrm{V}$.
+    </p>
+  </div>
+  <p>
+    La valeur efficace de $|v_s|$ est celle de $v_s$, puisque le carré ignore le signe : $V_{eff} = V_m/\sqrt{2} = V_s$. La tension redressée
+    n'est donc pas constante : son facteur de forme vaut $V_{eff}/V_{moy} = \pi/(2\sqrt{2}) = 1{,}111$, et la part alternative superposée à la
+    moyenne a pour valeur efficace $\sqrt{V_{eff}^2 - V_{moy}^2} = 0{,}483\,V_{moy}$. Le développement en série de Fourier précise où se trouve cette
+    part alternative :
+  </p>
+  <div class="formule-cle">
+    $$|V_m\sin\theta| = \frac{2V_m}{\pi} - \frac{4V_m}{\pi}\sum_{k=1}^{\infty}\frac{\cos(2k\theta)}{4k^2 - 1} = \frac{2V_m}{\pi} - \frac{4V_m}{3\pi}\cos 2\theta - \frac{4V_m}{15\pi}\cos 4\theta - \dots$$
+    <p class="formule-cle-legende">
+      Hypothèse : diodes idéales. Les seuls rangs présents sont pairs, $2f = 100\ \mathrm{Hz}$, $4f = 200\ \mathrm{Hz}$ et ainsi de suite, car le
+      signal se répète deux fois par période. Le terme à $100\ \mathrm{Hz}$ a une amplitude $4V_m/(3\pi) = 0{,}424\,V_m$, soit $66{,}7\ \%$ de la
+      moyenne : c'est lui que le filtre doit atténuer. Dimension : chaque terme est une tension. Cas limite : en $\theta = \pi/2$, la série
+      redonne $V_m$ ; en $\theta = 0$, elle redonne $0$.
+    </p>
+  </div>
+  <p>
+    Côté diodes et source, sur charge résistive : chaque diode conduit une alternance sur deux, avec $I_{D,moy} = V_m/(\pi R)$ et
+    $I_{D,eff} = V_m/(2R)$ ; le courant de la source est sinusoïdal, $i_s = v_s/R$, de valeur efficace $V_s/R$ et sans composante continue. Une diode
+    bloquée supporte au plus $V_m$. Le tableau de la section F compare ces grandeurs pour les trois montages.
+  </p>
+
+  <h3 id="e-inductive">Charge fortement inductive : le courant lissé</h3>
+  <p>
+    Une inductance en série avec la charge s'oppose aux variations du courant. Si sa réactance au rang 2, $2\omega L$, est grande devant $R$, le
+    courant de la charge devient quasi constant, $i_{ch} \approx I_d$, alors que la tension appliquée à l'ensemble reste $|v_s|$ tant que les diodes
+    conduisent. Comme une inductance n'absorbe aucune tension moyenne en régime établi, $\langle L\,\mathrm{d}i/\mathrm{d}t\rangle = 0$, la valeur
+    moyenne de la tension se retrouve entière aux bornes de $R$ : $I_d = V_{moy}/R = 2V_m/(\pi R)$. L'ondulation résiduelle du courant est, au premier
+    ordre, celle du terme à $100\ \mathrm{Hz}$ : $\Delta I_{\text{crête}} \approx \frac{4V_m}{3\pi}\big/\left|R + j2\omega L\right|$.
+  </p>
+  <p>
+    Le courant de la source devient alors un créneau : $+I_d$ pendant l'alternance positive, $-I_d$ pendant l'alternance négative. Ses
+    grandeurs s'en déduisent sans calcul compliqué :
+  </p>
+  <div class="formule-cle">
+    $$I_{s,eff} = I_d, \qquad I_{s1} = \frac{2\sqrt{2}}{\pi}\,I_d = 0{,}900\,I_d, \qquad \lambda = \frac{P}{S} = \frac{V_{moy} I_d}{V_s I_d} = \frac{2\sqrt{2}}{\pi} = 0{,}900, \qquad I_{D,moy} = \frac{I_d}{2},\ I_{D,eff} = \frac{I_d}{\sqrt{2}}$$
+    <p class="formule-cle-legende">
+      Courants en ampères. Hypothèses : $I_d$ parfaitement constant, commutation instantanée des diodes, source sans inductance. Le fondamental
+      du créneau est en phase avec $v_s$, $\cos\varphi_1 = 1$ : le facteur de puissance de $0{,}900$ vient tout entier de la déformation, avec un
+      taux de distorsion $\sqrt{(\pi^2/8) - 1} = 48{,}3\ \%$ et des harmoniques impairs d'amplitude $I_1/n$. Dimension : $\lambda$ est un rapport
+      de puissances, sans dimension. Cas limite : $L \to 0$ ramène au courant sinusoïdal de la charge résistive et à $\lambda = 1$.
+    </p>
+  </div>
+  <p>
+    Un transformateur réel possède une inductance de fuite $L_s$ ramenée au secondaire. Le courant de la source ne peut donc pas passer
+    instantanément de $-I_d$ à $+I_d$ : pendant un angle d'empiètement $\mu$, les quatre diodes conduisent ensemble, la charge est court-circuitée et
+    $v_{ch} = 0$. La surface de tension perdue à chaque alternance vaut $\int_0^{\mu} V_m\sin\theta\,\mathrm{d}\theta = 2\omega L_s I_d$, d'où une chute
+    de tension moyenne $\Delta V_{moy} = 2\omega L_s I_d/\pi$, proportionnelle au courant, sans pertes Joule associées. Avec $L_s = 0{,}5\ \mathrm{mH}$ et
+    $I_d = 10\ \mathrm{A}$, la chute vaut $1{,}0\ \mathrm{V}$. Le cours Redresseurs triphasés reprendra ce phénomène de commutation, déterminant sur
+    les gros ponts.
+  </p>
+
+  <h3 id="e-capacitif">Filtrage capacitif : bilan de charge et ondulation</h3>
+  <p>
+    Avec un condensateur $C$ en parallèle sur une charge qui consomme un courant $I$ à peu près constant, par exemple un régulateur, le
+    fonctionnement alterne deux phases à chaque alternance. Pendant la recharge, de $\theta_1$ jusque peu après la crête, deux diodes conduisent et
+    $v_C$ suit $|v_s| - 2V_F$. Pendant la décharge, toutes les diodes sont bloquées, car $|v_s| - 2V_F &lt; v_C$, et le condensateur fournit seul le
+    courant $I$ : $v_C$ décroît linéairement de $I/C$ volts par seconde. L'équilibre en régime établi impose que la charge rendue par le pont à
+    chaque recharge compense exactement la charge consommée sur une demi-période : $Q = I\,T/2$. Le simulateur de la fin de cette section montre ce
+    fonctionnement pour trois charges ; les formules suivantes en donnent le dimensionnement.
+  </p>
+  <div class="formule-cle">
+    $$\Delta V = \frac{I\,t_d}{C} \leq \frac{I}{2fC}, \qquad t_d = \frac{\pi/2 + \theta_1}{\omega}, \qquad \sin\theta_1 = \frac{\hat V_C - \Delta V}{\hat V_C}, \qquad \hat V_C \approx V_m - 2V_F$$
+    <p class="formule-cle-legende">
+      $\Delta V$ et $\hat V_C$ en volts, $I$ en ampères, $C$ en farads, $f$ en hertz, $t_d$ en secondes, $\theta_1$ en radians. Dérivation : la
+      décharge commence à la crête, en $\theta = \pi/2$, et s'achève quand $|v_s| - 2V_F$ rattrape $v_C$, en $\theta = \pi + \theta_1$ ; elle dure
+      $(\pi/2 + \theta_1)/\omega$, et un courant constant y retire $I\,t_d$ coulombs, soit $\Delta V = I\,t_d/C$. Majorer $t_d$ par $T/2 = 1/(2f)$ donne la
+      formule simplifiée, prudente, qui surestime $C$ de $5$ à $15\ \%$. Hypothèses : source sans impédance, $I$ constant, $\Delta V \ll \hat V_C$ pour que
+      la tension maximale reste voisine de la crête. Dimension : $\mathrm{A \cdot s/F} = \mathrm{C/(C/V)} = \mathrm{V}$. Cas limites : $C \to \infty$
+      donne $\Delta V \to 0$ et une recharge infiniment brève ; en simple alternance, la décharge dure presque une période entière et la formule
+      devient $\Delta V \leq I/(fC)$, deux fois plus d'ondulation pour le même condensateur.
+    </p>
+  </div>
+  <p>
+    La recharge s'effectue entre $\theta_1$ et $\pi/2$, soit un angle de conduction de $\pi/2 - \theta_1$ par alternance avec une source idéale. Sur cet
+    intervalle, le pont fournit à la fois le courant de la charge et celui du condensateur, $C\,\mathrm{d}v_C/\mathrm{d}t$. Au début de la recharge,
+    $v_C$ suit la sinusoïde, ce qui donne le courant de crête et le courant moyen pendant la conduction :
+  </p>
+  <div class="formule-cle">
+    $$\hat I_b = I + C\,\omega\,\hat V_C\cos\theta_1, \qquad \bar I_{cond} = I\,\frac{\pi}{\pi/2 - \theta_1}, \qquad I_{C,eff} = \sqrt{I_{s,eff}^2 - I^2}$$
+    <p class="formule-cle-legende">
+      Courants en ampères. Le premier résultat dérive $v_C = \hat V_C \sin\theta$ au point de reprise ; le deuxième traduit la livraison de la charge
+      $I\,T/2$ pendant la seule fenêtre de conduction ; le troisième vient de ce que le courant du condensateur est $i_b - I$, de valeur moyenne nulle,
+      et que la valeur efficace de $i_b$ est celle de $i_s$, dont il est la valeur absolue. Hypothèses : source idéale pour les deux premiers, aucune
+      pour le troisième, qui est exact. Dimension : $\mathrm{F \cdot rad/s \cdot V} = \mathrm{(C/V) \cdot V/s} = \mathrm{A}$. Cas limite : quand
+      $\theta_1 \to \pi/2$, l'angle de conduction tend vers zéro et la pointe tend vers l'infini : seule l'impédance de la source la limite.
+    </p>
+  </div>
+  <p>
+    Ces formules idéales suffisent pour un premier choix de $C$, mais elles se trompent lourdement sur les courants. Une résistance de source
+    $R_s$, de quelques dixièmes d'ohm pour un petit transformateur, limite la pointe à quelques fois $I$ au lieu de plusieurs dizaines de fois,
+    étale la conduction sur $50$ à $60^\circ$ par alternance, et abaisse la tension maximale de $R_s$ fois le courant de recharge. Dans l'exemple de la
+    section H, l'écart dépasse $2{,}5\ \mathrm{V}$ sur $23\ \mathrm{V}$. Les grandeurs qui chauffent les composants, $I_{s,eff}$ et $I_{C,eff}$,
+    s'obtiennent alors par simulation ou par les abaques publiés pour ce montage. Le simulateur suivant fait ce calcul.
+  </p>
+  <p>
+    Simulation du pont de Graetz. Choisissez la charge par le premier curseur : $1$ pour une résistance seule, $2$ pour une résistance en série
+    avec une inductance, $3$ pour une résistance en parallèle avec un condensateur ; réglez la tension efficace de la source, les éléments de la
+    charge et la résistance de la source, puis déplacez l'instant d'observation par la lecture ou par le curseur de temps. Prédisez avant de
+    manipuler : avec la charge $2$, que devient la forme du courant de la source quand $L$ passe de $10\ \mathrm{mH}$ à $500\ \mathrm{mH}$ ? Avec la
+    charge $3$, que deviennent la pointe du courant et le facteur de puissance quand la résistance de source passe de $2$ à $0{,}2\ \Omega$ ?
+  </p>
+  <figure id="e-pont-figure">
+    <div id="e-pont-tensions"></div>
+    <div id="e-pont-courants"></div>
+    <figcaption>
+      Formes d'onde du pont en régime établi, sur deux périodes. Graphique du haut : $v_{ch}$ en trait plein épais, $|v_s|$ en tirets, valeur
+      moyenne de $v_{ch}$ en pointillés horizontaux. Graphique du bas : courant de la source $i_s$ en trait plein, courant de la charge $i_{ch}$ en
+      tirets. Le trait vertical marque l'instant d'observation ; les valeurs numériques sont affichées sous les curseurs. Référence des potentiels :
+      borne N du pont ; $i_s$ compté positivement quand il sort de la borne A de la source. Seuil de chaque diode : $1{,}0\ \mathrm{V}$.
+    </figcaption>
+  </figure>
+  <div id="e-pont-curseurs"></div>
+  <div id="e-pont-lecteur"></div>
+  <div id="e-pont-valeurs"></div>
+  <p>
+    Interprétation. Avec la charge $2$, le courant de la source passe d'une sinusoïde légèrement déformée à un créneau presque parfait quand $L$
+    augmente : le facteur de puissance tend vers $0{,}90$, et la tension moyenne ne dépend pas de $L$, puisque l'inductance n'absorbe aucune tension
+    moyenne. Avec la charge $3$, $R = 100\ \Omega$ et $C = 1\ \mathrm{mF}$ sous $230\ \mathrm{V}$, réduire la résistance de source de $2$ à $0{,}2\ \Omega$ relève
+    la tension continue d'environ $291$ à $309\ \mathrm{V}$, mais rend les impulsions plus hautes et plus brèves : la pointe passe d'environ $15$ à
+    $30\ \mathrm{A}$, la conduction de $51$ à $29^\circ$ par alternance, et le facteur de puissance baisse d'environ $0{,}67$ à $0{,}49$. Un réseau "trop
+    raide" n'est pas un avantage pour un redresseur à condensateur : c'est pourquoi les variateurs ajoutent une self de ligne ou une self sur le bus
+    continu.
+  </p>
+
+  <h3 id="e-spectre">Le courant de ligne et son spectre</h3>
+  <p>
+    Le courant prélevé par un redresseur à condensateur est fait d'impulsions centrées sur les crêtes de tension. Son fondamental est en phase
+    avec la tension, mais ses harmoniques impairs de rangs 3, 5 et 7 sont très élevés. Le diagramme suivant compare, en pourcentage du fondamental,
+    le créneau de la charge fortement inductive, dont les harmoniques décroissent en $1/n$, et les impulsions de l'alimentation de l'exemple de la
+    section H, calculées par simulation.
+  </p>
+  <figure id="e-spectre-figure">
+    <svg viewBox="0 0 760 356" role="img" aria-label="Spectres du courant de ligne d'un pont de Graetz : créneaux d'une charge fortement inductive et impulsions d'un filtrage capacitif"><g fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M90 260H720M90 260V40"/><path d="M90 260h-6"/><path d="M90 210h-6"/><path d="M90 160h-6"/><path d="M90 110h-6"/><path d="M90 60h-6"/></g><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 4"><path d="M90 210H720"/><path d="M90 160H720"/><path d="M90 110H720"/><path d="M90 60H720"/></g><g stroke="currentColor" stroke-width="1.4"><rect x="108" y="60" width="30" height="200" fill="none"/><rect x="142" y="60" width="30" height="200" fill="currentColor"/><rect x="208" y="193.4" width="30" height="66.6" fill="none"/><rect x="242" y="95.2" width="30" height="164.8" fill="currentColor"/><rect x="308" y="220" width="30" height="40" fill="none"/><rect x="342" y="152.4" width="30" height="107.6" fill="currentColor"/><rect x="408" y="231.4" width="30" height="28.6" fill="none"/><rect x="442" y="211.8" width="30" height="48.2" fill="currentColor"/><rect x="508" y="237.8" width="30" height="22.2" fill="none"/><rect x="542" y="255" width="30" height="5" fill="currentColor"/><rect x="608" y="241.8" width="30" height="18.2" fill="none"/><rect x="642" y="244.4" width="30" height="15.6" fill="currentColor"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11"><text x="54" y="264">0</text><text x="54" y="214">25</text><text x="54" y="164">50</text><text x="54" y="114">75</text><text x="54" y="64">100</text><text x="106" y="54">100</text><text x="142" y="42">100</text><text x="132" y="280">1</text><text x="206" y="187.4">33,3</text><text x="242" y="89.2">82,4</text><text x="232" y="280">3</text><text x="306" y="214">20</text><text x="342" y="146.4">53,8</text><text x="332" y="280">5</text><text x="406" y="225.4">14,3</text><text x="442" y="205.8">24,1</text><text x="432" y="280">7</text><text x="506" y="231.8">11,1</text><text x="542" y="249">2,5</text><text x="532" y="280">9</text><text x="606" y="235.8">9,1</text><text x="642" y="238.4">7,8</text><text x="632" y="280">11</text><text x="340" y="302">rang harmonique n (fréquence n × 50 Hz)</text><text x="10" y="30">I_n / I_1 (%)</text><text x="30" y="326">Barres en contour, à gauche : créneaux d'une charge fortement inductive, I_n / I_1 = 1/n.</text><text x="30" y="344">Barres pleines, à droite : impulsions du filtrage capacitif de l'exemple H.</text></g></svg>
+    <figcaption>
+      Spectres du courant de ligne d'un pont de Graetz, rangs impairs 1 à 11 en abscisse, rapport $I_n/I_1$ en pour cent en ordonnée. Barres en
+      contour, à gauche de chaque rang : charge fortement inductive, taux de distorsion $48\ \%$, facteur de puissance $0{,}90$. Barres
+      pleines, à droite : filtrage capacitif de l'exemple H, rang 3 à $82\ \%$, taux de distorsion d'environ $102\ \%$, facteur de
+      puissance $0{,}70$.
+    </figcaption>
+  </figure>
+  <p>
+    En monophasé, les harmoniques de rang 3 de tous les appareils sont en phase entre eux ; dans une installation triphasée avec neutre, ceux des
+    trois phases s'additionnent dans le neutre au lieu de s'y compenser, comme l'a montré le cours
+    <a href="#/cours/harmoniques-et-qualite-de-l-energie">Harmoniques et qualité de l'énergie</a>. Un bâtiment de bureaux rempli d'alimentations
+    à condensateur peut ainsi porter dans son neutre un courant supérieur à celui des phases. Les limites d'émission harmonique applicables aux
+    appareils et aux installations dépendent des textes et normes retenus pour le projet ; elles imposent au-delà de quelques centaines de watts
+    un correcteur de facteur de puissance actif, que le cours Hacheurs DC-DC permettra de comprendre.
+  </p>
+
+  <h3 id="e-dimensionnement">Dimensionner un condensateur de filtrage</h3>
+  <p>
+    Le choix du condensateur combine quatre vérifications. La capacité d'abord, par la formule simplifiée, puis la méthode affinée, en tenant
+    compte de la tolérance du composant, souvent $\pm 20\ \%$ pour un électrolytique, et de sa perte de capacité au vieillissement. La tension
+    ensuite : à vide, $v_C$ monte à la crête du réseau haut, $1{,}1\,V_m$ moins les chutes, sans aucune ondulation ; la tension assignée doit
+    la dépasser avec une marge. Le courant efficace $I_{C,eff}$ enfin, qui chauffe la résistance série équivalente du condensateur : c'est souvent lui,
+    et non la capacité, qui impose le nombre de condensateurs en parallèle, et la durée de vie annoncée par le constructeur dépend de ce courant et
+    de la température. Reste l'appel à la mise sous tension : condensateur vide, il se comporte comme un court-circuit, et seule $R_s$ limite le
+    premier courant à $V_m/R_s$ ; au-delà de quelques millifarads, une résistance de précharge ou une thermistance s'impose.
+  </p>
+  <p>
+    Simulation de dimensionnement. Le graphique du haut trace l'ondulation $\Delta V$ en fonction de $C$ pour un courant de charge constant, selon
+    trois modèles ; celui du bas montre $v_C(t)$ pour la valeur de $C$ choisie. Réglez le courant, la tension du secondaire, la résistance de source
+    et la capacité. Prédisez avant de manipuler : l'écart entre la formule simplifiée et la méthode affinée est-il plus grand pour un petit ou pour un
+    gros condensateur ? Quand $R_s$ augmente, l'ondulation augmente-t-elle ou diminue-t-elle ?
+  </p>
+  <figure id="e-dimension-figure">
+    <div id="e-dimension-courbe"></div>
+    <div id="e-dimension-temps"></div>
+    <figcaption>
+      Graphique du haut : $\Delta V$ en volts en fonction de $C$ en millifarads ; trait plein épais, simulation avec la résistance de source ;
+      tirets, formule simplifiée $I/(2fC)$ ; pointillés, méthode affinée avec $t_d$, source idéale ; trait vertical, capacité choisie. Graphique du
+      bas : $v_C$ en trait plein sur deux périodes, $|v_s| - 2V_F$ en tirets, pour la capacité choisie. Seuil de chaque diode : $1{,}0\ \mathrm{V}$.
+    </figcaption>
+  </figure>
+  <div id="e-dimension-curseurs"></div>
+  <div id="e-dimension-valeurs"></div>
+  <p>
+    Interprétation : l'écart relatif entre la formule simplifiée et la méthode affinée est plus grand pour un petit condensateur, parce que la
+    fenêtre de recharge y est plus large et que $t_d$ s'éloigne de $T/2$ ; pour un gros condensateur, les deux formules convergent. La résistance de
+    source, elle, réduit un peu l'ondulation, en étalant la recharge, mais elle abaisse toute la tension : à ondulation égale, la tension minimale
+    $\hat V_C - \Delta V$ est plus basse, et c'est elle que le régulateur aval doit tolérer. Le bon critère de dimensionnement n'est donc pas $\Delta V$
+    seul, mais la tension minimale au réseau bas.
+  </p>
+
+  <h3 id="e-statut">Loi, convention, approximation, règle de conception et donnée du constructeur</h3>
+  <ul>
+    <li><strong>Lois physiques :</strong> la relation $i = C\,\mathrm{d}v/\mathrm{d}t$ et la conservation de la charge qui fonde $\Delta V = I\,t_d/C$ ; la loi de Faraday, qui interdit une tension moyenne aux bornes d'une inductance en régime établi et produit l'empiètement ; la conservation de l'énergie, qui équilibre puissances de la source, de la charge et des pertes.</li>
+    <li><strong>Conventions :</strong> le repérage de la borne A de la source et le sens positif de $i_s$, la convention récepteur pour la charge et pour les diodes, le choix de la borne N comme référence des potentiels, les points de polarité du transformateur à point milieu.</li>
+    <li><strong>Approximations :</strong> les diodes à seuil constant, la source sans impédance des formules de $\Delta V$, $\theta_1$ et $\hat I_b$, le courant de charge constant, le courant parfaitement lissé de la charge inductive, l'ondulation de courant limitée au rang 2.</li>
+    <li><strong>Règles de conception :</strong> dimensionner sur la tension minimale au réseau bas et sur la tension maximale au réseau haut, réserver $20$ à $30\ \%$ de marge sur la capacité pour la tolérance et le vieillissement, choisir des diodes de tension inverse au moins $1{,}5$ à $2{,}5$ fois la crête, prévoir une précharge au-delà de quelques millifarads.</li>
+    <li><strong>Données du constructeur ou des normes :</strong> la capacité, sa tolérance, la tension assignée, le courant efficace admissible à $100\ \mathrm{Hz}$ et la durée de vie des condensateurs ; la tension de court-circuit, la résistance et la régulation du transformateur ; $V_{RRM}$, $I_{FSM}$ et $I^2t$ du pont ; les limites d'émission harmonique, qui relèvent des textes applicables à l'appareil et à l'installation.</li>
+  </ul>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, le pont de Graetz sur charge résistive avec ses chronogrammes, l'organigramme de
+    dimensionnement d'un redresseur à condensateur et le tableau comparatif des montages. Les autres schémas sont restés au contact du passage
+    qu'ils illustrent ; la liste de renvois figure à la fin de la section.
+  </p>
+  <p>
+    Le schéma principal se lit en deux parties. En haut, le circuit : la source $v_s$ entre les nœuds A et B, fléchée vers A, sa borne repérée $+$ ;
+    le courant $i_s$, qui sort de la source par A ; les deux branches du pont, $D_1$ et $D_2$ à gauche, $D_3$ et $D_4$ à droite, toutes orientées de
+    la barre N vers la barre P ; la charge $R$ en convention récepteur, parcourue de P vers N par $i_{ch}$, avec $v_{ch}$ fléchée vers P. La barre N
+    est la référence des potentiels. En bas, quatre chronogrammes alignés sur deux périodes ; les traits verticaux pointillés séparent les
+    alternances.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 760 720" role="img" aria-label="Schéma principal : pont de Graetz sur charge résistive avec ses conventions, puis chronogrammes des tensions, du courant de ligne, des courants et de la tension de la diode D1 sur deux périodes"><defs><marker id="fl-f-pr" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker><marker id="fl-f-pr-o" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10" fill="none" stroke="currentColor" stroke-width="1.6"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M230 140V102M230 88V50"/><path d="M220 102L230 88L240 102Z"/><path d="M220 88H240"/><path d="M230 230V192M230 178V140"/><path d="M220 192L230 178L240 192Z"/><path d="M220 178H240"/><path d="M370 140V102M370 88V50"/><path d="M360 102L370 88L380 102Z"/><path d="M360 88H380"/><path d="M370 230V192M370 178V140"/><path d="M360 192L370 178L380 192Z"/><path d="M360 178H380"/><circle cx="300" cy="140" r="22"/><path d="M288 140c4 -10 8 -10 12 0s8 10 12 0"/><path d="M230 140H278M322 140H370"/><path d="M230 50H560M230 230H560"/><path d="M560 50V50"/><path d="M560 50V110M560 170V230"/><rect x="552" y="110" width="16" height="60" rx="2"/><path d="M470 230V242M456 242H484M461 248H479M466 254H474"/></g><g fill="currentColor" stroke="none"><circle cx="230" cy="140" r="3.2"/><circle cx="370" cy="140" r="3.2"/><circle cx="230" cy="50" r="3.2"/><circle cx="370" cy="50" r="3.2"/><circle cx="230" cy="230" r="3.2"/><circle cx="370" cy="230" r="3.2"/><circle cx="470" cy="230" r="3.2"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M318 176L282 176" marker-end="url(#fl-f-pr-o)"/><path d="M420 50L470 50" marker-end="url(#fl-f-pr)"/><path d="M600 210L600 70" marker-end="url(#fl-f-pr-o)"/><path d="M274 128L242 128" marker-end="url(#fl-f-pr)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="250" y="98">D1</text><text x="250" y="192">D2</text><text x="390" y="98">D3</text><text x="390" y="192">D4</text><text x="214" y="134">A</text><text x="378" y="134">B</text><text x="214" y="44">P</text><text x="214" y="252">N</text><text x="258" y="160">+</text><text x="334" y="160">-</text><text x="290" y="198">v_s</text><text x="250" y="120">i_s</text><text x="424" y="40">i_ch</text><text x="580" y="126">R</text><text x="612" y="144">v_ch</text><text x="548" y="44">+</text><text x="548" y="248">-</text><text x="400" y="284">référence : borne N du pont</text></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11"><text x="20" y="300">Alternance positive (A au-dessus de B) : D1 et D4 conduisent ; alternance négative : D3 et D2.</text></g><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M110 326V434"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11"><text x="14" y="384">v_s, v_ch</text></g><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 4"><path d="M88 349.4H108"/></g><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M110 380H720"/></g><polyline fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" stroke-dasharray="7 5" points="110,380 111.5,378.5 113,377 114.6,375.5 116.1,374 117.6,372.5 119.2,371 120.7,369.5 122.2,368.1 123.7,366.6 125.2,365.2 126.8,363.7 128.3,362.3 129.8,360.9 131.3,359.6 132.9,358.2 134.4,356.9 135.9,355.6 137.4,354.3 139,353 140.5,351.8 142,350.6 143.6,349.4 145.1,348.3 146.6,347.1 148.1,346.1 149.7,345 151.2,344 152.7,343 154.2,342.1 155.8,341.2 157.3,340.3 158.8,339.5 160.3,338.7 161.8,337.9 163.4,337.2 164.9,336.6 166.4,335.9 167.9,335.4 169.5,334.8 171,334.3 172.5,333.9 174.1,333.5 175.6,333.2 177.1,332.9 178.6,332.6 180.2,332.4 181.7,332.2 183.2,332.1 184.7,332 186.2,332 187.8,332 189.3,332.1 190.8,332.2 192.3,332.4 193.9,332.6 195.4,332.9 196.9,333.2 198.4,333.5 200,333.9 201.5,334.3 203,334.8 204.6,335.4 206.1,335.9 207.6,336.6 209.1,337.2 210.7,337.9 212.2,338.7 213.7,339.5 215.2,340.3 216.8,341.2 218.3,342.1 219.8,343 221.3,344 222.8,345 224.4,346.1 225.9,347.1 227.4,348.3 228.9,349.4 230.5,350.6 232,351.8 233.5,353 235.1,354.3 236.6,355.6 238.1,356.9 239.6,358.2 241.2,359.6 242.7,360.9 244.2,362.3 245.7,363.7 247.2,365.2 248.8,366.6 250.3,368.1 251.8,369.5 253.3,371 254.9,372.5 256.4,374 257.9,375.5 259.4,377 261,378.5 262.5,380 264,381.5 265.6,383 267.1,384.5 268.6,386 270.1,387.5 271.6,389 273.2,390.5 274.7,391.9 276.2,393.4 277.8,394.8 279.3,396.3 280.8,397.7 282.3,399.1 283.9,400.4 285.4,401.8 286.9,403.1 288.4,404.4 289.9,405.7 291.5,407 293,408.2 294.5,409.4 296.1,410.6 297.6,411.7 299.1,412.9 300.6,413.9 302.1,415 303.7,416 305.2,417 306.7,417.9 308.2,418.8 309.8,419.7 311.3,420.5 312.8,421.3 314.4,422.1 315.9,422.8 317.4,423.4 318.9,424.1 320.4,424.6 322,425.2 323.5,425.7 325,426.1 326.6,426.5 328.1,426.8 329.6,427.1 331.1,427.4 332.6,427.6 334.2,427.8 335.7,427.9 337.2,428 338.8,428 340.3,428 341.8,427.9 343.3,427.8 344.9,427.6 346.4,427.4 347.9,427.1 349.4,426.8 350.9,426.5 352.5,426.1 354,425.7 355.5,425.2 357.1,424.6 358.6,424.1 360.1,423.4 361.6,422.8 363.1,422.1 364.7,421.3 366.2,420.5 367.7,419.7 369.2,418.8 370.8,417.9 372.3,417 373.8,416 375.4,415 376.9,413.9 378.4,412.9 379.9,411.7 381.4,410.6 383,409.4 384.5,408.2 386,407 387.6,405.7 389.1,404.4 390.6,403.1 392.1,401.8 393.6,400.4 395.2,399.1 396.7,397.7 398.2,396.3 399.8,394.8 401.3,393.4 402.8,391.9 404.3,390.5 405.9,389 407.4,387.5 408.9,386 410.4,384.5 411.9,383 413.5,381.5 415,380 416.5,378.5 418.1,377 419.6,375.5 421.1,374 422.6,372.5 424.1,371 425.7,369.5 427.2,368.1 428.7,366.6 430.2,365.2 431.8,363.7 433.3,362.3 434.8,360.9 436.4,359.6 437.9,358.2 439.4,356.9 440.9,355.6 442.4,354.3 444,353 445.5,351.8 447,350.6 448.6,349.4 450.1,348.3 451.6,347.1 453.1,346.1 454.6,345 456.2,344 457.7,343 459.2,342.1 460.8,341.2 462.3,340.3 463.8,339.5 465.3,338.7 466.9,337.9 468.4,337.2 469.9,336.6 471.4,335.9 472.9,335.4 474.5,334.8 476,334.3 477.5,333.9 479.1,333.5 480.6,333.2 482.1,332.9 483.6,332.6 485.1,332.4 486.7,332.2 488.2,332.1 489.7,332 491.2,332 492.8,332 494.3,332.1 495.8,332.2 497.4,332.4 498.9,332.6 500.4,332.9 501.9,333.2 503.4,333.5 505,333.9 506.5,334.3 508,334.8 509.6,335.4 511.1,335.9 512.6,336.6 514.1,337.2 515.6,337.9 517.2,338.7 518.7,339.5 520.2,340.3 521.8,341.2 523.3,342.1 524.8,343 526.3,344 527.9,345 529.4,346.1 530.9,347.1 532.4,348.3 534,349.4 535.5,350.6 537,351.8 538.5,353 540,354.3 541.6,355.6 543.1,356.9 544.6,358.2 546.1,359.6 547.7,360.9 549.2,362.3 550.7,363.7 552.2,365.2 553.8,366.6 555.3,368.1 556.8,369.5 558.4,371 559.9,372.5 561.4,374 562.9,375.5 564.5,377 566,378.5 567.5,380 569,381.5 570.5,383 572.1,384.5 573.6,386 575.1,387.5 576.6,389 578.2,390.5 579.7,391.9 581.2,393.4 582.8,394.8 584.3,396.3 585.8,397.7 587.3,399.1 588.9,400.4 590.4,401.8 591.9,403.1 593.4,404.4 595,405.7 596.5,407 598,408.2 599.5,409.4 601,410.6 602.6,411.7 604.1,412.9 605.6,413.9 607.1,415 608.7,416 610.2,417 611.7,417.9 613.2,418.8 614.8,419.7 616.3,420.5 617.8,421.3 619.4,422.1 620.9,422.8 622.4,423.4 623.9,424.1 625.5,424.6 627,425.2 628.5,425.7 630,426.1 631.5,426.5 633.1,426.8 634.6,427.1 636.1,427.4 637.6,427.6 639.2,427.8 640.7,427.9 642.2,428 643.8,428 645.3,428 646.8,427.9 648.3,427.8 649.9,427.6 651.4,427.4 652.9,427.1 654.4,426.8 656,426.5 657.5,426.1 659,425.7 660.5,425.2 662,424.6 663.6,424.1 665.1,423.4 666.6,422.8 668.1,422.1 669.7,421.3 671.2,420.5 672.7,419.7 674.2,418.8 675.8,417.9 677.3,417 678.8,416 680.4,415 681.9,413.9 683.4,412.9 684.9,411.7 686.5,410.6 688,409.4 689.5,408.2 691,407 692.5,405.7 694.1,404.4 695.6,403.1 697.1,401.8 698.6,400.4 700.2,399.1 701.7,397.7 703.2,396.3 704.8,394.8 706.3,393.4 707.8,391.9 709.3,390.5 710.9,389 712.4,387.5 713.9,386 715.4,384.5 717,383 718.5,381.5 720,380"/><polyline fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round" points="110,380 111.5,378.5 113,377 114.6,375.5 116.1,374 117.6,372.5 119.2,371 120.7,369.5 122.2,368.1 123.7,366.6 125.2,365.2 126.8,363.7 128.3,362.3 129.8,360.9 131.3,359.6 132.9,358.2 134.4,356.9 135.9,355.6 137.4,354.3 139,353 140.5,351.8 142,350.6 143.6,349.4 145.1,348.3 146.6,347.1 148.1,346.1 149.7,345 151.2,344 152.7,343 154.2,342.1 155.8,341.2 157.3,340.3 158.8,339.5 160.3,338.7 161.8,337.9 163.4,337.2 164.9,336.6 166.4,335.9 167.9,335.4 169.5,334.8 171,334.3 172.5,333.9 174.1,333.5 175.6,333.2 177.1,332.9 178.6,332.6 180.2,332.4 181.7,332.2 183.2,332.1 184.7,332 186.2,332 187.8,332 189.3,332.1 190.8,332.2 192.3,332.4 193.9,332.6 195.4,332.9 196.9,333.2 198.4,333.5 200,333.9 201.5,334.3 203,334.8 204.6,335.4 206.1,335.9 207.6,336.6 209.1,337.2 210.7,337.9 212.2,338.7 213.7,339.5 215.2,340.3 216.8,341.2 218.3,342.1 219.8,343 221.3,344 222.8,345 224.4,346.1 225.9,347.1 227.4,348.3 228.9,349.4 230.5,350.6 232,351.8 233.5,353 235.1,354.3 236.6,355.6 238.1,356.9 239.6,358.2 241.2,359.6 242.7,360.9 244.2,362.3 245.7,363.7 247.2,365.2 248.8,366.6 250.3,368.1 251.8,369.5 253.3,371 254.9,372.5 256.4,374 257.9,375.5 259.4,377 261,378.5 262.5,380 264,378.5 265.6,377 267.1,375.5 268.6,374 270.1,372.5 271.6,371 273.2,369.5 274.7,368.1 276.2,366.6 277.8,365.2 279.3,363.7 280.8,362.3 282.3,360.9 283.9,359.6 285.4,358.2 286.9,356.9 288.4,355.6 289.9,354.3 291.5,353 293,351.8 294.5,350.6 296.1,349.4 297.6,348.3 299.1,347.1 300.6,346.1 302.1,345 303.7,344 305.2,343 306.7,342.1 308.2,341.2 309.8,340.3 311.3,339.5 312.8,338.7 314.4,337.9 315.9,337.2 317.4,336.6 318.9,335.9 320.4,335.4 322,334.8 323.5,334.3 325,333.9 326.6,333.5 328.1,333.2 329.6,332.9 331.1,332.6 332.6,332.4 334.2,332.2 335.7,332.1 337.2,332 338.8,332 340.3,332 341.8,332.1 343.3,332.2 344.9,332.4 346.4,332.6 347.9,332.9 349.4,333.2 350.9,333.5 352.5,333.9 354,334.3 355.5,334.8 357.1,335.4 358.6,335.9 360.1,336.6 361.6,337.2 363.1,337.9 364.7,338.7 366.2,339.5 367.7,340.3 369.2,341.2 370.8,342.1 372.3,343 373.8,344 375.4,345 376.9,346.1 378.4,347.1 379.9,348.3 381.4,349.4 383,350.6 384.5,351.8 386,353 387.6,354.3 389.1,355.6 390.6,356.9 392.1,358.2 393.6,359.6 395.2,360.9 396.7,362.3 398.2,363.7 399.8,365.2 401.3,366.6 402.8,368.1 404.3,369.5 405.9,371 407.4,372.5 408.9,374 410.4,375.5 411.9,377 413.5,378.5 415,380 416.5,378.5 418.1,377 419.6,375.5 421.1,374 422.6,372.5 424.1,371 425.7,369.5 427.2,368.1 428.7,366.6 430.2,365.2 431.8,363.7 433.3,362.3 434.8,360.9 436.4,359.6 437.9,358.2 439.4,356.9 440.9,355.6 442.4,354.3 444,353 445.5,351.8 447,350.6 448.6,349.4 450.1,348.3 451.6,347.1 453.1,346.1 454.6,345 456.2,344 457.7,343 459.2,342.1 460.8,341.2 462.3,340.3 463.8,339.5 465.3,338.7 466.9,337.9 468.4,337.2 469.9,336.6 471.4,335.9 472.9,335.4 474.5,334.8 476,334.3 477.5,333.9 479.1,333.5 480.6,333.2 482.1,332.9 483.6,332.6 485.1,332.4 486.7,332.2 488.2,332.1 489.7,332 491.2,332 492.8,332 494.3,332.1 495.8,332.2 497.4,332.4 498.9,332.6 500.4,332.9 501.9,333.2 503.4,333.5 505,333.9 506.5,334.3 508,334.8 509.6,335.4 511.1,335.9 512.6,336.6 514.1,337.2 515.6,337.9 517.2,338.7 518.7,339.5 520.2,340.3 521.8,341.2 523.3,342.1 524.8,343 526.3,344 527.9,345 529.4,346.1 530.9,347.1 532.4,348.3 534,349.4 535.5,350.6 537,351.8 538.5,353 540,354.3 541.6,355.6 543.1,356.9 544.6,358.2 546.1,359.6 547.7,360.9 549.2,362.3 550.7,363.7 552.2,365.2 553.8,366.6 555.3,368.1 556.8,369.5 558.4,371 559.9,372.5 561.4,374 562.9,375.5 564.5,377 566,378.5 567.5,380 569,378.5 570.5,377 572.1,375.5 573.6,374 575.1,372.5 576.6,371 578.2,369.5 579.7,368.1 581.2,366.6 582.8,365.2 584.3,363.7 585.8,362.3 587.3,360.9 588.9,359.6 590.4,358.2 591.9,356.9 593.4,355.6 595,354.3 596.5,353 598,351.8 599.5,350.6 601,349.4 602.6,348.3 604.1,347.1 605.6,346.1 607.1,345 608.7,344 610.2,343 611.7,342.1 613.2,341.2 614.8,340.3 616.3,339.5 617.8,338.7 619.4,337.9 620.9,337.2 622.4,336.6 623.9,335.9 625.5,335.4 627,334.8 628.5,334.3 630,333.9 631.5,333.5 633.1,333.2 634.6,332.9 636.1,332.6 637.6,332.4 639.2,332.2 640.7,332.1 642.2,332 643.8,332 645.3,332 646.8,332.1 648.3,332.2 649.9,332.4 651.4,332.6 652.9,332.9 654.4,333.2 656,333.5 657.5,333.9 659,334.3 660.5,334.8 662,335.4 663.6,335.9 665.1,336.6 666.6,337.2 668.1,337.9 669.7,338.7 671.2,339.5 672.7,340.3 674.2,341.2 675.8,342.1 677.3,343 678.8,344 680.4,345 681.9,346.1 683.4,347.1 684.9,348.3 686.5,349.4 688,350.6 689.5,351.8 691,353 692.5,354.3 694.1,355.6 695.6,356.9 697.1,358.2 698.6,359.6 700.2,360.9 701.7,362.3 703.2,363.7 704.8,365.2 706.3,366.6 707.8,368.1 709.3,369.5 710.9,371 712.4,372.5 713.9,374 715.4,375.5 717,377 718.5,378.5 720,380"/><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 4"><path d="M110 349.4H720"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11"><text x="30" y="353.4">2V_m/π</text><text x="172.2" y="322">V_m</text><text x="274.8" y="430">-V_m</text></g><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M110 448V512"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11"><text x="14" y="484">i_s</text></g><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M110 480H720"/></g><polyline fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" points="110,480 111.5,479.2 113,478.4 114.6,477.6 116.1,476.7 117.6,475.9 119.2,475.1 120.7,474.3 122.2,473.5 123.7,472.7 125.2,472 126.8,471.2 128.3,470.4 129.8,469.7 131.3,468.9 132.9,468.2 134.4,467.5 135.9,466.8 137.4,466.1 139,465.4 140.5,464.7 142,464.1 143.6,463.4 145.1,462.8 146.6,462.2 148.1,461.6 149.7,461 151.2,460.5 152.7,460 154.2,459.5 155.8,459 157.3,458.5 158.8,458 160.3,457.6 161.8,457.2 163.4,456.8 164.9,456.5 166.4,456.1 167.9,455.8 169.5,455.5 171,455.3 172.5,455 174.1,454.8 175.6,454.6 177.1,454.5 178.6,454.3 180.2,454.2 181.7,454.1 183.2,454.1 184.7,454 186.2,454 187.8,454 189.3,454.1 190.8,454.1 192.3,454.2 193.9,454.3 195.4,454.5 196.9,454.6 198.4,454.8 200,455 201.5,455.3 203,455.5 204.6,455.8 206.1,456.1 207.6,456.5 209.1,456.8 210.7,457.2 212.2,457.6 213.7,458 215.2,458.5 216.8,459 218.3,459.5 219.8,460 221.3,460.5 222.8,461 224.4,461.6 225.9,462.2 227.4,462.8 228.9,463.4 230.5,464.1 232,464.7 233.5,465.4 235.1,466.1 236.6,466.8 238.1,467.5 239.6,468.2 241.2,468.9 242.7,469.7 244.2,470.4 245.7,471.2 247.2,472 248.8,472.7 250.3,473.5 251.8,474.3 253.3,475.1 254.9,475.9 256.4,476.7 257.9,477.6 259.4,478.4 261,479.2 262.5,480 264,480.8 265.6,481.6 267.1,482.4 268.6,483.3 270.1,484.1 271.6,484.9 273.2,485.7 274.7,486.5 276.2,487.3 277.8,488 279.3,488.8 280.8,489.6 282.3,490.3 283.9,491.1 285.4,491.8 286.9,492.5 288.4,493.2 289.9,493.9 291.5,494.6 293,495.3 294.5,495.9 296.1,496.6 297.6,497.2 299.1,497.8 300.6,498.4 302.1,499 303.7,499.5 305.2,500 306.7,500.5 308.2,501 309.8,501.5 311.3,502 312.8,502.4 314.4,502.8 315.9,503.2 317.4,503.5 318.9,503.9 320.4,504.2 322,504.5 323.5,504.7 325,505 326.6,505.2 328.1,505.4 329.6,505.5 331.1,505.7 332.6,505.8 334.2,505.9 335.7,505.9 337.2,506 338.8,506 340.3,506 341.8,505.9 343.3,505.9 344.9,505.8 346.4,505.7 347.9,505.5 349.4,505.4 350.9,505.2 352.5,505 354,504.7 355.5,504.5 357.1,504.2 358.6,503.9 360.1,503.5 361.6,503.2 363.1,502.8 364.7,502.4 366.2,502 367.7,501.5 369.2,501 370.8,500.5 372.3,500 373.8,499.5 375.4,499 376.9,498.4 378.4,497.8 379.9,497.2 381.4,496.6 383,495.9 384.5,495.3 386,494.6 387.6,493.9 389.1,493.2 390.6,492.5 392.1,491.8 393.6,491.1 395.2,490.3 396.7,489.6 398.2,488.8 399.8,488 401.3,487.3 402.8,486.5 404.3,485.7 405.9,484.9 407.4,484.1 408.9,483.3 410.4,482.4 411.9,481.6 413.5,480.8 415,480 416.5,479.2 418.1,478.4 419.6,477.6 421.1,476.7 422.6,475.9 424.1,475.1 425.7,474.3 427.2,473.5 428.7,472.7 430.2,472 431.8,471.2 433.3,470.4 434.8,469.7 436.4,468.9 437.9,468.2 439.4,467.5 440.9,466.8 442.4,466.1 444,465.4 445.5,464.7 447,464.1 448.6,463.4 450.1,462.8 451.6,462.2 453.1,461.6 454.6,461 456.2,460.5 457.7,460 459.2,459.5 460.8,459 462.3,458.5 463.8,458 465.3,457.6 466.9,457.2 468.4,456.8 469.9,456.5 471.4,456.1 472.9,455.8 474.5,455.5 476,455.3 477.5,455 479.1,454.8 480.6,454.6 482.1,454.5 483.6,454.3 485.1,454.2 486.7,454.1 488.2,454.1 489.7,454 491.2,454 492.8,454 494.3,454.1 495.8,454.1 497.4,454.2 498.9,454.3 500.4,454.5 501.9,454.6 503.4,454.8 505,455 506.5,455.3 508,455.5 509.6,455.8 511.1,456.1 512.6,456.5 514.1,456.8 515.6,457.2 517.2,457.6 518.7,458 520.2,458.5 521.8,459 523.3,459.5 524.8,460 526.3,460.5 527.9,461 529.4,461.6 530.9,462.2 532.4,462.8 534,463.4 535.5,464.1 537,464.7 538.5,465.4 540,466.1 541.6,466.8 543.1,467.5 544.6,468.2 546.1,468.9 547.7,469.7 549.2,470.4 550.7,471.2 552.2,472 553.8,472.7 555.3,473.5 556.8,474.3 558.4,475.1 559.9,475.9 561.4,476.7 562.9,477.6 564.5,478.4 566,479.2 567.5,480 569,480.8 570.5,481.6 572.1,482.4 573.6,483.3 575.1,484.1 576.6,484.9 578.2,485.7 579.7,486.5 581.2,487.3 582.8,488 584.3,488.8 585.8,489.6 587.3,490.3 588.9,491.1 590.4,491.8 591.9,492.5 593.4,493.2 595,493.9 596.5,494.6 598,495.3 599.5,495.9 601,496.6 602.6,497.2 604.1,497.8 605.6,498.4 607.1,499 608.7,499.5 610.2,500 611.7,500.5 613.2,501 614.8,501.5 616.3,502 617.8,502.4 619.4,502.8 620.9,503.2 622.4,503.5 623.9,503.9 625.5,504.2 627,504.5 628.5,504.7 630,505 631.5,505.2 633.1,505.4 634.6,505.5 636.1,505.7 637.6,505.8 639.2,505.9 640.7,505.9 642.2,506 643.8,506 645.3,506 646.8,505.9 648.3,505.9 649.9,505.8 651.4,505.7 652.9,505.5 654.4,505.4 656,505.2 657.5,505 659,504.7 660.5,504.5 662,504.2 663.6,503.9 665.1,503.5 666.6,503.2 668.1,502.8 669.7,502.4 671.2,502 672.7,501.5 674.2,501 675.8,500.5 677.3,500 678.8,499.5 680.4,499 681.9,498.4 683.4,497.8 684.9,497.2 686.5,496.6 688,495.9 689.5,495.3 691,494.6 692.5,493.9 694.1,493.2 695.6,492.5 697.1,491.8 698.6,491.1 700.2,490.3 701.7,489.6 703.2,488.8 704.8,488 706.3,487.3 707.8,486.5 709.3,485.7 710.9,484.9 712.4,484.1 713.9,483.3 715.4,482.4 717,481.6 718.5,480.8 720,480"/><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M110 534V584"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11"><text x="14" y="563">i_D1, i_D3</text></g><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M110 580H720"/></g><polyline fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" points="110,580 111.5,578.7 113,577.5 114.6,576.2 116.1,575 117.6,573.7 119.2,572.5 120.7,571.3 122.2,570.1 123.7,568.8 125.2,567.6 126.8,566.5 128.3,565.3 129.8,564.1 131.3,563 132.9,561.8 134.4,560.7 135.9,559.6 137.4,558.6 139,557.5 140.5,556.5 142,555.5 143.6,554.5 145.1,553.5 146.6,552.6 148.1,551.7 149.7,550.8 151.2,550 152.7,549.2 154.2,548.4 155.8,547.6 157.3,546.9 158.8,546.2 160.3,545.6 161.8,544.9 163.4,544.4 164.9,543.8 166.4,543.3 167.9,542.8 169.5,542.4 171,542 172.5,541.6 174.1,541.3 175.6,541 177.1,540.7 178.6,540.5 180.2,540.3 181.7,540.2 183.2,540.1 184.7,540 186.2,540 187.8,540 189.3,540.1 190.8,540.2 192.3,540.3 193.9,540.5 195.4,540.7 196.9,541 198.4,541.3 200,541.6 201.5,542 203,542.4 204.6,542.8 206.1,543.3 207.6,543.8 209.1,544.4 210.7,544.9 212.2,545.6 213.7,546.2 215.2,546.9 216.8,547.6 218.3,548.4 219.8,549.2 221.3,550 222.8,550.8 224.4,551.7 225.9,552.6 227.4,553.5 228.9,554.5 230.5,555.5 232,556.5 233.5,557.5 235.1,558.6 236.6,559.6 238.1,560.7 239.6,561.8 241.2,563 242.7,564.1 244.2,565.3 245.7,566.5 247.2,567.6 248.8,568.8 250.3,570.1 251.8,571.3 253.3,572.5 254.9,573.7 256.4,575 257.9,576.2 259.4,577.5 261,578.7 262.5,580 264,580 265.6,580 267.1,580 268.6,580 270.1,580 271.6,580 273.2,580 274.7,580 276.2,580 277.8,580 279.3,580 280.8,580 282.3,580 283.9,580 285.4,580 286.9,580 288.4,580 289.9,580 291.5,580 293,580 294.5,580 296.1,580 297.6,580 299.1,580 300.6,580 302.1,580 303.7,580 305.2,580 306.7,580 308.2,580 309.8,580 311.3,580 312.8,580 314.4,580 315.9,580 317.4,580 318.9,580 320.4,580 322,580 323.5,580 325,580 326.6,580 328.1,580 329.6,580 331.1,580 332.6,580 334.2,580 335.7,580 337.2,580 338.8,580 340.3,580 341.8,580 343.3,580 344.9,580 346.4,580 347.9,580 349.4,580 350.9,580 352.5,580 354,580 355.5,580 357.1,580 358.6,580 360.1,580 361.6,580 363.1,580 364.7,580 366.2,580 367.7,580 369.2,580 370.8,580 372.3,580 373.8,580 375.4,580 376.9,580 378.4,580 379.9,580 381.4,580 383,580 384.5,580 386,580 387.6,580 389.1,580 390.6,580 392.1,580 393.6,580 395.2,580 396.7,580 398.2,580 399.8,580 401.3,580 402.8,580 404.3,580 405.9,580 407.4,580 408.9,580 410.4,580 411.9,580 413.5,580 415,580 416.5,578.7 418.1,577.5 419.6,576.2 421.1,575 422.6,573.7 424.1,572.5 425.7,571.3 427.2,570.1 428.7,568.8 430.2,567.6 431.8,566.5 433.3,565.3 434.8,564.1 436.4,563 437.9,561.8 439.4,560.7 440.9,559.6 442.4,558.6 444,557.5 445.5,556.5 447,555.5 448.6,554.5 450.1,553.5 451.6,552.6 453.1,551.7 454.6,550.8 456.2,550 457.7,549.2 459.2,548.4 460.8,547.6 462.3,546.9 463.8,546.2 465.3,545.6 466.9,544.9 468.4,544.4 469.9,543.8 471.4,543.3 472.9,542.8 474.5,542.4 476,542 477.5,541.6 479.1,541.3 480.6,541 482.1,540.7 483.6,540.5 485.1,540.3 486.7,540.2 488.2,540.1 489.7,540 491.2,540 492.8,540 494.3,540.1 495.8,540.2 497.4,540.3 498.9,540.5 500.4,540.7 501.9,541 503.4,541.3 505,541.6 506.5,542 508,542.4 509.6,542.8 511.1,543.3 512.6,543.8 514.1,544.4 515.6,544.9 517.2,545.6 518.7,546.2 520.2,546.9 521.8,547.6 523.3,548.4 524.8,549.2 526.3,550 527.9,550.8 529.4,551.7 530.9,552.6 532.4,553.5 534,554.5 535.5,555.5 537,556.5 538.5,557.5 540,558.6 541.6,559.6 543.1,560.7 544.6,561.8 546.1,563 547.7,564.1 549.2,565.3 550.7,566.5 552.2,567.6 553.8,568.8 555.3,570.1 556.8,571.3 558.4,572.5 559.9,573.7 561.4,575 562.9,576.2 564.5,577.5 566,578.7 567.5,580 569,580 570.5,580 572.1,580 573.6,580 575.1,580 576.6,580 578.2,580 579.7,580 581.2,580 582.8,580 584.3,580 585.8,580 587.3,580 588.9,580 590.4,580 591.9,580 593.4,580 595,580 596.5,580 598,580 599.5,580 601,580 602.6,580 604.1,580 605.6,580 607.1,580 608.7,580 610.2,580 611.7,580 613.2,580 614.8,580 616.3,580 617.8,580 619.4,580 620.9,580 622.4,580 623.9,580 625.5,580 627,580 628.5,580 630,580 631.5,580 633.1,580 634.6,580 636.1,580 637.6,580 639.2,580 640.7,580 642.2,580 643.8,580 645.3,580 646.8,580 648.3,580 649.9,580 651.4,580 652.9,580 654.4,580 656,580 657.5,580 659,580 660.5,580 662,580 663.6,580 665.1,580 666.6,580 668.1,580 669.7,580 671.2,580 672.7,580 674.2,580 675.8,580 677.3,580 678.8,580 680.4,580 681.9,580 683.4,580 684.9,580 686.5,580 688,580 689.5,580 691,580 692.5,580 694.1,580 695.6,580 697.1,580 698.6,580 700.2,580 701.7,580 703.2,580 704.8,580 706.3,580 707.8,580 709.3,580 710.9,580 712.4,580 713.9,580 715.4,580 717,580 718.5,580 720,580"/><polyline fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-dasharray="7 5" points="110,580 111.5,580 113,580 114.6,580 116.1,580 117.6,580 119.2,580 120.7,580 122.2,580 123.7,580 125.2,580 126.8,580 128.3,580 129.8,580 131.3,580 132.9,580 134.4,580 135.9,580 137.4,580 139,580 140.5,580 142,580 143.6,580 145.1,580 146.6,580 148.1,580 149.7,580 151.2,580 152.7,580 154.2,580 155.8,580 157.3,580 158.8,580 160.3,580 161.8,580 163.4,580 164.9,580 166.4,580 167.9,580 169.5,580 171,580 172.5,580 174.1,580 175.6,580 177.1,580 178.6,580 180.2,580 181.7,580 183.2,580 184.7,580 186.2,580 187.8,580 189.3,580 190.8,580 192.3,580 193.9,580 195.4,580 196.9,580 198.4,580 200,580 201.5,580 203,580 204.6,580 206.1,580 207.6,580 209.1,580 210.7,580 212.2,580 213.7,580 215.2,580 216.8,580 218.3,580 219.8,580 221.3,580 222.8,580 224.4,580 225.9,580 227.4,580 228.9,580 230.5,580 232,580 233.5,580 235.1,580 236.6,580 238.1,580 239.6,580 241.2,580 242.7,580 244.2,580 245.7,580 247.2,580 248.8,580 250.3,580 251.8,580 253.3,580 254.9,580 256.4,580 257.9,580 259.4,580 261,580 262.5,580 264,578.7 265.6,577.5 267.1,576.2 268.6,575 270.1,573.7 271.6,572.5 273.2,571.3 274.7,570.1 276.2,568.8 277.8,567.6 279.3,566.5 280.8,565.3 282.3,564.1 283.9,563 285.4,561.8 286.9,560.7 288.4,559.6 289.9,558.6 291.5,557.5 293,556.5 294.5,555.5 296.1,554.5 297.6,553.5 299.1,552.6 300.6,551.7 302.1,550.8 303.7,550 305.2,549.2 306.7,548.4 308.2,547.6 309.8,546.9 311.3,546.2 312.8,545.6 314.4,544.9 315.9,544.4 317.4,543.8 318.9,543.3 320.4,542.8 322,542.4 323.5,542 325,541.6 326.6,541.3 328.1,541 329.6,540.7 331.1,540.5 332.6,540.3 334.2,540.2 335.7,540.1 337.2,540 338.8,540 340.3,540 341.8,540.1 343.3,540.2 344.9,540.3 346.4,540.5 347.9,540.7 349.4,541 350.9,541.3 352.5,541.6 354,542 355.5,542.4 357.1,542.8 358.6,543.3 360.1,543.8 361.6,544.4 363.1,544.9 364.7,545.6 366.2,546.2 367.7,546.9 369.2,547.6 370.8,548.4 372.3,549.2 373.8,550 375.4,550.8 376.9,551.7 378.4,552.6 379.9,553.5 381.4,554.5 383,555.5 384.5,556.5 386,557.5 387.6,558.6 389.1,559.6 390.6,560.7 392.1,561.8 393.6,563 395.2,564.1 396.7,565.3 398.2,566.5 399.8,567.6 401.3,568.8 402.8,570.1 404.3,571.3 405.9,572.5 407.4,573.7 408.9,575 410.4,576.2 411.9,577.5 413.5,578.7 415,580 416.5,580 418.1,580 419.6,580 421.1,580 422.6,580 424.1,580 425.7,580 427.2,580 428.7,580 430.2,580 431.8,580 433.3,580 434.8,580 436.4,580 437.9,580 439.4,580 440.9,580 442.4,580 444,580 445.5,580 447,580 448.6,580 450.1,580 451.6,580 453.1,580 454.6,580 456.2,580 457.7,580 459.2,580 460.8,580 462.3,580 463.8,580 465.3,580 466.9,580 468.4,580 469.9,580 471.4,580 472.9,580 474.5,580 476,580 477.5,580 479.1,580 480.6,580 482.1,580 483.6,580 485.1,580 486.7,580 488.2,580 489.7,580 491.2,580 492.8,580 494.3,580 495.8,580 497.4,580 498.9,580 500.4,580 501.9,580 503.4,580 505,580 506.5,580 508,580 509.6,580 511.1,580 512.6,580 514.1,580 515.6,580 517.2,580 518.7,580 520.2,580 521.8,580 523.3,580 524.8,580 526.3,580 527.9,580 529.4,580 530.9,580 532.4,580 534,580 535.5,580 537,580 538.5,580 540,580 541.6,580 543.1,580 544.6,580 546.1,580 547.7,580 549.2,580 550.7,580 552.2,580 553.8,580 555.3,580 556.8,580 558.4,580 559.9,580 561.4,580 562.9,580 564.5,580 566,580 567.5,580 569,578.7 570.5,577.5 572.1,576.2 573.6,575 575.1,573.7 576.6,572.5 578.2,571.3 579.7,570.1 581.2,568.8 582.8,567.6 584.3,566.5 585.8,565.3 587.3,564.1 588.9,563 590.4,561.8 591.9,560.7 593.4,559.6 595,558.6 596.5,557.5 598,556.5 599.5,555.5 601,554.5 602.6,553.5 604.1,552.6 605.6,551.7 607.1,550.8 608.7,550 610.2,549.2 611.7,548.4 613.2,547.6 614.8,546.9 616.3,546.2 617.8,545.6 619.4,544.9 620.9,544.4 622.4,543.8 623.9,543.3 625.5,542.8 627,542.4 628.5,542 630,541.6 631.5,541.3 633.1,541 634.6,540.7 636.1,540.5 637.6,540.3 639.2,540.2 640.7,540.1 642.2,540 643.8,540 645.3,540 646.8,540.1 648.3,540.2 649.9,540.3 651.4,540.5 652.9,540.7 654.4,541 656,541.3 657.5,541.6 659,542 660.5,542.4 662,542.8 663.6,543.3 665.1,543.8 666.6,544.4 668.1,544.9 669.7,545.6 671.2,546.2 672.7,546.9 674.2,547.6 675.8,548.4 677.3,549.2 678.8,550 680.4,550.8 681.9,551.7 683.4,552.6 684.9,553.5 686.5,554.5 688,555.5 689.5,556.5 691,557.5 692.5,558.6 694.1,559.6 695.6,560.7 697.1,561.8 698.6,563 700.2,564.1 701.7,565.3 703.2,566.5 704.8,567.6 706.3,568.8 707.8,570.1 709.3,571.3 710.9,572.5 712.4,573.7 713.9,575 715.4,576.2 717,577.5 718.5,578.7 720,580"/><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M110 608V666"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11"><text x="14" y="641">v_D1</text></g><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M110 612H720"/></g><polyline fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" points="110,612 111.5,612 113,612 114.6,612 116.1,612 117.6,612 119.2,612 120.7,612 122.2,612 123.7,612 125.2,612 126.8,612 128.3,612 129.8,612 131.3,612 132.9,612 134.4,612 135.9,612 137.4,612 139,612 140.5,612 142,612 143.6,612 145.1,612 146.6,612 148.1,612 149.7,612 151.2,612 152.7,612 154.2,612 155.8,612 157.3,612 158.8,612 160.3,612 161.8,612 163.4,612 164.9,612 166.4,612 167.9,612 169.5,612 171,612 172.5,612 174.1,612 175.6,612 177.1,612 178.6,612 180.2,612 181.7,612 183.2,612 184.7,612 186.2,612 187.8,612 189.3,612 190.8,612 192.3,612 193.9,612 195.4,612 196.9,612 198.4,612 200,612 201.5,612 203,612 204.6,612 206.1,612 207.6,612 209.1,612 210.7,612 212.2,612 213.7,612 215.2,612 216.8,612 218.3,612 219.8,612 221.3,612 222.8,612 224.4,612 225.9,612 227.4,612 228.9,612 230.5,612 232,612 233.5,612 235.1,612 236.6,612 238.1,612 239.6,612 241.2,612 242.7,612 244.2,612 245.7,612 247.2,612 248.8,612 250.3,612 251.8,612 253.3,612 254.9,612 256.4,612 257.9,612 259.4,612 261,612 262.5,612 264,613.5 265.6,615 267.1,616.5 268.6,618 270.1,619.5 271.6,621 273.2,622.5 274.7,623.9 276.2,625.4 277.8,626.8 279.3,628.3 280.8,629.7 282.3,631.1 283.9,632.4 285.4,633.8 286.9,635.1 288.4,636.4 289.9,637.7 291.5,639 293,640.2 294.5,641.4 296.1,642.6 297.6,643.7 299.1,644.9 300.6,645.9 302.1,647 303.7,648 305.2,649 306.7,649.9 308.2,650.8 309.8,651.7 311.3,652.5 312.8,653.3 314.4,654.1 315.9,654.8 317.4,655.4 318.9,656.1 320.4,656.6 322,657.2 323.5,657.7 325,658.1 326.6,658.5 328.1,658.8 329.6,659.1 331.1,659.4 332.6,659.6 334.2,659.8 335.7,659.9 337.2,660 338.8,660 340.3,660 341.8,659.9 343.3,659.8 344.9,659.6 346.4,659.4 347.9,659.1 349.4,658.8 350.9,658.5 352.5,658.1 354,657.7 355.5,657.2 357.1,656.6 358.6,656.1 360.1,655.4 361.6,654.8 363.1,654.1 364.7,653.3 366.2,652.5 367.7,651.7 369.2,650.8 370.8,649.9 372.3,649 373.8,648 375.4,647 376.9,645.9 378.4,644.9 379.9,643.7 381.4,642.6 383,641.4 384.5,640.2 386,639 387.6,637.7 389.1,636.4 390.6,635.1 392.1,633.8 393.6,632.4 395.2,631.1 396.7,629.7 398.2,628.3 399.8,626.8 401.3,625.4 402.8,623.9 404.3,622.5 405.9,621 407.4,619.5 408.9,618 410.4,616.5 411.9,615 413.5,613.5 415,612 416.5,612 418.1,612 419.6,612 421.1,612 422.6,612 424.1,612 425.7,612 427.2,612 428.7,612 430.2,612 431.8,612 433.3,612 434.8,612 436.4,612 437.9,612 439.4,612 440.9,612 442.4,612 444,612 445.5,612 447,612 448.6,612 450.1,612 451.6,612 453.1,612 454.6,612 456.2,612 457.7,612 459.2,612 460.8,612 462.3,612 463.8,612 465.3,612 466.9,612 468.4,612 469.9,612 471.4,612 472.9,612 474.5,612 476,612 477.5,612 479.1,612 480.6,612 482.1,612 483.6,612 485.1,612 486.7,612 488.2,612 489.7,612 491.2,612 492.8,612 494.3,612 495.8,612 497.4,612 498.9,612 500.4,612 501.9,612 503.4,612 505,612 506.5,612 508,612 509.6,612 511.1,612 512.6,612 514.1,612 515.6,612 517.2,612 518.7,612 520.2,612 521.8,612 523.3,612 524.8,612 526.3,612 527.9,612 529.4,612 530.9,612 532.4,612 534,612 535.5,612 537,612 538.5,612 540,612 541.6,612 543.1,612 544.6,612 546.1,612 547.7,612 549.2,612 550.7,612 552.2,612 553.8,612 555.3,612 556.8,612 558.4,612 559.9,612 561.4,612 562.9,612 564.5,612 566,612 567.5,612 569,613.5 570.5,615 572.1,616.5 573.6,618 575.1,619.5 576.6,621 578.2,622.5 579.7,623.9 581.2,625.4 582.8,626.8 584.3,628.3 585.8,629.7 587.3,631.1 588.9,632.4 590.4,633.8 591.9,635.1 593.4,636.4 595,637.7 596.5,639 598,640.2 599.5,641.4 601,642.6 602.6,643.7 604.1,644.9 605.6,645.9 607.1,647 608.7,648 610.2,649 611.7,649.9 613.2,650.8 614.8,651.7 616.3,652.5 617.8,653.3 619.4,654.1 620.9,654.8 622.4,655.4 623.9,656.1 625.5,656.6 627,657.2 628.5,657.7 630,658.1 631.5,658.5 633.1,658.8 634.6,659.1 636.1,659.4 637.6,659.6 639.2,659.8 640.7,659.9 642.2,660 643.8,660 645.3,660 646.8,659.9 648.3,659.8 649.9,659.6 651.4,659.4 652.9,659.1 654.4,658.8 656,658.5 657.5,658.1 659,657.7 660.5,657.2 662,656.6 663.6,656.1 665.1,655.4 666.6,654.8 668.1,654.1 669.7,653.3 671.2,652.5 672.7,651.7 674.2,650.8 675.8,649.9 677.3,649 678.8,648 680.4,647 681.9,645.9 683.4,644.9 684.9,643.7 686.5,642.6 688,641.4 689.5,640.2 691,639 692.5,637.7 694.1,636.4 695.6,635.1 697.1,633.8 698.6,632.4 700.2,631.1 701.7,629.7 703.2,628.3 704.8,626.8 706.3,625.4 707.8,623.9 709.3,622.5 710.9,621 712.4,619.5 713.9,618 715.4,616.5 717,615 718.5,613.5 720,612"/><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11"><text x="274.8" y="664">-V_m</text></g><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 4"><path d="M262.5 326V666"/><path d="M415 326V666"/><path d="M567.5 326V666"/></g><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M110 676H720"/><path d="M110 672v8"/><path d="M262.5 672v8"/><path d="M415 672v8"/><path d="M567.5 672v8"/><path d="M720 672v8"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11"><text x="106" y="694">0</text><text x="254.5" y="694">10</text><text x="407" y="694">20</text><text x="559.5" y="694">30</text><text x="712" y="694">40</text><text x="550" y="712">temps t (ms), T = 20 ms</text></g></svg>
+    <figcaption>
+      Schéma principal : pont de Graetz sur charge résistive, diodes idéales. Premier chronogramme : $v_s$ en tirets, $v_{ch} = |v_s|$ en trait plein
+      épais et, en pointillés horizontaux, sa valeur moyenne $2V_m/\pi$. Deuxième : le courant de la source $i_s$, sinusoïdal et alternatif.
+      Troisième : $i_{D1}$ en trait plein, nul pendant l'alternance négative, et $i_{D3}$ en tirets, qui prend le relais ; $i_{D4}$ et $i_{D2}$ sont
+      identiques à ceux-ci. Quatrième : $v_{D1}$, nulle en conduction, égale à $-|v_s|$ en blocage, jusqu'à $-V_m$.
+    </figcaption>
+  </figure>
+  <p>
+    L'organigramme suivant donne la démarche de dimensionnement d'un redresseur monophasé à condensateur. Il se lit de haut en bas ; les losanges
+    sont des tests, les rectangles des calculs ou des décisions, et la boucle de retour traduit le caractère itératif du choix.
+  </p>
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Cahier des charges : tension minimale, courant I,<br/>plage du réseau, ondulation admise"] --> B["Montage : pont, point milieu<br/>ou simple alternance"]
+  B --> C["Crête au réseau bas :<br/>V_C max = V_m - 2 V_F"]
+  C --> D["Ondulation admise :<br/>ΔV = V_C max - V_min"]
+  D --> E["C ≥ I / (2 f ΔV), puis méthode affinée<br/>avec θ1 et t_d"]
+  E --> F["Simulation ou abaque<br/>avec la résistance de la source"]
+  F --> G{"Tension minimale respectée<br/>au réseau bas et à C - 20 % ?"}
+  G -->|"non"| H["Augmenter C ou la tension<br/>du secondaire"]
+  H --> F
+  G -->|"oui"| K["Contraintes : I_C eff, tension à vide<br/>au réseau haut, V_RRM et I_FSM des diodes"]
+  K --> L["Transformateur : S = V_s × I_s eff,<br/>appel à la mise sous tension"]
+  L --> M{"Appel supérieur à I_FSM<br/>ou à la tenue du fusible ?"}
+  M -->|"oui"| N["Précharge : résistance<br/>et contact de court-circuit"]
+  M -->|"non"| P["Bilan de puissance, facteur de puissance<br/>et harmoniques à déclarer"]
+  N --> P</pre>
+    <figcaption>
+      Organigramme de dimensionnement. La partie haute fixe la capacité par la tension minimale ; la boucle de retour vers la simulation rappelle
+      que la formule idéale sous-estime la chute due à la source ; la partie basse vérifie les contraintes des composants et l'effet sur le réseau.
+    </figcaption>
+  </figure>
+  <p>
+    Le tableau compare les trois montages pour une source de crête $V_m$. La ligne de puissance apparente suppose une charge fortement
+    inductive, courant lissé $I_d$, sauf indication ; $P_d = V_{moy}I_d$ est la puissance continue.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <thead>
+        <tr><th>Grandeur</th><th>Simple alternance</th><th>Double alternance à point milieu</th><th>Pont de Graetz</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Nombre de diodes, diodes en série dans le chemin</td><td>1, 1</td><td>2, 1</td><td>4, 2</td></tr>
+        <tr><td>Tension moyenne sur charge résistive</td><td>$V_m/\pi = 0{,}318\,V_m$</td><td>$2V_m/\pi = 0{,}637\,V_m$</td><td>$2V_m/\pi = 0{,}637\,V_m$</td></tr>
+        <tr><td>Fréquence de l'ondulation</td><td>$f$</td><td>$2f$</td><td>$2f$</td></tr>
+        <tr><td>Tension inverse maximale d'une diode</td><td>$V_m$, $2V_m$ avec condensateur</td><td>$2V_m$</td><td>$V_m$</td></tr>
+        <tr><td>Ondulation avec condensateur</td><td>$\Delta V \approx I/(fC)$</td><td>$\Delta V \approx I/(2fC)$</td><td>$\Delta V \approx I/(2fC)$</td></tr>
+        <tr><td>Composante continue dans le transformateur</td><td>oui, il risque de saturer</td><td>non</td><td>non</td></tr>
+        <tr><td>Puissance apparente du secondaire rapportée à $P_d$</td><td>$3{,}49$ sur charge résistive</td><td>$1{,}57$</td><td>$1{,}11$</td></tr>
+        <tr><td>Usage préférable</td><td>très petites puissances, signaux</td><td>très basse tension et fort courant</td><td>cas général, réseau et secondaires</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Les rapports de la ligne de puissance apparente se dérivent simplement. Pont : $S = V_s I_d = \frac{\pi}{2\sqrt{2}}V_{moy}I_d = 1{,}11\,P_d$. Point
+    milieu : chaque demi-secondaire porte $V_s$ et un courant efficace $I_d/\sqrt{2}$, d'où $S = 2V_s I_d/\sqrt{2} = 1{,}57\,P_d$. Simple alternance sur
+    résistance : $S = \frac{V_m}{\sqrt{2}}\cdot\frac{V_m}{2R}$ et $P_d = \frac{V_m^2}{\pi^2 R}$, d'où $\pi^2/(2\sqrt{2}) = 3{,}49$.
+  </p>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-aiguillage-figure" data-renvoi="d-aiguillage-figure">l'animation du pont vu comme un aiguillage</a> et <a href="#d-reservoir-figure" data-renvoi="d-reservoir-figure">l'animation du condensateur réservoir</a>, section D ;</li>
+    <li><a href="#e-p2-figure" data-renvoi="e-p2-figure">le montage à point milieu</a>, <a href="#e-pont-figure" data-renvoi="e-pont-figure">la simulation du pont sur trois charges</a>, <a href="#e-spectre-figure" data-renvoi="e-spectre-figure">les spectres du courant de ligne</a> et <a href="#e-dimension-figure" data-renvoi="e-dimension-figure">la simulation de dimensionnement du condensateur</a>, section E ;</li>
+    <li><a href="#h-figure" data-renvoi="h-figure">l'alimentation 24 V non régulée</a>, section H ;</li>
+    <li><a href="#i-chargeur-figure" data-renvoi="i-chargeur-figure">l'étage d'entrée du chargeur du bus 24 V secouru</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour analyser ou dimensionner un redresseur monophasé :</p>
+  <ol>
+    <li>Rassembler les données : tension efficace de la source et sa plage, en général $\pm 10\ \%$, fréquence, nature de la charge et son courant ou sa puissance, tension minimale exigée en aval, ondulation admise, paramètres des diodes et de la source. Noter pour chaque valeur si elle est mesurée, garantie par un constructeur ou supposée.</li>
+    <li>Identifier le montage et, avec des diodes idéales, les intervalles de conduction : pour chaque alternance, quelle paire ou quelle diode conduit, quel est le chemin du courant, quelle tension supportent les diodes bloquées. Tracer les chronogrammes de $v_{ch}$, $i_s$ et $v_D$.</li>
+    <li>Sans condensateur : calculer $V_{moy} = 2V_m/\pi - 2V_F$ pour le pont, en déduire le courant moyen, puis les courants des diodes et de la source selon la forme du courant, sinusoïdale ou en créneaux, et le facteur de puissance.</li>
+    <li>Avec condensateur : calculer $\hat V_C$ au réseau bas, l'ondulation admise $\Delta V = \hat V_C - V_{min}$, la capacité par $I/(2f\Delta V)$, puis par la méthode affinée $I\,t_d/\Delta V$ ; ajouter la marge de tolérance et choisir une valeur normalisée.</li>
+    <li>Vérifier avec l'impédance de la source, par simulation ou abaque : tension minimale réelle, courant de crête, angle de conduction, $I_{s,eff}$ et $I_{C,eff}$. Revenir à l'étape 4 si la tension minimale n'est pas tenue.</li>
+    <li>Choisir les composants : condensateurs par la tension à vide au réseau haut et par le courant efficace ; diodes par $V_{RRM}$, courants moyen et efficace et $I_{FSM}$ face à l'appel ; transformateur par $S = V_s I_{s,eff}$ ; précharge si l'appel dépasse les tenues.</li>
+    <li>Contrôler : bilan de puissance entre la source, la charge, les diodes et la résistance de source ; ordre de grandeur du facteur de puissance, $0{,}9$ en créneaux, $0{,}6$ à $0{,}75$ avec condensateur ; somme des tensions nulle sur chaque maille, à chaque instant, chutes des diodes comprises.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    On reprend la question d'ouverture. Une alimentation non régulée doit fournir $I = 2\ \mathrm{A}$ sous environ $24\ \mathrm{V}$ à des relais
+    et des bobines, qui tolèrent une ondulation de $1\ \mathrm{V}$ crête à crête. Elle utilise un transformateur $230/18\ \mathrm{V}$, $50\ \mathrm{Hz}$,
+    un pont de quatre diodes et un condensateur. Hypothèses d'étude, à remplacer par les données des composants retenus : chute de
+    $V_F = 1{,}0\ \mathrm{V}$ par diode au courant de crête, charge assimilée à un courant constant, et, dans un second temps, résistance de source
+    $R_s = 0{,}3\ \Omega$ ramenée au secondaire, enroulements et résistances des diodes compris, typique d'un transformateur de $80\ \mathrm{VA}$.
+  </p>
+  <figure id="h-figure">
+    <svg viewBox="0 0 760 320" role="img" aria-label="Alimentation continue non régulée : transformateur 230/18 V, pont de Graetz, deux condensateurs de 15 mF et charge de 2 A"><defs><marker id="fl-h-al" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker><marker id="fl-h-al-o" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10" fill="none" stroke="currentColor" stroke-width="1.6"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 70H60M100 70H120V80M120 180V190H20"/><rect x="60" y="62" width="40" height="16" rx="3"/><path d="M120 80 a12 12 0 0 1 0 25"/><path d="M120 105 a12 12 0 0 1 0 25"/><path d="M120 130 a12 12 0 0 1 0 25"/><path d="M120 155 a12 12 0 0 1 0 25"/><path d="M150 66V194M156 66V194"/><path d="M186 80 a12 12 0 0 0 0 25"/><path d="M186 105 a12 12 0 0 0 0 25"/><path d="M186 130 a12 12 0 0 0 0 25"/><path d="M186 155 a12 12 0 0 0 0 25"/><path d="M186 80V70H300M186 180V190H300"/><rect x="300" y="50" width="90" height="160" rx="4"/><path d="M345 148V136.3M345 123.7V112"/><path d="M336 136.3L345 123.7L354 136.3Z"/><path d="M336 123.7H354"/><path d="M390 80H640M390 180H640"/><path d="M460 80V124M460 136V180"/><path d="M444 124H476"/><path d="M444 138q16 -7 32 0"/><path d="M530 80V124M530 136V180"/><path d="M514 124H546"/><path d="M514 138q16 -7 32 0"/><path d="M640 80V108M640 152V180"/><circle cx="640" cy="130" r="22"/><path d="M640 114V146"/><path d="M590 180V192M576 192H604M581 198H599M586 204H594"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M634 140l6 8l6 -8"/></g><g fill="currentColor" stroke="none"><circle cx="460" cy="80" r="3.2"/><circle cx="530" cy="80" r="3.2"/><circle cx="460" cy="180" r="3.2"/><circle cx="530" cy="180" r="3.2"/><circle cx="590" cy="180" r="3.2"/></g><g fill="currentColor" stroke="none"><circle cx="110" cy="86" r="3.5"/><circle cx="198" cy="86" r="3.5"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M230 70L266 70" marker-end="url(#fl-h-al)"/><path d="M410 80L440 80" marker-end="url(#fl-h-al)"/><path d="M716 170L716 90" marker-end="url(#fl-h-al-o)"/><path d="M226 166L226 96" marker-end="url(#fl-h-al-o)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="20" y="60">L</text><text x="20" y="210">N</text><text x="64" y="54">F1</text><text x="96" y="228">T : 230 / 18 V</text><text x="96" y="244">80 VA</text><text x="236" y="60">i_s</text><text x="236" y="136">v_s</text><text x="306" y="76">~</text><text x="306" y="186">~</text><text x="380" y="72">+</text><text x="380" y="198">-</text><text x="306" y="236">pont 400 V, 10 A</text><text x="414" y="72">i_b</text><text x="476" y="122">C1</text><text x="546" y="122">C2</text><text x="420" y="224">2 × 15 mF, 35 V</text><text x="668" y="134">2 A</text><text x="724" y="134">v_C</text><text x="556" y="214">0 V</text></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11.5"><text x="20" y="272">Pont représenté par son bloc : entrées alternatives ~, sorties + et -.</text><text x="20" y="290">Charge en convention récepteur : I entre par sa borne +, v_C fléchée vers +.</text><text x="20" y="308">Référence : borne - du pont, 0 V, isolée du réseau par le transformateur.</text></g></svg>
+    <figcaption>
+      Alimentation de l'exemple. Fusible F1 au primaire, transformateur T dont les points marquent les bornes homologues, pont représenté par son
+      bloc, deux condensateurs $C_1$ et $C_2$ en parallèle, charge figurée par une source de courant de $2\ \mathrm{A}$ dont la flèche intérieure
+      donne le sens du courant. Flèches pleines : $i_s$ et $i_b$ ; flèches ouvertes : $v_s$ et $v_C$, pointées vers leur borne positive. La borne
+      $-$ du pont, isolée du réseau par le transformateur, est la référence $0\ \mathrm{V}$.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Données : $V_s = 18\ \mathrm{V}$, $f = 50\ \mathrm{Hz}$, $I = 2\ \mathrm{A}$, $\Delta V \leq 1\ \mathrm{V}$, $V_F = 1{,}0\ \mathrm{V}$, $R_s = 0{,}3\ \Omega$. Inconnues :
+    la capacité, sa tension et son courant efficace, la tension continue obtenue, les contraintes des diodes, la puissance apparente du
+    transformateur et le facteur de puissance. Stratégie : dimensionner $C$ avec la source idéale, par la formule simplifiée puis par la méthode
+    affinée ; choisir une valeur normalisée avec marge ; puis contrôler par simulation l'effet de $R_s$, que les formules ignorent.
+  </p>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li>Crête du secondaire : $V_m = \sqrt{2} \times 18 = 25{,}46\ \mathrm{V}$. Tension maximale du condensateur, source idéale : $\hat V_C = 25{,}46 - 2 \times 1{,}0 = 23{,}46\ \mathrm{V}$.</li>
+    <li>Formule simplifiée : $C \geq I/(2f\Delta V) = 2/(2 \times 50 \times 1) = 0{,}020\ \mathrm{F} = 20\ \mathrm{mF}$.</li>
+    <li>Méthode affinée : $\sin\theta_1 = (23{,}46 - 1)/23{,}46 = 0{,}9574$, d'où $\theta_1 = 73{,}2^\circ = 1{,}278\ \mathrm{rad}$. Durée de décharge : $t_d = (\pi/2 + \theta_1)/\omega = (1{,}571 + 1{,}278)/314{,}16 = 9{,}07\ \mathrm{ms}$. Capacité : $C \geq I\,t_d/\Delta V = 2 \times 9{,}07 \times 10^{-3}/1 = 18{,}1\ \mathrm{mF}$.</li>
+    <li>Choix : avec une tolérance de $-20\ \%$, la valeur nominale doit dépasser $18{,}1/0{,}8 = 22{,}7\ \mathrm{mF}$. On retient deux condensateurs de $15\ \mathrm{mF}$ en parallèle, $C = 30\ \mathrm{mF}$, ce qui partage aussi le courant efficace. Au pire de la tolérance, $24\ \mathrm{mF}$ donnent $\Delta V = 0{,}77\ \mathrm{V}$ ; à la valeur nominale, en itérant la méthode affinée, $\theta_1 = 76{,}8^\circ$ et $\Delta V = 0{,}62\ \mathrm{V}$.</li>
+    <li>Tension continue, source idéale : $V_{moy} \approx \hat V_C - \Delta V/2 = 23{,}46 - 0{,}31 = 23{,}15\ \mathrm{V}$.</li>
+    <li>Courants, source idéale : la conduction dure $90 - 76{,}8 = 13{,}2^\circ$, soit $0{,}73\ \mathrm{ms}$ par alternance ; le courant moyen pendant cette fenêtre vaut $\bar I_{cond} = Q/t_c = 0{,}020/(0{,}73 \times 10^{-3}) = 27{,}3\ \mathrm{A}$, et la pointe $\hat I_b = 2 + 0{,}030 \times 314{,}16 \times 23{,}46 \times \cos 76{,}8^\circ = 2 + 50{,}4 = 52{,}4\ \mathrm{A}$.</li>
+    <li>Contrôle avec $R_s = 0{,}3\ \Omega$, par la simulation de dimensionnement de la section E réglée sur $I = 2\ \mathrm{A}$, $V_s = 18\ \mathrm{V}$, $R_s = 0{,}3\ \Omega$ et $C = 30\ \mathrm{mF}$ : $v_C$ oscille entre $20{,}28$ et $20{,}75\ \mathrm{V}$, soit $\Delta V = 0{,}47\ \mathrm{V}$ et $V_{moy} = 20{,}52\ \mathrm{V}$ ; la pointe tombe à $9{,}75\ \mathrm{A}$, la conduction s'étend sur $55{,}8^\circ$ par alternance ; $I_{s,eff} = 3{,}94\ \mathrm{A}$, $I_{D,moy} = 1{,}00\ \mathrm{A}$, $I_{D,eff} = 2{,}79\ \mathrm{A}$.</li>
+    <li>Condensateurs : $I_{C,eff} = \sqrt{3{,}944^2 - 2^2} = 3{,}40\ \mathrm{A}$, soit $1{,}70\ \mathrm{A}$ par condensateur, à comparer au courant admissible à $100\ \mathrm{Hz}$ de la fiche technique. Tension à vide au réseau haut : $1{,}1 \times 25{,}46 = 28{,}0\ \mathrm{V}$ moins les chutes à faible courant : une tension assignée de $35\ \mathrm{V}$ convient.</li>
+    <li>Diodes : tension inverse maximale $\approx 1{,}1\,V_m = 28{,}0\ \mathrm{V}$, courant moyen $1{,}0\ \mathrm{A}$, efficace $2{,}79\ \mathrm{A}$ ; à la mise sous tension, l'appel vaut au plus $V_m/R_s = 25{,}46/0{,}3 = 85\ \mathrm{A}$ pendant quelques millisecondes. Un pont moulé de $400\ \mathrm{V}$, $10\ \mathrm{A}$, dont l'$I_{FSM}$ de l'ordre de $200\ \mathrm{A}$ couvre l'appel, laisse une large marge.</li>
+    <li>Transformateur et réseau : $S = V_s I_{s,eff} = 18 \times 3{,}94 = 71\ \mathrm{VA}$ pour $41\ \mathrm{W}$ utiles : un $80\ \mathrm{VA}$ convient. Facteur de puissance $\lambda = 0{,}70$, taux de distorsion du courant d'environ $102\ \%$, rang 3 à $82\ \%$ du fondamental.</li>
+  </ol>
+
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <p>
+    Bilan de puissance de la simulation : la source fournit $49{,}7\ \mathrm{W}$ ; la charge reçoit $2 \times 20{,}52 = 41{,}0\ \mathrm{W}$, la résistance de
+    source dissipe $0{,}3 \times 3{,}94^2 = 4{,}7\ \mathrm{W}$ et les seuils des diodes $2 \times 1{,}0 \times 2 = 4{,}0\ \mathrm{W}$, deux diodes en série
+    traversées par un courant moyen de $2\ \mathrm{A}$ ; total $49{,}7\ \mathrm{W}$. Charge : chaque diode porte $1{,}0\ \mathrm{A}$ moyen, la moitié de $I$,
+    comme il se doit puisque chaque paire conduit une alternance sur deux. Dimension : $I\,t_d/C$ donne bien des volts. Ordre de grandeur : un
+    courant efficace de source double du courant continu est typique du filtrage capacitif.
+  </p>
+  <p>
+    La conclusion pratique dépasse le calcul de $C$ : avec ce transformateur, l'alimentation ne donne pas $23\ \mathrm{V}$ mais $20{,}5\ \mathrm{V}$ en
+    charge, parce que la résistance de source prélève environ $2{,}6\ \mathrm{V}$ sur les pointes de courant. Avec un secondaire de $20\ \mathrm{V}$ et la
+    même résistance, la simulation donne $23{,}2\ \mathrm{V}$ moyens, $0{,}48\ \mathrm{V}$ d'ondulation et $4{,}0\ \mathrm{A}$ efficaces, soit
+    $80\ \mathrm{VA}$ : un transformateur de $100\ \mathrm{VA}$ s'impose alors. Les tensions de secondaire des catalogues étant en général données
+    à la charge assignée sur résistance, la tension à vide réelle est plus élevée : c'est la documentation du transformateur, avec sa régulation, qui
+    tranche.
+  </p>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <p>
+    Le projet fil rouge comporte un bus 24 V continu secouru par batterie, qui alimente l'armoire automate, la bobine du contacteur KM1 et
+    l'actionneur de la vanne de refoulement. Son chargeur, modélisé jusqu'ici par un équivalent de Thévenin de $27\ \mathrm{V}$ et $0{,}5\ \Omega$ dans le
+    cours <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes de Thévenin, Norton et superposition</a>, doit maintenant
+    être conçu. Son étage d'entrée est un redresseur monophasé : transformateur d'isolement, pont de Graetz et condensateur, suivi d'un hacheur
+    abaisseur qui régule $27\ \mathrm{V}$ et limite le courant à $8\ \mathrm{A}$, $6\ \mathrm{A}$ pour le bus et $2\ \mathrm{A}$ pour la recharge de la
+    batterie. Le hacheur sera étudié dans le cours Hacheurs DC-DC ; il suffit ici de savoir qu'il exige une tension d'entrée d'au moins
+    $31\ \mathrm{V}$ pour réguler $27\ \mathrm{V}$ et qu'il absorbe une puissance à peu près constante.
+  </p>
+  <figure id="i-chargeur-figure">
+    <svg viewBox="0 0 760 320" role="img" aria-label="Étage d'entrée du chargeur du bus 24 V secouru : transformateur 230/32 V, pont, précharge court-circuitée par un contact, condensateurs et hacheur abaisseur"><defs><marker id="fl-i-ch" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker><marker id="fl-i-ch-o" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10" fill="none" stroke="currentColor" stroke-width="1.6"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 70H50M90 70H110V80M110 180V190H20"/><rect x="50" y="62" width="40" height="16" rx="3"/><path d="M110 80 a12 12 0 0 1 0 25"/><path d="M110 105 a12 12 0 0 1 0 25"/><path d="M110 130 a12 12 0 0 1 0 25"/><path d="M110 155 a12 12 0 0 1 0 25"/><path d="M140 66V194M146 66V194"/><path d="M176 80 a12 12 0 0 0 0 25"/><path d="M176 105 a12 12 0 0 0 0 25"/><path d="M176 130 a12 12 0 0 0 0 25"/><path d="M176 155 a12 12 0 0 0 0 25"/><path d="M176 80V70H250M176 180V190H250"/><rect x="250" y="50" width="80" height="160" rx="4"/><path d="M290 148V136.3M290 123.7V112"/><path d="M281 136.3L290 123.7L299 136.3Z"/><path d="M281 123.7H299"/><path d="M330 80H360M410 80H520M330 180H600"/><rect x="360" y="72" width="50" height="16" rx="3"/><path d="M360 80V40H382M398 40H410V80M382 32L398 40"/><path d="M460 80V124M460 136V180"/><path d="M444 124H476"/><path d="M444 138q16 -7 32 0"/><path d="M520 80V124M520 136V180"/><path d="M504 124H536"/><path d="M504 138q16 -7 32 0"/><path d="M520 80H600"/><rect x="600" y="60" width="80" height="140" rx="4"/><path d="M680 90H730M680 170H730"/><path d="M716 110H744M722 118H738M730 90V110M730 118V170"/><path d="M560 180V192M546 192H574M551 198H569M556 204H564"/></g><g fill="currentColor" stroke="none"><circle cx="360" cy="80" r="3.2"/><circle cx="410" cy="80" r="3.2"/><circle cx="460" cy="80" r="3.2"/><circle cx="520" cy="80" r="3.2"/><circle cx="460" cy="180" r="3.2"/><circle cx="520" cy="180" r="3.2"/><circle cx="560" cy="180" r="3.2"/></g><g fill="currentColor" stroke="none"><circle cx="100" cy="86" r="3.5"/><circle cx="188" cy="86" r="3.5"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M196 70L232 70" marker-end="url(#fl-i-ch)"/><path d="M480 80L506 80" marker-end="url(#fl-i-ch)"/><path d="M440 166L440 96" marker-end="url(#fl-i-ch-o)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="20" y="60">L</text><text x="20" y="210">N</text><text x="54" y="54">F1</text><text x="84" y="228">T : 230 / 32 V</text><text x="84" y="244">630 VA</text><text x="200" y="60">i_s</text><text x="256" y="76">~</text><text x="256" y="186">~</text><text x="320" y="72">+</text><text x="320" y="198">-</text><text x="256" y="236">pont 35 A, 400 V</text><text x="358" y="110">R_p</text><text x="372" y="26">K</text><text x="400" y="136">v_C</text><text x="482" y="72">i_h</text><text x="484" y="118">C</text><text x="426" y="224">2 × 6,8 mF, 63 V</text><text x="612" y="100">hacheur</text><text x="612" y="116">abaisseur</text><text x="612" y="140">27 V</text><text x="612" y="156">8 A max</text><text x="686" y="82">+</text><text x="686" y="192">-</text><text x="700" y="140">bus</text><text x="588" y="214">0 V</text></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11.5"><text x="20" y="272">R_p = 1,5 ohm limite l'appel à la mise sous tension ; K la court-circuite ensuite.</text><text x="20" y="290">Flèches pleines : courants i_s et i_h. Flèche ouverte : tension v_C, vers la borne +.</text><text x="20" y="308">Référence : borne - du pont, 0 V. En sortie, bus 24 V secouru et batterie.</text></g></svg>
+    <figcaption>
+      Étage d'entrée du chargeur. Entre phase et neutre du tableau général, le fusible F1 et le transformateur T $230/32\ \mathrm{V}$ ; le pont ; la
+      résistance de précharge $R_p$, court-circuitée par le contact K ; les deux condensateurs en parallèle ; le hacheur abaisseur et, en sortie, le
+      bus avec sa batterie. Flèches pleines : courants $i_s$ et $i_h$ ; flèche ouverte : $v_C$. Référence : borne $-$ du pont.
+    </figcaption>
+  </figure>
+
+  <h3 id="i-donnees">Données et hypothèses</h3>
+  <p>
+    Puissance de sortie maximale $27 \times 8 = 216\ \mathrm{W}$, rendement supposé du hacheur $90\ \%$, d'où $240\ \mathrm{W}$ prélevés sur le condensateur.
+    Pour dimensionner au plus juste sur la tension minimale, on modélise le hacheur par un courant constant égal à sa valeur au seuil :
+    $I = 240/31 = 7{,}74\ \mathrm{A}$, majorant dès que la tension est plus haute. Réseau $230\ \mathrm{V} \pm 10\ \%$, alimenté aussi par le groupe
+    électrogène en marche dégradée. Transformateur supposé de $630\ \mathrm{VA}$, secondaire $32\ \mathrm{V}$ ; résistance totale de source
+    $R_s = 0{,}10\ \Omega$, dont $10\ \mathrm{m\Omega}$ par diode ; seuil prudent de $1{,}0\ \mathrm{V}$ par diode. Ces valeurs sont des hypothèses d'étude.
+  </p>
+
+  <h3 id="i-calculs">Dimensionnement au réseau bas</h3>
+  <p>
+    Au réseau bas, $V_s = 0{,}9 \times 32 = 28{,}8\ \mathrm{V}$, $V_m = 40{,}73\ \mathrm{V}$ et $\hat V_C = 38{,}73\ \mathrm{V}$ avec la source idéale. L'ondulation
+    admise est $\Delta V = 38{,}73 - 31 = 7{,}73\ \mathrm{V}$. Formule simplifiée : $C \geq 7{,}74/(100 \times 7{,}73) = 10{,}0\ \mathrm{mF}$. Méthode affinée :
+    $\sin\theta_1 = 31/38{,}73$, $\theta_1 = 53{,}2^\circ$, $t_d = 7{,}95\ \mathrm{ms}$, $C \geq 7{,}74 \times 7{,}95 \times 10^{-3}/7{,}73 = 7{,}97\ \mathrm{mF}$.
+  </p>
+  <p>
+    La simulation avec $R_s = 0{,}10\ \Omega$ dément ce résultat : avec $8{,}2\ \mathrm{mF}$, la tension minimale n'est que de $30{,}2\ \mathrm{V}$, car la
+    crête réelle de $v_C$ tombe à $36{,}9\ \mathrm{V}$ au lieu de $38{,}7\ \mathrm{V}$. Avec deux condensateurs de $6{,}8\ \mathrm{mF}$, soit
+    $13{,}6\ \mathrm{mF}$, $v_C$ oscille entre $32{,}19$ et $36{,}30\ \mathrm{V}$, $\Delta V = 4{,}11\ \mathrm{V}$ ; au pire de la tolérance, $10{,}9\ \mathrm{mF}$,
+    le minimum reste à $31{,}5\ \mathrm{V}$. Ce choix est retenu. Les contraintes associées, toujours au réseau bas : courant de crête
+    $40\ \mathrm{A}$, conduction de $53^\circ$ par alternance, $I_{s,eff} = 15{,}7\ \mathrm{A}$, $I_{C,eff} = 13{,}6\ \mathrm{A}$, soit $6{,}8\ \mathrm{A}$ par
+    condensateur, $I_{D,moy} = 3{,}87\ \mathrm{A}$ et $I_{D,eff} = 11{,}1\ \mathrm{A}$ par diode. Bilan : $305{,}3\ \mathrm{W}$ fournis par la source pour
+    $265{,}5\ \mathrm{W}$ dans le modèle de charge, $24{,}6\ \mathrm{W}$ dans $R_s$ et $15{,}5\ \mathrm{W}$ dans les seuils des diodes.
+  </p>
+
+  <h3 id="i-contraintes">Tensions, appel et réseau</h3>
+  <p>
+    Au réseau haut et à vide, $v_C$ monte vers $1{,}1 \times 32\sqrt{2} = 49{,}8\ \mathrm{V}$ moins les chutes des diodes : condensateurs de $63\ \mathrm{V}$
+    et hacheur accepté jusqu'à $60\ \mathrm{V}$ au moins. Les diodes voient la même tension en inverse ; un module de $35\ \mathrm{A}$, $400\ \mathrm{V}$,
+    courant et bon marché, offre un facteur huit et une forte tenue en surcharge. Chaque diode dissipe $1{,}0 \times 3{,}87 + 0{,}010 \times 11{,}1^2 = 5{,}1\ \mathrm{W}$,
+    soit environ $20\ \mathrm{W}$ pour le pont, qui demande un petit dissipateur. Sans précharge, l'appel à la mise sous tension atteindrait
+    $49{,}8/0{,}10 \approx 500\ \mathrm{A}$, au-delà de l'$I_{FSM}$ du pont et de l'énergie de préarc du fusible : une résistance $R_p = 1{,}5\ \Omega$ le
+    ramène à $49{,}8/1{,}6 = 31\ \mathrm{A}$, avec une constante de temps $1{,}6 \times 13{,}6\ \mathrm{mF} = 21{,}8\ \mathrm{ms}$ ; elle dissipe à chaque mise
+    sous tension une énergie égale à celle stockée, $\tfrac{1}{2} \times 0{,}0136 \times 47{,}8^2 = 15{,}5\ \mathrm{J}$, comme l'a établi le cours
+    <a href="#/cours/regime-transitoire-rc">Régime transitoire RC</a>, et le contact K la court-circuite après $200\ \mathrm{ms}$, soit plus de
+    $5\tau$.
+  </p>
+  <p>
+    Côté réseau, à tension nominale et avec le même modèle majorant, le secondaire porte $16{,}0\ \mathrm{A}$ efficaces, soit
+    $S = 32 \times 16{,}0 = 511\ \mathrm{VA}$ : le transformateur de $630\ \mathrm{VA}$ est justifié. Le primaire absorbe $2{,}22\ \mathrm{A}$ efficaces avec un
+    facteur de puissance de $0{,}67$ et un taux de distorsion d'environ $110\ \%$, dominé par le rang 3. Ce courant, branché entre une phase et
+    le neutre, s'ajoute aux harmoniques de rang 3 de l'éclairage et des prises dans le neutre du tableau général, déjà suivi par le TC de neutre du
+    plan de mesure.
+  </p>
+
+  <h3 id="i-compromis">Contraintes, risques et compromis</h3>
+  <p>
+    Le compromis principal oppose la capacité et la tension du secondaire. Augmenter $C$ au-delà de $13{,}6\ \mathrm{mF}$ ne relève presque plus la
+    tension minimale, que la résistance de source limite ; augmenter la tension du secondaire est plus efficace, mais relève la tension à vide et
+    la contrainte du hacheur. Un second compromis porte sur le facteur de puissance : une self de quelques millihenrys en série au secondaire
+    élargirait la conduction, réduirait $I_{s,eff}$ et les harmoniques, au prix d'une chute de tension supplémentaire ; pour quelques centaines de
+    watts, ce n'est pas indispensable, mais au-delà un correcteur actif devient la règle. Le risque majeur est le vieillissement des condensateurs :
+    leur courant efficace élevé échauffe leur résistance série, et une armoire chaude raccourcit leur durée de vie ; l'automate surveillera donc
+    l'ondulation du bus en marche, par la mesure prévue dans le cours
+    <a href="#/cours/associations-de-resistances-et-diviseurs">Associations de résistances et diviseurs</a>, une ondulation croissante annonçant un
+    condensateur qui s'assèche. Sur groupe électrogène, la tension et la fréquence peuvent s'écarter du réseau ; à $47{,}5\ \mathrm{Hz}$, l'ondulation
+    augmenterait d'environ $5\ \%$, ce que la marge absorbe.
+  </p>
+  <p>
+    Hypothèses à remplacer : puissance et rendement du hacheur, résistance et régulation du transformateur, tolérance, courant admissible et durée
+    de vie des condensateurs, $I_{FSM}$ du pont et caractéristiques du fusible, à prendre dans les documentations des composants retenus ; puis
+    mesure de l'ondulation et du courant primaire sur l'appareil réalisé.
+  </p>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Ajout au projet fil rouge</span>
+    <p>
+      Étage d'entrée du chargeur du bus 24 V secouru : transformateur $230/32\ \mathrm{V}$, $630\ \mathrm{VA}$, pont $35\ \mathrm{A}$, $400\ \mathrm{V}$,
+      condensateurs $2 \times 6{,}8\ \mathrm{mF}$, $63\ \mathrm{V}$, précharge de $1{,}5\ \Omega$ court-circuitée après $200\ \mathrm{ms}$, hacheur abaisseur
+      $27\ \mathrm{V}$, $8\ \mathrm{A}$. Au réseau bas, $v_C$ entre $32{,}2$ et $36{,}3\ \mathrm{V}$, au-dessus du minimum de $31\ \mathrm{V}$ du hacheur ;
+      $13{,}6\ \mathrm{A}$ efficaces dans les condensateurs ; $5{,}1\ \mathrm{W}$ par diode ; $2{,}22\ \mathrm{A}$ au primaire avec un facteur de puissance de
+      $0{,}67$.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Utiliser $V_m/\pi$ pour un pont, ou oublier ses deux chutes de diodes.</strong> Le pont donne $2V_m/\pi$, le double du simple alternance ; mais le courant traverse deux diodes, et sur un secondaire de $12\ \mathrm{V}$, les deux chutes enlèvent près de $2\ \mathrm{V}$, soit plus de $10\ \%$ de la tension de crête.</li>
+    <li><strong>Appliquer $\Delta V = I/(2fC)$ à un simple alternance.</strong> Le condensateur ne se recharge qu'une fois par période ; la décharge dure presque $T$ et l'ondulation est double : $I/(fC)$. L'erreur inverse, appliquer $I/(fC)$ à un pont, ne fait que surdimensionner.</li>
+    <li><strong>Choisir le condensateur sur sa seule capacité.</strong> Le courant efficace qui le traverse dépasse souvent le courant continu, $3{,}4\ \mathrm{A}$ pour $2\ \mathrm{A}$ dans l'exemple H, $13{,}6\ \mathrm{A}$ pour $7{,}7\ \mathrm{A}$ dans le chargeur ; s'il dépasse le courant admissible, le condensateur chauffe, s'assèche et perd sa capacité en quelques mois.</li>
+    <li><strong>Croire que le facteur de puissance vaut 1 parce que le courant est en phase avec la tension.</strong> Le fondamental est bien en phase, mais les harmoniques augmentent la valeur efficace sans transporter de puissance active : $\lambda = I_1/I_{eff} \approx 0{,}7$ avec un condensateur, $0{,}90$ avec une inductance.</li>
+    <li><strong>Ignorer l'impédance de la source.</strong> Les formules idéales donnent $23{,}2\ \mathrm{V}$ dans l'exemple H, la réalité $20{,}5\ \mathrm{V}$ ; et elles prédisent $52\ \mathrm{A}$ de pointe là où le transformateur en laisse passer $10$. Un condensateur dimensionné par la seule formule peut laisser le régulateur aval décrocher au réseau bas.</li>
+    <li><strong>Dimensionner les diodes d'un pont pour $2V_m$, ou celles d'un point milieu pour $V_m$.</strong> Dans le pont, une diode bloquée est mise en parallèle sur la tension de la charge par la diode passante de sa branche : $V_m$. Dans le point milieu, elle voit les deux demi-secondaires en série : $2V_m$.</li>
+    <li><strong>Relier la masse d'un oscilloscope à la borne $-$ d'un pont alimenté directement par le réseau.</strong> La masse de l'oscilloscope est reliée à la terre ; pendant une alternance, une diode du pont relie la borne $-$ à la phase, et la sonde crée un court-circuit franc. Il faut une sonde différentielle ou un transformateur d'isolement en amont du montage, jamais un oscilloscope "flottant" dont on a coupé la terre.</li>
+    <li><strong>Augmenter $C$ sans regarder l'appel à la mise sous tension.</strong> Un condensateur vide est un court-circuit : $500\ \mathrm{A}$ théoriques dans le chargeur sans précharge, de quoi faire fondre le fusible ou détruire le pont dès la première mise sous tension, ou le dégrader peu à peu.</li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain. Une ondulation à $50\ \mathrm{Hz}$ au lieu de $100\ \mathrm{Hz}$, environ deux fois plus ample, signale une diode ou une
+    branche du pont coupée : le montage fonctionne en simple alternance. Elle s'accompagne d'une composante continue dans le transformateur, qui
+    peut le faire ronfler et chauffer. Une diode en court-circuit met la source en court-circuit pendant une alternance sur deux : le fusible fond dès
+    la mise sous tension. Une ondulation à $100\ \mathrm{Hz}$ qui croît lentement au fil des mois, avec une tension moyenne en baisse, désigne un
+    condensateur qui perd sa capacité ; un condensateur bombé ou chaud au toucher le confirme. Hors tension, et une fois le condensateur
+    déchargé, chaque diode se contrôle au multimètre en position test de diode : environ $0{,}5\ \mathrm{V}$ dans le sens direct, dépassement de
+    gamme dans le sens inverse ; quatre mesures directes et quatre inverses, entre chaque borne alternative et les bornes $+$ et $-$. Un fusible qui
+    fond à chaque mise sous tension, sans défaut constaté ensuite, désigne une précharge inopérante, résistance coupée et contact K collé par
+    exemple.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic industriel et une
+    question conceptuelle. Ils vont de l'application directe d'une formule au choix de la méthode, au calcul multi-étapes, au dimensionnement sous
+    contrainte et au diagnostic. La correction de chacun reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la correction", puis se
+    déroule étape par étape, accompagnée d'une courbe ou d'un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Après chaque réponse,
+    l'explication s'affiche avec un petit schéma tracé pas à pas.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$\text{pont, charge } R \text{ ou } L : \quad V_{moy} = \frac{2V_m}{\pi} - 2V_F, \qquad V_{eff} = \frac{V_m}{\sqrt{2}}, \qquad V_{D,inv\,max} = V_m$$
+    $$\text{courant lissé } I_d : \quad I_{D,moy} = \frac{I_d}{2}, \quad I_{D,eff} = \frac{I_d}{\sqrt{2}}, \quad \lambda = \frac{2\sqrt{2}}{\pi} = 0{,}90$$
+    $$\Delta V = \frac{I\,t_d}{C} \leq \frac{I}{2fC}, \qquad t_d = \frac{\pi/2 + \theta_1}{\omega}, \qquad \sin\theta_1 = 1 - \frac{\Delta V}{\hat V_C}$$
+    $$I_{C,eff} = \sqrt{I_{s,eff}^2 - I^2}, \qquad S_{transfo} = V_s\,I_{s,eff}$$
+    $$\Delta V_{moy} = \frac{2\omega L_s I_d}{\pi}, \qquad \hat I_{appel} \approx \frac{V_m}{R_s + R_p}$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>Dimensionner la capacité sur la tension minimale au réseau bas, avec la tolérance du condensateur et la chute due à la source.</li>
+      <li>Vérifier le courant efficace des condensateurs, pas seulement leur capacité et leur tension.</li>
+      <li>Tension inverse des diodes : $V_m$ dans un pont, $2V_m$ au point milieu ou en simple alternance filtré, au réseau haut.</li>
+      <li>Prévoir une précharge dès que l'appel $V_m/R_s$ dépasse l'$I_{FSM}$ des diodes ou la tenue du fusible.</li>
+      <li>Ne jamais relier la masse d'un oscilloscope à un pont alimenté directement par le réseau.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Le pont de Graetz retourne l'alternance négative : deux diodes conduisent à la fois, la charge reçoit $|v_s|$, de
+    moyenne $2V_m/\pi$, avec une ondulation à $2f$, et chaque diode bloquée supporte $V_m$. Une inductance lisse le courant : la source débite des
+    créneaux, le facteur de puissance vaut $0{,}90$. Un condensateur lisse la tension : il se recharge pendant une courte fenêtre près des crêtes et
+    se décharge le reste du temps, d'où $\Delta V = I\,t_d/C \leq I/(2fC)$. Les impulsions de recharge sont intenses, riches en rang 3, et dégradent le
+    facteur de puissance vers $0{,}7$ ; l'impédance de la source les limite mais abaisse la tension. On dimensionne sur la tension minimale au réseau
+    bas, puis on vérifie courants efficaces, tensions à vide et appel.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent, <a href="#/cours/diodes-de-puissance">Diodes de puissance</a>, dont les
+    pertes et les tensions inverses se retrouvent dans chaque pont ; une sur le cours <a href="#/cours/moteur-asynchrone-triphase">Moteur
+    asynchrone triphasé</a>, vieux d'une semaine, dont les variateurs commencent par un redresseur ; une sur le cours
+    <a href="#/cours/revision-2-et-mini-projet-capteur">Révision 2 et mini-projet capteur</a>, vieux d'un mois, dont le filtre passe-bas répond au même
+    besoin de lissage que le condensateur de cette séance.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : simuler dans LTspice l'alimentation de l'exemple H, mesurer l'ondulation, les pointes et l'angle de conduction, observer l'appel à la
+    mise sous tension, puis vérifier en Python le dimensionnement du condensateur et le spectre du courant. Prédictions à écrire avant de
+    commencer : tension moyenne avec et sans résistance de source ; pointe de courant dans les deux cas ; rang harmonique le plus élevé après le
+    fondamental.
+  </p>
+  <ol>
+    <li>Dans LTspice, placer une source <code>SINE(0 25.456 50)</code> avec une résistance série <code>Rser=0.3</code>, un pont de quatre diodes définies par <code>.model DP D(Is=1n N=2 Rs=10m)</code>, deux condensateurs de <code>15m</code> en parallèle et une source de courant de <code>2</code> ampères comme charge.</li>
+    <li>Lancer <code>.tran 0 2 1.8 20u</code> pour atteindre le régime établi, puis mesurer par <code>.meas</code> les valeurs maximale, minimale et moyenne de $v_C$, la valeur efficace et la crête du courant de la source, et la valeur efficace du courant d'un condensateur.</li>
+    <li>Refaire la simulation avec <code>Rser=0.01</code> et comparer : tension moyenne, pointe, angle de conduction mesuré au curseur.</li>
+    <li>Appel : lancer <code>.tran 0 100m 0 5u</code> à partir de condensateurs vides et relever la première pointe de courant ; ajouter une résistance de précharge de $2{,}2\ \Omega$ et comparer.</li>
+    <li>Défaut : supprimer une diode du pont et observer la fréquence et l'amplitude de l'ondulation.</li>
+    <li>En Python, programmer la méthode affinée : fonction qui, pour $V_s$, $V_F$, $I$, $f$ et $\Delta V$, renvoie $\theta_1$, $t_d$ et $C$ ; vérifier les $18{,}1\ \mathrm{mF}$ de l'exemple H. Exporter ensuite le courant de source de LTspice en texte et calculer son spectre par transformée de Fourier rapide sur un nombre entier de périodes.</li>
+  </ol>
+  <p>
+    Résultats attendus : avec $0{,}3\ \Omega$, environ $20\ \mathrm{V}$ moyens, $0{,}5\ \mathrm{V}$ d'ondulation, une pointe de l'ordre de $10\ \mathrm{A}$ et
+    $4\ \mathrm{A}$ efficaces ; avec $0{,}01\ \Omega$, environ $22$ à $23\ \mathrm{V}$ et des pointes de plusieurs dizaines d'ampères, plus étroites ; un
+    appel de l'ordre de $80\ \mathrm{A}$ sans précharge, ramené vers $10\ \mathrm{A}$ avec $2{,}2\ \Omega$ ; une ondulation à $50\ \mathrm{Hz}$ environ deux
+    fois plus ample avec une diode retirée ; un rang 3 proche de $80\ \%$ du fondamental. Les valeurs exactes dépendent du modèle de diode, dont le
+    seuil n'est pas exactement $1{,}0\ \mathrm{V}$. Anomalies à observer : un pas de calcul trop grand rate les pointes et fausse la valeur efficace ;
+    une mesure lancée avant le régime établi donne une moyenne trop basse ; un spectre calculé sur un nombre non entier de périodes fait apparaître
+    des rangs pairs et des raies étalées qui n'existent pas. Le modèle ne contient ni l'inductance de fuite du transformateur ni la résistance série
+    des condensateurs, qui réduiraient encore les pointes et ajouteraient une petite marche sur $v_C$ à chaque recharge.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est calculé dans ce navigateur à
+    partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement pour suivre votre progression.
+    Le jalon visé à la fin du module suivant demande d'analyser les principaux convertisseurs de puissance, leurs formes d'onde, leurs pertes,
+    leurs protections et leur intégration dans un variateur : le redresseur à condensateur en est l'étage d'entrée le plus fréquent.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Le pont de Graetz donne $|v_s|$, de moyenne $2V_m/\pi$, avec deux diodes en série dans le chemin du courant et $V_m$ en inverse sur chaque diode bloquée ; l'ondulation est à $2f$.</li>
+    <li data-rang="02">Le condensateur se recharge pendant une courte fenêtre et fournit seul le courant le reste du temps : $\Delta V = I\,t_d/C \leq I/(2fC)$, mais la tension minimale réelle dépend aussi de l'impédance de la source, qu'il faut toujours vérifier.</li>
+    <li data-rang="03">Le prix du filtrage capacitif est un courant de source impulsionnel : valeur efficace double du courant continu, condensateurs fortement sollicités, rang 3 élevé et facteur de puissance vers $0{,}7$.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> raisonner sur des grandeurs différentes au bon endroit, la tension minimale pour la capacité,
+    la tension maximale pour les tenues, le courant efficace pour les échauffements et la pointe pour l'appel, sans se contenter de la formule
+    $I/(2fC)$. La simulation de dimensionnement et l'organigramme de la section F sont faits pour installer ce réflexe.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Redresseurs triphasés, passe au pont à six diodes qui alimente le variateur de la
+    pompe. Question à préparer : sur un réseau de $400\ \mathrm{V}$ entre phases, combien de diodes conduisent à la fois dans ce pont, à quelle
+    fréquence la tension redressée ondule-t-elle, et pourquoi, sans aucun condensateur, son ondulation relative est-elle bien plus faible que celle
+    d'un pont monophasé ?
+  </p>
+
+</article>
