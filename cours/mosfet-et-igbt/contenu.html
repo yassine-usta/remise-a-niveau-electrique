@@ -1,0 +1,1385 @@
+<article class="cours" data-slug="mosfet-et-igbt">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/thyristors-et-redresseurs-commandes">Thyristors et redresseurs commandés</a> s'est achevé sur deux questions.
+      Pourquoi un thyristor, qui ne s'éteint que lorsque son courant s'annule, ne peut-il pas découper une tension continue à $10\ \mathrm{kHz}$ ?
+      Parce qu'en continu, rien n'annule son courant : la gâchette ne sait qu'amorcer, et il faudrait un circuit auxiliaire d'extinction forcée,
+      avec condensateur et second thyristor, qui inverse la tension pendant au moins $t_q$, quelques dizaines à quelques centaines de
+      microsecondes, à chaque période de $100\ \mathrm{\mu s}$. C'est lourd, lent et coûteux. Et si l'on disposait d'un interrupteur blocable à
+      volonté, quelles pertes apparaîtraient ? À chaque ouverture, le courant doit décroître pendant que la tension remonte : pendant quelques
+      dizaines de nanosecondes, l'interrupteur porte à la fois une tension et un courant importants, et dissipe une énergie de l'ordre de
+      $\frac{1}{2}VIt$. Le thyristor, commuté par le réseau au passage naturel du courant par zéro et seulement $100$ à $300$ fois par seconde,
+      échappait presque entièrement à ces pertes ; un interrupteur qui commute $10\,000$ fois par seconde sous pleine tension et plein courant ne
+      le peut pas. Cette séance présente les deux interrupteurs blocables qui dominent l'électronique de puissance moderne, le MOSFET et
+      l'IGBT, et apprend à chiffrer leurs pertes.
+    </p>
+    <p>
+      La séance s'appuie sur la jonction PN, la recharge inverse et le modèle à seuil du cours <a href="#/cours/diodes-de-puissance">Diodes de
+      puissance</a> ; sur la charge d'un condensateur à travers une résistance du cours <a href="#/cours/regime-transitoire-rc">Régime transitoire
+      RC</a> ; sur la relation $v = L\,\mathrm{d}i/\mathrm{d}t$ du cours <a href="#/cours/inductances-et-champ-magnetique">Inductances et champ
+      magnétique</a> ; sur les valeurs moyenne et efficace du cours <a href="#/cours/signaux-periodiques-et-sinusoides">Signaux périodiques et
+      sinusoïdes</a> ; et sur le variateur de la pompe du projet fil rouge, dont la loi de commande a été établie dans le cours
+      <a href="#/cours/variation-de-vitesse-des-moteurs-asynchrones">Variation de vitesse des moteurs asynchrones</a>.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Un variateur de vitesse, une alimentation à découpage, un chargeur de batterie, un onduleur photovoltaïque, un convertisseur de traction ou
+    une alimentation sans interruption ont tous le même cœur : des interrupteurs qui s'ouvrent et se ferment des milliers à des millions de fois
+    par seconde, et que la commande sait ouvrir aussi bien que fermer. Deux composants se partagent l'essentiel de ce marché. Le MOSFET, transistor
+    à effet de champ, règne aux basses tensions et aux fréquences élevées : alimentations de cartes, convertisseurs $12$, $24$ ou $48\ \mathrm{V}$,
+    chargeurs ; dans sa version en carbure de silicium, il conquiert les tensions de $650$ à $1700\ \mathrm{V}$. L'IGBT, transistor bipolaire à
+    grille isolée, règne sur les variateurs industriels raccordés au réseau $400$ ou $690\ \mathrm{V}$, la traction ferroviaire et les grands
+    onduleurs, de quelques kilowatts à plusieurs mégawatts.
+  </p>
+  <p>
+    Les questions d'ingénieur sont toujours les mêmes. Quel composant choisir pour une tension, un courant et une fréquence de découpage donnés ?
+    Combien dissipe-t-il en conduction, combien à chaque commutation, et quelle température de jonction atteint-il ? Comment le commander : quelle
+    tension de grille, quelle résistance de grille, quelle puissance de commande ? Quels risques accompagnent des commutations rapides :
+    surtensions, conduction parasite, perturbations électromagnétiques, contraintes sur l'isolation du moteur ? Le travail central de la séance
+    consiste à comparer MOSFET et IGBT pour deux convertisseurs du projet fil rouge : le hacheur du chargeur du bus $24\ \mathrm{V}$ secouru et
+    l'onduleur du variateur de la pompe.
+  </p>
+  <p>
+    Organisation suggérée pour les $90$ minutes : $10$ minutes pour les prérequis, $15$ minutes pour l'intuition physique, $30$ minutes pour la
+    théorie et les deux simulations, $15$ minutes pour l'exemple et l'application industrielle, $20$ minutes pour les exercices, le quiz et la
+    révision. Le travail pratique de la section O se fait à part.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Expliquer la formation du canal d'un MOSFET, la modulation de conductivité d'un IGBT et la raison pour laquelle l'IGBT conduit mieux à haute tension mais commute plus lentement.</li>
+    <li data-rang="02">Calculer les pertes de conduction d'un MOSFET, $R_{DS(on)}I_{eff}^2$ à la température de jonction réelle, et d'un IGBT, $V_{CE0}I_{moy} + r_{CE}I_{eff}^2$, puis le courant de croisement entre les deux.</li>
+    <li data-rang="03">Calculer les durées de commutation, le $\mathrm{d}v/\mathrm{d}t$ et la puissance de commande à partir des charges de grille, de la résistance de grille et des tensions du pilote.</li>
+    <li data-rang="04">Calculer les énergies de commutation sur charge inductive, par le modèle linéaire ou à partir des données d'un catalogue, et en déduire les pertes en fonction de la fréquence de découpage.</li>
+    <li data-rang="05">Comparer MOSFET Si, MOSFET SiC et IGBT pour un convertisseur donné, en tenant compte des pertes, de la température de jonction, du $\mathrm{d}v/\mathrm{d}t$ et des contraintes d'installation.</li>
+    <li data-rang="06">Diagnostiquer une conduction parasite par effet Miller, une surtension au blocage ou un échauffement anormal à partir des formes d'onde et des conditions de fonctionnement.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Quatre acquis suffisent. Le premier, vu dans le cours <a href="#/cours/regime-transitoire-rc">Régime transitoire RC</a> : un condensateur $C$
+    chargé à travers $R$ par une source $E$ suit $v(t) = E + (v_0 - E)\,e^{-t/\tau}$ avec $\tau = RC$, et le temps pour passer de $v_1$ à $v_2$ vaut
+    $\tau\ln\frac{E - v_1}{E - v_2}$. Le deuxième, vu dans le cours <a href="#/cours/condensateurs-et-champ-electrique">Condensateurs et champ
+    électrique</a> : $i = C\,\mathrm{d}v/\mathrm{d}t$, la charge $Q = CV$ et l'énergie $\frac{1}{2}CV^2$. Le troisième, vu dans les cours
+    <a href="#/cours/signaux-periodiques-et-sinusoides">Signaux périodiques et sinusoïdes</a> et <a href="#/cours/diodes-de-puissance">Diodes de
+    puissance</a> : un créneau d'amplitude $I$ et de rapport cyclique $D$ a pour valeur moyenne $DI$ et pour valeur efficace $I\sqrt{D}$, et un
+    composant modélisé par $v = V_0 + r\,i$ dissipe $V_0I_{moy} + rI_{eff}^2$. Le quatrième, vu dans le cours
+    <a href="#/cours/inductances-et-champ-magnetique">Inductances et champ magnétique</a> : une inductance impose $v = L\,\mathrm{d}i/\mathrm{d}t$,
+    si bien qu'un courant qui varie très vite dans quelques dizaines de nanohenrys de câblage crée des dizaines de volts. La correction de chaque
+    question reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la correction".
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Notation de la séance</span>
+    <p>
+      MOSFET : drain D, source S, grille G ; tension $v_{DS}$ et courant $i_D$ entrant par le drain, en convention récepteur ; tension de commande
+      $v_{GS}$. IGBT : collecteur C, émetteur E, grille G, avec $v_{CE}$, $i_C$ et $v_{GE}$ ; quand un raisonnement vaut pour les deux, on écrit
+      $v_{DS}$ et $i_D$. $V_{th}$ est la tension de seuil, $V_{pl}$ la tension du plateau Miller, $R_G$ la résistance totale de la boucle de grille,
+      interne et externe, $V_{GG+}$ et $V_{GG-}$ les tensions du pilote à l'état passant et bloqué. $C_{GS}$, $C_{GD}$ et $C_{DS}$ sont les capacités
+      entre électrodes ; le catalogue donne $C_{iss} = C_{GS} + C_{GD}$, $C_{rss} = C_{GD}$ et $C_{oss} = C_{DS} + C_{GD}$, ainsi que les charges
+      $Q_G$, $Q_{GS}$ et $Q_{GD}$. $V_{DC}$ est la tension du bus que l'interrupteur doit couper, $I_L$ le courant de la charge inductive, $f$ la
+      fréquence de découpage, $D$ le rapport cyclique, $T_j$ la température de jonction. Les durées de commutation sont notées $t_{ri}$ et $t_{fi}$
+      pour la montée et la chute du courant, $t_{fv}$ et $t_{rv}$ pour la chute et la montée de la tension ; $E_{on}$ et $E_{off}$ sont les énergies
+      dissipées à la mise en conduction et au blocage.
+    </p>
+  </div>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-canal-texte">Un interrupteur commandé par un champ électrique</h3>
+  <p>
+    Le MOSFET est un condensateur dont l'une des armatures est le silicium. La grille, électrode métallique ou en silicium polycristallin, est
+    séparée d'une zone de silicium dopée P, le caisson, par une couche d'oxyde de quelques dizaines de nanomètres. De part et d'autre de cette zone
+    se trouvent deux régions N+ fortement dopées : la source et le drain. Sans tension de grille, le chemin source, caisson, drain contient deux
+    jonctions PN tête-bêche : aucun courant ne passe, quel que soit le signe de $v_{DS}$ dans la limite de la diode interne. Quand on porte la
+    grille à un potentiel positif, le champ électrique à travers l'oxyde repousse d'abord les trous du caisson, ce qui crée une zone désertée,
+    puis, au-delà de la tension de seuil $V_{th}$, attire sous l'oxyde assez d'électrons pour que la surface du caisson P se comporte comme du
+    silicium N : c'est la couche d'inversion, ou canal. Un pont d'électrons relie alors la source au drain.
+  </p>
+  <p>
+    La simulation suivante représente une coupe simplifiée d'un MOSFET à canal N, placé dans un circuit de $40\ \mathrm{V}$ avec une charge de
+    $5\ \Omega$, la configuration du hacheur étudié plus loin. Prédisez avant de manipuler : quand $v_{GS}$ monte de $0$ à $12\ \mathrm{V}$, le
+    courant apparaît-il progressivement dès $0\ \mathrm{V}$, ou seulement au-delà d'un seuil ? La puissance dissipée dans le transistor est-elle
+    maximale à $v_{GS} = 12\ \mathrm{V}$, quand le courant est maximal, ou ailleurs ? Faites glisser la poignée ronde sur l'échelle de $v_{GS}$, à
+    gauche, utilisez le curseur, ou lancez la lecture, qui fait monter $v_{GS}$ de $0$ à $12\ \mathrm{V}$.
+  </p>
+  <figure id="d-canal-figure">
+    <div class="schema-vivant" id="d-canal"></div>
+    <div id="d-canal-curseurs"></div>
+    <div id="d-canal-lecteur"></div>
+    <div id="d-canal-valeurs"></div>
+    <figcaption>
+      Coupe d'un MOSFET à canal N. Caisson P, régions N+ de source et de drain, oxyde en trait fin et grille en trait épais au-dessus. La zone
+      désertée est la bande en tirets sous l'oxyde ; le canal est la bande pleine qui apparaît au-delà du seuil, d'autant plus épaisse que $v_{GS}$
+      dépasse $V_{th}$. Les points mobiles représentent les électrons, qui vont de la source vers le drain ; le courant conventionnel $i_D$, fléché,
+      va donc du drain vers la source. La source est la référence des potentiels ; $v_{GS}$ et $v_{DS}$ sont fléchées vers la grille et vers le
+      drain. En mouvement réduit, les électrons restent immobiles et seule leur densité change.
+    </figcaption>
+  </figure>
+  <p>
+    Interprétation : rien ne passe tant que $v_{GS} &lt; V_{th} = 3\ \mathrm{V}$ ; la grille ne fait que déserter le caisson. Entre $3$ et
+    $4{,}5\ \mathrm{V}$, le canal est formé mais étroit : le transistor limite lui-même le courant, et la tension $v_{DS}$ reste élevée. C'est la
+    zone de saturation, ou zone active, où le courant ne dépend presque que de $v_{GS}$. La puissance $v_{DS}\,i_D$ y passe par un maximum de
+    $80\ \mathrm{W}$ vers $4{,}1\ \mathrm{V}$, quand le courant vaut $4\ \mathrm{A}$ et la tension $20\ \mathrm{V}$ : un transistor qui resterait là
+    serait détruit en quelques millisecondes. Au-delà de $4{,}5\ \mathrm{V}$, le canal peut porter plus que les $8\ \mathrm{A}$ que le circuit
+    autorise : le transistor devient une simple résistance $R_{DS(on)}$ de quelques milliohms, et sa dissipation retombe sous $1\ \mathrm{W}$. Un
+    interrupteur de puissance ne doit donc traverser la zone active que le plus vite possible : c'est l'origine des pertes de commutation.
+  </p>
+  <p>
+    Une analogie contrôlée : une écluse dont on ouvre la vanne en faisant monter la pression d'un vérin. La pression du vérin, comme $v_{GS}$, ne
+    consomme aucun débit une fois établie ; il faut seulement fournir le volume d'huile qui déplace le piston, comme on fournit la charge $Q_G$
+    à la grille. Tant que la pression n'a pas vaincu le ressort de rappel, la vanne reste fermée : c'est le seuil.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie de l'écluse</span>
+    <p>
+      L'analogie rend bien compte de la commande sans consommation statique et de l'existence d'un seuil. Elle échoue sur trois points. Le vérin
+      d'une écluse n'est pas couplé à l'eau qu'il commande, alors que la capacité grille-drain $C_{GD}$ relie la commande au circuit de puissance :
+      quand $v_{DS}$ varie, un courant est injecté dans la grille. Le canal n'a pas d'inertie mécanique : il se forme en quelques nanosecondes, et
+      ce sont les capacités et la résistance de grille qui fixent la vitesse. Enfin, une écluse entrouverte ne s'échauffe pas, alors que le
+      transistor en zone active dissipe toute la puissance $v_{DS}\,i_D$.
+    </p>
+  </div>
+
+  <h3 id="d-structures-texte">Du MOSFET à l'IGBT : le prix de la tenue en tension</h3>
+  <p>
+    Un MOSFET de puissance n'est pas plat comme la coupe précédente : il est vertical. La source et la grille sont sur la face supérieure, le drain
+    sur la face inférieure, et le courant traverse toute l'épaisseur de la puce. Entre le canal et le drain se trouve une couche N− épaisse et peu
+    dopée, la zone de tenue : c'est elle qui supporte la tension à l'état bloqué. Pour tenir $V_{BR}$, elle doit être d'autant plus épaisse et
+    d'autant moins dopée que $V_{BR}$ est grande, et sa résistance à l'état passant croît alors très vite, comme $V_{BR}^2$ à $V_{BR}^{2{,}5}$. Un
+    MOSFET au silicium de $100\ \mathrm{V}$ affiche quelques milliohms ; à surface de puce égale, un MOSFET au silicium de $1200\ \mathrm{V}$
+    afficherait des centaines de milliohms.
+  </p>
+  <p>
+    L'IGBT résout ce problème en ajoutant une couche P+ sous la zone de tenue. Quand le canal conduit, les électrons arrivent dans la zone N− ; la
+    jonction entre cette zone et la couche P+ devient passante et injecte des trous dans la zone de tenue. Électrons et trous en grand nombre
+    rendent la zone N− très conductrice : c'est la modulation de conductivité. La chute de tension devient celle d'une diode, environ
+    $0{,}7$ à $1\ \mathrm{V}$, plus une petite résistance, quelle que soit la tenue en tension. Le schéma suivant compare les deux structures. Les
+    zones sont repérées par leur dopage ; la flèche pleine donne le chemin des électrons, depuis la source par le canal vers le bas ; les flèches
+    en tirets, dans l'IGBT seulement, donnent l'injection des trous depuis la couche P+ vers le haut. À l'état bloqué, le drain ou le collecteur est
+    positif par rapport à la source ou à l'émetteur, et c'est la zone N− qui porte la tension.
+  </p>
+  <figure id="d-structures-figure">
+    <svg viewBox="0 0 760 380" role="img" aria-label="Coupes verticales comparées d'un MOSFET de puissance et d'un IGBT, avec le chemin des électrons et l'injection des trous">
+      <defs><marker id="fl-d-st" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6">
+        <rect x="40" y="36" width="300" height="14"/>
+        <rect x="60" y="50" width="40" height="50"/>
+        <rect x="280" y="50" width="40" height="50"/>
+        <rect x="118" y="60" width="144" height="40" stroke-dasharray="4 3"/>
+        <rect x="130" y="70" width="120" height="18" stroke-width="2.6"/>
+        <rect x="40" y="100" width="300" height="196"/>
+        <path d="M40 100H150Q152 160 118 166H40"/>
+        <path d="M340 100H230Q228 160 262 166H340"/>
+        <rect x="64" y="100" width="70" height="20" rx="3"/>
+        <rect x="246" y="100" width="70" height="20" rx="3"/>
+        <path d="M134 103H150M230 103H246" stroke-width="4"/>
+        <path d="M40 256H340"/>
+        <rect x="40" y="296" width="300" height="14"/>
+        <rect x="420" y="36" width="300" height="14"/>
+        <rect x="440" y="50" width="40" height="50"/>
+        <rect x="660" y="50" width="40" height="50"/>
+        <rect x="498" y="60" width="144" height="40" stroke-dasharray="4 3"/>
+        <rect x="510" y="70" width="120" height="18" stroke-width="2.6"/>
+        <rect x="420" y="100" width="300" height="196"/>
+        <path d="M420 100H530Q532 160 498 166H420"/>
+        <path d="M720 100H610Q608 160 642 166H720"/>
+        <rect x="444" y="100" width="70" height="20" rx="3"/>
+        <rect x="626" y="100" width="70" height="20" rx="3"/>
+        <path d="M514 103H530M610 103H626" stroke-width="4"/>
+        <path d="M420 238H720" stroke-dasharray="6 4"/>
+        <path d="M420 256H720"/>
+        <rect x="420" y="296" width="300" height="14"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+        <path d="M134 112Q170 112 190 120V244" marker-end="url(#fl-d-st)"/>
+        <path d="M246 112Q210 112 190 120"/>
+        <path d="M514 112Q550 112 570 120V230" marker-end="url(#fl-d-st)"/>
+        <path d="M626 112Q590 112 570 120"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.6" stroke-dasharray="5 4">
+        <path d="M520 270V182" marker-end="url(#fl-d-st)"/>
+        <path d="M620 270V182" marker-end="url(#fl-d-st)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="40" y="18" font-size="13">MOSFET de puissance vertical</text>
+        <text x="420" y="18" font-size="13">IGBT</text>
+        <text x="262" y="31">source S</text>
+        <text x="600" y="31">émetteur E</text>
+        <text x="152" y="83">grille G</text>
+        <text x="532" y="83">grille G</text>
+        <text x="86" y="115">n+</text>
+        <text x="270" y="115">n+</text>
+        <text x="466" y="115">n+</text>
+        <text x="650" y="115">n+</text>
+        <text x="62" y="150">p</text>
+        <text x="306" y="150">p</text>
+        <text x="442" y="150">p</text>
+        <text x="686" y="150">p</text>
+        <text x="132" y="136" font-size="11">canal</text>
+        <text x="512" y="136" font-size="11">canal</text>
+        <text x="200" y="196">électrons</text>
+        <text x="50" y="214">n- : zone de tenue,</text>
+        <text x="50" y="230">épaisse, peu dopée</text>
+        <text x="630" y="196">trous</text>
+        <text x="630" y="212">injectés</text>
+        <text x="430" y="214">n- modulée</text>
+        <text x="660" y="234" font-size="11">tampon n</text>
+        <text x="60" y="280">substrat n+</text>
+        <text x="434" y="290">couche p+ injectrice</text>
+        <text x="150" y="330">drain D</text>
+        <text x="530" y="330">collecteur C</text>
+        <text x="40" y="360">À l'état bloqué : D ou C positif par rapport à S ou E ; la zone n- porte la tension.</text>
+      </g>
+    </svg>
+    <figcaption>
+      Structures comparées. Les deux composants ont la même face supérieure : grille isolée, caissons P, sources N+ et canal en surface. Le MOSFET
+      repose sur un substrat N+ : le courant n'est porté que par des électrons, ce qui le rend rapide, mais la zone N− reste résistive. L'IGBT repose
+      sur une couche P+ qui injecte des trous : la zone N− devient très conductrice, mais il faudra évacuer ces charges à chaque blocage. La couche
+      tampon N, en tirets, limite l'extension du champ et permet d'amincir la zone de tenue.
+    </figcaption>
+  </figure>
+  <p>
+    Cette injection a une contrepartie. Au blocage, le canal se ferme en quelques dizaines de nanosecondes, mais les trous stockés dans la zone
+    N− ne disparaissent que par recombinaison : le courant ne s'annule pas net, il traîne sous forme d'un courant de queue qui décroît en quelques
+    centaines de nanosecondes, alors que la tension est déjà revenue à $V_{DC}$. Le MOSFET, composant unipolaire, n'a pas de queue. Le bilan est
+    une règle de choix qui reviendra toute la séance : l'IGBT conduit mieux à haute tension, le MOSFET commute plus vite. Le carbure de silicium
+    change la donne : son champ critique, environ huit fois celui du silicium, permet une zone de tenue dix fois plus mince et beaucoup plus
+    dopée, si bien qu'un MOSFET SiC de $1200\ \mathrm{V}$ atteint quelques dizaines de milliohms sans injection de trous, donc sans queue.
+  </p>
+  <p>
+    Une analogie contrôlée pour l'IGBT : un couloir étroit que l'on élargit en y faisant entrer une foule par une seconde porte. Le passage devient
+    facile tant que la foule est là, mais pour fermer le couloir il faut attendre que la foule l'ait quitté.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie de la foule</span>
+    <p>
+      L'image décrit correctement la baisse de résistance et la lenteur du blocage. Elle ne dit pas que les trous ne sortent pas seulement : ils se
+      recombinent avec les électrons sur place, avec une durée de vie que le fabricant règle par irradiation ou par dopage, en arbitrant entre chute
+      de tension et courant de queue. Elle ne dit pas non plus que l'IGBT garde un seuil, celui de la jonction P+ N−, que le MOSFET n'a pas : à
+      faible courant, le MOSFET, sans seuil, reste meilleur.
+    </p>
+  </div>
+
+  <h3 id="d-cellule-texte">Commuter une charge inductive : la cellule de commutation</h3>
+  <p>
+    Dans presque tous les convertisseurs, l'interrupteur commute un courant imposé par une inductance : bobinage d'un moteur, inductance d'un
+    hacheur, inductance de lissage. Le schéma suivant montre la cellule élémentaire. Un bus $V_{DC}$, dont la borne négative est la référence des
+    potentiels ; un interrupteur commandé K, ici un MOSFET à canal N, entre la borne positive et le point milieu ; une diode de roue libre
+    $D_{RL}$, cathode au point milieu ; une inductance qui, sur la durée d'une commutation, impose le courant $I_L$ comme une source de courant.
+    Les courants $i_K$ et $i_D$ sont fléchés dans le sens passant de chaque composant ; $v_K$ est fléchée du point milieu vers la borne positive,
+    en convention récepteur pour K, et $v_M$ de la masse vers le point milieu.
+  </p>
+  <figure id="d-cellule-figure">
+    <svg viewBox="0 0 760 360" role="img" aria-label="Cellule de commutation : bus continu, interrupteur commandé, diode de roue libre et inductance de charge, avec les conventions de courant et de tension">
+      <defs><marker id="fl-d-ce" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">
+        <circle cx="90" cy="180" r="22"/>
+        <path d="M90 158V60H330V100H316"/>
+        <path d="M90 202V300H580V262"/>
+        <path d="M316 94v14M316 113v14M316 132v14"/>
+        <path d="M316 140H330V180"/>
+        <path d="M330 120V140"/>
+        <path d="M308 96V144"/>
+        <path d="M308 120H260"/>
+        <path d="M330 300V250"/>
+        <path d="M318 250L330 230L342 250Z"/>
+        <path d="M318 230H342"/>
+        <path d="M330 230V180H400"/>
+        <path d="M400 180a10 10 0 0 1 20 0a10 10 0 0 1 20 0a10 10 0 0 1 20 0a10 10 0 0 1 20 0"/>
+        <path d="M480 180H580V218"/>
+        <circle cx="580" cy="240" r="22"/>
+        <path d="M210 300V312M196 312H224M201 318H219M206 324H214"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.6">
+        <path d="M330 120H318" marker-end="url(#fl-d-ce)"/>
+        <path d="M580 226V254" marker-end="url(#fl-d-ce)"/>
+        <path d="M190 48H236" marker-end="url(#fl-d-ce)"/>
+        <path d="M364 290V244" marker-end="url(#fl-d-ce)"/>
+        <path d="M500 168H546" marker-end="url(#fl-d-ce)"/>
+        <path d="M384 172V68" marker-end="url(#fl-d-ce)"/>
+        <path d="M282 294V188" marker-end="url(#fl-d-ce)"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="330" cy="180" r="3.5"/>
+        <circle cx="330" cy="300" r="3.5"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="84" y="174">+</text>
+        <text x="86" y="194">-</text>
+        <text x="30" y="184">V_DC</text>
+        <text x="198" y="40">i_K</text>
+        <text x="340" y="80">D</text>
+        <text x="340" y="164">S</text>
+        <text x="246" y="114">G</text>
+        <text x="276" y="96">K</text>
+        <text x="350" y="228">D_RL</text>
+        <text x="372" y="276">i_D</text>
+        <text x="392" y="156">v_K</text>
+        <text x="236" y="250">v_M</text>
+        <text x="426" y="162">L</text>
+        <text x="508" y="160">I_L</text>
+        <text x="610" y="244">I_L imposé</text>
+        <text x="610" y="260">par la charge</text>
+        <text x="160" y="342">masse, référence 0 V</text>
+        <text x="416" y="66" font-size="11">K fermé : v_K ≈ 0, i_K = I_L, i_D = 0</text>
+        <text x="416" y="86" font-size="11">K ouvert : D_RL conduit, v_M ≈ 0, v_K = V_DC</text>
+        <text x="416" y="106" font-size="11">Nœud : i_K + i_D = I_L à tout instant</text>
+        <text x="416" y="126" font-size="11">Maille : v_K + v_M = V_DC</text>
+      </g>
+    </svg>
+    <figcaption>
+      Cellule de commutation. La flèche courte dans le symbole du MOSFET indique un canal N. Les deux lois de Kirchhoff, rappelées à droite,
+      imposent la séquence de toute commutation dure : K ne peut perdre son courant que si la diode le reprend, et la diode ne peut se bloquer,
+      donc laisser $v_K$ chuter, que lorsque K porte déjà tout $I_L$.
+    </figcaption>
+  </figure>
+  <p>
+    D'où la conséquence centrale. À la mise en conduction, le courant de K doit d'abord monter de $0$ à $I_L$ pendant que la diode conduit encore,
+    donc sous la pleine tension $V_{DC}$ ; ensuite seulement la tension peut chuter. Au blocage, la tension doit d'abord remonter jusqu'à
+    $V_{DC}$, à plein courant, pour que la diode puisse conduire ; ensuite seulement le courant peut décroître. Pendant ces intervalles,
+    l'interrupteur porte simultanément tension et courant : c'est la commutation dure. Sur une charge résistive, tension et courant varieraient
+    ensemble et les pertes seraient trois fois plus faibles ; sur une charge inductive, ce n'est pas possible.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-conduction">Caractéristiques à l'état passant et pertes de conduction</h3>
+  <p>
+    Un MOSFET saturé par une tension de grille suffisante, $10$ à $12\ \mathrm{V}$ pour un MOSFET Si, $15$ à $18\ \mathrm{V}$ pour un SiC, se
+    comporte comme une résistance : $v_{DS} = R_{DS(on)}\,i_D$. Il conduit dans les deux sens : un courant négatif traverse le canal aussi bien qu'un
+    courant positif, ce qu'on exploite en redressement synchrone. En sens inverse et sans commande, c'est la diode interne, formée par le caisson P
+    et la zone N−, qui conduit. La résistance augmente avec la température, parce que la mobilité des électrons diminue : pour un MOSFET Si, on
+    retient $R_{DS(on)}(T_j) \approx R_{DS(on),25}\,[1 + a(T_j - 25)]$ avec $a$ de l'ordre de $0{,}005$ à $0{,}008\ \mathrm{K^{-1}}$, soit un facteur
+    $1{,}5$ à $1{,}8$ à $125\ ^\circ\mathrm{C}$. Ce coefficient positif est une bonne nouvelle : en parallèle, la puce la plus chaude devient plus
+    résistante et se décharge sur ses voisines. Un IGBT se modélise par un seuil et une résistance : $v_{CE} = V_{CE0} + r_{CE}\,i_C$. Il ne conduit
+    que dans un sens ; un IGBT de puissance est toujours associé à une diode antiparallèle, logée dans le même boîtier.
+  </p>
+  <p>
+    Les pertes de conduction se calculent comme pour la diode. La puissance instantanée vaut $p = v\,i$ ; sa moyenne sur une période $T$ donne :
+  </p>
+  <div class="formule-cle">
+    $$P_{cond,MOS} = \frac{1}{T}\int_0^T R_{DS(on)}\,i^2\,\mathrm{d}t = R_{DS(on)}\,I_{eff}^2, \qquad P_{cond,IGBT} = \frac{1}{T}\int_0^T (V_{CE0} + r_{CE}\,i)\,i\,\mathrm{d}t = V_{CE0}\,I_{moy} + r_{CE}\,I_{eff}^2$$
+    <p class="formule-cle-legende">
+      $R_{DS(on)}$ et $r_{CE}$ en ohms, à la température de jonction réelle ; $V_{CE0}$ en volts ; $I_{moy}$ et $I_{eff}$ valeurs moyenne et efficace
+      du courant dans le composant, en ampères, sur la période complète. Hypothèses : modèles linéaires par morceaux, valables au-delà de quelques
+      pour cent du courant nominal, tension de grille suffisante. Pour un créneau d'amplitude $I$ et de rapport cyclique $D$ : $I_{moy} = DI$,
+      $I_{eff}^2 = DI^2$. Vérification dimensionnelle : $\Omega \cdot \mathrm{A^2} = \mathrm{V} \cdot \mathrm{A} = \mathrm{W}$.
+    </p>
+  </div>
+  <p>
+    Cas limites. Quand le courant tend vers zéro, les pertes du MOSFET décroissent comme son carré, celles de l'IGBT seulement comme le courant :
+    à faible charge, le MOSFET gagne toujours. Aux forts courants, le terme résistif domine dans les deux cas. Le courant de croisement s'obtient en
+    égalant les chutes : $R_{DS(on)}I_x = V_{CE0} + r_{CE}I_x$, soit $I_x = \dfrac{V_{CE0}}{R_{DS(on)} - r_{CE}}$, qui n'existe que si
+    $R_{DS(on)} &gt; r_{CE}$. Au-dessous de $I_x$, le MOSFET a la plus petite chute ; au-dessus, l'IGBT.
+  </p>
+  <p>
+    Pourquoi la tenue en tension coûte-t-elle si cher à un composant unipolaire ? La zone de tenue, d'épaisseur $W$ et de dopage $N_D$, doit
+    supporter $V_{BR}$ sans que le champ dépasse le champ critique $E_c$ du matériau. Au claquage, l'équation de Poisson donne un champ triangulaire
+    de pente $qN_D/\varepsilon$ ; le champ maximal $E_c = qN_DW/\varepsilon$ et la tension $V_{BR} = \frac{1}{2}E_cW$ fixent l'épaisseur
+    $W = 2V_{BR}/E_c$ et le dopage $N_D = \varepsilon E_c/(qW)$. La résistance d'un centimètre carré de cette couche, de conductivité
+    $q\mu N_D$, vaut alors :
+  </p>
+  <div class="formule-cle">
+    $$R_{on,sp} = \frac{W}{q\,\mu\,N_D} = \frac{W^2}{\mu\,\varepsilon\,E_c} = \frac{4\,V_{BR}^2}{\mu\,\varepsilon\,E_c^3}$$
+    <p class="formule-cle-legende">
+      $R_{on,sp}$ en $\Omega\cdot\mathrm{m^2}$, $\mu$ mobilité des électrons en $\mathrm{m^2/(V\cdot s)}$, $\varepsilon$ permittivité en
+      $\mathrm{F/m}$, $E_c$ en $\mathrm{V/m}$. Vérification : $\mathrm{V^2}/(\mathrm{m^2V^{-1}s^{-1}} \cdot \mathrm{F\,m^{-1}} \cdot
+      \mathrm{V^3m^{-3}}) = \mathrm{V^2}/(\mathrm{A\,V\,m^{-2}}) = \Omega\cdot\mathrm{m^2}$, puisque $\mathrm{F} = \mathrm{A\,s/V}$. Hypothèses :
+      jonction abrupte, champ critique constant ; comme $E_c$ croît légèrement avec le dopage, l'exposant réel est plutôt $2{,}5$. Loi physique
+      pour la forme, approximation pour les valeurs.
+    </p>
+  </div>
+  <p>
+    Pour $1200\ \mathrm{V}$, avec $\mu = 0{,}135\ \mathrm{m^2/(V\cdot s)}$, $\varepsilon = 11{,}7\,\varepsilon_0$ et $E_c \approx 0{,}3\ \mathrm{MV/cm}$
+    pour le silicium, on trouve $W = 80\ \mathrm{\mu m}$ et $R_{on,sp} = 0{,}15\ \Omega\cdot\mathrm{cm^2}$ : une puce de $1\ \mathrm{cm^2}$ ferait déjà
+    $150\ \mathrm{m\Omega}$ pour la seule zone de tenue. Pour le carbure de silicium 4H, avec $\mu \approx 0{,}09\ \mathrm{m^2/(V\cdot s)}$,
+    $\varepsilon = 9{,}7\,\varepsilon_0$ et $E_c \approx 2{,}5\ \mathrm{MV/cm}$, $W = 9{,}6\ \mathrm{\mu m}$ et $R_{on,sp} = 0{,}48\
+    \mathrm{m\Omega\cdot cm^2}$, environ $320$ fois moins. En pratique, le canal et le substrat ajoutent leur part et l'écart effectif est plus
+    faible, mais l'ordre de grandeur explique la percée du SiC. Cas limite : à $V_{BR} = 30\ \mathrm{V}$, la zone de tenue du silicium devient
+    négligeable devant le canal, et la loi en $V_{BR}^2$ ne s'applique plus.
+  </p>
+  <p>
+    La simulation suivante compare, pour la classe $1200\ \mathrm{V}$, la caractéristique d'un IGBT de $100\ \mathrm{A}$, celle d'un MOSFET SiC de
+    $20\ \mathrm{m\Omega}$ à chaud et celle d'un MOSFET Si de $1200\ \mathrm{V}$ supposé de $0{,}25\ \Omega$ à $25\ ^\circ\mathrm{C}$. Prédisez
+    avant de manipuler : à $125\ ^\circ\mathrm{C}$, jusqu'à quel courant le MOSFET SiC a-t-il une chute inférieure à celle de l'IGBT ? Quand la
+    température de jonction monte, la chute de l'IGBT à $20\ \mathrm{A}$ augmente-t-elle ou diminue-t-elle ? Faites glisser la poignée ronde sur l'axe
+    des courants, puis changez la température et le rapport cyclique.
+  </p>
+  <figure id="e-carac-figure">
+    <div class="schema-vivant" id="e-carac"></div>
+    <div id="e-carac-curseurs"></div>
+    <div id="e-carac-valeurs"></div>
+    <figcaption>
+      Caractéristiques à l'état passant, chute de tension en ordonnée et courant en abscisse. IGBT en trait plein épais, avec son seuil
+      $V_{CE0}$ ; MOSFET SiC en tirets ; MOSFET Si $1200\ \mathrm{V}$ en pointillés, qui sort du cadre dès $16\ \mathrm{A}$ à $25\ ^\circ\mathrm{C}$ et dès $10\ \mathrm{A}$ environ à $125\ ^\circ\mathrm{C}$. Le trait
+      vertical fin suit la poignée ; le losange marque le courant de croisement entre l'IGBT et le MOSFET SiC quand il est dans le cadre. Les pertes
+      affichées supposent un courant constant pendant la fraction $D$ de la période.
+    </figcaption>
+  </figure>
+  <p>
+    Interprétation : à $125\ ^\circ\mathrm{C}$, le MOSFET SiC a la plus faible chute jusqu'à $I_x = 0{,}85/(0{,}020 - 0{,}011) = 94\ \mathrm{A}$, soit
+    presque jusqu'au calibre de l'IGBT ; à $25\ ^\circ\mathrm{C}$, le croisement recule à $158\ \mathrm{A}$, hors du cadre. La chute de l'IGBT à
+    $20\ \mathrm{A}$ diminue légèrement quand $T_j$ monte, car son seuil baisse, comme celui d'une diode ; à $100\ \mathrm{A}$, elle augmente, car la
+    résistance l'emporte : le point d'inversion du coefficient de température se situe vers le tiers du calibre pour ce modèle. Le MOSFET Si de
+    $1200\ \mathrm{V}$ illustre la loi en $V_{BR}^2$ : à $125\ ^\circ\mathrm{C}$ et $16\ \mathrm{A}$ continus, il chuterait de $6{,}7\ \mathrm{V}$ et dissiperait
+    $107\ \mathrm{W}$, ce qui explique qu'on ne l'emploie pas à cette tension.
+  </p>
+
+  <h3 id="e-grille">Commande de grille : capacités, charges et durées</h3>
+  <p>
+    Vue du pilote, la grille est une capacité. Trois capacités relient les électrodes : $C_{GS}$, la plus grande, entre grille et source ;
+    $C_{GD}$, la capacité de Miller, entre grille et drain ; $C_{DS}$, entre drain et source. $C_{GD}$ et $C_{DS}$ dépendent fortement de $v_{DS}$ :
+    elles sont grandes quand le composant conduit et petites sous haute tension. Le schéma suivant montre le pilote, ses deux tensions
+    d'alimentation $V_{GG+}$ et $V_{GG-}$, les résistances de grille de mise en conduction et de blocage, et le retour du courant de grille par
+    une source dite de Kelvin, connexion distincte de la source de puissance.
+  </p>
+  <figure id="e-grille-figure">
+    <svg viewBox="0 0 760 340" role="img" aria-label="Commande de grille : pilote, résistances de grille, capacités internes du MOSFET et source de Kelvin">
+      <defs><marker id="fl-e-gr" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">
+        <rect x="40" y="90" width="130" height="120" rx="8"/>
+        <path d="M170 130H200M250 130H290V170H250M200 170H170"/>
+        <rect x="200" y="122" width="50" height="16" rx="2"/>
+        <rect x="200" y="162" width="50" height="16" rx="2"/>
+        <path d="M290 150H374"/>
+        <path d="M374 102V198"/>
+        <path d="M384 96v16M384 142v16M384 188v16"/>
+        <path d="M400 40V104H384M384 196H400V320"/>
+        <path d="M400 150V196"/>
+        <path d="M105 210V280H400"/>
+        <path d="M105 90V66M40 170H22"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.6">
+        <path d="M400 150H386" marker-end="url(#fl-e-gr)"/>
+        <path d="M262 112H286" marker-end="url(#fl-e-gr)"/>
+        <path d="M318 274V160" marker-end="url(#fl-e-gr)"/>
+        <path d="M520 316V48" marker-end="url(#fl-e-gr)"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" stroke-dasharray="5 4">
+        <path d="M340 150V92M340 84V56H400"/>
+        <path d="M352 150V206M352 214V236H400"/>
+        <path d="M400 70H460V128M460 136V250H400"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2.2">
+        <path d="M328 92H352M328 84H352"/>
+        <path d="M340 206H364M340 214H364"/>
+        <path d="M448 128H472M448 136H472"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="340" cy="150" r="3"/>
+        <circle cx="352" cy="150" r="3"/>
+        <circle cx="400" cy="56" r="3"/>
+        <circle cx="400" cy="70" r="3"/>
+        <circle cx="400" cy="236" r="3"/>
+        <circle cx="400" cy="250" r="3"/>
+        <circle cx="400" cy="280" r="3"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="62" y="142">pilote de</text>
+        <text x="62" y="158">grille</text>
+        <text x="66" y="60">+V_GG</text>
+        <text x="2" y="192">-V_GG</text>
+        <text x="200" y="116" font-size="11">R_G,on</text>
+        <text x="200" y="196" font-size="11">R_G,off</text>
+        <text x="266" y="104">i_G</text>
+        <text x="262" y="232">v_GS</text>
+        <text x="296" y="80">C_GD</text>
+        <text x="368" y="230">C_GS</text>
+        <text x="478" y="136">C_DS</text>
+        <text x="410" y="36">D</text>
+        <text x="410" y="334">S puissance</text>
+        <text x="362" y="146">G</text>
+        <text x="96" y="298" font-size="11">source de Kelvin : retour du courant de grille</text>
+        <text x="528" y="190">v_DS</text>
+        <text x="560" y="80">C_iss = C_GS + C_GD</text>
+        <text x="560" y="104">C_rss = C_GD</text>
+        <text x="560" y="128">C_oss = C_DS + C_GD</text>
+        <text x="560" y="160">tirets : capacités</text>
+        <text x="560" y="176">internes, non câblées</text>
+      </g>
+    </svg>
+    <figcaption>
+      Commande de grille. Les capacités en tirets sont internes au composant ; elles ne sont pas câblées, mais elles fixent tout le comportement
+      dynamique. Les deux résistances séparées permettent de régler indépendamment la vitesse de mise en conduction et celle du blocage. La source
+      de Kelvin évite que la chute $L\,\mathrm{d}i/\mathrm{d}t$ dans la connexion de source, parcourue par le courant de puissance, ne s'ajoute à la
+      tension de commande. $v_{GS}$ est fléchée de la source vers la grille, $v_{DS}$ de la source vers le drain ; la source est la référence.
+    </figcaption>
+  </figure>
+  <p>
+    Le catalogue résume le comportement de la grille par la courbe de charge, relevée en injectant un courant constant dans la grille d'un
+    composant qui commute une charge inductive. Le schéma suivant la trace pour le MOSFET $100\ \mathrm{V}$ du hacheur de l'exemple : en abscisse,
+    la charge apportée à la grille ; en ordonnée, $v_{GS}$ en trait plein épais et $v_{DS}$, à une autre échelle, en tirets.
+  </p>
+  <figure id="e-qg-figure">
+    <svg viewBox="0 0 760 360" role="img" aria-label="Courbe de charge de grille : tension grille-source et tension drain-source en fonction de la charge injectée, avec le plateau Miller">
+      <defs><marker id="fl-e-qg" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4">
+        <path d="M80 300H716" marker-end="url(#fl-e-qg)"/>
+        <path d="M80 300V36" marker-end="url(#fl-e-qg)"/>
+        <path d="M680 300V36" stroke-width="1"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1" stroke-dasharray="2 4" opacity="0.7">
+        <path d="M80 240H215V300"/>
+        <path d="M80 210H282.5V300"/>
+        <path d="M432.5 210V300"/>
+        <path d="M80 60H680"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3">
+        <path d="M80 300L215 240L282.5 210H432.5L680 60"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" stroke-dasharray="7 5">
+        <path d="M80 100H282.5L432.5 300H680"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.4">
+        <path d="M84 326H278" marker-end="url(#fl-e-qg)" marker-start="url(#fl-e-qg)"/>
+        <path d="M287 326H428" marker-end="url(#fl-e-qg)" marker-start="url(#fl-e-qg)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="40" y="244">3 V</text>
+        <text x="32" y="214">4,5 V</text>
+        <text x="40" y="64">12 V</text>
+        <text x="46" y="32">v_GS</text>
+        <text x="690" y="104">40 V</text>
+        <text x="686" y="32">v_DS</text>
+        <text x="688" y="290">Q_G (nC)</text>
+        <text x="72" y="318">0</text>
+        <text x="200" y="318">9</text>
+        <text x="266" y="318">13,5</text>
+        <text x="416" y="318">23,5</text>
+        <text x="672" y="318">40</text>
+        <text x="140" y="344">Q_GS = 13,5 nC</text>
+        <text x="316" y="344">Q_GD = 10 nC</text>
+        <text x="94" y="232">V_th</text>
+        <text x="446" y="240">plateau Miller, de 13,5 à 23,5 nC :</text>
+        <text x="446" y="256">v_GS = V_pl et v_DS chute</text>
+        <text x="96" y="92">v_DS = V_DC tant que i_D monte</text>
+        <text x="560" y="180">pente plus douce :</text>
+        <text x="540" y="196">C_GD grande à v_DS faible</text>
+        <text x="222" y="270">i_D monte</text>
+        <text x="222" y="284">de 0 à I_L</text>
+      </g>
+    </svg>
+    <figcaption>
+      Courbe de charge de grille. De $0$ à $V_{th}$, la grille se charge sans effet sur la puissance. De $V_{th}$ à $V_{pl}$, le courant monte de $0$
+      à $I_L$ sous pleine tension. Sur le plateau Miller, tout le courant de grille sert à décharger $C_{GD}$ : $v_{GS}$ reste constante et $v_{DS}$
+      chute. Au-delà, la grille finit de se charger jusqu'à $V_{GG+}$, pour réduire $R_{DS(on)}$. $Q_G$, lu à $12\ \mathrm{V}$, sert au calcul de la
+      puissance de commande.
+    </figcaption>
+  </figure>
+  <p>
+    Les durées s'en déduisent avec le modèle simplifié suivant : pilote idéal derrière $R_G$, capacité d'entrée $C_{iss}$ constante hors plateau,
+    courant de drain lié à la tension de grille en zone active par $i_D = k(v_{GS} - V_{th})^2$, ce qui donne le plateau $V_{pl} = V_{th} +
+    \sqrt{I_L/k}$. Hors plateau, la grille se charge comme un circuit RC de constante $\tau = R_GC_{iss}$ ; sur le plateau, $v_{GS}$ est constante,
+    donc le courant de grille l'est aussi et décharge $C_{GD}$ à vitesse constante :
+  </p>
+  <div class="formule-cle">
+    $$t_{d(on)} = \tau\ln\frac{V_{GG+} - V_{GG-}}{V_{GG+} - V_{th}}, \qquad t_{ri} = \tau\ln\frac{V_{GG+} - V_{th}}{V_{GG+} - V_{pl}}, \qquad t_{fv} = \frac{Q_{GD}}{I_{G,on}}, \quad I_{G,on} = \frac{V_{GG+} - V_{pl}}{R_G}$$
+    $$t_{rv} = \frac{Q_{GD}}{I_{G,off}}, \quad I_{G,off} = \frac{V_{pl} - V_{GG-}}{R_G}, \qquad t_{fi} = \tau\ln\frac{V_{pl} - V_{GG-}}{V_{th} - V_{GG-}}, \qquad \frac{\mathrm{d}v_{DS}}{\mathrm{d}t} = \frac{I_G}{C_{GD}}$$
+    <p class="formule-cle-legende">
+      Durées en secondes, $R_G$ en ohms, $C_{iss}$ en farads, tensions en volts, $Q_{GD}$ en coulombs. La dernière relation vient de
+      $i_G = C_{GD}\,\mathrm{d}(v_{DS} - v_{GS})/\mathrm{d}t$ avec $v_{GS}$ constante sur le plateau. Vérification : $\mathrm{C}/\mathrm{A} =
+      \mathrm{s}$ et $\mathrm{A}/\mathrm{F} = \mathrm{V/s}$. Approximations : $C_{GD}$ remplacée par une charge équivalente $Q_{GD}$, inductances
+      parasites négligées ; pour un IGBT, la montée et la chute du courant sont en outre limitées par la physique bipolaire interne.
+    </p>
+  </div>
+  <p>
+    Interprétation : la mise en conduction est d'autant plus rapide que le plateau est loin de $V_{GG+}$, le blocage d'autant plus rapide que le
+    plateau est loin de $V_{GG-}$. C'est une raison de bloquer sous tension négative. Cas limites : $R_G \to 0$ donnerait des durées nulles, mais la
+    résistance interne de grille, de l'ordre de l'ohm, et l'inductance du boîtier bornent la vitesse ; $R_G$ très grande allonge toutes les durées
+    et fait exploser les pertes de commutation.
+  </p>
+  <p>
+    La puissance de commande n'est pas nulle, même si le courant de grille statique l'est. À chaque période, le pilote apporte la charge $Q_G$
+    sous l'excursion $\Delta V_G = V_{GG+} - V_{GG-}$, puis la retire : l'énergie $Q_G\Delta V_G$ est prise à l'alimentation du pilote et
+    dissipée dans les résistances de grille et dans le pilote, quelle que soit la valeur de $R_G$.
+  </p>
+  <div class="formule-cle">
+    $$P_G = Q_G\,(V_{GG+} - V_{GG-})\,f$$
+    <p class="formule-cle-legende">
+      $Q_G$ en coulombs, tensions en volts, $f$ en hertz, $P_G$ en watts. Hypothèse : $Q_G$ lu sur la courbe de charge pour l'excursion réelle,
+      négative comprise. Cas limite : à $f = 0$, aucune puissance. Exemple : $40\ \mathrm{nC}$, $12\ \mathrm{V}$, $100\ \mathrm{kHz}$ donnent
+      $48\ \mathrm{mW}$ ; un module IGBT de $3\ \mathrm{\mu C}$ sous $23\ \mathrm{V}$ à $4\ \mathrm{kHz}$ demande $0{,}28\ \mathrm{W}$ par interrupteur.
+    </p>
+  </div>
+  <p>
+    La capacité de Miller crée aussi un risque. Dans un bras de pont, quand l'interrupteur du haut se ferme, la tension aux bornes de celui du bas,
+    bloqué, monte avec une pente $\mathrm{d}v/\mathrm{d}t$. Le courant $C_{GD}\,\mathrm{d}v/\mathrm{d}t$ traverse sa résistance de grille de blocage
+    et soulève sa tension de grille de $R_{G,off}C_{GD}\,\mathrm{d}v/\mathrm{d}t$. Avec $C_{GD} = 30\ \mathrm{pF}$, $40\ \mathrm{kV/\mu s}$ et
+    $4\ \Omega$, cela fait $1{,}2\ \mathrm{A}$ et $4{,}8\ \mathrm{V}$, au-dessus d'un seuil de $3\ \mathrm{V}$ : l'interrupteur bloqué conduit
+    brièvement et court-circuite le bus à travers le bras. Les remèdes sont une tension de blocage négative, une résistance de blocage plus
+    faible, ou un transistor auxiliaire qui court-circuite la grille à la source pendant le blocage, appelé pince de Miller. Pour la même raison,
+    la commande d'un bras impose un temps mort, de quelques centaines de nanosecondes pour un IGBT, pendant lequel les deux interrupteurs sont
+    bloqués : il couvre la dispersion des retards et des durées de blocage.
+  </p>
+
+  <h3 id="e-commutation">Énergies de commutation sur charge inductive</h3>
+  <p>
+    Avec les séquences imposées par la cellule de commutation et des rampes linéaires, l'énergie se calcule par l'intégrale de $v\,i$. Pendant la
+    montée du courant, $v = V_{DC}$ et $i = I_L\,t/t_{ri}$ : $\int_0^{t_{ri}} V_{DC}I_L\frac{t}{t_{ri}}\,\mathrm{d}t = \frac{1}{2}V_{DC}I_Lt_{ri}$.
+    Pendant la chute de tension, $i = I_L$ et la tension décroît linéairement : même résultat avec $t_{fv}$. Le blocage se traite de la même façon.
+    Trois termes s'ajoutent en pratique : la recharge inverse de la diode de roue libre, dont le courant de pointe traverse l'interrupteur qui se
+    ferme alors que la tension est encore entière ; l'énergie de la capacité de sortie $C_{oss}$, chargée sous $V_{DC}$ et vidée dans le canal à
+    chaque mise en conduction d'un MOSFET ; le courant de queue d'un IGBT au blocage.
+  </p>
+  <div class="formule-cle">
+    $$E_{on} \approx \frac{1}{2}V_{DC}I_L\,(t_{ri} + t_{fv}) + V_{DC}Q_{rr} + E_{oss}, \qquad E_{off} \approx \frac{1}{2}V_{DC}I_L\,(t_{rv} + t_{fi}) + V_{DC}\,k_qI_L\,\tau_q$$
+    $$P_{com} = f\,(E_{on} + E_{off}), \qquad E_{oss} = \frac{1}{2}C_{oss,er}V_{DC}^2, \qquad \Delta V = L_\sigma\frac{\mathrm{d}i}{\mathrm{d}t}$$
+    <p class="formule-cle-legende">
+      Énergies en joules, $Q_{rr}$ charge de recouvrement de la diode en coulombs, $k_q$ fraction du courant qui subsiste en queue et $\tau_q$ sa
+      constante de décroissance, $C_{oss,er}$ capacité équivalente en énergie donnée par le catalogue, $L_\sigma$ inductance parasite de la maille
+      de commutation en henrys. Vérification : $\mathrm{V \cdot A \cdot s} = \mathrm{J}$ et $\mathrm{V \cdot C} = \mathrm{J}$. Approximations : rampes
+      linéaires, terme $V_{DC}Q_{rr}$ majorant, queue exponentielle. Cas limites : des durées nulles rendraient l'interrupteur idéal ; à courant
+      nul, $E_{oss}$ subsiste pour un MOSFET, si bien que les pertes de commutation ne disparaissent pas à vide.
+    </p>
+  </div>
+  <p>
+    L'inductance parasite $L_\sigma$, quelques dizaines de nanohenrys pour un module et ses barres, a deux effets opposés : elle réduit la tension
+    pendant la montée du courant, donc $E_{on}$, mais elle crée au blocage une surtension $L_\sigma\,\mathrm{d}i/\mathrm{d}t$ qui s'ajoute à
+    $V_{DC}$. C'est elle qui limite la vitesse utilisable : un composant rapide dans un câblage long sort de son aire de sécurité.
+  </p>
+  <p>
+    La simulation suivante calcule les deux commutations avec ce modèle, pour trois composants : le MOSFET Si $100\ \mathrm{V}$ du hacheur, sous
+    $40\ \mathrm{V}$ et $8\ \mathrm{A}$ ; un MOSFET SiC $1200\ \mathrm{V}$ et un IGBT $1200\ \mathrm{V}$, sous $540\ \mathrm{V}$ et $50\ \mathrm{A}$.
+    Prédisez avant de manipuler. Pour l'IGBT, $E_{off}$ est-elle plus grande ou plus petite que $E_{on}$, et quelle partie du chronogramme pèse le
+    plus ? Si vous doublez $R_G$, les énergies doublent-elles ? Que devient la tension au blocage du MOSFET SiC si l'on ajoute $50\ \mathrm{nH}$
+    de câblage ? Choisissez le composant, réglez les paramètres, puis parcourez les deux commutations avec la poignée ronde ou la lecture.
+  </p>
+  <figure id="e-chrono-figure">
+    <div class="schema-vivant" id="e-chrono"></div>
+    <div id="e-chrono-curseurs"></div>
+    <div id="e-chrono-lecteur"></div>
+    <div id="e-chrono-valeurs"></div>
+    <figcaption>
+      Chronogrammes de commutation. Panneau de gauche : mise en conduction ; panneau de droite : blocage, chacun avec sa propre échelle de temps
+      indiquée sous l'axe. Rangée du haut : $v_{GS}$, entre $V_{GG-}$ et $V_{GG+}$. Rangée du milieu : $v_{DS}$ en trait plein épais, rapportée à
+      $V_{DC}$, et $i_D$ en tirets, rapporté à $I_L$. Rangée du bas : puissance instantanée $p = v_{DS}\,i_D$, dont la surface grisée est l'énergie
+      dissipée. Le trait vertical fin suit la poignée ronde, qui se déplace sur l'axe placé sous les panneaux.
+    </figcaption>
+  </figure>
+  <p>
+    Interprétation. Pour l'IGBT sous $540\ \mathrm{V}$ et $50\ \mathrm{A}$ avec $4\ \Omega$, le modèle donne $E_{on} = 4{,}61\ \mathrm{mJ}$ et
+    $E_{off} = 3{,}08\ \mathrm{mJ}$. La mise en conduction coûte le plus, à cause de la longue chute de tension sur le plateau, $193\ \mathrm{ns}$, et
+    de la recharge inverse de la diode, qui ajoute un pic de courant de $39\ \mathrm{A}$ sous pleine tension. Au blocage, le courant de queue, $20\
+    \%$ du courant pendant quelques centaines de nanosecondes, coûte à lui seul $1{,}07\ \mathrm{mJ}$, plus du tiers de $E_{off}$. Doubler $R_G$ de
+    $4$ à $8\ \Omega$ porte $E_{on}$ à $7{,}23\ \mathrm{mJ}$ et $E_{off}$ à $4{,}11\ \mathrm{mJ}$ : la hausse est forte mais pas proportionnelle, car
+    les intervalles bornés par la physique interne et la queue ne dépendent pas de $R_G$ ; en échange, le $\mathrm{d}v/\mathrm{d}t$ au blocage
+    passe de $7{,}1$ à $3{,}5\ \mathrm{kV/\mu s}$. Pour le MOSFET SiC, les énergies tombent à $0{,}68$ et $0{,}32\ \mathrm{mJ}$, sept fois moins
+    au total, avec des pentes de $33$ à $40\ \mathrm{kV/\mu s}$ ; $50\ \mathrm{nH}$ de câblage ajoutent alors $250\ \mathrm{V}$ au blocage, la moitié
+    de $V_{DC}$, contre $33\ \mathrm{V}$ pour l'IGBT. Pour le MOSFET Si du hacheur, $E_{on} = 1{,}87\ \mathrm{\mu J}$, dont $0{,}37\ \mathrm{\mu J}$
+    de $C_{oss}$, et $E_{off} = 2{,}75\ \mathrm{\mu J}$, soit $0{,}46\ \mathrm{W}$ à $100\ \mathrm{kHz}$. Le modèle est volontairement simple ; il
+    reproduit l'ordre de grandeur des catalogues, à $10$ ou $20\ \%$ près, et surtout leurs tendances.
+  </p>
+
+  <h3 id="e-methodes">Quatre méthodes pour chiffrer les pertes de commutation</h3>
+  <ul>
+    <li><strong>Modèle linéaire à partir des charges de grille</strong>, celui de la simulation : il explique l'influence de $R_G$, des tensions du pilote et de $Q_{GD}$, et suffit pour un premier choix de MOSFET. Il est optimiste, car il néglige les inductances, la non-linéarité de $C_{GD}$ et la recharge de la diode réelle. À préférer en avant-projet et pour comprendre.</li>
+    <li><strong>Énergies du catalogue mises à l'échelle</strong> : le fabricant donne $E_{on}$, $E_{off}$ et $E_{rec}$ mesurées à $V_{ref}$, $I_{ref}$, $T_j$ et $R_G$ donnés ; on applique $E \approx E_{ref}\,(V_{DC}/V_{ref})(I/I_{ref})$, avec un exposant de $1{,}2$ à $1{,}4$ sur la tension pour certains IGBT. Méthode standard pour les modules IGBT et SiC, à condition de rester proche des conditions de mesure, $R_G$ compris.</li>
+    <li><strong>Simulation avec le modèle SPICE du fabricant</strong> : elle prend en compte les inductances du câblage réel et la diode associée. À préférer quand la disposition est figée et que les surtensions comptent autant que les pertes.</li>
+    <li><strong>Essai à double impulsion</strong> : deux impulsions de commande sur une charge inductive, mesure de $v$ et $i$ à l'oscilloscope et intégration. C'est la référence, indispensable pour valider un prototype, mais elle demande une sonde de courant rapide et un réglage soigné des délais entre voies.</li>
+  </ul>
+
+  <h3 id="e-thermique">Température de jonction</h3>
+  <p>
+    Les pertes totales $P = P_{cond} + P_{com}$ traversent une chaîne de résistances thermiques jusqu'au dissipateur ou à l'air ambiant :
+    $T_j = T_{ref} + R_{th}\,P$, avec $R_{th}$ en $\mathrm{K/W}$. Pour un MOSFET, $R_{DS(on)}$ dépend de $T_j$ : on suppose une température, on
+    calcule les pertes, on recalcule $T_j$ et on itère. La boucle converge si $a\,P_{cond}\,R_{th} &lt; 1$ ; dans le cas contraire, la
+    température s'emballe. Le cours Thermique des composants de puissance détaillera les régimes transitoires et les impédances thermiques.
+  </p>
+
+  <h3 id="e-statut">Loi, convention, approximation, règle de conception et donnée du constructeur</h3>
+  <ul>
+    <li><strong>Lois physiques :</strong> la formation du canal par effet de champ ; la modulation de conductivité par injection de porteurs minoritaires ; l'équation de Poisson qui lie tenue, épaisseur et dopage ; $i = C\,\mathrm{d}v/\mathrm{d}t$ sur la capacité de Miller ; $v = L\,\mathrm{d}i/\mathrm{d}t$ sur l'inductance parasite ; les lois de Kirchhoff qui imposent la séquence de la commutation dure.</li>
+    <li><strong>Conventions :</strong> la convention récepteur pour l'interrupteur ; la source ou l'émetteur comme référence des tensions de commande ; les définitions des durées $t_{ri}$, $t_{fv}$, $t_{rv}$, $t_{fi}$ et des énergies $E_{on}$, $E_{off}$, dont les bornes d'intégration varient selon les fabricants, par exemple de $10\ \%$ à $2\ \%$ des grandeurs.</li>
+    <li><strong>Approximations :</strong> les modèles $R_{DS(on)}$ et $V_{CE0} + r_{CE}i$ ; la loi quadratique en zone active ; les rampes linéaires ; la mise à l'échelle linéaire des énergies ; le courant de charge constant pendant une commutation.</li>
+    <li><strong>Règles de conception :</strong> tenue en tension de l'ordre du double de $V_{DC}$, par exemple $1200\ \mathrm{V}$ pour un bus de $540$ à $700\ \mathrm{V}$ et $100\ \mathrm{V}$ pour un bus de $50\ \mathrm{V}$ ; blocage sous tension négative pour les IGBT et les SiC ; temps mort ; $T_j$ de conception inférieure de $25$ à $50\ \mathrm{K}$ à la limite du catalogue ; maille de commutation la plus courte possible.</li>
+    <li><strong>Données du constructeur :</strong> $R_{DS(on)}$ et sa variation en température, $V_{CE(sat)}$, $V_{th}$, $Q_G$, $Q_{GD}$, $C_{iss}$, $C_{oss}$, $C_{rss}$, $E_{on}$, $E_{off}$, $E_{rec}$, $Q_{rr}$, aire de sécurité, tenue au court-circuit et résistances thermiques. Les valeurs de cette séance sont des ordres de grandeur supposés ; seule la fiche du composant retenu fait foi.</li>
+  </ul>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, le chronogramme de commutation avec ses pertes, puis le diagramme des domaines
+    d'emploi, l'organigramme de choix et de calcul et le tableau comparatif. Les autres schémas sont restés au contact du passage qu'ils
+    illustrent ; la liste de renvois figure à la fin de la section.
+  </p>
+  <p>
+    Le schéma principal se lit de gauche à droite : mise en conduction à gauche, blocage à droite, avec les mêmes rangées que dans la simulation.
+    En haut, la tension de commande, entre $V_{GG-}$ et $V_{GG+}$, avec les deux plateaux Miller. Au milieu, $v_{DS}$ en trait plein épais et $i_D$
+    en tirets, chacun rapporté à sa valeur de régime, $V_{DC}$ et $I_L$ ; le prolongement en pointillés du courant au blocage est le courant de
+    queue, propre à l'IGBT ; la bosse du courant à la mise en conduction est la recharge inverse de la diode. En bas, la puissance dissipée, dont
+    les surfaces grisées sont $E_{on}$ et $E_{off}$. Les durées sont repérées entre les traits verticaux fins ; les échelles de temps ne sont pas
+    respectées, pour que chaque intervalle reste lisible.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 760 540" role="img" aria-label="Schéma principal : chronogramme de mise en conduction et de blocage avec tension de grille, tension, courant, puissance et énergies dissipées">
+      <defs><marker id="fl-f-pr" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="currentColor" stroke="none" opacity="0.16">
+        <path d="M150 360L180 290L195 282L210 290L260 360Z"/>
+        <path d="M470 360L530 290L560 300L560 340C600 352 640 357 700 360Z"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.2">
+        <path d="M70 110H380M410 110H730"/>
+        <path d="M70 250H380M410 250H730"/>
+        <path d="M70 360H380M410 360H730"/>
+        <path d="M70 420H380" marker-end="url(#fl-f-pr)"/>
+        <path d="M410 420H730" marker-end="url(#fl-f-pr)"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1" stroke-dasharray="2 4" opacity="0.75">
+        <path d="M100 30V420M150 30V420M180 30V420M210 30V420M260 30V420"/>
+        <path d="M440 30V420M470 30V420M530 30V420M560 30V420"/>
+        <path d="M70 88H380M410 88H730"/>
+        <path d="M70 78H380M410 78H730"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4">
+        <path d="M70 110H100C115 98 135 91 150 88L180 78H260C290 56 330 46 380 43"/>
+        <path d="M410 43H440C450 60 462 72 470 78H530L560 88C580 104 620 109 730 110"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3">
+        <path d="M70 165H180L260 250H380"/>
+        <path d="M410 250H470L530 165"/>
+        <path d="M530 165L536 150L546 160L560 165H730"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" stroke-dasharray="7 5">
+        <path d="M70 250H150L180 185L195 170L210 185H380"/>
+        <path d="M410 185H530L560 236"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" stroke-dasharray="2 4">
+        <path d="M560 236C600 246 640 249 700 250"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+        <path d="M70 360H150L180 290L195 282L210 290L260 360H380"/>
+        <path d="M410 360H470L530 290L560 300L560 340C600 352 640 357 700 360H730"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="70" y="22">mise en conduction</text>
+        <text x="410" y="22">blocage</text>
+        <text x="16" y="48">V_GG+</text>
+        <text x="16" y="114">V_GG-</text>
+        <text x="16" y="82" font-size="11">V_pl</text>
+        <text x="16" y="96" font-size="11">V_th</text>
+        <text x="200" y="72" font-size="11">plateau</text>
+        <text x="476" y="72" font-size="11">plateau</text>
+        <text x="16" y="170">V_DC</text>
+        <text x="16" y="190">I_L</text>
+        <text x="16" y="254">0</text>
+        <text x="270" y="210">v_DS</text>
+        <text x="300" y="180">i_D</text>
+        <text x="600" y="180">v_DS</text>
+        <text x="430" y="178">i_D</text>
+        <text x="540" y="144" font-size="11">surtension L_σ di/dt</text>
+        <text x="600" y="232" font-size="11">queue (IGBT)</text>
+        <text x="190" y="162" font-size="11">de la diode</text>
+        <text x="190" y="150" font-size="11">recharge</text>
+        <text x="16" y="300">p</text>
+        <text x="196" y="340">E_on</text>
+        <text x="590" y="336">E_off</text>
+        <text x="372" y="440">t</text>
+        <text x="722" y="440">t</text>
+        <text x="80" y="440" font-size="11">commande</text>
+        <text x="420" y="440" font-size="11">commande</text>
+        <text x="106" y="458" font-size="11">t_d(on)</text>
+        <text x="150" y="476" font-size="11">t_ri</text>
+        <text x="216" y="458" font-size="11">t_fv</text>
+        <text x="440" y="458" font-size="11">t_d(off)</text>
+        <text x="486" y="476" font-size="11">t_rv</text>
+        <text x="548" y="458" font-size="11">t_fi</text>
+        <text x="70" y="510">Montée du courant sous pleine tension, puis chute de la tension à plein courant.</text>
+        <text x="70" y="528">Au blocage, l'ordre s'inverse : la tension remonte d'abord, le courant chute ensuite.</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal. Les surfaces grisées sous la courbe de puissance sont les énergies dissipées : à la mise en conduction, un triangle prolongé
+      par la bosse de recharge de la diode ; au blocage, un triangle suivi d'une longue traîne pour l'IGBT, absente pour un MOSFET. Les plateaux de
+      $v_{GS}$ coïncident exactement avec les variations de $v_{DS}$ : c'est la capacité de Miller qui impose la vitesse de la tension.
+    </figcaption>
+  </figure>
+  <p>
+    Le diagramme suivant situe les familles d'interrupteurs dans le plan tension de blocage, fréquence de découpage. Les deux axes sont
+    logarithmiques ; chaque zone en tirets ou en trait plein est un domaine d'emploi courant, pas une limite physique, et les frontières se
+    déplacent avec chaque génération de composants. Les deux points marquent les convertisseurs du projet fil rouge.
+  </p>
+  <figure id="f-domaines-figure">
+    <svg viewBox="0 0 760 400" role="img" aria-label="Domaines d'emploi des interrupteurs de puissance en fonction de la tension de blocage et de la fréquence de découpage">
+      <defs><marker id="fl-f-do" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.4">
+        <path d="M80 340H724" marker-end="url(#fl-f-do)"/>
+        <path d="M80 340V22" marker-end="url(#fl-f-do)"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="2 4" opacity="0.5">
+        <path d="M235 40V340M390 40V340M545 40V340M700 40V340"/>
+        <path d="M80 240H700M80 140H700M80 40H700"/>
+      </g>
+      <g fill="currentColor" stroke="none" opacity="0.08">
+        <rect x="80" y="40" width="155" height="100"/>
+        <rect x="235" y="59" width="263" height="103"/>
+        <rect x="390" y="88" width="202" height="71"/>
+        <rect x="343" y="145" width="357" height="165"/>
+        <rect x="545" y="159" width="155" height="91"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.8">
+        <rect x="80" y="40" width="155" height="100" rx="6"/>
+        <rect x="235" y="59" width="263" height="103" rx="8"/>
+        <rect x="343" y="145" width="357" height="165" rx="8"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.8" stroke-dasharray="7 5">
+        <rect x="390" y="88" width="202" height="71" rx="8"/>
+        <rect x="545" y="159" width="155" height="91" rx="8"/>
+      </g>
+      <g fill="currentColor" stroke="currentColor">
+        <circle cx="328" cy="132" r="5"/>
+        <circle cx="545" cy="240" r="5"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="92" y="62">thyristor</text>
+        <text x="250" y="80">IGBT</text>
+        <text x="404" y="110">MOSFET SiC</text>
+        <text x="356" y="300">MOSFET Si</text>
+        <text x="600" y="182">GaN</text>
+        <text x="240" y="106" font-size="11">onduleur pompe</text>
+        <text x="240" y="120" font-size="11">4 kHz, 1200 V</text>
+        <text x="420" y="236" font-size="11">hacheur chargeur</text>
+        <text x="420" y="252" font-size="11">100 kHz, 100 V</text>
+        <text x="64" y="360">100 Hz</text>
+        <text x="218" y="360">1 kHz</text>
+        <text x="368" y="360">10 kHz</text>
+        <text x="520" y="360">100 kHz</text>
+        <text x="680" y="360">1 MHz</text>
+        <text x="40" y="344">10 V</text>
+        <text x="32" y="244">100 V</text>
+        <text x="26" y="144">1 kV</text>
+        <text x="20" y="44">10 kV</text>
+        <text x="420" y="386">fréquence de découpage (échelle logarithmique)</text>
+        <text x="92" y="30">tension de blocage</text>
+      </g>
+    </svg>
+    <figcaption>
+      Domaines d'emploi indicatifs. Trait plein : technologies au silicium, thyristor, IGBT et MOSFET Si. Tirets : semi-conducteurs à grand gap,
+      MOSFET SiC et transistors GaN. Plus la tension est haute, plus la fréquence praticable baisse, parce que les pertes de commutation croissent
+      avec $V_{DC}$ et que les composants de haute tension sont plus lents ; les matériaux à grand gap repoussent cette frontière vers la droite.
+    </figcaption>
+  </figure>
+  <p>
+    L'organigramme suivant résume la démarche de choix et de calcul. Il se lit de haut en bas ; les losanges sont des tests, les rectangles des
+    calculs ou des décisions, et les deux boucles ramènent au choix du composant ou de la fréquence quand un critère n'est pas tenu.
+  </p>
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Données : V_DC, courant, f, refroidissement"] --> B["Tenue : environ 2 V_DC"]
+  B --> C{"Classe de tension ?"}
+  C -->|"jusqu'à 200 V"| D["MOSFET Si"]
+  C -->|"600 à 1700 V"| E{"f ou rendement prioritaires ?"}
+  E -->|"non"| F["IGBT et diode"]
+  E -->|"oui"| G["MOSFET SiC"]
+  D --> H["Pertes de conduction à T_j"]
+  F --> H
+  G --> H
+  H --> I["Pertes de commutation : f (E_on + E_off)"]
+  I --> J["T_j = T_ref + R_th P, itérer"]
+  J --> K{"T_j acceptable ?"}
+  K -->|"non"| L["Réduire f, changer de calibre, mieux refroidir"]
+  L --> H
+  K -->|"oui"| M{"Surtension et dv/dt acceptables ?"}
+  M -->|"non"| N["Augmenter R_G, réduire la maille, filtrer"]
+  N --> I
+  M -->|"oui"| O["Commande : V_GG+, V_GG-, R_G, P_G, temps mort"]</pre>
+    <figcaption>
+      Organigramme de choix et de calcul. La tension fixe la famille, la fréquence et le rendement départagent l'IGBT et le MOSFET SiC ; la première
+      boucle vérifie la température, la seconde les contraintes de commutation, que le gain de vitesse ne doit pas rendre inacceptables.
+    </figcaption>
+  </figure>
+  <p>
+    Le tableau compare les trois technologies pour des composants représentatifs de cette séance ; les valeurs sont des ordres de grandeur
+    supposés, à remplacer par les fiches des composants réels.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <thead>
+        <tr><th>Critère</th><th>MOSFET Si</th><th>MOSFET SiC</th><th>IGBT Si</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Tenues courantes</td><td>$20$ à $900\ \mathrm{V}$</td><td>$650$ à $3300\ \mathrm{V}$</td><td>$600$ à $6500\ \mathrm{V}$</td></tr>
+        <tr><td>Conduction</td><td>$R_{DS(on)}$, quelques $\mathrm{m\Omega}$ en $100\ \mathrm{V}$</td><td>$R_{DS(on)}$, $20\ \mathrm{m\Omega}$ en $1200\ \mathrm{V}$ et $100\ \mathrm{A}$</td><td>$V_{CE0} \approx 0{,}85\ \mathrm{V}$ et $r_{CE} \approx 11\ \mathrm{m\Omega}$ en $1200\ \mathrm{V}$ et $100\ \mathrm{A}$</td></tr>
+        <tr><td>Conduction inverse</td><td>canal ou diode interne, lente</td><td>canal ou diode interne, rapide mais à forte chute</td><td>impossible : diode antiparallèle</td></tr>
+        <tr><td>Commutation</td><td>quelques ns à quelques dizaines de ns</td><td>$10$ à $30\ \mathrm{ns}$, $20$ à $50\ \mathrm{kV/\mu s}$</td><td>$50$ à $300\ \mathrm{ns}$, queue de quelques centaines de ns</td></tr>
+        <tr><td>$E_{on} + E_{off}$ sous $540\ \mathrm{V}$, $50\ \mathrm{A}$</td><td>sans objet</td><td>environ $1\ \mathrm{mJ}$</td><td>environ $7\ \mathrm{mJ}$</td></tr>
+        <tr><td>Commande</td><td>$0$ et $10$ à $12\ \mathrm{V}$</td><td>$-4$ et $+18\ \mathrm{V}$ typiques, tolérance de grille étroite</td><td>$-8$ et $+15\ \mathrm{V}$ typiques</td></tr>
+        <tr><td>Coefficient de température de la chute</td><td>positif</td><td>positif</td><td>négatif à faible courant, positif au-delà</td></tr>
+        <tr><td>Usage préférable</td><td>alimentations, hacheurs basse tension, redressement synchrone</td><td>onduleurs rapides, chargeurs de véhicules, photovoltaïque, rendement maximal</td><td>variateurs industriels, traction, fortes puissances à fréquence modérée</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-canal-figure" data-renvoi="d-canal-figure">la formation du canal d'un MOSFET</a>, <a href="#d-structures-figure" data-renvoi="d-structures-figure">les structures comparées du MOSFET et de l'IGBT</a> et <a href="#d-cellule-figure" data-renvoi="d-cellule-figure">la cellule de commutation</a>, section D ;</li>
+    <li><a href="#e-carac-figure" data-renvoi="e-carac-figure">les caractéristiques à l'état passant</a>, <a href="#e-grille-figure" data-renvoi="e-grille-figure">la commande de grille et les capacités</a>, <a href="#e-qg-figure" data-renvoi="e-qg-figure">la courbe de charge de grille</a> et <a href="#e-chrono-figure" data-renvoi="e-chrono-figure">la simulation des chronogrammes de commutation</a>, section E ;</li>
+    <li><a href="#h-figure" data-renvoi="h-figure">le hacheur du chargeur</a>, section H ;</li>
+    <li><a href="#i-figure" data-renvoi="i-figure">la chaîne du variateur de la pompe</a> et <a href="#i-pertes-figure" data-renvoi="i-pertes-figure">la simulation des pertes en fonction de la fréquence</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour choisir un interrupteur commandé et chiffrer ses pertes :</p>
+  <ol>
+    <li>Rassembler les données : $V_{DC}$ et sa plage, forme et valeurs du courant dans l'interrupteur, fréquence de découpage, température de référence et refroidissement.</li>
+    <li>Fixer la tenue en tension, environ le double de $V_{DC}$ maximale, et en déduire la famille : MOSFET Si jusqu'à $200\ \mathrm{V}$ environ, IGBT ou MOSFET SiC au-delà.</li>
+    <li>Calculer les valeurs moyenne et efficace du courant dans le composant, sur la période complète.</li>
+    <li>Calculer les pertes de conduction à une température de jonction supposée : $R_{DS(on)}(T_j)\,I_{eff}^2$ ou $V_{CE0}I_{moy} + r_{CE}I_{eff}^2$, plus la diode associée.</li>
+    <li>Calculer les énergies de commutation : modèle linéaire à partir de $R_G$, $Q_{GD}$ et des seuils, ou énergies du catalogue mises à l'échelle de $V_{DC}$ et du courant commuté ; ajouter $E_{oss}$ et la recharge de la diode ; multiplier par $f$.</li>
+    <li>Calculer la température de jonction, comparer à l'hypothèse et itérer ; comparer à la limite de conception.</li>
+    <li>Vérifier les contraintes de commutation : surtension $L_\sigma\,\mathrm{d}i/\mathrm{d}t$ contre la tenue, $\mathrm{d}v/\mathrm{d}t$ contre la conduction parasite, l'isolation et la compatibilité électromagnétique.</li>
+    <li>Dimensionner la commande : $V_{GG+}$, $V_{GG-}$, $R_G$, puissance $Q_G\Delta V_Gf$, temps mort, protections.</li>
+    <li>Contrôler : unités, ordre de grandeur du rendement, rapport entre pertes de commutation et de conduction, cohérence avec un composant de catalogue réel.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Le chargeur du bus $24\ \mathrm{V}$ secouru du projet fil rouge est un hacheur abaisseur qui délivre $27\ \mathrm{V}$ et $8\ \mathrm{A}$ à partir
+    du bus redressé dimensionné dans le cours <a href="#/cours/redresseurs-monophases">Redresseurs monophasés</a>, compris entre $31{,}5$ et
+    $49{,}8\ \mathrm{V}$. On choisit et on chiffre son interrupteur, puis on le compare à un IGBT. Le fonctionnement du hacheur lui-même sera
+    établi dans le cours Hacheurs DC-DC ; on admet ici que le rapport cyclique vaut $D = V_s/V_e$ et que le courant de l'inductance est lissé.
+  </p>
+  <figure id="h-figure">
+    <svg viewBox="0 0 760 340" role="img" aria-label="Hacheur abaisseur du chargeur : source, MOSFET, diode Schottky, inductance, condensateur et bus 27 V, avec conventions">
+      <defs><marker id="fl-h-bk" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">
+        <circle cx="80" cy="180" r="20"/>
+        <path d="M80 160V70H240"/>
+        <path d="M80 200V290H620"/>
+        <path d="M150 70V165M150 175V290"/>
+        <path d="M136 165H164M136 175H164" stroke-width="2.4"/>
+        <g transform="rotate(-90 280 92)">
+          <path d="M302 52V72H288"/>
+          <path d="M288 66v14M288 85v14M288 104v14"/>
+          <path d="M288 112H302V132"/>
+          <path d="M302 92V112"/>
+          <path d="M280 68V116"/>
+          <path d="M280 92H250"/>
+        </g>
+        <path d="M320 70H380"/>
+        <path d="M280 122V150"/>
+        <rect x="200" y="150" width="100" height="50" rx="6"/>
+        <path d="M300 165H340"/>
+        <path d="M340 290V200"/>
+        <path d="M328 200L340 180L352 200Z"/>
+        <path d="M328 180H352M328 180v-5M352 180v5"/>
+        <path d="M340 180V70"/>
+        <path d="M380 70a10 10 0 0 1 20 0a10 10 0 0 1 20 0a10 10 0 0 1 20 0a10 10 0 0 1 20 0"/>
+        <path d="M460 70H620V140"/>
+        <path d="M520 70V165M520 175V290"/>
+        <path d="M506 165H534M506 175H534" stroke-width="2.4"/>
+        <rect x="600" y="140" width="40" height="80" rx="4"/>
+        <path d="M620 220V290"/>
+        <path d="M420 290V302M406 302H434M411 308H429M416 314H424"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.6">
+        <path d="M302 92H290" transform="rotate(-90 280 92)" marker-end="url(#fl-h-bk)"/>
+        <path d="M176 58H214" marker-end="url(#fl-h-bk)"/>
+        <path d="M316 44H246" marker-end="url(#fl-h-bk)"/>
+        <path d="M362 276V222" marker-end="url(#fl-h-bk)"/>
+        <path d="M470 58H508" marker-end="url(#fl-h-bk)"/>
+        <path d="M40 270V92" marker-end="url(#fl-h-bk)"/>
+        <path d="M566 284V78" marker-end="url(#fl-h-bk)"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="340" cy="70" r="3.5"/>
+        <circle cx="340" cy="165" r="3.5"/>
+        <circle cx="520" cy="70" r="3.5"/>
+        <circle cx="520" cy="290" r="3.5"/>
+        <circle cx="150" cy="70" r="3.5"/>
+        <circle cx="150" cy="290" r="3.5"/>
+        <circle cx="340" cy="290" r="3.5"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="74" y="176">+</text>
+        <text x="8" y="186">V_e</text>
+        <text x="160" y="160">C_e</text>
+        <text x="182" y="50">i_T</text>
+        <text x="236" y="58" font-size="11">D</text>
+        <text x="316" y="58" font-size="11">S</text>
+        <text x="260" y="36">v_DS</text>
+        <text x="288" y="140" font-size="11">G</text>
+        <text x="214" y="172">pilote</text>
+        <text x="214" y="188">12 V</text>
+        <text x="208" y="222" font-size="11">référence au</text>
+        <text x="208" y="236" font-size="11">point milieu</text>
+        <text x="248" y="112">T</text>
+        <text x="366" y="214">D</text>
+        <text x="370" y="256">i_D</text>
+        <text x="414" y="54">L</text>
+        <text x="478" y="50">i_L</text>
+        <text x="538" y="160">C_s</text>
+        <text x="574" y="190">V_s</text>
+        <text x="652" y="170">bus 24 V</text>
+        <text x="652" y="186">secouru,</text>
+        <text x="652" y="202">27 V, 8 A</text>
+        <text x="360" y="332">masse, référence 0 V</text>
+      </g>
+    </svg>
+    <figcaption>
+      Hacheur abaisseur du chargeur. Le MOSFET T, dessiné horizontalement, a son drain côté source et sa source côté point milieu ; son pilote est
+      référencé au point milieu, qui saute entre $0$ et $V_e$ à chaque période, d'où une alimentation flottante ou par condensateur de bootstrap.
+      La diode Schottky D, cathode au point milieu, reprend le courant de l'inductance quand T est bloqué. Courants fléchés dans le sens de
+      conduction ; $v_{DS}$ en convention récepteur ; masse à la borne négative.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Données : $V_e = 40\ \mathrm{V}$ en fonctionnement normal, $V_s = 27\ \mathrm{V}$, $I_L = 8\ \mathrm{A}$ lissés, $f = 100\ \mathrm{kHz}$.
+    MOSFET Si $100\ \mathrm{V}$ supposé : $R_{DS(on)} = 8\ \mathrm{m\Omega}$ à $25\ ^\circ\mathrm{C}$, $a = 0{,}0067\ \mathrm{K^{-1}}$, soit
+    $12\ \mathrm{m\Omega}$ à $100\ ^\circ\mathrm{C}$ ; $C_{iss} = 3\ \mathrm{nF}$, $V_{th} = 3\ \mathrm{V}$, $V_{pl} = 4{,}5\ \mathrm{V}$ à $8\ \mathrm{A}$,
+    $Q_{GD} = 10\ \mathrm{nC}$ sous $40\ \mathrm{V}$, $Q_G = 40\ \mathrm{nC}$ à $12\ \mathrm{V}$, $C_{oss,er} = 460\ \mathrm{pF}$ ; résistance
+    thermique jusqu'à l'air $R_{th} = 40\ \mathrm{K/W}$ sur circuit imprimé, air à $55\ ^\circ\mathrm{C}$ dans l'armoire. Pilote $0$ et $12\ \mathrm{V}$,
+    $R_G = 5\ \Omega$ au total. Inductance parasite de la maille de commutation supposée de $10\ \mathrm{nH}$. IGBT de comparaison $600\ \mathrm{V}$,
+    $15\ \mathrm{A}$, supposé : $V_{CE0} = 0{,}9\ \mathrm{V}$, $r_{CE} = 30\ \mathrm{m\Omega}$ à chaud, $E_{on} + E_{off} = 0{,}30\ \mathrm{mJ}$ sous
+    $400\ \mathrm{V}$ et $15\ \mathrm{A}$. Inconnues : pertes de conduction et de commutation du MOSFET, température de jonction, puissance de
+    commande, surtension, puis pertes de l'IGBT. Stratégie : courants dans l'interrupteur, conduction à $100\ ^\circ\mathrm{C}$ supposés, durées par
+    le modèle de grille, énergies, température et itération, comparaison.
+  </p>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li>Rapport cyclique : $D = 27/40 = 0{,}675$. Courants dans T : $I_{moy} = DI_L = 5{,}40\ \mathrm{A}$, $I_{eff}^2 = DI_L^2 = 0{,}675 \times 64 = 43{,}2\ \mathrm{A^2}$, soit $I_{eff} = 6{,}57\ \mathrm{A}$, ondulation négligée.</li>
+    <li>Conduction à $100\ ^\circ\mathrm{C}$ : $P_{cond} = 0{,}012 \times 43{,}2 = 0{,}518\ \mathrm{W}$.</li>
+    <li>Constante de grille : $\tau = R_GC_{iss} = 5 \times 3 \times 10^{-9} = 15\ \mathrm{ns}$. Mise en conduction : $t_{ri} = 15\ln\frac{12 - 3}{12 - 4{,}5} = 15 \times 0{,}182 = 2{,}73\ \mathrm{ns}$ ; $I_{G,on} = (12 - 4{,}5)/5 = 1{,}5\ \mathrm{A}$, $t_{fv} = 10/1{,}5 = 6{,}67\ \mathrm{ns}$.</li>
+    <li>Blocage : $I_{G,off} = 4{,}5/5 = 0{,}9\ \mathrm{A}$, $t_{rv} = 10/0{,}9 = 11{,}1\ \mathrm{ns}$ ; $t_{fi} = 15\ln\frac{4{,}5}{3} = 15 \times 0{,}405 = 6{,}08\ \mathrm{ns}$.</li>
+    <li>Énergies : $E_{on} = \frac{1}{2} \times 40 \times 8 \times 9{,}40 \times 10^{-9} = 1{,}50\ \mathrm{\mu J}$ ; $E_{off} = \frac{1}{2} \times 40 \times 8 \times 17{,}19 \times 10^{-9} = 2{,}75\ \mathrm{\mu J}$ ; $E_{oss} = \frac{1}{2} \times 460 \times 10^{-12} \times 40^2 = 0{,}37\ \mathrm{\mu J}$. Total $4{,}62\ \mathrm{\mu J}$ ; la diode Schottky n'a pas de recharge inverse notable.</li>
+    <li>Commutation : $P_{com} = 10^5 \times 4{,}62 \times 10^{-6} = 0{,}462\ \mathrm{W}$. Pertes totales : $P = 0{,}518 + 0{,}462 = 0{,}980\ \mathrm{W}$.</li>
+    <li>Température : $T_j = 55 + 40 \times 0{,}980 = 94{,}2\ ^\circ\mathrm{C}$, sous les $100\ ^\circ\mathrm{C}$ supposés. Itération : $R_{DS(on)}(94{,}2) = 8 \times (1 + 0{,}0067 \times 69{,}2) = 11{,}7\ \mathrm{m\Omega}$, $P_{cond} = 0{,}506\ \mathrm{W}$, $T_j = 93{,}7\ ^\circ\mathrm{C}$ : la boucle converge immédiatement.</li>
+    <li>Commande : $P_G = 40 \times 10^{-9} \times 12 \times 10^5 = 48\ \mathrm{mW}$, prélevés sur l'alimentation du pilote.</li>
+    <li>Surtension au blocage : $\Delta V = L_\sigma I_L/t_{fi} = 10 \times 10^{-9} \times 8/(6{,}08 \times 10^{-9}) = 13{,}2\ \mathrm{V}$ ; tension crête $53{,}2\ \mathrm{V}$ en marche normale et $63{,}0\ \mathrm{V}$ sous $49{,}8\ \mathrm{V}$ d'entrée, à comparer aux $100\ \mathrm{V}$ de tenue.</li>
+    <li>IGBT de comparaison : $P_{cond} = 0{,}9 \times 5{,}40 + 0{,}030 \times 43{,}2 = 4{,}86 + 1{,}30 = 6{,}16\ \mathrm{W}$ ; $P_{com} = 10^5 \times 0{,}30 \times 10^{-3} \times \frac{40}{400} \times \frac{8}{15} = 1{,}60\ \mathrm{W}$ ; total $7{,}76\ \mathrm{W}$, soit $7{,}9$ fois plus que le MOSFET.</li>
+  </ol>
+
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li>Unités : $\Omega \cdot \mathrm{A^2}$, $\mathrm{V \cdot A \cdot s}$ et $\mathrm{Hz \cdot J}$ donnent bien des watts.</li>
+    <li>Rendement : $0{,}98\ \mathrm{W}$ pour $216\ \mathrm{W}$ délivrés, soit $0{,}45\ \%$ ; un MOSFET bien choisi dans un hacheur basse tension coûte typiquement moins de $1\ \%$.</li>
+    <li>Équilibre : pertes de commutation et de conduction sont voisines. La fréquence qui les égalise vaut $0{,}518/(4{,}62 \times 10^{-6}) = 112\ \mathrm{kHz}$ : $100\ \mathrm{kHz}$ est un choix équilibré pour ce composant.</li>
+    <li>Ordres de grandeur : des durées de quelques nanosecondes et des énergies de quelques microjoules sont typiques d'un MOSFET $100\ \mathrm{V}$ sous $40\ \mathrm{V}$ ; la simulation de la section E retrouve exactement ces valeurs avec $L_\sigma = 0$.</li>
+    <li>La diode Schottky, avec $0{,}5\ \mathrm{V}$, dissipe $0{,}5 \times 8 \times 0{,}325 = 1{,}3\ \mathrm{W}$, plus que le MOSFET. Un second MOSFET en redressement synchrone ne dissiperait que $0{,}012 \times 64 \times 0{,}325 = 0{,}25\ \mathrm{W}$ : c'est la prochaine amélioration.</li>
+    <li>La mise à l'échelle linéaire des énergies de l'IGBT de $400$ à $40\ \mathrm{V}$ est très optimiste, car la queue dépend peu de la tension : l'écart réel est plus grand encore. L'IGBT est écarté.</li>
+  </ul>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <p>
+    Projet fil rouge : l'onduleur du variateur de la pompe. Dans le cours <a href="#/cours/variation-de-vitesse-des-moteurs-asynchrones">Variation
+    de vitesse des moteurs asynchrones</a>, le moteur supposé de $30\ \mathrm{kW}$, $52{,}6\ \mathrm{A}$, $\cos\varphi = 0{,}86$ a été placé en loi
+    $U/f$, avec un point de service à $42{,}25\ \mathrm{Hz}$, $339\ \mathrm{V}$ et $39{,}6\ \mathrm{A}$ ; le bus continu de $540\ \mathrm{V}$ a été
+    étudié dans les cours <a href="#/cours/diodes-de-puissance">Diodes de puissance</a> et <a href="#/cours/redresseurs-triphases">Redresseurs
+    triphasés</a>. Reste l'onduleur : six interrupteurs en trois bras, commandés en modulation de largeur d'impulsion. Faut-il des IGBT, la solution
+    classique, ou des MOSFET SiC ?
+  </p>
+  <figure id="i-figure">
+    <svg viewBox="0 0 760 380" role="img" aria-label="Variateur de la pompe : pont à diodes, bus continu, onduleur à six interrupteurs, câble et moteur">
+      <defs><marker id="fl-i-on" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">
+        <path d="M20 150H70M20 170H70M20 190H70"/>
+        <rect x="70" y="120" width="80" height="100" rx="6"/>
+        <path d="M150 140H170V80H520M150 200H170V280H520"/>
+        <path d="M200 80V170M200 180V280"/>
+        <path d="M186 170H214M186 180H214" stroke-width="2.4"/>
+        <path d="M320 80V100L308 110M308 130L320 140V160M308 104V136M302 106V134M302 120H288M320 90H342V112M332 130L342 112L352 130ZM332 112H352M342 130V150H320"/>
+        <path d="M320 160V200"/>
+        <path d="M320 200V220L308 230M308 250L320 260V280M308 224V256M302 226V254M302 240H288M320 210H342V232M332 250L342 232L352 250ZM332 232H352M342 250V270H320"/>
+        <path d="M420 80V100L408 110M408 130L420 140V160M408 104V136M402 106V134M402 120H388M420 90H442V112M432 130L442 112L452 130ZM432 112H452M442 130V150H420"/>
+        <path d="M420 160V200"/>
+        <path d="M420 200V220L408 230M408 250L420 260V280M408 224V256M402 226V254M402 240H388M420 210H442V232M432 250L442 232L452 250ZM432 232H452M442 250V270H420"/>
+        <path d="M520 80V100L508 110M508 130L520 140V160M508 104V136M502 106V134M502 120H488M520 90H542V112M532 130L542 112L552 130ZM532 112H552M542 130V150H520"/>
+        <path d="M520 160V200"/>
+        <path d="M520 200V220L508 230M508 250L520 260V280M508 224V256M502 226V254M502 240H488M520 210H542V232M532 250L542 232L552 250ZM532 232H552M542 250V270H520"/>
+        <path d="M320 180H292M420 180H392M520 180H492"/>
+        <path d="M600 150H680M600 170H680M600 190H680"/>
+        <circle cx="710" cy="170" r="28"/>
+        <path d="M80 150L100 170L80 190M100 150V190M120 150L140 170L120 190M140 150V190" stroke-width="1.2"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.6">
+        <path d="M232 276V84" marker-end="url(#fl-i-on)"/>
+        <path d="M316 136L320 140" marker-end="url(#fl-i-on)"/>
+        <path d="M316 256L320 260" marker-end="url(#fl-i-on)"/>
+        <path d="M416 136L420 140" marker-end="url(#fl-i-on)"/>
+        <path d="M416 256L420 260" marker-end="url(#fl-i-on)"/>
+        <path d="M516 136L520 140" marker-end="url(#fl-i-on)"/>
+        <path d="M516 256L520 260" marker-end="url(#fl-i-on)"/>
+        <path d="M612 140H644" marker-end="url(#fl-i-on)"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="320" cy="180" r="3.5"/>
+        <circle cx="420" cy="180" r="3.5"/>
+        <circle cx="520" cy="180" r="3.5"/>
+        <circle cx="200" cy="80" r="3.5"/>
+        <circle cx="200" cy="280" r="3.5"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="16" y="138">réseau</text>
+        <text x="16" y="214">400 V</text>
+        <text x="76" y="240">pont à</text>
+        <text x="76" y="256">diodes</text>
+        <text x="152" y="72">+</text>
+        <text x="152" y="298">-</text>
+        <text x="160" y="164" font-size="11">C_bus</text>
+        <text x="240" y="196">V_DC</text>
+        <text x="240" y="212">540 V</text>
+        <text x="326" y="76" font-size="11">T1</text>
+        <text x="426" y="76" font-size="11">T3</text>
+        <text x="526" y="76" font-size="11">T5</text>
+        <text x="326" y="298" font-size="11">T4</text>
+        <text x="426" y="298" font-size="11">T6</text>
+        <text x="526" y="298" font-size="11">T2</text>
+        <text x="276" y="176" font-size="11">a</text>
+        <text x="376" y="176" font-size="11">b</text>
+        <text x="476" y="176" font-size="11">c</text>
+        <text x="600" y="136">i_a</text>
+        <text x="600" y="214">a, b, c</text>
+        <text x="600" y="230">câble 85 m</text>
+        <text x="702" y="175">M</text>
+        <text x="682" y="222">30 kW</text>
+        <text x="262" y="330">commande MLI : un bras par phase, temps mort entre</text>
+        <text x="262" y="346">les deux interrupteurs d'un même bras</text>
+        <text x="600" y="258">dv/dt aux bornes</text>
+        <text x="600" y="274">du moteur</text>
+      </g>
+    </svg>
+    <figcaption>
+      Chaîne du variateur. Le bus est référencé à sa borne négative ; $V_{DC}$ est fléchée vers la borne positive. Chaque interrupteur est un IGBT,
+      collecteur en haut, flèche d'émetteur sortante, avec sa diode antiparallèle à droite, qui conduit quand le courant de phase revient vers le bus.
+      Les points milieux a, b, c sont reliés aux trois conducteurs du câble repérés par les mêmes lettres ; le courant de phase $i_a$ est compté vers
+      le moteur. Avec des MOSFET SiC, le symbole change mais la structure reste la même, le canal assurant aussi la conduction inverse.
+    </figcaption>
+  </figure>
+
+  <h3 id="i-donnees">Données et hypothèses</h3>
+  <p>
+    Point de dimensionnement : courant nominal $I = 52{,}6\ \mathrm{A}$ efficaces, soit $\hat I = 74{,}4\ \mathrm{A}$, $\cos\varphi = 0{,}86$, bus
+    $V_{DC} = 540\ \mathrm{V}$, indice de modulation $m = 1$, découpage à $4\ \mathrm{kHz}$. L'indice $m$ rapporte l'amplitude de la tension de
+    référence à $V_{DC}/2$ ; $m = 1$ est une simplification, car $540\ \mathrm{V}$ ne donnent que $331\ \mathrm{V}$ entre phases en modulation
+    sinusoïdale pure, et les variateurs gagnent environ $15\ \%$ par des techniques que le cours Onduleurs triphasés présentera. Module IGBT
+    $1200\ \mathrm{V}$, $100\ \mathrm{A}$, supposé, à $125\ ^\circ\mathrm{C}$ : $V_{CE0} = 0{,}85\ \mathrm{V}$, $r_{CE} = 11\ \mathrm{m\Omega}$,
+    $E_{on} = 9{,}0\ \mathrm{mJ}$ et $E_{off} = 6{,}5\ \mathrm{mJ}$ sous $600\ \mathrm{V}$ et $100\ \mathrm{A}$ avec $R_G = 4\ \Omega$ ; diode
+    $V_{F0} = 0{,}9\ \mathrm{V}$, $r_F = 8\ \mathrm{m\Omega}$, $E_{rec} = 4{,}0\ \mathrm{mJ}$. Module MOSFET SiC $1200\ \mathrm{V}$ supposé :
+    $R_{DS(on)} = 20\ \mathrm{m\Omega}$ à chaud, $E_{on} + E_{off} = 2{,}1\ \mathrm{mJ}$ et $E_{rec} = 0{,}3\ \mathrm{mJ}$ dans les mêmes conditions,
+    conduction inverse par le canal. Dissipateur à $80\ ^\circ\mathrm{C}$, résistances thermiques jonction-dissipateur de $0{,}30\ \mathrm{K/W}$ par
+    IGBT, $0{,}50\ \mathrm{K/W}$ par diode et $0{,}35\ \mathrm{K/W}$ par MOSFET SiC.
+  </p>
+
+  <h3 id="i-formules">Pertes d'un interrupteur d'onduleur en modulation sinusoïdale</h3>
+  <p>
+    Dans un bras, l'IGBT du haut conduit pendant la demi-période où le courant de phase $i = \hat I\sin\psi$ est positif, avec un rapport cyclique
+    local $d = \frac{1}{2}[1 + m\sin(\psi + \varphi)]$, puisque la tension de référence est en avance de $\varphi$ sur le courant. La moyenne de
+    $d\,(V_{CE0}i + r_{CE}i^2)$ sur la période du fondamental s'obtient avec $\int_0^\pi \sin\psi\,\mathrm{d}\psi = 2$,
+    $\int_0^\pi \sin(\psi + \varphi)\sin\psi\,\mathrm{d}\psi = \frac{\pi}{2}\cos\varphi$, $\int_0^\pi \sin^2\psi\,\mathrm{d}\psi = \frac{\pi}{2}$ et
+    $\int_0^\pi \sin(\psi + \varphi)\sin^2\psi\,\mathrm{d}\psi = \frac{4}{3}\cos\varphi$. La diode du même bras conduit pendant la fraction
+    complémentaire $1 - d$, d'où le signe moins. À chaque période de découpage, l'interrupteur commute le courant instantané ; la moyenne de
+    $|i|$ sur la demi-période où il commute, ramenée à la période complète, vaut $\frac{1}{2\pi}\int_0^\pi \hat I\sin\psi\,\mathrm{d}\psi =
+    \hat I/\pi$.
+  </p>
+  <div class="formule-cle">
+    $$P_{cond,T} = V_{CE0}\hat I\left(\frac{1}{2\pi} + \frac{m\cos\varphi}{8}\right) + r_{CE}\hat I^2\left(\frac{1}{8} + \frac{m\cos\varphi}{3\pi}\right), \qquad P_{cond,D} = V_{F0}\hat I\left(\frac{1}{2\pi} - \frac{m\cos\varphi}{8}\right) + r_F\hat I^2\left(\frac{1}{8} - \frac{m\cos\varphi}{3\pi}\right)$$
+    $$P_{com,T} = f\,(E_{on} + E_{off})_{ref}\,\frac{V_{DC}}{V_{ref}}\,\frac{\hat I}{\pi I_{ref}}, \qquad P_{rec,D} = f\,E_{rec,ref}\,\frac{V_{DC}}{V_{ref}}\,\frac{\hat I}{\pi I_{ref}}, \qquad P_{cond,SiC} = R_{DS(on)}\frac{I^2}{2}$$
+    <p class="formule-cle-legende">
+      Puissances par interrupteur, en watts ; $\hat I$ crête du courant de phase, $I$ sa valeur efficace, $m$ sans dimension, $\varphi$ déphasage
+      du courant sur la tension. Hypothèses : courant sinusoïdal, période de découpage très courte devant celle du fondamental, modèles linéaires
+      des composants, énergies proportionnelles à la tension et au courant. Pour le MOSFET SiC, le canal conduit dans les deux sens et chaque
+      interrupteur porte la moitié de $I^2$, temps mort négligé. Cas limite : à $\cos\varphi = 0$, IGBT et diode se partagent la conduction à parts
+      égales.
+    </p>
+  </div>
+
+  <h3 id="i-calculs">Comparaison chiffrée</h3>
+  <ol>
+    <li>IGBT, conduction : $0{,}85 \times 74{,}4 \times (0{,}1592 + 0{,}1075) = 16{,}86\ \mathrm{W}$ et $0{,}011 \times 74{,}4^2 \times (0{,}125 + 0{,}0913) = 13{,}16\ \mathrm{W}$, soit $30{,}0\ \mathrm{W}$.</li>
+    <li>Facteur de commutation : $\frac{540}{600} \times \frac{74{,}4}{\pi \times 100} = 0{,}2131$. IGBT : $4000 \times 15{,}5 \times 10^{-3} \times 0{,}2131 = 13{,}2\ \mathrm{W}$.</li>
+    <li>Diode : conduction $3{,}46 + 1{,}49 = 4{,}95\ \mathrm{W}$, recharge $4000 \times 4{,}0 \times 10^{-3} \times 0{,}2131 = 3{,}41\ \mathrm{W}$.</li>
+    <li>Par interrupteur et sa diode : $51{,}6\ \mathrm{W}$ ; pour l'onduleur : $310\ \mathrm{W}$, soit $0{,}96\ \%$ des $32{,}2\ \mathrm{kW}$ transmis au bus.</li>
+    <li>MOSFET SiC : conduction $0{,}020 \times 52{,}6^2/2 = 27{,}7\ \mathrm{W}$, commutation $4000 \times 2{,}1 \times 10^{-3} \times 0{,}2131 = 1{,}79\ \mathrm{W}$, recharge $0{,}26\ \mathrm{W}$ : $29{,}7\ \mathrm{W}$ par interrupteur, $178\ \mathrm{W}$ pour l'onduleur, $0{,}55\ \%$.</li>
+    <li>Températures : IGBT $80 + 0{,}30 \times 43{,}2 = 93{,}0\ ^\circ\mathrm{C}$, diode $80 + 0{,}50 \times 8{,}36 = 84{,}2\ ^\circ\mathrm{C}$, MOSFET SiC $80 + 0{,}35 \times 29{,}7 = 90{,}4\ ^\circ\mathrm{C}$ : les deux solutions tiennent largement.</li>
+    <li>Fréquence : à $8\ \mathrm{kHz}$, $409\ \mathrm{W}$ contre $191\ \mathrm{W}$ ; à $16\ \mathrm{kHz}$, $609\ \mathrm{W}$ contre $215\ \mathrm{W}$. Le SiC rend la fréquence presque gratuite.</li>
+    <li>Point de service, $39{,}6\ \mathrm{A}$, $\cos\varphi = 0{,}82$, $m = 0{,}85$, $524\ \mathrm{V}$, $4\ \mathrm{kHz}$ : $214\ \mathrm{W}$ contre $103\ \mathrm{W}$. Sur $6000\ \mathrm{h}$, l'écart de $111\ \mathrm{W}$ représente $665\ \mathrm{kWh}$ par an.</li>
+    <li>Contrôle de cohérence avec la simulation de la section E : à $540\ \mathrm{V}$ et $50\ \mathrm{A}$, la mise à l'échelle donne $15{,}5 \times 0{,}9 \times 0{,}5 = 6{,}98\ \mathrm{mJ}$ pour l'IGBT, le modèle de commutation $7{,}69\ \mathrm{mJ}$ ; pour le SiC, $0{,}95$ contre $0{,}99\ \mathrm{mJ}$. Les deux approches concordent à $10\ \%$ près.</li>
+  </ol>
+  <p>
+    La simulation suivante reprend ces formules. Prédisez avant de manipuler : quand la pompe tourne au ralenti, avec un courant de $20\ \mathrm{A}$
+    et un $\cos\varphi$ de $0{,}75$, l'avantage relatif du SiC augmente-t-il ou diminue-t-il ? À quelle fréquence de découpage les pertes de
+    commutation de l'IGBT égalent-elles ses pertes de conduction ? Réglez le courant, le facteur de puissance, l'indice de modulation, la tension du
+    bus et la fréquence repérée.
+  </p>
+  <figure id="i-pertes-figure">
+    <div id="i-pertes-curseurs"></div>
+    <div id="i-pertes-trace"></div>
+    <div id="i-pertes-valeurs"></div>
+    <figcaption>
+      Pertes totales de l'onduleur, six interrupteurs et leurs diodes, en fonction de la fréquence de découpage. Trait épais : IGBT et diodes ;
+      trait moyen : MOSFET SiC ; trait fin horizontal : pertes de conduction seules de la solution IGBT. La légende du tracé associe chaque couleur à
+      sa courbe. Le trait vertical en pointillés marque la fréquence choisie avec le dernier curseur.
+    </figcaption>
+  </figure>
+  <p>
+    Interprétation : au ralenti, avec $20\ \mathrm{A}$, $\cos\varphi = 0{,}75$ et $m = 0{,}5$, l'IGBT dissipe environ $97\ \mathrm{W}$ et le SiC
+    $29\ \mathrm{W}$ à $4\ \mathrm{kHz}$ : le rapport passe de $1{,}7$ à $3{,}4$, parce que le seuil $V_{CE0}$ pèse d'autant plus que le courant est
+    faible, alors que les pertes du SiC décroissent comme $I^2$. Au point nominal, les pertes de commutation de l'IGBT égalent ses pertes de
+    conduction, diodes comprises, vers $8\ \mathrm{kHz}$ ; au-delà, chaque kilohertz coûte environ $25\ \mathrm{W}$ à l'IGBT et $3\ \mathrm{W}$ au
+    SiC.
+  </p>
+
+  <h3 id="i-compromis">Contraintes, risques et compromis</h3>
+  <ul>
+    <li>Pentes de tension et câble : avec $40\ \mathrm{kV/\mu s}$, le SiC impose au câble de $85\ \mathrm{m}$ des fronts de $13\ \mathrm{ns}$. Un câble se comporte en ligne dès que sa longueur dépasse environ $vt_r/2$, avec $v \approx 150\ \mathrm{m/\mu s}$ : $1{,}0\ \mathrm{m}$ pour le SiC, $5{,}7\ \mathrm{m}$ pour les $76\ \mathrm{ns}$ de l'IGBT. Dans les deux cas, l'onde réfléchie peut approcher le double de $V_{DC}$ aux bornes du moteur ; la documentation du variateur précise au-delà de quelle longueur une self de sortie ou un filtre $\mathrm{d}v/\mathrm{d}t$ est exigé, et ce filtre doit être plus énergique avec du SiC.</li>
+    <li>Moteur : des fronts raides sollicitent davantage les premières spires et favorisent les courants de palier par couplage capacitif ; un moteur existant, non prévu pour un variateur, est le premier à en souffrir.</li>
+    <li>Compatibilité électromagnétique : le courant parasite vers la terre, $C\,\mathrm{d}v/\mathrm{d}t$ à travers la capacité du câble blindé, est cinq fois plus fort avec le SiC ; le filtre d'entrée et le raccordement des blindages, traités dans le cours Compatibilité électromagnétique, en dépendent.</li>
+    <li>Fréquence : à $4\ \mathrm{kHz}$, le moteur siffle de façon audible ; le SiC permettrait $16\ \mathrm{kHz}$, inaudible, pour $215\ \mathrm{W}$ de pertes, alors que l'IGBT y dissiperait $609\ \mathrm{W}$. Pour une pompe en local technique, le bruit n'est pas un critère.</li>
+    <li>Robustesse : un module IGBT tient typiquement $10\ \mathrm{\mu s}$ de court-circuit, un MOSFET SiC de l'ordre de $2$ à $3\ \mathrm{\mu s}$ : la protection par désaturation doit être plus rapide. Le cours Protections des convertisseurs y reviendra.</li>
+    <li>Décision : onduleur IGBT $1200\ \mathrm{V}$, $100\ \mathrm{A}$ à $4\ \mathrm{kHz}$, solution standard d'un variateur du commerce, avec la self de sortie si la documentation l'exige pour $85\ \mathrm{m}$. Le gain de $665\ \mathrm{kWh}$ par an du SiC ne compense ni le filtre plus lourd ni le risque sur le moteur ; il deviendrait intéressant pour un moteur proche du variateur ou un entraînement rapide à haute fréquence.</li>
+  </ul>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Ajout au projet fil rouge</span>
+    <p>
+      Choix des interrupteurs commandés. Onduleur de la pompe : IGBT $1200\ \mathrm{V}$, $100\ \mathrm{A}$ supposés à $4\ \mathrm{kHz}$, $310\ \mathrm{W}$
+      au nominal soit $0{,}96\ \%$, $214\ \mathrm{W}$ au point de service, $T_j = 93\ ^\circ\mathrm{C}$ pour un dissipateur à $80\ ^\circ\mathrm{C}$ ;
+      MOSFET SiC écarté malgré $178$ et $103\ \mathrm{W}$, soit $665\ \mathrm{kWh}$ par an, à cause des $40\ \mathrm{kV/\mu s}$ sur $85\ \mathrm{m}$ de
+      câble. Hacheur du chargeur $24\ \mathrm{V}$ : MOSFET Si $100\ \mathrm{V}$, $8\ \mathrm{m\Omega}$ à $100\ \mathrm{kHz}$, $0{,}98\ \mathrm{W}$ et
+      $T_j = 94\ ^\circ\mathrm{C}$, contre $7{,}8\ \mathrm{W}$ pour un IGBT ; redressement synchrone envisagé. Hypothèses à remplacer par les
+      documentations du variateur et des composants retenus et par une mesure des températures en service.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Croire qu'un MOSFET ne consomme rien sur sa grille.</strong> Le courant statique est nul, mais chaque période exige la charge $Q_G$ : $P_G = Q_G\Delta V_Gf$, et le pilote doit fournir des pointes de plusieurs ampères pour commuter vite.</li>
+    <li><strong>Prendre $R_{DS(on)}$ à $25\ ^\circ\mathrm{C}$.</strong> À la température de fonctionnement, elle vaut $1{,}5$ à $1{,}8$ fois plus pour un MOSFET Si : les pertes de conduction sont sous-estimées d'autant.</li>
+    <li><strong>Calculer les pertes d'un MOSFET avec le courant moyen, ou celles d'un IGBT avec le seul terme en $I_{eff}^2$.</strong> Une résistance dissipe $RI_{eff}^2$ ; un seuil dissipe $V_0I_{moy}$. Mélanger les deux fausse la comparaison au voisinage du courant de croisement.</li>
+    <li><strong>Considérer la tension de seuil comme une tension de commande.</strong> À $V_{th}$, le composant commence à peine à conduire ; il faut $V_{GG+}$ bien au-dessus du plateau pour atteindre $R_{DS(on)}$ ou $V_{CE(sat)}$ du catalogue.</li>
+    <li><strong>Oublier l'effet Miller.</strong> Le $\mathrm{d}v/\mathrm{d}t$ d'un interrupteur injecte $C_{GD}\,\mathrm{d}v/\mathrm{d}t$ dans la grille de l'autre : sans tension négative ni pince de Miller, le bras se met en court-circuit à chaque commutation rapide.</li>
+    <li><strong>Utiliser les énergies du catalogue hors de leurs conditions.</strong> Elles sont mesurées avec une résistance de grille, une température et une inductance de maille données ; changer $R_G$ de $4$ à $8\ \Omega$ multiplie $E_{on}$ par $1{,}6$ dans le modèle de la séance.</li>
+    <li><strong>Croire qu'un IGBT conduit en inverse.</strong> Il n'a pas de diode interne utilisable : sans diode antiparallèle, une charge inductive détruit le bras à la première ouverture.</li>
+    <li><strong>Négliger l'inductance de câblage.</strong> $50\ \mathrm{nH}$ et $5\ \mathrm{A/ns}$ font $250\ \mathrm{V}$ de surtension : un composant rapide exige une maille de commutation compacte et des condensateurs de découplage au plus près.</li>
+    <li><strong>Supprimer le temps mort pour gagner en tension de sortie.</strong> Les retards au blocage dispersés entre composants feraient conduire les deux interrupteurs d'un bras simultanément : le courant n'est limité que par $L_\sigma$.</li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain. Un variateur qui déclenche en court-circuit au moment où l'interrupteur complémentaire se ferme, surtout à chaud ou
+    après un changement de câble de grille, désigne une conduction parasite par effet Miller : mesurer $v_{GE}$ de l'interrupteur bloqué avec une
+    sonde différentielle et vérifier la tension négative. Une surtension au blocage qui grandit avec le courant désigne $L_\sigma$ : condensateur de
+    découplage éloigné ou barres longues. Un composant qui chauffe plus que prévu à faible charge désigne souvent les pertes de commutation, qui ne
+    décroissent pas comme celles de conduction : vérifier la fréquence réelle et $R_G$. Des oscillations de quelques dizaines de mégahertz sur
+    $v_{DS}$ après chaque blocage proviennent de la résonance entre $L_\sigma$ et $C_{oss}$ ; elles rayonnent et se traitent par la disposition ou
+    un circuit RC d'amortissement. Un MOSFET détruit en court-circuit drain-source après une surtension se détecte hors tension au multimètre ; un
+    claquage de grille, par une résistance faible entre grille et source.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic industriel et une
+    question conceptuelle. Ils vont de l'application directe d'une formule au choix de la méthode, au calcul multi-étapes, au dimensionnement sous
+    contrainte et au diagnostic. La correction de chacun reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la correction", puis se
+    déroule étape par étape, accompagnée d'une courbe ou d'un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Après chaque réponse,
+    l'explication s'affiche avec un petit schéma tracé pas à pas.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$P_{cond,MOS} = R_{DS(on)}(T_j)\,I_{eff}^2, \qquad P_{cond,IGBT} = V_{CE0}I_{moy} + r_{CE}I_{eff}^2, \qquad I_x = \frac{V_{CE0}}{R_{DS(on)} - r_{CE}}$$
+    $$E_{on} + E_{off} \approx \frac{1}{2}V_{DC}I_L\,(t_{ri} + t_{fv} + t_{rv} + t_{fi}), \qquad P_{com} = f\,(E_{on} + E_{off})$$
+    $$t_{fv} = \frac{Q_{GD}R_G}{V_{GG+} - V_{pl}}, \qquad \frac{\mathrm{d}v}{\mathrm{d}t} = \frac{I_G}{C_{GD}}$$
+    $$P_G = Q_G\,(V_{GG+} - V_{GG-})\,f$$
+    $$\Delta V = L_\sigma\frac{\mathrm{d}i}{\mathrm{d}t}, \qquad T_j = T_{ref} + R_{th}\,(P_{cond} + P_{com})$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>$R_{DS(on)}$ se prend à la température de jonction réelle, et la boucle thermique s'itère.</li>
+      <li>Sur charge inductive, tension et courant ne varient jamais ensemble : la commutation dure coûte $\frac{1}{2}VI$ par unité de durée de transition.</li>
+      <li>Les énergies du catalogue ne valent qu'avec la résistance de grille, la température et la tension de leur mesure.</li>
+      <li>Un composant rapide exige une maille courte, une tension de blocage négative et un temps mort.</li>
+      <li>Le gain de vitesse se paie en $\mathrm{d}v/\mathrm{d}t$ : câble, moteur et compatibilité électromagnétique.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> MOSFET et IGBT sont des interrupteurs commandés par une grille isolée : il faut charger une capacité, pas entretenir un
+    courant. Le MOSFET, unipolaire, se comporte à l'état passant comme une résistance $R_{DS(on)}$ qui croît vite avec la tenue en tension ; il
+    commute en quelques nanosecondes. L'IGBT ajoute une injection de trous qui abaisse la chute à haute tension, au prix d'un seuil et d'un courant
+    de queue au blocage. Sur charge inductive, chaque commutation impose tension et courant simultanés : l'énergie $\frac{1}{2}VIt$, multipliée par
+    la fréquence, s'ajoute aux pertes de conduction. Le plateau Miller fixe la vitesse de la tension, donc le compromis entre pertes et
+    $\mathrm{d}v/\mathrm{d}t$. MOSFET Si en basse tension, IGBT en industriel à fréquence modérée, SiC quand la fréquence ou le rendement priment.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent, <a href="#/cours/thyristors-et-redresseurs-commandes">Thyristors et
+    redresseurs commandés</a>, dont le thyristor sert de point de comparaison ; une sur le cours <a href="#/cours/variation-de-vitesse-des-moteurs-asynchrones">Variation
+    de vitesse des moteurs asynchrones</a>, vieux d'une semaine, dont la loi $U/f$ fixe la tension que l'onduleur doit produire ; une sur le cours
+    <a href="#/cours/impedances-en-regime-sinusoidal">Impédances en régime sinusoïdal</a>, vieux d'un mois, dont la réactance d'une inductance
+    explique le rôle du câblage en haute fréquence.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : réaliser dans LTspice un essai à double impulsion sur un MOSFET $100\ \mathrm{V}$, mesurer $E_{on}$ et $E_{off}$, observer l'effet de
+    $R_G$ et de l'inductance parasite, puis comparer en Python au modèle de la séance et au cas de l'IGBT. Prédictions à écrire avant de commencer :
+    durée de la première impulsion pour atteindre $8\ \mathrm{A}$ dans $20\ \mathrm{\mu H}$ sous $40\ \mathrm{V}$ ; ordre de grandeur de $E_{on}$ et
+    $E_{off}$ ; effet du doublement de $R_G$ ; fréquence des oscillations après le blocage avec $10\ \mathrm{nH}$ de maille.
+  </p>
+  <ol>
+    <li>Circuit : source $40\ \mathrm{V}$ découplée par un condensateur de $10\ \mathrm{\mu F}$ ; MOSFET à canal N en position basse, source à la masse ; inductance de $20\ \mathrm{\mu H}$ entre la borne positive et le drain ; diode Schottky $100\ \mathrm{V}$ en parallèle sur l'inductance, cathode côté borne positive. Choisir le MOSFET dans la bibliothèque de LTspice, par le menu de sélection d'un nouveau transistor : n'importe quel modèle de $100\ \mathrm{V}$ et de l'ordre de $10\ \mathrm{m\Omega}$ convient, les résultats dépendront du modèle.</li>
+    <li>Commande : source <code>PULSE(0 12 1u 2n 2n 4u 7u 2)</code> derrière une résistance <code>{Rg}</code> avec <code>.param Rg=5</code>. La première impulsion de $4\ \mathrm{\mu s}$ établit $8\ \mathrm{A}$, puisque $t_1 = LI/V = 20 \times 10^{-6} \times 8/40$ ; le blocage qui suit mesure $E_{off}$, la seconde impulsion, $3\ \mathrm{\mu s}$ plus tard, mesure $E_{on}$ à presque le même courant.</li>
+    <li>Simulation : <code>.tran 0 9u 0 50p</code>. Mesures : <code>.meas tran Eoff INTEG V(d)*Id(M1) FROM 4.9u TO 5.3u</code> et <code>.meas tran Eon INTEG V(d)*Id(M1) FROM 7.9u TO 8.3u</code>, à ajuster aux instants réels de commutation.</li>
+    <li>Paramétrage : <code>.step param Rg list 2.5 5 10 20</code> ; relever $E_{on}$, $E_{off}$, les durées de montée et de chute de $v_{DS}$, puis tracer les énergies en fonction de $R_G$.</li>
+    <li>Inductance parasite : insérer $10\ \mathrm{nH}$ entre la source du MOSFET et la masse, puis entre le condensateur de découplage et l'inductance ; mesurer la surtension au blocage et la fréquence des oscillations.</li>
+    <li>En Python : recalculer $E_{on}$ et $E_{off}$ avec le modèle de grille de la section E pour les paramètres du modèle LTspice, lus dans sa fiche ; tracer les pertes totales du hacheur en fonction de $f$ pour le MOSFET et pour l'IGBT de la section H, et retrouver la fréquence d'équilibre de $112\ \mathrm{kHz}$.</li>
+  </ol>
+  <p>
+    Résultats attendus : quelques microjoules pour chaque énergie, du même ordre que les $1{,}9$ et $2{,}8\ \mathrm{\mu J}$ du modèle, avec une
+    croissance presque proportionnelle à $R_G$ ; une surtension de l'ordre de $10$ à $20\ \mathrm{V}$ avec $10\ \mathrm{nH}$ ; des oscillations vers
+    $1/(2\pi\sqrt{L_\sigma C_{oss}})$, soit environ $74\ \mathrm{MHz}$ pour $10\ \mathrm{nH}$ et $460\ \mathrm{pF}$. Anomalies à observer : le
+    courant mesuré à la borne de drain contient le courant de $C_{oss}$, si bien que $E_{off}$ paraît plus faible et $E_{on}$ plus forte que les
+    énergies dissipées dans le canal ; un pas de calcul trop grand arrondit les fronts et fausse les énergies d'un facteur deux ; sans inductance
+    parasite, la simulation est irréaliste ; les modèles sont souvent donnés à $25\ ^\circ\mathrm{C}$, alors que la séance raisonne à chaud. LTspice
+    ne fournit pas de modèle d'IGBT générique : la comparaison avec l'IGBT se fait en Python, ou avec le modèle SPICE d'un fabricant si vous en
+    disposez.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est calculé dans ce navigateur à
+    partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement pour suivre votre progression.
+    Le jalon visé à la fin du module suivant demande d'analyser les principaux convertisseurs de puissance, leurs formes d'onde, leurs pertes,
+    leurs protections et leur intégration dans un variateur : les pertes des interrupteurs commandés en sont la base.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">MOSFET et IGBT se commandent par une grille isolée : la commande charge une capacité, dont le plateau Miller fixe la vitesse de la tension et la puissance $Q_G\Delta V_Gf$ le coût.</li>
+    <li data-rang="02">Le MOSFET conduit comme une résistance et commute très vite ; l'IGBT conduit comme une diode à haute tension mais traîne au blocage : $R_{DS(on)}I_{eff}^2$ contre $V_{CE0}I_{moy} + r_{CE}I_{eff}^2$.</li>
+    <li data-rang="03">Sur charge inductive, chaque commutation dissipe environ $\frac{1}{2}V_{DC}I_Lt$ ; les pertes croissent avec $f$, et la vitesse qui les réduit se paie en surtension et en $\mathrm{d}v/\mathrm{d}t$.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> enchaîner les échelles. Un calcul de pertes mêle des nanosecondes, des microjoules et des
+    kilohertz, puis des watts et des kelvins ; une erreur de préfixe passe inaperçue si l'on ne contrôle pas l'ordre de grandeur final, quelques
+    dixièmes à quelques pour cent de la puissance convertie. L'exemple du hacheur et la comparaison de l'onduleur sont faits pour installer ce
+    réflexe.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Hacheurs DC-DC, utilise ces interrupteurs pour convertir une tension continue en
+    une autre. Question à préparer : dans le hacheur de l'exemple, pourquoi la tension moyenne de sortie vaut-elle $D$ fois la tension d'entrée, et
+    que devient le courant dans l'inductance si la charge tombe à $0{,}2\ \mathrm{A}$ ? Et comment obtenir $27\ \mathrm{V}$ à partir d'une batterie de
+    $12\ \mathrm{V}$, avec les mêmes composants autrement disposés ?
+  </p>
+
+</article>
