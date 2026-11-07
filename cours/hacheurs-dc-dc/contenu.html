@@ -1,0 +1,866 @@
+<article class="cours" data-slug="hacheurs-dc-dc">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/mosfet-et-igbt">MOSFET et IGBT</a> s'est achevé sur trois questions. Pourquoi, dans le hacheur du chargeur, la
+      tension moyenne de sortie vaut-elle $D$ fois la tension d'entrée ? Parce que la tension au point milieu de la cellule de commutation est un
+      créneau qui vaut $V_e$ pendant $DT$ et $0$ pendant le reste de la période, et qu'une inductance, en régime périodique établi, ne peut
+      supporter aucune tension moyenne : la sortie reçoit donc la valeur moyenne du créneau, $DV_e$. Que devient le courant de l'inductance si la
+      charge tombe à $0{,}2\ \mathrm{A}$ ? Son ondulation, fixée par $L$, $f$ et les tensions, ne change pas, mais sa valeur moyenne devient plus
+      petite que la moitié de cette ondulation : le courant s'annule avant la fin de chaque période, la diode se bloque, et la relation $V_s = DV_e$
+      cesse d'être vraie. Comment obtenir $27\ \mathrm{V}$ à partir d'une batterie de $12\ \mathrm{V}$ ? En permutant les trois éléments de la même
+      cellule : l'inductance côté entrée, l'interrupteur vers la masse et la diode vers la sortie. C'est le hacheur élévateur. Cette séance établit
+      ces trois réponses avec rigueur et en tire les règles de dimensionnement.
+    </p>
+    <p>
+      La séance s'appuie sur la relation $v = L\,\mathrm{d}i/\mathrm{d}t$ et l'énergie $\frac{1}{2}Li^2$ du cours <a href="#/cours/inductances-et-champ-magnetique">Inductances
+      et champ magnétique</a> ; sur $i = C\,\mathrm{d}v/\mathrm{d}t$ du cours <a href="#/cours/condensateurs-et-champ-electrique">Condensateurs et
+      champ électrique</a> ; sur les valeurs moyenne et efficace du cours <a href="#/cours/signaux-periodiques-et-sinusoides">Signaux périodiques
+      et sinusoïdes</a> ; sur l'oscillation amortie d'un circuit LC du cours <a href="#/cours/regime-transitoire-rlc">Régime transitoire RLC</a> ;
+      sur le filtrage capacitif du bus d'entrée établi dans le cours <a href="#/cours/redresseurs-monophases">Redresseurs monophasés</a> ; et sur
+      le choix des interrupteurs du cours <a href="#/cours/mosfet-et-igbt">MOSFET et IGBT</a>.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Presque toute énergie électrique continue passe, à un moment, par un hacheur. Le chargeur d'une batterie, l'alimentation $24\ \mathrm{V}$ d'une
+    armoire d'automatisme, les rails $5$, $3{,}3$ et $1\ \mathrm{V}$ d'une carte électronique, l'étage d'entrée d'un onduleur photovoltaïque qui
+    cherche le point de puissance maximale, le convertisseur d'un véhicule électrique entre sa batterie et son onduleur de traction, l'alimentation
+    des LED d'éclairage ou le correcteur de facteur de puissance d'un variateur : tous convertissent une tension continue en une autre en découpant,
+    avec un interrupteur commandé, le transfert d'énergie à travers une inductance. Le rendement typique, de $90$ à $99\ \%$, est hors de portée
+    d'un régulateur linéaire, qui dissiperait sous forme de chaleur toute la différence de tension multipliée par le courant.
+  </p>
+  <p>
+    Les questions d'ingénieur sont toujours les mêmes. Quelle topologie, selon que la sortie doit être plus basse, plus haute, de même signe ou de
+    signe opposé ? Quel rapport cyclique, et sur quelle plage, quand l'entrée varie ? Quelle inductance pour une ondulation de courant acceptable,
+    et quel courant de saturation ? Quel condensateur pour une ondulation de tension donnée, et quel courant efficace doit-il supporter ? Que se
+    passe-t-il à faible charge, au démarrage, en court-circuit ? Quelles tensions et quels courants les semi-conducteurs voient-ils ? Le travail
+    central de la séance consiste à dimensionner un hacheur abaisseur, celui du chargeur du bus $24\ \mathrm{V}$ secouru du projet fil rouge,
+    puis un hacheur élévateur qui produit $27\ \mathrm{V}$ à partir d'une batterie de $12\ \mathrm{V}$.
+  </p>
+  <p>
+    Organisation suggérée pour les $90$ minutes : $10$ minutes pour les prérequis, $10$ minutes pour l'intuition physique et l'animation de la
+    cellule, $30$ minutes pour la théorie et ses simulations, $15$ minutes pour l'exemple et l'application industrielle, $25$ minutes pour les
+    exercices, le quiz et la révision. Le travail pratique de la section O se fait à part.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Expliquer le fonctionnement des hacheurs abaisseur, élévateur et inverseur à partir de la cellule de commutation, du sens des courants et de l'équilibre des volts-secondes aux bornes de l'inductance.</li>
+    <li data-rang="02">Établir et calculer le rapport de conversion en conduction continue, $D$, $1/(1 - D)$ et $D/(1 - D)$, ainsi que les courants moyens, efficaces et crêtes de chaque composant.</li>
+    <li data-rang="03">Dimensionner l'inductance pour une ondulation de courant donnée dans le cas le plus défavorable de la plage d'entrée, et le condensateur de sortie pour une ondulation de tension donnée, résistance série comprise.</li>
+    <li data-rang="04">Calculer la frontière entre conduction continue et discontinue, et le rapport de conversion en conduction discontinue.</li>
+    <li data-rang="05">Comparer les trois topologies selon les contraintes en tension et en courant des semi-conducteurs, la nature pulsée ou continue des courants d'entrée et de sortie et le comportement en défaut.</li>
+    <li data-rang="06">Diagnostiquer une saturation d'inductance, un passage en conduction discontinue, une surtension au démarrage ou à vide et un condensateur vieilli à partir des formes d'onde et des symptômes.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois acquis suffisent. Le premier, vu dans le cours <a href="#/cours/inductances-et-champ-magnetique">Inductances et champ magnétique</a> :
+    aux bornes d'une inductance, $v_L = L\,\mathrm{d}i_L/\mathrm{d}t$ ; une tension constante y fait croître ou décroître le courant linéairement,
+    de $\Delta i = v_L\,\Delta t/L$, et le courant d'une inductance ne peut pas subir de discontinuité. Le deuxième, vu dans le cours
+    <a href="#/cours/signaux-periodiques-et-sinusoides">Signaux périodiques et sinusoïdes</a> : la valeur moyenne d'un créneau qui vaut $V$ pendant
+    une fraction $D$ de la période et $0$ le reste du temps est $DV$ ; la valeur efficace d'un courant triangulaire d'ondulation crête à crête
+    $\Delta i$ autour de $I$ vaut $\sqrt{I^2 + \Delta i^2/12}$. Le troisième, vu dans le cours <a href="#/cours/condensateurs-et-champ-electrique">Condensateurs
+    et champ électrique</a> : un condensateur traversé par un courant $i_C$ voit sa tension varier de $\Delta v = \frac{1}{C}\int i_C\,\mathrm{d}t$,
+    soit la charge apportée divisée par la capacité. La correction de chaque question reste masquée jusqu'à une tentative ou un clic explicite sur
+    "Voir la correction".
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Notation de la séance</span>
+    <p>
+      $V_e$ est la tension d'entrée, $V_s$ la tension de sortie, comptée positivement dans le sens indiqué sur chaque schéma ; pour le montage
+      inverseur, on raisonne sur $|V_s|$. $T$ est l'interrupteur commandé, $D$ la diode, $q(t)$ le signal de commande, qui vaut $1$ quand $T$ est
+      fermé. $f = 1/T_d$ est la fréquence de découpage ; pour éviter toute confusion avec l'interrupteur, la période s'écrit $T_d$ dans les
+      formules, et "$T$" dans les chronogrammes désigne la fin de la première période. $D$, rapport cyclique, est la fraction de période pendant
+      laquelle $T$ conduit ; le contexte distingue toujours le rapport cyclique de la diode. $i_L$ est le courant de l'inductance, $I_L$ sa valeur
+      moyenne, $\Delta i_L$ son ondulation crête à crête, $\hat{I}_L = I_L + \Delta i_L/2$ sa valeur crête. $I_s$ est le courant moyen de sortie,
+      $R$ la résistance de charge équivalente, $C$ le condensateur de sortie et $\Delta V_s$ l'ondulation crête à crête de la tension de sortie.
+      $M = |V_s|/V_e$ est le rapport de conversion. Les tensions sont fléchées vers la borne positive ; l'inductance est en convention récepteur :
+      la flèche de $v_L$ pointe vers la borne par laquelle entre $i_L$. La masse, notée $0\ \mathrm{V}$, est le potentiel de référence.
+    </p>
+  </div>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-reservoir">Transférer l'énergie par paquets à travers une inductance</h3>
+  <p>
+    Un régulateur linéaire abaisse une tension en plaçant en série un transistor qui absorbe la différence : de $40$ à $27\ \mathrm{V}$ sous
+    $8\ \mathrm{A}$, il dissiperait $13 \times 8 = 104\ \mathrm{W}$, soit un rendement de $27/40 = 67{,}5\ \%$. Le hacheur procède autrement. Son
+    interrupteur n'est jamais dans un état intermédiaire : fermé, il ne porte presque aucune tension ; ouvert, presque aucun courant. Dans les deux
+    cas, il dissipe très peu. Mais une tension qui saute entre $V_e$ et $0$ n'est pas une tension continue : il faut un élément qui accepte ces
+    sauts de tension sans que son courant saute. C'est exactement la propriété de l'inductance. Pendant que l'interrupteur est fermé, l'inductance
+    se charge d'énergie magnétique, $\frac{1}{2}Li_L^2$ augmente ; pendant qu'il est ouvert, la diode se ferme d'elle-même pour laisser passer le
+    courant que l'inductance impose, et l'énergie stockée s'écoule vers la sortie. Le condensateur de sortie lisse les petits paquets restants.
+  </p>
+  <p>
+    Le point essentiel est que le courant de l'inductance ne peut pas s'interrompre. Quand l'interrupteur s'ouvre, ce courant doit trouver un
+    chemin : la tension au nœud de commutation $A$ bascule jusqu'à ce que la diode devienne passante. C'est pour cela que la diode est appelée
+    diode de roue libre : elle n'est pas commandée, c'est l'inductance qui la met en conduction. Interrupteur et diode forment une cellule de
+    commutation : à tout instant, l'un des deux conduit le courant $i_L$, et $i_T + i_D = i_L$.
+  </p>
+  <p>
+    L'animation suivante montre les deux phases d'une période pour chacune des trois topologies. Prédisez avant de manipuler : dans le hacheur
+    abaisseur, la source fournit-elle du courant pendant toute la période, ou seulement pendant que $T$ est fermé ? Et dans le hacheur élévateur, le
+    condensateur de sortie reçoit-il du courant pendant toute la période ? Faites glisser la poignée ronde le long de l'axe des temps, sous le
+    chronogramme, ou lancez la lecture ; le premier curseur choisit la topologie, le second le rapport cyclique.
+  </p>
+  <figure id="d-cellule-figure">
+    <div class="schema-vivant" id="d-cellule"></div>
+    <div id="d-cellule-curseurs"></div>
+    <div id="d-cellule-lecteur"></div>
+    <div id="d-cellule-valeurs"></div>
+    <figcaption>
+      Cellule de commutation animée. À gauche, le schéma : l'interrupteur $T$ est dessiné fermé ou ouvert selon l'instant choisi ; la maille qui
+      porte le courant de l'inductance est repassée en trait épais, et les points qui la parcourent avancent proportionnellement à la charge
+      transportée ; pendant la conduction de $T$, pour l'élévateur et l'inverseur, une maille en tirets montre le condensateur qui alimente seul
+      la charge. Les tensions $V_e$ et $V_s$ sont fléchées vers la borne
+      positive, la masse est en bas. À droite, le chronogramme de $i_L$ sur deux périodes, en trait plein, avec la valeur moyenne en tirets ; le
+      point mobile repère l'instant observé. En mouvement réduit, la lecture ne démarre jamais d'elle-même.
+    </figcaption>
+  </figure>
+  <p>
+    Interprétation. Dans le hacheur abaisseur, la source ne débite que pendant $DT_d$ : son courant est haché, ce qui explique le condensateur
+    d'entrée indispensable ; la sortie, elle, reçoit $i_L$ en permanence, un courant triangulaire mais jamais nul en conduction continue, si bien
+    que le condensateur de sortie n'a qu'à absorber l'ondulation. Dans le hacheur élévateur, c'est l'inverse : la source débite en permanence à
+    travers l'inductance, mais la sortie ne reçoit du courant que pendant $(1 - D)T_d$, à travers la diode ; pendant $DT_d$, le condensateur
+    alimente seul la charge. Le hacheur inverseur cumule les deux inconvénients : courant haché à l'entrée comme à la sortie. Cette différence
+    entre courants continus et pulsés gouverne le dimensionnement des condensateurs, des filtres et des protections.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Analogie contrôlée et ses limites</span>
+    <p>
+      Le bélier hydraulique est une bonne image du hacheur élévateur : une colonne d'eau, lancée dans une conduite, est brusquement arrêtée par une
+      vanne ; son inertie, l'équivalent de l'inductance, fait monter la pression au point de dépasser celle d'un réservoir haut, l'équivalent du
+      condensateur de sortie, dans lequel un clapet anti-retour, la diode, laisse passer l'eau. On élève ainsi de l'eau plus haut que la source
+      sans pompe. L'analogie s'arrête là : le bélier hydraulique perd l'eau qui s'échappe par la vanne, alors que l'inductance restitue toute son
+      énergie ; une conduite ne stocke son énergie que sous forme cinétique et n'a pas d'équivalent exact de la saturation magnétique, qui limite le
+      courant qu'une inductance réelle peut porter ; enfin, rien dans l'analogie ne rend compte de la conduction discontinue, où le courant
+      s'annule et où le clapet reste fermé alors que la vanne l'est aussi.
+    </p>
+  </div>
+
+  <h3 id="d-equilibre">Pourquoi la tension de sortie ne dépend que du rapport cyclique</h3>
+  <p>
+    En régime établi, tout est périodique : le courant $i_L$ revient à la même valeur au début de chaque période. Or $\Delta i_L = \frac{1}{L}\int v_L\,\mathrm{d}t$
+    sur une période. Pour que le courant revienne à sa valeur initiale, l'aire de $v_L$ pendant la phase où elle est positive, notée $A_+$, doit
+    exactement compenser l'aire de la phase négative, $A_-$. C'est l'équilibre des volts-secondes. Si la tension de sortie était plus basse que la
+    valeur d'équilibre, $A_+$ dépasserait $A_-$ : le courant gagnerait un peu à chaque période, le condensateur recevrait plus de charge que la
+    charge n'en consomme, et la tension de sortie monterait jusqu'à rétablir l'équilibre. Le hacheur trouve donc seul sa tension de sortie, dans la
+    limite de la conduction continue et des pertes. La seconde animation de la section E montre ce mécanisme sur une batterie, où il prend une forme
+    plus redoutable.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-hypotheses">Hypothèses du modèle de base</h3>
+  <p>
+    Le modèle de base repose sur cinq hypothèses, toutes des approximations qu'il faudra lever ensuite : interrupteur et diode idéaux, sans chute ni
+    durée de commutation ; inductance linéaire, sans saturation ni résistance ; condensateur assez grand pour que la tension de sortie soit
+    pratiquement constante sur une période, ce qui permet de traiter $v_L$ comme constante par morceaux ; régime périodique établi ; conduction
+    continue, c'est-à-dire $i_L > 0$ pendant toute la période. Sous ces hypothèses, chaque phase impose à l'inductance une tension constante et le
+    courant varie linéairement : les formes d'onde sont des segments de droite, et tout se calcule par des aires de rectangles et de triangles.
+  </p>
+
+  <h3 id="e-buck">Hacheur abaisseur, ou buck</h3>
+  <p>
+    Interrupteur entre la borne positive de la source et le nœud $A$, diode entre la masse et $A$, inductance entre $A$ et la sortie. Phase 1,
+    $0 &lt; t &lt; DT_d$ : $T$ fermé, $v_A = V_e$, la diode est bloquée sous $V_e$ en inverse, $v_L = V_e - V_s > 0$ et $i_L$ croît. Phase 2,
+    $DT_d &lt; t &lt; T_d$ : $T$ ouvert, $i_L$ force la diode en conduction, $v_A = 0$, $v_L = -V_s$ et $i_L$ décroît. Le schéma et les
+    chronogrammes ci-dessous résument ces deux phases.
+  </p>
+  <figure id="e-buck-figure">
+    <svg viewBox="0 0 770 300" role="img" aria-label="Hacheur abaisseur : schéma avec conventions et chronogrammes de la commande, de la tension et du courant de l'inductance et du courant de diode"><defs><marker id="fl-buck" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M70 70V140M70 180V250"/><circle cx="70" cy="160" r="20"/><path d="M70 250H370"/><path d="M70 70H100"/><path d="M100 70H108M162 70H170"/><path d="M108 70L158 52" stroke-width="2.4"/><circle cx="108" cy="70" r="3"/><circle cx="162" cy="70" r="3"/><path d="M170 70H215"/><path d="M215 70V151M215 169V250"/><path d="M205 169L215 151L225 169Z"/><path d="M205 151h20" stroke-width="2.6"/><path d="M215 70H232.5a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0H310"/><path d="M310 70H370"/><path d="M310 70V155M310 165V250"/><path d="M292 155h36M292 165h36" stroke-width="3"/><path d="M370 70V136M370 184V250"/><rect x="361" y="136" width="18" height="48" rx="3"/><path d="M215 250v10M201 260h28M206 265h18M211 270h8"/></g><circle cx="215" cy="70" r="3.6" fill="currentColor" stroke="none"/><circle cx="310" cy="70" r="3.6" fill="currentColor" stroke="none"/><circle cx="310" cy="250" r="3.6" fill="currentColor" stroke="none"/><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M36 200L36 120" marker-end="url(#fl-buck)"/><path d="M176 56L204 56" marker-end="url(#fl-buck)"/><path d="M232 198L232 172" marker-end="url(#fl-buck)"/><path d="M288 38L238 38" marker-end="url(#fl-buck)"/><path d="M286 84L306 84" marker-end="url(#fl-buck)"/><path d="M410 205L410 120" marker-end="url(#fl-buck)"/><path d="M352 112L352 136" marker-end="url(#fl-buck)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13"><text x="65" y="150">+</text><text x="66" y="178">-</text><text x="10" y="112">V_e</text><text x="118" y="100">T</text><text x="186" y="166">D</text><text x="255" y="98">L</text><text x="100" y="122" font-size="11">q(t)</text><text x="178" y="46">i_T</text><text x="238" y="196">i_D</text><text x="252" y="30">v_L</text><text x="272" y="102">i_L</text><text x="272" y="166">C</text><text x="384" y="166">R</text><text x="400" y="112">V_s</text><text x="380" y="92">+</text><text x="380" y="240">-</text><text x="330" y="108">I_s</text><text x="232" y="270" font-size="11">0 V</text><text x="222" y="62" font-size="11">A</text></g><g fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><path d="M480 62H742"/><path d="M480 118H742"/><path d="M480 200H742"/><path d="M480 256H742"/><path d="M480 30V270"/><path d="M480 174H730" stroke-dasharray="5 4"/><path d="M480 200H730" opacity="0"/><path d="M555 34V262" stroke-dasharray="2 4" opacity="0.6"/><path d="M605 34V262" stroke-dasharray="2 4" opacity="0.6"/><path d="M730 34V262" stroke-dasharray="2 4" opacity="0.6"/></g><g fill="currentColor" stroke="none" opacity="0.16"><rect x="480" y="102" width="75" height="16"/><rect x="555" y="118" width="50" height="24"/><rect x="605" y="102" width="75" height="16"/><rect x="680" y="118" width="50" height="24"/></g><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M480 62V42H555V62H605V42H680V62H730" stroke-width="2"/><path d="M480 118V102H555V142H605V118V102H680V142H730V118" stroke-width="2.4"/><path d="M480 188L555 160L605 188L680 160L730 188" stroke-width="2.6"/><path d="M480 256H555V228L605 247.6V256M605 256H680V228L730 247.6V256" stroke-width="2.4"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="436" y="66">q</text><text x="436" y="122">v_L</text><text x="436" y="204">i_L</text><text x="436" y="260">i_D</text><text x="484" y="96" font-size="11">V_e - V_s</text><text x="559" y="156" font-size="11">-V_s</text><text x="509.5" y="114" font-size="11">A+</text><text x="572" y="134" font-size="11">A-</text><text x="736" y="178" font-size="11">I_L</text><text x="547" y="284" font-size="11">DT</text><text x="597" y="284" font-size="11">T</text><text x="722" y="284" font-size="11">2T</text></g></svg>
+    <figcaption>
+      Hacheur abaisseur. À gauche, le schéma : $V_e$ et $V_s$ fléchées vers la borne positive, masse $0\ \mathrm{V}$ en bas ; $i_T$, $i_L$ et $i_D$
+      fléchés dans leur sens réel de circulation ; $v_L$ en convention récepteur, flèche vers le nœud $A$ par lequel entre $i_L$ ; $I_s$ est le
+      courant moyen de la charge, et le courant du condensateur vaut $i_C = i_L - I_s$. À droite, deux périodes avec $D = 0{,}6$ : commande $q$,
+      tension $v_L$ avec les aires $A_+$ et $A_-$ grisées et égales, courant $i_L$ triangulaire autour de sa moyenne $I_L$ en tirets, et courant de
+      diode $i_D$, égal à $i_L$ pendant la phase 2. Les traits verticaux pointillés repèrent $DT_d$ et la fin de chaque période.
+    </figcaption>
+  </figure>
+  <p>
+    Équilibre des volts-secondes : $(V_e - V_s)\,DT_d = V_s\,(1 - D)\,T_d$, d'où :
+  </p>
+  <div class="formule-cle">
+    $$V_s = D\,V_e, \qquad \Delta i_L = \frac{(V_e - V_s)\,D}{L\,f} = \frac{V_s\,(1 - D)}{L\,f}, \qquad I_L = I_s$$
+    <p class="formule-cle-legende">
+      $V_e$, $V_s$ en volts ; $D$ sans dimension, entre $0$ et $1$ ; $L$ en henrys ; $f$ en hertz ; courants en ampères. Hypothèses : composants
+      idéaux, conduction continue, $V_s$ constante sur une période. Le courant moyen de l'inductance est celui de la charge, car le courant moyen du
+      condensateur est nul en régime établi. Vérification dimensionnelle : $\mathrm{V}/(\mathrm{H} \cdot \mathrm{Hz}) = \mathrm{V} \cdot \mathrm{s}/\mathrm{H} = \mathrm{A}$,
+      puisque $1\ \mathrm{H} = 1\ \mathrm{V \cdot s/A}$. Cas limites : $D = 1$ donne $V_s = V_e$, interrupteur toujours fermé ; $D \to 0$ donne
+      $V_s \to 0$. Interprétation : la sortie reçoit la valeur moyenne du créneau $v_A$, que le filtre $LC$ débarrasse de ses composantes à $f$ et
+      au-delà.
+    </p>
+  </div>
+  <p>
+    L'ondulation $\Delta i_L = V_e D(1 - D)/(Lf)$ est maximale à $D = 0{,}5$ pour une entrée donnée ; à sortie fixée, elle croît avec $V_e$, puisque
+    $\Delta i_L = V_s(1 - V_s/V_e)/(Lf)$. Le dimensionnement de l'inductance se fait donc à la tension d'entrée maximale. Bilan de puissance des
+    composants idéaux : $V_eI_e = V_sI_s$, avec $I_e = DI_L$, le courant moyen de l'interrupteur ; le hacheur abaisseur est un "transformateur
+    continu" de rapport $D$. Les courants des composants, l'ondulation étant négligée devant $I_L$, valent :
+  </p>
+  <div class="formule-cle">
+    $$I_{T,moy} = D\,I_L, \quad I_{T,eff} \approx I_L\sqrt{D}, \quad I_{D,moy} = (1 - D)\,I_L, \quad I_{D,eff} \approx I_L\sqrt{1 - D}, \quad V_{T,max} = V_{D,max} = V_e$$
+    <p class="formule-cle-legende">
+      Avec l'ondulation, on remplace $I_L^2$ par $I_L^2 + \Delta i_L^2/12$ dans les valeurs efficaces. Ces formules alimentent directement les calculs
+      de pertes du cours <a href="#/cours/mosfet-et-igbt">MOSFET et IGBT</a> : $R_{DS(on)}I_{T,eff}^2$ pour l'interrupteur et $V_FI_{D,moy}$ pour une
+      diode Schottky.
+    </p>
+  </div>
+  <p>
+    Ondulation de tension de sortie. Le courant du condensateur est $i_C = i_L - I_s$, un triangle d'amplitude crête à crête $\Delta i_L$ centré
+    sur zéro. La charge apportée pendant la demi-période où $i_C > 0$ est l'aire d'un triangle de base $T_d/2$ et de hauteur $\Delta i_L/2$, soit
+    $\Delta Q = \frac{1}{2} \cdot \frac{T_d}{2} \cdot \frac{\Delta i_L}{2} = \frac{\Delta i_L}{8f}$.
+  </p>
+  <div class="formule-cle">
+    $$\Delta V_s = \frac{\Delta Q}{C} = \frac{\Delta i_L}{8\,C\,f} = \frac{V_s\,(1 - D)}{8\,L\,C\,f^2}, \qquad \Delta V_{ESR} \approx R_{ESR}\,\Delta i_L, \qquad I_{C,eff} = \frac{\Delta i_L}{\sqrt{12}}$$
+    <p class="formule-cle-legende">
+      $C$ en farads, $\Delta V_s$ en volts. Vérification : $\mathrm{A}/(\mathrm{F} \cdot \mathrm{Hz}) = \mathrm{A \cdot s}/\mathrm{F} = \mathrm{C}/\mathrm{F} = \mathrm{V}$.
+      Hypothèse : condensateur idéal ; un condensateur réel ajoute la chute $R_{ESR}\,i_C$ dans sa résistance série équivalente, souvent dominante
+      pour les électrolytiques. Additionner les deux termes est pessimiste, car leurs maxima ne coïncident pas : c'est une règle de conception
+      prudente, pas une loi. Interprétation : la décroissance en $1/f^2$ explique pourquoi monter en fréquence réduit si vite la taille du filtre.
+      Écrite avec $f_0 = 1/(2\pi\sqrt{LC})$, la formule devient $\Delta V_s/V_s = \frac{\pi^2}{2}(1 - D)(f_0/f)^2$ : c'est l'atténuation d'un filtre
+      du second ordre, déjà rencontré dans le cours <a href="#/cours/filtres-passifs">Filtres passifs</a>.
+    </p>
+  </div>
+
+  <h3 id="e-boost">Hacheur élévateur, ou boost</h3>
+  <p>
+    Inductance entre la source et le nœud $A$, interrupteur entre $A$ et la masse, diode entre $A$ et la sortie. Phase 1 : $T$ fermé, $v_A = 0$,
+    $v_L = V_e > 0$, $i_L$ croît ; la diode est bloquée sous $V_s$ en inverse et le condensateur alimente seul la charge. Phase 2 : $T$ ouvert,
+    $i_L$ force la diode en conduction, $v_A = V_s$, $v_L = V_e - V_s &lt; 0$ et $i_L$ décroît en alimentant la sortie.
+  </p>
+  <figure id="e-boost-figure">
+    <svg viewBox="0 0 770 300" role="img" aria-label="Hacheur élévateur : schéma avec conventions et chronogrammes de la commande, de la tension et du courant de l'inductance et du courant de diode"><defs><marker id="fl-boost" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M70 70V140M70 180V250"/><circle cx="70" cy="160" r="20"/><path d="M70 250H370"/><path d="M70 70H112.5a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0H215"/><path d="M215 70V130"/><path d="M215 130V138M215 182V190"/><path d="M215 182L197 142" stroke-width="2.4"/><circle cx="215" cy="138" r="3"/><circle cx="215" cy="182" r="3"/><path d="M215 190V250"/><path d="M215 70H253.5M271.5 70H310"/><path d="M253.5 60L271.5 70L253.5 80Z"/><path d="M271.5 60v20" stroke-width="2.6"/><path d="M310 70H370"/><path d="M310 70V155M310 165V250"/><path d="M292 155h36M292 165h36" stroke-width="3"/><path d="M370 70V136M370 184V250"/><rect x="361" y="136" width="18" height="48" rx="3"/><path d="M215 250v10M201 260h28M206 265h18M211 270h8"/></g><circle cx="215" cy="70" r="3.6" fill="currentColor" stroke="none"/><circle cx="310" cy="70" r="3.6" fill="currentColor" stroke="none"/><circle cx="310" cy="250" r="3.6" fill="currentColor" stroke="none"/><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M36 200L36 120" marker-end="url(#fl-boost)"/><path d="M170 38L120 38" marker-end="url(#fl-boost)"/><path d="M100 84L124 84" marker-end="url(#fl-boost)"/><path d="M232 140L232 168" marker-end="url(#fl-boost)"/><path d="M250 52L280 52" marker-end="url(#fl-boost)"/><path d="M410 205L410 120" marker-end="url(#fl-boost)"/><path d="M352 112L352 136" marker-end="url(#fl-boost)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13"><text x="65" y="150">+</text><text x="66" y="178">-</text><text x="10" y="112">V_e</text><text x="152" y="106">L</text><text x="176" y="150">T</text><text x="258" y="98">D</text><text x="120" y="214" font-size="11">q(t)</text><text x="134" y="30">v_L</text><text x="92" y="102">i_L</text><text x="238" y="160">i_T</text><text x="252" y="44">i_D</text><text x="272" y="166">C</text><text x="384" y="166">R</text><text x="400" y="112">V_s</text><text x="380" y="92">+</text><text x="380" y="240">-</text><text x="330" y="108">I_s</text><text x="232" y="270" font-size="11">0 V</text><text x="222" y="62" font-size="11">A</text></g><g fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><path d="M480 62H742"/><path d="M480 118H742"/><path d="M480 200H742"/><path d="M480 256H742"/><path d="M480 30V270"/><path d="M480 174H730" stroke-dasharray="5 4"/><path d="M480 200H730" opacity="0"/><path d="M555 34V262" stroke-dasharray="2 4" opacity="0.6"/><path d="M605 34V262" stroke-dasharray="2 4" opacity="0.6"/><path d="M730 34V262" stroke-dasharray="2 4" opacity="0.6"/></g><g fill="currentColor" stroke="none" opacity="0.16"><rect x="480" y="100" width="75" height="18"/><rect x="555" y="118" width="50" height="27"/><rect x="605" y="100" width="75" height="18"/><rect x="680" y="118" width="50" height="27"/></g><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M480 62V42H555V62H605V42H680V62H730" stroke-width="2"/><path d="M480 118V100H555V145H605V118V100H680V145H730V118" stroke-width="2.4"/><path d="M480 188L555 160L605 188L680 160L730 188" stroke-width="2.6"/><path d="M480 256H555V228L605 247.6V256M605 256H680V228L730 247.6V256" stroke-width="2.4"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="436" y="66">q</text><text x="436" y="122">v_L</text><text x="436" y="204">i_L</text><text x="436" y="260">i_D</text><text x="484" y="94" font-size="11">V_e</text><text x="559" y="159" font-size="11">V_e - V_s</text><text x="509.5" y="113" font-size="11">A+</text><text x="572" y="135.5" font-size="11">A-</text><text x="736" y="178" font-size="11">I_L</text><text x="547" y="284" font-size="11">DT</text><text x="597" y="284" font-size="11">T</text><text x="722" y="284" font-size="11">2T</text></g></svg>
+    <figcaption>
+      Hacheur élévateur, mêmes conventions. L'inductance est côté source : la flèche de $v_L$ pointe vers la borne de gauche, par laquelle entre
+      $i_L$. Le courant de la source est $i_L$ lui-même, continu ; le courant reçu par la sortie est $i_D$, nul pendant $DT_d$ puis égal à $i_L$ :
+      c'est un courant pulsé, dont l'amplitude dépasse nettement le courant moyen $I_s$. Les aires $A_+ = V_eDT_d$ et $A_- = (V_s - V_e)(1 - D)T_d$
+      sont égales en régime établi.
+    </figcaption>
+  </figure>
+  <p>
+    Équilibre des volts-secondes : $V_e\,DT_d = (V_s - V_e)(1 - D)\,T_d$, d'où :
+  </p>
+  <div class="formule-cle">
+    $$V_s = \frac{V_e}{1 - D}, \qquad I_L = \frac{I_s}{1 - D}, \qquad \Delta i_L = \frac{V_e\,D}{L\,f}, \qquad \Delta V_s = \frac{I_s\,D}{C\,f}, \qquad V_{T,max} = V_{D,max} = V_s$$
+    <p class="formule-cle-legende">
+      Mêmes unités. Le courant moyen d'entrée est celui de l'inductance : par le bilan de puissance, $V_eI_L = V_sI_s$, d'où $I_L = I_s/(1 - D)$.
+      L'ondulation de tension se calcule autrement que pour l'abaisseur : pendant $DT_d$, le condensateur fournit seul le courant $I_s$, et perd la
+      charge $I_sDT_d$. Cas limites : $D = 0$ donne $V_s = V_e$, la diode conduisant en permanence ; $D \to 1$ donne en théorie $V_s \to \infty$, ce
+      que les pertes interdisent, comme le montre la simulation de gain réel plus bas. À sortie fixée, $\Delta i_L = V_e(1 - V_e/V_s)/(Lf)$ est
+      maximale pour $V_e = V_s/2$, ou à la borne de la plage d'entrée la plus proche de cette valeur. Vérification dimensionnelle de $\Delta V_s$ :
+      $\mathrm{A}/(\mathrm{F} \cdot \mathrm{Hz}) = \mathrm{V}$.
+    </p>
+  </div>
+  <p>
+    Le courant efficace du condensateur de sortie est la grandeur la plus souvent sous-estimée. Le courant $i_D$ vaut environ $I_L$ pendant
+    $(1 - D)T_d$ ; le condensateur reçoit $i_D - I_s$, de valeur moyenne nulle. Son carré moyen vaut $(1 - D)I_L^2 - I_s^2 = I_s^2\frac{D}{1 - D}$,
+    d'où $I_{C,eff} \approx I_s\sqrt{D/(1 - D)}$, ondulation négligée : à $D = 0{,}6$, $1{,}22$ fois le courant de sortie, alors que, dans un
+    abaisseur, ce courant n'est qu'une fraction de l'ondulation $\Delta i_L$. À l'inverse, l'entrée d'un élévateur ne demande qu'un petit
+    condensateur. Enfin, un élévateur n'a pas de protection naturelle : la diode relie en permanence l'entrée à la sortie, si bien qu'un
+    court-circuit en sortie n'est limité par aucun interrupteur, et qu'à la mise sous tension le condensateur de sortie se charge directement à
+    $V_e$ par un appel de courant limité seulement par les résistances.
+  </p>
+
+  <h3 id="e-bb">Hacheur abaisseur-élévateur inverseur, ou buck-boost</h3>
+  <p>
+    Interrupteur entre la source et $A$, inductance entre $A$ et la masse, diode entre la sortie et $A$, montée pour conduire de la sortie vers
+    $A$. Phase 1 : $T$ fermé, $v_L = V_e$, l'inductance se charge sans échange avec la sortie. Phase 2 : $T$ ouvert, l'inductance maintient son
+    courant vers la masse ; ce courant ne peut venir que de la sortie à travers la diode, si bien que la borne de sortie devient négative par
+    rapport à la masse. Toute l'énergie transférée transite par l'inductance : c'est un convertisseur à stockage pur.
+  </p>
+  <figure id="e-bb-figure">
+    <svg viewBox="0 0 770 300" role="img" aria-label="Hacheur abaisseur-élévateur inverseur : schéma avec conventions et chronogrammes"><defs><marker id="fl-bb" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M70 70V140M70 180V250"/><circle cx="70" cy="160" r="20"/><path d="M70 250H370"/><path d="M70 70H100"/><path d="M100 70H108M162 70H170"/><path d="M108 70L158 52" stroke-width="2.4"/><circle cx="108" cy="70" r="3"/><circle cx="162" cy="70" r="3"/><path d="M170 70H215"/><path d="M215 70V130a7.5 7.5 0 0 1 0 15a7.5 7.5 0 0 1 0 15a7.5 7.5 0 0 1 0 15a7.5 7.5 0 0 1 0 15V250"/><path d="M215 70H253.5M271.5 70H310"/><path d="M271.5 60L253.5 70L271.5 80Z"/><path d="M253.5 60v20" stroke-width="2.6"/><path d="M310 70H370"/><path d="M310 70V155M310 165V250"/><path d="M292 155h36M292 165h36" stroke-width="3"/><path d="M370 70V136M370 184V250"/><rect x="361" y="136" width="18" height="48" rx="3"/><path d="M215 250v10M201 260h28M206 265h18M211 270h8"/></g><circle cx="215" cy="70" r="3.6" fill="currentColor" stroke="none"/><circle cx="310" cy="70" r="3.6" fill="currentColor" stroke="none"/><circle cx="310" cy="250" r="3.6" fill="currentColor" stroke="none"/><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M36 200L36 120" marker-end="url(#fl-bb)"/><path d="M176 56L204 56" marker-end="url(#fl-bb)"/><path d="M254 196L254 136" marker-end="url(#fl-bb)"/><path d="M198 200L198 226" marker-end="url(#fl-bb)"/><path d="M282 52L252 52" marker-end="url(#fl-bb)"/><path d="M410 120L410 205" marker-end="url(#fl-bb)"/><path d="M352 112L352 136" marker-end="url(#fl-bb)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13"><text x="65" y="150">+</text><text x="66" y="178">-</text><text x="10" y="112">V_e</text><text x="118" y="100">T</text><text x="240" y="166">L</text><text x="258" y="98">D</text><text x="100" y="116" font-size="11">q(t)</text><text x="178" y="46">i_T</text><text x="260" y="140">v_L</text><text x="166" y="216">i_L</text><text x="252" y="44">i_D</text><text x="272" y="166">C</text><text x="384" y="166">R</text><text x="396" y="228">|V_s|</text><text x="380" y="92">-</text><text x="380" y="240">+</text><text x="330" y="108">I_s</text><text x="232" y="270" font-size="11">0 V</text><text x="222" y="62" font-size="11">A</text></g><g fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><path d="M480 62H742"/><path d="M480 118H742"/><path d="M480 200H742"/><path d="M480 256H742"/><path d="M480 30V270"/><path d="M480 174H730" stroke-dasharray="5 4"/><path d="M480 200H730" opacity="0"/><path d="M555 34V262" stroke-dasharray="2 4" opacity="0.6"/><path d="M605 34V262" stroke-dasharray="2 4" opacity="0.6"/><path d="M730 34V262" stroke-dasharray="2 4" opacity="0.6"/></g><g fill="currentColor" stroke="none" opacity="0.16"><rect x="480" y="100" width="75" height="18"/><rect x="555" y="118" width="50" height="27"/><rect x="605" y="100" width="75" height="18"/><rect x="680" y="118" width="50" height="27"/></g><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M480 62V42H555V62H605V42H680V62H730" stroke-width="2"/><path d="M480 118V100H555V145H605V118V100H680V145H730V118" stroke-width="2.4"/><path d="M480 188L555 160L605 188L680 160L730 188" stroke-width="2.6"/><path d="M480 256H555V228L605 247.6V256M605 256H680V228L730 247.6V256" stroke-width="2.4"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="436" y="66">q</text><text x="436" y="122">v_L</text><text x="436" y="204">i_L</text><text x="436" y="260">i_D</text><text x="484" y="94" font-size="11">V_e</text><text x="559" y="159" font-size="11">-|V_s|</text><text x="509.5" y="113" font-size="11">A+</text><text x="572" y="135.5" font-size="11">A-</text><text x="736" y="178" font-size="11">I_L</text><text x="547" y="284" font-size="11">DT</text><text x="597" y="284" font-size="11">T</text><text x="722" y="284" font-size="11">2T</text></g></svg>
+    <figcaption>
+      Hacheur inverseur. L'inductance est verticale, parcourue de haut en bas : la flèche de $v_L$ pointe vers la borne haute. La sortie est
+      inversée : la borne commune avec la masse est la borne positive, signe $+$ en bas, et la flèche $|V_s|$ pointe donc vers le bas. Le courant de
+      diode $i_D$ circule de la sortie vers le nœud $A$. Entrée et sortie reçoivent toutes deux un courant haché ; l'interrupteur et la diode
+      supportent $V_e + |V_s|$ à l'état bloqué.
+    </figcaption>
+  </figure>
+  <p>
+    Équilibre des volts-secondes : $V_e\,DT_d = |V_s|(1 - D)\,T_d$, d'où :
+  </p>
+  <div class="formule-cle">
+    $$|V_s| = \frac{D}{1 - D}\,V_e, \qquad I_L = \frac{I_s}{1 - D} = I_e + I_s, \qquad \Delta i_L = \frac{V_e\,D}{L\,f}, \qquad \Delta V_s = \frac{I_s\,D}{C\,f}, \qquad V_{T,max} = V_e + |V_s|$$
+    <p class="formule-cle-legende">
+      Le rapport vaut $1$ pour $D = 0{,}5$ : au-dessous, le montage abaisse ; au-dessus, il élève. Cas limites : $D = 0$ donne $V_s = 0$ ; $D \to 1$
+      donne en théorie une tension infinie. Le courant de l'inductance porte la somme des courants moyens d'entrée et de sortie : c'est le prix d'un
+      transfert entièrement indirect. Variantes à retenir sans les détailler : le montage SEPIC et le montage Ćuk donnent un rapport $D/(1 - D)$ avec
+      un condensateur de transfert, le SEPIC sans inversion ; le buck-boost à quatre interrupteurs, sans inversion, est courant dans les chargeurs
+      USB et les convertisseurs de batterie.
+    </p>
+  </div>
+
+  <h3 id="e-volt-seconde">L'équilibre des volts-secondes vu sur une batterie</h3>
+  <p>
+    Quand un hacheur abaisseur charge une batterie, la tension de sortie n'est plus libre : la batterie l'impose, à quelques dixièmes de volt près.
+    Le raisonnement de la section D s'applique alors à l'envers : si $DV_e$ diffère de la tension de la batterie, l'équilibre des volts-secondes ne
+    peut pas être atteint par la tension, et c'est le courant qui dérive, période après période. Seule la petite résistance $r$ de la batterie et des
+    connexions arrête la dérive, quand $DV_e - V_{bat} = rI_L$. La simulation suivante reproduit ce mécanisme avec le chargeur du projet fil rouge :
+    $V_e = 40\ \mathrm{V}$, $L = 56\ \mathrm{\mu H}$, $f = 100\ \mathrm{kHz}$.
+  </p>
+  <p>
+    Prédisez avant de manipuler : avec $D = 0{,}675$, donc $DV_e = 27\ \mathrm{V}$, une batterie à $26{,}2\ \mathrm{V}$ et $r = 0{,}1\ \Omega$, vers
+    quel courant moyen le hacheur tend-il ? Et que se passe-t-il si le rapport cyclique est augmenté de seulement $0{,}02$ ? Lancez la lecture : le
+    temps s'écoule de $0$ à $3\ \mathrm{ms}$, soit $300$ périodes, et peut être mis en pause ou remis à zéro ; les curseurs changent $D$, la
+    tension de batterie et $r$ ; le tracé de $v_L$ montre la période atteinte par la lecture.
+  </p>
+  <figure id="e-vs-figure">
+    <div id="e-vs-curseurs"></div>
+    <div id="e-vs-vl"></div>
+    <div id="e-vs-il"></div>
+    <div id="e-vs-lecteur"></div>
+    <div id="e-vs-valeurs"></div>
+    <figcaption>
+      En haut, la tension $v_L$ pendant la période observée : la surface comprise entre la courbe et l'axe au-dessus de zéro est $A_+$, celle au-dessous
+      est $A_-$ ; leur différence divisée par $L$ donne la variation du courant sur la période. En bas, le courant $i_L$ depuis la mise en marche,
+      tracé jusqu'à l'instant atteint par la lecture, et sa valeur finale théorique $(DV_e - V_{bat})/r$ en repère horizontal. Le modèle néglige la
+      chute de la diode et de l'interrupteur, et suppose la batterie de tension constante.
+    </figcaption>
+  </figure>
+  <p>
+    Interprétation. Le courant monte avec la constante de temps $L/r = 0{,}56\ \mathrm{ms}$ vers $(27 - 26{,}2)/0{,}1 = 8\ \mathrm{A}$. Avec
+    $D = 0{,}695$, $DV_e = 27{,}8\ \mathrm{V}$ et le courant tend vers $16\ \mathrm{A}$ : une erreur de $3\ \%$ sur le rapport cyclique double le
+    courant. Un chargeur de batterie ne peut donc jamais fonctionner en boucle ouverte sur le rapport cyclique : il faut une régulation du courant,
+    qui ajuste $D$ en permanence, puis une régulation de tension en fin de charge. Les boucles de régulation seront traitées dans le module
+    d'automatique, à partir du cours Modélisation des systèmes dynamiques. Si $DV_e$ est plus petit que la tension de batterie, le courant tombe à
+    zéro et y reste : la diode empêche toute inversion, le hacheur abaisseur est unidirectionnel.
+  </p>
+
+  <h3 id="e-formes">Formes d'onde des trois topologies</h3>
+  <p>
+    La simulation suivante calcule le régime établi exact des trois topologies, conduction discontinue comprise, pour un jeu de paramètres
+    quelconque : tension d'entrée, rapport cyclique, inductance, fréquence, résistance de charge et capacité de sortie. Prédisez avant de manipuler :
+    pour le hacheur abaisseur avec les valeurs initiales, que devient l'ondulation $\Delta i_L$ si $R$ passe de $3{,}4$ à $100\ \Omega$ ? Et que
+    devient la tension de sortie ? Puis, pour le hacheur élévateur, comparez l'ondulation de tension de sortie à celle de l'abaisseur pour la même
+    capacité.
+  </p>
+  <figure id="e-formes-figure">
+    <div id="e-formes-curseurs"></div>
+    <div id="e-formes-il"></div>
+    <div id="e-formes-vl"></div>
+    <div id="e-formes-valeurs"></div>
+    <figcaption>
+      Régime établi sur deux périodes. Premier tracé : le courant $i_L$ de l'inductance et le courant reçu par le nœud de sortie, $i_L$ pour
+      l'abaisseur, $i_D$ pour les deux autres. Second tracé : la tension $v_L$, avec ses deux paliers en conduction continue et un troisième palier
+      nul en conduction discontinue. Les légendes associent chaque courbe à son nom ; les valeurs affichées sous les tracés sont calculées avec les
+      mêmes équations que le texte. L'ondulation de sortie est obtenue en intégrant numériquement le courant du condensateur.
+    </figcaption>
+  </figure>
+  <p>
+    Interprétation. Tant que le courant ne s'annule pas, l'ondulation $\Delta i_L$ ne dépend pas de la charge : seule la valeur moyenne $I_L$ suit
+    $I_s$. Quand $R$ augmente, le triangle descend jusqu'à toucher zéro, puis un palier nul apparaît : c'est la conduction discontinue, et la tension
+    de sortie monte au-dessus de $DV_e$. Pour l'élévateur, l'ondulation de sortie est plusieurs fois plus forte que pour l'abaisseur à capacité égale,
+    parce que le condensateur porte seul la charge pendant $DT_d$, au lieu de n'absorber que l'ondulation d'un courant continu.
+  </p>
+
+  <h3 id="e-discontinu">Conduction discontinue</h3>
+  <p>
+    Frontière. La conduction reste continue tant que le minimum du triangle, $I_L - \Delta i_L/2$, est positif. Pour l'abaisseur, $I_L = I_s$ ; la
+    frontière est atteinte quand $I_s = \Delta i_L/2$. Pour l'élévateur et l'inverseur, $I_L = I_s/(1 - D)$. Dans les trois cas, le courant de sortie
+    limite s'écrit de la même façon en fonction de la tension d'entrée :
+  </p>
+  <div class="formule-cle">
+    $$I_{s,lim} = \frac{V_e\,D\,(1 - D)}{2\,L\,f}$$
+    <p class="formule-cle-legende">
+      Pour l'abaisseur, on retrouve $\Delta i_L/2 = V_s(1 - D)/(2Lf)$. Vérification : $\mathrm{V}/(\mathrm{H} \cdot \mathrm{Hz}) = \mathrm{A}$. Ce
+      courant est maximal à $D = 0{,}5$. Au-dessous de $I_{s,lim}$, le hacheur est en conduction discontinue. On écrit souvent ce critère avec le
+      paramètre sans dimension $K = 2Lf/R$ : conduction continue si $K > 1 - D$ pour l'abaisseur, $K > D(1 - D)^2$ pour l'élévateur et
+      $K > (1 - D)^2$ pour l'inverseur.
+    </p>
+  </div>
+  <p>
+    Rapport de conversion en conduction discontinue, établi pour l'abaisseur. La période comporte trois intervalles : $DT_d$, où $i_L$ monte de $0$
+    à $\hat{I}_L = (V_e - V_s)DT_d/L$ ; $D_2T_d$, où il redescend à zéro, avec $V_sD_2T_d = (V_e - V_s)DT_d$ par l'équilibre des volts-secondes ; et
+    le reste, où $i_L = 0$, la diode et l'interrupteur étant tous deux bloqués. Le courant moyen de l'inductance est l'aire du triangle divisée par la
+    période : $I_s = \frac{1}{2}\hat{I}_L(D + D_2)$. En éliminant $D_2$ et $\hat{I}_L$ :
+  </p>
+  <div class="formule-cle">
+    $$I_s = \frac{V_e\,D^2}{2\,L\,f}\cdot\frac{1 - M}{M} \quad\Longleftrightarrow\quad M = \frac{V_s}{V_e} = \frac{1}{1 + \dfrac{2\,L\,f\,I_s}{D^2\,V_e}} = \frac{2}{1 + \sqrt{1 + 4K/D^2}}$$
+    <p class="formule-cle-legende">
+      Hypothèses : composants idéaux, tension de sortie constante sur une période. Cas limites : à la frontière, $I_s = I_{s,lim}$, la formule redonne
+      $M = D$ ; à vide, $I_s \to 0$, $M \to 1$ : la sortie monte jusqu'à l'entrée, quel que soit le rapport cyclique. Pour l'élévateur,
+      $M = 1 + V_eD^2/(2LfI_s)$, qui croît sans limite à vide ; pour l'inverseur, $M = V_eD^2/(2LfI_s) = D/\sqrt{K}$. Interprétation : en conduction
+      discontinue, chaque période transfère une énergie fixée, $\frac{1}{2}L\hat{I}_L^2$, indépendante de la charge ; si la charge consomme moins, la
+      tension monte. Un élévateur à vide en boucle ouverte détruit donc son condensateur ou son interrupteur : la régulation doit réduire $D$, et une
+      protection contre la surtension de sortie est obligatoire.
+    </p>
+  </div>
+  <p>
+    La conduction discontinue n'est pas un défaut : elle réduit les pertes de recharge de la diode et simplifie la régulation, et beaucoup
+    d'alimentations de faible puissance y fonctionnent volontairement. Mais elle change le gain et la dynamique, augmente le courant crête et
+    l'ondulation, et, en régulation de tension, elle impose à la commande une plage de rapport cyclique beaucoup plus large. La simulation suivante
+    trace la caractéristique de sortie $V_s(I_s)$ de chaque topologie pour quatre rapports cycliques. Prédisez avant de manipuler : à $D$ constant,
+    sur quelle partie de la caractéristique la tension de sortie dépend-elle de la charge ? Faites glisser la poignée ronde le long de l'axe
+    horizontal pour choisir le courant de sortie : le point de fonctionnement se place sur la courbe du rapport cyclique choisi.
+  </p>
+  <figure id="e-frontiere-figure">
+    <div id="e-frontiere-curseurs"></div>
+    <div class="schema-vivant" id="e-frontiere"></div>
+    <div id="e-frontiere-valeurs"></div>
+    <figcaption>
+      Caractéristiques de sortie avec $V_e = 40\ \mathrm{V}$, $L = 56\ \mathrm{\mu H}$, $f = 100\ \mathrm{kHz}$, valeurs du chargeur du projet fil
+      rouge. Abscisse : courant de sortie $I_s$ ; ordonnée : tension de sortie, en valeur absolue pour l'inverseur. Les quatre courbes en trait fin
+      correspondent à $D = 0{,}2$, $0{,}4$, $0{,}6$ et $0{,}8$ ; la courbe en trait épais correspond au rapport cyclique choisi par le curseur. La
+      courbe en tirets est la frontière : à droite, conduction continue et tension horizontale ; à gauche, conduction discontinue. La poignée se
+      déplace sur l'axe des courants ; le point plein, relié à elle par un trait pointillé, est le point de fonctionnement.
+    </figcaption>
+  </figure>
+  <p>
+    Interprétation. À droite de la frontière, chaque caractéristique est horizontale : le hacheur se comporte comme une source de tension idéale, et
+    la régulation n'a qu'à compenser les variations de $V_e$ et les pertes. À gauche, la tension s'envole quand le courant diminue, d'autant plus vite
+    que $D$ est faible pour l'abaisseur, et sans limite pour l'élévateur et l'inverseur. Agrandir $L$ ou $f$ repousse la frontière vers les faibles
+    courants, au prix d'une inductance plus encombrante ou de pertes de commutation plus fortes.
+  </p>
+
+  <h3 id="e-reel">Limites du modèle idéal : résistance de l'inductance et gain réel</h3>
+  <p>
+    La résistance $r_L$ de l'enroulement, à laquelle s'ajoutent la résistance à l'état passant de l'interrupteur et l'équivalent de la diode, introduit
+    une chute de tension proportionnelle à $I_L$. Pour l'élévateur, l'équilibre des volts-secondes devient $(V_e - r_LI_L)D = (V_s - V_e + r_LI_L)(1 - D)$,
+    avec $I_L = V_s/(R(1 - D))$, d'où :
+  </p>
+  <div class="formule-cle">
+    $$M = \frac{V_s}{V_e} = \frac{1}{1 - D}\cdot\frac{1}{1 + \dfrac{r_L}{R\,(1 - D)^2}}, \qquad \eta = \frac{1}{1 + \dfrac{r_L}{R\,(1 - D)^2}}, \qquad M_{max} = \frac{1}{2}\sqrt{\frac{R}{r_L}}$$
+    <p class="formule-cle-legende">
+      $r_L$ et $R$ en ohms. Le maximum est atteint pour $1 - D = \sqrt{r_L/R}$. Au-delà, augmenter $D$ fait baisser la tension de sortie : la boucle de
+      régulation, qui croit devoir augmenter $D$ pour relever la tension, s'emballe et se bloque au rapport cyclique maximal. C'est pourquoi les
+      élévateurs limitent $D$ à $0{,}8$ ou $0{,}9$ et dépassent rarement un rapport de $4$ à $5$ ; au-delà, on choisit un convertisseur à
+      transformateur. Vérification dimensionnelle : $r_L/R$ est sans dimension. Cas limite : $r_L = 0$ redonne le modèle idéal.
+    </p>
+  </div>
+  <p>
+    Prédisez avant de manipuler : pour $r_L/R = 1\ \%$, quel est le gain maximal, et pour quel rapport cyclique ? Faites varier $r_L/R$ puis le
+    rapport cyclique.
+  </p>
+  <figure id="e-reel-figure">
+    <div id="e-reel-curseurs"></div>
+    <div id="e-reel-trace"></div>
+    <div id="e-reel-valeurs"></div>
+    <figcaption>
+      Gain d'un hacheur élévateur en fonction du rapport cyclique : courbe idéale $1/(1 - D)$ et courbe réelle avec $r_L/R$ choisi, identifiées par la
+      légende ; le point marque le rapport cyclique choisi, le trait vertical pointillé le gain maximal.
+    </figcaption>
+  </figure>
+  <p>
+    Interprétation. Avec $r_L/R = 1\ \%$, le gain plafonne à $5$ pour $D = 0{,}9$, et le rendement n'y est plus que de $50\ \%$ : à fort rapport, la
+    perte $r_LI_L^2$ croît comme $1/(1 - D)^2$. Dans la zone utile, $D &lt; 0{,}7$, l'écart au modèle idéal reste de quelques pour cent, que la
+    régulation corrige. Les autres approximations se lèvent de la même manière : chute de la diode, qui s'ajoute à $V_s$ dans l'équilibre ; temps
+    morts et durées de commutation, qui réduisent le rapport cyclique effectif ; saturation de l'inductance, qui fait croître $\mathrm{d}i/\mathrm{d}t$
+    au-delà du courant de saturation et qui n'est pas modélisée ici.
+  </p>
+
+  <h3 id="e-statut">Loi, convention, approximation, règle de conception et donnée du constructeur</h3>
+  <ul>
+    <li><strong>Lois physiques :</strong> $v_L = L\,\mathrm{d}i_L/\mathrm{d}t$, $i_C = C\,\mathrm{d}v_C/\mathrm{d}t$, lois de Kirchhoff, conservation de l'énergie. L'équilibre des volts-secondes et l'équilibre des charges du condensateur en sont des conséquences exactes en régime périodique.</li>
+    <li><strong>Conventions :</strong> le sens des flèches de tension et de courant, le choix de compter $|V_s|$ pour l'inverseur, la définition de $D$ comme fraction de conduction de l'interrupteur commandé, l'ondulation exprimée en crête à crête.</li>
+    <li><strong>Approximations :</strong> composants idéaux, tension de sortie constante sur une période, courant lissé dans les valeurs efficaces, addition pessimiste des ondulations capacitive et résistive.</li>
+    <li><strong>Règles de conception :</strong> ondulation de courant de $20$ à $40\ \%$ du courant nominal ; inductance choisie au cas le plus défavorable de la plage d'entrée ; courant de saturation supérieur au courant crête avec une marge, souvent $20$ à $30\ \%$, et au seuil de la limitation de courant ; tenue des semi-conducteurs voisine du double de la tension bloquée ; rapport cyclique d'un élévateur borné vers $0{,}8$ à $0{,}9$.</li>
+    <li><strong>Données du constructeur :</strong> courant de saturation et résistance de l'inductance, résistance série, courant efficace admissible et perte de capacité sous tension des condensateurs, en particulier la forte baisse de capacité des céramiques sous tension continue ; chute et tenue des semi-conducteurs. Ces valeurs se lisent sur les fiches, aux conditions de température et de fréquence indiquées.</li>
+  </ul>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, le diagramme des rapports de conversion, l'organigramme de dimensionnement et le tableau
+    comparatif. Les schémas et chronogrammes de chaque topologie sont restés au contact de leur explication, en section E ; la liste de renvois
+    figure à la fin de la section.
+  </p>
+  <p>
+    Le schéma principal montre ce que les trois hacheurs ont en commun : la même cellule de commutation, formée d'un interrupteur $T$, d'une diode
+    $D$ et d'une inductance $L$ réunis au nœud de commutation $A$. Les trois bornes libres $a$, $b$ et $c$ sont raccordées différemment selon la
+    topologie, comme l'indiquent les trois cadres. Dans tous les cas, l'inductance relie le nœud $A$ à une tension quasi constante, celle de la source,
+    de la sortie ou de la masse, ce qui garantit que son courant varie linéairement ; et la diode est orientée pour reprendre le courant de
+    l'inductance quand $T$ s'ouvre. Les flèches donnent le sens réel des courants en fonctionnement normal.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 770 310" role="img" aria-label="Schéma principal : la cellule de commutation commune aux trois hacheurs et ses trois branchements"><defs><marker id="fl-cell" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M200 150V128"/><path d="M200 58V66M200 120V128"/><path d="M200 120L182 70" stroke-width="2.4"/><circle cx="200" cy="66" r="3"/><circle cx="200" cy="120" r="3"/><path d="M200 58V40"/><circle cx="200" cy="34" r="6"/><path d="M200 150V191M200 209V250"/><path d="M190 209L200 191L210 209Z"/><path d="M190 191h20" stroke-width="2.6"/><circle cx="200" cy="256" r="6"/><path d="M200 150H235a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0H330"/><circle cx="336" cy="150" r="6"/><rect x="430" y="40" width="320" height="72" rx="10"/><rect x="430" y="124" width="320" height="72" rx="10"/><rect x="430" y="208" width="320" height="72" rx="10"/></g><circle cx="200" cy="150" r="3.6" fill="currentColor" stroke="none"/><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M232 166L296 166" marker-end="url(#fl-cell)"/><path d="M186 110L186 134" marker-end="url(#fl-cell)"/><path d="M186 226L186 196" marker-end="url(#fl-cell)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13"><text x="214" y="38">a</text><text x="214" y="98">T</text><text x="214" y="262">b</text><text x="214" y="206">D</text><text x="348" y="155">c</text><text x="255" y="132">L</text><text x="250" y="184">i_L</text><text x="150" y="120">i_T</text><text x="150" y="214">i_D</text><text x="170" y="146" font-size="12">A</text><text x="444" y="62" font-weight="600">Abaisseur (buck)</text><text x="444" y="84" font-size="12">a : V_e+</text><text x="544" y="84" font-size="12">b : 0 V</text><text x="644" y="84" font-size="12">c : V_s+</text><text x="444" y="103" font-size="12">V_s = D V_e</text><text x="444" y="146" font-weight="600">Élévateur (boost)</text><text x="444" y="168" font-size="12">a : 0 V</text><text x="544" y="168" font-size="12">b : V_s+</text><text x="644" y="168" font-size="12">c : V_e+</text><text x="444" y="187" font-size="12">V_s = V_e / (1 - D)</text><text x="444" y="230" font-weight="600">Inverseur (buck-boost)</text><text x="444" y="252" font-size="12">a : V_e+</text><text x="544" y="252" font-size="12">b : V_s-</text><text x="644" y="252" font-size="12">c : 0 V</text><text x="444" y="271" font-size="12">|V_s| = D V_e / (1 - D)</text><text x="20" y="296" font-size="12">i_T + i_D = i_L à tout instant ; T et D ne conduisent jamais ensemble en conduction continue.</text></g></svg>
+    <figcaption>
+      Schéma principal : la cellule de commutation et ses trois raccordements. À gauche, la cellule : $i_T$ descend de la borne $a$ vers $A$ quand $T$
+      conduit, $i_D$ monte de la borne $b$ vers $A$ quand la diode conduit, et $i_L$ sort de $A$ vers la borne $c$. Le signe $+$ ou $-$ suivant le nom
+      d'une tension indique la borne raccordée ; $0\ \mathrm{V}$ est la masse. Pour l'élévateur et l'inverseur, les courants réels sont de même sens
+      dans la cellule, mais la borne $c$ est côté source ou côté masse.
+    </figcaption>
+  </figure>
+  <p>
+    Le diagramme suivant compare les rapports de conversion idéaux en conduction continue. Abscisse : rapport cyclique ; ordonnée : $M = |V_s|/V_e$.
+    Le trait horizontal pointillé marque $M = 1$, le trait vertical pointillé $D = 0{,}5$, où l'inverseur passe d'abaisseur à élévateur.
+  </p>
+  <figure id="f-gains-figure">
+    <svg viewBox="0 0 760 350" role="img" aria-label="Rapport de conversion idéal en conduction continue des trois hacheurs en fonction du rapport cyclique"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M80 300H710"/><path d="M80 300V22"/><path d="M80 300v6"/><path d="M204 300v6"/><path d="M328 300v6"/><path d="M452 300v6"/><path d="M576 300v6"/><path d="M700 300v6"/><path d="M80 300h-6"/><path d="M80 246h-6"/><path d="M80 192h-6"/><path d="M80 138h-6"/><path d="M80 84h-6"/><path d="M80 30h-6"/><path d="M80 246H700" stroke-dasharray="2 4" opacity="0.6"/><path d="M390 300V30" stroke-dasharray="2 4" opacity="0.6"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="80.0,300.0 85.2,299.6 90.3,299.1 95.5,298.6 100.7,298.2 105.8,297.8 111.0,297.3 116.2,296.9 121.3,296.4 126.5,295.9 131.7,295.5 136.8,295.1 142.0,294.6 147.2,294.1 152.3,293.7 157.5,293.2 162.7,292.8 167.8,292.4 173.0,291.9 178.2,291.4 183.3,291.0 188.5,290.6 193.7,290.1 198.8,289.6 204.0,289.2 209.2,288.8 214.3,288.3 219.5,287.9 224.7,287.4 229.8,286.9 235.0,286.5 240.2,286.1 245.3,285.6 250.5,285.1 255.7,284.7 260.8,284.2 266.0,283.8 271.2,283.4 276.3,282.9 281.5,282.4 286.7,282.0 291.8,281.6 297.0,281.1 302.2,280.6 307.3,280.2 312.5,279.8 317.7,279.3 322.8,278.9 328.0,278.4 333.2,277.9 338.3,277.5 343.5,277.1 348.7,276.6 353.8,276.1 359.0,275.7 364.2,275.2 369.3,274.8 374.5,274.4 379.7,273.9 384.8,273.4 390.0,273.0 395.2,272.6 400.3,272.1 405.5,271.6 410.7,271.2 415.8,270.8 421.0,270.3 426.2,269.9 431.3,269.4 436.5,268.9 441.7,268.5 446.8,268.1 452.0,267.6 457.2,267.1 462.3,266.7 467.5,266.2 472.7,265.8 477.8,265.4 483.0,264.9 488.2,264.4 493.3,264.0 498.5,263.6 503.7,263.1 508.8,262.6 514.0,262.2 519.2,261.8 524.3,261.3 529.5,260.9 534.7,260.4 539.8,259.9 545.0,259.5 550.2,259.1 555.3,258.6 560.5,258.1 565.7,257.7 570.8,257.2 576.0,256.8 581.2,256.4 586.3,255.9 591.5,255.4 596.7,255.0 601.8,254.6 607.0,254.1 612.2,253.7 617.3,253.2 622.5,252.8 627.7,252.3 632.8,251.8 638.0,251.4 643.2,250.9 648.3,250.5 653.5,250.1 658.7,249.6 663.8,249.2 669.0,248.7 674.2,248.2 679.3,247.8 684.5,247.3 689.7,246.9 694.8,246.4 700.0,246.0"/></g><g fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="80.0,246.0 84.1,245.6 88.3,245.3 92.4,244.9 96.5,244.5 100.7,244.1 104.8,243.8 108.9,243.4 113.1,243.0 117.2,242.6 121.3,242.1 125.5,241.7 129.6,241.3 133.7,240.9 137.9,240.4 142.0,240.0 146.1,239.6 150.3,239.1 154.4,238.6 158.5,238.2 162.7,237.7 166.8,237.2 170.9,236.7 175.1,236.2 179.2,235.7 183.3,235.2 187.5,234.7 191.6,234.1 195.7,233.6 199.9,233.1 204.0,232.5 208.1,231.9 212.3,231.4 216.4,230.8 220.5,230.2 224.7,229.6 228.8,228.9 232.9,228.3 237.1,227.7 241.2,227.0 245.3,226.4 249.5,225.7 253.6,225.0 257.7,224.3 261.9,223.6 266.0,222.9 270.1,222.1 274.3,221.4 278.4,220.6 282.5,219.8 286.7,219.0 290.8,218.2 294.9,217.3 299.1,216.5 303.2,215.6 307.3,214.7 311.5,213.8 315.6,212.9 319.7,212.0 323.9,211.0 328.0,210.0 332.1,209.0 336.3,208.0 340.4,206.9 344.5,205.8 348.7,204.7 352.8,203.6 356.9,202.4 361.1,201.2 365.2,200.0 369.3,198.8 373.5,197.5 377.6,196.2 381.7,194.8 385.9,193.4 390.0,192.0 394.1,190.5 398.3,189.0 402.4,187.5 406.5,185.9 410.7,184.3 414.8,182.6 418.9,180.9 423.1,179.1 427.2,177.3 431.3,175.4 435.5,173.4 439.6,171.4 443.7,169.4 447.9,167.2 452.0,165.0 456.1,162.7 460.3,160.3 464.4,157.9 468.5,155.4 472.7,152.7 476.8,150.0 480.9,147.2 485.1,144.2 489.2,141.2 493.3,138.0 497.5,134.7 501.6,131.2 505.7,127.7 509.9,123.9 514.0,120.0 518.1,115.9 522.3,111.6 526.4,107.1 530.5,102.4 534.7,97.5 538.8,92.3 542.9,86.8 547.1,81.1 551.2,75.0 555.3,68.6 559.5,61.8 563.6,54.5 567.7,46.9 571.9,38.7 576.0,30.0"/></g><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 6"><polyline points="80.0,300.0 84.3,299.6 88.6,299.2 92.9,298.9 97.2,298.5 101.5,298.1 105.8,297.7 110.1,297.2 114.4,296.8 118.7,296.4 123.1,296.0 127.4,295.5 131.7,295.1 136.0,294.6 140.3,294.2 144.6,293.7 148.9,293.3 153.2,292.8 157.5,292.3 161.8,291.8 166.1,291.3 170.4,290.8 174.7,290.3 179.0,289.7 183.3,289.2 187.6,288.7 191.9,288.1 196.2,287.5 200.6,287.0 204.9,286.4 209.2,285.8 213.5,285.2 217.8,284.6 222.1,283.9 226.4,283.3 230.7,282.7 235.0,282.0 239.3,281.3 243.6,280.6 247.9,279.9 252.2,279.2 256.5,278.5 260.8,277.8 265.1,277.0 269.4,276.2 273.7,275.5 278.0,274.7 282.4,273.8 286.7,273.0 291.0,272.1 295.3,271.3 299.6,270.4 303.9,269.5 308.2,268.6 312.5,267.6 316.8,266.6 321.1,265.6 325.4,264.6 329.7,263.6 334.0,262.5 338.3,261.4 342.6,260.3 346.9,259.2 351.2,258.0 355.5,256.8 359.8,255.6 364.2,254.3 368.5,253.0 372.8,251.7 377.1,250.3 381.4,248.9 385.7,247.5 390.0,246.0 394.3,244.5 398.6,242.9 402.9,241.3 407.2,239.7 411.5,237.9 415.8,236.2 420.1,234.4 424.4,232.5 428.7,230.6 433.0,228.6 437.3,226.5 441.7,224.4 446.0,222.2 450.3,219.9 454.6,217.6 458.9,215.2 463.2,212.6 467.5,210.0 471.8,207.3 476.1,204.5 480.4,201.5 484.7,198.5 489.0,195.3 493.3,192.0 497.6,188.6 501.9,185.0 506.2,181.2 510.5,177.3 514.8,173.2 519.1,168.9 523.5,164.4 527.8,159.6 532.1,154.6 536.4,149.4 540.7,143.9 545.0,138.0 549.3,131.9 553.6,125.3 557.9,118.4 562.2,111.0 566.5,103.2 570.8,94.8 575.1,85.9 579.4,76.3 583.7,66.0 588.0,55.0 592.3,43.0 596.6,30.1"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13"><text x="70" y="322" font-size="11">0,0</text><text x="194" y="322" font-size="11">0,2</text><text x="318" y="322" font-size="11">0,4</text><text x="442" y="322" font-size="11">0,6</text><text x="566" y="322" font-size="11">0,8</text><text x="690" y="322" font-size="11">1,0</text><text x="58" y="304" font-size="11">0</text><text x="58" y="250" font-size="11">1</text><text x="58" y="196" font-size="11">2</text><text x="58" y="142" font-size="11">3</text><text x="58" y="88" font-size="11">4</text><text x="58" y="34" font-size="11">5</text><text x="696" y="340">D</text><text x="10" y="18">M = |V_s| / V_e</text><text x="489.2" y="288.36" font-size="12">abaisseur, trait fin</text><text x="253.6" y="57" font-size="12">élévateur, trait épais</text><text x="346.6" y="121.8" font-size="12">inverseur, tirets</text><text x="396" y="34" font-size="11">D = 0,5</text><text x="86" y="240" font-size="11">M = 1</text></g></svg>
+    <figcaption>
+      Rapports de conversion idéaux. Abaisseur, trait fin : droite $M = D$, toujours inférieure à $1$. Élévateur, trait épais : $1/(1 - D)$, toujours
+      supérieur à $1$, qui diverge vers $D = 1$. Inverseur, tirets : $D/(1 - D)$, qui traverse $M = 1$ à $D = 0{,}5$. Les deux dernières courbes sont
+      tracées jusqu'à $M = 5$ ; au-delà, les pertes rendent le modèle idéal faux, comme le montre la simulation de gain réel de la section E.
+    </figcaption>
+  </figure>
+  <p>
+    L'organigramme résume la démarche de dimensionnement. Il se lit de haut en bas ; les losanges sont des tests, les rectangles des calculs ou des
+    décisions, et les boucles ramènent au choix de la fréquence ou de l'inductance quand un critère n'est pas tenu.
+  </p>
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Données : V_e, V_s, I_s, f, ondulations"] --> B{"Sortie ?"}
+  B -->|"plus basse"| C["Abaisseur : D = V_s / V_e"]
+  B -->|"plus haute"| D["Élévateur : D = 1 - V_e / V_s"]
+  B -->|"inversée"| E["Inverseur"]
+  C --> F["Plage de D"]
+  D --> F
+  E --> F
+  F --> G["L au cas défavorable pour Δi_L"]
+  G --> H["Courants moyens, efficaces, crêtes"]
+  H --> I{"L réalisable ?"}
+  I -->|"non"| J["Augmenter f ou Δi_L"]
+  J --> G
+  I -->|"oui"| K["C : capacité, résistance série, courant efficace"]
+  K --> L["Conduction discontinue et marche à vide"]
+  L --> M["Semi-conducteurs, pertes, température"]
+  M --> N["Démarrage progressif, limitation, surtension"]</pre>
+    <figcaption>
+      Organigramme de dimensionnement d'un hacheur. Le niveau et la polarité de la sortie choisissent la topologie ; l'inductance se calcule au cas le
+      plus défavorable de la plage d'entrée ; la boucle vérifie que l'inductance reste réalisable, courant de saturation et pertes compris ; les dernières étapes traitent les régimes que le
+      modèle de base ignore : faible charge, défaut et démarrage.
+    </figcaption>
+  </figure>
+  <p>
+    Le tableau compare les trois topologies en conduction continue, composants idéaux ; $I_L$ est le courant moyen de l'inductance.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <thead>
+        <tr><th>Critère</th><th>Abaisseur</th><th>Élévateur</th><th>Inverseur</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Rapport $M$</td><td>$D$</td><td>$1/(1 - D)$</td><td>$D/(1 - D)$, sortie inversée</td></tr>
+        <tr><td>Courant moyen de $L$</td><td>$I_s$</td><td>$I_s/(1 - D) = I_e$</td><td>$I_s/(1 - D) = I_e + I_s$</td></tr>
+        <tr><td>Ondulation $\Delta i_L$</td><td>$V_s(1 - D)/(Lf)$</td><td>$V_eD/(Lf)$</td><td>$V_eD/(Lf)$</td></tr>
+        <tr><td>Tension bloquée par $T$ et $D$</td><td>$V_e$</td><td>$V_s$</td><td>$V_e + |V_s|$</td></tr>
+        <tr><td>Courant d'entrée</td><td>haché</td><td>continu, triangulaire</td><td>haché</td></tr>
+        <tr><td>Courant reçu par la sortie</td><td>continu, triangulaire</td><td>pulsé</td><td>pulsé</td></tr>
+        <tr><td>Ondulation $\Delta V_s$, condensateur idéal</td><td>$\Delta i_L/(8Cf)$</td><td>$I_sD/(Cf)$</td><td>$I_sD/(Cf)$</td></tr>
+        <tr><td>Courant efficace de $C$ en sortie</td><td>$\Delta i_L/\sqrt{12}$, faible</td><td>$\approx I_s\sqrt{D/(1 - D)}$, fort</td><td>$\approx I_s\sqrt{D/(1 - D)}$, fort</td></tr>
+        <tr><td>Court-circuit de sortie</td><td>coupé par $T$</td><td>non coupable par $T$ : la diode relie l'entrée à la sortie</td><td>coupé par $T$</td></tr>
+        <tr><td>Comportement à vide en boucle ouverte</td><td>$V_s$ monte vers $V_e$</td><td>$V_s$ monte sans limite</td><td>$|V_s|$ monte sans limite</td></tr>
+        <tr><td>Usages typiques</td><td>chargeurs, rails de cartes, alimentations $24\ \mathrm{V}$</td><td>étages photovoltaïques, correcteurs de facteur de puissance, éclairage LED</td><td>petites alimentations auxiliaires, tensions négatives</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-cellule-figure" data-renvoi="d-cellule-figure">l'animation de la cellule de commutation des trois topologies</a>, section D ;</li>
+    <li><a href="#e-buck-figure" data-renvoi="e-buck-figure">le hacheur abaisseur et ses chronogrammes</a>, <a href="#e-boost-figure" data-renvoi="e-boost-figure">le hacheur élévateur</a>, <a href="#e-bb-figure" data-renvoi="e-bb-figure">le hacheur inverseur</a>, <a href="#e-vs-figure" data-renvoi="e-vs-figure">la simulation de l'équilibre des volts-secondes sur une batterie</a>, <a href="#e-formes-figure" data-renvoi="e-formes-figure">la simulation des formes d'onde</a>, <a href="#e-frontiere-figure" data-renvoi="e-frontiere-figure">les caractéristiques de sortie et la frontière de conduction discontinue</a> et <a href="#e-reel-figure" data-renvoi="e-reel-figure">le gain réel de l'élévateur</a>, section E ;</li>
+    <li><a href="#h-figure" data-renvoi="h-figure">le hacheur du chargeur</a>, <a href="#h-demarrage-figure" data-renvoi="h-demarrage-figure">l'animation du démarrage</a> et <a href="#h-boost-figure" data-renvoi="h-boost-figure">l'élévateur de 12 à 27 V</a>, section H ;</li>
+    <li><a href="#i-figure" data-renvoi="i-figure">la chaîne de conversion photovoltaïque</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour analyser ou dimensionner un hacheur à une inductance :</p>
+  <ol>
+    <li>Rassembler les données : plage de tension d'entrée, tension et courant de sortie, fréquence de découpage, ondulations de courant et de tension admises, températures.</li>
+    <li>Choisir la topologie d'après le niveau et la polarité de la sortie, puis repérer sur le schéma le nœud de commutation, les deux phases et le sens des courants.</li>
+    <li>Écrire, pour chaque phase, la tension aux bornes de l'inductance ; appliquer l'équilibre des volts-secondes pour obtenir $M$, puis la plage du rapport cyclique aux bornes de $V_e$.</li>
+    <li>Calculer le courant moyen de l'inductance par le bilan de puissance ou par l'équilibre des charges du condensateur.</li>
+    <li>Déterminer le cas le plus défavorable pour l'ondulation, $V_e$ maximale pour l'abaisseur, $V_e$ la plus proche de $V_s/2$ pour l'élévateur, et choisir $L$ pour l'ondulation visée ; arrondir à une valeur normalisée et recalculer.</li>
+    <li>Calculer les courants crêtes et efficaces de l'inductance, de l'interrupteur, de la diode et des condensateurs ; fixer le courant de saturation de l'inductance au-dessus du courant crête et du seuil de limitation.</li>
+    <li>Choisir le condensateur de sortie : capacité pour l'ondulation, résistance série, courant efficace admissible, tension nominale et baisse de capacité sous tension.</li>
+    <li>Calculer la frontière de conduction discontinue et décider si le fonctionnement à faible charge est acceptable ; vérifier le comportement à vide.</li>
+    <li>Vérifier les tensions bloquées, choisir les semi-conducteurs, chiffrer les pertes avec les méthodes du cours <a href="#/cours/mosfet-et-igbt">MOSFET et IGBT</a> et le rendement.</li>
+    <li>Traiter les régimes hors du modèle : démarrage progressif, limitation de courant, protection de surtension, court-circuit, puis contrôler unités, ordres de grandeur et bilan énergétique.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Le travail central comporte deux dimensionnements. Le premier est celui du hacheur abaisseur du chargeur du bus $24\ \mathrm{V}$ secouru du
+    projet fil rouge, dont l'étage d'entrée a été établi dans le cours <a href="#/cours/redresseurs-monophases">Redresseurs monophasés</a> et
+    l'interrupteur choisi dans le cours <a href="#/cours/mosfet-et-igbt">MOSFET et IGBT</a>. Le second est un hacheur élévateur qui produit
+    $27\ \mathrm{V}$ à partir d'une batterie de $12\ \mathrm{V}$.
+  </p>
+  <figure id="h-figure">
+    <svg viewBox="0 0 450 310" role="img" aria-label="Hacheur abaisseur du chargeur du bus 24 V secouru avec ses valeurs"><defs><marker id="fl-h1" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M70 70V140M70 180V250"/><circle cx="70" cy="160" r="20"/><path d="M70 250H370"/><path d="M70 70H100"/><path d="M100 70H108M162 70H170"/><path d="M108 70L158 52" stroke-width="2.4"/><circle cx="108" cy="70" r="3"/><circle cx="162" cy="70" r="3"/><path d="M170 70H215"/><path d="M215 70V151M215 169V250"/><path d="M205 169L215 151L225 169Z"/><path d="M205 151h20" stroke-width="2.6"/><path d="M215 70H232.5a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0H310"/><path d="M310 70H370"/><path d="M310 70V155M310 165V250"/><path d="M292 155h36M292 165h36" stroke-width="3"/><path d="M370 70V136M370 184V250"/><rect x="361" y="136" width="18" height="48" rx="3"/><path d="M215 250v10M201 260h28M206 265h18M211 270h8"/></g><circle cx="215" cy="70" r="3.6" fill="currentColor" stroke="none"/><circle cx="310" cy="70" r="3.6" fill="currentColor" stroke="none"/><circle cx="310" cy="250" r="3.6" fill="currentColor" stroke="none"/><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M36 200L36 120" marker-end="url(#fl-h1)"/><path d="M176 56L204 56" marker-end="url(#fl-h1)"/><path d="M232 198L232 172" marker-end="url(#fl-h1)"/><path d="M288 38L238 38" marker-end="url(#fl-h1)"/><path d="M286 84L306 84" marker-end="url(#fl-h1)"/><path d="M410 205L410 120" marker-end="url(#fl-h1)"/><path d="M352 112L352 136" marker-end="url(#fl-h1)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13"><text x="65" y="150">+</text><text x="66" y="178">-</text><text x="4" y="44" font-size="11">31,5 à 49,8 V</text><text x="118" y="100">T</text><text x="186" y="166">D</text><text x="255" y="98">L</text><text x="100" y="122" font-size="11">MOSFET 100 V</text><text x="178" y="46">i_T</text><text x="238" y="196">i_D</text><text x="252" y="30">v_L</text><text x="272" y="102">i_L</text><text x="120" y="186" font-size="11">Schottky 100 V</text><text x="232" y="124" font-size="11">56 µH</text><text x="272" y="166">C</text><text x="384" y="166">R</text><text x="400" y="112">27 V</text><text x="380" y="92">+</text><text x="380" y="240">-</text><text x="330" y="108">I_s</text><text x="232" y="270" font-size="11">0 V</text><text x="222" y="62" font-size="11">A</text></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13"><text x="130" y="296" font-size="11">C = 47 µF, 15 mΩ ; R : bus 24 V et batterie, 8 A</text><text x="10" y="296" font-size="11">f = 100 kHz</text></g></svg>
+    <figcaption>
+      Hacheur abaisseur du chargeur, mêmes conventions que dans la section E. L'entrée est le bus redressé et filtré par $2 \times 6{,}8\ \mathrm{mF}$,
+      compris entre $31{,}5$ et $49{,}8\ \mathrm{V}$ ; la sortie alimente le bus $24\ \mathrm{V}$ secouru, batterie et armoire d'automatisme, sous
+      $27\ \mathrm{V}$ et $8\ \mathrm{A}$, représentés par la résistance équivalente $R$. Les valeurs inscrites sont celles retenues à la fin du calcul.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-donnees">Premier dimensionnement : données, inconnues et stratégie</h3>
+  <p>
+    Données : $V_e$ de $31{,}5$ à $49{,}8\ \mathrm{V}$, $40\ \mathrm{V}$ en fonctionnement normal ; $V_s = 27\ \mathrm{V}$ ; $I_s = 8\ \mathrm{A}$ ;
+    $f = 100\ \mathrm{kHz}$. Critères de conception supposés : ondulation de courant au plus égale à $30\ \%$ de $I_s$, soit $2{,}4\ \mathrm{A}$ ;
+    ondulation de tension de sortie au plus égale à $100\ \mathrm{mV}$ crête à crête, batterie déconnectée, pour que le hacheur reste stable et
+    propre sans elle. MOSFET $100\ \mathrm{V}$ de $12\ \mathrm{m\Omega}$ à chaud et diode Schottky de $0{,}5\ \mathrm{V}$ retenus au cours précédent ;
+    résistance d'enroulement supposée de $15\ \mathrm{m\Omega}$ ; pertes fer supposées de $0{,}5\ \mathrm{W}$. Inconnues : plage du rapport
+    cyclique, $L$, courants crête et efficace, $C$ et sa résistance série, frontière de conduction discontinue, comportement à $0{,}2\ \mathrm{A}$,
+    rendement. Stratégie : rapport cyclique aux deux bornes ; inductance à $V_e$ maximale, où l'ondulation est la plus forte ; condensateur pour cette
+    même ondulation ; puis vérifications.
+  </p>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li>Rapport cyclique : $D = V_s/V_e$, soit $27/49{,}8 = 0{,}542$, $27/40 = 0{,}675$ et $27/31{,}5 = 0{,}857$. La commande doit couvrir $0{,}54$ à $0{,}86$, plus la marge que demandent les chutes de tension.</li>
+    <li>Cas défavorable pour l'ondulation : $V_s(1 - D)$ vaut $27 \times 0{,}458 = 12{,}36\ \mathrm{V}$ à $49{,}8\ \mathrm{V}$, contre $8{,}78\ \mathrm{V}$ à $40\ \mathrm{V}$ et $3{,}86\ \mathrm{V}$ à $31{,}5\ \mathrm{V}$.</li>
+    <li>Inductance minimale : $L \geq \dfrac{V_s(1 - D)}{f\,\Delta i_L} = \dfrac{12{,}36}{10^5 \times 2{,}4} = 51{,}5\ \mathrm{\mu H}$. Valeur normalisée retenue : $L = 56\ \mathrm{\mu H}$.</li>
+    <li>Ondulations réelles : $\Delta i_L = 12{,}36/(56 \times 10^{-6} \times 10^5) = 2{,}21\ \mathrm{A}$ à $49{,}8\ \mathrm{V}$, $1{,}57\ \mathrm{A}$ à $40\ \mathrm{V}$ et $0{,}69\ \mathrm{A}$ à $31{,}5\ \mathrm{V}$.</li>
+    <li>Courant crête : $\hat{I}_L = 8 + 2{,}21/2 = 9{,}10\ \mathrm{A}$. Courant de saturation exigé, avec $25\ \%$ de marge et au-dessus d'une limitation de courant réglée vers $10\ \mathrm{A}$ : au moins $11{,}5\ \mathrm{A}$. Énergie à stocker au crête : $\frac{1}{2}L\hat{I}_L^2 = 0{,}5 \times 56 \times 10^{-6} \times 9{,}10^2 = 2{,}32\ \mathrm{mJ}$, qui fixe la taille du noyau.</li>
+    <li>Courant efficace de l'inductance : $\sqrt{8^2 + 2{,}21^2/12} = 8{,}03\ \mathrm{A}$ ; l'ondulation n'ajoute que $0{,}3\ \%$ au courant efficace.</li>
+    <li>Condensateur : $C \geq \dfrac{\Delta i_L}{8f\,\Delta V_s} = \dfrac{2{,}21}{8 \times 10^5 \times 0{,}1} = 27{,}6\ \mathrm{\mu F}$, et $R_{ESR} \leq 0{,}1/2{,}21 = 45\ \mathrm{m\Omega}$ si la résistance série était seule. Choix : condensateur polymère de $47\ \mathrm{\mu F}$, $50\ \mathrm{V}$, $15\ \mathrm{m\Omega}$ supposés. Ondulation : $\dfrac{2{,}21}{8 \times 10^5 \times 47 \times 10^{-6}} = 58{,}7\ \mathrm{mV}$ de terme capacitif, plus $0{,}015 \times 2{,}21 = 33{,}1\ \mathrm{mV}$ de terme résistif, soit au plus $91{,}8\ \mathrm{mV}$. Courant efficace : $2{,}21/\sqrt{12} = 0{,}64\ \mathrm{A}$.</li>
+    <li>Frontière de conduction discontinue : $I_{s,lim} = \Delta i_L/2$, soit $1{,}10\ \mathrm{A}$ à $49{,}8\ \mathrm{V}$ et $0{,}78\ \mathrm{A}$ à $40\ \mathrm{V}$. Au-dessous, conduction discontinue.</li>
+    <li>Fonctionnement à $0{,}2\ \mathrm{A}$ sous $40\ \mathrm{V}$, batterie chargée : $R = 27/0{,}2 = 135\ \Omega$ et $K = 2Lf/R = 2 \times 56 \times 10^{-6} \times 10^5/135 = 0{,}0830$. Si le rapport cyclique restait à $0{,}675$ : $M = 2/(1 + \sqrt{1 + 4 \times 0{,}0830/0{,}675^2}) = 2/(1 + 1{,}315) = 0{,}864$, soit $V_s = 34{,}6\ \mathrm{V}$. Pour tenir $27\ \mathrm{V}$, la régulation doit descendre à $D = \sqrt{4K/((2/M - 1)^2 - 1)}$ avec $M = 0{,}675$ : $(2/0{,}675 - 1)^2 - 1 = 2{,}853$, d'où $D = \sqrt{0{,}332/2{,}853} = 0{,}341$.</li>
+    <li>Pertes au point normal, $40\ \mathrm{V}$ : MOSFET $0{,}98\ \mathrm{W}$, repris du cours précédent ; diode $0{,}5 \times 8 \times (1 - 0{,}675) = 1{,}30\ \mathrm{W}$ ; cuivre de l'inductance $0{,}015 \times (64 + 1{,}57^2/12) = 0{,}96\ \mathrm{W}$ ; fer $0{,}5\ \mathrm{W}$. Total $3{,}74\ \mathrm{W}$ pour $216\ \mathrm{W}$ délivrés : rendement $216/219{,}7 = 98{,}3\ \%$.</li>
+  </ol>
+
+  <h3 id="h-demarrage">Démarrage : pourquoi un démarrage progressif est indispensable</h3>
+  <p>
+    À la mise en marche, batterie déconnectée, le filtre $LC$ et la charge forment le circuit RLC série du cours <a href="#/cours/regime-transitoire-rlc">Régime
+    transitoire RLC</a>, excité par un échelon de valeur moyenne $DV_e$. Fréquence propre : $f_0 = 1/(2\pi\sqrt{LC}) = 1/(2\pi\sqrt{56 \times 10^{-6} \times 47 \times 10^{-6}}) = 3{,}10\ \mathrm{kHz}$ ;
+    impédance caractéristique $\sqrt{L/C} = 1{,}09\ \Omega$ ; amortissement $\zeta = \frac{1}{2R}\sqrt{L/C} = 1{,}09/(2 \times 3{,}375) = 0{,}162$. Le
+    dépassement relatif vaut $e^{-\pi\zeta/\sqrt{1 - \zeta^2}} = 0{,}60$ : la sortie monterait vers $27 \times 1{,}60 = 43\ \mathrm{V}$, et le courant
+    crête approcherait $27/1{,}09 \approx 25\ \mathrm{A}$, bien au-delà de la saturation. Prédisez avant de lancer l'animation : quelle durée de
+    rampe du rapport cyclique supprime presque entièrement le dépassement ? Lancez la lecture, puis réglez la durée de la rampe et le courant de charge.
+  </p>
+  <figure id="h-demarrage-figure">
+    <div id="h-demarrage-curseurs"></div>
+    <div id="h-demarrage-trace"></div>
+    <div id="h-demarrage-lecteur"></div>
+    <div id="h-demarrage-valeurs"></div>
+    <figcaption>
+      Démarrage du hacheur abaisseur, simulé période par période avec $V_e = 40\ \mathrm{V}$, $L = 56\ \mathrm{\mu H}$, $C = 47\ \mathrm{\mu F}$,
+      $f = 100\ \mathrm{kHz}$ et un rapport cyclique final de $0{,}675$, atteint en rampe sur la durée choisie. Les deux courbes, identifiées par la
+      légende, sont la tension de sortie, en volts, et le courant de l'inductance, en ampères, sur la même échelle numérique ; elles sont tracées
+      jusqu'à l'instant atteint par la lecture. Le repère horizontal en tirets marque la saturation supposée de $11{,}5\ \mathrm{A}$.
+    </figcaption>
+  </figure>
+  <p>
+    Interprétation. Sans rampe, la simulation donne $43{,}2\ \mathrm{V}$ et $27{,}4\ \mathrm{A}$ de crête, conformes à l'estimation analytique ; le
+    courant franchit largement la saturation et la tension dépasse celle de la batterie qu'on raccordera. Avec une rampe de $1\ \mathrm{ms}$, trois
+    périodes propres environ, le dépassement tombe à $28{,}0\ \mathrm{V}$ et $9{,}9\ \mathrm{A}$ ; avec $2\ \mathrm{ms}$, à $27{,}5\ \mathrm{V}$.
+    Le démarrage progressif et la limitation de courant crête cycle par cycle sont donc des fonctions obligatoires de la commande, pas des options.
+  </p>
+
+  <h3 id="h-boost">Second dimensionnement : élévateur de 12 à 27 V</h3>
+  <figure id="h-boost-figure">
+    <svg viewBox="0 0 450 310" role="img" aria-label="Hacheur élévateur de 12 V vers 27 V avec ses valeurs"><defs><marker id="fl-h2" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M70 70V140M70 180V250"/><circle cx="70" cy="160" r="20"/><path d="M70 250H370"/><path d="M70 70H112.5a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0H215"/><path d="M215 70V130"/><path d="M215 130V138M215 182V190"/><path d="M215 182L197 142" stroke-width="2.4"/><circle cx="215" cy="138" r="3"/><circle cx="215" cy="182" r="3"/><path d="M215 190V250"/><path d="M215 70H253.5M271.5 70H310"/><path d="M253.5 60L271.5 70L253.5 80Z"/><path d="M271.5 60v20" stroke-width="2.6"/><path d="M310 70H370"/><path d="M310 70V155M310 165V250"/><path d="M292 155h36M292 165h36" stroke-width="3"/><path d="M370 70V136M370 184V250"/><rect x="361" y="136" width="18" height="48" rx="3"/><path d="M215 250v10M201 260h28M206 265h18M211 270h8"/></g><circle cx="215" cy="70" r="3.6" fill="currentColor" stroke="none"/><circle cx="310" cy="70" r="3.6" fill="currentColor" stroke="none"/><circle cx="310" cy="250" r="3.6" fill="currentColor" stroke="none"/><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M36 200L36 120" marker-end="url(#fl-h2)"/><path d="M170 38L120 38" marker-end="url(#fl-h2)"/><path d="M100 84L124 84" marker-end="url(#fl-h2)"/><path d="M232 140L232 168" marker-end="url(#fl-h2)"/><path d="M250 52L280 52" marker-end="url(#fl-h2)"/><path d="M410 205L410 120" marker-end="url(#fl-h2)"/><path d="M352 112L352 136" marker-end="url(#fl-h2)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13"><text x="65" y="150">+</text><text x="66" y="178">-</text><text x="4" y="44" font-size="11">10,5 à 14,4 V</text><text x="152" y="106">L</text><text x="176" y="150">T</text><text x="258" y="98">D</text><text x="120" y="214" font-size="11">MOSFET 60 V</text><text x="134" y="30">v_L</text><text x="92" y="102">i_L</text><text x="238" y="160">i_T</text><text x="252" y="44">i_D</text><text x="96" y="124" font-size="11">47 µH</text><text x="236" y="124" font-size="11">Schottky 45 V</text><text x="272" y="166">C</text><text x="384" y="166">R</text><text x="400" y="112">27 V</text><text x="380" y="92">+</text><text x="380" y="240">-</text><text x="330" y="108">I_s</text><text x="232" y="270" font-size="11">0 V</text><text x="222" y="62" font-size="11">A</text></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13"><text x="130" y="296" font-size="11">C = 2 x 47 µF ; R : charge 27 V, 2 A</text><text x="10" y="296" font-size="11">f = 100 kHz</text></g></svg>
+    <figcaption>
+      Hacheur élévateur alimenté par une batterie de $12\ \mathrm{V}$, comprise entre $10{,}5\ \mathrm{V}$ déchargée et $14{,}4\ \mathrm{V}$ en fin de
+      charge, qui délivre $27\ \mathrm{V}$ et $2\ \mathrm{A}$, soit $54\ \mathrm{W}$, à $100\ \mathrm{kHz}$. Mêmes conventions que la figure de la
+      section E ; les valeurs inscrites sont celles retenues.
+    </figcaption>
+  </figure>
+  <p>
+    Données : $V_e$ de $10{,}5$ à $14{,}4\ \mathrm{V}$, $V_s = 27\ \mathrm{V}$, $I_s = 2\ \mathrm{A}$, $f = 100\ \mathrm{kHz}$ ; ondulation de courant au
+    plus égale à $1{,}5\ \mathrm{A}$ ; ondulation de tension au plus égale à $1\ \%$, soit $270\ \mathrm{mV}$. Inconnues : plage de $D$, $L$,
+    courants, $C$, contraintes des semi-conducteurs. Stratégie : mêmes étapes, avec le cas défavorable propre à l'élévateur.
+  </p>
+  <ol>
+    <li>Rapport cyclique $D = 1 - V_e/V_s$ : $0{,}611$ à $10{,}5\ \mathrm{V}$, $0{,}556$ à $12\ \mathrm{V}$, $0{,}467$ à $14{,}4\ \mathrm{V}$.</li>
+    <li>Courant moyen d'entrée $I_L = I_s/(1 - D)$ : $5{,}14\ \mathrm{A}$ à $10{,}5\ \mathrm{V}$, $4{,}50\ \mathrm{A}$ à $12\ \mathrm{V}$, $3{,}75\ \mathrm{A}$ à $14{,}4\ \mathrm{V}$. On vérifie le bilan : $10{,}5 \times 5{,}14 = 54\ \mathrm{W}$.</li>
+    <li>Cas défavorable pour l'ondulation : $V_eD = V_e(1 - V_e/V_s)$ est maximal pour $V_e = V_s/2 = 13{,}5\ \mathrm{V}$, qui appartient à la plage : $13{,}5 \times 0{,}5 = 6{,}75\ \mathrm{V}$.</li>
+    <li>Inductance : $L \geq 6{,}75/(10^5 \times 1{,}5) = 45\ \mathrm{\mu H}$ ; valeur retenue $47\ \mathrm{\mu H}$, soit $\Delta i_L = 6{,}75/4{,}7 = 1{,}44\ \mathrm{A}$ au plus, et $1{,}37\ \mathrm{A}$ à $10{,}5\ \mathrm{V}$.</li>
+    <li>Courant crête, à $10{,}5\ \mathrm{V}$ : $5{,}14 + 1{,}37/2 = 5{,}83\ \mathrm{A}$ ; saturation exigée au-delà de $7{,}3\ \mathrm{A}$ avec $25\ \%$ de marge.</li>
+    <li>Condensateur, au cas le plus défavorable $D = 0{,}611$ : $C \geq I_sD/(f\,\Delta V_s) = 2 \times 0{,}611/(10^5 \times 0{,}27) = 45{,}3\ \mathrm{\mu F}$. Mais la résistance série voit le courant pulsé de crête $5{,}83\ \mathrm{A}$, et le courant efficace vaut $I_s\sqrt{D/(1 - D)} = 2 \times 1{,}254 = 2{,}51\ \mathrm{A}$. Choix : deux condensateurs polymère de $47\ \mathrm{\mu F}$, $15\ \mathrm{m\Omega}$ chacun, soit $94\ \mathrm{\mu F}$ et $7{,}5\ \mathrm{m\Omega}$ : ondulation $130\ \mathrm{mV} + 0{,}0075 \times 5{,}83 = 130 + 44 = 174\ \mathrm{mV}$, et $1{,}25\ \mathrm{A}$ efficaces par condensateur.</li>
+    <li>Semi-conducteurs : interrupteur et diode bloquent $V_s = 27\ \mathrm{V}$, plus les surtensions de câblage : MOSFET $60\ \mathrm{V}$ et diode Schottky $45\ \mathrm{V}$ ; courant moyen de diode égal à $I_s = 2\ \mathrm{A}$, crête $5{,}83\ \mathrm{A}$.</li>
+    <li>Frontière de conduction discontinue à $12\ \mathrm{V}$ : $I_{s,lim} = 12 \times 0{,}556 \times 0{,}444/(2 \times 47 \times 10^{-6} \times 10^5) = 0{,}315\ \mathrm{A}$.</li>
+  </ol>
+
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li>Unités : $\mathrm{V}/(\mathrm{H} \cdot \mathrm{Hz})$ donne des ampères, $\mathrm{A}/(\mathrm{F} \cdot \mathrm{Hz})$ des volts, $\mathrm{H} \cdot \mathrm{A^2}$ des joules.</li>
+    <li>Bilans : pour l'abaisseur, $219{,}7\ \mathrm{W}$ absorbés à $40\ \mathrm{V}$ correspondent à $5{,}49\ \mathrm{A}$ moyens d'entrée, proches de $DI_s = 5{,}40\ \mathrm{A}$, l'écart étant celui des pertes. L'hypothèse de $240\ \mathrm{W}$ absorbés retenue pour dimensionner le pont dans le cours <a href="#/cours/redresseurs-monophases">Redresseurs monophasés</a> était donc prudente.</li>
+    <li>Ordres de grandeur : quelques dizaines de microhenrys et de microfarads à $100\ \mathrm{kHz}$ pour quelques centaines de watts sont typiques ; un rendement de $98\ \%$ est normal pour un abaisseur basse tension bien conçu.</li>
+    <li>Comparaison des condensateurs : à puissance comparable, le condensateur de sortie de l'élévateur porte quatre fois plus de courant efficace que celui de l'abaisseur, $2{,}51\ \mathrm{A}$ pour $54\ \mathrm{W}$ contre $0{,}64\ \mathrm{A}$ pour $216\ \mathrm{W}$ : c'est la signature du courant pulsé.</li>
+    <li>Cohérence avec le cours précédent : les courants de l'interrupteur de l'abaisseur, $5{,}40\ \mathrm{A}$ moyens et $6{,}57\ \mathrm{A}$ efficaces à $40\ \mathrm{V}$, sont bien $DI_L$ et $I_L\sqrt{D}$.</li>
+    <li>Incertitudes : la résistance de l'inductance, les pertes fer et la baisse de capacité des condensateurs sous tension sont supposées ; elles déplacent le rendement de quelques dixièmes de point et l'ondulation de quelques dizaines de pour cent, sans changer les choix.</li>
+  </ul>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <p>
+    Le projet fil rouge prévoit une installation photovoltaïque, dont le champ sera dimensionné dans le cours Solaire photovoltaïque. Son onduleur
+    comportera, comme presque tous les onduleurs de chaîne, un étage élévateur placé entre les modules et le bus continu. On en fait ici le
+    prédimensionnement, avec une puissance supposée de $15\ \mathrm{kW}$, pour en comprendre les contraintes.
+  </p>
+  <figure id="i-figure">
+    <svg viewBox="0 0 770 270" role="img" aria-label="Chaîne de conversion photovoltaïque : champ, élévateur MPPT, bus continu, onduleur et réseau"><defs><marker id="fl-pv" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="20" y="60" width="140" height="92" rx="10"/><rect x="190" y="60" width="140" height="92" rx="10"/><rect x="360" y="60" width="140" height="92" rx="10"/><rect x="530" y="60" width="140" height="92" rx="10"/><rect x="190" y="200" width="140" height="56" rx="10"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M160 106L188 106" marker-end="url(#fl-pv)"/><path d="M330 106L358 106" marker-end="url(#fl-pv)"/><path d="M500 106L528 106" marker-end="url(#fl-pv)"/><path d="M670 106L700 106" marker-end="url(#fl-pv)"/><path d="M90 152V228H190" stroke-dasharray="5 4"/><path d="M260 200L260 156" marker-end="url(#fl-pv)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13"><text x="34" y="88">Chaîne de</text><text x="34" y="108">modules PV</text><text x="34" y="136" font-size="11">300 à 600 V</text><text x="204" y="88">Élévateur</text><text x="204" y="108">MPPT</text><text x="204" y="136" font-size="11">L = 1 mH</text><text x="374" y="88">Bus continu</text><text x="374" y="108">700 V</text><text x="374" y="136" font-size="11">C_bus</text><text x="544" y="88">Onduleur</text><text x="544" y="108">triphasé</text><text x="544" y="136" font-size="11">et filtre</text><text x="704" y="102">réseau</text><text x="704" y="120">400 V</text><text x="204" y="224">Commande</text><text x="204" y="244" font-size="11">MPPT : D(t)</text><text x="26" y="246" font-size="11">mesures v_pv et i_pv</text><text x="20" y="40" font-size="12">sens du transfert d'énergie : de gauche à droite</text><text x="360" y="228" font-size="11">le bus est tenu à 700 V par l'onduleur ;</text><text x="360" y="246" font-size="11">l'élévateur règle la tension du champ</text></g></svg>
+    <figcaption>
+      Chaîne de conversion photovoltaïque. Les flèches pleines donnent le sens du transfert d'énergie ; la liaison en tirets représente les mesures de
+      tension et de courant du champ, utilisées par la commande MPPT, recherche du point de puissance maximale, qui fixe le rapport cyclique de
+      l'élévateur. L'onduleur, traité dans le cours Onduleurs triphasés, régule la tension du bus à $700\ \mathrm{V}$ ; l'élévateur règle donc non pas
+      sa tension de sortie, mais sa tension d'entrée, celle du champ.
+    </figcaption>
+  </figure>
+  <h3 id="i-donnees">Données, contraintes d'exploitation et calculs</h3>
+  <p>
+    Hypothèses : tension du champ au point de puissance maximale entre $300\ \mathrm{V}$, par forte chaleur, et $600\ \mathrm{V}$ ; tension de circuit
+    ouvert par grand froid voisine de $750\ \mathrm{V}$, supposée ; bus à $700\ \mathrm{V}$, nécessaire pour qu'un onduleur triphasé produise
+    $400\ \mathrm{V}$ composés, dont la crête vaut $566\ \mathrm{V}$, avec une marge de régulation. Rapport cyclique $D = 1 - V_{pv}/700$ : $0{,}571$
+    à $300\ \mathrm{V}$, $0{,}143$ à $600\ \mathrm{V}$. Courant d'entrée $15\,000/300 = 50\ \mathrm{A}$ au plus. Ondulation : $V_{pv}D$ est maximal à
+    $350\ \mathrm{V}$, avec $175\ \mathrm{V}$ ; avec des IGBT à $20\ \mathrm{kHz}$ et une ondulation limitée à $10\ \mathrm{A}$, soit $20\ \%$ de
+    $50\ \mathrm{A}$, $L \geq 175/(2 \times 10^4 \times 10) = 0{,}875\ \mathrm{mH}$ ; on retient $1\ \mathrm{mH}$, qui donne $8{,}57\ \mathrm{A}$
+    d'ondulation et $54{,}3\ \mathrm{A}$ de crête à $300\ \mathrm{V}$. L'énergie stockée au crête, $\frac{1}{2} \times 10^{-3} \times 54{,}3^2 = 1{,}47\ \mathrm{J}$,
+    représente une inductance de plusieurs kilogrammes.
+  </p>
+  <h3 id="i-compromis">Risques, choix d'ingénierie et compromis</h3>
+  <ul>
+    <li>Fréquence et technologie : des MOSFET SiC à $50\ \mathrm{kHz}$ diviseraient l'inductance par $2{,}5$, à $0{,}35\ \mathrm{mH}$, au prix des pentes de tension discutées dans le cours <a href="#/cours/mosfet-et-igbt">MOSFET et IGBT</a> ; ici, les pentes restent confinées dans l'onduleur, sans câble moteur, ce qui rend le SiC plus attractif que pour le variateur de la pompe.</li>
+    <li>Diode : sous $700\ \mathrm{V}$ et $50\ \mathrm{A}$, la recharge inverse d'une diode silicium rapide dominerait les pertes de mise en conduction ; une diode Schottky SiC, sans recharge inverse, est le choix standard, comme le laissait prévoir le cours <a href="#/cours/diodes-de-puissance">Diodes de puissance</a>.</li>
+    <li>Entrelacement : deux élévateurs en parallèle, commandés en décalage d'une demi-période, se partagent le courant ; leurs ondulations se compensent partiellement à l'entrée et la fréquence apparente double, ce qui allège les condensateurs. C'est aussi un moyen de suivre deux chaînes de modules d'orientations différentes avec deux MPPT indépendants.</li>
+    <li>Tension de circuit ouvert : par grand froid, le champ peut dépasser $700\ \mathrm{V}$ ; l'élévateur cesse alors de découper, $D = 0$, et la diode relie directement le champ au bus, que l'onduleur doit tenir. Les semi-conducteurs sont choisis en $1200\ \mathrm{V}$, et la tension maximale du champ doit rester inférieure à la tenue de l'onduleur indiquée par le constructeur.</li>
+    <li>Ondulation au point de fonctionnement : une ondulation de tension du champ autour du point de puissance maximale fait perdre une fraction de la puissance ; le condensateur d'entrée la limite, et la commande MPPT doit distinguer l'ondulation de découpage de la perturbation volontaire qu'elle injecte pour chercher le maximum.</li>
+    <li>Sécurité : un champ photovoltaïque éclairé ne peut pas être éteint ; l'élévateur ne protège pas contre un défaut en amont, d'où le sectionneur en courant continu, la détection d'arc et le contrôle d'isolement, traités dans les cours consacrés aux installations et au solaire. Les valeurs de ce paragraphe sont des hypothèses à remplacer par la documentation de l'onduleur choisi.</li>
+  </ul>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Ajout au projet fil rouge</span>
+    <p>
+      Hacheur abaisseur du chargeur du bus $24\ \mathrm{V}$ secouru : entrée de $31{,}5$ à $49{,}8\ \mathrm{V}$, sortie $27\ \mathrm{V}$ et
+      $8\ \mathrm{A}$ à $100\ \mathrm{kHz}$, rapport cyclique de $0{,}54$ à $0{,}86$ ; inductance de $56\ \mathrm{\mu H}$, $2{,}21\ \mathrm{A}$
+      d'ondulation au plus, $9{,}10\ \mathrm{A}$ de crête, saturation exigée d'au moins $11{,}5\ \mathrm{A}$ ; condensateur polymère de
+      $47\ \mathrm{\mu F}$, $50\ \mathrm{V}$, $92\ \mathrm{mV}$ d'ondulation au plus batterie déconnectée ; conduction discontinue au-dessous de
+      $0{,}78\ \mathrm{A}$ à $40\ \mathrm{V}$, avec $D = 0{,}34$ à $0{,}2\ \mathrm{A}$ ; rendement estimé de $98{,}3\ \%$ ; démarrage progressif d'au
+      moins $1\ \mathrm{ms}$ et limitation de courant vers $10\ \mathrm{A}$ obligatoires ; régulation de courant puis de tension imposée par la batterie.
+      Étage élévateur du futur onduleur photovoltaïque prédimensionné pour $15\ \mathrm{kW}$ supposés : $1\ \mathrm{mH}$ à $20\ \mathrm{kHz}$,
+      semi-conducteurs $1200\ \mathrm{V}$, diode SiC. Hypothèses à remplacer par les documentations des composants et par une mesure de l'ondulation
+      et du démarrage sur l'appareil réalisé.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Appliquer $V_s = DV_e$ à faible charge.</strong> La relation suppose la conduction continue ; en conduction discontinue, la tension monte vers $V_e$ pour l'abaisseur et sans limite pour l'élévateur. Toujours calculer $I_{s,lim}$ avant d'utiliser $M = D$.</li>
+    <li><strong>Dimensionner l'inductance à la tension d'entrée nominale.</strong> L'ondulation de l'abaisseur croît avec $V_e$ ; celle de l'élévateur est maximale vers $V_e = V_s/2$. Le calcul se fait au cas le plus défavorable de la plage.</li>
+    <li><strong>Confondre courant moyen et courant crête pour la saturation.</strong> Le noyau sature au courant instantané : c'est $\hat{I}_L$, et même le seuil de la limitation de courant, qu'il faut comparer au courant de saturation. Une inductance saturée voit son courant monter en flèche en fin de conduction.</li>
+    <li><strong>Prendre le courant moyen d'entrée d'un élévateur égal au courant de sortie.</strong> Le bilan de puissance donne $I_L = I_s/(1 - D)$, plus de deux fois $I_s$ à $D = 0{,}6$ ; l'inductance, l'interrupteur et la source doivent le supporter.</li>
+    <li><strong>Choisir le condensateur sur sa seule capacité.</strong> Sa résistance série, son courant efficace admissible et sa baisse de capacité sous tension comptent autant ; dans un élévateur, le courant efficace est souvent le critère dimensionnant. Un céramique de $50\ \mathrm{V}$ peut perdre plus de la moitié de sa capacité sous $27\ \mathrm{V}$.</li>
+    <li><strong>Croire qu'un élévateur se protège par son interrupteur.</strong> La diode relie en permanence l'entrée à la sortie : un court-circuit en sortie n'est limité que par la source ; il faut un fusible, un interrupteur en série ou une topologie différente.</li>
+    <li><strong>Oublier le signe de la sortie de l'inverseur.</strong> La borne commune à la masse est la borne positive ; un condensateur polarisé monté à l'envers ou une mesure référencée à la mauvaise borne en résultent. Et l'interrupteur bloque $V_e + |V_s|$, pas $V_e$.</li>
+    <li><strong>Faire fonctionner un chargeur en rapport cyclique fixe.</strong> Sur une batterie, la différence $DV_e - V_{bat}$ divisée par une résistance de quelques dixièmes d'ohm fixe le courant : une petite erreur de $D$ produit un courant énorme.</li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain. Une inductance qui chauffe anormalement, avec un courant dont la rampe s'incurve vers le haut en fin de conduction sur
+    une sonde de courant, désigne la saturation : vérifier le courant crête réel et la température du noyau. Une tension de sortie qui monte à vide
+    ou à faible charge, ou une régulation qui oscille à faible charge, désigne la conduction discontinue : comparer le courant de charge à
+    $I_{s,lim}$, ajouter une charge minimale ou adapter la boucle. Une ondulation de sortie qui augmente au fil des mois, avec un condensateur chaud,
+    désigne le vieillissement : la résistance série augmente, la capacité diminue ; c'est la même surveillance que pour le bus du redresseur. Des
+    pointes de tension étroites sur la sortie, synchrones des commutations et d'amplitude indépendante de la charge, viennent des inductances
+    parasites et de la mesure elle-même : mesurer avec un ressort de masse court, pas avec le fil de masse de la sonde. Un élévateur dont la
+    tension s'effondre quand on pousse le rapport cyclique au-delà d'une certaine valeur a franchi le maximum de gain : les pertes de l'inductance ou
+    de l'interrupteur dominent.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic industriel et une
+    question conceptuelle. Ils vont de l'application directe d'une formule au choix de la méthode, au calcul en plusieurs étapes, au
+    dimensionnement sous contrainte et au diagnostic. La correction de chacun reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la
+    correction", puis se déroule étape par étape, accompagnée d'une courbe ou d'un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Après chaque réponse,
+    l'explication s'affiche avec un petit schéma tracé pas à pas.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$\text{abaisseur : } V_s = DV_e, \qquad \text{élévateur : } V_s = \frac{V_e}{1 - D}, \qquad \text{inverseur : } |V_s| = \frac{D}{1 - D}V_e$$
+    $$\Delta i_L = \frac{V_s(1 - D)}{Lf}\ \text{(abaisseur)}, \qquad \Delta i_L = \frac{V_eD}{Lf}\ \text{(élévateur, inverseur)}$$
+    $$\Delta V_s = \frac{\Delta i_L}{8Cf}\ \text{(abaisseur)}, \qquad \Delta V_s = \frac{I_sD}{Cf}\ \text{(élévateur, inverseur)}$$
+    $$I_{s,lim} = \frac{V_eD(1 - D)}{2Lf}$$
+    $$M_{DCM,\,abaisseur} = \frac{2}{1 + \sqrt{1 + 4K/D^2}}, \qquad K = \frac{2Lf}{R}$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>Les rapports $D$, $1/(1 - D)$ et $D/(1 - D)$ ne valent qu'en conduction continue.</li>
+      <li>L'inductance se dimensionne au cas le plus défavorable de la plage d'entrée, et sa saturation au courant crête, limitation comprise.</li>
+      <li>Le condensateur de sortie d'un élévateur ou d'un inverseur porte un courant efficace du même ordre que le courant de sortie.</li>
+      <li>Un élévateur ne coupe pas un court-circuit de sortie et s'emballe à vide en boucle ouverte.</li>
+      <li>Démarrage progressif, limitation de courant et régulation sont des fonctions obligatoires.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Un hacheur convertit une tension continue en une autre en hachant, avec un interrupteur et une diode, la tension
+    appliquée à une inductance, qui transfère l'énergie sans interrompre son courant. En régime établi, l'aire de la tension de l'inductance est
+    nulle sur une période : cet équilibre des volts-secondes donne $D$ pour l'abaisseur, $1/(1 - D)$ pour l'élévateur et $D/(1 - D)$ pour l'inverseur.
+    L'ondulation du courant, fixée par $L$, $f$ et les tensions, ne dépend pas de la charge ; quand le courant moyen devient inférieur à sa
+    demi-ondulation, la conduction devient discontinue et la tension de sortie monte. L'abaisseur reçoit un courant continu en sortie, l'élévateur un
+    courant pulsé, qui fatigue son condensateur. Les pertes limitent le gain réel. Le démarrage, la faible charge et le court-circuit exigent une
+    commande protégée.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent, <a href="#/cours/mosfet-et-igbt">MOSFET et IGBT</a>, dont les
+    interrupteurs équipent les hacheurs ; une sur le cours <a href="#/cours/machine-synchrone">Machine synchrone</a>, vieux d'une semaine, dont
+    l'excitatrice alimente le régulateur d'excitation du groupe électrogène ; une sur le cours <a href="#/cours/puissances-en-courant-alternatif">Puissances
+    en courant alternatif</a>, vieux d'un mois, dont le facteur de puissance détermine le courant absorbé au réseau par le chargeur.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : simuler dans LTspice le hacheur abaisseur du chargeur, vérifier l'ondulation, la frontière de conduction discontinue et le démarrage,
+    puis transformer le montage en élévateur. Prédictions à écrire avant de commencer : ondulation de courant à $40$ et à $49{,}8\ \mathrm{V}$ ;
+    tension de sortie à $0{,}2\ \mathrm{A}$ avec $D = 0{,}675$ ; tension crête au démarrage sans rampe ; ondulation de sortie de l'élévateur.
+  </p>
+  <ol>
+    <li>Circuit : source <code>V1</code> de $40\ \mathrm{V}$ ; interrupteur commandé en tension <code>S1</code> entre la source et le nœud <code>A</code>, avec <code>.model SW SW(Ron=12m Roff=1Meg Vt=0.5)</code> ; diode Schottky entre la masse, anode, et <code>A</code>, cathode, avec <code>.model DS D(Is=1u N=1.2 Rs=10m)</code> ; inductance de $56\ \mathrm{\mu H}$ avec <code>Rser=15m</code> entre <code>A</code> et la sortie ; condensateur de $47\ \mathrm{\mu F}$ avec <code>Rser=15m</code> ; résistance de charge <code>{R}</code> avec <code>.param R=3.375</code>.</li>
+    <li>Commande : source <code>PULSE(0 1 0 1n 1n {D*10u} 10u)</code> avec <code>.param D=0.675</code>, reliée à l'entrée de commande de <code>S1</code>.</li>
+    <li>Simulation : <code>.tran 0 6m 5m 10n</code> pour le régime établi ; mesurer l'ondulation de <code>I(L1)</code> et de <code>V(s)</code> avec <code>.meas tran dI PP I(L1) FROM 5.9m TO 6m</code> et <code>.meas tran dV PP V(s) FROM 5.9m TO 6m</code>. Recommencer avec $V_e = 49{,}8\ \mathrm{V}$ et $D = 0{,}542$.</li>
+    <li>Conduction discontinue : <code>.step param R list 3.375 20 34.6 60 135</code> ; relever la tension moyenne de sortie et repérer l'apparition du palier nul de $i_L$.</li>
+    <li>Démarrage : <code>.tran 0 3m 0 10n</code> sans rampe, puis avec une rampe obtenue par une source de commande comparant une dent de scie à $100\ \mathrm{kHz}$ à une tension qui monte de $0$ à $0{,}675$ en $1\ \mathrm{ms}$ ; relever la tension et le courant crêtes.</li>
+    <li>Élévateur : réarranger les mêmes éléments en élévateur, $V_e = 12\ \mathrm{V}$, $L = 47\ \mathrm{\mu H}$, $C = 94\ \mathrm{\mu F}$ avec <code>Rser=7.5m</code>, $R = 13{,}5\ \Omega$, $D = 0{,}556$ ; mesurer $V_s$, l'ondulation et le courant efficace du condensateur avec <code>.meas tran IC RMS I(C1)</code>.</li>
+    <li>En Python : tracer les ondulations mesurées contre les formules de la section E, et la tension de sortie mesurée en fonction de $R$ contre la formule de conduction discontinue.</li>
+  </ol>
+  <p>
+    Résultats attendus : $\Delta i_L$ voisine de $1{,}57\ \mathrm{A}$ à $40\ \mathrm{V}$ et de $2{,}21\ \mathrm{A}$ à $49{,}8\ \mathrm{V}$ ; une tension de
+    sortie un peu inférieure à $27\ \mathrm{V}$, d'environ $0{,}5\ \mathrm{V}$, à cause de la diode et des résistances ; une conduction discontinue
+    dès $R$ supérieure à environ $34{,}6\ \Omega$, frontière à $0{,}78\ \mathrm{A}$, et une sortie vers $34$ à $35\ \mathrm{V}$ à $135\ \Omega$ ; une
+    crête de démarrage voisine de $43\ \mathrm{V}$ sans rampe ; pour l'élévateur, environ $26\ \mathrm{V}$, une ondulation de l'ordre de
+    $170\ \mathrm{mV}$ et un courant efficace de condensateur voisin de $2{,}2\ \mathrm{A}$. Anomalies à observer : un pas de calcul trop grand déforme
+    les rampes et fausse l'ondulation ; sans résistance série, le condensateur idéal sous-estime l'ondulation réelle ; en conduction discontinue,
+    des oscillations apparaissent sur le nœud <code>A</code> pendant le palier nul, résonance entre l'inductance et les capacités parasites, absentes
+    si le modèle n'en contient pas ; le modèle d'interrupteur idéal ne donne aucune perte de commutation.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est calculé dans ce navigateur à partir
+    de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement pour suivre votre progression. Le jalon visé
+    à la fin du module suivant demande d'analyser les principaux convertisseurs de puissance, leurs formes d'onde, leurs pertes, leurs protections et
+    leur intégration dans un variateur : les hacheurs en sont la première famille complète.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">En régime établi, la tension moyenne d'une inductance est nulle : cet équilibre des volts-secondes donne directement le rapport de conversion de toute topologie, $D$, $1/(1 - D)$ ou $D/(1 - D)$ en conduction continue.</li>
+    <li data-rang="02">L'ondulation du courant, fixée par $L$, $f$ et les tensions, ne dépend pas de la charge ; dès que le courant moyen descend sous la demi-ondulation, la conduction devient discontinue et la tension échappe à la formule.</li>
+    <li data-rang="03">La place de l'inductance décide de la nature des courants : continu en sortie pour l'abaisseur, continu en entrée pour l'élévateur, ce qui fixe les condensateurs, les filtres et le comportement en défaut.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> savoir quelle formule vaut dans quelle situation. Les formules de conduction continue sont si
+    simples qu'on les applique hors de leur domaine : à faible charge, au démarrage, sur une batterie ou à fort rapport cyclique. Le réflexe à
+    installer est de vérifier, avant tout calcul, le mode de conduction, la grandeur imposée par l'extérieur et le cas le plus défavorable de la plage.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Révision 7 et mini-projet alimentation, assemble toute la chaîne du réseau à une
+    tension continue régulée : transformateur, redresseur, condensateur de filtrage, hacheur et régulation. Question à préparer : pour alimenter en
+    $24\ \mathrm{V}$, $5\ \mathrm{A}$ une armoire à partir du réseau $230\ \mathrm{V}$, quelle tension choisir pour le bus intermédiaire entre le
+    redresseur et le hacheur abaisseur, et comment ce choix déplace-t-il les contraintes entre le transformateur, le condensateur de filtrage et
+    l'inductance du hacheur ?
+  </p>
+
+</article>
