@@ -1,0 +1,1002 @@
+<article class="cours" data-slug="revision-7-et-mini-projet-alimentation">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/hacheurs-dc-dc">Hacheurs DC-DC</a> s'est achevé sur une question : pour alimenter en $24\ \mathrm{V}$, $5\ \mathrm{A}$
+      une armoire à partir du réseau $230\ \mathrm{V}$, quelle tension choisir pour le bus intermédiaire entre le redresseur et le hacheur
+      abaisseur, et comment ce choix déplace-t-il les contraintes entre le transformateur, le condensateur de filtrage et l'inductance du hacheur ?
+      La réponse courte tient en trois phrases. La borne basse est imposée par le hacheur : au creux de l'ondulation, au réseau bas, le bus doit
+      rester au-dessus de la tension de sortie divisée par le rapport cyclique maximal. Au-dessus de cette borne, chaque volt gagné fait fondre la
+      capacité nécessaire, parce que l'énergie qu'un condensateur peut céder entre deux tensions croît comme la différence de leurs carrés. En
+      contrepartie, un bus plus haut exige des semi-conducteurs et des condensateurs plus tenus en tension, une inductance plus grande pour la même
+      ondulation et des pertes de commutation plus élevées. Cette séance établit cette réponse avec rigueur et la chiffre sur un cas complet.
+    </p>
+    <p>
+      C'est une séance de révision : elle réunit les six cours du module. La caractéristique et les pertes d'une diode viennent du cours
+      <a href="#/cours/diodes-de-puissance">Diodes de puissance</a> ; le pont de Graetz et le filtrage capacitif du cours
+      <a href="#/cours/redresseurs-monophases">Redresseurs monophasés</a> ; le pont à six impulsions du cours
+      <a href="#/cours/redresseurs-triphases">Redresseurs triphasés</a> ; l'angle de retard du cours
+      <a href="#/cours/thyristors-et-redresseurs-commandes">Thyristors et redresseurs commandés</a> ; les pertes de conduction et de commutation du
+      cours <a href="#/cours/mosfet-et-igbt">MOSFET et IGBT</a> ; le rapport cyclique et l'ondulation du cours
+      <a href="#/cours/hacheurs-dc-dc">Hacheurs DC-DC</a>. Le transformateur réel du cours <a href="#/cours/transformateur-reel">Transformateur
+      réel</a>, l'énergie d'un condensateur du cours <a href="#/cours/condensateurs-et-champ-electrique">Condensateurs et champ électrique</a> et le
+      facteur de puissance du cours <a href="#/cours/puissances-en-courant-alternatif">Puissances en courant alternatif</a> complètent la boîte à
+      outils.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Une armoire d'automatisme, un capteur, un variateur, une carte de commande, un chargeur de batterie : tous consomment une tension continue
+    régulée, et presque tous la tirent du réseau alternatif. Entre la prise et la charge se trouve toujours la même chaîne de fonctions : adapter
+    et isoler, redresser, stocker et filtrer, convertir et réguler, protéger. Chaque fonction a été étudiée séparément dans le module ; une
+    alimentation réelle oblige à les faire travailler ensemble, et c'est à leurs interfaces que se cachent les difficultés : la tension du bus
+    intermédiaire, le courant d'appel à la mise sous tension, la tenue aux microcoupures, le facteur de puissance vu du réseau, les pertes qui
+    s'additionnent d'un étage à l'autre.
+  </p>
+  <p>
+    L'ingénieur de terrain achète le plus souvent une alimentation toute faite sur rail DIN. Il doit pourtant savoir la spécifier et la vérifier :
+    quel courant d'appel le fusible amont verra-t-il, combien de millisecondes la sortie tiendra-t-elle si le réseau disparaît, quel courant le
+    module tirera-t-il au réseau bas, combien de watts il dissipera dans l'armoire, que se passera-t-il à faible charge ou en court-circuit. Le
+    travail central de la séance consiste à proposer et calculer une alimentation continue simple, $24\ \mathrm{V}$ et $5\ \mathrm{A}$ à partir du
+    réseau $230\ \mathrm{V}$, avec un transformateur, un pont de diodes, un condensateur de bus et un hacheur abaisseur. Ce sera l'alimentation
+    locale de l'armoire déportée du projet fil rouge.
+  </p>
+  <p>
+    Organisation suggérée pour les $90$ minutes : $10$ minutes pour les prérequis et la synthèse du module, $10$ minutes pour l'intuition et
+    l'animation d'une période réseau, $25$ minutes pour la théorie du bus intermédiaire et ses deux simulations, $20$ minutes pour le
+    dimensionnement complet de la section H, $25$ minutes pour les exercices, le quiz et la révision. Le travail pratique de la section O se fait à
+    part.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Expliquer le rôle de chaque étage d'une alimentation alternatif vers continu régulée et le sens réel des courants dans le pont, le condensateur de bus et le hacheur au cours d'une période réseau.</li>
+    <li data-rang="02">Calculer les bornes basse et haute de la tension du bus intermédiaire à partir du rapport cyclique maximal du hacheur, des tolérances du réseau et de la tenue des composants.</li>
+    <li data-rang="03">Dimensionner le condensateur de bus par la méthode énergétique, puis vérifier le résultat par simulation, en tenant compte de la charge à puissance constante et de la tolérance de capacité.</li>
+    <li data-rang="04">Dimensionner l'ensemble de la chaîne : transformateur en voltampères, pont de diodes, précharge, inductance et condensateur du hacheur, semi-conducteurs et fusible.</li>
+    <li data-rang="05">Calculer le rendement global, le facteur de puissance vu du réseau et le temps de maintien sur microcoupure, et comparer la solution à découpage à une régulation linéaire et à un pont commandé.</li>
+    <li data-rang="06">Diagnostiquer une alimentation défaillante à partir de ses symptômes : condensateur vieilli, précharge défaillante, perte de régulation au réseau bas, surcharge du transformateur.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Trois acquis suffisent. Le premier, vu dans le cours <a href="#/cours/signaux-periodiques-et-sinusoides">Signaux périodiques et
+    sinusoïdes</a> : une tension sinusoïdale de valeur efficace $E$ a pour crête $E\sqrt{2}$ ; un pont de Graetz redresse cette tension en une
+    suite d'arches de fréquence double, et chaque arche fait conduire deux diodes en série. Le deuxième, vu dans le cours
+    <a href="#/cours/hacheurs-dc-dc">Hacheurs DC-DC</a> : un hacheur abaisseur en conduction continue délivre $V_s = DV_e$, et son rapport cyclique
+    est borné en pratique vers $0{,}9$ par les temps morts et le temps minimal de blocage de la commande. Le troisième, vu dans le cours
+    <a href="#/cours/condensateurs-et-champ-electrique">Condensateurs et champ électrique</a> : un condensateur de capacité $C$ sous la tension $v$
+    stocke l'énergie $\frac{1}{2}Cv^2$. La correction de chaque question reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la
+    correction".
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Notation de la séance</span>
+    <p>
+      Côté réseau : $V_r$ est la tension efficace du réseau, $230\ \mathrm{V}$ nominal, et $k$ son facteur de variation, de $0{,}9$ à $1{,}1$.
+      Transformateur : $E_0$ est la tension efficace du secondaire à vide sous le réseau nominal, $R_s$ la résistance totale ramenée au secondaire,
+      $e(t)$ la tension du secondaire et $i_2(t)$ son courant, comptés positivement de la borne repérée par un point vers le pont. Pont :
+      diodes $D_1$ à $D_4$, chacune modélisée par un seuil $V_{F0}$ et une résistance $r_F$. Bus : $v_b(t)$ est la tension du condensateur de bus
+      $C_b$, mesurée de la borne $+$ vers le $0\ \mathrm{V}$ du bus, qui sert de potentiel de référence côté continu ; $V_{b,max}$ et $V_{b,min}$
+      sont sa crête et son creux, $P_b$ la puissance absorbée par le hacheur. Hacheur : $D$ est le rapport cyclique, à ne pas confondre avec les
+      noms de diodes, qui portent toujours un indice ; $D_{RL}$ est la diode de roue libre, $L$ l'inductance, $C_s$ le condensateur de sortie,
+      $f_d$ la fréquence de découpage, $V_s$ et $I_s$ la tension et le courant de sortie, $P_s = V_sI_s$. Les rendements sont notés $\eta$, le
+      facteur de puissance $\lambda$. Tous les composants passifs sont en convention récepteur, la source $e(t)$ en convention générateur.
+    </p>
+  </div>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-tampon">Un réseau qui livre par bouffées, une charge qui consomme en continu</h3>
+  <p>
+    Le réseau ne livre pas l'énergie à débit constant à une charge continue : la puissance instantanée d'une source sinusoïdale s'annule deux fois
+    par période. Derrière un pont de diodes, c'est pire encore : le pont ne conduit que lorsque la tension redressée dépasse celle du condensateur,
+    c'est-à-dire pendant une courte fenêtre autour de chaque crête, de l'ordre de $50$ à $60$ degrés sur les $180$ d'une alternance. Pendant ce
+    bref instant, le condensateur de bus se remplit sous un courant de forte pointe ; pendant tout le reste de l'alternance, il se vide seul dans le
+    hacheur. Le condensateur de bus est donc un réservoir tampon entre un fournisseur qui livre par bouffées à $100\ \mathrm{Hz}$ et un client qui
+    consomme sans interruption.
+  </p>
+  <p>
+    Le hacheur, de son côté, ne voit pas une tension constante : il voit une tension qui ondule de plusieurs volts au rythme de $100\ \mathrm{Hz}$.
+    Sa boucle de régulation, beaucoup plus rapide, ajuste le rapport cyclique à chaque période de découpage pour que la sortie reste à
+    $24\ \mathrm{V}$. Conséquence capitale : à sortie constante, le hacheur absorbe une puissance constante, quelle que soit la tension du bus.
+    Quand le bus baisse, il tire davantage de courant. C'est l'inverse d'une résistance, dont le courant baisse avec la tension.
+  </p>
+  <p>
+    L'animation suivante parcourt une période réseau de l'alimentation dimensionnée en section H. Prédisez avant de manipuler : à quel moment de
+    l'alternance les diodes du pont commencent-elles à conduire, avant ou après la crête de la tension redressée ? Et que fait le courant du
+    condensateur pendant que les diodes sont bloquées ? Faites glisser la poignée ronde le long de l'axe des temps, sous le chronogramme, ou
+    lancez la lecture.
+  </p>
+  <figure id="d-periode-figure">
+    <div class="schema-vivant" id="d-periode"></div>
+    <div id="d-periode-lecteur"></div>
+    <div id="d-periode-valeurs"></div>
+    <figcaption>
+      Une période réseau de l'alimentation, au réseau nominal et à pleine charge. En haut, le schéma : secondaire du transformateur, en convention
+      générateur, avec sa borne repérée par un point en haut ; pont de Graetz ; condensateur de bus ; hacheur abaisseur et charge de
+      $24\ \mathrm{V}$. Le $0\ \mathrm{V}$ du bus est le rail du bas. Les deux diodes en conduction et la maille qu'elles ferment sont repassées en
+      trait épais ; quand aucune diode ne conduit, seule la maille du condensateur vers le hacheur reste en trait épais. La flèche placée à côté
+      du condensateur donne le sens réel de son courant : vers le bas, entrant par sa borne positive, en charge ; vers le haut en décharge. En bas, le chronogramme sur $20\ \mathrm{ms}$ :
+      la tension redressée moins deux seuils de diode en tirets, la tension du bus en trait plein épais, le courant du secondaire en trait fin, positif
+      pendant l'alternance positive et négatif pendant l'alternance négative ; le trait vertical repère l'instant observé. En mouvement réduit, la
+      lecture ne démarre jamais d'elle-même.
+    </figcaption>
+  </figure>
+  <p>
+    Interprétation. Les diodes ne commencent à conduire qu'un peu avant la crête, à l'instant où la tension redressée rattrape la tension du bus,
+    déjà redescendue ; elles se bloquent peu après la crête, quand le courant demandé par le condensateur s'annule. Tout le courant de l'alternance
+    passe donc dans une fenêtre d'environ $55$ degrés, avec une pointe de $16\ \mathrm{A}$ pour un courant moyen de $3{,}2\ \mathrm{A}$. Pendant le
+    reste du temps, le condensateur alimente seul le hacheur : son courant est négatif, et la tension du bus décroît d'environ $5\ \mathrm{V}$. On
+    remarque aussi que la pente de décroissance s'accentue légèrement en fin de décharge : c'est la signature de la charge à puissance constante,
+    qui tire davantage de courant quand la tension baisse. Le transformateur voit un courant en impulsions alternées, très riche en harmoniques :
+    son facteur de puissance sera médiocre, et sa valeur efficace élevée échauffera les enroulements.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Analogie contrôlée et ses limites</span>
+    <p>
+      Le bus se comporte comme un château d'eau rempli par une pompe à pistons, qui ne débite qu'au sommet de chaque course, et vidé par un robinet
+      asservi qui délivre un débit d'énergie constant au réseau aval. La hauteur d'eau oscille entre deux niveaux ; la réserve utile est l'eau
+      comprise entre le niveau le plus haut et le niveau au-dessous duquel le robinet ne peut plus assurer son service. L'analogie s'arrête vite.
+      L'énergie d'un condensateur croît comme le carré de sa tension, alors que l'eau d'un réservoir cylindrique croît comme la hauteur : doubler
+      la tension quadruple la réserve. Un robinet ordinaire débite moins quand le niveau baisse, alors que le hacheur tire plus de courant quand la
+      tension baisse. Enfin, la pompe à pistons ne voit pas la hauteur d'eau, alors que le pont de diodes ne conduit que si la tension redressée
+      dépasse celle du bus : c'est le bus lui-même qui fixe l'instant où la recharge commence.
+    </p>
+  </div>
+
+  <h3 id="d-cascade">Une cascade de convertisseurs : les rendements se multiplient, les contraintes se transmettent</h3>
+  <p>
+    Chaque étage ne voit que ses voisins. Le hacheur impose une puissance au bus ; le bus impose au pont un courant en pointes ; ce courant traverse
+    le transformateur, dont la résistance fait chuter la crête et donc le niveau du bus ; ce niveau fixe à son tour le rapport cyclique du hacheur.
+    Les choix se répercutent dans les deux sens. Les pertes, elles, s'accumulent : chaque étage doit transporter la puissance utile plus les pertes
+    de tous les étages situés en aval, et le rendement global est le produit des rendements. Un hacheur à $97\ \%$ derrière un pont à $95\ \%$ et
+    un transformateur à $90\ \%$ donne une alimentation à environ $83\ \%$ : le maillon faible n'est presque jamais l'électronique de puissance,
+    mais le transformateur à $50\ \mathrm{Hz}$.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-hypotheses">Hypothèses du modèle</h3>
+  <p>
+    Le transformateur est représenté côté secondaire par une source sinusoïdale de valeur efficace $kE_0$ en série avec la résistance $R_s$, qui
+    regroupe les enroulements primaire et secondaire ; l'inductance de fuite est négligée, ce qui rend les pointes de courant un peu pessimistes,
+    et le courant magnétisant n'est compté que par les pertes fer. Chaque diode du pont est modélisée par $V_{F0}$ et $r_F$. Le hacheur est régulé
+    et beaucoup plus rapide que la période réseau : vu du bus, il absorbe la puissance constante $P_b = P_s/\eta_h$. Ces hypothèses sont celles des
+    cours <a href="#/cours/redresseurs-monophases">Redresseurs monophasés</a> et <a href="#/cours/hacheurs-dc-dc">Hacheurs DC-DC</a>, réunies.
+  </p>
+
+  <h3 id="e-synthese">Synthèse du module : six cours, une même logique</h3>
+  <p>
+    Tous les convertisseurs du module reposent sur la même idée : des interrupteurs, commandés ou non, qui aiguillent un courant imposé par une
+    inductance ou une tension imposée par un condensateur. Une diode s'ouvre et se ferme d'elle-même selon le signe de sa tension et de son
+    courant ; un thyristor attend en plus un ordre de gâchette pour s'amorcer, mais ne sait pas s'ouvrir seul ; un MOSFET ou un IGBT s'ouvre et se
+    ferme sur ordre. La commandabilité croissante des interrupteurs élargit ce que le convertisseur sait faire : un pont de diodes redresse à
+    tension fixe, un pont de thyristors règle sa tension moyenne et peut renvoyer l'énergie au réseau, un hacheur règle sa tension à toute vitesse,
+    avec un rendement voisin de $97\ \%$. Le tableau rassemble les relations à connaître.
+  </p>
+  <div class="cadre-tableau" style="contain: paint;">
+    <table>
+      <thead>
+        <tr><th>Cours</th><th>Relation clé</th><th>Pertes ou contrainte à chiffrer</th><th>Hypothèse principale</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Diodes de puissance</td><td>$v_F = V_{F0} + r_Fi_F$</td><td>$P = V_{F0}I_{moy} + r_FI_{eff}^2$ ; tension inverse et $I_{FSM}$</td><td>modèle linéarisé à chaud ; recouvrement négligé à $50\ \mathrm{Hz}$</td></tr>
+        <tr><td>Redresseurs monophasés</td><td>$V_{moy} = 2\sqrt{2}\,V/\pi$ sur charge résistive ; $\Delta V \approx I/(2fC)$ avec condensateur</td><td>pointe et valeur efficace du courant, courant efficace du condensateur</td><td>source idéale ou résistive ; décharge sur une demi-période</td></tr>
+        <tr><td>Redresseurs triphasés</td><td>$V_{moy} = 3\sqrt{2}\,U/\pi \approx 1{,}35\,U$</td><td>chute de commutation $3L_c\omega I_d/\pi$</td><td>courant lissé côté continu</td></tr>
+        <tr><td>Thyristors et redresseurs commandés</td><td>$V_{moy} = V_{d0}\cos\alpha$</td><td>facteur de déplacement voisin de $\cos\alpha$ ; onduleur réseau pour $\alpha$ supérieur à $90$ degrés</td><td>conduction continue, courant lissé</td></tr>
+        <tr><td>MOSFET et IGBT</td><td>$P_{cond} = R_{DS(on)}I_{eff}^2$ ou $V_{CE0}I_{moy} + r_CI_{eff}^2$</td><td>$P_{com} \approx \frac{1}{2}VI(t_r + t_f)f_d$</td><td>commutations linéarisées, température de jonction fixée</td></tr>
+        <tr><td>Hacheurs DC-DC</td><td>$V_s = DV_e$, $\Delta i_L = V_s(1 - D)/(Lf_d)$</td><td>courants crête et efficaces, frontière de conduction discontinue</td><td>conduction continue, régime établi</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Deux méthodes traversent tout le module. La première est l'équilibre en régime périodique : la tension moyenne d'une inductance et le courant
+    moyen d'un condensateur sont nuls sur une période, ce qui donne les rapports de conversion et les ondulations. La seconde est le bilan de
+    puissance : ce qui entre dans un étage en ressort, pertes comprises, ce qui donne les courants moyens sans connaître les formes d'onde. La
+    séance les applique cette fois à toute une chaîne.
+  </p>
+
+  <h3 id="e-architecture">Architecture d'une alimentation alternatif vers continu régulée</h3>
+  <p>
+    Cinq fonctions se succèdent. Le transformateur à $50\ \mathrm{Hz}$ isole galvaniquement la sortie du réseau, ce qui permet de relier son
+    $0\ \mathrm{V}$ à la terre pour former une très basse tension de protection, et abaisse la tension à un niveau adapté aux semi-conducteurs. Le pont
+    de Graetz redresse. Le condensateur de bus stocke l'énergie entre deux crêtes et fixe le niveau du bus. Le hacheur abaisseur convertit cette
+    tension ondulée en $24\ \mathrm{V}$ régulés. Les protections entourent l'ensemble : fusible et varistance au primaire, précharge du bus,
+    démarrage progressif, limitation de courant et protection de surtension en sortie. Le schéma principal de la section F place ces fonctions sur
+    un même dessin, avec les polarités et le sens des courants. Une variante industrielle courante, l'alimentation à découpage hors ligne, redresse
+    directement le réseau à $325\ \mathrm{V}$ et confie l'isolement à un transformateur à haute fréquence intégré au convertisseur ; elle sort du
+    cadre du module, mais les mêmes raisonnements de bus, d'énergie et de rendement s'y appliquent.
+  </p>
+
+  <h3 id="e-puissance-constante">Le hacheur vu du bus : une charge à puissance constante</h3>
+  <p>
+    Un hacheur régulé maintient $P_s = V_sI_s$ constant ; avec un rendement $\eta_h$ peu variable, il absorbe au bus $P_b = P_s/\eta_h$, et son
+    courant d'entrée moyen vaut $i_b = P_b/v_b$. Sa caractéristique dans le plan $(v_b, i_b)$ est une hyperbole. Sa résistance incrémentale, la
+    pente locale de cette caractéristique, est négative :
+  </p>
+  <div class="formule-cle">
+    $$r_{inc} = \frac{\mathrm{d}v_b}{\mathrm{d}i_b} = -\frac{P_b}{i_b^2} = -\frac{v_b^2}{P_b}$$
+    <p class="formule-cle-legende">
+      $v_b$ en volts, $i_b$ en ampères, $P_b$ en watts, $r_{inc}$ en ohms. Hypothèses : régulation parfaite et rendement constant. Dérivation :
+      $v_b i_b = P_b$, donc $i_b\,\mathrm{d}v_b + v_b\,\mathrm{d}i_b = 0$. Vérification dimensionnelle : $\mathrm{V^2/W} = \mathrm{V^2/(V \cdot A)} =
+      \Omega$. Cas limite : à puissance nulle, $|r_{inc}|$ devient infini, le hacheur ne charge plus le bus. Au point nominal de la section H,
+      $38{,}4\ \mathrm{V}$ et $123{,}4\ \mathrm{W}$, $r_{inc} = -12{,}0\ \Omega$.
+    </p>
+  </div>
+  <p>
+    La figure compare cette caractéristique à celle d'une résistance qui absorberait la même puissance au même point. Le point de fonctionnement
+    nominal est commun aux deux ; loin de ce point, elles divergent : quand la tension baisse, la résistance consomme moins et soulage le bus, le
+    hacheur consomme plus et l'enfonce. Cette propriété explique deux faits de terrain. Au réseau bas, l'ondulation du bus se creuse plus vite que ne
+    le prévoirait une charge résistive. Et un filtre d'entrée inductif placé devant un hacheur peut entrer en oscillation, parce qu'une résistance
+    négative compense l'amortissement du filtre ; la règle de conception associée demande que l'impédance du filtre reste nettement inférieure à
+    $|r_{inc}|$. Son étude complète relève du cours Critères de stabilité.
+  </p>
+  <figure id="e-hyperbole-figure">
+    <svg viewBox="0 0 720 300" role="img" aria-label="Caractéristique courant-tension d'une charge à puissance constante comparée à une résistance, avec la tangente au point nominal"><defs><marker id="fl-hyp" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M70 260H690" marker-end="url(#fl-hyp)"/><path d="M70 260V30" marker-end="url(#fl-hyp)"/><path d="M190 260v6M310 260v6M430 260v6M550 260v6M670 260v6"/><path d="M70 206h-6M70 152h-6M70 98h-6M70 44h-6"/><path d="M70 206H670M70 152H670M70 98H670" stroke-dasharray="2 5" opacity="0.45"/></g><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M214.0 74.9 L226.0 89.1 L238.0 101.3 L250.0 111.9 L262.0 121.2 L274.0 129.3 L286.0 136.6 L298.0 143.1 L310.0 148.9 L322.0 154.2 L334.0 159.0 L346.0 163.4 L358.0 167.4 L370.0 171.2 L382.0 174.6 L394.0 177.7 L406.0 180.7 L418.0 183.4 L430.0 186.0 L442.0 188.3 L454.0 190.6 L466.0 192.7 L478.0 194.7 L490.0 196.5 L502.0 198.3 L514.0 200.0 L526.0 201.5 L538.0 203.0 L550.0 204.5 L562.0 205.8 L574.0 207.1 L586.0 208.3 L598.0 209.5 L610.0 210.6 L622.0 211.7 L634.0 212.7 L646.0 213.7 L658.0 214.7 L670.0 215.6" stroke-width="3"/><path d="M70 260L646 187.8" stroke-width="1.8" stroke-dasharray="8 5"/><path d="M334 177.5L670 219.6" stroke-width="1.5"/><path d="M531.2 202.2V260M531.2 202.2H70" stroke-width="1" stroke-dasharray="2 4" opacity="0.7"/></g><circle cx="531.2" cy="202.2" r="5" fill="currentColor" stroke="none"/><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M300 120L262 106" marker-end="url(#fl-hyp)"/><path d="M432 236L404 194" marker-end="url(#fl-hyp)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="640" y="297" font-size="11">v_b (V)</text><text x="22" y="26">i_b (A)</text><text x="185" y="280">10</text><text x="304" y="280">20</text><text x="424" y="280">30</text><text x="544" y="280">40</text><text x="664" y="280">50</text><text x="50" y="210">3</text><text x="50" y="156">6</text><text x="50" y="102">9</text><text x="42" y="48">12</text><text x="306" y="116">hacheur : i_b = P_b / v_b</text><text x="306" y="132" font-size="11">trait plein épais</text><text x="560" y="176">résistance de 12,0 Ω</text><text x="560" y="192" font-size="11">tirets</text><text x="300" y="250">tangente : pente -1 / 12,0 Ω</text><text x="540" y="244" font-size="11">38,4 V ; 3,21 A</text><text x="90" y="292" font-size="11">P_b = 123,4 W ; le 0 V du bus est la référence des tensions</text></g></svg>
+    <figcaption>
+      Caractéristique d'entrée du hacheur régulé, en trait plein épais, comparée à une résistance de $12{,}0\ \Omega$, en tirets, qui absorbe la
+      même puissance au point nominal, repéré par le disque. La tangente à l'hyperbole, en trait fin, a une pente négative : sa valeur inverse est la
+      résistance incrémentale $-12{,}0\ \Omega$. Les tensions sont celles du bus, mesurées depuis son $0\ \mathrm{V}$ ; le courant est le courant
+      moyen d'entrée du hacheur, compté positivement du bus vers le hacheur, en convention récepteur.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-energie">Dimensionner le condensateur de bus par l'énergie</h3>
+  <p>
+    Entre la fin d'une recharge, où la tension vaut $V_{b,max}$, et le début de la suivante, où elle vaut $V_{b,min}$, le pont est bloqué : le
+    condensateur fournit seul la puissance $P_b$. Son énergie décroît donc à vitesse constante, $\frac{\mathrm{d}}{\mathrm{d}t}\left(\frac{1}{2}Cv_b^2\right)
+    = -P_b$. En intégrant sur la durée de décharge $t_d$ :
+  </p>
+  <div class="formule-cle">
+    $$\frac{1}{2}C_b\left(V_{b,max}^2 - V_{b,min}^2\right) = P_b\,t_d \qquad\Longrightarrow\qquad C_b = \frac{2P_b\,t_d}{V_{b,max}^2 - V_{b,min}^2} \le \frac{P_b}{f_r\left(V_{b,max}^2 - V_{b,min}^2\right)}$$
+    <p class="formule-cle-legende">
+      $C_b$ en farads, $P_b$ en watts, $t_d$ en secondes, tensions en volts, $f_r$ fréquence du réseau en hertz. Hypothèses : charge à puissance
+      constante, recharge brève. La borne de droite prend $t_d = 1/(2f_r)$, toute la demi-période : c'est un majorant prudent, puisque la recharge
+      occupe en réalité une fraction de l'alternance. Vérification dimensionnelle : $\mathrm{W \cdot s/V^2} = \mathrm{J/V^2} = \mathrm{C \cdot V/V^2}
+      = \mathrm{F}$. Cas limites : si $V_{b,min}$ tend vers $V_{b,max}$, $C_b$ tend vers l'infini, aucune capacité finie ne supprime l'ondulation ;
+      si $P_b$ tend vers zéro, la capacité nécessaire s'annule.
+    </p>
+  </div>
+  <p>
+    Interprétation physique : la capacité nécessaire ne dépend pas de l'ondulation en volts, mais de l'écart entre les carrés des tensions extrêmes,
+    c'est-à-dire de l'énergie utilisable. Lien avec la formule du cours <a href="#/cours/redresseurs-monophases">Redresseurs monophasés</a> : en
+    écrivant $V_{b,max}^2 - V_{b,min}^2 = (V_{b,max} - V_{b,min})(V_{b,max} + V_{b,min}) = 2\overline{V_b}\,\Delta V$ et $I = P_b/\overline{V_b}$,
+    on retrouve $\Delta V = I\,t_d/C_b$, soit $\Delta V = I/(2f_rC_b)$ pour $t_d = 1/(2f_r)$. Les deux formules sont la même loi ; la forme
+    énergétique est plus juste quand l'ondulation est grande et elle montre directement l'effet de la tension du bus. Sa seule difficulté est
+    l'estimation de $V_{b,max}$, que la résistance du transformateur abaisse de plusieurs volts pendant la pointe de courant : la simulation
+    suivante lève cette incertitude.
+  </p>
+
+  <h3 id="e-bus-sim">Simulation du bus sur deux périodes réseau</h3>
+  <p>
+    La simulation résout pas à pas l'équation du bus, $C_b\,\mathrm{d}v_b/\mathrm{d}t = i_2 - P_b/v_b$, avec un courant de pont
+    $i_2 = \max\left(0,\ (|e| - 2V_{F0} - v_b)/(R_s + 2r_F)\right)$. Elle part des valeurs de la section H : secondaire de $32\ \mathrm{V}$ à vide,
+    $R_s = 0{,}25\ \Omega$, $V_{F0} = 0{,}8\ \mathrm{V}$, $r_F = 20\ \mathrm{m\Omega}$, $C_b = 4{,}4\ \mathrm{mF}$. Prédisez avant de manipuler : si
+    la capacité est divisée par deux, la pointe du courant de pont augmente-t-elle ou diminue-t-elle, et la valeur efficace du courant du
+    secondaire suit-elle ? Si le réseau baisse de $10\ \%$, le creux du bus baisse-t-il de $10\ \%$, de moins, ou de plus ? Refaites ensuite l'essai de la capacité avec une résistance de source réduite à $0{,}05\ \Omega$, celle d'un transformateur beaucoup plus gros.
+  </p>
+  <figure id="e-bus-figure">
+    <div id="e-bus-curseurs"></div>
+    <div id="e-bus-tension"></div>
+    <div id="e-bus-courant"></div>
+    <div id="e-bus-valeurs"></div>
+    <figcaption>
+      Simulation temporelle du bus. Premier tracé : tension redressée moins deux seuils de diode et tension du bus, avec la limite basse de
+      $28\ \mathrm{V}$ du hacheur en tirets horizontaux. Second tracé : courant du secondaire, positif pendant l'alternance positive, et courant du
+      condensateur, positif en charge. Les valeurs affichées sont calculées sur les deux dernières périodes simulées, une fois le régime établi.
+    </figcaption>
+  </figure>
+  <p>
+    Interprétation. Avec $R_s = 0{,}25\ \Omega$, c'est la résistance du transformateur qui limite la pointe : diviser la capacité par deux
+    creuse l'ondulation et élargit la fenêtre de conduction de $54{,}5$ à $59{,}6$ degrés, mais la pointe ne passe que de $16{,}2$ à
+    $16{,}0\ \mathrm{A}$ et la valeur efficace du secondaire reste voisine de $6{,}4\ \mathrm{A}$, parce que le pont doit toujours livrer la
+    même charge par alternance. Avec une source raide, $R_s = 0{,}05\ \Omega$, la capacité redevient déterminante : la fenêtre se réduit à
+    $40$ degrés, la pointe dépasse $22\ \mathrm{A}$ et le facteur de puissance tombe vers $0{,}59$ ; doubler encore la capacité aggrave les deux.
+    Un condensateur surdimensionné n'est donc pas gratuit derrière un transformateur peu résistif. Au réseau bas, le creux baisse plus que la
+    tension du réseau, de $35{,}7$ à $30{,}6\ \mathrm{V}$, soit $14\ \%$ : la crête perd $10\ \%$, et comme la charge à puissance constante
+    tire plus de courant, l'ondulation se creuse aussi. Avec la tolérance de $-20\ \%$ sur la capacité, le creux descend à
+    $29{,}5\ \mathrm{V}$, encore au-dessus des $28\ \mathrm{V}$ exigés. Enfin, la crête du bus est inférieure de plusieurs volts à la crête à
+    vide : c'est la chute dans $R_s$ pendant la pointe, que la méthode énergétique ignorait.
+  </p>
+
+  <h3 id="e-fenetre">La fenêtre de tension du bus</h3>
+  <p>
+    La borne basse vient du hacheur. Son rapport cyclique est borné par la commande, vers $D_{max} = 0{,}9$ ; les chutes dans l'interrupteur et
+    l'inductance s'ajoutent à la tension de sortie. Il faut donc, au creux le plus profond, au réseau bas, à pleine charge et capacité en bas de
+    tolérance :
+  </p>
+  <div class="formule-cle">
+    $$V_{b,min} \ge \frac{V_s + \left(R_{DS(on)} + R_L\right)I_s}{D_{max}} + \text{marge}$$
+    <p class="formule-cle-legende">
+      Tensions en volts, résistances en ohms, courant en ampères, $D_{max}$ sans dimension. Hypothèse : conduction continue. Avec $24\ \mathrm{V}$,
+      $5\ \mathrm{A}$, $18$ et $30\ \mathrm{m\Omega}$ : $(24 + 0{,}24)/0{,}9 = 26{,}9\ \mathrm{V}$, arrondis à $28\ \mathrm{V}$ pour la marge de
+      réglage. Cas limite : avec $D_{max} = 1$ et des composants parfaits, la borne tombe à $V_s$, ce qu'aucune commande réelle n'atteint.
+    </p>
+  </div>
+  <p>
+    La borne haute vient de la tenue des composants : à vide, au réseau haut, le bus monte jusqu'à la crête du secondaire moins deux seuils de
+    diode, sans aucune chute résistive. Les condensateurs, l'interrupteur et la diode du hacheur doivent tenir cette tension avec une marge, et les
+    pertes de commutation croissent avec elle. Entre les deux, le bus évolue selon le réseau et la charge. L'échelle des tensions ci-dessous résume
+    cette fenêtre pour l'alimentation de la section H.
+  </p>
+  <figure id="e-fenetre-figure">
+    <svg viewBox="0 0 760 400" role="img" aria-label="Échelle des tensions du bus : bornes basse et haute, plages de fonctionnement et tenues des composants"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M150 380V144"/><path d="M150 136V40"/><path d="M142 146l16-6M142 138l16-6"/><path d="M144 348h12M144 324.8h12M144 316h12M144 304h12M144 254.4h12M144 212.8h12M144 176h12M144 154.4h12M144 109.2h12M144 50h12"/><path d="M156 348L180 354M156 324.8L180 336M156 316L180 318M156 304L180 300M156 254.4L180 254M156 212.8L180 212M156 176L180 180M156 154.4L180 156M156 109.2L180 110M156 50L180 50" stroke-width="1" opacity="0.7"/><path d="M120 304V154.4M114 304h12M114 154.4h12" stroke-width="2.2"/></g><g fill="currentColor" stroke="none"><rect x="150" y="212.8" width="16" height="41.6" opacity="0.35"/><rect x="150" y="316" width="16" height="64" opacity="0.14"/></g><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="3 4" opacity="0.8"><path d="M166 316V380"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="186" y="358">24,0 V : tension de sortie V_s</text><text x="186" y="340">26,9 V : limite du hacheur, D = 0,9, chutes comprises</text><text x="186" y="322">28,0 V : borne basse spécifiée, marge de réglage incluse</text><text x="186" y="304">29,5 V : creux au pire, réseau -10 %, pleine charge, C_b -20 %</text><text x="186" y="258">35,7 à 40,9 V : bande nominale à pleine charge, creux et crête (bande grisée)</text><text x="186" y="216">40,9 V : crête nominale à pleine charge</text><text x="186" y="184">45,5 V : crête au réseau +10 %, pleine charge</text><text x="186" y="160">48,2 V : à vide, réseau +10 %, borne haute</text><text x="186" y="114">63 V : tension nominale des condensateurs de bus</text><text x="186" y="54">100 V : tenue de l'interrupteur et de la diode du hacheur</text><text x="20" y="236" font-size="11">plage d'entrée</text><text x="20" y="250" font-size="11">du hacheur</text><text x="20" y="264" font-size="11">29,5 à 48,2 V</text><text x="40" y="374" font-size="11">zone de perte</text><text x="40" y="388" font-size="11">de régulation</text><text x="150" y="30" font-size="11">tension du bus depuis son 0 V ; échelle dilatée sous 50 V, comprimée au-dessus</text></g></svg>
+    <figcaption>
+      Fenêtre de tension du bus. L'axe vertical donne la tension du bus par rapport à son $0\ \mathrm{V}$ ; il est coupé à $50\ \mathrm{V}$, avec
+      deux échelles différentes, pour que les niveaux proches restent lisibles. La barre verticale épaisse, à gauche, est la plage d'entrée du
+      hacheur ; la bande grisée foncée, l'ondulation nominale à pleine charge ; la zone grisée claire, au bas de l'axe, la zone où le hacheur perd sa
+      régulation. Les marges se lisent directement : $1{,}5\ \mathrm{V}$ entre le creux au pire et la borne spécifiée, un facteur $1{,}3$ entre la
+      borne haute et la tension des condensateurs, un facteur $2{,}1$ pour les semi-conducteurs du hacheur.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-choix">Choisir la tension du bus</h3>
+  <p>
+    La tension du bus se choisit par la tension du secondaire. Pour comparer honnêtement, on garde le même transformateur de $250\ \mathrm{VA}$ :
+    sa résistance ramenée au secondaire varie alors comme le carré de sa tension, $R_s \propto E_0^2$, puisque à puissance égale le courant varie
+    comme $1/E_0$. Pour chaque tension, la capacité est la plus petite qui maintient le creux au-dessus de $28\ \mathrm{V}$ au réseau bas avec
+    $-20\ \%$ de tolérance ; l'inductance est celle qui limite l'ondulation à $1{,}5\ \mathrm{A}$ au réseau haut ; les semi-conducteurs passent de
+    la classe $100\ \mathrm{V}$ à la classe $150\ \mathrm{V}$ quand le bus à vide dépasse $62{,}5\ \mathrm{V}$, avec une résistance à l'état passant
+    et un seuil de diode plus élevés. Prédisez avant de manipuler : quand la tension du secondaire passe de $28$ à $56\ \mathrm{V}$, laquelle de ces
+    grandeurs varie le plus, le rendement global, la capacité nécessaire ou l'inductance ?
+  </p>
+  <figure id="e-choix-figure">
+    <div id="e-choix-curseurs"></div>
+    <div id="e-choix-trace"></div>
+    <div id="e-choix-valeurs"></div>
+    <figcaption>
+      Pertes de la chaîne en fonction de la tension efficace du secondaire à vide, à puissance de sortie fixée : pertes du pont, pertes cuivre du
+      transformateur, pertes du hacheur et total, pertes fer comprises. Le trait vertical en tirets repère la tension choisie avec le premier
+      curseur ; le panneau donne, pour cette tension, la capacité et l'inductance nécessaires, la classe des semi-conducteurs, le rendement et la
+      capacité qu'il faudrait pour tenir une microcoupure de $20\ \mathrm{ms}$.
+    </figcaption>
+  </figure>
+  <p>
+    Interprétation. Le rendement global ne varie qu'à peine plus d'un point sur toute la plage : les pertes cuivre du transformateur, à peu près
+    constantes, dominent ; les pertes du pont baissent quand le courant baisse, celles du hacheur montent avec la tension commutée et le saut de
+    classe des semi-conducteurs. La capacité, elle, est divisée par près de trente entre $28$ et $56\ \mathrm{V}$ : près de la borne basse, la
+    moindre baisse de crête mange toute l'énergie utilisable, et la capacité explose. La capacité nécessaire pour tenir $20\ \mathrm{ms}$ suit la même
+    tendance. L'inductance ne croît que de $70\ \%$ environ. Le choix de la tension du bus est donc d'abord un compromis entre la taille du
+    condensateur et la tension de tenue des composants ; le rendement le départage à peine. Le secondaire de $32\ \mathrm{V}$ retenu en section H
+    garde des semi-conducteurs de $100\ \mathrm{V}$ et des condensateurs de $63\ \mathrm{V}$ courants, et c'est la tension du transformateur du
+    chargeur du bus $24\ \mathrm{V}$ secouru : une seule référence de rechange pour les deux appareils.
+  </p>
+
+  <h3 id="e-transformateur">Transformateur : voltampères et facteur de puissance</h3>
+  <p>
+    Le transformateur ne se dimensionne pas sur la puissance active mais sur ses voltampères, $S = E_2I_{2,eff}$, qui fixent l'échauffement des
+    enroulements. Or le courant en pointes du pont a une valeur efficace très supérieure à sa valeur moyenne : le facteur de forme
+    $I_{2,eff}/I_{moy}$ vaut environ $2$ dans l'exemple. Vu du réseau, le facteur de puissance $\lambda = P/S$ est donc faible, alors que le
+    courant fondamental est presque en phase avec la tension : la perte vient de la déformation, pas du déphasage, comme établi dans le cours
+    <a href="#/cours/harmoniques-et-qualite-de-l-energie">Harmoniques et qualité de l'énergie</a>.
+  </p>
+  <div class="formule-cle">
+    $$\lambda = \frac{P}{V_{eff}I_{eff}} = \underbrace{\frac{I_{1,eff}}{I_{eff}}}_{\text{déformation}}\ \underbrace{\cos\varphi_1}_{\text{déplacement}}, \qquad S_{transfo} \ge E_0\,I_{2,eff}$$
+    <p class="formule-cle-legende">
+      $P$ en watts, tensions en volts, courants en ampères, $S$ en voltampères ; $\lambda$ et $\cos\varphi_1$ sans dimension. Hypothèse : tension
+      sinusoïdale ; la puissance active n'est portée que par le fondamental du courant. Cas limite : pour un courant sinusoïdal en phase, les deux
+      facteurs valent $1$. Dans l'exemple, $\lambda \approx 0{,}70$ : un condensateur de compensation au primaire n'y changerait presque rien.
+    </p>
+  </div>
+
+  <h3 id="e-precharge">Mise sous tension : précharge et démarrage progressif</h3>
+  <p>
+    À la mise sous tension, le condensateur de bus est déchargé : vu du pont, c'est un court-circuit. Si l'enclenchement a lieu près de la crête, le
+    courant n'est limité que par $R_s$ et les diodes ; le modèle sans inductance de fuite donne $(45{,}25 - 1{,}6)/0{,}29 = 150\ \mathrm{A}$, un
+    majorant. La pointe réelle est plus faible, mais elle sollicite le fusible, les contacts, le pont et les condensateurs. Une résistance de
+    précharge $R_{\text{pré}}$ insérée sur le rail positif limite cette pointe ; un contact $K$, relais ou transistor, la court-circuite une fois le bus
+    chargé, pour qu'elle ne dissipe rien en service. Le hacheur ne démarre qu'ensuite, avec une rampe de consigne : c'est le démarrage progressif
+    étudié dans le cours <a href="#/cours/hacheurs-dc-dc">Hacheurs DC-DC</a>.
+  </p>
+  <figure id="e-precharge-schema">
+    <svg viewBox="0 0 720 250" role="img" aria-label="Circuit de précharge du bus : pont, résistance de précharge court-circuitée par un contact, condensateur de bus et hacheur"><defs><marker id="fl-pre" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="40" y="70" width="110" height="130" rx="10"/><path d="M150 90H230"/><rect x="230" y="80" width="60" height="20" rx="3"/><path d="M290 90H380"/><path d="M210 90V40H238M282 40H310V90"/><path d="M238 40L276 26" stroke-width="2.4"/><circle cx="238" cy="40" r="3"/><circle cx="282" cy="40" r="3"/><path d="M380 90V135M380 145V200"/><path d="M360 135h40M360 145h40" stroke-width="3"/><path d="M380 90H500"/><path d="M150 200H500"/><rect x="500" y="70" width="140" height="150" rx="10"/></g><circle cx="210" cy="90" r="3.6" fill="currentColor" stroke="none"/><circle cx="310" cy="90" r="3.6" fill="currentColor" stroke="none"/><circle cx="380" cy="90" r="3.6" fill="currentColor" stroke="none"/><circle cx="380" cy="200" r="3.6" fill="currentColor" stroke="none"/><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M164 108L206 108" marker-end="url(#fl-pre)"/><path d="M412 120L412 160" marker-end="url(#fl-pre)"/><path d="M440 185L440 105" marker-end="url(#fl-pre)"/><path d="M450 76L490 76" marker-end="url(#fl-pre)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="56" y="128">pont de</text><text x="56" y="146">Graetz</text><text x="56" y="164" font-size="11">D1 à D4</text><text x="176" y="126">i_r</text><text x="236" y="122">R_pré</text><text x="236" y="138" font-size="11">2,2 Ω</text><text x="244" y="20">K</text><text x="318" y="30" font-size="11">fermé à 80 ms</text><text x="350" y="122">+</text><text x="350" y="172">-</text><text x="330" y="232">C_b 4,4 mF</text><text x="418" y="178">i_C</text><text x="448" y="150">v_b</text><text x="452" y="68">i_b</text><text x="514" y="128">hacheur</text><text x="514" y="146">abaisseur</text><text x="514" y="170" font-size="11">démarre à 100 ms</text><text x="514" y="186" font-size="11">rampe de 10 ms</text><text x="160" y="220" font-size="11">0 V du bus, référence</text></g></svg>
+    <figcaption>
+      Circuit de précharge. Le contact $K$, ouvert à la mise sous tension, se ferme après $80\ \mathrm{ms}$ et court-circuite $R_{\text{pré}}$ ; le hacheur
+      démarre à $100\ \mathrm{ms}$ avec une rampe de $10\ \mathrm{ms}$. Le courant redressé $i_r$ entre par la borne positive du bus ; $i_C$ est fléché
+      en convention récepteur sur le condensateur ; $v_b$ est fléchée vers la borne $+$ ; $i_b$ est le courant absorbé par le hacheur. Le rail du bas
+      est le $0\ \mathrm{V}$ du bus.
+    </figcaption>
+  </figure>
+  <p>
+    Le modèle RC du cours <a href="#/cours/regime-transitoire-rc">Régime transitoire RC</a> donne la pointe, $(E_0\sqrt{2} - 2V_{F0})/(R_{\text{pré}} + R_s + 2r_F)$,
+    mais pas la durée de charge : la source n'est pas un échelon, c'est une suite d'arches, et la recharge ne se fait plus qu'au voisinage des
+    crêtes quand le bus approche de la crête. Prédisez avant de manipuler : avec une résistance de précharge plus grande, la pointe à
+    l'enclenchement diminue ; que devient le courant à la fermeture du contact ? Et l'énergie dissipée dans la résistance dépend-elle beaucoup de sa
+    valeur ? Réglez la résistance, la tension du réseau et l'instant d'enclenchement, puis parcourez les $150$ premières millisecondes avec le
+    curseur d'instant ou la lecture.
+  </p>
+  <figure id="e-demarrage-figure">
+    <div id="e-demarrage-curseurs"></div>
+    <div id="e-demarrage-tension"></div>
+    <div id="e-demarrage-courant"></div>
+    <div id="e-demarrage-lecteur"></div>
+    <div id="e-demarrage-valeurs"></div>
+    <figcaption>
+      Mise sous tension simulée. Premier tracé : tension du bus. Second tracé : courant redressé fourni par le pont. Le trait vertical en pointillés
+      et le point repèrent l'instant atteint par la lecture ; les traits verticaux fins marquent la fermeture du contact à $80\ \mathrm{ms}$ et le
+      départ du hacheur à $100\ \mathrm{ms}$. Le panneau donne la pointe avant et après la fermeture du contact et l'énergie dissipée dans la
+      résistance jusqu'à l'instant observé.
+    </figcaption>
+  </figure>
+  <p>
+    Interprétation. Sans précharge, la pointe atteint $150\ \mathrm{A}$ au réseau nominal en enclenchant à la crête, $45\ \mathrm{A}$ en
+    enclenchant au passage par zéro : l'instant d'enclenchement compte autant que la résistance. Avec $2{,}2\ \Omega$, elle tombe à $17{,}5\ \mathrm{A}$,
+    et la fermeture du contact ne provoque qu'une pointe de $14{,}8\ \mathrm{A}$, inférieure à celle du régime établi. Avec $4{,}7\ \Omega$, la précharge est
+    trop lente : le bus n'a atteint que $33{,}8\ \mathrm{V}$ à $80\ \mathrm{ms}$, et la fermeture du contact provoque une seconde pointe de
+    $34\ \mathrm{A}$. L'énergie dissipée reste voisine de $3\ \mathrm{J}$ quelle que soit la résistance : elle est de l'ordre de l'énergie stockée,
+    comme pour toute charge d'un condensateur à travers une résistance. La résistance se choisit donc pour sa tenue aux impulsions, pas pour sa
+    puissance permanente, et la temporisation doit couvrir largement la durée de charge.
+  </p>
+
+  <h3 id="e-maintien">Maintien sur microcoupure</h3>
+  <p>
+    Si le réseau disparaît, le hacheur continue de puiser $P_b$ dans le condensateur jusqu'à ce que le bus atteigne la borne basse. La même loi de
+    l'énergie donne la durée de maintien :
+  </p>
+  <div class="formule-cle">
+    $$t_m = \frac{C_b\left(V_1^2 - V_{b,min}^2\right)}{2P_b}$$
+    <p class="formule-cle-legende">
+      $t_m$ en secondes, $C_b$ en farads, $V_1$ tension du bus à l'instant de la coupure, $V_{b,min}$ borne basse, en volts, $P_b$ en watts.
+      Hypothèse : puissance constante pendant toute la décharge. Vérification dimensionnelle : $\mathrm{F \cdot V^2/W} = \mathrm{J/W} = \mathrm{s}$.
+      Cas le plus défavorable : coupure au creux, $V_1 = V_{b,min,ondulation}$. Cas limite : si $V_1 = V_{b,min}$, le maintien est nul. Avec
+      $4{,}4\ \mathrm{mF}$, $123{,}4\ \mathrm{W}$ et $28\ \mathrm{V}$ : $8{,}8\ \mathrm{ms}$ depuis le creux nominal de $35{,}7\ \mathrm{V}$,
+      $15{,}9\ \mathrm{ms}$ depuis la crête de $40{,}9\ \mathrm{V}$.
+    </p>
+  </div>
+  <p>
+    Une microcoupure de $20\ \mathrm{ms}$, fréquente sur un réseau industriel lors de l'élimination d'un défaut voisin, n'est donc pas tenue. Il
+    faudrait environ $8\ \mathrm{mF}$, ou relever la tension du bus : avec un secondaire de $48\ \mathrm{V}$ et les mêmes $4{,}4\ \mathrm{mF}$, le
+    creux nominal monterait à $57{,}8\ \mathrm{V}$ et le maintien à $45\ \mathrm{ms}$, au prix de condensateurs de $100\ \mathrm{V}$ et de
+    semi-conducteurs de $150\ \mathrm{V}$. C'est la forme la plus concrète de la réponse à la question d'ouverture.
+  </p>
+
+  <h3 id="e-regulation">Régulation et protections du hacheur</h3>
+  <p>
+    La commande du hacheur comporte deux boucles imbriquées. La boucle interne mesure le courant de l'inductance et coupe l'interrupteur dès qu'il
+    atteint une consigne : c'est la commande en mode courant crête, qui limite naturellement le courant à chaque période de découpage et protège
+    contre la saturation et le court-circuit. La boucle externe compare la tension de sortie à une référence et fixe la consigne de courant ; elle
+    rejette l'ondulation à $100\ \mathrm{Hz}$ du bus parce que sa bande passante, de quelques kilohertz, est très supérieure à $100\ \mathrm{Hz}$.
+    Son réglage relève du cours Correcteurs P, PI, PD et PID. S'y ajoutent une protection de surtension en sortie, une protection thermique et un
+    verrouillage en sous-tension qui interdit le fonctionnement tant que le bus est sous la borne basse, pour que le hacheur ne tire pas un courant
+    croissant d'un bus qui s'effondre. Au primaire, le fusible temporisé protège le câble et le transformateur contre un défaut interne, et la
+    varistance écrête les surtensions du réseau ; le choix de ces protections sera repris dans le cours Protections des convertisseurs.
+  </p>
+
+  <h3 id="e-comparaison">Trois façons de réguler : linéaire, pont commandé, découpage</h3>
+  <p>
+    Trois solutions donnent $24\ \mathrm{V}$ continus à partir du même transformateur. Le régulateur linéaire place un transistor en série qui
+    absorbe la différence entre le bus et la sortie ; il est simple, silencieux en compatibilité électromagnétique et très rapide, mais il dissipe
+    $(\overline{V_b} - V_s)I_s$ : avec le même transformateur, $(36{,}5 - 24) \times 5 = 62\ \mathrm{W}$ au réseau nominal et $84\ \mathrm{W}$ au réseau
+    haut, pour un rendement global de $55\ \%$ ; pire, son courant d'entrée vaut $5\ \mathrm{A}$ au lieu de $3{,}2$, et le secondaire porte
+    $9{,}2\ \mathrm{A}$ efficaces, au-delà des $7{,}8\ \mathrm{A}$ assignés du transformateur de $250\ \mathrm{VA}$. Le pont commandé à thyristors
+    du cours <a href="#/cours/thyristors-et-redresseurs-commandes">Thyristors et redresseurs commandés</a> règle la tension moyenne par l'angle
+    $\alpha$, mais il ne règle que la moyenne, à $100\ \mathrm{Hz}$ : il faudrait une grosse inductance de lissage, et le facteur de déplacement
+    $\cos\alpha$ dégrade encore le facteur de puissance ; il reste la solution des fortes puissances, chargeurs de batteries de traction ou
+    excitations. Le hacheur, enfin, régule finement à $97\ \%$ de rendement, au prix d'une commande plus complexe et d'un découpage qu'il faut
+    filtrer. Pour $120\ \mathrm{W}$ et une sortie précise, le hacheur s'impose ; le linéaire reste pertinent pour quelques watts sur une référence
+    de mesure, où son silence électromagnétique prime.
+  </p>
+
+  <h3 id="e-statut">Loi, convention, approximation, règle de conception et donnée du constructeur</h3>
+  <ul>
+    <li><strong>Lois physiques :</strong> conservation de l'énergie, d'où la loi $\frac{1}{2}C_b(V_1^2 - V_2^2) = P_bt$ ; lois de Kirchhoff ; $i = C\,\mathrm{d}v/\mathrm{d}t$ ; blocage d'une diode sous tension inverse.</li>
+    <li><strong>Conventions :</strong> le $0\ \mathrm{V}$ du bus comme référence des tensions continues, la convention récepteur des composants passifs, le sens positif de $i_2$, le facteur $k$ du réseau, le rapport cyclique défini comme fraction de conduction de l'interrupteur.</li>
+    <li><strong>Approximations :</strong> transformateur réduit à une source et une résistance, sans inductance de fuite ; diodes linéarisées ; hacheur vu comme une puissance constante ; décharge sur une demi-période dans la méthode énergétique ; pertes du hacheur estimées par les formules du cours <a href="#/cours/mosfet-et-igbt">MOSFET et IGBT</a>.</li>
+    <li><strong>Règles de conception :</strong> borne basse du bus avec $D_{max} = 0{,}9$ et une marge ; tolérance de $-20\ \%$ sur les condensateurs électrolytiques ; tension nominale des condensateurs supérieure d'au moins $25\ \%$ à la borne haute ; semi-conducteurs du hacheur tenant environ le double de la tension commutée ; précharge temporisée au-delà de la durée de charge ; impédance du filtre d'entrée inférieure à $|r_{inc}|$.</li>
+    <li><strong>Données du constructeur ou de la norme :</strong> résistance et pertes fer du transformateur, courant d'enclenchement d'un transformateur torique, $I_{FSM}$ et $I^2t$ du pont, courant efficace admissible et durée de vie des condensateurs à $105\ ^{\circ}\mathrm{C}$, courbe de fusion du fusible, tenue aux impulsions de la résistance de précharge, exigences de tenue aux microcoupures et d'émission harmonique applicables à l'appareil, à vérifier selon le cas.</li>
+  </ul>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Cette section réunit le schéma principal de la séance, l'organigramme de dimensionnement, la carte du module et le tableau comparatif des
+    architectures. Les schémas et simulations liés à une notion précise sont restés au contact de leur explication ; la liste de renvois figure à
+    la fin de la section.
+  </p>
+  <p>
+    Le schéma principal représente l'alimentation complète du mini-projet. À gauche, le réseau : phase $L$, neutre $N$ et conducteur de protection
+    $PE$, avec le fusible temporisé $F_1$ sur la phase et la varistance entre phase et neutre. Le transformateur $T_1$ porte un point sur la borne
+    homologue de chaque enroulement : la tension $e(t)$ du secondaire est comptée positivement de la borne pointée vers l'autre, et le courant
+    $i_2$ sort de la borne pointée vers le nœud $A$ du pont. Le fil qui relie l'autre borne au nœud $B$ enjambe la branche de $D_1$ et $D_2$ par un
+    petit arc : les deux conducteurs se croisent sans être reliés. Le rail du haut est la borne positive du bus, le rail du bas son
+    $0\ \mathrm{V}$, référence de toutes les tensions continues. Sur le rail positif se succèdent la précharge, le condensateur de bus et le hacheur
+    abaisseur. Les liaisons en tirets sont des signaux de mesure et de commande ; elles croisent le rail du bas sans y être reliées. Le $0\ \mathrm{V}$
+    de sortie est relié au conducteur de protection en un seul point, ce qui fait de la sortie une très basse tension de protection : ce choix sera
+    confirmé dans le cours Sécurité électrique et schémas de liaison à la terre.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 820 390" role="img" aria-label="Schéma principal : réseau, fusible, varistance, transformateur, pont de Graetz, précharge, condensateur de bus, hacheur abaisseur, sortie 24 V et commande"><defs><marker id="fl-pp" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M28 70H50M84 70H168V120"/><rect x="50" y="63" width="34" height="14" rx="2"/>
+        <path d="M28 320H168V230"/>
+        <path d="M115 70V165M115 225V320"/><rect x="105" y="165" width="20" height="60" rx="2"/><path d="M98 232L132 158L140 158" stroke-width="1.6"/>
+        <path d="M168 120a13.75 13.75 0 0 0 0 27.5a13.75 13.75 0 0 0 0 27.5a13.75 13.75 0 0 0 0 27.5a13.75 13.75 0 0 0 0 27.5"/>
+        <path d="M183 112V238M188 112V238" stroke-width="1.8"/>
+        <path d="M202 120a13.75 13.75 0 0 1 0 27.5a13.75 13.75 0 0 1 0 27.5a13.75 13.75 0 0 1 0 27.5a13.75 13.75 0 0 1 0 27.5"/>
+        <path d="M202 120V105H250V180H270"/>
+        <path d="M202 230V250H264a6 6 0 0 1 12 0H305V180H340"/>
+        <path d="M270 60V111M270 129V206M270 224V300"/><path d="M260 129H280L270 111Z"/><path d="M260 111H280" stroke-width="2.6"/><path d="M260 224H280L270 206Z"/><path d="M260 206H280" stroke-width="2.6"/>
+        <path d="M340 60V111M340 129V231M340 249V300"/><path d="M330 129H350L340 111Z"/><path d="M330 111H350" stroke-width="2.6"/><path d="M330 249H350L340 231Z"/><path d="M330 231H350" stroke-width="2.6"/>
+        <path d="M270 60H395M445 60H566M594 60H630"/><rect x="395" y="52" width="50" height="16" rx="3"/>
+        <path d="M380 60V30H400M440 30H470V60"/><path d="M400 30L436 16" stroke-width="2.4"/><circle cx="400" cy="30" r="3"/><circle cx="440" cy="30" r="3"/>
+        <path d="M500 60V175M500 185V300"/><path d="M480 175H520" stroke-width="3"/><path d="M480 187q20 -6 40 0" stroke-width="3"/>
+        <path d="M566 60L590 46" stroke-width="2.4"/><circle cx="566" cy="60" r="3"/><circle cx="594" cy="60" r="3"/>
+        <path d="M615 60V171M615 189V300"/><path d="M605 189H625L615 171Z"/><path d="M605 171H625" stroke-width="2.6"/>
+        <path d="M630 60H640a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0a7.5 7.5 0 0 1 15 0H794"/>
+        <path d="M700 60V175M700 185V300"/><path d="M680 175H720M680 185H720" stroke-width="3"/>
+        <path d="M270 300H794"/><path d="M794 60V140M794 220V300"/><rect x="782" y="140" width="24" height="80" rx="3"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="6 5" stroke-linecap="round">
+        <path d="M28 365H300V300"/><path d="M185 365V238"/>
+        <path d="M720 60V345H700"/><path d="M632 70V318"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="540" y="318" width="160" height="56" rx="8"/><path d="M556 318V80" stroke-dasharray="6 5" marker-end="url(#fl-pp)"/></g>
+      <g fill="currentColor" stroke="none"><circle cx="24" cy="70" r="4"/><circle cx="24" cy="320" r="4"/><circle cx="24" cy="365" r="4"/><circle cx="115" cy="70" r="3.6"/><circle cx="115" cy="320" r="3.6"/><circle cx="270" cy="180" r="3.6"/><circle cx="340" cy="180" r="3.6"/><circle cx="340" cy="60" r="3.6"/><circle cx="340" cy="300" r="3.6"/><circle cx="380" cy="60" r="3.6"/><circle cx="470" cy="60" r="3.6"/><circle cx="500" cy="60" r="3.6"/><circle cx="500" cy="300" r="3.6"/><circle cx="615" cy="60" r="3.6"/><circle cx="615" cy="300" r="3.6"/><circle cx="700" cy="60" r="3.6"/><circle cx="700" cy="300" r="3.6"/><circle cx="300" cy="300" r="3.6"/><circle cx="720" cy="60" r="3"/><circle cx="160" cy="112" r="3"/><circle cx="212" cy="112" r="3"/></g>
+      <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+        <path d="M208 96L234 96" marker-end="url(#fl-pp)"/><path d="M346 48L374 48" marker-end="url(#fl-pp)"/><path d="M488 96L488 140" marker-end="url(#fl-pp)"/><path d="M530 280L530 84" marker-end="url(#fl-pp)"/><path d="M632 40L664 40" marker-end="url(#fl-pp)"/><path d="M704 48L730 48" marker-end="url(#fl-pp)"/><path d="M744 280L744 84" marker-end="url(#fl-pp)"/>      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="4" y="58">L</text><text x="4" y="312">N</text><text x="4" y="384">PE</text><text x="34" y="30">230 V ± 10 %</text><text x="34" y="44">50 Hz</text>
+        <text x="54" y="96">F1</text><text x="44" y="110" font-size="11">T 2 A</text><text x="44" y="190">VDR</text><text x="40" y="206" font-size="11">275 V</text>
+        <text x="196" y="266">T1</text><text x="196" y="280" font-size="11">230 / 32 V</text><text x="196" y="294" font-size="11">250 VA</text>
+        <text x="212" y="92" font-size="11">i_2</text><text x="217" y="168" font-size="11">e(t)</text><text x="216" y="136" font-size="11">+</text><text x="216" y="226" font-size="11">-</text>
+        <text x="248" y="196" font-size="11">A</text><text x="350" y="196" font-size="11">B</text>
+        <text x="284" y="124">D1</text><text x="284" y="219">D2</text><text x="354" y="124">D3</text><text x="354" y="244">D4</text>
+        <text x="350" y="40" font-size="11">i_r</text><text x="398" y="88">R_pré</text><text x="400" y="102" font-size="11">2,2 Ω</text><text x="412" y="14">K</text>
+        <text x="472" y="120" font-size="11">i_C</text><text x="508" y="168" font-size="11">+</text><text x="440" y="214" font-size="11">C_b</text><text x="406" y="228" font-size="11">2 x 2200 µF</text><text x="430" y="242" font-size="11">63 V</text><text x="536" y="200">v_b</text>
+        <text x="566" y="34">T</text><text x="500" y="20" font-size="11">MOSFET 100 V</text><text x="570" y="186">D_RL</text>
+        <text x="646" y="32" font-size="11">L 82 µH</text><text x="636" y="86" font-size="11">i_L</text><text x="664" y="200">C_s</text><text x="648" y="216" font-size="11">100 µF</text>
+        <text x="706" y="40" font-size="11">I_s</text><text x="750" y="180">V_s</text><text x="750" y="196" font-size="11">24 V</text><text x="750" y="212" font-size="11">5 A</text>
+        <text x="330" y="318" font-size="11">0 V du bus, référence</text><text x="310" y="356" font-size="11">liaison 0 V - PE</text><text x="310" y="370" font-size="11">en un point</text>
+        <text x="550" y="338" font-size="11">commande MLI 100 kHz</text><text x="550" y="352" font-size="11">régulation de V_s,</text><text x="550" y="366" font-size="11">limitation de i_L</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal de l'alimentation $24\ \mathrm{V}$, $5\ \mathrm{A}$. Les points des enroulements de $T_1$ repèrent les bornes homologues ;
+      $e(t)$ est fléchée en convention générateur, son signe $+$ du côté du point. Pendant l'alternance positive, $D_1$ et $D_4$ conduisent ; pendant
+      l'alternance négative, $D_3$ et $D_2$. Le courant redressé $i_r$ entre dans le bus par le rail positif ; la flèche $i_C$ est en convention
+      récepteur ; $v_b$ et $V_s$ sont fléchées vers la borne positive, depuis le $0\ \mathrm{V}$. Le contact $K$ court-circuite $R_{\text{pré}}$ après la
+      précharge. Les liaisons en tirets portent la mesure de $V_s$, la mesure de $i_L$ et l'ordre de commande de $T$, ainsi que les liaisons au
+      conducteur de protection.
+    </figcaption>
+  </figure>
+
+  <p>
+    L'organigramme résume la démarche de dimensionnement. Il se lit de haut en bas ; les losanges sont des tests, les rectangles des calculs ou des
+    décisions ; les boucles ramènent au choix du secondaire ou de la capacité quand un critère n'est pas tenu.
+  </p>
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Cahier des charges"] --> B["P_b = P_s / η_h"]
+  B --> C["Borne basse du bus :<br/>(V_s + chutes) / D_max"]
+  C --> D["Secondaire E_0,<br/>transformateur en VA"]
+  D --> E["C_b par l'énergie,<br/>tolérance comprise"]
+  E --> F{"Creux au pire<br/>au-dessus de la borne ?"}
+  F -->|"non"| D
+  F -->|"oui"| G["Courants efficaces<br/>et crêtes"]
+  G --> H{"Composants dans leurs<br/>valeurs assignées ?"}
+  H -->|"non"| D
+  H -->|"oui"| I["Hacheur : L, C_s,<br/>semi-conducteurs"]
+  I --> J["Précharge, démarrage,<br/>protections"]
+  J --> K["Maintien sur<br/>microcoupure"]
+  K --> L["Rendement, facteur de<br/>puissance, échauffement"]</pre>
+    <figcaption>
+      Organigramme de dimensionnement d'une alimentation alternatif vers continu régulée. Le point de départ est la sortie : on remonte la chaîne
+      de l'aval vers l'amont, parce que chaque étage doit porter la puissance de ceux qui le suivent. Les deux tests renvoient au choix du
+      secondaire, car c'est lui qui fixe à la fois le niveau du bus et le courant du transformateur.
+    </figcaption>
+  </figure>
+
+  <p>
+    La carte du module relie les six cours. Les flèches pleines vont d'une notion à celle qui la prolonge ; les flèches en pointillés indiquent
+    l'emploi d'une notion dans le mini-projet de la séance.
+  </p>
+  <figure id="f-carte">
+    <pre class="mermaid">flowchart TD
+  DI["Diodes de puissance<br/>V_F0, r_F, pertes"] --> RM["Redresseurs monophasés<br/>Graetz, filtrage"]
+  DI --> RT["Redresseurs triphasés<br/>1,35 U, commutation"]
+  RM --> TH["Thyristors<br/>V_d0 cos α"]
+  RT --> TH
+  MI["MOSFET et IGBT<br/>conduction, commutation"] --> HA["Hacheurs<br/>D, ondulation"]
+  RM -.-> MP["Mini-projet<br/>alimentation 24 V, 5 A"]
+  HA -.-> MP
+  MI -.-> MP
+  DI -.-> MP
+  TH -.-> CMP["Variante écartée<br/>pont commandé"]
+  CMP -.-> MP</pre>
+    <figcaption>
+      Carte du module des semi-conducteurs et de la conversion. Les diodes alimentent les deux familles de redresseurs, qui débouchent sur les
+      redresseurs commandés ; les interrupteurs commandés débouchent sur les hacheurs. Le mini-projet emprunte à quatre cours directement, et au
+      cours sur les thyristors par la comparaison avec un pont commandé.
+    </figcaption>
+  </figure>
+
+  <p>
+    Le tableau compare quatre architectures d'alimentation $24\ \mathrm{V}$, $120\ \mathrm{W}$ à partir du réseau. Les valeurs des deux premières
+    colonnes viennent des calculs de la séance ; celles des deux dernières sont des ordres de grandeur, à remplacer par les données du constructeur.
+  </p>
+  <div class="cadre-tableau" style="contain: paint;">
+    <table>
+      <thead>
+        <tr><th>Critère</th><th>Transformateur, pont, régulateur linéaire</th><th>Transformateur, pont, hacheur (retenu)</th><th>Transformateur, pont à thyristors, inductance</th><th>Module à découpage hors ligne du commerce</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Rendement global</td><td>environ $55\ \%$</td><td>$83\ \%$</td><td>$75$ à $85\ \%$ selon l'inductance</td><td>souvent $90$ à $94\ \%$</td></tr>
+        <tr><td>Facteur de puissance</td><td>environ $0{,}74$, mais transformateur surchargé</td><td>$0{,}70$</td><td>dégradé par $\cos\alpha$</td><td>élevé si correcteur actif, selon la puissance</td></tr>
+        <tr><td>Précision et ondulation de sortie</td><td>excellentes</td><td>bonnes, quelques dizaines de millivolts</td><td>médiocres, ondulation à $100\ \mathrm{Hz}$</td><td>bonnes</td></tr>
+        <tr><td>Perturbations électromagnétiques</td><td>très faibles</td><td>découpage à filtrer</td><td>encoches de commutation</td><td>découpage filtré par le constructeur</td></tr>
+        <tr><td>Masse et volume</td><td>élevés, dissipateur important</td><td>transformateur $50\ \mathrm{Hz}$ dominant</td><td>transformateur et inductance lourds</td><td>faibles</td></tr>
+        <tr><td>Maintien sur microcoupure</td><td>selon $C_b$</td><td>$8{,}8$ à $15{,}9\ \mathrm{ms}$</td><td>faible</td><td>donnée du constructeur</td></tr>
+        <tr><td>Usage pertinent</td><td>quelques watts, références de mesure</td><td>étude, réparation, chargeur sur mesure</td><td>fortes puissances, chargeurs de traction</td><td>armoires industrielles courantes</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <p>Les illustrations suivantes sont restées au contact du passage qu'elles éclairent :</p>
+  <ul>
+    <li><a href="#d-periode-figure" data-renvoi="d-periode-figure">l'animation d'une période réseau de l'alimentation</a>, section D ;</li>
+    <li><a href="#e-hyperbole-figure" data-renvoi="e-hyperbole-figure">la caractéristique d'une charge à puissance constante</a>, <a href="#e-bus-figure" data-renvoi="e-bus-figure">la simulation du bus sur deux périodes</a>, <a href="#e-fenetre-figure" data-renvoi="e-fenetre-figure">la fenêtre de tension du bus</a>, <a href="#e-choix-figure" data-renvoi="e-choix-figure">la simulation du choix de la tension du bus</a>, <a href="#e-precharge-schema" data-renvoi="e-precharge-schema">le circuit de précharge</a> et <a href="#e-demarrage-figure" data-renvoi="e-demarrage-figure">la simulation de la mise sous tension</a>, section E ;</li>
+    <li><a href="#h-bilan-figure" data-renvoi="h-bilan-figure">le bilan de puissance animé de la chaîne</a>, section H ;</li>
+    <li><a href="#i-figure" data-renvoi="i-figure">l'implantation de l'alimentation locale de l'armoire déportée</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>Pour proposer et calculer une alimentation continue régulée à partir du réseau :</p>
+  <ol>
+    <li>Écrire le cahier des charges : tension et courant de sortie, précision, plage du réseau, maintien sur microcoupure exigé, température ambiante, isolement, encombrement.</li>
+    <li>Choisir l'architecture en comparant les solutions linéaire, à découpage et achetée, selon la puissance, la précision et les perturbations admises.</li>
+    <li>Estimer les pertes du hacheur avec les formules du cours <a href="#/cours/mosfet-et-igbt">MOSFET et IGBT</a>, puis la puissance absorbée au bus $P_b = P_s/\eta_h$.</li>
+    <li>Fixer la borne basse du bus à partir de $D_{max}$, des chutes et d'une marge ; la borne haute à partir de la crête à vide au réseau haut.</li>
+    <li>Choisir la tension du secondaire et le transformateur : crête au réseau bas suffisante, voltampères supérieurs à $E_0I_{2,eff}$.</li>
+    <li>Calculer une première capacité par la méthode énergétique, tolérance comprise, puis vérifier le creux au pire par simulation et corriger.</li>
+    <li>Calculer les courants efficaces et crêtes du secondaire, des diodes et des condensateurs ; choisir le pont, les condensateurs et leur tension nominale.</li>
+    <li>Dimensionner le hacheur avec la méthode du cours <a href="#/cours/hacheurs-dc-dc">Hacheurs DC-DC</a>, au cas le plus défavorable de la plage du bus.</li>
+    <li>Traiter la mise sous tension et les défauts : précharge, démarrage progressif, limitation de courant, fusible, varistance, verrouillage en sous-tension.</li>
+    <li>Calculer le maintien sur microcoupure, le rendement global, le facteur de puissance et la chaleur dissipée ; contrôler unités, ordres de grandeur et bilan énergétique, puis lister les hypothèses à remplacer par des données réelles.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Le travail central : proposer et calculer une alimentation continue simple de $24\ \mathrm{V}$, $5\ \mathrm{A}$, alimentée par le réseau
+    $230\ \mathrm{V}$, avec l'architecture du schéma principal de la section F. La démarche suit l'organigramme de la section F, de l'aval vers l'amont.
+  </p>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    <strong>Données.</strong> Sortie : $V_s = 24\ \mathrm{V}$, $I_s = 5\ \mathrm{A}$, $P_s = 120\ \mathrm{W}$, ondulation inférieure à $1\ \%$.
+    Réseau : $230\ \mathrm{V}$ à plus ou moins $10\ \%$, $50\ \mathrm{Hz}$. Transformateur supposé : $230\ \mathrm{V}$ et $32\ \mathrm{V}$ à vide,
+    $250\ \mathrm{VA}$, $R_s = 0{,}25\ \Omega$ ramenés au secondaire, pertes fer de $4\ \mathrm{W}$. Pont : $V_{F0} = 0{,}8\ \mathrm{V}$,
+    $r_F = 20\ \mathrm{m\Omega}$ par diode. Hacheur à $f_d = 100\ \mathrm{kHz}$ : MOSFET de $100\ \mathrm{V}$, $R_{DS(on)} = 18\ \mathrm{m\Omega}$ à
+    chaud, $t_r + t_f = 40\ \mathrm{ns}$, $Q_g = 30\ \mathrm{nC}$ sous $10\ \mathrm{V}$, $C_{oss} = 500\ \mathrm{pF}$ ; diode Schottky de
+    $100\ \mathrm{V}$, $V_F = 0{,}6\ \mathrm{V}$ à $5\ \mathrm{A}$ ; inductance de résistance $R_L = 30\ \mathrm{m\Omega}$ et $0{,}3\ \mathrm{W}$ de
+    pertes fer ; commande $0{,}5\ \mathrm{W}$ ; $D_{max} = 0{,}9$ ; ondulation de courant d'au plus $1{,}5\ \mathrm{A}$, soit $30\ \%$. Toutes ces
+    valeurs de composants sont des hypothèses de catalogue.
+  </p>
+  <p>
+    <strong>Inconnues.</strong> Capacité du bus, inductance et condensateur de sortie, tenues des semi-conducteurs, précharge, fusible,
+    voltampères du transformateur, rendement global, facteur de puissance, maintien sur microcoupure.
+  </p>
+  <p>
+    <strong>Stratégie.</strong> Partir de la sortie pour obtenir la puissance au bus ; fixer la fenêtre de tension du bus ; calculer une première
+    capacité par l'énergie, puis la vérifier par simulation ; en déduire les courants, puis dimensionner le hacheur et les protections ; terminer
+    par les bilans. Les pertes du hacheur dépendent de la tension moyenne du bus, qui dépend elle-même de la puissance absorbée : le calcul a été
+    bouclé deux fois, et les valeurs présentées sont celles de la boucle convergée.
+  </p>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li>
+      <strong>Pertes du hacheur au point nominal</strong>, bus moyen de $38{,}4\ \mathrm{V}$ issu de l'étape 5. Rapport cyclique
+      $D = 24/38{,}43 = 0{,}625$ ; ondulation $\Delta i_L = V_s(1 - D)/(Lf_d) = 24 \times 0{,}375/(82 \times 10^{-6} \times 10^5) = 1{,}10\ \mathrm{A}$ ;
+      carré du courant efficace de l'inductance $I_s^2 + \Delta i_L^2/12 = 25{,}10\ \mathrm{A^2}$. Conduction du MOSFET :
+      $0{,}018 \times 0{,}625 \times 25{,}10 = 0{,}28\ \mathrm{W}$ ; commutation : $\frac{1}{2} \times 38{,}43 \times 5 \times 40 \times 10^{-9} \times 10^5 = 0{,}38\ \mathrm{W}$ ;
+      capacité de sortie : $\frac{1}{2} \times 500 \times 10^{-12} \times 38{,}43^2 \times 10^5 = 0{,}04\ \mathrm{W}$ ; grille :
+      $30 \times 10^{-9} \times 10 \times 10^5 = 0{,}03\ \mathrm{W}$ ; diode : $0{,}6 \times 5 \times 0{,}375 = 1{,}13\ \mathrm{W}$ ; inductance :
+      $0{,}030 \times 25{,}10 + 0{,}3 = 1{,}05\ \mathrm{W}$ ; commande : $0{,}5\ \mathrm{W}$. Total : $3{,}41\ \mathrm{W}$, soit
+      $\eta_h = 120/123{,}41 = 97{,}2\ \%$ et $P_b = 123{,}4\ \mathrm{W}$.
+    </li>
+    <li>
+      <strong>Fenêtre du bus.</strong> Borne basse : $(24 + (0{,}018 + 0{,}030) \times 5)/0{,}9 = 26{,}9\ \mathrm{V}$, portée à $28\ \mathrm{V}$.
+      Borne haute, à vide au réseau haut : $1{,}1 \times 32\sqrt{2} - 2 \times 0{,}8 = 49{,}78 - 1{,}6 = 48{,}2\ \mathrm{V}$.
+    </li>
+    <li>
+      <strong>Secondaire.</strong> Crête au réseau bas, sans chute résistive : $0{,}9 \times 32\sqrt{2} - 1{,}6 = 39{,}1\ \mathrm{V}$, supérieure
+      de $11\ \mathrm{V}$ à la borne basse : le secondaire de $32\ \mathrm{V}$ laisse une réserve d'énergie utilisable confortable.
+    </li>
+    <li>
+      <strong>Capacité par l'énergie</strong>, décharge sur toute la demi-période :
+      $C_b = P_b/(f_r(V_{max}^2 - V_{min}^2)) = 123{,}4/(50 \times (39{,}13^2 - 28^2)) = 123{,}4/(50 \times 747{,}2) = 3{,}30\ \mathrm{mF}$.
+      Avec $-20\ \%$ de tolérance : $3{,}30/0{,}8 = 4{,}13\ \mathrm{mF}$. Choix : deux condensateurs de $2200\ \mathrm{\mu F}$ en parallèle,
+      $C_b = 4{,}4\ \mathrm{mF}$, tension nominale $63\ \mathrm{V}$.
+    </li>
+    <li>
+      <strong>Vérification par simulation.</strong> Au réseau nominal, le bus oscille entre $35{,}7$ et $40{,}9\ \mathrm{V}$, moyenne
+      $38{,}4\ \mathrm{V}$, avec une fenêtre de conduction de $54{,}5$ degrés par alternance. Au pire, réseau $-10\ \%$ et capacité de
+      $3{,}52\ \mathrm{mF}$, le creux vaut $29{,}5\ \mathrm{V}$, au-dessus des $28\ \mathrm{V}$. La plus petite capacité nominale qui tient ce cas
+      vaut $3{,}55\ \mathrm{mF}$ : la méthode énergétique, avec ses $4{,}13\ \mathrm{mF}$, était prudente de $16\ \%$. Ses deux approximations se
+      compensent en partie : elle surestime la crête, que la chute dans $R_s$ abaisse à $36{,}7\ \mathrm{V}$ au réseau bas, mais elle surestime aussi la
+      durée de décharge.
+    </li>
+    <li>
+      <strong>Courants et composants côté réseau.</strong> Au réseau nominal : courant redressé moyen $3{,}22\ \mathrm{A}$, courant efficace du
+      secondaire $I_{2,eff} = 6{,}43\ \mathrm{A}$, pointe $16{,}2\ \mathrm{A}$ ; au réseau bas, $7{,}07\ \mathrm{A}$ et $17{,}0\ \mathrm{A}$. Le
+      transformateur fournit $32 \times 6{,}43 = 206\ \mathrm{VA}$, au plus $209\ \mathrm{VA}$ au réseau haut : $84\ \%$ de ses $250\ \mathrm{VA}$.
+      Chaque diode porte $1{,}61\ \mathrm{A}$ moyens et $4{,}55\ \mathrm{A}$ efficaces, d'où $0{,}8 \times 1{,}61 + 0{,}02 \times 4{,}55^2 = 1{,}70\ \mathrm{W}$
+      et $6{,}80\ \mathrm{W}$ pour le pont ; elle bloque au plus $49{,}8\ \mathrm{V}$ : un pont de $200\ \mathrm{V}$, $25\ \mathrm{A}$ convient, son
+      $I_{FSM}$ restant à lire sur la fiche. Les condensateurs portent ensemble $5{,}57\ \mathrm{A}$ efficaces, $6{,}01\ \mathrm{A}$ au pire, soit
+      $3{,}0\ \mathrm{A}$ chacun à $100\ \mathrm{Hz}$, à comparer à leur courant admissible.
+    </li>
+    <li>
+      <strong>Hacheur.</strong> Plage du rapport cyclique idéal : $24/48{,}2 = 0{,}50$ à $24/29{,}5 = 0{,}81$. Inductance au réseau haut :
+      $L \ge 24 \times (1 - 0{,}498)/(1{,}5 \times 10^5) = 80{,}3\ \mathrm{\mu H}$, choix $82\ \mathrm{\mu H}$, d'où $\Delta i_L = 1{,}47\ \mathrm{A}$
+      au plus et une crête de $5{,}73\ \mathrm{A}$ ; limitation de courant réglée à $6{,}5\ \mathrm{A}$, courant de saturation exigé d'au moins
+      $8\ \mathrm{A}$. Frontière de conduction discontinue : $\Delta i_L/2 = 0{,}73\ \mathrm{A}$ au réseau haut. Condensateur de sortie polymère de
+      $100\ \mathrm{\mu F}$, $35\ \mathrm{V}$, $20\ \mathrm{m\Omega}$ : $\Delta V_s \le 1{,}47/(8 \times 100 \times 10^{-6} \times 10^5) + 0{,}020 \times 1{,}47 = 18 + 29 = 48\ \mathrm{mV}$,
+      soit $0{,}2\ \%$ ; courant efficace $1{,}47/\sqrt{12} = 0{,}42\ \mathrm{A}$. MOSFET et diode de $100\ \mathrm{V}$ : facteur $2{,}1$ sur la borne haute.
+    </li>
+    <li>
+      <strong>Précharge.</strong> $R_{\text{pré}} = 2{,}2\ \Omega$ : pointe $(45{,}25 - 1{,}6)/(2{,}2 + 0{,}29) = 17{,}5\ \mathrm{A}$ au réseau nominal,
+      $19{,}4\ \mathrm{A}$ au réseau haut, contre $150$ et $166\ \mathrm{A}$ sans précharge. Le contact se ferme à $80\ \mathrm{ms}$ ; l'énergie dissipée
+      vaut environ $2{,}9\ \mathrm{J}$, $3{,}6\ \mathrm{J}$ au réseau haut, par mise sous tension. Une résistance bobinée tenant cette impulsion convient.
+    </li>
+    <li>
+      <strong>Fusible primaire.</strong> Courant primaire $I_1 = I_{2,eff} \times 32/230 = 0{,}895\ \mathrm{A}$ au réseau nominal,
+      $0{,}98\ \mathrm{A}$ au réseau bas. Un fusible temporisé de $2\ \mathrm{A}$ laisse une marge d'un facteur $2$ ; il reste à vérifier qu'il tient le
+      courant d'enclenchement du transformateur torique, qui peut atteindre plusieurs dizaines de fois le courant assigné pendant quelques
+      millisecondes, en comparant les courbes du constructeur.
+    </li>
+    <li>
+      <strong>Maintien.</strong> $t_m = 4{,}4 \times 10^{-3} \times (35{,}72^2 - 28^2)/(2 \times 123{,}4) = 8{,}8\ \mathrm{ms}$ au pire instant du
+      réseau nominal, $15{,}9\ \mathrm{ms}$ depuis la crête.
+    </li>
+    <li>
+      <strong>Bilans.</strong> Puissance absorbée au réseau : $120 + 3{,}41 + 6{,}80 + 10{,}35 + 4 = 144{,}6\ \mathrm{W}$, les $10{,}35\ \mathrm{W}$
+      étant les pertes cuivre $R_sI_{2,eff}^2 = 0{,}25 \times 6{,}43^2$. Rendement global : $120/144{,}6 = 83{,}0\ \%$. Facteur de puissance :
+      $\lambda = 144{,}6/(230 \times 0{,}895) = 0{,}70$. Chaleur dégagée dans l'armoire : $24{,}6\ \mathrm{W}$, dont $14{,}3\ \mathrm{W}$ dans le
+      transformateur.
+    </li>
+  </ol>
+
+  <h3 id="h-bilan-titre">Bilan de puissance animé</h3>
+  <p>
+    Le diagramme suivant représente le flux de puissance de la chaîne : la largeur de la bande est proportionnelle à la puissance transportée, et
+    chaque perte s'en détache vers le bas. Prédisez avant de manipuler : à demi-charge, le rendement global est-il meilleur ou moins bon qu'à pleine
+    charge ? Et à un ampère ? Réglez le courant de sortie et la tension du réseau ; la bande se redessine progressivement vers le nouvel état.
+  </p>
+  <figure id="h-bilan-figure">
+    <div class="schema-vivant" id="h-bilan"></div>
+    <div id="h-bilan-curseurs"></div>
+    <div id="h-bilan-valeurs"></div>
+    <figcaption>
+      Flux de puissance de l'alimentation, du réseau, à gauche, vers la sortie, à droite. La bande principale, en aplat, porte la puissance qui
+      traverse chaque étage ; les quatre languettes qui s'en détachent vers le bas sont les pertes fer et cuivre du transformateur, les pertes du
+      pont et celles du hacheur, avec leur valeur en watts. Le calcul refait, à chaque réglage, la simulation du bus de la section E et
+      l'estimation des pertes du hacheur de l'étape 1, en conduction continue.
+    </figcaption>
+  </figure>
+  <p>
+    Interprétation. Le rendement passe par un maximum d'environ $84\ \%$ vers $3\ \mathrm{A}$ : en dessous, les pertes fixes, $4\ \mathrm{W}$ de pertes
+    fer, la commande et les pertes fer de l'inductance, pèsent de plus en plus, et le rendement tombe vers $77\ \%$ à $1\ \mathrm{A}$ ; au-dessus,
+    les pertes cuivre du transformateur, proportionnelles au carré du courant, prennent le relais. C'est le comportement de tout transformateur,
+    étudié dans le cours <a href="#/cours/transformateur-reel">Transformateur réel</a> : rendement maximal quand pertes fixes et pertes variables
+    sont du même ordre. Au réseau haut, le rendement s'améliore légèrement, parce que le courant baisse ; le facteur de puissance, lui, se dégrade à
+    faible charge.
+  </p>
+
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li><strong>Unités :</strong> chaque formule a été vérifiée dimensionnellement en section E ; les résultats sont en volts, ampères, watts, farads, henrys, secondes.</li>
+    <li><strong>Bilan de charge :</strong> courant moyen du pont fois tension moyenne du bus, $3{,}217 \times 38{,}43 = 123{,}6\ \mathrm{W}$, égale à $P_b = 123{,}4\ \mathrm{W}$ à $0{,}2\ \%$ près : le condensateur ne crée ni ne consomme d'énergie en moyenne.</li>
+    <li><strong>Bilan d'énergie sur une alternance :</strong> le condensateur cède $\frac{1}{2} \times 4{,}4 \times 10^{-3} \times (40{,}95^2 - 35{,}72^2) = 0{,}88\ \mathrm{J}$, soit $7{,}1\ \mathrm{ms}$ de fonctionnement à $123{,}4\ \mathrm{W}$ ; la conduction occupant $54{,}5$ degrés, c'est-à-dire $3{,}0\ \mathrm{ms}$ sur $10$, la décharge dure environ $7{,}0\ \mathrm{ms}$ : les deux calculs concordent.</li>
+    <li><strong>Produit des rendements :</strong> transformateur $130{,}2/144{,}6 = 0{,}90$, pont $123{,}4/130{,}2 = 0{,}948$, hacheur $0{,}972$ ; produit $0{,}830$, identique au bilan direct.</li>
+    <li><strong>Ordre de grandeur :</strong> facteur de forme du courant du secondaire $6{,}43/3{,}22 = 2{,}0$ et facteur de puissance de $0{,}70$, conformes à ce qu'on attend d'un pont à condensateur en tête derrière un petit transformateur ; ils concordent avec les $0{,}67$ trouvés pour le chargeur dans le cours <a href="#/cours/redresseurs-monophases">Redresseurs monophasés</a>.</li>
+    <li><strong>Incertitudes :</strong> l'inductance de fuite, négligée, réduirait les pointes et élargirait la fenêtre de conduction ; la résistance réelle du transformateur, à lire sur sa fiche, déplace directement la crête du bus et les pertes cuivre ; une erreur de $20\ \%$ sur $R_s$ déplace le creux au pire d'environ un demi-volt, de $29{,}0$ à $29{,}9\ \mathrm{V}$, à revérifier dans la simulation de la section E.</li>
+  </ul>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <p>
+    Le projet fil rouge comporte une armoire déportée, à $40\ \mathrm{m}$ de l'armoire de l'automate, reliée au bus $24\ \mathrm{V}$ secouru par un
+    câble de $2 \times 2{,}5\ \mathrm{mm^2}$ de $0{,}576\ \Omega$ en boucle. Le cours <a href="#/cours/revision-1-et-etude-de-cas-continu">Révision 1 et
+    étude de cas continu</a> avait montré qu'un réchauffage anti-condensation de $60\ \mathrm{W}$ dans cette armoire porterait la consommation du
+    bus à $6{,}34\ \mathrm{A}$, au-delà de son plafond de $6\ \mathrm{A}$. Le mini-projet apporte la solution : une alimentation locale de
+    $24\ \mathrm{V}$, $5\ \mathrm{A}$, non secourue, installée dans l'armoire déportée et alimentée par un départ $230\ \mathrm{V}$ du tableau
+    général. Elle porte le réchauffage, deux électrovannes de $8\ \mathrm{W}$, un ventilateur de $10\ \mathrm{W}$, l'éclairage et les voyants,
+    environ $6\ \mathrm{W}$, avec une réserve de $28\ \mathrm{W}$. Les capteurs et les entrées et sorties de l'automate restent sur le bus secouru.
+  </p>
+  <figure id="i-figure">
+    <svg viewBox="0 0 770 300" role="img" aria-label="Implantation : tableau général, armoire de l'automate avec bus 24 V secouru, armoire déportée à 40 m avec alimentation locale et ses charges"><defs><marker id="fl-site" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="20" y="40" width="150" height="220" rx="10"/><rect x="220" y="40" width="180" height="130" rx="10"/><rect x="470" y="30" width="280" height="250" rx="10"/><rect x="490" y="150" width="120" height="70" rx="8"/><rect x="490" y="60" width="240" height="60" rx="8"/><rect x="640" y="150" width="90" height="110" rx="8"/></g><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M170 100H218" marker-end="url(#fl-site)"/><path d="M400 90H488" marker-end="url(#fl-site)"/><path d="M170 210H360V185H488" marker-end="url(#fl-site)"/><path d="M610 185H638" marker-end="url(#fl-site)"/><path d="M620 240L620 270H560V222" stroke-dasharray="5 4"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="34" y="66">Tableau</text><text x="34" y="82">général</text><text x="34" y="104" font-size="11">230 / 400 V</text><text x="34" y="236" font-size="11">départ 230 V</text><text x="34" y="250" font-size="11">2 A, 3G1,5</text><text x="234" y="64">Armoire</text><text x="234" y="80">de l'automate</text><text x="234" y="104" font-size="11">chargeur 27 V</text><text x="234" y="120" font-size="11">et batterie 24 V</text><text x="234" y="140" font-size="11">bus secouru,</text><text x="234" y="156" font-size="11">plafond 6 A</text><text x="406" y="80" font-size="11">40 m</text><text x="406" y="108" font-size="11">2 x 2,5 mm²</text><text x="372" y="204" font-size="11">40 m</text><text x="484" y="22" font-weight="600">Armoire déportée</text><text x="502" y="84">capteurs, entrées et sorties</text><text x="502" y="104" font-size="11">sur le bus secouru, inchangé</text><text x="500" y="174">alimentation</text><text x="500" y="190">locale</text><text x="500" y="208" font-size="11">24 V, 5 A</text><text x="650" y="172" font-size="11">réchauffage</text><text x="650" y="186" font-size="11">60 W</text><text x="646" y="204" font-size="11">électrovannes</text><text x="650" y="218" font-size="11">ventilateur</text><text x="650" y="232" font-size="11">voyants</text><text x="650" y="246" font-size="11">réserve</text><text x="400" y="296" font-size="11">0 V local relié au 0 V secouru et au PE en un seul point</text><text x="20" y="282" font-size="11">flèches : sens du transfert d'énergie</text></g></svg>
+    <figcaption>
+      Implantation de l'alimentation locale. Les flèches pleines donnent le sens du transfert d'énergie : du tableau général vers l'armoire de
+      l'automate, qui alimente l'armoire déportée par le bus secouru, et directement du tableau vers l'alimentation locale par un départ
+      $230\ \mathrm{V}$ distinct. La liaison en tirets représente la mise en commun des références $0\ \mathrm{V}$ et du conducteur de protection en
+      un seul point, pour que les entrées de l'automate et les charges locales partagent la même référence sans former de boucle.
+    </figcaption>
+  </figure>
+
+  <h3 id="i-contraintes">Contraintes d'exploitation et risques</h3>
+  <p>
+    L'armoire déportée est un coffret étanche exposé jusqu'à $40\ ^{\circ}\mathrm{C}$ en été. L'alimentation y dissipe $24{,}6\ \mathrm{W}$ à pleine
+    charge, qui s'ajoutent au réchauffage en hiver, ce qui est utile, mais aussi à l'ensoleillement en été, ce qui ne l'est pas : la durée de vie des
+    condensateurs électrolytiques est divisée par deux environ tous les $10\ ^{\circ}\mathrm{C}$, une règle empirique à confirmer sur la fiche du
+    constructeur. Le réchauffage est commandé par le thermostat du cours <a href="#/cours/revision-2-et-mini-projet-capteur">Révision 2 et mini-projet
+    capteur</a> : la charge varie donc de $2{,}5\ \mathrm{A}$ en quelques millisecondes, échelon que la boucle de tension doit absorber sans
+    dépassement notable. L'alimentation n'est pas secourue : en cas de coupure, le réchauffage, la ventilation et les électrovannes tombent.
+    Les électrovannes doivent donc avoir une position de repli sûre hors tension, et l'automate, qui reste alimenté, doit constater la perte de
+    l'alimentation locale par une entrée de surveillance et ne pas confondre une vanne au repos avec un défaut de vanne.
+  </p>
+  <p>
+    Le maintien de $8{,}8\ \mathrm{ms}$ ne couvre pas une microcoupure de $20\ \mathrm{ms}$ : les électrovannes peuvent retomber puis se recoller,
+    ce qui provoque un coup de bélier sur leur circuit. Deux remèdes : accepter l'événement et le faire gérer par l'automate, ou doubler la capacité
+    à $8{,}8\ \mathrm{mF}$, ce qui porte le maintien à $22\ \mathrm{ms}$. Ce second choix oblige à doubler aussi la temporisation de précharge : avec
+    $2{,}2\ \Omega$ et $8{,}8\ \mathrm{mF}$, le bus n'atteint que $33{,}8\ \mathrm{V}$ à $80\ \mathrm{ms}$, et la fermeture du contact provoquerait
+    une pointe de $34\ \mathrm{A}$.
+  </p>
+
+  <h3 id="i-compromis">Choix d'ingénierie et compromis</h3>
+  <p>
+    Trois options ont été comparées. Alimenter les nouvelles charges par le bus secouru impose de renforcer le chargeur et la batterie et de
+    remplacer le câble de $40\ \mathrm{m}$ : à $5\ \mathrm{A}$ de plus, sa chute atteindrait $2{,}9\ \mathrm{V}$ supplémentaires. Construire
+    l'alimentation calculée en section H donne une maîtrise complète des marges et des pièces de rechange communes avec le chargeur, au prix d'un
+    transformateur de $250\ \mathrm{VA}$ lourd et d'un rendement de $83\ \%$. Acheter un module à découpage du commerce sur rail DIN donne un
+    rendement supérieur, une masse faible et une documentation de conformité. La recommandation est la troisième, mais spécifiée par la
+    présente étude : $24\ \mathrm{V}$, $5\ \mathrm{A}$ en continu à $40\ ^{\circ}\mathrm{C}$ sans déclassement, entrée $207$ à $253\ \mathrm{V}$,
+    maintien d'au moins $20\ \mathrm{ms}$ à pleine charge, courant d'appel limité et compatible avec le fusible temporisé de $2\ \mathrm{A}$,
+    limitation de courant en sortie, contact de signalisation de bon fonctionnement câblé sur une entrée de l'automate. La section H reste
+    l'étude de référence qui permet de juger les fiches des fournisseurs.
+  </p>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Ajout au projet fil rouge</span>
+    <p>
+      Alimentation locale $24\ \mathrm{V}$, $5\ \mathrm{A}$ non secourue de l'armoire déportée, pour le réchauffage de $60\ \mathrm{W}$ et les charges
+      non critiques qui dépassaient le plafond de $6\ \mathrm{A}$ du bus secouru. Étude de référence : transformateur $230/32\ \mathrm{V}$ à vide,
+      $250\ \mathrm{VA}$, $R_s = 0{,}25\ \Omega$ supposés ; pont $200\ \mathrm{V}$, $25\ \mathrm{A}$ ($6{,}80\ \mathrm{W}$) ; bus de
+      $2 \times 2200\ \mathrm{\mu F}$, $63\ \mathrm{V}$, entre $35{,}7$ et $40{,}9\ \mathrm{V}$ au nominal, $29{,}5\ \mathrm{V}$ au pire pour une borne
+      basse de $28\ \mathrm{V}$, $48{,}2\ \mathrm{V}$ à vide au réseau haut ; hacheur abaisseur à $100\ \mathrm{kHz}$, $82\ \mathrm{\mu H}$,
+      $100\ \mathrm{\mu F}$ polymère, MOSFET et Schottky de $100\ \mathrm{V}$, $97{,}2\ \%$ ; précharge de $2{,}2\ \Omega$ court-circuitée à
+      $80\ \mathrm{ms}$ ($17{,}5\ \mathrm{A}$ au lieu de $150\ \mathrm{A}$) ; fusible temporisé de $2\ \mathrm{A}$ ; $144{,}6\ \mathrm{W}$ absorbés,
+      rendement $83{,}0\ \%$, facteur de puissance $0{,}70$, maintien de $8{,}8\ \mathrm{ms}$, $22\ \mathrm{ms}$ avec $8{,}8\ \mathrm{mF}$.
+      Recommandation : module du commerce spécifié par cette étude, maintien d'au moins $20\ \mathrm{ms}$, signalisation vers l'automate. Hypothèses
+      à remplacer par les documentations des composants ou du module retenu et par un relevé du bus et du courant d'appel à la mise en service.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Calculer la capacité du bus avec le courant de sortie.</strong> Le bus alimente le hacheur, pas la charge : son courant vaut $P_b/v_b$, $3{,}2\ \mathrm{A}$ et non $5\ \mathrm{A}$, et il augmente quand le bus baisse. Raisonner en puissance, pas en courant.</li>
+    <li><strong>Prendre la crête à vide comme crête en charge.</strong> La résistance du transformateur abaisse la crête de plusieurs volts pendant la pointe de courant ; la méthode énergétique doit être vérifiée par simulation ou par une mesure.</li>
+    <li><strong>Oublier le cas le plus défavorable.</strong> Le creux se vérifie au réseau bas, à pleine charge, avec la capacité en bas de tolérance et vieillie ; la tenue en tension se vérifie à vide au réseau haut. Les deux extrêmes ne sont pas le même point de fonctionnement.</li>
+    <li><strong>Dimensionner le transformateur sur la puissance active.</strong> Il chauffe selon ses voltampères, $E_0I_{2,eff}$ : $206\ \mathrm{VA}$ pour $145\ \mathrm{W}$ absorbés. Un transformateur de $150\ \mathrm{VA}$ serait en surcharge permanente.</li>
+    <li><strong>Croire qu'un condensateur de compensation relève le facteur de puissance d'un pont de diodes.</strong> Le facteur de puissance de $0{,}70$ vient de la déformation du courant, pas d'un déphasage ; un condensateur au primaire ajouterait du courant réactif sans réduire les harmoniques.</li>
+    <li><strong>Surdimensionner la capacité "pour être tranquille".</strong> Derrière une source raide, elle raccourcit la fenêtre de conduction, augmente la pointe, la valeur efficace et le courant d'appel, et dégrade le facteur de puissance.</li>
+    <li><strong>Oublier la précharge ou la temporiser trop court.</strong> Sans précharge, la pointe n'est limitée que par le transformateur ; avec une temporisation trop courte ou une résistance trop forte, la pointe se reporte à la fermeture du contact.</li>
+    <li><strong>Laisser le hacheur fonctionner sous la borne basse.</strong> Une charge à puissance constante tire un courant croissant d'un bus qui baisse : sans verrouillage en sous-tension, elle accélère l'effondrement et sollicite inutilement le pont et le transformateur.</li>
+  </ol>
+  <p>
+    Diagnostic sur le terrain. Une ondulation à $100\ \mathrm{Hz}$ qui apparaît sur la sortie $24\ \mathrm{V}$ au réseau bas ou à pleine charge
+    désigne un creux du bus passé sous la borne basse : mesurer le bus à l'oscilloscope ; si l'ondulation du bus a grandi depuis la mise en
+    service, les condensateurs ont perdu de la capacité. Une alimentation qui redémarre en boucle à la mise sous tension, sortie chargée, désigne
+    souvent une précharge défaillante ou un verrouillage en sous-tension réglé trop près du creux. Un fusible primaire qui fond à certaines mises
+    sous tension seulement, et jamais en service, désigne le courant d'enclenchement du transformateur ou du bus, selon l'instant de fermeture :
+    c'est le signe d'un fusible trop rapide ou d'une précharge court-circuitée par un contact collé. Un transformateur anormalement chaud, sans
+    surcharge en watts, désigne une valeur efficace élevée du courant : condensateur surdimensionné, transformateur trop raide ou charge
+    supérieure à l'estimation. Un bus qui monte au-dessus de la crête du secondaire désigne un retour d'énergie depuis la sortie, par exemple une
+    charge inductive ou un moteur entraîné, que le pont de diodes ne peut pas renvoyer au réseau.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante, qui reprennent tout le module : deux fondamentaux, deux intermédiaires, un avancé, une question de
+    diagnostic industriel et une question conceptuelle. Ils vont de l'application directe d'une formule au choix de la méthode, au calcul en
+    plusieurs étapes, au dimensionnement sous contrainte, au diagnostic à partir de symptômes et à l'analyse d'un compromis. La correction de chacun
+    reste masquée jusqu'à une tentative ou un clic explicite sur "Voir la correction", puis se déroule étape par étape, accompagnée d'une courbe ou
+    d'un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangeant choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma, sur l'ensemble du module.
+    Après chaque réponse, l'explication s'affiche avec un petit schéma tracé pas à pas.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+
+  <div class="formule-cle">
+    <p class="formule-cle-legende" style="margin:0 0 0.6rem;font-weight:600;">Cinq formules essentielles</p>
+    $$C_b = \frac{2P_b\,t_d}{V_{b,max}^2 - V_{b,min}^2} \le \frac{P_b}{f_r\left(V_{b,max}^2 - V_{b,min}^2\right)}$$
+    $$t_m = \frac{C_b\left(V_1^2 - V_{b,min}^2\right)}{2P_b}$$
+    $$V_{b,min} \ge \frac{V_s + \left(R_{DS(on)} + R_L\right)I_s}{D_{max}} + \text{marge}, \qquad V_{b,max} = kE_0\sqrt{2} - 2V_{F0}$$
+    $$r_{inc} = -\frac{v_b^2}{P_b}$$
+    $$\eta = \eta_{transfo}\,\eta_{pont}\,\eta_h, \qquad \lambda = \frac{P}{V_{eff}I_{eff}}, \qquad S_{transfo} \ge E_0I_{2,eff}$$
+  </div>
+
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ol>
+      <li>Le bus alimente une charge à puissance constante : raisonner en puissance et en énergie, jamais avec le courant de sortie.</li>
+      <li>Le creux se vérifie au réseau bas, à pleine charge, capacité en bas de tolérance ; la tenue en tension, à vide au réseau haut.</li>
+      <li>Le transformateur se choisit sur ses voltampères, que le courant en pointes rend bien supérieurs à la puissance active.</li>
+      <li>La précharge doit limiter la pointe d'enclenchement sans reporter une seconde pointe à la fermeture de son contact.</li>
+      <li>Le maintien sur microcoupure dépend de $V^2$ : quelques volts de bus en plus valent beaucoup de microfarads.</li>
+    </ol>
+  </div>
+
+  <p>
+    <strong>Résumé.</strong> Une alimentation régulée enchaîne transformateur, pont de diodes, condensateur de bus et hacheur. Le hacheur régulé
+    absorbe une puissance constante, ce qui fait du bus une réserve d'énergie qui se vide entre deux crêtes : la capacité se calcule par
+    $\frac{1}{2}C(V_{max}^2 - V_{min}^2) = P\,t_d$, puis se vérifie par simulation. La borne basse du bus vient du rapport cyclique maximal, la borne
+    haute de la tenue des composants. Relever la tension du bus fait fondre la capacité et allonge le maintien, au prix de composants plus tenus en
+    tension ; le rendement change à peine, car le transformateur domine les pertes. Le courant en pointes impose des voltampères élevés et un
+    facteur de puissance voisin de $0{,}7$. Précharge, démarrage progressif, limitation et verrouillage en sous-tension complètent la conception.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance ; deux sur le cours précédent, <a href="#/cours/hacheurs-dc-dc">Hacheurs DC-DC</a>, dont le hacheur
+    abaisseur forme le dernier étage de l'alimentation ; une sur le cours <a href="#/cours/revision-6-et-selection-d-un-entrainement">Révision 6 et
+    sélection d'un entraînement</a>, vieux d'une semaine, dont le freinage renvoie de l'énergie vers un bus continu ; une sur le cours
+    <a href="#/cours/correction-du-facteur-de-puissance">Correction du facteur de puissance</a>, vieux d'un mois, dont les outils ne suffisent pas
+    devant un courant déformé.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : simuler dans LTspice l'alimentation de la section H, vérifier le creux du bus au pire, la pointe de mise sous tension et le maintien,
+    puis comparer à la méthode énergétique en Python. Prédictions à écrire avant de commencer : creux du bus au réseau nominal et au pire, pointe de
+    courant d'enclenchement avec et sans précharge, durée de maintien après une coupure au creux.
+  </p>
+  <ol>
+    <li>Source : <code>V1 a b SINE(0 {45.25*k} 50 0 0 {phi})</code> avec <code>.param k=1 phi=90</code> ; résistance <code>Rs</code> de $0{,}25\ \Omega$ en série. L'angle <code>phi</code>, en degrés, fixe l'instant d'enclenchement.</li>
+    <li>Pont : quatre diodes avec <code>.model DP D(Is=1e-8 N=1.6 Rs=20m)</code>, dont la chute vaut environ $0{,}8$ à $1{,}05\ \mathrm{V}$ entre $1$ et $10\ \mathrm{A}$ ; vérifier ce point par un balayage <code>.dc</code> avant de poursuivre.</li>
+    <li>Bus : condensateur <code>Cb</code> de <code>{C}</code> avec <code>.param C=4.4m</code> et <code>Rser=20m</code> ; résistance de précharge <code>Rpre</code> de $2{,}2\ \Omega$ en parallèle avec un interrupteur <code>S1</code> commandé par une source <code>PULSE(0 1 80m 1u 1u 1 2)</code>, <code>.model SW SW(Ron=5m Roff=1Meg Vt=0.5)</code>.</li>
+    <li>Charge à puissance constante : source de courant comportementale <code>B1 bus 0 I=if(time&gt;100m, 123.4*min(1,(time-100m)/10m)/max(V(bus),20), 0)</code>, qui représente le hacheur régulé et son démarrage progressif.</li>
+    <li>Simulation : <code>.tran 0 400m 0 5u</code> ; mesurer le creux et la crête en régime établi avec <code>.meas tran Vmin MIN V(bus) FROM 360m TO 400m</code> et <code>.meas tran Vmax MAX V(bus) FROM 360m TO 400m</code>, le courant efficace du secondaire avec <code>.meas tran I2 RMS I(Rs) FROM 360m TO 400m</code> et la pointe d'enclenchement avec <code>.meas tran Ipk MAX abs(I(Rs)) FROM 0 TO 80m</code>.</li>
+    <li>Pire cas : <code>.param k=0.9 C=3.52m</code> ; puis enclenchement à la crête et au zéro, <code>.step param phi list 0 90</code>, avec et sans précharge, en remplaçant <code>Rpre</code> par $1\ \mathrm{m\Omega}$.</li>
+    <li>Maintien : couper la source à $300\ \mathrm{ms}$ en multipliant son amplitude par une source de commande, et mesurer le temps mis par le bus pour atteindre $28\ \mathrm{V}$.</li>
+    <li>En Python : recalculer la capacité par la méthode énergétique et le maintien par $t_m = C_b(V_1^2 - V_{b,min}^2)/(2P_b)$, puis comparer aux mesures LTspice.</li>
+  </ol>
+  <p>
+    Résultats attendus : creux et crête voisins de $35{,}7$ et $40{,}9\ \mathrm{V}$ au nominal, creux voisin de $29{,}5\ \mathrm{V}$ au pire ; courant
+    efficace du secondaire voisin de $6{,}4\ \mathrm{A}$ ; pointe d'enclenchement d'environ $150\ \mathrm{A}$ à la crête sans précharge, $45\ \mathrm{A}$
+    au zéro, $17{,}5\ \mathrm{A}$ avec $2{,}2\ \Omega$ ; maintien de $8$ à $9\ \mathrm{ms}$ après une coupure au creux. Les écarts de quelques
+    dixièmes de volt viennent du modèle exponentiel des diodes, plus réaliste que le modèle linéarisé. Anomalies à observer : un pas de calcul trop
+    grand rate le sommet des pointes et sous-estime la valeur efficace ; une source de courant comportementale sans plancher sur la tension diverge
+    au démarrage, d'où le <code>max(V(bus),20)</code> ; sans inductance de fuite, les pointes sont surestimées, ce qu'on vérifie en ajoutant
+    $100\ \mathrm{\mu H}$ en série avec <code>Rs</code> ; une résistance série nulle du condensateur donne des courants irréalistes à
+    l'enclenchement.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours. Le bilan affiché sous la grille est calculé dans ce navigateur à partir
+    de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement pour suivre votre progression. Le jalon visé
+    à la fin du module suivant demande d'analyser les principaux convertisseurs de puissance, leurs formes d'onde, leurs pertes, leurs protections et
+    leur intégration dans un variateur : la chaîne redresseur, bus et hacheur de cette séance en est la moitié continue.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Le hacheur régulé est une charge à puissance constante : le bus est une réserve d'énergie, dimensionnée par $\frac{1}{2}C(V_{max}^2 - V_{min}^2) = P\,t_d$ et vérifiée au cas le plus défavorable.</li>
+    <li data-rang="02">La tension du bus se choisit dans une fenêtre bornée par le rapport cyclique maximal en bas et par la tenue des composants en haut ; la monter fait fondre la capacité et allonge le maintien, sans grand effet sur le rendement.</li>
+    <li data-rang="03">Une chaîne de conversion se dimensionne de l'aval vers l'amont : chaque étage porte la puissance des suivants, les rendements se multiplient, et le courant en pointes du pont fixe les voltampères du transformateur.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> raisonner sur toute la chaîne à la fois. Chaque formule du module, prise seule, est simple ;
+    l'erreur vient des interfaces, quand on transporte le courant de sortie jusqu'au bus, qu'on suppose la crête à vide en charge, ou qu'on oublie
+    que le cas le plus défavorable n'est pas le même pour le creux et pour la tenue en tension. Le réflexe à installer : passer par la puissance et
+    l'énergie, et écrire explicitement, pour chaque vérification, le point de fonctionnement retenu.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Onduleurs monophasés, fait le chemin inverse, du bus continu vers une tension
+    alternative. Question à préparer : à partir d'un bus de $400\ \mathrm{V}$, comment un pont de quatre interrupteurs peut-il produire une tension
+    de $230\ \mathrm{V}$ efficaces à $50\ \mathrm{Hz}$ en ne commutant qu'entre $+400$ et $-400\ \mathrm{V}$, et quelle loi doit suivre son rapport
+    cyclique au cours d'une période pour que la valeur moyenne glissante de la tension découpée soit sinusoïdale ?
+  </p>
+
+</article>
