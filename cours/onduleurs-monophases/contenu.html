@@ -1,0 +1,1179 @@
+<article class="cours" data-slug="onduleurs-monophases">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/revision-7-et-mini-projet-alimentation">Révision 7 et mini-projet alimentation</a> s'est achevé sur une question :
+      à partir d'un bus de $400\ \mathrm{V}$, comment un pont de quatre interrupteurs peut-il produire $230\ \mathrm{V}$ efficaces à $50\ \mathrm{Hz}$
+      en ne commutant qu'entre $+400$ et $-400\ \mathrm{V}$, et quelle loi doit suivre son rapport cyclique ? La réponse tient en une idée déjà vue
+      dans le cours <a href="#/cours/hacheurs-dc-dc">Hacheurs DC-DC</a> : un filtre ne transmet que la valeur moyenne du créneau. Si, sur chaque période
+      de découpage, la tension vaut $+E$ pendant la fraction $d$ et $-E$ pendant le reste, sa valeur moyenne vaut $(2d - 1)E$. Il suffit de faire
+      varier lentement $d$ selon $d(t) = \frac{1}{2}\left(1 + m_a \sin\omega t\right)$ pour que cette moyenne glissante devienne
+      $m_a E \sin\omega t$. Pour $230\ \mathrm{V}$ efficaces, soit $325{,}3\ \mathrm{V}$ crête, il faut $m_a = 325{,}3/400 = 0{,}813$ : le rapport
+      cyclique oscille entre $0{,}093$ et $0{,}907$ à chaque période du réseau. Cette séance établit ce résultat, en mesure les limites et en tire les
+      règles de dimensionnement.
+    </p>
+    <p>
+      La séance s'appuie sur la décomposition en série de Fourier d'un signal carré, vue dans le cours <a href="#/cours/introduction-a-fourier">Introduction
+      à Fourier</a> ; sur le taux de distorsion du cours <a href="#/cours/harmoniques-et-qualite-de-l-energie">Harmoniques et qualité de l'énergie</a> ;
+      sur le filtre passe-bas du second ordre des cours <a href="#/cours/filtres-passifs">Filtres passifs</a> et
+      <a href="#/cours/resonance-serie-et-parallele">Résonance série et parallèle</a> ; sur les interrupteurs commandés du cours
+      <a href="#/cours/mosfet-et-igbt">MOSFET et IGBT</a> ; enfin sur les puissances instantanée, active et réactive du cours
+      <a href="#/cours/puissances-en-courant-alternatif">Puissances en courant alternatif</a>. Le cours
+      <a href="#/cours/thyristors-et-redresseurs-commandes">Thyristors et redresseurs commandés</a> a déjà montré un fonctionnement en onduleur, mais
+      assisté par le réseau, qui impose la tension et la fréquence : l'onduleur de cette séance est autonome, il crée lui-même sa tension et sa fréquence.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    L'onduleur est le convertisseur qui transforme une tension continue en tension alternative de fréquence et d'amplitude réglables. Il ferme la
+    boucle ouverte par les redresseurs : le module précédent a appris à passer de l'alternatif au continu, celui-ci apprend à revenir à l'alternatif,
+    en choisissant librement la forme d'onde. Presque tout l'équipement moderne d'un site industriel en dépend.
+  </p>
+  <ul>
+    <li><strong>Alimentations sans interruption.</strong> Une ASI en double conversion redresse le réseau vers un bus continu secouru par une batterie,
+      puis recrée une tension de $230\ \mathrm{V}$, $50\ \mathrm{Hz}$ propre pour les serveurs, la supervision et les automates.</li>
+    <li><strong>Photovoltaïque et stockage.</strong> Les panneaux et les batteries produisent du continu ; c'est un onduleur qui injecte leur énergie dans
+      le réseau, en se synchronisant sur lui.</li>
+    <li><strong>Variateurs de vitesse.</strong> Le pont triphasé d'un variateur, étudié dans le cours Onduleurs triphasés, est composé de bras
+      identiques à ceux de cette séance ; la modulation de largeur d'impulsion y est la même.</li>
+    <li><strong>Chauffage par induction, alimentation de transducteurs, convertisseurs isolés.</strong> Un pont en H attaque un transformateur ou un
+      circuit résonant à haute fréquence.</li>
+  </ul>
+  <p>
+    Comprendre l'onduleur monophasé, c'est comprendre trois choses : comment un bras de deux interrupteurs fabrique une tension découpée, comment la
+    commande place les harmoniques là où un petit filtre peut les éliminer, et pourquoi la puissance d'une charge monophasée pulse à deux fois la
+    fréquence de sortie, ce qui dimensionne le condensateur du bus. Ces trois mécanismes reviennent dans tout le reste du module.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Expliquer le fonctionnement d'un bras d'onduleur et identifier, à partir des signes de la tension et du courant, l'interrupteur ou la diode qui conduit dans un pont en H.</li>
+    <li data-rang="02">Calculer la valeur efficace du fondamental et des harmoniques d'une tension en pleine onde, en commande décalée et en modulation sinusoïdale, pour un demi-pont et un pont complet.</li>
+    <li data-rang="03">Comparer les modulations bipolaire et unipolaire : position des harmoniques, ondulation du courant, contraintes de commande.</li>
+    <li data-rang="04">Dimensionner un filtre de sortie $LC$ à partir d'une ondulation de courant admissible et d'une atténuation visée à la fréquence de découpage.</li>
+    <li data-rang="05">Calculer la fluctuation de puissance à $2f$ d'une charge monophasée et dimensionner le condensateur du bus continu.</li>
+    <li data-rang="06">Diagnostiquer les défauts typiques d'un onduleur : distorsion par temps mort, surmodulation, résonance du filtre à vide.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Quatre notions suffisent pour suivre la séance.
+  </p>
+  <ul>
+    <li><strong>Valeur moyenne d'un créneau.</strong> Un signal qui vaut $V_h$ pendant $dT$ et $V_b$ pendant $(1 - d)T$ a pour valeur moyenne
+      $dV_h + (1 - d)V_b$. Pour un créneau entre $+E$ et $-E$, cela donne $(2d - 1)E$.</li>
+    <li><strong>Série de Fourier d'un carré.</strong> Un signal carré symétrique d'amplitude $\pm A$ ne contient que des harmoniques impairs, d'amplitude
+      crête $\dfrac{4A}{h\pi}$ pour le rang $h$. Le fondamental vaut donc $\dfrac{4}{\pi}A \approx 1{,}273A$ crête, plus que l'amplitude du carré lui-même.</li>
+    <li><strong>Valeurs efficaces.</strong> Une sinusoïde d'amplitude $\hat{V}$ a pour valeur efficace $\hat{V}/\sqrt{2}$ ; un carré $\pm A$ a pour
+      valeur efficace $A$ ; le taux de distorsion vaut $\sqrt{V^2 - V_1^2}/V_1$.</li>
+    <li><strong>Impédances.</strong> $Z_L = jL\omega$ croît avec la fréquence, $Z_C = 1/(jC\omega)$ décroît : une inductance en série puis un
+      condensateur en parallèle forment un passe-bas du second ordre, de pulsation propre $\omega_0 = 1/\sqrt{LC}$, qui atténue en $(f_0/f)^2$
+      au-delà de $f_0$.</li>
+  </ul>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Notation de la séance</span>
+    <p>
+      $E$ : tension du bus continu, en volts. $f$ et $\omega = 2\pi f$ : fréquence et pulsation de la tension de sortie souhaitée ($50\ \mathrm{Hz}$).
+      $f_d$ : fréquence de découpage, $T_d = 1/f_d$. $v_s$ : tension de sortie du pont, prise entre les points milieux $A$ et $B$, fléchée vers $A$ ;
+      $i_s$ : courant de sortie, compté de $A$ vers $B$ dans la charge, en convention récepteur pour la charge. $V_1$ : valeur efficace du fondamental
+      de $v_s$ ; $V_h$ : valeur efficace de l'harmonique de rang $h$. $m_a$ : indice de modulation d'amplitude ; $m_f = f_d/f$ : indice de modulation
+      de fréquence. $d$ : rapport cyclique local d'un bras. Le potentiel de référence, noté $0\ \mathrm{V}$, est la borne négative du bus.
+    </p>
+  </div>
+  <p>
+    Mini-test de trois questions. Les réponses restent masquées, séparées de l'énoncé, jusqu'à votre tentative ou à un clic explicite.
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-bras">Un bras d'onduleur : deux interrupteurs qui ne conduisent jamais ensemble</h3>
+  <p>
+    La brique de base de tout onduleur de tension est le bras : deux interrupteurs commandés en série entre les deux bornes du bus continu, leur point
+    commun $A$ formant la sortie. Chaque interrupteur est un transistor, IGBT ou MOSFET, muni d'une diode en antiparallèle. La commande est
+    complémentaire : quand l'interrupteur haut $T_1$ est fermé, le bas $T_2$ est ouvert, et inversement. Ainsi le potentiel du point $A$ vaut
+    $E$ ou $0$, quel que soit le courant qui sort du bras. Fermer les deux à la fois court-circuiterait le bus : c'est le défaut le plus destructeur d'un
+    onduleur, qu'un temps mort entre l'ouverture de l'un et la fermeture de l'autre doit empêcher.
+  </p>
+  <figure id="d-bras-figure">
+    <svg viewBox="0 0 640 300" role="img" aria-label="Bras d'onduleur : bus continu, interrupteurs T1 et T2 avec diodes antiparallèles D1 et D2, point milieu A, courant de sortie et tension du point milieu par rapport à la référence 0 V">
+      <defs><marker id="fl-bras" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M80 40H260M80 260H260"/>
+        <path d="M80 40V130M80 170V260"/>
+        <circle cx="80" cy="150" r="20"/>
+        <path d="M150 40V143M150 157V260"/>
+        <path d="M132 143h36M132 157h36" stroke-width="3"/>
+        <path d="M260 40V70M260 120V180M260 230V260"/>
+        <circle cx="260" cy="70" r="3"/><circle cx="260" cy="120" r="3"/>
+        <path d="M260 120L242 78" stroke-width="2.4"/>
+        <circle cx="260" cy="180" r="3"/><circle cx="260" cy="230" r="3"/>
+        <path d="M260 230L242 188" stroke-width="2.4"/>
+        <path d="M260 52H300V86M300 104V138H260"/>
+        <path d="M290 104L300 86L310 104Z"/><path d="M290 86h20" stroke-width="2.6"/>
+        <path d="M260 162H300V196M300 214V248H260"/>
+        <path d="M290 214L300 196L310 214Z"/><path d="M290 196h20" stroke-width="2.6"/>
+        <path d="M260 150H470"/>
+        <rect x="470" y="128" width="70" height="44" rx="6"/>
+        <path d="M540 150H590V260H260"/>
+        <path d="M150 260v10M136 270h28M141 275h18M146 280h8"/>
+      </g>
+      <circle cx="260" cy="150" r="4" fill="currentColor" stroke="none"/>
+      <circle cx="260" cy="40" r="3.6" fill="currentColor" stroke="none"/>
+      <circle cx="260" cy="260" r="3.6" fill="currentColor" stroke="none"/>
+      <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+        <path d="M40 210V90" marker-end="url(#fl-bras)"/>
+        <path d="M350 138H410" marker-end="url(#fl-bras)"/>
+        <path d="M430 258V166" marker-end="url(#fl-bras)" stroke-dasharray="5 4"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13">
+        <text x="74" y="142">+</text><text x="75" y="170">-</text>
+        <text x="16" y="154">E</text>
+        <text x="168" y="134">C</text>
+        <text x="216" y="100">T1</text><text x="216" y="210">T2</text>
+        <text x="316" y="100">D1</text><text x="316" y="210">D2</text>
+        <text x="266" y="146">A</text>
+        <text x="362" y="128">i_A</text>
+        <text x="440" y="216">v_A</text>
+        <text x="482" y="155">charge</text>
+        <text x="170" y="32" font-size="11">borne +E du bus</text>
+        <text x="172" y="292" font-size="11">0 V, référence</text>
+      </g>
+    </svg>
+    <figcaption>
+      Un bras d'onduleur. Le bus continu $E$, avec son condensateur $C$, a sa borne négative prise comme référence $0\ \mathrm{V}$. L'interrupteur haut
+      $T_1$ relie le point milieu $A$ à $+E$, l'interrupteur bas $T_2$ le relie à $0\ \mathrm{V}$ ; chaque diode, dessinée pointe vers le haut, conduit
+      de bas en haut, en sens inverse de son transistor. La flèche pleine $i_A$ donne le sens positif du courant de sortie ; la flèche en pointillé
+      $v_A$ est la tension du point milieu mesurée par rapport à la référence. Si $T_1$ est commandé et que $i_A &gt; 0$, le courant passe par $T_1$ ;
+      si $i_A &lt; 0$, il remonte par $D_1$ vers le bus. Dans les deux cas $v_A = E$ : la tension ne dépend que de la commande.
+    </figcaption>
+  </figure>
+  <p>
+    Ce dernier point est la clé : grâce aux diodes, le bras est réversible en courant. Il impose une tension à la charge sans se soucier du signe du
+    courant, et l'énergie peut aller du bus vers la charge ou revenir de la charge vers le bus. C'est indispensable dès que la charge est inductive,
+    car son courant reste en retard sur la tension et change de signe à un autre instant qu'elle.
+  </p>
+
+  <h3 id="d-moyenne">La valeur moyenne glissante : sculpter une sinusoïde avec des créneaux</h3>
+  <p>
+    Un bras seul ne sait produire que deux niveaux. Pour obtenir une sinusoïde, on découpe très vite, à $f_d$ de l'ordre de la dizaine de
+    kilohertz, et on fait varier le rapport cyclique au rythme lent de la sinusoïde voulue. Sur une période de découpage, trop courte pour que le
+    courant d'une charge inductive ait le temps de varier beaucoup, la charge ne "voit" que la valeur moyenne locale de la tension découpée. Cette
+    moyenne, recalculée à chaque instant sur une fenêtre de largeur $T_d$, est la valeur moyenne glissante.
+  </p>
+  <p>
+    Prédisez avant de manipuler : avec un pont complet commuté entre $+E$ et $-E$, quel rapport cyclique local faut-il au sommet de la sinusoïde, au
+    passage par zéro et au creux, si l'indice de modulation vaut $0{,}8$ ? Que devient la moyenne glissante si l'on pousse l'indice au-delà de $1$ ?
+    Faites glisser la poignée le long de l'axe des temps, ou lancez la lecture : la fenêtre grisée de largeur $T_d$ se déplace, et le point mesure la
+    moyenne de la tension découpée sur cette fenêtre. Les curseurs règlent l'indice de modulation et le nombre de périodes de découpage par période du
+    réseau, volontairement petit ici pour que les impulsions restent lisibles.
+  </p>
+  <figure id="d-glissante-figure">
+    <div class="schema-vivant" id="d-glissante"></div>
+    <div id="d-glissante-curseurs"></div>
+    <div id="d-glissante-lecteur"></div>
+    <div id="d-glissante-valeurs"></div>
+    <figcaption>
+      En trait fin, la tension découpée $v_s(t)$ d'un pont complet en modulation bipolaire, qui ne prend que les valeurs $+E$ et $-E$. En trait
+      pointillé, la sinusoïde de référence $m_a E \sin\omega t$. En trait épais, la moyenne glissante calculée sur une période de découpage, tracée
+      jusqu'à l'instant choisi ; le rectangle translucide est la fenêtre de calcul et le point rond sa valeur moyenne. L'axe horizontal couvre une période
+      de $20\ \mathrm{ms}$ ; la référence des tensions est le milieu fictif du bus, de sorte que $v_s$ est symétrique. Aucune grandeur ne suit le
+      défilement de la page : seuls la poignée, les curseurs et le lecteur pilotent l'instant et les réglages.
+    </figcaption>
+  </figure>
+  <p>
+    Interprétation. Le rapport cyclique local suit $d = \frac{1}{2}(1 + m_a\sin\omega t)$ : $0{,}9$ au sommet pour $m_a = 0{,}8$, $0{,}5$ au passage par
+    zéro, $0{,}1$ au creux. La moyenne glissante épouse alors la référence : c'est elle que transmet un filtre passe-bas, ou une charge inductive qui
+    joue ce rôle. Au-delà de $m_a = 1$, le rapport cyclique demandé sort de l'intervalle $[0, 1]$ : il reste bloqué à $1$ ou $0$ près des crêtes, la
+    moyenne s'aplatit et la sinusoïde se déforme. C'est la surmodulation : le fondamental augmente encore, mais moins vite que $m_a$, et des harmoniques
+    de rang faible réapparaissent.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Analogie contrôlée et ses limites</span>
+    <p>
+      On peut comparer la modulation à un variateur de lumière qui allumerait et éteindrait une lampe des milliers de fois par seconde : l'œil ne voit
+      que la moyenne, et en faisant varier lentement la proportion de temps allumé, on obtient une lumière qui monte et descend sans à-coup. L'analogie
+      rend bien compte du rôle de la moyenne et de la séparation des échelles de temps. Elle a trois limites. D'abord, l'œil est un filtre parfait pour
+      la lampe, alors que le filtre d'un onduleur laisse passer un résidu d'ondulation qu'il faut chiffrer. Ensuite, la lampe ne renvoie jamais
+      d'énergie, alors qu'une charge inductive en renvoie au bus pendant une partie de chaque période. Enfin, le découpage n'est pas gratuit :
+      chaque commutation coûte de l'énergie dans les semi-conducteurs, ce qui borne la fréquence de découpage.
+    </p>
+  </div>
+
+  <h3 id="d-equilibre">Pourquoi la commande fixe la tension, et la charge le courant</h3>
+  <p>
+    L'onduleur de cette séance est un onduleur de tension : son bus continu est tenu par un condensateur, sa sortie est une tension découpée imposée
+    par la commande. La charge, de son côté, fixe le courant, son amplitude et son déphasage. Le même pont alimenté par une source de courant serait un
+    onduleur de courant, aux propriétés duales, réservé aujourd'hui à quelques applications de forte puissance. Cette répartition des rôles explique
+    toutes les règles d'association : un onduleur de tension ne doit jamais débiter directement sur un condensateur, qui recevrait des pointes de
+    courant à chaque commutation, et il doit toujours voir une inductance, celle de la charge ou celle d'un filtre, entre ses points milieux et toute
+    tension imposée.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-hypotheses">Hypothèses du modèle de base</h3>
+  <ol>
+    <li>Interrupteurs idéaux : commutation instantanée, chute de tension nulle à l'état passant, courant nul à l'état bloqué.</li>
+    <li>Bus continu parfait : la tension $E$ reste constante pendant une période de découpage. L'ondulation réelle du bus est traitée plus loin.</li>
+    <li>Commande complémentaire sans temps mort dans chaque bras ; l'effet du temps mort est étudié à la fin de cette section.</li>
+    <li>Charge linéaire, en régime périodique établi, et fréquence de découpage grande devant la fréquence de sortie : $f_d \gg f$.</li>
+  </ol>
+
+  <h3 id="e-demi-pont">Demi-pont : un bras et un point milieu capacitif</h3>
+  <p>
+    Le demi-pont utilise un seul bras. La charge est branchée entre le point milieu $A$ du bras et le point milieu $O$ d'un diviseur capacitif formé
+    de deux condensateurs égaux, chacun chargé à $E/2$. Selon l'interrupteur fermé, la charge reçoit $+E/2$ ou $-E/2$. Le schéma ci-dessous fixe
+    les conventions.
+  </p>
+  <figure id="e-demi-pont-figure">
+    <svg viewBox="0 0 620 300" role="img" aria-label="Demi-pont : deux condensateurs en série formant le point milieu O, un bras T1 T2 avec diodes, charge entre A et O, tension v_AO et courant i_s">
+      <defs><marker id="fl-dp" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M70 40H420M70 260H420"/>
+        <path d="M70 40V130M70 170V260"/>
+        <circle cx="70" cy="150" r="20"/>
+        <path d="M160 40V88M160 98V202M160 212V260"/>
+        <path d="M142 88h36M142 98h36M142 202h36M142 212h36" stroke-width="3"/>
+        <path d="M420 40V70M420 120V180M420 230V260"/>
+        <circle cx="420" cy="70" r="3"/><circle cx="420" cy="120" r="3"/>
+        <path d="M420 120L402 78" stroke-width="2.4"/>
+        <circle cx="420" cy="180" r="3"/><circle cx="420" cy="230" r="3"/>
+        <path d="M420 230L402 188" stroke-width="2.4"/>
+        <path d="M420 52H460V86M460 104V138H420"/>
+        <path d="M450 104L460 86L470 104Z"/><path d="M450 86h20" stroke-width="2.6"/>
+        <path d="M420 162H460V196M460 214V248H420"/>
+        <path d="M450 214L460 196L470 214Z"/><path d="M450 196h20" stroke-width="2.6"/>
+        <path d="M160 150H240"/>
+        <rect x="240" y="128" width="80" height="44" rx="6"/>
+        <path d="M320 150H420"/>
+        <path d="M70 260v10M56 270h28M61 275h18M66 280h8"/>
+      </g>
+      <circle cx="160" cy="150" r="4" fill="currentColor" stroke="none"/>
+      <circle cx="420" cy="150" r="4" fill="currentColor" stroke="none"/>
+      <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+        <path d="M30 210V90" marker-end="url(#fl-dp)"/>
+        <path d="M400 136H350" marker-end="url(#fl-dp)"/>
+        <path d="M206 192H384" marker-end="url(#fl-dp)" stroke-dasharray="5 4"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13">
+        <text x="64" y="142">+</text><text x="65" y="170">-</text>
+        <text x="8" y="154">E</text>
+        <text x="184" y="98">C1, E/2</text><text x="184" y="212">C2, E/2</text>
+        <text x="142" y="142">O</text>
+        <text x="432" y="146">A</text>
+        <text x="376" y="100">T1</text><text x="376" y="214">T2</text>
+        <text x="476" y="100">D1</text><text x="476" y="214">D2</text>
+        <text x="352" y="128">i_s</text>
+        <text x="270" y="155">charge</text>
+        <text x="266" y="212">v_AO</text>
+        <text x="90" y="292" font-size="11">0 V, référence</text>
+      </g>
+    </svg>
+    <figcaption>
+      Demi-pont. Les condensateurs $C_1$ et $C_2$, égaux, partagent le bus en deux moitiés et créent le point milieu $O$. La charge est placée entre
+      $A$ et $O$ ; la flèche pleine donne le sens positif de $i_s$, compté de $A$ vers la charge, et la flèche en pointillé la tension $v_{AO}$, fléchée
+      vers $A$, en convention récepteur pour la charge. $T_1$ fermé donne $v_{AO} = +E/2$, $T_2$ fermé donne $v_{AO} = -E/2$. Le courant de la charge
+      revient par le point $O$ : il traverse les condensateurs, qui doivent donc être dimensionnés pour le courant de sortie entier.
+    </figcaption>
+  </figure>
+  <p>
+    En commande pleine onde, $T_1$ est fermé pendant la première demi-période et $T_2$ pendant la seconde : $v_{AO}$ est un carré d'amplitude
+    $\pm E/2$. Son développement en série de Fourier se dérive en une ligne. Avec $\theta = \omega t$, la fonction est impaire, donc seuls les
+    coefficients en sinus existent :
+  </p>
+  <div class="formule-cle">
+    $$b_h = \frac{1}{\pi}\int_0^{2\pi} v(\theta)\sin h\theta\,\mathrm{d}\theta = \frac{2A}{\pi}\int_0^{\pi}\sin h\theta\,\mathrm{d}\theta
+    = \frac{2A}{h\pi}\left(1 - \cos h\pi\right) = \begin{cases}\dfrac{4A}{h\pi} & h \text{ impair}\\[4pt] 0 & h \text{ pair}\end{cases}$$
+    <p class="formule-cle-legende">
+      $A$ : amplitude du carré, en volts ; $h$ : rang, sans unité ; $b_h$ : amplitude crête de l'harmonique $h$, en volts. Hypothèses : carré
+      parfaitement symétrique, commutations instantanées. Pour le demi-pont, $A = E/2$, d'où $\hat{V}_1 = 2E/\pi$ et
+      $V_1 = \sqrt{2}E/\pi \approx 0{,}450E$ efficaces. Cas limite : quand $h \to \infty$, $b_h \to 0$ en $1/h$, lentement, ce qui explique la richesse
+      harmonique du carré. Dimension : $b_h$ est le produit de volts par un nombre, donc des volts.
+    </p>
+  </div>
+  <p>
+    Interprétation physique : le fondamental d'un carré est plus grand que le carré lui-même, de $27\ \%$, parce que le carré "remplit" davantage la
+    demi-période qu'une sinusoïde de même crête. Le demi-pont a deux défauts. Il n'exploite que la moitié du bus, ce qui impose un bus deux fois plus
+    élevé pour la même sortie ; et ses condensateurs portent tout le courant de la charge, ce qui fait osciller le potentiel du point $O$ à la
+    fréquence de sortie. On le réserve aux petites puissances et aux alimentations à découpage.
+  </p>
+
+  <h3 id="e-pont">Pont complet, ou pont en H</h3>
+  <p>
+    Le pont complet associe deux bras, $A$ et $B$, sur le même bus ; la charge est branchée entre leurs points milieux. Comme
+    $v_s = v_A - v_B$ et que chaque point milieu vaut $E$ ou $0$, la sortie peut prendre trois valeurs : $+E$, $0$ et $-E$. Le schéma suivant donne
+    les repères utilisés dans tout le reste du cours.
+  </p>
+  <figure id="e-pont-figure">
+    <svg viewBox="0 0 640 320" role="img" aria-label="Pont en H : bus E avec condensateur, bras A avec T1 D1 T2 D2, bras B avec T3 D3 T4 D4, charge R L entre A et B, courant i_s de A vers B et tension v_s fléchée vers A">
+      <defs><marker id="fl-pont" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M60 50H460M60 270H460"/>
+        <path d="M60 50V140M60 180V270"/>
+        <circle cx="60" cy="160" r="20"/>
+        <path d="M130 50V153M130 167V270"/>
+        <path d="M112 153h36M112 167h36" stroke-width="3"/>
+        <path d="M220 50V80M220 130V190M220 240V270"/>
+        <circle cx="220" cy="80" r="3"/><circle cx="220" cy="130" r="3"/><path d="M220 130L202 88" stroke-width="2.4"/>
+        <circle cx="220" cy="190" r="3"/><circle cx="220" cy="240" r="3"/><path d="M220 240L202 198" stroke-width="2.4"/>
+        <path d="M220 60H260V96M260 114V150H220"/>
+        <path d="M250 114L260 96L270 114Z"/><path d="M250 96h20" stroke-width="2.6"/>
+        <path d="M220 170H260V206M260 224V260H220"/>
+        <path d="M250 224L260 206L270 224Z"/><path d="M250 206h20" stroke-width="2.6"/>
+        <path d="M460 50V80M460 130V190M460 240V270"/>
+        <circle cx="460" cy="80" r="3"/><circle cx="460" cy="130" r="3"/><path d="M460 130L442 88" stroke-width="2.4"/>
+        <circle cx="460" cy="190" r="3"/><circle cx="460" cy="240" r="3"/><path d="M460 240L442 198" stroke-width="2.4"/>
+        <path d="M460 60H500V96M500 114V150H460"/>
+        <path d="M490 114L500 96L510 114Z"/><path d="M490 96h20" stroke-width="2.6"/>
+        <path d="M460 170H500V206M500 224V260H460"/>
+        <path d="M490 224L500 206L510 224Z"/><path d="M490 206h20" stroke-width="2.6"/>
+        <path d="M220 160H290"/>
+        <rect x="290" y="150" width="44" height="20" rx="3"/>
+        <path d="M334 160H346a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0H460"/>
+        <path d="M130 270v10M116 280h28M121 285h18M126 290h8"/>
+      </g>
+      <circle cx="220" cy="160" r="4" fill="currentColor" stroke="none"/>
+      <circle cx="460" cy="160" r="4" fill="currentColor" stroke="none"/>
+      <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+        <path d="M24 220V100" marker-end="url(#fl-pont)"/>
+        <path d="M282 140H320" marker-end="url(#fl-pont)"/>
+        <path d="M440 196H282" marker-end="url(#fl-pont)" stroke-dasharray="5 4"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13">
+        <text x="54" y="152">+</text><text x="55" y="180">-</text>
+        <text x="4" y="164">E</text>
+        <text x="150" y="152">C</text>
+        <text x="176" y="110">T1</text><text x="176" y="222">T2</text>
+        <text x="274" y="110">D1</text><text x="274" y="222">D2</text>
+        <text x="416" y="110">T3</text><text x="416" y="222">T4</text>
+        <text x="514" y="110">D3</text><text x="514" y="222">D4</text>
+        <text x="206" y="154">A</text><text x="466" y="166">B</text>
+        <text x="300" y="184" font-size="12">R</text><text x="370" y="184" font-size="12">L</text>
+        <text x="290" y="132">i_s</text>
+        <text x="350" y="214">v_s</text>
+        <text x="150" y="42" font-size="11">borne +E</text>
+        <text x="150" y="306" font-size="11">0 V, référence</text>
+      </g>
+    </svg>
+    <figcaption>
+      Pont en H. Le bras gauche porte $T_1$, $D_1$ en haut et $T_2$, $D_2$ en bas, son point milieu est $A$ ; le bras droit porte $T_3$, $D_3$ et
+      $T_4$, $D_4$, son point milieu est $B$. Chaque diode conduit de bas en haut, en sens inverse de son transistor. La charge $R$, $L$ est placée
+      entre $A$ et $B$ ; la flèche pleine donne le sens positif de $i_s$, de $A$ vers $B$ ; la flèche en pointillé est $v_s = v_A - v_B$, fléchée vers
+      $A$, en convention récepteur pour la charge. Les deux potentiels $v_A$ et $v_B$ sont mesurés par rapport à la borne négative du bus.
+    </figcaption>
+  </figure>
+  <div class="cadre-tableau">
+    <table>
+      <thead>
+        <tr><th>Interrupteurs commandés</th><th>$v_A$</th><th>$v_B$</th><th>$v_s$</th><th>Si $i_s &gt; 0$, conduisent</th><th>Si $i_s &lt; 0$, conduisent</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>$T_1$ et $T_4$</td><td>$E$</td><td>$0$</td><td>$+E$</td><td>$T_1$, $T_4$ : le bus fournit</td><td>$D_1$, $D_4$ : le bus reçoit</td></tr>
+        <tr><td>$T_2$ et $T_3$</td><td>$0$</td><td>$E$</td><td>$-E$</td><td>$D_2$, $D_3$ : le bus reçoit</td><td>$T_2$, $T_3$ : le bus fournit</td></tr>
+        <tr><td>$T_1$ et $T_3$</td><td>$E$</td><td>$E$</td><td>$0$</td><td>$T_1$, $D_3$ : roue libre haute</td><td>$D_1$, $T_3$ : roue libre haute</td></tr>
+        <tr><td>$T_2$ et $T_4$</td><td>$0$</td><td>$0$</td><td>$0$</td><td>$D_2$, $T_4$ : roue libre basse</td><td>$T_2$, $D_4$ : roue libre basse</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Les quatre états utiles du pont. Les deux états à tension nulle court-circuitent la charge par le haut ou par le bas : son courant y tourne en roue
+    libre, sans échange avec le bus. En commande pleine onde, le pont alterne seulement les deux premiers états : $v_s$ est un carré $\pm E$, de
+    fondamental $\hat{V}_1 = 4E/\pi$, soit
+  </p>
+  <div class="formule-cle">
+    $$V_1 = \frac{4E}{\pi\sqrt{2}} = \frac{2\sqrt{2}}{\pi}E \approx 0{,}900\,E, \qquad V_h = \frac{V_1}{h}\ \ (h \text{ impair}), \qquad
+    \mathrm{THD}_v = \frac{\sqrt{E^2 - V_1^2}}{V_1} = 48{,}3\ \%$$
+    <p class="formule-cle-legende">
+      $E$ en volts ; $V_1$ et $V_h$ en volts efficaces. Hypothèses : pont idéal, carré symétrique. Le pont complet donne deux fois le fondamental du
+      demi-pont pour le même bus, car $v_s$ varie de $2E$ au lieu de $E$. Cas limite : avec un bus de $400\ \mathrm{V}$, la pleine onde donne
+      $360\ \mathrm{V}$ efficaces au fondamental et rien d'autre : l'amplitude n'est pas réglable sans changer $E$. Dimension : volts.
+    </p>
+  </div>
+
+  <h3 id="e-qui-conduit">Qui conduit ? Les quatre quadrants d'une charge inductive</h3>
+  <p>
+    Sur une charge $R$, $L$, le courant est en retard sur la tension. Juste après chaque inversion de $v_s$, le courant garde donc pendant un moment le
+    signe précédent : il est alors porté par les diodes, et l'énergie stockée dans l'inductance revient vers le bus. Prédisez avant de manipuler : en
+    pleine onde, sur une charge de $R = 10\ \Omega$ et de constante de temps $\tau = L/R$, pendant quelle fraction de la demi-période les diodes
+    conduisent-elles quand $\tau$ passe de $1$ à $10\ \mathrm{ms}$ ? Faites glisser la poignée le long de l'axe des angles, ou lancez la lecture :
+    le schéma surligne la maille parcourue par le courant et désigne les composants passants.
+  </p>
+  <figure id="e-quadrants-figure">
+    <div class="schema-vivant" id="e-quadrants"></div>
+    <div id="e-quadrants-curseurs"></div>
+    <div id="e-quadrants-lecteur"></div>
+    <div id="e-quadrants-valeurs"></div>
+    <figcaption>
+      À gauche, le pont en H : la maille parcourue par le courant à l'instant choisi est surlignée en trait épais translucide, et des points mobiles
+      indiquent le sens réel de circulation. À droite, une période de la tension $v_s$ en trait fin, carré $\pm E$ avec $E = 400\ \mathrm{V}$, et du
+      courant $i_s$ en trait épais, calculé exactement en régime établi ; les zones hachurées marquent les intervalles où le courant et la tension sont
+      de signes opposés, donc où les diodes conduisent et où le bus reçoit de l'énergie. La poignée se déplace sur l'axe des angles, de $0$ à
+      $360$ degrés.
+    </figcaption>
+  </figure>
+  <p>
+    Interprétation. Avec $\tau = 1\ \mathrm{ms}$, le courant s'inverse presque aussitôt après la tension : les diodes ne conduisent qu'environ
+    $0{,}7\ \mathrm{ms}$ par demi-période. Avec $\tau = 10\ \mathrm{ms}$, le courant devient presque triangulaire et les diodes conduisent pendant
+    près de $4\ \mathrm{ms}$ sur $10$ : une part importante de l'énergie fait des allers-retours entre le bus et la charge. C'est la puissance réactive
+    du cours <a href="#/cours/puissances-en-courant-alternatif">Puissances en courant alternatif</a>, vue de l'intérieur du convertisseur : elle ne
+    consomme rien en moyenne, mais elle charge les semi-conducteurs et le condensateur du bus. Sans diodes, l'ouverture d'un transistor avec un courant
+    inductif non nul produirait une surtension destructrice, exactement comme la coupure d'une bobine sans roue libre étudiée dans le cours
+    <a href="#/cours/regime-transitoire-rl">Régime transitoire RL</a>.
+  </p>
+
+  <h3 id="e-decale">Commande décalée : régler l'amplitude sans découper</h3>
+  <p>
+    Pour régler le fondamental sans changer $E$, on décale la commande des deux bras d'un angle $2\alpha$ : pendant un intervalle $\alpha$ autour de
+    chaque passage par zéro, les deux points milieux sont au même potentiel et $v_s = 0$. La tension devient une onde quasi carrée à trois niveaux :
+    $+E$ pour $\alpha &lt; \theta &lt; \pi - \alpha$, $0$ sur les bords, puis $-E$ de façon symétrique. Le calcul de Fourier suit la même ligne que
+    pour le carré :
+  </p>
+  <div class="formule-cle">
+    $$b_h = \frac{2E}{\pi}\int_{\alpha}^{\pi - \alpha}\sin h\theta\,\mathrm{d}\theta = \frac{4E}{h\pi}\cos h\alpha, \qquad
+    V_h = \frac{2\sqrt{2}\,E}{h\pi}\cos h\alpha, \qquad V = E\sqrt{1 - \frac{2\alpha}{\pi}}$$
+    <p class="formule-cle-legende">
+      $\alpha$ : demi-largeur de chaque palier nul, en radians ou en degrés ; $V_h$ : valeur efficace de l'harmonique $h$ impair ; $V$ : valeur
+      efficace totale. Hypothèses : pont idéal, paliers symétriques. Cas limites : $\alpha = 0$ redonne la pleine onde ; $\alpha = 90$ degrés annule
+      tout. Un harmonique disparaît quand $h\alpha = 90$ degrés : $\alpha = 30$ degrés supprime le rang 3, $\alpha = 18$ degrés le rang 5.
+      Dimension : volts.
+    </p>
+  </div>
+  <p>
+    Prédisez avant de manipuler : pour obtenir $230\ \mathrm{V}$ au fondamental à partir de $400\ \mathrm{V}$, quel angle faut-il, et le taux de
+    distorsion sera-t-il meilleur ou pire qu'en pleine onde ? Le curseur règle $\alpha$ et la tension du bus ; le tracé montre la forme d'onde et son
+    fondamental, le spectre les harmoniques de rang 1 à 15 en valeur efficace.
+  </p>
+  <figure id="e-decale-figure">
+    <div id="e-decale-curseurs"></div>
+    <div id="e-decale-trace"></div>
+    <div id="e-decale-spectre"></div>
+    <figcaption>
+      En haut, une période de $v_s$ en commande décalée, en trait fin, et son fondamental en trait épais ; les paliers nuls de demi-largeur $\alpha$
+      encadrent chaque passage par zéro. En bas, le spectre en valeurs efficaces : la barre du rang 1 est le fondamental, les autres les harmoniques
+      impairs. Les mesures affichent la valeur efficace totale, le fondamental et le taux de distorsion calculé sur les rangs 3 à 199.
+    </figcaption>
+  </figure>
+  <p>
+    Interprétation. L'angle vaut $\alpha = \arccos(230/360{,}1) = 50{,}3$ degrés, et le taux de distorsion monte à $57{,}8\ \%$ contre $48{,}3\ \%$ en
+    pleine onde : réduire l'amplitude en élargissant les paliers nuls enrichit la tension en harmoniques de rang faible, $105\ \mathrm{V}$ au rang 3
+    et $51\ \mathrm{V}$ au rang 7. À $\alpha = 30$ degrés, le rang 3 s'annule, mais le fondamental vaut alors $0{,}78E$ et n'est plus réglable.
+    Cette commande garde un intérêt quand les commutations doivent être rares : très forte puissance, ou circuit résonant qui filtre de lui-même. Pour
+    une tension de qualité à fréquence industrielle, il faut repousser les harmoniques vers les hautes fréquences : c'est le rôle de la modulation de
+    largeur d'impulsion.
+  </p>
+
+  <h3 id="e-mli">Modulation de largeur d'impulsion sinusoïdale</h3>
+  <p>
+    La modulation sinusoïdale compare une référence $v_{ref} = m_a\sin\omega t$ à une porteuse triangulaire d'amplitude $1$ et de fréquence $f_d$.
+    En modulation bipolaire, les deux bras commutent ensemble, en diagonale : $T_1$ et $T_4$ sont fermés quand $v_{ref}$ dépasse la porteuse,
+    $T_2$ et $T_3$ sinon. La sortie ne vaut que $+E$ ou $-E$. Sur une période de découpage, la porteuse étant linéaire, la fraction de temps où la
+    référence la dépasse est $d = \frac{1}{2}(1 + v_{ref})$, d'où la valeur moyenne locale :
+  </p>
+  <div class="formule-cle">
+    $$\langle v_s\rangle_{T_d} = dE + (1 - d)(-E) = (2d - 1)E = m_a E\sin\omega t, \qquad \hat{V}_1 = m_a E, \qquad V_1 = \frac{m_a E}{\sqrt{2}}\quad (m_a \le 1)$$
+    <p class="formule-cle-legende">
+      $m_a = \hat{v}_{ref}/\hat{v}_{tri}$ : indice de modulation d'amplitude, sans unité ; $m_f = f_d/f$ : indice de modulation de fréquence. Hypothèses :
+      $f_d \gg f$, référence quasi constante sur une période de découpage, pont idéal. Le résultat vaut aussi pour le demi-pont avec $E/2$ à la place de
+      $E$. Cas limites : $m_a = 0$ donne un carré à rapport cyclique $0{,}5$ et une moyenne nulle ; $m_a = 1$ donne $\hat{V}_1 = E$, soit $0{,}707E$
+      efficaces ; au-delà, surmodulation, jusqu'à la pleine onde $4E/\pi$ quand $m_a \to \infty$. Dimension : volts.
+    </p>
+  </div>
+  <p>
+    En modulation unipolaire, chaque bras a sa propre comparaison : le bras $A$ compare $+v_{ref}$ à la porteuse, le bras $B$ compare $-v_{ref}$. On
+    obtient $\langle v_A\rangle = \frac{E}{2}(1 + m_a\sin\omega t)$ et $\langle v_B\rangle = \frac{E}{2}(1 - m_a\sin\omega t)$, donc le même
+    fondamental $m_a E\sin\omega t$. Mais la sortie prend alors trois niveaux, $0$ et $+E$ pendant l'alternance positive, $0$ et $-E$ pendant la
+    négative, et elle commute deux fois plus souvent que chaque bras. Le spectre en témoigne : en bipolaire, les harmoniques se groupent autour de
+    $m_f$, $2m_f$, $3m_f$ ; en unipolaire, les composantes autour des multiples impairs de $m_f$ s'annulent entre les deux bras, et le premier groupe
+    apparaît en $2m_f \pm 1$. Pour $m_a = 0{,}813$, le calcul numérique donne une raie de $0{,}80E$ crête à $m_f$ en bipolaire, et deux raies de
+    $0{,}31E$ crête à $2m_f \pm 1$ en unipolaire. Dans les deux cas, aucun harmonique notable n'apparaît en dessous de $m_f - 3$ tant que
+    $m_a \le 1$.
+  </p>
+  <p>
+    Prédisez avant de manipuler : si l'on passe de la modulation bipolaire à l'unipolaire à $m_f$ constant, le fondamental change-t-il ? La première
+    raie harmonique se déplace-t-elle ? Que se passe-t-il pour $m_a = 1{,}3$ ? Les curseurs règlent l'indice de modulation, $m_f$ entre $5$ et $41$
+    et le type de modulation ; le premier tracé montre la porteuse et la ou les références, le second la tension de sortie et son fondamental, le
+    spectre les raies jusqu'au rang $3m_f$.
+  </p>
+  <figure id="e-mli-figure">
+    <div id="e-mli-curseurs"></div>
+    <div id="e-mli-comparaison"></div>
+    <div id="e-mli-sortie"></div>
+    <div id="e-mli-spectre"></div>
+    <figcaption>
+      Premier tracé : la porteuse triangulaire d'amplitude $1$, la référence $m_a\sin\omega t$ et, en modulation unipolaire, la référence opposée
+      utilisée par le bras $B$, sur une période de $20\ \mathrm{ms}$. Second tracé : la tension de sortie $v_s$ rapportée à $E$ et son fondamental
+      calculé par transformée de Fourier discrète. Spectre : amplitudes crêtes rapportées à $E$, rang par rang. Les mesures donnent le fondamental
+      calculé, la valeur théorique $m_a$, le taux de distorsion de la tension et le rang de la première raie supérieure à $5\ \%$.
+    </figcaption>
+  </figure>
+  <p>
+    Interprétation. Le fondamental vaut $m_a$ dans les deux modulations tant que $m_a \le 1$ : la loi $\hat{V}_1 = m_a E$ est linéaire, ce qui permet de
+    régler la tension de sortie par la seule commande, même si le bus fluctue. En unipolaire, la première raie notable saute de $m_f$ à $2m_f \pm 1$ et
+    le taux de distorsion de la tension baisse nettement : à fréquence de commutation égale des interrupteurs, le filtre voit une fréquence double.
+    Au-delà de $m_a = 1$, le fondamental croît moins vite que $m_a$ et les rangs $3$, $5$, $7$ réapparaissent : la surmodulation échange de la qualité
+    contre un peu de tension. Une dernière règle de conception : en bipolaire, on choisit $m_f$ entier impair, pour garder la symétrie de la forme
+    d'onde et éviter tout harmonique pair ; en unipolaire, les raies autour des multiples impairs de $m_f$ s'annulent quelle que soit sa parité. Au-delà de $m_f \approx 21$, une porteuse non synchronisée sur la référence
+    ne crée plus que des sous-harmoniques négligeables.
+  </p>
+
+  <h3 id="e-ondulation">Ondulation du courant de sortie</h3>
+  <p>
+    Entre $A$ et $B$ se trouve une inductance, celle de la charge ou celle du filtre de sortie. Sur une période de découpage, la tension de sortie lente
+    $v$ est presque constante et la tension découpée oscille autour d'elle. En bipolaire, l'inductance voit $E - v$ pendant $dT_d$, avec
+    $d = \frac{1}{2}(1 + v/E)$ ; en unipolaire, pendant l'alternance positive, elle voit $E - v$ pendant une fraction $v/E$ de chaque demi-période
+    $T_d/2$, puisque la sortie commute à $2f_d$. L'ondulation crête à crête vaut donc :
+  </p>
+  <div class="formule-cle">
+    $$\Delta i_{bip} = \frac{(E - v)\,d}{Lf_d} = \frac{E^2 - v^2}{2ELf_d} \le \frac{E}{2Lf_d}, \qquad
+    \Delta i_{unip} = \frac{(E - v)\,v}{2ELf_d} \le \frac{E}{8Lf_d}$$
+    <p class="formule-cle-legende">
+      $L$ en henrys, $f_d$ en hertz, $E$ et $v$ en volts, $\Delta i$ en ampères. Hypothèses : $v$ constant sur une période de découpage, chute ohmique
+      négligée. Le maximum est atteint à $v = 0$ en bipolaire et à $v = E/2$ en unipolaire. Cas limite : en unipolaire, l'ondulation s'annule quand
+      $v \to 0$ ou $v \to E$. Dimension : $\mathrm{V}/(\mathrm{H}\cdot\mathrm{Hz}) = \mathrm{V\,s}/\mathrm{H} = \mathrm{A}$.
+    </p>
+  </div>
+  <p>
+    Interprétation : à inductance et fréquence de commutation égales, la modulation unipolaire divise l'ondulation maximale par quatre, un facteur
+    deux venant de la fréquence apparente double, l'autre de la marche de tension réduite de moitié. C'est pourquoi presque tous les onduleurs
+    monophasés à filtre de sortie l'utilisent.
+  </p>
+
+  <h3 id="e-filtre">Filtre de sortie LC</h3>
+  <p>
+    Quand la charge exige une tension sinusoïdale, comme une ASI, on place entre le pont et la charge une inductance série $L_f$ et un condensateur
+    parallèle $C_f$. Avec une charge résistive $R$, la fonction de transfert vaut :
+  </p>
+  <div class="formule-cle">
+    $$\underline{H}(j\omega) = \frac{\underline{V}_{sortie}}{\underline{V}_{pont}} = \frac{1}{1 - \omega^2 L_f C_f + j\omega L_f/R}, \qquad
+    f_0 = \frac{1}{2\pi\sqrt{L_f C_f}}, \qquad Z_0 = \sqrt{\frac{L_f}{C_f}}, \qquad Q = \frac{R}{Z_0}$$
+    <p class="formule-cle-legende">
+      $L_f$ en henrys, $C_f$ en farads, $R$ en ohms ; $Z_0$ : impédance caractéristique, en ohms ; $Q$ : facteur de qualité de la charge parallèle,
+      sans unité. Hypothèses : composants idéaux, charge linéaire. Loin au-dessus de $f_0$, $|\underline{H}| \approx (f_0/f)^2$, soit
+      $-40\ \mathrm{dB}$ par décade. Cas limite : à vide, $R \to \infty$, $Q \to \infty$ et le gain à $f_0$ devient infini : le filtre doit être
+      amorti, par une résistance ou par la régulation. Dimension : $\omega^2 L_f C_f$ et $\omega L_f/R$ sont sans unité.
+    </p>
+  </div>
+  <p>
+    Les règles de conception usuelles, qui ne sont pas des lois, s'enchaînent ainsi : choisir $L_f$ pour limiter l'ondulation à $20$ à $30\ \%$ du
+    courant crête nominal ; choisir $f_0$ au moins dix fois au-dessus de la fréquence de sortie et dix fois en dessous de la première raie de
+    découpage ; vérifier que le courant réactif de $C_f$ à $50\ \mathrm{Hz}$ reste de quelques pour cent du courant nominal ; vérifier que la chute
+    de tension fondamentale dans $L_f$ laisse une marge de modulation. Prédisez avant de manipuler : si l'on double $C_f$, que deviennent $f_0$,
+    l'atténuation à $2f_d$ et le courant réactif à vide ? Les curseurs règlent $L_f$, $C_f$, la fréquence de découpage et la charge, en pour cent
+    d'une charge résistive de $1{,}6\ \mathrm{kW}$ sous $230\ \mathrm{V}$ ; la valeur initiale est le filtre retenu pour le projet fil rouge.
+  </p>
+  <figure id="e-filtre-figure">
+    <div id="e-filtre-curseurs"></div>
+    <div id="e-filtre-bode"></div>
+    <figcaption>
+      Gain et phase du filtre $LC$ chargé, de $10\ \mathrm{Hz}$ à $100\ \mathrm{kHz}$ ; le repère vertical marque $f_0$. Les mesures donnent $f_0$,
+      $Z_0$, le facteur de qualité à la charge choisie, l'atténuation à $2f_d$, l'ondulation maximale du courant en modulation unipolaire et le courant
+      réactif du condensateur à $50\ \mathrm{Hz}$. À faible charge, le pic de résonance monte : c'est le cas le plus sévère pour la stabilité.
+    </figcaption>
+  </figure>
+  <p>
+    Interprétation. Doubler $C_f$ divise $f_0$ par $\sqrt{2}$, gagne $6\ \mathrm{dB}$ d'atténuation à $2f_d$, mais double le courant réactif permanent
+    à vide et abaisse $Z_0$, donc le facteur de qualité à charge donnée augmente. Augmenter $L_f$ réduit l'ondulation et la contrainte sur le
+    condensateur, mais alourdit le filtre et accroît la chute de tension fondamentale. Monter la fréquence de découpage est le levier le plus
+    efficace, en $1/f_d^2$ pour l'atténuation, au prix des pertes de commutation évaluées dans le cours <a href="#/cours/mosfet-et-igbt">MOSFET et
+    IGBT</a>. La résonance du filtre, étudiée dans le cours <a href="#/cours/resonance-serie-et-parallele">Résonance série et parallèle</a>, impose
+    un amortissement à vide.
+  </p>
+
+  <h3 id="e-bus">Puissance pulsée et condensateur du bus</h3>
+  <p>
+    Une charge monophasée ne consomme pas une puissance constante. Avec $v = V\sqrt{2}\sin\omega t$ et $i = I\sqrt{2}\sin(\omega t - \varphi)$, le
+    produit se développe par $2\sin a\sin b = \cos(a - b) - \cos(a + b)$ :
+  </p>
+  <div class="formule-cle">
+    $$p(t) = VI\cos\varphi - VI\cos(2\omega t - \varphi), \qquad CE\,\frac{\mathrm{d}v_E}{\mathrm{d}t} = S\cos(2\omega t - \varphi)
+    \;\Rightarrow\; \Delta V_{E,cc} = \frac{S}{\omega C E}$$
+    <p class="formule-cle-legende">
+      $V$, $I$ : valeurs efficaces ; $S = VI$ : puissance apparente, en voltampères ; $C$ : capacité du bus, en farads ; $\Delta V_{E,cc}$ :
+      ondulation crête à crête du bus, en volts. Hypothèses : onduleur sans pertes, bus alimenté par une source de puissance constante, le redresseur ou
+      la batterie, ondulation faible devant $E$. Le courant à $2f$ que doit fournir le condensateur a pour amplitude $S/E$, soit $S/(E\sqrt{2})$
+      efficaces. Cas limite : en triphasé équilibré, les trois termes à $2f$ se compensent et la puissance devient constante. Dimension :
+      $\mathrm{VA}/(\mathrm{s^{-1}\cdot F\cdot V}) = \mathrm{J}/(\mathrm{F\cdot V}) = \mathrm{C\,V}/\mathrm{C} = \mathrm{V}$.
+    </p>
+  </div>
+  <p>
+    Interprétation physique : deux fois par période du réseau, la charge reçoit le double de sa puissance moyenne ; deux fois par période, elle n'en
+    reçoit plus, ou en renvoie si $\varphi \ne 0$. Quelque chose doit stocker cette énergie qui va et vient, et c'est le condensateur du bus.
+    L'amplitude de la pulsation est $S$, et non $P$ : une charge réactive pulse autant qu'une charge active de même puissance apparente. Prédisez
+    avant de manipuler : quelle capacité limite l'ondulation à $20\ \mathrm{V}$ crête à crête pour $2\ \mathrm{kVA}$ sous $400\ \mathrm{V}$ ? Le
+    facteur de puissance change-t-il cette ondulation ? Les curseurs règlent la puissance apparente, le facteur de puissance et la capacité.
+  </p>
+  <figure id="e-bus-figure">
+    <div id="e-bus-curseurs"></div>
+    <div id="e-bus-puissance"></div>
+    <div id="e-bus-tension"></div>
+    <figcaption>
+      En haut, sur deux périodes de $20\ \mathrm{ms}$ : la puissance instantanée $p(t)$ fournie à la charge, en trait épais, et sa valeur moyenne $P$,
+      en trait fin constant. En bas, la tension du bus $v_E(t)$ quand le bus reçoit une puissance constante égale à $P$ : elle monte quand $p &lt; P$ et
+      descend quand $p &gt; P$. Le modèle néglige les pertes et l'ondulation à la fréquence de découpage.
+    </figcaption>
+  </figure>
+  <p>
+    Interprétation. Il faut $C = S/(\omega E\,\Delta V) = 2000/(314{,}2 \times 400 \times 20) = 0{,}80\ \mathrm{mF}$ ; avec $1\ \mathrm{mF}$,
+    l'ondulation tombe à $15{,}9\ \mathrm{V}$. Le facteur de puissance déplace la sinusoïde de puissance, il ne change ni son amplitude ni
+    l'ondulation du bus. Un onduleur monophasé demande donc beaucoup plus de capacité de bus qu'un onduleur triphasé de même puissance, dont le bus
+    ne voit que l'ondulation de découpage. Cette ondulation à $100\ \mathrm{Hz}$, si la régulation ne la compense pas, module la tension de sortie
+    et crée un harmonique de rang 3.
+  </p>
+
+  <h3 id="e-temps-mort">Temps mort : la petite durée qui déforme la sinusoïde</h3>
+  <p>
+    Dans chaque bras, la fermeture d'un interrupteur est retardée d'un temps mort $t_m$, de l'ordre de la microseconde, après l'ouverture de l'autre,
+    pour qu'ils ne conduisent jamais ensemble. Pendant $t_m$, aucun transistor ne conduit et c'est le signe du courant qui choisit la diode passante :
+    si le courant sort du bras, $D_2$ conduit et le point milieu tombe à $0$ ; s'il y entre, $D_1$ conduit et le point milieu monte à $E$. À chaque
+    période de découpage, le bras perd ou gagne donc $t_m E$ volts-secondes, toujours dans le sens opposé au courant.
+  </p>
+  <div class="formule-cle">
+    $$\Delta V_{bras} = t_m f_d E, \qquad \Delta V_{pont} = 2\,t_m f_d E\ \ \text{de signe opposé à } i_s$$
+    <p class="formule-cle-legende">
+      $t_m$ en secondes, $f_d$ en hertz, $E$ en volts. Hypothèses : commutations idéales hors temps mort, courant de signe constant sur la période de
+      découpage. Exemple : $t_m = 1\ \mathrm{\mu s}$, $f_d = 20\ \mathrm{kHz}$, $E = 400\ \mathrm{V}$ donnent $16\ \mathrm{V}$ d'erreur moyenne, un
+      carré en phase avec le courant dont le fondamental vaut $\frac{4}{\pi}\times 16/\sqrt{2} = 14{,}4\ \mathrm{V}$ efficaces. Cas limite :
+      $t_m \to 0$ supprime l'erreur, mais aussi la sécurité contre le court-circuit de bras. Dimension : $\mathrm{s}\cdot\mathrm{Hz}\cdot\mathrm{V} = \mathrm{V}$.
+    </p>
+  </div>
+  <p>
+    L'erreur, petite en valeur moyenne, se concentre autour des passages par zéro du courant, où elle change brutalement de signe : la sinusoïde
+    présente un méplat caractéristique, et des harmoniques de rangs 3, 5 et 7 apparaissent, d'autant plus visibles que la charge est faible. Les
+    commandes modernes mesurent le signe du courant et ajoutent la correction au rapport cyclique.
+  </p>
+
+  <h3 id="e-statut">Loi, convention, approximation, règle de conception et donnée du constructeur</h3>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Catégorie</th><th>Dans cette séance</th></tr></thead>
+      <tbody>
+        <tr><td>Loi physique</td><td>Lois de Kirchhoff, $v = L\,\mathrm{d}i/\mathrm{d}t$, conservation de l'énergie dans le pont, décomposition de Fourier d'un signal périodique, $p = vi$.</td></tr>
+        <tr><td>Convention</td><td>Sens de $i_s$ de $A$ vers $B$, $v_s = v_A - v_B$ fléchée vers $A$, convention récepteur pour la charge, référence à la borne négative du bus, définition de $m_a$ et $m_f$.</td></tr>
+        <tr><td>Approximation</td><td>Interrupteurs idéaux, bus constant sur une période de découpage, moyenne glissante valable si $f_d \gg f$, atténuation en $(f_0/f)^2$ loin de $f_0$.</td></tr>
+        <tr><td>Règle de conception</td><td>Ondulation de $20$ à $30\ \%$ du courant crête, $f_0$ placée à au moins une décade de $f$ et de la première raie, $m_a$ inférieur à $1$ avec marge, $m_f$ entier impair en bipolaire.</td></tr>
+        <tr><td>Constructeur ou norme</td><td>Temps mort minimal et tenue en tension des modules, courant admissible des condensateurs, taux de distorsion et tolérances de tension exigés de la sortie d'une ASI, à lire dans la documentation et la norme de produit applicables.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Le schéma principal place l'onduleur monophasé dans l'équipement où il est le plus répandu sur un site industriel : l'alimentation sans
+    interruption en double conversion. Il se lit de gauche à droite dans le sens normal de la puissance.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 760 330" role="img" aria-label="Chaîne d'une ASI en double conversion : réseau, redresseur, bus continu, pont en H, filtre LC, charges ; batterie et élévateur vers le bus ; commande ; dérivation statique">
+      <defs><marker id="fl-f" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+        <rect x="10" y="110" width="100" height="62" rx="8"/>
+        <rect x="136" y="110" width="100" height="62" rx="8"/>
+        <rect x="262" y="110" width="100" height="62" rx="8"/>
+        <rect x="388" y="110" width="100" height="62" rx="8"/>
+        <rect x="514" y="110" width="100" height="62" rx="8"/>
+        <rect x="640" y="110" width="110" height="62" rx="8"/>
+        <rect x="136" y="232" width="100" height="50" rx="8"/>
+        <rect x="262" y="232" width="100" height="50" rx="8"/>
+        <rect x="388" y="250" width="226" height="50" rx="8" stroke-dasharray="6 4"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M110 141H134" marker-end="url(#fl-f)"/>
+        <path d="M236 141H260" marker-end="url(#fl-f)"/>
+        <path d="M362 141H386" marker-end="url(#fl-f)"/>
+        <path d="M488 141H512" marker-end="url(#fl-f)"/>
+        <path d="M614 141H638" marker-end="url(#fl-f)"/>
+        <path d="M236 257H260" marker-end="url(#fl-f)"/>
+        <path d="M312 232V174" marker-end="url(#fl-f)"/>
+        <path d="M438 250V174" marker-end="url(#fl-f)" stroke-dasharray="5 4"/>
+        <path d="M564 174V248" marker-end="url(#fl-f)" stroke-dasharray="5 4"/>
+        <path d="M60 110V62H695V108" marker-end="url(#fl-f)" stroke-dasharray="7 5"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11.5" text-anchor="middle">
+        <text x="60" y="134">Réseau</text><text x="60" y="150">230 V, 50 Hz</text>
+        <text x="186" y="130">Redresseur</text><text x="186" y="146">à courant</text><text x="186" y="162">sinusoïdal</text>
+        <text x="312" y="134">Bus continu</text><text x="312" y="150">400 V</text><text x="312" y="166">C = 1 mF</text>
+        <text x="438" y="134">Pont en H</text><text x="438" y="150">MLI unipolaire</text><text x="438" y="166">16 kHz</text>
+        <text x="564" y="134">Filtre LC</text><text x="564" y="150">1 mH, 10 µF</text>
+        <text x="695" y="134">Charges de</text><text x="695" y="150">supervision</text><text x="695" y="166">230 V, 2 kVA</text>
+        <text x="186" y="254">Batterie</text><text x="186" y="270">secours</text>
+        <text x="312" y="254">Élévateur</text><text x="312" y="270">vers 400 V</text>
+        <text x="501" y="272">Commande : MLI, régulation</text><text x="501" y="288">de v_sortie, limitation de i</text>
+        <text x="378" y="54">dérivation statique, si l'onduleur est en défaut ou surchargé</text>
+        <text x="500" y="198" font-size="10.5">tension découpée</text>
+        <text x="610" y="214" font-size="10.5">mesures v, i</text>
+        <text x="380" y="214" font-size="10.5">ordres MLI</text>
+      </g>
+    </svg>
+    <figcaption>
+      ASI en double conversion. Les flèches pleines donnent le sens normal de la puissance : du réseau vers le bus continu par un redresseur qui absorbe
+      un courant sinusoïdal, puis du bus vers les charges par le pont en H et son filtre $LC$. En cas de perte du réseau, la batterie alimente le bus par
+      un hacheur élévateur, sans aucune interruption côté charges. Les flèches en pointillé court sont des liaisons de commande : ordres de modulation
+      vers le pont, mesures de tension et de courant de sortie vers la commande. La flèche en pointillé long est la dérivation statique, qui relie
+      directement les charges au réseau en cas de défaut ou de surcharge de l'onduleur. Les valeurs sont celles retenues pour le projet fil rouge en
+      section I.
+    </figcaption>
+  </figure>
+  <p>
+    Le tableau suivant compare les commandes étudiées, pour un pont complet sur un bus $E$. Il sert à choisir une commande avant tout calcul.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <thead>
+        <tr><th>Critère</th><th>Pleine onde</th><th>Décalée, angle $\alpha$</th><th>MLI bipolaire</th><th>MLI unipolaire</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Niveaux de $v_s$</td><td>$\pm E$</td><td>$+E$, $0$, $-E$</td><td>$\pm E$</td><td>$+E$, $0$, $-E$</td></tr>
+        <tr><td>Fondamental efficace</td><td>$0{,}900E$</td><td>$0{,}900E\cos\alpha$</td><td>$m_aE/\sqrt{2}$</td><td>$m_aE/\sqrt{2}$</td></tr>
+        <tr><td>Réglage de l'amplitude</td><td>non</td><td>oui, par $\alpha$</td><td>oui, linéaire si $m_a \le 1$</td><td>oui, linéaire si $m_a \le 1$</td></tr>
+        <tr><td>Premiers harmoniques</td><td>3, 5, 7 en $V_1/h$</td><td>3, 5, 7 en $V_1\cos(h\alpha)/(h\cos\alpha)$</td><td>autour de $m_f$</td><td>autour de $2m_f$</td></tr>
+        <tr><td>Ondulation de courant maximale</td><td>sans objet</td><td>sans objet</td><td>$E/(2Lf_d)$</td><td>$E/(8Lf_d)$</td></tr>
+        <tr><td>Commutations par période</td><td>2 par interrupteur</td><td>2 par interrupteur</td><td>$m_f$ par interrupteur</td><td>$m_f$ par interrupteur</td></tr>
+        <tr><td>Emploi typique</td><td>convertisseur résonant, très forte puissance</td><td>forte puissance, charge filtrante</td><td>onduleur simple, charge très inductive</td><td>ASI, onduleur photovoltaïque, onduleur à filtre</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    L'organigramme ci-dessous résume la démarche de résolution d'un problème d'onduleur monophasé, de la tension visée jusqu'au bus.
+  </p>
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Tension visée : V1, f, et charge connue"] --> B{"Le bus E est-il fixé ?"}
+  B -->|"Oui"| C["Vérifier V1 crête inférieure à E, avec la chute dans L"]
+  B -->|"Non"| D["Choisir E pour m_a voisin de 0,8 à 0,9"]
+  C --> E{"Qualité de tension exigée ?"}
+  D --> E
+  E -->|"Forme peu importante, peu de commutations"| F["Pleine onde ou commande décalée : calculer alpha et V_h"]
+  E -->|"Tension sinusoïdale"| G["MLI unipolaire : m_a = V1 crête / E, choisir f_d"]
+  G --> H["Choisir L pour l'ondulation de courant admissible"]
+  H --> I["Choisir C pour f0 à une décade de f et de 2 f_d"]
+  I --> J["Vérifier courant réactif de C, chute dans L, marge de m_a"]
+  F --> K["Calculer les courants harmoniques avec Z_h = R + j h omega L"]
+  J --> L["Dimensionner le bus : C_bus = S / (omega E delta V)"]
+  K --> L
+  L --> M["Contrôles : dimensions, bilan de puissance, temps mort, résonance à vide"]</pre>
+    <figcaption>
+      Organigramme de résolution. Les losanges sont des choix de conception, les rectangles des calculs. Les deux branches se rejoignent sur le
+      dimensionnement du bus, commun à tout onduleur monophasé à cause de la puissance pulsée à $2f$, puis sur les contrôles finaux.
+    </figcaption>
+  </figure>
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <ul>
+    <li><a href="#d-bras-figure" data-renvoi="d-bras-figure">Bras d'onduleur</a> : conventions, interrupteurs et diodes, en section D.</li>
+    <li><a href="#d-glissante-figure" data-renvoi="d-glissante-figure">Valeur moyenne glissante</a> : animation manipulable, en section D.</li>
+    <li><a href="#e-demi-pont-figure" data-renvoi="e-demi-pont-figure">Demi-pont</a> et <a href="#e-pont-figure" data-renvoi="e-pont-figure">pont en H</a> : schémas de référence, en section E.</li>
+    <li><a href="#e-quadrants-figure" data-renvoi="e-quadrants-figure">Quatre quadrants d'une charge inductive</a> : maille parcourue et composants passants, en section E.</li>
+    <li><a href="#e-decale-figure" data-renvoi="e-decale-figure">Commande décalée</a>, <a href="#e-mli-figure" data-renvoi="e-mli-figure">modulation sinusoïdale</a>, <a href="#e-filtre-figure" data-renvoi="e-filtre-figure">filtre LC</a> et <a href="#e-bus-figure" data-renvoi="e-bus-figure">puissance pulsée du bus</a> : simulations, en section E.</li>
+    <li><a href="#h-figure" data-renvoi="h-figure">Spectres comparés des trois commandes</a>, en section H, et <a href="#i-figure" data-renvoi="i-figure">étage de sortie de l'ASI</a> avec <a href="#i-fresnel-figure" data-renvoi="i-fresnel-figure">diagramme des courants</a>, en section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <ol>
+    <li>Fixer les conventions : sens de $i_s$, flèche de $v_s$, référence des potentiels, convention récepteur pour la charge. Écrire les données en unités SI.</li>
+    <li>Identifier la structure, demi-pont ou pont complet, et la commande : la tension disponible est $E/2$ ou $E$ par bras.</li>
+    <li>Calculer le réglage : $\alpha = \arccos\left(V_1/(0{,}9E)\right)$ en commande décalée, $m_a = \hat{V}_1/E$ en modulation sinusoïdale, en
+      vérifiant $m_a \le 1$ au bus minimal et avec la chute fondamentale dans l'inductance série.</li>
+    <li>Établir le spectre de tension : formules de Fourier pour les commandes à faible nombre de commutations, raies autour de $m_f$ ou $2m_f$ pour la
+      modulation.</li>
+    <li>Calculer les courants par superposition, la charge étant linéaire : $I_h = V_h/|R + jh\omega L|$, puis le taux de distorsion du courant.</li>
+    <li>Dimensionner le filtre s'il existe : $L$ par l'ondulation admissible, $C$ par la fréquence propre, puis vérifier courant réactif, chute de
+      tension et amortissement à vide.</li>
+    <li>Faire le bilan de puissance : $P = RI_1^2 + \sum RI_h^2$, courant moyen du bus $P/(\eta E)$, puis la pulsation à $2f$ et le condensateur du
+      bus.</li>
+    <li>Contrôler : dimensions, ordre de grandeur, cohérence entre tension et puissance, effet du temps mort, tenue en tension et en courant des
+      semi-conducteurs au cas le plus défavorable.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Un pont complet alimenté par un bus de $E = 400\ \mathrm{V}$ doit fournir $230\ \mathrm{V}$ efficaces au fondamental, à $50\ \mathrm{Hz}$, à une
+    charge série $R = 10\ \Omega$, $L = 20\ \mathrm{mH}$, sans filtre. On compare les trois commandes.
+  </p>
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <ul>
+    <li><strong>Données :</strong> $E = 400\ \mathrm{V}$ ; $R = 10\ \Omega$ ; $L = 20\ \mathrm{mH}$ ; $f = 50\ \mathrm{Hz}$, $\omega = 314{,}16\ \mathrm{rad/s}$ ;
+      $V_1$ visé $= 230\ \mathrm{V}$ ; fréquence de découpage $f_d = 20\ \mathrm{kHz}$, soit $m_f = 400$.</li>
+    <li><strong>Inconnues :</strong> pour chaque commande, le réglage, les harmoniques de tension, le courant fondamental et le taux de distorsion du
+      courant ; puis la puissance, le courant du bus et l'ondulation du courant en modulation.</li>
+    <li><strong>Stratégie :</strong> la charge est linéaire, donc on traite chaque harmonique séparément avec $\underline{Z}_h = R + jh\omega L$, puis on
+      superpose. Les tensions viennent des formules de Fourier établies en section E.</li>
+  </ul>
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li><strong>Impédance au fondamental.</strong> $\underline{Z}_1 = 10 + j\,314{,}16 \times 0{,}020 = 10 + j6{,}283\ \Omega$, soit
+      $|\underline{Z}_1| = 11{,}81\ \Omega$ et $\varphi_1 = 32{,}1$ degrés.</li>
+    <li><strong>Pleine onde.</strong> $V_1 = 0{,}9003 \times 400 = 360{,}1\ \mathrm{V}$, non réglable : $I_1 = 360{,}1/11{,}81 = 30{,}49\ \mathrm{A}$ et
+      $P \approx 10 \times 30{,}49^2 = 9{,}30\ \mathrm{kW}$, presque $2{,}5$ fois trop. Le cahier des charges n'est pas tenu : cette commande est écartée.</li>
+    <li><strong>Commande décalée.</strong> $\cos\alpha = 230/360{,}1 = 0{,}6387$, d'où $\alpha = 50{,}3$ degrés. Harmoniques :
+      $V_3 = \dfrac{360{,}1}{3}|\cos 150{,}9^\circ| = 104{,}9\ \mathrm{V}$, $V_5 = \dfrac{360{,}1}{5}|\cos 251{,}5^\circ| = 22{,}8\ \mathrm{V}$,
+      $V_7 = 51{,}0\ \mathrm{V}$. Courants : $I_1 = 230/11{,}81 = 19{,}47\ \mathrm{A}$ ; $|\underline{Z}_3| = |10 + j18{,}85| = 21{,}34\ \Omega$, donc
+      $I_3 = 4{,}92\ \mathrm{A}$, soit $25\ \%$ du fondamental ; $|\underline{Z}_5| = 32{,}97\ \Omega$, $I_5 = 0{,}69\ \mathrm{A}$. Sommé jusqu'au rang 199,
+      le taux de distorsion du courant vaut $26{,}3\ \%$.</li>
+    <li><strong>Modulation unipolaire.</strong> $m_a = 230\sqrt{2}/400 = 325{,}3/400 = 0{,}813$, dans la zone linéaire. Les premières raies sont aux
+      rangs $799$ et $801$, soit $39{,}95$ et $40{,}05\ \mathrm{kHz}$, d'amplitude $0{,}308 \times 400 = 123{,}0\ \mathrm{V}$ crête chacune, soit
+      $87{,}0\ \mathrm{V}$ efficaces. À $40\ \mathrm{kHz}$, $|\underline{Z}| \approx 2\pi \times 40\,000 \times 0{,}020 = 5027\ \Omega$ : chaque raie ne
+      fait circuler que $24{,}5\ \mathrm{mA}$ crête. Le taux de distorsion du courant, calculé par transformée de Fourier sur tout le spectre, vaut
+      $0{,}14\ \%$. Ondulation maximale : $\Delta i = E/(8Lf_d) = 400/(8 \times 0{,}020 \times 20\,000) = 0{,}125\ \mathrm{A}$ crête à crête.</li>
+    <li><strong>Comparaison bipolaire.</strong> Même $m_a$, première raie au rang $400$, soit $20\ \mathrm{kHz}$, de $0{,}804 \times 400 = 321{,}8\ \mathrm{V}$
+      crête : $321{,}8/2513 = 128\ \mathrm{mA}$ crête, ondulation maximale $E/(2Lf_d) = 0{,}5\ \mathrm{A}$, taux de distorsion du courant $0{,}53\ \%$.</li>
+    <li><strong>Puissances et bus.</strong> Avec la modulation, $P = RI_1^2 = 10 \times 19{,}47^2 = 3793\ \mathrm{W}$ ; $S_1 = 230 \times 19{,}47 = 4479\ \mathrm{VA}$ ;
+      $\cos\varphi_1 = 0{,}847$. Pont idéal : courant moyen du bus $3793/400 = 9{,}48\ \mathrm{A}$, auquel se superpose une composante à
+      $100\ \mathrm{Hz}$ d'amplitude $S_1/E = 11{,}2\ \mathrm{A}$, que le condensateur du bus doit fournir.</li>
+  </ol>
+  <p>
+    Le diagramme suivant compare les spectres de tension obtenus, en valeurs efficaces, pour les trois commandes.
+  </p>
+  <figure id="h-figure">
+    <svg viewBox="0 0 720 300" role="img" aria-label="Spectres de tension comparés : pleine onde, commande décalée à 50,3 degrés et modulation unipolaire, valeurs efficaces des rangs 1, 3, 5, 7 et des raies de découpage">
+      <g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity="0.6">
+        <path d="M40 250H710"/>
+        <path d="M40 250V60"/>
+        <path d="M36 153.4h8M36 98.8h8"/>
+      </g>
+      <g fill="currentColor" fill-opacity="0.22" stroke="currentColor" stroke-width="1.8">
+        <rect x="60" y="98.8" width="30" height="151.2"/>
+        <rect x="104" y="199.6" width="30" height="50.4"/>
+        <rect x="148" y="219.8" width="30" height="30.2"/>
+        <rect x="192" y="228.4" width="30" height="21.6"/>
+        <rect x="290" y="153.4" width="30" height="96.6"/>
+        <rect x="334" y="205.9" width="30" height="44.1"/>
+        <rect x="378" y="240.4" width="30" height="9.6"/>
+        <rect x="422" y="228.6" width="30" height="21.4"/>
+        <rect x="500" y="153.4" width="30" height="96.6"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="5 4">
+        <rect x="660" y="213.5" width="30" height="36.5"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M544 250h30M588 250h30M632 250h0"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11" text-anchor="middle">
+        <text x="75" y="92">360,1</text><text x="119" y="193">120,0</text><text x="163" y="213">72,0</text><text x="207" y="222">51,4</text>
+        <text x="305" y="147">230</text><text x="349" y="199">104,9</text><text x="393" y="234">22,8</text><text x="437" y="222">51,0</text>
+        <text x="515" y="147">230</text><text x="559" y="244">0</text><text x="603" y="244">0</text><text x="675" y="207">87,0</text>
+        <text x="75" y="266">h1</text><text x="119" y="266">h3</text><text x="163" y="266">h5</text><text x="207" y="266">h7</text>
+        <text x="305" y="266">h1</text><text x="349" y="266">h3</text><text x="393" y="266">h5</text><text x="437" y="266">h7</text>
+        <text x="515" y="266">h1</text><text x="559" y="266">h3</text><text x="603" y="266">h5</text><text x="675" y="266">40 kHz</text>
+        <text x="141" y="288">pleine onde</text><text x="371" y="288">décalée, 50,3 degrés</text><text x="595" y="288">MLI unipolaire</text>
+        <text x="40" y="48">V eff</text>
+        <text x="22" y="157">230</text><text x="22" y="102">360</text>
+      </g>
+    </svg>
+    <figcaption>
+      Spectres de la tension $v_s$ pour $E = 400\ \mathrm{V}$, en volts efficaces, à la même échelle verticale. Les barres pleines sont le fondamental
+      $h_1$ et les harmoniques de rangs 3, 5 et 7 ; la barre en pointillé de droite représente chacune des deux raies de découpage à $39{,}95$ et
+      $40{,}05\ \mathrm{kHz}$, très éloignées des autres en fréquence. La pleine onde donne trop de fondamental ; la commande décalée l'ajuste mais garde
+      de forts rangs 3 et 7 ; la modulation ne laisse que des raies à haute fréquence, que l'inductance de la charge atténue d'un facteur proche de 800.
+    </figcaption>
+  </figure>
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li><strong>Dimensions :</strong> $V/\Omega = \mathrm{A}$, $\Omega \cdot \mathrm{A}^2 = \mathrm{W}$, $\mathrm{V}/(\mathrm{H} \cdot \mathrm{Hz}) = \mathrm{A}$.</li>
+    <li><strong>Bilan de puissance :</strong> $V_1I_1\cos\varphi_1 = 230 \times 19{,}47 \times 0{,}847 = 3792\ \mathrm{W}$, égal à $RI_1^2$ à l'arrondi près.</li>
+    <li><strong>Ordre de grandeur :</strong> $\Delta i = 0{,}125\ \mathrm{A}$ crête à crête contre $27{,}5\ \mathrm{A}$ crête au fondamental : moins de $0{,}5\ \%$,
+      cohérent avec un taux de distorsion de $0{,}14\ \%$.</li>
+    <li><strong>Cas limite :</strong> pour $\alpha \to 0$, la commande décalée redonne bien les $360{,}1\ \mathrm{V}$ de la pleine onde ; pour $m_a = 1$, la
+      modulation ne donnerait que $283\ \mathrm{V}$ : la pleine onde reste le maximum absolu, $27\ \%$ au-dessus.</li>
+  </ul>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <p>
+    Sur le site du projet fil rouge, l'automate et ses entrées-sorties sont secourus par le bus $24\ \mathrm{V}$ continu. La supervision, en revanche,
+    fonctionne en $230\ \mathrm{V}$ alternatif : poste de conduite, serveur d'historique, commutateurs du réseau industriel, pare-feu et écrans. Lors
+    d'une coupure du réseau, l'inverseur de sources bascule sur le groupe électrogène, puis la reprise des charges se fait par paliers espacés d'une
+    vingtaine de secondes : sans secours, la supervision redémarrerait à chaque coupure, perdrait ses historiques en cours et laisserait l'exploitant
+    aveugle au moment même où la marche dégradée exige le plus d'attention. On étudie l'étage de sortie de l'ASI monophasée de supervision.
+  </p>
+  <figure id="i-figure">
+    <svg viewBox="0 0 740 300" role="img" aria-label="Étage de sortie de l'ASI : bus 400 V et condensateur 1 mF, pont en H, inductance de filtre 1 mH portant i_L, condensateur 10 µF, charges de supervision, tension de sortie v_o et tension du pont v_p">
+      <defs><marker id="fl-i" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M60 50H255V70M60 260H255V240"/>
+        <path d="M60 50V135M60 175V260"/>
+        <circle cx="60" cy="155" r="20"/>
+        <path d="M110 50V150M110 160V260"/>
+        <path d="M92 150h36M92 160h36" stroke-width="3"/>
+        <rect x="170" y="70" width="170" height="170" rx="10"/>
+        <path d="M340 120H420M340 190H400V230H600"/>
+        <path d="M420 120H432a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0H600"/>
+        <path d="M540 120V170M540 180V230"/>
+        <path d="M522 170h36M522 180h36" stroke-width="3"/>
+        <path d="M600 120H650V145M650 205V230H600"/>
+        <rect x="636" y="145" width="28" height="60" rx="4"/>
+        <path d="M110 260v10M96 270h28M101 275h18M106 280h8"/>
+      </g>
+      <circle cx="540" cy="120" r="3.6" fill="currentColor" stroke="none"/>
+      <circle cx="540" cy="230" r="3.6" fill="currentColor" stroke="none"/>
+      <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+        <path d="M30 210V100" marker-end="url(#fl-i)"/>
+        <path d="M440 100H480" marker-end="url(#fl-i)"/>
+        <path d="M560 136V160" marker-end="url(#fl-i)"/>
+        <path d="M620 102H646" marker-end="url(#fl-i)"/>
+        <path d="M380 218V134" marker-end="url(#fl-i)" stroke-dasharray="5 4"/>
+        <path d="M700 222V128" marker-end="url(#fl-i)" stroke-dasharray="5 4"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5">
+        <text x="54" y="148">+</text><text x="55" y="176">-</text><text x="6" y="160">E</text><text x="16" y="88" font-size="11">400 V</text>
+        <text x="122" y="140">1 mF</text>
+        <text x="255" y="140" text-anchor="middle">pont en H</text>
+        <text x="255" y="158" text-anchor="middle" font-size="11">IGBT 650 V, 30 A</text>
+        <text x="255" y="176" text-anchor="middle" font-size="11">MLI unipolaire</text>
+        <text x="255" y="194" text-anchor="middle" font-size="11">f_d = 16 kHz</text>
+        <text x="350" y="112">A</text><text x="350" y="208">B</text>
+        <text x="440" y="146">L_f = 1 mH</text>
+        <text x="446" y="92">i_L</text>
+        <text x="566" y="196">C_f</text><text x="566" y="212" font-size="11">10 µF</text>
+        <text x="566" y="152">i_C</text>
+        <text x="614" y="94">i_o</text>
+        <text x="626" y="250" font-size="11">charges</text>
+        <text x="388" y="182">v_p</text>
+        <text x="708" y="180">v_o</text>
+        <text x="80" y="292" font-size="11">0 V, référence du bus</text>
+      </g>
+    </svg>
+    <figcaption>
+      Étage de sortie de l'ASI. Le bus de $400\ \mathrm{V}$ et son condensateur de $1\ \mathrm{mF}$ alimentent le pont en H, représenté par un bloc
+      dont les points milieux sont $A$ et $B$. La tension du pont $v_p$, flèche en pointillé de gauche, est découpée ; l'inductance $L_f$ porte le
+      courant $i_L$ ; le condensateur $C_f$ dérive le courant $i_C$ ; les charges reçoivent $i_o$ sous la tension filtrée $v_o$, flèche en pointillé de
+      droite. Les flèches pleines donnent les sens positifs des courants ; les tensions sont fléchées vers la borne supérieure, en convention récepteur
+      pour le filtre et les charges.
+    </figcaption>
+  </figure>
+  <h3 id="i-donnees">Données, contraintes d'exploitation et calculs</h3>
+  <p>
+    Hypothèses d'étude, à remplacer par la documentation de l'appareil retenu : ASI en double conversion de $2\ \mathrm{kVA}$ à facteur de puissance
+    $0{,}8$, soit $1{,}6\ \mathrm{kW}$ ; sortie $230\ \mathrm{V}$, $50\ \mathrm{Hz}$ ; bus régulé à $400\ \mathrm{V}$, qui peut descendre à
+    $360\ \mathrm{V}$ en fin d'autonomie si l'élévateur de batterie sature ; modulation unipolaire à $f_d = 16\ \mathrm{kHz}$, soit $m_f = 320$.
+  </p>
+  <ol>
+    <li><strong>Courant nominal :</strong> $I_o = 2000/230 = 8{,}70\ \mathrm{A}$ efficaces, $12{,}30\ \mathrm{A}$ crête, en retard de $36{,}9$ degrés.</li>
+    <li><strong>Inductance :</strong> ondulation visée d'environ $25\ \%$ du courant crête, soit $3{,}1\ \mathrm{A}$ :
+      $L_f \ge E/(8f_d\Delta i) = 400/(8 \times 16\,000 \times 3{,}07) = 1{,}02\ \mathrm{mH}$. On retient $1\ \mathrm{mH}$, d'où
+      $\Delta i_{max} = 3{,}13\ \mathrm{A}$.</li>
+    <li><strong>Condensateur :</strong> première raie de découpage à $2f_d = 32\ \mathrm{kHz}$ ; une fréquence propre voisine de $1{,}6\ \mathrm{kHz}$
+      laisse une décade de chaque côté, à $32$ fois $50\ \mathrm{Hz}$ et à $1/20$ de $32\ \mathrm{kHz}$. $C_f = 10\ \mu\mathrm{F}$ donne
+      $f_0 = 1/(2\pi\sqrt{10^{-3} \times 10^{-5}}) = 1592\ \mathrm{Hz}$ et $Z_0 = \sqrt{L_f/C_f} = 10\ \Omega$.</li>
+    <li><strong>Atténuation :</strong> à $32\ \mathrm{kHz}$, $|\underline{H}| \approx 1/((32\,000/1592)^2 - 1) = 0{,}00248$, soit $-52{,}1\ \mathrm{dB}$.
+      Chacune des deux raies de $122{,}0\ \mathrm{V}$ crête du pont devient $0{,}30\ \mathrm{V}$ crête en sortie ; le résidu de découpage, calculé sur tout le
+      spectre, vaut $0{,}34\ \mathrm{V}$ efficaces, soit $0{,}15\ \%$ de $230\ \mathrm{V}$.</li>
+    <li><strong>Courant réactif du filtre :</strong> $I_C = 230 \times 314{,}16 \times 10^{-5} = 0{,}72\ \mathrm{A}$, soit $8{,}3\ \%$ du courant nominal,
+      permanent même à vide.</li>
+    <li><strong>Courant du pont :</strong> $\underline{I}_L = \underline{I}_o + \underline{I}_C = (6{,}96 - j5{,}22) + j0{,}72 = 6{,}96 - j4{,}49\ \mathrm{A}$,
+      soit $8{,}28\ \mathrm{A}$ efficaces et $11{,}71\ \mathrm{A}$ crête ; avec la demi-ondulation, $13{,}3\ \mathrm{A}$ crête dans les semi-conducteurs.</li>
+    <li><strong>Tension du pont et marge de modulation :</strong> $\underline{V}_p = 230 + j0{,}3142 \times (6{,}96 - j4{,}49) = 231{,}41 + j2{,}19\ \mathrm{V}$,
+      soit $231{,}4\ \mathrm{V}$ efficaces et $327{,}3\ \mathrm{V}$ crête. D'où $m_a = 0{,}818$ à $400\ \mathrm{V}$ et $0{,}909$ à $360\ \mathrm{V}$ : la
+      zone linéaire est tenue sur toute la plage du bus.</li>
+    <li><strong>Amortissement :</strong> à pleine charge, la part active équivaut à $R = 230^2/1600 = 33{,}1\ \Omega$, d'où $Q = 3{,}3$ ; à vide, $Q$ tend vers
+      l'infini. La commande doit amortir activement le filtre, par une boucle sur le courant du condensateur, faute de quoi une perturbation à
+      $1{,}6\ \mathrm{kHz}$, rang 32, oscillerait longtemps.</li>
+    <li><strong>Bus :</strong> $\Delta V_E = S/(\omega C E) = 2000/(314{,}16 \times 10^{-3} \times 400) = 15{,}9\ \mathrm{V}$ crête à crête avec
+      $1\ \mathrm{mF}$, soit $4\ \%$ ; les condensateurs portent $S/(E\sqrt{2}) = 3{,}54\ \mathrm{A}$ efficaces à $100\ \mathrm{Hz}$, en plus de
+      l'ondulation de découpage.</li>
+    <li><strong>Temps mort :</strong> $1\ \mu\mathrm{s}$ supposé, soit $2 \times 10^{-6} \times 16\,000 \times 400 = 12{,}8\ \mathrm{V}$ d'erreur moyenne
+      autour des passages par zéro du courant : compensation par la commande exigée.</li>
+  </ol>
+  <p>
+    Le diagramme suivant montre comment le courant du pont se compose du courant des charges et du courant du condensateur. Prédisez avant de
+    manipuler : à vide, le courant du pont est-il nul ? Quand la charge augmente à facteur de puissance $0{,}8$, l'angle de $\underline{I}_L$ se
+    rapproche-t-il ou s'éloigne-t-il de celui de $\underline{I}_o$ ?
+  </p>
+  <figure id="i-fresnel-figure">
+    <div id="i-fresnel-curseurs"></div>
+    <div id="i-fresnel"></div>
+    <figcaption>
+      Diagramme de Fresnel des courants de l'étage de sortie, la tension $\underline{V}_o$ prise comme origine des phases. Les vecteurs sont
+      $\underline{I}_o$, courant des charges, $\underline{I}_C$, courant du condensateur, en avance de $90$ degrés, et leur somme $\underline{I}_L$,
+      courant du pont et de l'inductance. Les mesures donnent la tension et l'indice de modulation nécessaires au pont, calculés avec
+      $\underline{V}_p = \underline{V}_o + jL_f\omega\underline{I}_L$.
+    </figcaption>
+  </figure>
+  <p>
+    Interprétation. À vide, le pont fournit encore $0{,}72\ \mathrm{A}$ capacitifs : le filtre impose un courant permanent, qui coûte des pertes de
+    conduction mais aucune puissance active. Quand la charge inductive croît, $\underline{I}_C$ compense une partie de son réactif : $\underline{I}_L$
+    est un peu moins déphasé que $\underline{I}_o$, $32{,}9$ degrés contre $36{,}9$ à pleine charge. La tension du pont reste à moins de $1\ \%$ de
+    la tension de sortie, ce qui confirme que la chute fondamentale dans $L_f$ ne consomme qu'une faible marge de modulation.
+  </p>
+  <h3 id="i-compromis">Risques, choix d'ingénierie et compromis</h3>
+  <ul>
+    <li><strong>Charges non linéaires.</strong> Les alimentations des ordinateurs absorbent un courant en pointes, riche en rangs 3 et 5. Traversant
+      $L_f$, de $0{,}94\ \Omega$ au rang 3, ces courants déforment la tension de sortie ; seule une régulation rapide de la tension de sortie, qui
+      abaisse l'impédance apparente de l'ASI, les maîtrise. Le choix d'une ASI se fait donc sur un essai en charge non linéaire, pas seulement sur une
+      charge résistive.</li>
+    <li><strong>Fréquence de découpage.</strong> $16\ \mathrm{kHz}$ ménage les pertes de commutation mais reste audible pour certaines personnes ; passer à
+      $20\ \mathrm{kHz}$ réduirait $L_f$ de $20\ \%$ à ondulation égale, au prix de pertes plus élevées. Pour un local technique, le
+      compromis retenu est acceptable.</li>
+    <li><strong>Surcharge et court-circuit.</strong> Un onduleur ne fournit pas de courant de court-circuit comme un transformateur : la commande le
+      limite, par exemple à deux fois le nominal pendant quelques dizaines de millisecondes, puis bascule sur la dérivation statique. La
+      sélectivité des protections des départs de supervision doit en tenir compte, ce que traiteront les cours Protections des convertisseurs et
+      Coordination et sélectivité.</li>
+    <li><strong>Marche dégradée.</strong> Sur groupe électrogène, la fréquence d'entrée fluctue ; l'ASI se resynchronise lentement ou fonctionne en
+      fréquence libre, et son redresseur à courant sinusoïdal ménage le groupe. La dérivation statique n'est autorisée que si la fréquence du groupe
+      reste dans la fenêtre de synchronisation.</li>
+    <li><strong>Vieillissement.</strong> Les condensateurs du bus, sollicités par les $3{,}5\ \mathrm{A}$ à $100\ \mathrm{Hz}$, et les ventilateurs sont
+      les éléments d'usure ; la supervision doit remonter les alarmes de l'ASI vers l'automate.</li>
+  </ul>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Ajout au projet fil rouge</span>
+    <p>
+      ASI monophasée de la supervision, $2\ \mathrm{kVA}$ à facteur de puissance $0{,}8$ supposés, en double conversion : bus de $400\ \mathrm{V}$,
+      $360\ \mathrm{V}$ au minimum, condensateur de $1\ \mathrm{mF}$ ($15{,}9\ \mathrm{V}$ d'ondulation à $100\ \mathrm{Hz}$, $3{,}54\ \mathrm{A}$
+      efficaces) ; pont en H en modulation unipolaire à $16\ \mathrm{kHz}$ ; filtre $1\ \mathrm{mH}$ et $10\ \mu\mathrm{F}$, $f_0 = 1592\ \mathrm{Hz}$,
+      $Z_0 = 10\ \Omega$, $-52{,}1\ \mathrm{dB}$ à $32\ \mathrm{kHz}$, résidu de découpage de $0{,}15\ \%$ ; ondulation de $3{,}13\ \mathrm{A}$, courant crête
+      de $13{,}3\ \mathrm{A}$ dans les semi-conducteurs, $0{,}72\ \mathrm{A}$ réactifs à vide ; $m_a = 0{,}818$ à $400\ \mathrm{V}$ et $0{,}909$ à
+      $360\ \mathrm{V}$ ; amortissement actif du filtre, compensation du temps mort ($12{,}8\ \mathrm{V}$ pour $1\ \mu\mathrm{s}$), dérivation statique
+      et alarmes vers l'automate. Hypothèses à remplacer par la documentation de l'ASI retenue et par un essai en charge non linéaire à la mise en
+      service.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Erreur</th><th>Pourquoi c'est faux</th><th>Correction</th></tr></thead>
+      <tbody>
+        <tr><td>Prendre $E$ pour la tension fondamentale d'un pont en pleine onde.</td><td>$E$ est la valeur efficace du carré entier, harmoniques compris.</td><td>$V_1 = 0{,}900E$ ; le reste, $0{,}435E$ efficaces, est harmonique.</td></tr>
+        <tr><td>Écrire $V_1 = m_aE$ en efficace, ou $m_aE$ pour un demi-pont.</td><td>$m_aE$ est une valeur crête, et le demi-pont ne dispose que de $E/2$.</td><td>$V_1 = m_aE/\sqrt{2}$ pour le pont complet, $m_aE/(2\sqrt{2})$ pour le demi-pont.</td></tr>
+        <tr><td>Croire que la modulation supprime les harmoniques.</td><td>Elle les déplace vers $m_f$ ou $2m_f$ ; le taux de distorsion de la tension découpée reste de l'ordre de $75$ à $140\ \%$.</td><td>Raisonner sur le courant ou sur la tension filtrée, qui seuls deviennent sinusoïdaux.</td></tr>
+        <tr><td>Appliquer $\hat{V}_1 = m_aE$ en surmodulation.</td><td>Au-delà de $m_a = 1$, le rapport cyclique sature et la loi n'est plus linéaire.</td><td>Garder une marge, $m_a \le 0{,}9$ au bus minimal ; sinon, calculer le spectre réel.</td></tr>
+        <tr><td>Dimensionner le bus d'un onduleur monophasé comme celui d'un triphasé.</td><td>La puissance monophasée pulse à $2f$ avec l'amplitude $S$.</td><td>$C \ge S/(\omega E\,\Delta V)$, et vérifier le courant efficace des condensateurs.</td></tr>
+        <tr><td>Brancher un condensateur directement aux bornes du pont.</td><td>Un onduleur de tension imposerait des sauts de tension au condensateur, donc des pointes de courant.</td><td>Toujours une inductance entre les points milieux et une tension imposée.</td></tr>
+        <tr><td>Attribuer au filtre la déformation autour des passages par zéro.</td><td>Le méplat suit le passage par zéro du courant, pas de la tension : c'est la signature du temps mort.</td><td>Calculer $2t_mf_dE$ et activer la compensation du temps mort.</td></tr>
+        <tr><td>Concevoir le filtre à pleine charge seulement.</td><td>À vide, le facteur de qualité tend vers l'infini.</td><td>Prévoir un amortissement passif ou actif, et l'essayer à vide.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Démarche de diagnostic sur un onduleur en service : relever à l'oscilloscope, avec une sonde différentielle, la tension de sortie et le courant
+    sur une période, puis leur spectre. Une distorsion de rang faible qui grandit à faible charge oriente vers le temps mort ; une oscillation
+    amortie vers $f_0$ après chaque variation de charge, vers un défaut d'amortissement ; un harmonique 3 qui suit la charge, vers l'ondulation du bus
+    non compensée ; un aplatissement des crêtes au bus bas, vers la surmodulation ; un échauffement anormal des condensateurs du bus, vers une
+    capacité perdue par vieillissement.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic industriel et une question
+    conceptuelle sans calcul. Chaque correction reste masquée jusqu'à votre tentative ou un clic explicite ; elle se déroule ensuite étape par étape,
+    avec un tracé ou un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangées : choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Le score s'affiche à la fin et
+    alimente le bilan de la section P.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+  <h3 id="m-formules">Cinq formules essentielles</h3>
+  <ol>
+    <li>Pleine onde, pont complet : $V_1 = \dfrac{2\sqrt{2}}{\pi}E \approx 0{,}900E$ et $V_h = V_1/h$, $h$ impair ; demi-pont : moitié.</li>
+    <li>Commande décalée : $V_h = \dfrac{2\sqrt{2}E}{h\pi}\cos h\alpha$ ; le rang $h$ disparaît pour $\alpha = 90^\circ/h$.</li>
+    <li>Modulation sinusoïdale, zone linéaire : $\hat{V}_1 = m_aE$, soit $V_1 = m_aE/\sqrt{2}$, pour $m_a \le 1$.</li>
+    <li>Ondulation maximale du courant : $E/(2Lf_d)$ en bipolaire, $E/(8Lf_d)$ en unipolaire.</li>
+    <li>Bus d'un onduleur monophasé : $\Delta V_{E,cc} = \dfrac{S}{\omega CE}$, courant à $2f$ de $S/(E\sqrt{2})$ efficaces.</li>
+  </ol>
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ul>
+      <li>Jamais les deux interrupteurs d'un même bras fermés ensemble : le temps mort est une sécurité, et il a un coût en distorsion.</li>
+      <li>La modulation déplace les harmoniques, elle ne les supprime pas : le filtre ou l'inductance de la charge fait le reste.</li>
+      <li>$m_aE$ est une valeur crête ; vérifier $m_a \le 1$ au bus minimal, chute dans l'inductance comprise.</li>
+      <li>Une charge monophasée pulse à $2f$ avec l'amplitude $S$ : le condensateur du bus se dimensionne sur cette pulsation.</li>
+      <li>Un filtre $LC$ peu chargé résonne : l'essai à vide est obligatoire.</li>
+    </ul>
+  </div>
+  <h3 id="m-resume">Résumé</h3>
+  <p>
+    Un onduleur de tension fabrique une tension alternative à partir d'un bus continu en commutant des bras de deux interrupteurs complémentaires,
+    munis de diodes en antiparallèle qui rendent chaque bras réversible en courant. Le demi-pont donne $\pm E/2$, le pont en H $+E$, $0$ et $-E$. La
+    pleine onde fournit $0{,}9E$ au fondamental, sans réglage ; la commande décalée règle l'amplitude mais garde des harmoniques de rang faible. La
+    modulation sinusoïdale fait varier le rapport cyclique pour que la moyenne glissante vaille $m_aE\sin\omega t$, et repousse les harmoniques vers
+    $m_f$ en bipolaire, $2m_f$ en unipolaire, où l'ondulation de courant est quatre fois plus faible. Un filtre $LC$ placé une décade sous la
+    première raie rend la tension sinusoïdale, à condition d'être amorti. La puissance d'une charge monophasée pulse à $2f$ : le condensateur du bus
+    absorbe cette pulsation.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance, deux sur le cours précédent, <a href="#/cours/revision-7-et-mini-projet-alimentation">Révision 7 et
+    mini-projet alimentation</a>, une sur le cours <a href="#/cours/diodes-de-puissance">Diodes de puissance</a>, vieux d'une semaine, et une sur le
+    cours <a href="#/cours/resonance-serie-et-parallele">Résonance série et parallèle</a>, vieux d'un mois, dont le filtre de sortie est l'application
+    directe.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : simuler dans LTspice l'étage de sortie de l'ASI du projet fil rouge, vérifier le fondamental, l'ondulation et le résidu de découpage,
+    puis observer la résonance à vide et l'effet du temps mort. Prédictions à écrire avant de commencer : tension efficace de sortie ; ondulation de
+    $i_L$ au sommet et au passage par zéro de la tension ; amplitude de la raie à $32\ \mathrm{kHz}$ en sortie ; allure de la tension à vide après la
+    mise en marche ; effet d'un temps mort de $1\ \mu\mathrm{s}$.
+  </p>
+  <ol>
+    <li>Circuit : source continue <code>V1</code> de $400\ \mathrm{V}$ ; deux bras de deux interrupteurs <code>S1</code> à <code>S4</code> avec
+      <code>.model SW SW(Ron=50m Roff=1Meg Vt=0.5 Vh=-0.1)</code>, chacun shunté par une diode <code>.model DP D(Ron=20m Vfwd=0.8)</code> montée en
+      antiparallèle ; inductance <code>L1</code> de $1\ \mathrm{mH}$ avec <code>Rser=50m</code> entre le point milieu <code>A</code> et la sortie ;
+      condensateur <code>C1</code> de $10\ \mu\mathrm{F}$ entre la sortie et le point milieu <code>B</code> ; charge <code>R1</code> de
+      $33{,}1\ \Omega$ en série avec <code>L2</code> de $78\ \mathrm{mH}$, ce qui représente $2\ \mathrm{kVA}$ à facteur de puissance $0{,}8$.</li>
+    <li>Commande : porteuse <code>V2 tri 0 PULSE(-1 1 0 31.25u 31.25u 0 62.5u)</code>, triangle à $16\ \mathrm{kHz}$ ; référence
+      <code>V3 ref 0 SINE(0 0.818 50)</code> ; commandes des bras par sources comportementales :
+      <code>B1 ga 0 V=if(V(ref)&gt;V(tri),1,0)</code> et <code>B2 gb 0 V=if(-V(ref)&gt;V(tri),1,0)</code>, avec leurs compléments
+      <code>1-V(ga)</code> et <code>1-V(gb)</code> pour les interrupteurs bas.</li>
+    <li>Simulation : <code>.tran 0 100m 60m 20n</code> ; mesurer <code>.four 50 V(out,B)</code> pour le fondamental et le taux de distorsion, et
+      <code>.meas tran dI PP I(L1) FROM 64.5m TO 65.5m</code> autour d'un sommet de tension.</li>
+    <li>Spectre : afficher la transformée de Fourier de <code>V(A,B)</code> et de <code>V(out,B)</code> sur la fenêtre de $40\ \mathrm{ms}$ et relever
+      les raies autour de $32\ \mathrm{kHz}$.</li>
+    <li>Variantes : remplacer la charge par $10\ \mathrm{k\Omega}$ et observer les premières millisecondes ; ajouter un temps mort en retardant de
+      $1\ \mu\mathrm{s}$ les fronts montants de chaque commande ; passer en modulation bipolaire en commandant <code>S1</code> et <code>S4</code> par
+      <code>ga</code>, <code>S2</code> et <code>S3</code> par son complément.</li>
+  </ol>
+  <p>
+    Résultats attendus : environ $230\ \mathrm{V}$ efficaces en sortie, un peu moins à cause des résistances, avec un taux de distorsion inférieur à
+    $1\ \%$ ; ondulation de $i_L$ proche de $3{,}1\ \mathrm{A}$ crête à crête quand $v_{out}$ passe par $200\ \mathrm{V}$, presque nulle au passage
+    par zéro ; raies d'environ $122\ \mathrm{V}$ crête à $31{,}95$ et $32{,}05\ \mathrm{kHz}$ sur <code>V(A,B)</code>, ramenées à quelques centaines
+    de millivolts en sortie. À vide, une oscillation à $1{,}6\ \mathrm{kHz}$ se superpose au démarrage et s'amortit lentement. Avec le temps mort, la
+    tension perd une dizaine de volts au fondamental et présente un méplat aux passages par zéro du courant. En bipolaire, l'ondulation de $i_L$
+    quadruple.
+  </p>
+  <p>
+    Anomalies à observer et à expliquer : une raie de sortie à $16\ \mathrm{kHz}$ signale une modulation devenue bipolaire par erreur de câblage ;
+    un courant énorme à chaque front, un court-circuit de bras par recouvrement des commandes ; une tension de sortie aplatie aux crêtes, un indice de
+    modulation trop grand ; une simulation qui diverge ou ralentit, un pas de calcul trop grand devant $1/f_d$. Variante sans LTspice : reprendre en
+    Python le calcul de la section H, en échantillonnant la comparaison sinus-triangle sur $2^{20}$ points par période puis en appliquant
+    <code>numpy.fft.rfft</code>.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours, notées de 0 à 4. Le bilan affiché sous la grille est calculé dans ce
+    navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement. Aucune estimation n'est
+    faite à votre place : seul le score réellement obtenu sert de référence. Le jalon visé à la fin de ce module demande d'analyser les principaux
+    convertisseurs de puissance, leurs formes d'onde, leurs pertes, leurs protections et leur intégration dans un variateur.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Un bras d'onduleur impose une tension, $E$ ou $0$, quel que soit le signe du courant, grâce aux diodes en antiparallèle : la tension dépend de la commande, le courant de la charge.</li>
+    <li data-rang="02">La modulation sinusoïdale fait de la moyenne glissante une sinusoïde d'amplitude $m_aE$ et repousse les harmoniques vers $m_f$ ou $2m_f$ ; c'est l'inductance, de la charge ou du filtre, qui rend le courant sinusoïdal.</li>
+    <li data-rang="03">La puissance d'une charge monophasée pulse à $2f$ avec l'amplitude $S$ : le condensateur du bus se dimensionne sur cette pulsation, contrairement au triphasé équilibré.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> distinguer la tension découpée de la tension utile. Le spectre de la tension découpée reste très
+    riche même en modulation, alors que le courant, ou la tension après filtre, est presque sinusoïdal. Les erreurs viennent de ce glissement : valeur
+    crête prise pour une valeur efficace, harmoniques de tension confondus avec harmoniques de courant, fondamental de la pleine onde confondu avec $E$.
+    Le réflexe à installer : préciser, pour chaque grandeur, s'il s'agit de la tension découpée ou filtrée, de la valeur crête ou efficace, et du
+    fondamental ou du signal complet.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Onduleurs triphasés, ajoute un troisième bras sur le même bus. Question à préparer :
+    avec trois références sinusoïdales déphasées de $120$ degrés, quelle est la tension efficace maximale entre deux phases en zone linéaire, pour un
+    bus de $540\ \mathrm{V}$, et pourquoi ajouter la même composante de rang 3 aux trois références permet-il de l'augmenter d'environ $15\ \%$ sans
+    déformer les tensions entre phases ?
+  </p>
+
+</article>
