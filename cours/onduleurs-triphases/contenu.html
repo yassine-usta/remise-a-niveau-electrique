@@ -1,0 +1,857 @@
+<article class="cours" data-slug="onduleurs-triphases">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/onduleurs-monophases">Onduleurs monophasés</a> s'est achevé sur une question : avec trois références sinusoïdales
+      déphasées de $120$ degrés, quelle tension efficace maximale obtient-on entre deux phases en zone linéaire, pour un bus de $540\ \mathrm{V}$, et
+      pourquoi ajouter la même composante de rang 3 aux trois références permet-il de l'augmenter d'environ $15\ \%$ ? Réponse en deux lignes, que
+      cette séance va démontrer. Chaque bras, comparé à une porteuse commune, applique en valeur moyenne glissante $\frac{E}{2}m_a\cos(\omega t - k\,120^\circ)$
+      par rapport au point milieu du bus ; la tension entre deux phases est la différence de deux de ces tensions, d'amplitude $\sqrt{3}\,m_aE/2$, soit au
+      plus $\frac{\sqrt{3}}{2\sqrt{2}}E = 0{,}612E = 330{,}7\ \mathrm{V}$ efficaces pour $m_a = 1$. Une composante commune aux trois bras disparaît dans
+      toute différence : on peut donc l'ajouter librement pour écrêter les références sans toucher aux tensions entre phases, et gagner le facteur
+      $2/\sqrt{3} = 1{,}155$, soit $381{,}8\ \mathrm{V}$.
+    </p>
+    <p>
+      La séance s'appuie sur les tensions simples et composées et le facteur $\sqrt{3}$ du cours <a href="#/cours/systemes-triphases-equilibres">Systèmes
+      triphasés équilibrés</a> ; sur la puissance constante d'un récepteur triphasé équilibré, vue dans le cours <a href="#/cours/puissance-en-triphase">Puissance
+      en triphasé</a> ; sur le déplacement du point neutre du cours <a href="#/cours/charges-triphasees-desequilibrees">Charges triphasées
+      déséquilibrées</a> ; sur les nombres complexes et l'opérateur $a = e^{j2\pi/3}$ du cours <a href="#/cours/nombres-complexes-et-phaseurs">Nombres
+      complexes et phaseurs</a> ; sur le champ tournant du cours <a href="#/cours/moteur-asynchrone-triphase">Moteur asynchrone triphasé</a> et la loi
+      U/f du cours <a href="#/cours/variation-de-vitesse-des-moteurs-asynchrones">Variation de vitesse des moteurs asynchrones</a> ; enfin sur les
+      harmoniques de rangs $6k \pm 1$ du cours <a href="#/cours/redresseurs-triphases">Redresseurs triphasés</a>, qui reviennent ici côté sortie.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    L'onduleur triphasé de tension est le convertisseur le plus répandu de l'électronique de puissance industrielle. Trois bras identiques à celui du
+    cours précédent, montés sur un même bus continu, suffisent à produire un système triphasé de tensions dont l'amplitude et la fréquence sont
+    réglables à volonté. On le trouve partout où un moteur doit tourner à vitesse variable et partout où une source continue doit échanger de
+    l'énergie avec le réseau.
+  </p>
+  <ul>
+    <li><strong>Variateurs de vitesse.</strong> Pompes, ventilateurs, convoyeurs, compresseurs, levage : l'étage de sortie d'un variateur est un
+      onduleur triphasé à six interrupteurs, commandé en modulation de largeur d'impulsion à quelques kilohertz.</li>
+    <li><strong>Photovoltaïque, stockage et bornes de recharge.</strong> Au-delà de quelques kilowatts, l'injection se fait en triphasé, par un onduleur
+      synchronisé sur le réseau.</li>
+    <li><strong>Alimentations sans interruption triphasées, compensateurs statiques, filtres actifs.</strong> Le même pont, commandé autrement,
+      fournit une tension, absorbe un courant réactif ou compense des harmoniques.</li>
+    <li><strong>Traction et véhicules électriques.</strong> Le moteur de traction est alimenté par un onduleur triphasé sur la batterie, réversible
+      pour le freinage.</li>
+  </ul>
+  <p>
+    Trois idées font la différence entre un utilisateur et un ingénieur capable de diagnostiquer un variateur. D'abord, l'onduleur ne possède que huit
+    états de commutation, et toute la commande consiste à les enchaîner ; savoir lire une table de commutation, c'est savoir ce que voit le moteur.
+    Ensuite, la charge ne voit que les différences entre les bras : une tension commune aux trois bras, dite de mode commun, est invisible pour les
+    tensions composées mais pas pour les roulements ni pour la terre. Enfin, la représentation par vecteur spatial ramène les trois bras à un seul
+    point dans un hexagone : elle explique d'un même geste la modulation vectorielle, le gain de $15\ \%$ de tension et la limite de la pleine onde.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Établir, à partir des états des trois bras, les tensions composées et les tensions simples d'une charge équilibrée en étoile, et dresser la table de commutation complète des huit états.</li>
+    <li data-rang="02">Expliquer la séquence de la commande pleine onde à $180$ degrés et calculer le fondamental et les harmoniques de ses tensions composées et simples.</li>
+    <li data-rang="03">Calculer le vecteur spatial d'un état et interpréter l'hexagone des vecteurs de tension : secteurs, vecteurs nuls, cercle inscrit.</li>
+    <li data-rang="04">Calculer les durées d'application $t_1$, $t_2$ et $t_0$ de la modulation vectorielle pour une référence donnée, et en déduire les rapports cycliques des bras.</li>
+    <li data-rang="05">Comparer la modulation sinus-triangle, l'injection de rang 3 et la modulation vectorielle : tension composée maximale, spectre, tension de mode commun, et dimensionner la tension de bus nécessaire.</li>
+    <li data-rang="06">Diagnostiquer un défaut d'onduleur triphasé à partir de ses symptômes : saturation de tension à vitesse maximale, courants de mode commun, bras défaillant.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>
+    Quatre notions suffisent pour suivre la séance.
+  </p>
+  <ul>
+    <li><strong>Système triphasé équilibré direct.</strong> Trois tensions simples de même amplitude, déphasées de $120$ degrés dans l'ordre $a$, $b$, $c$.
+      Les tensions composées valent $\sqrt{3}$ fois les tensions simples et sont en avance de $30$ degrés : $u_{ab} = \sqrt{3}\,\hat{V}\cos(\omega t + 30^\circ)$
+      si $v_a = \hat{V}\cos\omega t$. La somme des trois tensions simples est nulle à tout instant.</li>
+    <li><strong>Opérateur $a$.</strong> $a = e^{j2\pi/3} = -\frac{1}{2} + j\frac{\sqrt{3}}{2}$, $a^2 = e^{-j2\pi/3}$, et surtout $1 + a + a^2 = 0$.</li>
+    <li><strong>Bras d'onduleur et moyenne glissante.</strong> Un bras impose à son point milieu $+E/2$ ou $-E/2$ par rapport au point milieu du bus ;
+      avec un rapport cyclique local $d$, sa moyenne glissante vaut $(2d - 1)E/2$. En pleine onde, son fondamental vaut $\frac{4}{\pi}\cdot\frac{E}{2} = \frac{2E}{\pi}$ crête.</li>
+    <li><strong>Charge équilibrée sans neutre.</strong> Trois impédances identiques en étoile, neutre non relié : la somme des courants est nulle, et le
+      potentiel du neutre se place à la moyenne des trois potentiels appliqués, comme établi dans le cours
+      <a href="#/cours/charges-triphasees-desequilibrees">Charges triphasées déséquilibrées</a>.</li>
+  </ul>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Notation de la séance</span>
+    <p>
+      $E$ : tension du bus continu, en volts. Potentiel de référence : la borne négative du bus, notée $0\ \mathrm{V}$ ; $O$ : point milieu, réel ou
+      fictif, du bus, au potentiel $E/2$. $s_a$, $s_b$, $s_c$ : états des bras, $1$ si l'interrupteur haut est fermé, $0$ si c'est le bas ; un état
+      s'écrit $(s_as_bs_c)$, par exemple $100$. $v_{AO}$, $v_{BO}$, $v_{CO}$ : tensions des points milieux des bras par rapport à $O$, égales à
+      $(2s_k - 1)E/2$. $v_{AB} = v_{AO} - v_{BO}$ : tension composée, fléchée vers $A$. $n$ : neutre de la charge en étoile ; $v_{An}$ : tension simple
+      de la phase $a$ ; $v_{nO}$ : tension de mode commun, potentiel de $n$ par rapport à $O$. Courants $i_a$, $i_b$, $i_c$ comptés de l'onduleur vers la
+      charge, en convention récepteur pour la charge. Interrupteurs : $T_1$ et $T_4$ pour le bras $A$, $T_3$ et $T_6$ pour $B$, $T_5$ et $T_2$ pour $C$,
+      numérotation choisie pour que la pleine onde les ferme dans l'ordre $1$ à $6$. Références sinusoïdales en cosinus :
+      $v_a^* = \hat{V}\cos\omega t$. $m_a$ : indice de modulation, rapport de l'amplitude d'une référence à celle de la porteuse ; $f_d$ et $T_d$ : fréquence
+      et période de découpage. $\vec{v}$ : vecteur spatial.
+    </p>
+  </div>
+  <p>
+    Mini-test de trois questions. Les réponses restent masquées, séparées de l'énoncé, jusqu'à votre tentative ou à un clic explicite.
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-trois-bras">Trois bras sur un même bus : huit états, et rien d'autre</h3>
+  <p>
+    Un onduleur triphasé de tension est formé de trois bras identiques branchés sur le même bus continu. Chaque bras porte deux interrupteurs
+    commandés en complément, munis de leurs diodes en antiparallèle : son point milieu est relié soit à la borne $+E$, soit à la borne $0\ \mathrm{V}$,
+    quel que soit le signe du courant qui en sort. Avec trois bras à deux positions, l'onduleur ne peut se trouver que dans $2^3 = 8$ états. Toute la
+    commande, de la plus rudimentaire à la plus élaborée, se résume à choisir lequel de ces huit états appliquer, et pendant combien de temps.
+  </p>
+  <figure id="d-onduleur-figure">
+    <svg viewBox="0 0 780 440" role="img" aria-label="Onduleur triphasé de tension : bus continu E partagé par deux condensateurs de point milieu O, trois bras A, B et C de deux interrupteurs munis de diodes, charge en étoile de neutre n isolé ; état 100 représenté, T1, T6 et T2 fermés"><defs><marker id="fl-ond" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M50 40H450M50 300H450"/><path d="M50 40V150M50 190V300"/><circle cx="50" cy="170" r="20"/><path d="M120 40V100M120 110V230M120 240V300"/><path d="M104 100h32M104 110h32M104 230h32M104 240h32" stroke-width="3"/><path d="M230 40V70M230 120V170"/><circle cx="230" cy="70" r="3"/><circle cx="230" cy="120" r="3"/><path d="M230 120V70" stroke-width="2.8"/><path d="M230 52H258V86M258 104V140H230"/><path d="M249 104L258 86L267 104Z"/><path d="M249 86h18" stroke-width="2.6"/><path d="M230 170V200M230 250V300"/><circle cx="230" cy="200" r="3"/><circle cx="230" cy="250" r="3"/><path d="M230 250L214 208" stroke-width="2.4"/><path d="M230 182H258V216M258 234V270H230"/><path d="M249 234L258 216L267 234Z"/><path d="M249 216h18" stroke-width="2.6"/><path d="M230 170H292"/><path d="M292 170V292a8 8 0 0 1 0 16V410H590"/><rect x="590" y="401" width="60" height="18" rx="3"/><path d="M650 410H700"/><path d="M340 40V70M340 120V170"/><circle cx="340" cy="70" r="3"/><circle cx="340" cy="120" r="3"/><path d="M340 120L324 78" stroke-width="2.4"/><path d="M340 52H368V86M368 104V140H340"/><path d="M359 104L368 86L377 104Z"/><path d="M359 86h18" stroke-width="2.6"/><path d="M340 170V200M340 250V300"/><circle cx="340" cy="200" r="3"/><circle cx="340" cy="250" r="3"/><path d="M340 250V200" stroke-width="2.8"/><path d="M340 182H368V216M368 234V270H340"/><path d="M359 234L368 216L377 234Z"/><path d="M359 216h18" stroke-width="2.6"/><path d="M340 170H402"/><path d="M402 170V292a8 8 0 0 1 0 16V375H590"/><rect x="590" y="366" width="60" height="18" rx="3"/><path d="M650 375H700"/><path d="M450 40V70M450 120V170"/><circle cx="450" cy="70" r="3"/><circle cx="450" cy="120" r="3"/><path d="M450 120L434 78" stroke-width="2.4"/><path d="M450 52H478V86M478 104V140H450"/><path d="M469 104L478 86L487 104Z"/><path d="M469 86h18" stroke-width="2.6"/><path d="M450 170V200M450 250V300"/><circle cx="450" cy="200" r="3"/><circle cx="450" cy="250" r="3"/><path d="M450 250V200" stroke-width="2.8"/><path d="M450 182H478V216M478 234V270H450"/><path d="M469 234L478 216L487 234Z"/><path d="M469 216h18" stroke-width="2.6"/><path d="M450 170H512"/><path d="M512 170V340H590"/><rect x="590" y="331" width="60" height="18" rx="3"/><path d="M650 340H700"/><path d="M700 340V410"/></g><g fill="currentColor" stroke="none"><circle cx="120" cy="170" r="4"/><circle cx="230" cy="170" r="4"/><circle cx="230" cy="40" r="3.4"/><circle cx="230" cy="300" r="3.4"/><circle cx="340" cy="170" r="4"/><circle cx="340" cy="40" r="3.4"/><circle cx="340" cy="300" r="3.4"/><circle cx="450" cy="170" r="4"/><circle cx="450" cy="40" r="3.4"/><circle cx="450" cy="300" r="3.4"/><circle cx="700" cy="375" r="4"/></g><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M515 400H548" marker-end="url(#fl-ond)"/><path d="M515 365H548" marker-end="url(#fl-ond)"/><path d="M515 330H548" marker-end="url(#fl-ond)"/><path d="M572 381V403" marker-end="url(#fl-ond)" stroke-dasharray="4 3"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5"><text x="44" y="162">+</text><text x="45" y="190">-</text><text x="16" y="175">E</text><text x="140" y="90">C/2</text><text x="140" y="262">C/2</text><text x="128" y="186">O</text><text x="192" y="100">T1</text><text x="192" y="230">T4</text><text x="268" y="100">D1</text><text x="268" y="230">D4</text><text x="236" y="163">A</text><text x="518" y="395" font-size="11">i_a</text><text x="606" y="414" font-size="11">Z</text><text x="302" y="100">T3</text><text x="302" y="230">T6</text><text x="378" y="100">D3</text><text x="378" y="230">D6</text><text x="346" y="163">B</text><text x="518" y="360" font-size="11">i_b</text><text x="606" y="379" font-size="11">Z</text><text x="412" y="100">T5</text><text x="412" y="230">T2</text><text x="488" y="100">D5</text><text x="488" y="230">D2</text><text x="456" y="163">C</text><text x="518" y="325" font-size="11">i_c</text><text x="606" y="344" font-size="11">Z</text><text x="578" y="397" font-size="11">v_AB</text><text x="710" y="379">n</text><text x="160" y="30" font-size="11">borne +E du bus</text><text x="150" y="322" font-size="11">borne 0 V, référence des potentiels</text><text x="560" y="322" font-size="11">charge équilibrée en étoile</text><text x="560" y="432" font-size="11">neutre n non relié</text></g></svg>
+    <figcaption>
+      Onduleur triphasé de tension, représenté dans l'état $100$ : $T_1$ est fermé, donc $A$ est relié à $+E$ ; $T_6$ et $T_2$ sont fermés, donc $B$ et
+      $C$ sont reliés à $0\ \mathrm{V}$. La borne négative du bus est la référence des potentiels ; les deux condensateurs $C/2$ définissent le point
+      milieu $O$, à $E/2$, que l'on utilise comme référence de calcul même quand il n'est pas accessible. Chaque diode, dessinée pointe vers le haut,
+      conduit en sens inverse de son transistor. Les flèches pleines $i_a$, $i_b$, $i_c$ donnent le sens positif des courants, de l'onduleur vers la
+      charge ; la flèche en tirets courts est la tension composée $v_{AB}$, fléchée vers $A$. Les petits arcs sur les conducteurs de sortie marquent
+      un croisement sans connexion avec la borne $0\ \mathrm{V}$. La charge $Z$ est équilibrée, en étoile, et son neutre $n$ n'est relié à rien : sa
+      tension $v_{nO}$ par rapport à $O$ est libre.
+    </figcaption>
+  </figure>
+  <p>
+    Dans l'état $100$, la phase $a$ est reliée à $+E$, les phases $b$ et $c$ à $0$. La charge voit donc $v_{AB} = E$, $v_{BC} = 0$ et $v_{CA} = -E$.
+    Les deux impédances des phases $b$ et $c$ sont en parallèle et en série avec celle de la phase $a$ : le neutre se place au tiers de la tension,
+    à $E/3$ au-dessus de la borne $0\ \mathrm{V}$. La phase $a$ reçoit $2E/3$, les phases $b$ et $c$ reçoivent $-E/3$ chacune. Trois niveaux de tension
+    simple apparaissent ainsi, $\pm E/3$ et $\pm 2E/3$, plus le zéro, alors que chaque bras n'a que deux positions.
+  </p>
+
+  <h3 id="d-pleine-onde">La séquence la plus simple : la pleine onde à 180 degrés</h3>
+  <p>
+    La commande la plus simple ferme l'interrupteur haut de chaque bras pendant une demi-période, le bas pendant l'autre, les trois bras étant décalés
+    de $120$ degrés. Il en résulte six états actifs successifs, chacun appliqué pendant $60$ degrés : $100$, $110$, $010$, $011$, $001$, $101$. À chaque
+    changement d'état, un seul bras commute. Les tensions composées sont des créneaux de $120$ degrés à trois niveaux, $+E$, $0$ et $-E$ ; les tensions
+    simples sont des escaliers à six marches, $E/3$ puis $2E/3$ puis $E/3$, et ainsi de suite. C'est la commande dite six pas, la seule qui donne la
+    tension maximale d'un bus donné.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Avant de lancer l'animation ci-dessous, écrivez vos réponses : quelle est l'allure de $v_{AB}$ sur une période, combien de fois par période
+      chaque interrupteur commute-t-il, et dans quel sens le point qui représente l'état dans l'hexagone parcourt-il les sommets ?
+    </p>
+  </div>
+  <figure id="d-sixstep-figure">
+    <div class="schema-vivant" id="d-sixstep"></div>
+    <div id="d-sixstep-lecteur"></div>
+    <div id="d-sixstep-valeurs"></div>
+    <figcaption>
+      Animation manipulable de la pleine onde, pour $E = 540\ \mathrm{V}$. Faites glisser la poignée le long de la piste, sous les chronogrammes, ou
+      utilisez le lecteur pour parcourir une période ; l'angle électrique $\omega t$ est piloté par vous seul. À gauche, l'hexagone : le vecteur en trait
+      épais est le vecteur spatial de l'état courant, dont le numéro et l'état $(s_as_bs_c)$ sont rappelés. À droite, de haut en bas : les états
+      logiques des trois bras, $1$ en haut et $0$ en bas ; la tension composée $v_{AB}$ entre $-E$ et $+E$ ; la tension simple $v_{An}$, en escalier, avec
+      en tirets son fondamental $\frac{2E}{\pi}\cos\omega t$. Le trait vertical en pointillé marque l'instant observé.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Chaque interrupteur ne commute que deux fois par période : la pleine onde minimise les pertes de commutation. Le
+    vecteur saute d'un sommet au suivant tous les $60$ degrés, toujours dans le sens trigonométrique pour l'ordre direct : il tourne, mais par bonds,
+    ce qui produit dans le moteur un champ tournant saccadé et des harmoniques de rangs $5$, $7$, $11$, $13$. La tension composée n'atteint jamais
+    $\pm E$ plus de $120$ degrés de suite ; la tension simple, elle, ne vaut jamais plus de $2E/3$. Ni l'amplitude ni le contenu harmonique ne sont
+    réglables : il faut moduler.
+  </p>
+
+  <h3 id="d-mode-commun">Ce que la charge voit, et ce qu'elle ne voit pas</h3>
+  <p>
+    Si l'on ajoute la même tension aux trois points milieux, aucune tension composée ne change, donc aucun courant ne change dans une charge
+    équilibrée sans neutre. C'est le neutre $n$ qui suit : son potentiel monte et descend de la même quantité. La charge est indifférente à cette
+    composante commune, dite de mode commun ; l'onduleur, lui, peut en jouer pour mieux utiliser son bus. Mais le neutre d'un moteur n'est pas isolé
+    de tout : ses enroulements forment avec la carcasse, reliée à la terre, des capacités parasites, et chaque saut de la tension de mode commun y
+    fait circuler une impulsion de courant.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Analogie contrôlée et ses limites</span>
+    <p>
+      La charge en étoile se comporte comme un plateau posé sur trois vérins : seule l'inclinaison du plateau, qui dépend des différences de longueur
+      des vérins, compte pour ce qui est posé dessus ; allonger les trois vérins de la même quantité soulève le plateau sans l'incliner. L'onduleur
+      dispose de cette liberté pour atteindre des inclinaisons plus fortes sans dépasser la course des vérins. Limites : la hauteur du plateau n'est
+      pas sans effet dans la réalité, puisque la tension de mode commun fait circuler des courants vers la terre par les capacités parasites ; un
+      vérin a une course continue, alors qu'un bras ne prend que deux positions et n'atteint les valeurs intermédiaires qu'en moyenne ; enfin
+      l'analogie suppose une charge équilibrée, et un neutre relié ou une charge déséquilibrée rendrait le mode commun visible.
+    </p>
+  </div>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-hypotheses">Hypothèses du modèle de base</h3>
+  <ul>
+    <li>Interrupteurs idéaux : chute de tension nulle, commutation instantanée, temps mort négligé sauf mention contraire.</li>
+    <li>Bus continu parfait : $E$ constant sur une période de découpage, point milieu $O$ à $E/2$.</li>
+    <li>Charge triphasée linéaire et équilibrée, en étoile de neutre isolé, ou en triangle ramené à une étoile équivalente.</li>
+    <li>Pour la modulation : $f_d \gg f$, de sorte que les grandeurs moyennées sur une période de découpage varient lentement.</li>
+  </ul>
+
+  <h3 id="e-tensions">Des états des bras aux tensions de la charge</h3>
+  <p>
+    Par rapport au point milieu $O$, chaque point milieu de bras est au potentiel $v_{kO} = (2s_k - 1)\frac{E}{2}$, soit $+E/2$ ou $-E/2$. Les tensions
+    composées s'en déduisent par différence, sans aucune hypothèse sur la charge :
+  </p>
+  <div class="formule-cle">
+    $$v_{AB} = v_{AO} - v_{BO} = E\,(s_a - s_b), \qquad v_{BC} = E\,(s_b - s_c), \qquad v_{CA} = E\,(s_c - s_a)$$
+    <p class="formule-cle-legende">
+      $E$ en volts, $s_k \in \{0, 1\}$ sans dimension. C'est une loi de Kirchhoff appliquée à la maille bras $A$, bras $B$, bus : elle vaut pour toute
+      charge. Cas limite : dans les états $000$ et $111$, les trois tensions composées sont nulles, la charge est court-circuitée par l'onduleur.
+    </p>
+  </div>
+  <p>
+    Pour les tensions simples, il faut le potentiel du neutre. Écrivons $v_{kO} = v_{kn} + v_{nO}$ pour les trois phases et sommons :
+    $v_{AO} + v_{BO} + v_{CO} = (v_{An} + v_{Bn} + v_{Cn}) + 3v_{nO}$. Pour une charge équilibrée sans neutre, la somme des courants est nulle, et des
+    impédances identiques donnent des tensions simples de somme nulle pour toute la partie des signaux qui fait circuler du courant ; d'où :
+  </p>
+  <div class="formule-cle">
+    $$v_{nO} = \frac{v_{AO} + v_{BO} + v_{CO}}{3}, \qquad v_{An} = v_{AO} - v_{nO} = \frac{2v_{AO} - v_{BO} - v_{CO}}{3} = \frac{E}{3}\,(2s_a - s_b - s_c)$$
+    <p class="formule-cle-legende">
+      Hypothèse : charge linéaire, équilibrée, neutre isolé. Vérification dimensionnelle : volts de part et d'autre. Interprétation : $v_{nO}$ est la
+      moyenne des trois potentiels, c'est la tension de mode commun ; elle prend les valeurs $-E/2$, $-E/6$, $+E/6$ et $+E/2$, et varie de $E/3$ à
+      chaque commutation d'un bras. Cas limite : état $100$, $v_{An} = \frac{E}{3}(2 - 0 - 0) = \frac{2E}{3}$, ce que donnait le raisonnement par
+      diviseur de la section D.
+    </p>
+  </div>
+
+  <h3 id="e-table">La table de commutation</h3>
+  <p>
+    Appliquer ces formules aux huit états donne la table de commutation, outil central pour lire une commande ou diagnostiquer un onduleur. La dernière
+    colonne anticipe la notion de vecteur spatial établie plus loin.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <thead>
+        <tr><th>État $s_as_bs_c$</th><th>Fermés</th><th>$v_{AB}$</th><th>$v_{BC}$</th><th>$v_{CA}$</th><th>$v_{An}$</th><th>$v_{Bn}$</th><th>$v_{Cn}$</th><th>$v_{nO}$</th><th>Vecteur</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>$000$</td><td>$T_4$, $T_6$, $T_2$</td><td>$0$</td><td>$0$</td><td>$0$</td><td>$0$</td><td>$0$</td><td>$0$</td><td>$-E/2$</td><td>$V_0$, nul</td></tr>
+        <tr><td>$100$</td><td>$T_1$, $T_6$, $T_2$</td><td>$E$</td><td>$0$</td><td>$-E$</td><td>$2E/3$</td><td>$-E/3$</td><td>$-E/3$</td><td>$-E/6$</td><td>$V_1$, $0^\circ$</td></tr>
+        <tr><td>$110$</td><td>$T_1$, $T_3$, $T_2$</td><td>$0$</td><td>$E$</td><td>$-E$</td><td>$E/3$</td><td>$E/3$</td><td>$-2E/3$</td><td>$+E/6$</td><td>$V_2$, $60^\circ$</td></tr>
+        <tr><td>$010$</td><td>$T_4$, $T_3$, $T_2$</td><td>$-E$</td><td>$E$</td><td>$0$</td><td>$-E/3$</td><td>$2E/3$</td><td>$-E/3$</td><td>$-E/6$</td><td>$V_3$, $120^\circ$</td></tr>
+        <tr><td>$011$</td><td>$T_4$, $T_3$, $T_5$</td><td>$-E$</td><td>$0$</td><td>$E$</td><td>$-2E/3$</td><td>$E/3$</td><td>$E/3$</td><td>$+E/6$</td><td>$V_4$, $180^\circ$</td></tr>
+        <tr><td>$001$</td><td>$T_4$, $T_6$, $T_5$</td><td>$0$</td><td>$-E$</td><td>$E$</td><td>$-E/3$</td><td>$-E/3$</td><td>$2E/3$</td><td>$-E/6$</td><td>$V_5$, $240^\circ$</td></tr>
+        <tr><td>$101$</td><td>$T_1$, $T_6$, $T_5$</td><td>$E$</td><td>$-E$</td><td>$0$</td><td>$E/3$</td><td>$-2E/3$</td><td>$E/3$</td><td>$+E/6$</td><td>$V_6$, $300^\circ$</td></tr>
+        <tr><td>$111$</td><td>$T_1$, $T_3$, $T_5$</td><td>$0$</td><td>$0$</td><td>$0$</td><td>$0$</td><td>$0$</td><td>$0$</td><td>$+E/2$</td><td>$V_7$, nul</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Trois contrôles se font d'un coup d'œil sur chaque ligne : la somme des trois tensions composées est nulle, la somme des trois tensions simples est
+    nulle, et $v_{AB} = v_{An} - v_{Bn}$. Les deux états nuls ne diffèrent que par la tension de mode commun, $-E/2$ ou $+E/2$ : c'est ce degré de liberté
+    que la modulation vectorielle exploite.
+  </p>
+
+  <h3 id="e-six-pas">Spectre de la pleine onde</h3>
+  <p>
+    En pleine onde, $v_{AO}$ est un carré $\pm E/2$, de fondamental $\frac{2E}{\pi}$ crête et d'harmoniques impairs en $1/h$. Les rangs multiples de
+    3 sont identiques en phase sur les trois bras, puisque $3 \times 120^\circ = 360^\circ$ : ils forment du mode commun et disparaissent des tensions
+    composées et simples. Il reste les rangs $h = 6k \pm 1$, soit $5$, $7$, $11$, $13$, déjà rencontrés côté réseau dans le cours
+    <a href="#/cours/redresseurs-triphases">Redresseurs triphasés</a>.
+  </p>
+  <div class="formule-cle">
+    $$V_{An,1} = \frac{\sqrt{2}}{\pi}E \approx 0{,}450E, \qquad U_{AB,1} = \sqrt{3}\,V_{An,1} = \frac{\sqrt{6}}{\pi}E \approx 0{,}780E, \qquad V_h = \frac{V_1}{h},\ h = 6k \pm 1$$
+    <p class="formule-cle-legende">
+      Valeurs efficaces. Dérivation : fondamental crête de $v_{AO}$, $\frac{4}{\pi}\cdot\frac{E}{2}$, divisé par $\sqrt{2}$ ; la tension simple a le même
+      fondamental que $v_{AO}$ car le mode commun ne contient que des rangs multiples de 3. Vérification dimensionnelle : des volts. Valeur efficace
+      totale de la tension composée, créneau de $120$ degrés : $E\sqrt{2/3} = 0{,}816E$, d'où un taux de distorsion de
+      $\sqrt{0{,}816^2 - 0{,}780^2}/0{,}780 = 31\ \%$. Cas limite : aucun onduleur à deux niveaux ne peut fournir un fondamental supérieur à $0{,}780E$
+      entre phases.
+    </p>
+  </div>
+
+  <h3 id="e-vecteur-spatial">Le vecteur spatial : trois grandeurs, un seul point</h3>
+  <p>
+    Trois grandeurs de somme nulle ne contiennent que deux informations indépendantes : on peut les ramener à un seul nombre complexe. On définit le
+    vecteur spatial, avec la normalisation qui conserve les amplitudes :
+  </p>
+  <div class="formule-cle">
+    $$\vec{v} = \frac{2}{3}\left(v_a + a\,v_b + a^2 v_c\right), \qquad a = e^{j2\pi/3}$$
+    <p class="formule-cle-legende">
+      $v_a$, $v_b$, $v_c$ en volts, $\vec{v}$ en volts. C'est une convention de représentation, pas une loi : le facteur $2/3$ est choisi pour que $|\vec{v}|$
+      soit égal à l'amplitude des tensions simples d'un système équilibré. Vérification : avec $v_a = \hat{V}\cos\theta$, $v_b = \hat{V}\cos(\theta - 120^\circ)$,
+      $v_c = \hat{V}\cos(\theta + 120^\circ)$, on obtient $\vec{v} = \hat{V}e^{j\theta}$, un vecteur de module constant qui tourne à $\omega$. Propriété clé :
+      ajouter la même tension $v_0$ aux trois grandeurs ajoute $\frac{2}{3}v_0(1 + a + a^2) = 0$ ; le vecteur spatial ignore le mode commun, si bien que
+      l'on peut indifféremment y porter $v_{kO}$ ou $v_{kn}$.
+    </p>
+  </div>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Pour l'animation suivante, prédisez : quand l'angle $\theta$ parcourt un tour, que fait l'extrémité du vecteur ? Et si l'on ajoute aux trois
+      tensions une même composante de rang 3, le vecteur change-t-il de module, de vitesse, ou reste-t-il identique ?
+    </p>
+  </div>
+  <figure id="e-vecteur-figure">
+    <div class="schema-vivant" id="e-vecteur"></div>
+    <div id="e-vecteur-curseurs"></div>
+    <div id="e-vecteur-lecteur"></div>
+    <div id="e-vecteur-valeurs"></div>
+    <figcaption>
+      Construction animée du vecteur spatial. Faites tourner la poignée sur le cercle ou lancez le lecteur : l'angle $\theta$ est piloté par vous. À
+      gauche, les trois axes $a$, $b$ et $c$ en tirets ; les trois flèches fines, marquées $a$, $b$ et $c$, sont les contributions $\frac{2}{3}v_k$ portées
+      chacune le long de son axe et mises bout à bout ; la flèche épaisse va de l'origine à leur extrémité commune, c'est $\vec{v}$. À droite, les trois
+      tensions $v_a$, $v_b$ et $v_c$ en fonction de $\theta$, marquées par leur nom, avec l'instant observé en pointillé. Le curseur ajoute aux trois
+      tensions la même composante $k\cos 3\theta$.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> L'extrémité décrit un cercle de rayon égal à l'amplitude des tensions simples, à vitesse constante : c'est la
+    représentation, dans le plan, du champ tournant que ces tensions créeraient dans un moteur. Quand on ajoute la composante de rang 3, les trois
+    flèches fines changent, mais leur somme ne bouge pas : la chaîne se déforme et revient au même point. C'est la démonstration visuelle de
+    $1 + a + a^2 = 0$, et la raison pour laquelle l'injection de rang 3 est sans effet sur les tensions composées.
+  </p>
+  <p>
+    Appliquée aux états de l'onduleur, la définition donne huit vecteurs. Pour l'état $100$ : $\vec{v} = \frac{2}{3}\cdot\frac{E}{2}(1 - a - a^2) = \frac{2}{3}\cdot\frac{E}{2}\cdot 2 = \frac{2E}{3}$,
+    sur l'axe $a$. La figure ci-dessous refait ce calcul de manière géométrique.
+  </p>
+  <figure id="e-construction-figure">
+    <svg viewBox="0 0 760 330" role="img" aria-label="Construction du vecteur spatial de l'état 100 : contributions de chaque bras le long des axes a, b et c mises bout à bout, résultante 2E/3 sur l'axe a"><defs><marker id="fl-cons" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="5 5" opacity="0.7"><path d="M130 180L440 180"/><path d="M220 232L65 -36.5"/><path d="M220 128L65 396.5"/></g><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M190 180L280 180" marker-end="url(#fl-cons)"/><path d="M280 180L325 257.9" marker-end="url(#fl-cons)"/><path d="M325 257.9L370 180" marker-end="url(#fl-cons)"/><path d="M190 285L370 285" stroke-width="3.4" marker-end="url(#fl-cons)"/></g><circle cx="190" cy="180" r="4" fill="currentColor"/><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="418" y="172">axe a</text><text x="60" y="-33.8">axe b</text><text x="58" y="403.8">axe c</text><text x="200" y="170">+E/3 sur a</text><text x="198" y="236">-E/3 sur b</text><text x="375" y="227.9">-E/3 sur c</text><text x="214" y="306" font-size="12.5">résultante V1 = 2E/3, angle 0</text></g><g fill="none" stroke="currentColor" stroke-width="1.4"><rect x="486" y="40" width="268" height="250" rx="10"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="500" y="66">état 100 :</text><text x="500" y="87">v_AO = +E/2</text><text x="500" y="108">v_BO = v_CO = -E/2</text><text x="500" y="129"></text><text x="500" y="150">v = (2/3)(v_AO + a v_BO + a² v_CO)</text><text x="500" y="171">  = (2/3)(E/2)(1 - a - a²)</text><text x="500" y="192">  = (2/3)(E/2)(2) = 2E/3</text><text x="500" y="213"></text><text x="500" y="234">car 1 + a + a² = 0 :</text><text x="500" y="255">une tension commune aux trois</text><text x="500" y="276">bras ne change pas le vecteur.</text></g></svg>
+    <figcaption>
+      Construction du vecteur de l'état $100$. Les droites en tirets sont les axes $a$, $b$ et $c$, orientés à $0$, $120$ et $240$ degrés dans le sens
+      trigonométrique. La première flèche fine porte $\frac{2}{3}v_{AO} = +E/3$ le long de l'axe $a$ ; la deuxième porte $\frac{2}{3}v_{BO} = -E/3$ le
+      long de l'axe $b$, donc dans le sens opposé à cet axe ; la troisième fait de même sur l'axe $c$. Leurs composantes verticales s'annulent et la
+      résultante, flèche épaisse dessinée sous la construction, vaut $2E/3$ sur l'axe $a$. L'encadré à droite donne le même calcul sous forme complexe.
+    </figcaption>
+  </figure>
+  <p>
+    Les six états actifs donnent ainsi six vecteurs de module $2E/3$, espacés de $60$ degrés : $V_k$ est à l'angle $(k - 1) \times 60^\circ$. Leurs
+    extrémités forment un hexagone régulier. Les deux états nuls donnent le vecteur nul. On passe d'un sommet au sommet voisin en ne commutant qu'un
+    seul bras, et les sommets opposés, par exemple $100$ et $011$, sont complémentaires. L'hexagone complet, schéma principal de la séance, est
+    commenté en section F.
+  </p>
+
+  <h3 id="e-svm-principe">Modulation vectorielle : approcher une référence par trois vecteurs</h3>
+  <p>
+    L'onduleur ne sait appliquer que huit vecteurs ; il ne peut pas produire instantanément une référence $\vec{v}^*$ quelconque. Mais il peut la
+    produire en valeur moyenne sur une période de découpage $T_d$, en appliquant pendant des durées choisies les deux vecteurs actifs qui encadrent la
+    référence et un vecteur nul. Si $\vec{v}^*$ est dans le secteur I, entre $V_1$ et $V_2$, avec un angle $\theta$ compté depuis $V_1$ :
+  </p>
+  <div class="formule-cle">
+    $$\vec{v}^*\,T_d = V_1\,t_1 + V_2\,t_2 + V_0\,t_0, \qquad t_1 = T_d\,\frac{\sqrt{3}\,|\vec{v}^*|}{E}\sin(60^\circ - \theta), \qquad t_2 = T_d\,\frac{\sqrt{3}\,|\vec{v}^*|}{E}\sin\theta, \qquad t_0 = T_d - t_1 - t_2$$
+    <p class="formule-cle-legende">
+      Dérivation : on projette l'égalité vectorielle sur l'axe réel et sur l'axe imaginaire, avec $V_1 = \frac{2E}{3}$ et $V_2 = \frac{2E}{3}e^{j60^\circ}$.
+      L'axe imaginaire donne $|\vec{v}^*|\sin\theta\,T_d = \frac{2E}{3}\cdot\frac{\sqrt{3}}{2}t_2$, d'où $t_2$ ; l'axe réel donne ensuite $t_1$, ou l'on
+      utilise la symétrie du secteur. Dimensions : $\mathrm{V}/\mathrm{V}$ sans dimension, multiplié par une durée. Hypothèse : $E$ constant sur $T_d$.
+      Cas limites : $\theta = 0$ donne $t_2 = 0$, la référence est sur $V_1$ ; $t_0 = 0$ arrive quand $\vec{v}^*$ touche le côté de l'hexagone.
+    </p>
+  </div>
+  <p>
+    La condition $t_0 \ge 0$ pour toute orientation impose que le cercle décrit par la référence reste inscrit dans l'hexagone, de rayon
+    $\frac{2E}{3}\cos 30^\circ = \frac{E}{\sqrt{3}}$. La tension composée efficace maximale en zone linéaire vaut donc
+    $\sqrt{3}\cdot\frac{E}{\sqrt{3}}\cdot\frac{1}{\sqrt{2}} = \frac{E}{\sqrt{2}} = 0{,}707E$. On définit souvent l'indice $m = |\vec{v}^*|/(E/\sqrt{3})$, qui vaut
+    $1$ à la limite linéaire.
+  </p>
+  <p>
+    Reste à ordonner les états dans la période. La séquence symétrique, centrée, répartit le temps nul à parts égales entre $000$ et $111$ :
+    $000$ pendant $t_0/4$, $V_1$ pendant $t_1/2$, $V_2$ pendant $t_2/2$, $111$ pendant $t_0/2$, puis la même suite à rebours. Chaque bras commute
+    exactement deux fois par période et un seul bras change d'état à la fois. Les rapports cycliques des bras s'en déduisent directement, et c'est
+    eux qu'on programme dans le microcontrôleur :
+  </p>
+  <div class="formule-cle">
+    $$d_a = \frac{t_1 + t_2 + t_0/2}{T_d}, \qquad d_b = \frac{t_2 + t_0/2}{T_d}, \qquad d_c = \frac{t_0/2}{T_d}\qquad \text{(secteur I)}$$
+    <p class="formule-cle-legende">
+      Le bras $A$ est haut dans $V_1$, $V_2$ et $111$ ; le bras $B$ dans $V_2$ et $111$ ; le bras $C$ dans $111$ seulement. Dans les autres secteurs, les
+      rôles des bras tournent. Contrôle : $E(d_a - d_b) = E\,t_1/T_d$ doit égaler la tension composée $v_{AB}$ moyenne demandée.
+    </p>
+  </div>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Avant d'utiliser la simulation, prédisez : que deviennent $t_1$, $t_2$ et $t_0$ quand la référence s'approche du sommet $V_1$ ? du milieu d'un côté
+      de l'hexagone ? du centre ? Et que se passe-t-il si vous placez la référence entre le cercle inscrit et un sommet ?
+    </p>
+  </div>
+  <figure id="e-svm-figure">
+    <div class="schema-vivant" id="e-svm"></div>
+    <div id="e-svm-curseurs"></div>
+    <div id="e-svm-lecteur"></div>
+    <div id="e-svm-valeurs"></div>
+    <figcaption>
+      Simulation de la modulation vectorielle. Déplacez la poignée, extrémité de la référence $\vec{v}^*$, n'importe où dans le cadre de l'hexagone ; le
+      lecteur fait tourner la référence à module constant. Dans l'hexagone : le cercle en tirets est le cercle inscrit, limite linéaire ; la flèche
+      épaisse est la référence ; les deux flèches en tirets sont ses composantes $\frac{t_1}{T_d}V_k$ et $\frac{t_2}{T_d}V_{k+1}$ sur les deux vecteurs
+      qui encadrent le secteur. À droite, une période de découpage : les commandes des trois bras, centrées, puis la tension de mode commun $v_{nO}$.
+      Les curseurs règlent la tension du bus et la fréquence de découpage. Si la référence sort de l'hexagone, elle est ramenée sur son bord et
+      l'écart est signalé.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Près d'un sommet, un seul vecteur actif suffit et $t_0$ reste grand si le module est faible ; au milieu d'un côté,
+    les deux vecteurs actifs se partagent le temps et $t_0$ s'annule le premier, ce qui fixe la limite linéaire. Au centre, presque tout le temps est
+    nul : la tension moyenne est faible, mais l'onduleur commute toujours, d'où des pertes de commutation presque indépendantes de la tension
+    produite. Entre le cercle inscrit et les sommets, une référence fixe reste réalisable, mais une référence qui tourne sortirait de l'hexagone dans
+    les zones des milieux de côtés : c'est la surmodulation, qui conduit progressivement à la pleine onde quand on ne garde que les sommets.
+  </p>
+
+  <h3 id="e-mli">Modulation sinus-triangle triphasée et injection de mode commun</h3>
+  <p>
+    La méthode la plus répandue, héritée du monophasé, compare trois références sinusoïdales déphasées de $120$ degrés à une porteuse triangulaire
+    commune d'amplitude $1$. En zone linéaire, la moyenne glissante de chaque bras vaut $v_{kO} = m_a\frac{E}{2}\cos(\omega t - k\,120^\circ)$ :
+  </p>
+  <div class="formule-cle">
+    $$\hat{V}_{An,1} = m_a\frac{E}{2}, \qquad U_{AB,1} = \frac{\sqrt{3}}{2\sqrt{2}}\,m_aE \approx 0{,}612\,m_aE \quad (m_a \le 1), \qquad I_{bus,moy} = \frac{3}{4}\,m_a\hat{I}\cos\varphi$$
+    <p class="formule-cle-legende">
+      Valeur efficace pour $U_{AB,1}$. La dernière relation est le bilan de puissance d'un onduleur sans pertes : $EI_{bus,moy} = 3\cdot\frac{m_aE}{2}\cdot\frac{\hat{I}}{2}\cos\varphi$,
+      avec $\hat{I}$ l'amplitude du courant de phase. Contrairement au monophasé, la puissance instantanée d'une charge triphasée équilibrée est
+      constante : le courant du bus n'a pas de composante à $2f$, seulement des composantes liées au découpage.
+    </p>
+  </div>
+  <p>
+    Pour aller au-delà de $0{,}612E$ sans surmodulation, on ajoute aux trois références la même composante $v_0^*$, de mode commun, qui aplatit leurs
+    crêtes. Deux choix classiques : une sinusoïde de rang 3 d'amplitude $1/6$ de la référence, qui permet $m_a = 2/\sqrt{3} = 1{,}155$ ; ou la
+    composante dite min-max, $v_0^* = -\frac{1}{2}\left(\max(v_k^*) + \min(v_k^*)\right)$, qui centre les trois références dans la porteuse. La seconde
+    donne exactement les mêmes rapports cycliques que la modulation vectorielle symétrique : les deux méthodes sont équivalentes, l'une raisonnée en
+    vecteurs, l'autre en porteuse. Le maximum devient $\frac{2}{\sqrt{3}} \times 0{,}612E = 0{,}707E$, gain de $15{,}5\ \%$.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Prédisez : avec $m_a = 1{,}1$ et sans injection, la tension $v_{AB}$ est-elle encore une modulation propre ? Quels rangs apparaissent dans son
+      spectre ? Et avec l'injection min-max au même $m_a$ ? Enfin, avec $m_f = 15$, voyez-vous une raie au rang $15$ dans $v_{AB}$ ?
+    </p>
+  </div>
+  <figure id="e-mli-figure">
+    <div id="e-mli-curseurs"></div>
+    <div id="e-mli-comparaison"></div>
+    <div id="e-mli-sortie"></div>
+    <div id="e-mli-spectre"></div>
+    <figcaption>
+      Simulation de la modulation triphasée. Les curseurs règlent l'indice de modulation, l'indice de fréquence $m_f = f_d/f$ et le type de
+      modulation : sinus-triangle seul, injection de rang 3 au sixième ou injection min-max. Premier tracé : la porteuse et les trois références, après
+      injection éventuelle. Deuxième tracé : la tension composée $v_{AB}$ rapportée à $E$ et son fondamental. Troisième tracé : le spectre de $v_{AB}$,
+      amplitudes crêtes rapportées à $E$. Les mesures affichent le fondamental calculé par transformée de Fourier, la valeur théorique en zone linéaire
+      et le taux de distorsion.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Sans injection, dès que $m_a$ dépasse $1$, les références sortent de la porteuse, les bras restent bloqués pendant
+    les crêtes, et les rangs $5$ et $7$ réapparaissent : c'est la surmodulation. Avec l'injection, les références restent dans la porteuse jusqu'à
+    $m_a = 1{,}155$ et le spectre de $v_{AB}$ reste propre aux rangs faibles. Avec $m_f$ multiple de 3, la raie au rang $m_f$, la plus forte de la tension
+    d'un bras, est identique sur les trois bras : elle est de mode commun et disparaît de $v_{AB}$ ; ne restent que les bandes latérales $m_f \pm 2$,
+    $2m_f \pm 1$. C'est pourquoi les commandes à faible $m_f$ choisissent un multiple de 3.
+  </p>
+
+  <h3 id="e-mode-commun">Tension de mode commun et ses conséquences</h3>
+  <p>
+    Quelle que soit la modulation, $v_{nO}$ prend à chaque instant l'une des valeurs $\pm E/6$, $\pm E/2$, et saute de $E/3$ à chaque commutation, soit
+    six sauts par période de découpage en modulation vectorielle. La valeur moyenne de $v_{nO}$ sur $T_d$ est la composante $v_0$ injectée ; ses sauts,
+    eux, ne sont pas supprimables avec un onduleur à deux niveaux. Avec des fronts de quelques kilovolts par microseconde, ils font circuler dans les
+    capacités parasites du câble et du moteur des impulsions de courant vers la terre. Conséquences : déclenchements de dispositifs différentiels,
+    perturbations des capteurs, tensions d'arbre et courants dans les roulements, qui en piquent les pistes. Le cours Compatibilité
+    électromagnétique traitera les chemins de couplage et les remèdes ; retenons ici l'ordre de grandeur, $E/3$ par front.
+  </p>
+
+  <h3 id="e-temps-mort">Temps mort et surmodulation</h3>
+  <p>
+    Comme en monophasé, le temps mort $t_m$ inséré entre l'ouverture d'un interrupteur et la fermeture de son complémentaire déplace la tension moyenne
+    de chaque bras de $t_mf_dE$, de signe opposé au courant de la phase. En triphasé, l'erreur forme un système de créneaux qui déforme les courants
+    près de leurs passages par zéro et retranche à la tension fondamentale une quantité de l'ordre de $\frac{4}{\pi}t_mf_dE\cdot\frac{\sqrt{3}}{\sqrt{2}}$
+    entre phases, à compenser par la commande. Au-delà de la limite linéaire, la surmodulation fait croître la tension jusqu'à la pleine onde,
+    $0{,}780E$, au prix des harmoniques de rangs $5$ et $7$ : les variateurs l'utilisent pour franchir les derniers pour cent de tension près de la
+    vitesse nominale.
+  </p>
+
+  <h3 id="e-statut">Loi, convention, approximation, règle de conception et donnée du constructeur</h3>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Catégorie</th><th>Dans cette séance</th></tr></thead>
+      <tbody>
+        <tr><td>Loi physique</td><td>Lois de Kirchhoff : $v_{AB} = E(s_a - s_b)$ ; somme nulle des courants d'une étoile isolée ; décomposition de Fourier ; conservation de la puissance dans le pont.</td></tr>
+        <tr><td>Convention</td><td>Référence à la borne négative, point milieu $O$, état $(s_as_bs_c)$, numérotation $T_1$ à $T_6$, références en cosinus, facteur $2/3$ du vecteur spatial, définitions de $m_a$ et de $m$.</td></tr>
+        <tr><td>Approximation</td><td>Interrupteurs idéaux, bus constant sur $T_d$, valeurs moyennes glissantes pour $f_d \gg f$, charge équilibrée et linéaire.</td></tr>
+        <tr><td>Règle de conception</td><td>$m_f$ multiple de 3 si $m_f$ est faible ; marge de tension au bus minimal ; séquence symétrique qui ne commute qu'un bras à la fois ; compensation du temps mort.</td></tr>
+        <tr><td>Constructeur ou norme</td><td>Temps mort minimal des modules, $\mathrm{d}v/\mathrm{d}t$ admissible par l'isolation du moteur, longueur de câble et self de sortie admises, stratégie de surmodulation du variateur : à lire dans les documentations applicables.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Le schéma principal de la séance est l'hexagone des vecteurs de tension. Il condense la table de commutation, la modulation vectorielle et les
+    limites de tension de toutes les modulations.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 760 440" role="img" aria-label="Hexagone des vecteurs de tension de l'onduleur triphasé : six vecteurs actifs V1 à V6 avec leurs états, vecteurs nuls V0 et V7 au centre, secteurs I à VI, cercle inscrit de rayon E sur racine de trois, cercle de rayon E/2, référence à 40 degrés décomposée sur V1 et V2"><defs><marker id="fl-hex" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-linejoin="round"><polygon points="435,215 352.5,72.1 187.5,72.1 105,215 187.5,357.9 352.5,357.9" stroke-width="2"/><circle cx="270" cy="215" r="142.9" stroke-width="1.4" stroke-dasharray="12 4 2 4"/><circle cx="270" cy="215" r="123.8" stroke-width="1.2" stroke-dasharray="2 4"/><path d="M270 215L393.8 143.6" stroke-width="0.8" opacity="0.45"/><path d="M270 215L270 72.1" stroke-width="0.8" opacity="0.45"/><path d="M270 215L146.2 143.6" stroke-width="0.8" opacity="0.45"/><path d="M270 215L146.2 286.4" stroke-width="0.8" opacity="0.45"/><path d="M270 215L270 357.9" stroke-width="0.8" opacity="0.45"/><path d="M270 215L393.8 286.4" stroke-width="0.8" opacity="0.45"/></g><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M270 215L431 215" marker-end="url(#fl-hex)"/><path d="M270 215L350.5 75.6" marker-end="url(#fl-hex)"/><path d="M270 215L189.5 75.6" marker-end="url(#fl-hex)"/><path d="M270 215L109 215" marker-end="url(#fl-hex)"/><path d="M270 215L189.5 354.4" marker-end="url(#fl-hex)"/><path d="M270 215L350.5 354.4" marker-end="url(#fl-hex)"/></g><g fill="none" stroke="currentColor" stroke-linecap="round"><path d="M270 215L320.5 215" stroke-width="1.6" stroke-dasharray="5 3" marker-end="url(#fl-hex)"/><path d="M320.5 215L368 132.7" stroke-width="1.6" stroke-dasharray="5 3" marker-end="url(#fl-hex)"/><path d="M270 215L368 132.7" stroke-width="3.6" marker-end="url(#fl-hex)"/><path d="M310 215A40 40 0 0 0 300.6 189.3" stroke-width="1.2"/></g><circle cx="270" cy="215" r="5" fill="currentColor"/><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="443" y="219">V1 (100)</text><text x="358.5" y="64.1">V2 (110)</text><text x="125.5" y="64.1">V3 (010)</text><text x="35" y="219">V4 (011)</text><text x="125.5" y="379.9">V5 (001)</text><text x="358.5" y="379.9">V6 (101)</text><text x="382.6" y="150.5" font-size="12" font-weight="600">I</text><text x="264" y="82.1" font-size="12" font-weight="600">II</text><text x="145.4" y="150.5" font-size="12" font-weight="600">III</text><text x="145.4" y="287.5" font-size="12" font-weight="600">IV</text><text x="264" y="355.9" font-size="12" font-weight="600">V</text><text x="382.6" y="287.5" font-size="12" font-weight="600">VI</text><text x="130" y="257" font-size="11">V0 (000), V7 (111)</text><text x="316" y="201" font-size="11">40°</text><text x="324" y="120.7" font-size="12">v_ref</text><text x="280" y="231" font-size="10.5">(t1/Td) V1</text></g><g fill="none" stroke="currentColor" stroke-width="1.4"><rect x="490" y="30" width="262" height="384" rx="10"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11.5"><text x="506" y="54" font-weight="600">Lecture de l'hexagone</text><text x="506" y="74"></text><text x="506" y="94">état (s_a s_b s_c) : 1 = haut</text><text x="506" y="114">sommets : |V1..V6| = 2E/3</text><text x="506" y="134">angle de Vk : (k - 1) × 60°</text><text x="506" y="154">V0, V7 : vecteurs nuls</text><text x="506" y="174"></text><text x="506" y="194">trait mixte : cercle inscrit,</text><text x="506" y="214">rayon E/√3, limite linéaire</text><text x="506" y="234">de la MLI vectorielle</text><text x="506" y="254">pointillé fin : rayon E/2,</text><text x="506" y="274">limite du sinus-triangle</text><text x="506" y="294"></text><text x="506" y="314">trait épais : v_ref à 40°</text><text x="506" y="334">tirets : (t1/Td)V1 + (t2/Td)V2</text><text x="506" y="354"></text><text x="506" y="374">d'un état au voisin, un seul</text><text x="506" y="394">bras commute</text></g></svg>
+    <figcaption>
+      Hexagone des vecteurs de tension d'un onduleur triphasé à deux niveaux. L'axe horizontal vers la droite est l'axe $a$, origine des angles, comptés
+      dans le sens trigonométrique. Les six flèches qui partent du centre sont les vecteurs actifs $V_1$ à $V_6$, de module $2E/3$, repérés par leur
+      état $(s_as_bs_c)$ ; le centre porte les deux vecteurs nuls $V_0$ et $V_7$. Les chiffres romains I à VI nomment les six secteurs, délimités par les
+      vecteurs actifs. Le cercle en trait mixte, inscrit dans l'hexagone, de rayon $E/\sqrt{3}$, est la limite de la modulation vectorielle en zone
+      linéaire ; le cercle en pointillé fin, de rayon $E/2$, celle de la modulation sinus-triangle. La flèche la plus épaisse est une référence à
+      $40$ degrés, celle de l'exemple de la section H ; les deux flèches en tirets la décomposent en $\frac{t_1}{T_d}V_1 + \frac{t_2}{T_d}V_2$. L'encadré
+      de droite résume les conventions de lecture.
+    </figcaption>
+  </figure>
+  <p>
+    Le tableau suivant compare les commandes d'un onduleur triphasé sur un bus $E$. Il sert à choisir une commande avant tout calcul.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <thead>
+        <tr><th>Critère</th><th>Pleine onde</th><th>Sinus-triangle</th><th>Injection de rang 3</th><th>Vectorielle ou min-max</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Tension composée efficace maximale</td><td>$0{,}780E$, non réglable</td><td>$0{,}612E$</td><td>$0{,}707E$</td><td>$0{,}707E$, puis surmodulation jusqu'à $0{,}780E$</td></tr>
+        <tr><td>Bus nécessaire pour $400\ \mathrm{V}$ entre phases</td><td>$513\ \mathrm{V}$</td><td>$653\ \mathrm{V}$</td><td>$566\ \mathrm{V}$</td><td>$566\ \mathrm{V}$</td></tr>
+        <tr><td>Harmoniques de $v_{AB}$</td><td>$5$, $7$, $11$, $13$ en $V_1/h$</td><td>autour de $m_f$, $2m_f$</td><td>autour de $m_f$, $2m_f$</td><td>autour de $m_f$, $2m_f$</td></tr>
+        <tr><td>Commutations par interrupteur et par période</td><td>$1$ fermeture</td><td>$m_f$</td><td>$m_f$</td><td>$m_f$</td></tr>
+        <tr><td>Mise en œuvre</td><td>triviale</td><td>analogique ou numérique</td><td>numérique</td><td>numérique, calcul de secteur ou min-max</td></tr>
+        <tr><td>Emploi typique</td><td>très forte puissance, haute vitesse</td><td>commandes simples, enseignement</td><td>variateurs anciens</td><td>variateurs, onduleurs réseau</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    L'organigramme ci-dessous résume la démarche de résolution d'un problème d'onduleur triphasé, de la tension demandée jusqu'aux rapports cycliques
+    et aux contrôles.
+  </p>
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Tension composée U et fréquence f demandées, bus E connu"] --> B["Amplitude de la référence : V = U racine de 2 / racine de 3"]
+  B --> C{"V inférieure à E / 2 ?"}
+  C -->|"Oui"| D["Sinus-triangle possible : m_a = 2 V / E"]
+  C -->|"Non"| E{"V inférieure à E / racine de 3 ?"}
+  E -->|"Oui"| F["Vectorielle ou min-max : m = racine de 3 V / E"]
+  E -->|"Non"| G["Surmodulation ou pleine onde : accepter les rangs 5 et 7, ou relever E"]
+  D --> H["À un instant donné : angle, secteur, t1, t2, t0"]
+  F --> H
+  H --> I["Séquence symétrique et rapports cycliques des bras"]
+  I --> J["Tensions composées moyennes : E (d_a - d_b)"]
+  J --> K["Contrôles : table de commutation, bilan de puissance, mode commun, temps mort"]
+  G --> K</pre>
+    <figcaption>
+      Organigramme de résolution. Les losanges sont des tests sur l'amplitude de la référence, comparée aux rayons des deux cercles de l'hexagone ; les
+      rectangles sont des calculs. Toutes les branches aboutissent aux mêmes contrôles finaux : relire la table de commutation, vérifier le bilan de
+      puissance, estimer les sauts de mode commun et l'effet du temps mort.
+    </figcaption>
+  </figure>
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <ul>
+    <li><a href="#d-onduleur-figure" data-renvoi="d-onduleur-figure">Onduleur triphasé de tension</a> : conventions, interrupteurs, charge en étoile, en section D.</li>
+    <li><a href="#d-sixstep-figure" data-renvoi="d-sixstep-figure">Séquence de la pleine onde</a> : animation manipulable, en section D.</li>
+    <li><a href="#e-vecteur-figure" data-renvoi="e-vecteur-figure">Construction du vecteur spatial</a> et <a href="#e-construction-figure" data-renvoi="e-construction-figure">vecteur de l'état 100</a>, en section E.</li>
+    <li><a href="#e-svm-figure" data-renvoi="e-svm-figure">Modulation vectorielle</a> et <a href="#e-mli-figure" data-renvoi="e-mli-figure">modulation sinus-triangle avec injection</a> : simulations, en section E.</li>
+    <li><a href="#h-figure" data-renvoi="h-figure">Chronogramme d'une période de découpage</a>, en section H.</li>
+    <li><a href="#i-figure" data-renvoi="i-figure">Variateur de la pompe</a> et <a href="#i-tension-figure" data-renvoi="i-tension-figure">tension disponible selon la fréquence</a>, en section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <ol>
+    <li>Fixer les conventions : référence des potentiels, point milieu $O$, ordre des phases, sens des courants, flèches des tensions composées. Écrire
+      les données en unités SI et noter si les tensions données sont simples ou composées, efficaces ou crêtes.</li>
+    <li>Pour un état ou une table de commutation donnés, calculer $v_{AB} = E(s_a - s_b)$ et ses permutations, puis $v_{An} = \frac{E}{3}(2s_a - s_b - s_c)$
+      et $v_{nO}$ ; vérifier les sommes nulles.</li>
+    <li>Pour une séquence d'états et leurs durées sur une période, calculer les rapports cycliques $d_a$, $d_b$, $d_c$ des bras, puis les tensions
+      moyennes $v_{kO} = (2d_k - 1)E/2$, les tensions composées moyennes $E(d_a - d_b)$ et le vecteur spatial moyen.</li>
+    <li>Pour une tension demandée, calculer l'amplitude $\hat{V} = U\sqrt{2}/\sqrt{3}$ et la comparer à $E/2$, $E/\sqrt{3}$ et à la pleine onde ;
+      choisir la modulation et vérifier la marge au bus minimal.</li>
+    <li>En modulation vectorielle, déterminer le secteur, l'angle local $\theta$, puis $t_1$, $t_2$, $t_0$ ; construire la séquence symétrique et en
+      déduire les rapports cycliques.</li>
+    <li>Calculer les courants : par phase, avec le schéma équivalent étoile de la charge ; harmoniques éventuels par superposition, avec les
+      impédances aux rangs concernés.</li>
+    <li>Faire le bilan de puissance : $P = \sqrt{3}UI\cos\varphi$, courant moyen du bus $P/(\eta E)$, sans composante à $2f$ en équilibré.</li>
+    <li>Contrôler : dimensions, cohérence de la table, ordres de grandeur, saut de mode commun $E/3$, erreur de temps mort, tenue des interrupteurs
+      au courant crête et à $E$ augmentée des surtensions de commutation.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Un onduleur triphasé alimenté par un bus de $E = 600\ \mathrm{V}$ découpe à $f_d = 5\ \mathrm{kHz}$. Il doit fournir à un moteur une tension
+    composée de $380\ \mathrm{V}$ efficaces à $50\ \mathrm{Hz}$ ; le moteur absorbe alors $15\ \mathrm{kW}$ avec un facteur de puissance de $0{,}85$. On
+    étudie la période de découpage centrée sur l'instant où la référence fait un angle de $40$ degrés avec l'axe $a$, et l'on interprète la table de
+    commutation qui en résulte.
+  </p>
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <ul>
+    <li><strong>Données :</strong> $E = 600\ \mathrm{V}$ ; $f_d = 5\ \mathrm{kHz}$, donc $T_d = 200\ \mu\mathrm{s}$ ; $U = 380\ \mathrm{V}$ ; $f = 50\ \mathrm{Hz}$ ;
+      angle de la référence $40^\circ$ ; $P = 15\ \mathrm{kW}$ ; $\cos\varphi = 0{,}85$.</li>
+    <li><strong>Inconnues :</strong> modulation possible ; durées $t_1$, $t_2$, $t_0$ ; table de commutation de la période ; rapports cycliques des bras ;
+      tensions moyennes composées et simples ; mode commun ; courant de phase et courant moyen du bus.</li>
+    <li><strong>Stratégie :</strong> comparer l'amplitude de la référence aux deux limites de l'hexagone, appliquer les formules de la modulation
+      vectorielle dans le secteur I, construire la séquence symétrique, puis relire la table avec $v_{AB} = E(s_a - s_b)$ pour vérifier que la valeur moyenne
+      retrouve la référence.</li>
+  </ul>
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li><strong>Amplitude de la référence.</strong> $\hat{V} = 380\sqrt{2}/\sqrt{3} = 310{,}3\ \mathrm{V}$. Limites : $E/2 = 300\ \mathrm{V}$ et
+      $E/\sqrt{3} = 346{,}4\ \mathrm{V}$. La modulation sinus-triangle demanderait $m_a = 310{,}3/300 = 1{,}034$, elle serait en surmodulation ; la
+      modulation vectorielle est linéaire avec $m = 310{,}3/346{,}4 = 0{,}896$.</li>
+    <li><strong>Secteur et durées.</strong> $40^\circ$ est entre $0$ et $60^\circ$ : secteur I, vecteurs $V_1$ ($100$) et $V_2$ ($110$), $\theta = 40^\circ$.
+      Coefficient $\sqrt{3}\hat{V}/E = \sqrt{3} \times 310{,}3/600 = 0{,}8957$. $t_1 = 200 \times 0{,}8957 \times \sin 20^\circ = 200 \times 0{,}3063 = 61{,}3\ \mu\mathrm{s}$ ;
+      $t_2 = 200 \times 0{,}8957 \times \sin 40^\circ = 200 \times 0{,}5757 = 115{,}1\ \mu\mathrm{s}$ ; $t_0 = 200 - 61{,}3 - 115{,}1 = 23{,}6\ \mu\mathrm{s}$.</li>
+    <li><strong>Table de commutation de la période.</strong> Séquence symétrique : $000$ pendant $t_0/4 = 5{,}9\ \mu\mathrm{s}$, $100$ pendant
+      $t_1/2 = 30{,}6\ \mu\mathrm{s}$, $110$ pendant $t_2/2 = 57{,}6\ \mu\mathrm{s}$, $111$ pendant $t_0/2 = 11{,}8\ \mu\mathrm{s}$, puis $110$, $100$ et $000$
+      avec les mêmes durées. Total : $2 \times (5{,}9 + 30{,}6 + 57{,}6) + 11{,}8 = 200\ \mu\mathrm{s}$.</li>
+    <li><strong>Rapports cycliques.</strong> Le bras $A$ est haut dans $100$, $110$ et $111$ : $d_a = (61{,}3 + 115{,}1 + 11{,}8)/200 = 0{,}941$. Le bras
+      $B$ est haut dans $110$ et $111$ : $d_b = (115{,}1 + 11{,}8)/200 = 0{,}635$. Le bras $C$ n'est haut que dans $111$ : $d_c = 11{,}8/200 = 0{,}059$.</li>
+    <li><strong>Tensions moyennes des bras.</strong> $v_{kO} = (2d_k - 1) \times 300$ : $v_{AO} = 264{,}6\ \mathrm{V}$, $v_{BO} = 80{,}8\ \mathrm{V}$,
+      $v_{CO} = -264{,}6\ \mathrm{V}$.</li>
+    <li><strong>Tensions composées moyennes.</strong> $v_{AB} = 600 \times (0{,}941 - 0{,}635) = 183{,}8\ \mathrm{V}$, $v_{BC} = 345{,}4\ \mathrm{V}$,
+      $v_{CA} = -529{,}2\ \mathrm{V}$. Valeurs attendues de la référence : $u_{ab} = \sqrt{3}\hat{V}\cos(40^\circ + 30^\circ) = 537{,}4 \times 0{,}342 = 183{,}8\ \mathrm{V}$,
+      et de même pour les deux autres. La moyenne de la période reproduit exactement la référence.</li>
+    <li><strong>Mode commun et tensions simples.</strong> $v_{nO}$ moyen $= (264{,}6 + 80{,}8 - 264{,}6)/3 = 26{,}9\ \mathrm{V}$ : c'est la composante min-max
+      implicite de la modulation vectorielle. $v_{An} = 264{,}6 - 26{,}9 = 237{,}7\ \mathrm{V}$, égal à $310{,}3\cos 40^\circ$ ; $v_{Bn} = 53{,}9\ \mathrm{V}$ ;
+      $v_{Cn} = -291{,}6\ \mathrm{V}$. Instantanément, $v_{nO}$ passe par $-300$, $-100$, $+100$ et $+300\ \mathrm{V}$ : six sauts de $200\ \mathrm{V}$ par période.</li>
+    <li><strong>Courants.</strong> $I = P/(\sqrt{3}U\cos\varphi) = 15\,000/(\sqrt{3} \times 380 \times 0{,}85) = 26{,}8\ \mathrm{A}$ efficaces, $\hat{I} = 37{,}9\ \mathrm{A}$.
+      Courant moyen du bus pour un onduleur idéal : $P/E = 25{,}0\ \mathrm{A}$, constant à l'échelle de la période du réseau.</li>
+  </ol>
+  <p>
+    Le chronogramme ci-dessous représente la table de commutation de la période étudiée, à l'échelle.
+  </p>
+  <figure id="h-figure">
+    <svg viewBox="0 0 760 400" role="img" aria-label="Chronogramme d'une période de découpage en MLI vectorielle symétrique : séquence 000, 100, 110, 111, 110, 100, 000, commandes des trois bras et tension de mode commun v_nO"><g fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="2 4" opacity="0.6"><path d="M108.3 40V330"/><path d="M203.2 40V330"/><path d="M381.7 40V330"/><path d="M418.3 40V330"/><path d="M596.8 40V330"/><path d="M691.7 40V330"/></g><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M90 80H108.3V50H691.7V80H710"/><path d="M90 140H203.2V110H596.8V140H710"/><path d="M90 200H381.7V170H418.3V200H710"/><path d="M90 326V326H108.3V302H203.2V278H381.7V254H418.3V278H596.8V302H691.7V326H710"/></g><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="6 4"><path d="M90 286.8H710"/></g><g fill="none" stroke="currentColor" stroke-width="1.3" opacity="0.8"><path d="M90 350H710"/><path d="M90 346v8"/><path d="M245 346v8"/><path d="M400 346v8"/><path d="M555 346v8"/><path d="M710 346v8"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11.5"><text x="30" y="70">s_a</text><text x="30" y="130">s_b</text><text x="30" y="190">s_c</text><text x="22" y="294">v_nO</text><text x="716" y="258" font-size="10.5">+300 V</text><text x="716" y="330" font-size="10.5">-300 V</text><text x="716" y="290.8" font-size="10.5">moyenne 26,9 V</text><text x="99.1" y="30" text-anchor="middle" font-size="11">000</text><text x="155.8" y="30" text-anchor="middle" font-size="11">100</text><text x="292.5" y="30" text-anchor="middle" font-size="11">110</text><text x="400" y="30" text-anchor="middle" font-size="11">111</text><text x="507.5" y="30" text-anchor="middle" font-size="11">110</text><text x="644.2" y="30" text-anchor="middle" font-size="11">100</text><text x="700.9" y="30" text-anchor="middle" font-size="11">000</text><text x="90" y="370" text-anchor="middle" font-size="10.5">0</text><text x="245" y="370" text-anchor="middle" font-size="10.5">50</text><text x="400" y="370" text-anchor="middle" font-size="10.5">100</text><text x="555" y="370" text-anchor="middle" font-size="10.5">150</text><text x="710" y="370" text-anchor="middle" font-size="10.5">200</text><text x="400" y="392" text-anchor="middle" font-size="11">temps en µs, période de découpage Td = 200 µs</text><text x="155.8" y="236" text-anchor="middle" font-size="10.5">30,6</text><text x="292.5" y="236" text-anchor="middle" font-size="10.5">57,6</text><text x="507.5" y="236" text-anchor="middle" font-size="10.5">57,6</text><text x="644.2" y="236" text-anchor="middle" font-size="10.5">30,6</text><text x="400" y="236" text-anchor="middle" font-size="10">11,8</text></g></svg>
+    <figcaption>
+      Une période de découpage de $200\ \mu\mathrm{s}$, à l'échelle. En haut, les états successifs ; les traits verticaux en pointillé séparent les
+      segments, et les nombres sous les commandes donnent leurs durées en microsecondes. Les trois créneaux $s_a$, $s_b$ et $s_c$ sont les commandes
+      des bras, $1$ en haut, centrées sur le milieu de la période : leurs largeurs sont $0{,}941$, $0{,}635$ et $0{,}059\ T_d$. En bas, la tension de mode
+      commun $v_{nO}$ monte par marches de $200\ \mathrm{V}$, de $-300$ à $+300\ \mathrm{V}$, puis redescend ; le trait en tirets marque sa valeur
+      moyenne, $26{,}9\ \mathrm{V}$. On vérifie qu'un seul bras change d'état à chaque frontière.
+    </figcaption>
+  </figure>
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li><strong>Dimensions :</strong> $\mathrm{V}/\mathrm{V}$ sans dimension multiplié par des microsecondes ; $\mathrm{W}/(\mathrm{V} \cdot 1) = \mathrm{A}$.</li>
+    <li><strong>Somme nulle :</strong> $183{,}8 + 345{,}4 - 529{,}2 = 0$ ; $237{,}7 + 53{,}9 - 291{,}6 = 0$.</li>
+    <li><strong>Bilan de puissance :</strong> avec la relation de la section E, $\frac{3}{4}m_a\hat{I}\cos\varphi = 0{,}75 \times 1{,}034 \times 37{,}9 \times 0{,}85 = 25{,}0\ \mathrm{A}$,
+      égal à $P/E$ : le $m_a$ équivalent supérieur à $1$ n'empêche rien, la modulation vectorielle le réalise grâce au mode commun.</li>
+    <li><strong>Ordre de grandeur :</strong> $t_0$ ne représente que $12\ \%$ de la période, cohérent avec $m = 0{,}896$ proche de la limite ; au milieu
+      d'un côté, $\theta = 30^\circ$, on trouverait $t_0 = 200(1 - 0{,}8957 \times 2\sin 30^\circ) = 20{,}9\ \mu\mathrm{s}$, minimum sur le tour.</li>
+    <li><strong>Cas limite :</strong> pour $m = 1$ et $\theta = 30^\circ$, $t_0 = 0$ ; la tension composée maximale vaut $600/\sqrt{2} = 424{,}3\ \mathrm{V}$, et la
+      pleine onde $0{,}780 \times 600 = 467{,}8\ \mathrm{V}$.</li>
+  </ul>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <p>
+    Sur le site du projet fil rouge, la pompe centrifuge est entraînée par un moteur asynchrone de $30\ \mathrm{kW}$, $400\ \mathrm{V}$ en triangle,
+    $52{,}6\ \mathrm{A}$, $1475\ \mathrm{tr/min}$, alimenté par un variateur U/f. Les cours précédents en ont fixé la loi de commande (point de service
+    à $42{,}25\ \mathrm{Hz}$ et $339\ \mathrm{V}$, $39{,}6\ \mathrm{A}$, $\cos\varphi = 0{,}82$), le redresseur d'entrée (bus compris entre
+    $514{,}1\ \mathrm{V}$ à pleine vitesse dans le modèle à courant lissé et la crête de $565{,}7\ \mathrm{V}$) et les interrupteurs (IGBT
+    $1200\ \mathrm{V}$, $4\ \mathrm{kHz}$, câble de $85\ \mathrm{m}$). Il reste à choisir la modulation de l'onduleur et à vérifier qu'il peut fournir la
+    tension demandée.
+  </p>
+  <figure id="i-figure">
+    <svg viewBox="0 0 760 330" role="img" aria-label="Variateur de la pompe du projet fil rouge : réseau 400 V, self de ligne, redresseur PD3, bus continu, onduleur triphasé en MLI vectorielle à 4 kHz, self de sortie, câble de 85 m, moteur de 30 kW et pompe ; chemin du courant de mode commun par les capacités du câble et du moteur vers la terre"><defs><marker id="fl-var" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="10" y="100" width="92" height="64" rx="8"/><rect x="118" y="100" width="92" height="64" rx="8"/><rect x="226" y="100" width="92" height="64" rx="8"/><rect x="334" y="100" width="92" height="64" rx="8"/><rect x="442" y="100" width="92" height="64" rx="8"/><rect x="550" y="100" width="92" height="64" rx="8"/><rect x="658" y="100" width="92" height="64" rx="8"/><rect x="378" y="220" width="220" height="52" rx="8"/></g><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M102 132H116" marker-end="url(#fl-var)"/><path d="M210 132H224" marker-end="url(#fl-var)"/><path d="M318 132H332" marker-end="url(#fl-var)"/><path d="M426 132H440" marker-end="url(#fl-var)"/><path d="M534 132H548" marker-end="url(#fl-var)"/><path d="M642 132H656" marker-end="url(#fl-var)"/><path d="M488 220V166" marker-end="url(#fl-var)" stroke-dasharray="5 4"/><path d="M704 164V296H56" stroke-dasharray="9 5"/><path d="M56 296V166" stroke-dasharray="9 5" marker-end="url(#fl-var)"/><path d="M596 164V296" stroke-dasharray="9 5"/></g><g fill="none" stroke="currentColor" stroke-width="1.6"><path d="M690 300h28M695 306h18M700 312h8"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11.5" text-anchor="middle"><text x="56" y="126" font-size="10.5">Réseau</text><text x="56" y="144" font-size="10">400 V, 50 Hz</text><text x="164" y="126" font-size="10.5">Self de ligne</text><text x="164" y="144" font-size="10">0,40 mH</text><text x="272" y="126" font-size="10.5">Redresseur</text><text x="272" y="144" font-size="10">PD3, diodes</text><text x="380" y="126" font-size="10.5">Bus continu</text><text x="380" y="144" font-size="10">514 à 566 V</text><text x="488" y="126" font-size="10.5">Onduleur</text><text x="488" y="144" font-size="10">IGBT, 4 kHz</text><text x="596" y="126" font-size="10.5">Self de sortie</text><text x="596" y="144" font-size="10">et câble 85 m</text><text x="704" y="126" font-size="10.5">Moteur</text><text x="704" y="144" font-size="10">30 kW, pompe</text><text x="488" y="242">Commande : MLI vectorielle,</text><text x="488" y="258">consigne de fréquence</text><text x="380" y="90" font-size="10.5">sens normal de la puissance</text><text x="330" y="316" font-size="10.5">courant de mode commun : capacités du câble et du moteur vers la terre, retour par la terre</text><text x="704" y="328" font-size="10.5">terre</text></g></svg>
+    <figcaption>
+      Chaîne du variateur de la pompe. Les flèches pleines donnent le sens normal de la puissance, du réseau vers la pompe. La flèche en tirets courts
+      porte les ordres de commutation de la commande vers l'onduleur. Le trajet en tirets longs représente le courant de mode commun : les sauts de
+      $v_{nO}$ chargent les capacités parasites du câble et du moteur, le courant rejoint la terre puis revient vers l'entrée du variateur par la terre
+      du réseau. Les valeurs sont celles du projet fil rouge.
+    </figcaption>
+  </figure>
+  <h3 id="i-donnees">Données, contraintes d'exploitation et calculs</h3>
+  <ul>
+    <li><strong>Point de service, bus de $523{,}9\ \mathrm{V}$.</strong> Tension demandée $339\ \mathrm{V}$. En sinus-triangle, $m_a = 339/(0{,}612 \times 523{,}9) = 1{,}057$ :
+      surmodulation au point de fonctionnement le plus fréquent, avec des rangs $5$ et $7$ en permanence. En modulation vectorielle,
+      $m = 339/(523{,}9/\sqrt{2}) = 0{,}915$ : zone linéaire. La modulation vectorielle, ou l'injection min-max, est donc imposée.</li>
+    <li><strong>Pleine vitesse, bus au pire de $514{,}1\ \mathrm{V}$.</strong> La loi U/f demande $400\ \mathrm{V}$ à $50\ \mathrm{Hz}$. Maxima : $314{,}8\ \mathrm{V}$ en
+      sinus-triangle, $363{,}5\ \mathrm{V}$ en modulation vectorielle linéaire, $400{,}8\ \mathrm{V}$ en pleine onde. Même la modulation vectorielle sature,
+      dès $45{,}3\ \mathrm{Hz}$ avec $U_0 = 8\ \mathrm{V}$.</li>
+    <li><strong>Conséquence sur le moteur.</strong> Avec le schéma équivalent du moteur et le couple quadratique de la pompe, $363{,}5\ \mathrm{V}$ à
+      $50\ \mathrm{Hz}$ donnent un flux réduit à $90\ \%$, un glissement de $2{,}06\ \%$ au lieu de $1{,}67\ \%$, $1469\ \mathrm{tr/min}$ et
+      $57{,}0\ \mathrm{A}$, soit $8\ \%$ au-dessus du courant nominal : inacceptable en régime permanent.</li>
+    <li><strong>Surmodulation jusqu'à la pleine onde.</strong> À $400{,}8\ \mathrm{V}$, le courant fondamental revient à $52{,}6\ \mathrm{A}$, mais les
+      harmoniques de tension $5$ et $7$, de $80{,}2$ et $57{,}3\ \mathrm{V}$ entre phases, font circuler environ $11{,}3$ et $5{,}8\ \mathrm{A}$ dans les
+      réactances de fuite, soit un taux de distorsion du courant voisin de $25\ \%$ et quelque $0{,}1\ \mathrm{kW}$ de pertes Joule supplémentaires,
+      sans compter l'effet de peau au rotor.</li>
+    <li><strong>Bus et courant continu.</strong> Au point de service, le moteur absorbe $19{,}06\ \mathrm{kW}$ ; avec les $214\ \mathrm{W}$ de pertes de
+      l'onduleur, le bus fournit $19{,}27\ \mathrm{kW}$, soit $36{,}8\ \mathrm{A}$ moyens sous $523{,}9\ \mathrm{V}$, sans ondulation à $100\ \mathrm{Hz}$
+      due à la charge : seule subsiste l'ondulation à $300\ \mathrm{Hz}$ du redresseur PD3.</li>
+    <li><strong>Mode commun.</strong> Sauts de $E/3$, de $171$ à $189\ \mathrm{V}$, six fois par période de découpage, soit $24\,000$ fronts par seconde
+      à $4\ \mathrm{kHz}$, appliqués aux capacités des $85\ \mathrm{m}$ de câble et du moteur.</li>
+  </ul>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Avant d'utiliser la simulation suivante, prédisez à quelle fréquence la loi U/f atteint la limite de la modulation vectorielle si le bus descend à
+      $500\ \mathrm{V}$, puis s'il remonte à $560\ \mathrm{V}$.
+    </p>
+  </div>
+  <figure id="i-tension-figure">
+    <div id="i-tension-curseurs"></div>
+    <div id="i-tension-trace"></div>
+    <figcaption>
+      Tension disponible et tension demandée en fonction de la fréquence. La droite en trait épais est la loi U/f du variateur,
+      $U = U_0 + (400 - U_0)f/50$ ; les trois paliers horizontaux sont les tensions composées maximales de la modulation sinus-triangle, de la modulation
+      vectorielle linéaire et de la pleine onde pour le bus choisi. Les curseurs règlent la tension du bus et la tension de démarrage $U_0$ ; les
+      mesures donnent les fréquences auxquelles chaque modulation sature et la tension disponible à $50\ \mathrm{Hz}$ en zone linéaire, en pour cent des $400\ \mathrm{V}$ demandés.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> La pente de la loi U/f est fixée par le moteur, les paliers par le bus : le croisement se déplace d'environ
+    $0{,}09\ \mathrm{Hz}$ par volt de bus en modulation vectorielle. Sous $500\ \mathrm{V}$, la saturation commence vers $44\ \mathrm{Hz}$ ; à
+    $560\ \mathrm{V}$, elle n'arrive qu'à $50\ \mathrm{Hz}$ environ. Le point de service de $42{,}25\ \mathrm{Hz}$ reste en zone linéaire dans tout le
+    domaine de tension du bus, ce qui justifie le choix de la modulation vectorielle.
+  </p>
+  <h3 id="i-compromis">Risques, choix d'ingénierie et compromis</h3>
+  <ul>
+    <li><strong>Choix de la modulation.</strong> Modulation vectorielle symétrique, ou injection min-max, à $4\ \mathrm{kHz}$ : point de service en zone
+      linéaire à $m = 0{,}915$, soit $8{,}5\ \%$ sous la limite, pertes de commutation identiques à celles du sinus-triangle.</li>
+    <li><strong>Pleine vitesse.</strong> Trois options : accepter la surmodulation au-delà de $45\ \mathrm{Hz}$ jusqu'à la pleine onde, avec un courant
+      déformé mais un fondamental correct ; limiter la fréquence maximale à la saturation, au prix d'environ $9\ \%$ de débit ; relever le bus par un
+      redresseur actif, solution coûteuse. La pleine vitesse n'étant demandée que ponctuellement, la surmodulation autorisée est retenue, avec un
+      contrôle du courant moteur en marche à $50\ \mathrm{Hz}$.</li>
+    <li><strong>Hypothèse fragile.</strong> Le bus de $514{,}1\ \mathrm{V}$ est une borne basse : le condensateur relève la valeur réelle vers
+      $530\ \mathrm{V}$ environ. Une mesure du bus à pleine vitesse tranchera ; à $538{,}5\ \mathrm{V}$, la modulation vectorielle fournirait
+      $380{,}8\ \mathrm{V}$, et la surmodulation resterait nécessaire mais réduite.</li>
+    <li><strong>Mode commun.</strong> Les fronts de $E/3$ sur $85\ \mathrm{m}$ de câble imposent un câble blindé à écran relié aux deux extrémités, la
+      self de sortie déjà prévue et la surveillance des roulements ; un filtre de mode commun ou des roulements isolés seront discutés dans le cours
+      Compatibilité électromagnétique.</li>
+    <li><strong>Exploitation.</strong> Le variateur doit remonter à l'automate la tension du bus, le courant de sortie et l'indicateur de surmodulation
+      lorsqu'il existe, pour corréler les échauffements du moteur aux périodes de pleine vitesse.</li>
+  </ul>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Ajout au projet fil rouge</span>
+    <p>
+      Modulation de l'onduleur du variateur de la pompe : modulation vectorielle symétrique, ou injection min-max équivalente, à $4\ \mathrm{kHz}$,
+      imposée par le point de service ($339\ \mathrm{V}$ à $42{,}25\ \mathrm{Hz}$ sous $523{,}9\ \mathrm{V}$ : $m = 0{,}915$, contre $m_a = 1{,}057$ en
+      sinus-triangle) ; à $50\ \mathrm{Hz}$ sous $514{,}1\ \mathrm{V}$, $363{,}5\ \mathrm{V}$ au plus en zone linéaire, saturation dès $45{,}3\ \mathrm{Hz}$,
+      $57{,}0\ \mathrm{A}$ et flux de $90\ \%$ sans surmodulation ; surmodulation autorisée jusqu'à la pleine onde ($400{,}8\ \mathrm{V}$, environ
+      $11{,}3\ \mathrm{A}$ au rang 5 et $5{,}8\ \mathrm{A}$ au rang 7) ; bus à $36{,}8\ \mathrm{A}$ moyens au point de service ; sauts de mode commun de
+      $171$ à $189\ \mathrm{V}$, $24\,000$ par seconde, d'où câble blindé et self de sortie. Hypothèses à remplacer par la documentation du variateur et
+      par une mesure du bus et du courant moteur à pleine vitesse.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Erreur</th><th>Pourquoi c'est faux</th><th>Correction</th></tr></thead>
+      <tbody>
+        <tr><td>Croire qu'en pleine onde la tension simple vaut $\pm E/2$.</td><td>$\pm E/2$ est la tension d'un bras par rapport au point milieu ; le neutre de la charge bouge.</td><td>$v_{An} = \frac{E}{3}(2s_a - s_b - s_c)$ : niveaux $\pm E/3$ et $\pm 2E/3$.</td></tr>
+        <tr><td>Écrire $U_{AB,1} = m_aE/\sqrt{2}$ comme en pont en H.</td><td>Chaque bras ne dispose que de $\pm E/2$, et la tension composée est une différence de deux bras déphasés.</td><td>$U_{AB,1} = 0{,}612\,m_aE$ en sinus-triangle.</td></tr>
+        <tr><td>Penser que l'injection de rang 3 déforme les courants du moteur.</td><td>Elle est commune aux trois bras, donc absente des tensions composées.</td><td>Elle ne change que $v_{nO}$ ; seuls un neutre relié ou une charge déséquilibrée la rendraient visible.</td></tr>
+        <tr><td>Prendre $2E/3$, module des sommets, pour la limite linéaire.</td><td>Une référence qui tourne doit rester dans l'hexagone sur tout le tour.</td><td>Rayon du cercle inscrit, $E/\sqrt{3}$, soit $0{,}707E$ entre phases.</td></tr>
+        <tr><td>Croire que les états $000$ et $111$ sont équivalents en tout point.</td><td>Ils donnent les mêmes tensions composées mais des modes communs opposés, $\mp E/2$.</td><td>Les répartir pour centrer les impulsions et limiter les sauts de mode commun.</td></tr>
+        <tr><td>Dimensionner le bus d'un onduleur triphasé pour une ondulation à $2f$.</td><td>La puissance d'une charge triphasée équilibrée est constante.</td><td>Dimensionner sur l'ondulation du redresseur, le courant de découpage et la tenue aux transitoires.</td></tr>
+        <tr><td>Choisir $m_f$ quelconque à faible fréquence de découpage.</td><td>Hors multiple de 3, la raie à $m_f$ apparaît dans les tensions composées.</td><td>Prendre $m_f$ multiple de 3, ou une fréquence de découpage assez haute pour que la question disparaisse.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Démarche de diagnostic sur un variateur en service : relever, avec une sonde différentielle et une pince, les trois courants de sortie et une
+    tension composée filtrée. Un courant d'une phase qui perd une alternance, avec une composante continue et un couple pulsant, oriente vers un
+    interrupteur ou sa commande défaillants dans le bras correspondant ; des courants sains mais une tension plafonnée près de la vitesse nominale,
+    vers une saturation de tension liée au bus ; des déclenchements de différentiel ou des roulements marqués de stries régulières, vers le mode
+    commun ; une distorsion autour des passages par zéro qui grandit à faible charge, vers le temps mort.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic industriel et une question
+    conceptuelle sans calcul. Chaque correction reste masquée jusqu'à votre tentative ou un clic explicite ; elle se déroule ensuite étape par étape,
+    avec un tracé ou un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangées : choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Le score s'affiche à la fin et
+    alimente le bilan de la section P.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+  <h3 id="m-formules">Cinq formules essentielles</h3>
+  <ol>
+    <li>Tensions d'un état : $v_{AB} = E(s_a - s_b)$, $v_{An} = \frac{E}{3}(2s_a - s_b - s_c)$, $v_{nO} = \frac{1}{3}(v_{AO} + v_{BO} + v_{CO})$.</li>
+    <li>Pleine onde : $V_{An,1} = \frac{\sqrt{2}}{\pi}E = 0{,}450E$, $U_{AB,1} = \frac{\sqrt{6}}{\pi}E = 0{,}780E$, harmoniques $6k \pm 1$ en $V_1/h$.</li>
+    <li>Vecteur spatial : $\vec{v} = \frac{2}{3}(v_a + av_b + a^2v_c)$ ; sommets de module $2E/3$, cercle inscrit de rayon $E/\sqrt{3}$.</li>
+    <li>Modulation vectorielle, secteur I : $t_1 = T_d\frac{\sqrt{3}|\vec{v}^*|}{E}\sin(60^\circ - \theta)$, $t_2 = T_d\frac{\sqrt{3}|\vec{v}^*|}{E}\sin\theta$, $t_0 = T_d - t_1 - t_2$.</li>
+    <li>Tensions composées maximales : $0{,}612E$ en sinus-triangle, $0{,}707E$ avec injection ou en vectorielle, $0{,}780E$ en pleine onde.</li>
+  </ol>
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ul>
+      <li>Distinguer $v_{kO}$, tension d'un bras par rapport au point milieu, et $v_{kn}$, tension simple de la charge : elles diffèrent du mode commun.</li>
+      <li>La limite linéaire est le cercle inscrit, pas les sommets de l'hexagone.</li>
+      <li>Vérifier la tension disponible au bus minimal, à pleine charge, avant de promettre la tension nominale au moteur.</li>
+      <li>Le mode commun saute de $E/3$ à chaque commutation : courants de fuite, différentiels, roulements.</li>
+      <li>Un seul bras doit changer d'état à chaque transition ; une table qui en fait commuter deux à la fois double les sauts de tension.</li>
+    </ul>
+  </div>
+  <h3 id="m-resume">Résumé</h3>
+  <p>
+    Un onduleur triphasé de tension est formé de trois bras sur un même bus ; il n'a que huit états. Les tensions composées valent $E(s_a - s_b)$ ; les
+    tensions simples d'une charge équilibrée, $\frac{E}{3}(2s_a - s_b - s_c)$, car le neutre suit la moyenne des bras, appelée mode commun. La pleine
+    onde enchaîne six états actifs et donne $0{,}780E$ entre phases, avec des harmoniques $6k \pm 1$. Le vecteur spatial représente chaque état par un
+    sommet d'un hexagone de rayon $2E/3$ ; la modulation vectorielle combine deux sommets voisins et un vecteur nul pour reproduire une référence en
+    moyenne, jusqu'au cercle inscrit, soit $0{,}707E$ entre phases, $15{,}5\ \%$ de plus que le sinus-triangle. L'injection min-max lui est équivalente.
+    La puissance triphasée équilibrée est constante, mais le mode commun saute de $E/3$ à chaque commutation.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance, deux sur le cours précédent, <a href="#/cours/onduleurs-monophases">Onduleurs monophasés</a>, une sur le
+    cours <a href="#/cours/redresseurs-monophases">Redresseurs monophasés</a>, vieux d'une semaine, et une sur le cours
+    <a href="#/cours/revision-3-et-analyse-d-une-charge-ac">Révision 3 et analyse d'une charge AC</a>, vieux d'un mois, dont le théorème de Boucherot
+    sert encore au bilan de puissance d'un variateur.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : simuler dans LTspice un onduleur triphasé alimentant une charge $R$-$L$ équilibrée en étoile, comparer la modulation sinus-triangle et
+    l'injection min-max au même indice, et observer la tension de mode commun. Prédictions à écrire avant de commencer : tension composée efficace au
+    fondamental pour $m_a = 0{,}9$ puis $m_a = 1{,}1$, avec et sans injection ; allure de $v_{nO}$ ; présence ou non d'une raie à $m_f$ dans $v_{AB}$ ;
+    courant moyen du bus comparé à $P/E$.
+  </p>
+  <ol>
+    <li>Circuit : source continue <code>V1</code> de $600\ \mathrm{V}$ entre <code>P</code> et <code>N</code>, deux condensateurs de $1\ \mathrm{mF}$ en
+      série formant le point milieu <code>O</code> ; trois bras de deux interrupteurs <code>.model SW SW(Ron=20m Roff=1Meg Vt=0.5 Vh=-0.1)</code>,
+      chacun shunté par une diode <code>.model DP D(Ron=10m Vfwd=0.8)</code> en antiparallèle, points milieux <code>A</code>, <code>B</code>,
+      <code>C</code> ; charge en étoile de neutre <code>n</code> : $R = 8\ \Omega$ en série avec $L = 15\ \mathrm{mH}$ par phase.</li>
+    <li>Commande : porteuse <code>V2 tri 0 PULSE(-1 1 0 {Td/2} {Td/2} 0 {Td})</code> avec <code>.param Td=1/2550</code>, soit $m_f = 51$, multiple de 3 ;
+      références <code>B3 ra 0 V=ma*cos(2*pi*50*time)</code> et ses deux homologues décalées de $\mp 2\pi/3$ ; injection min-max
+      <code>B6 v0 0 V=-0.5*(max(max(V(ra),V(rb)),V(rc))+min(min(V(ra),V(rb)),V(rc)))*k</code>, avec <code>.param k=0</code> ou <code>1</code> ;
+      commandes <code>B7 ga 0 V=if(V(ra)+V(v0)&gt;V(tri),1,0)</code> et leurs compléments pour les interrupteurs bas.</li>
+    <li>Simulation : <code>.tran 0 100m 60m 1u</code>, avec <code>.step param ma list 0.9 1.1</code> et <code>.step param k list 0 1</code> ; mesurer
+      <code>.four 50 V(A,B)</code> et <code>.four 50 I(Ra)</code>.</li>
+    <li>Observations : tracer <code>V(A,B)</code>, <code>V(A,n)</code> et <code>V(n,O)</code> sur deux périodes de découpage, puis la transformée de
+      Fourier de <code>V(A,B)</code> et de <code>V(A,O)</code> sur $40\ \mathrm{ms}$ ; mesurer la valeur moyenne du courant de <code>V1</code>.</li>
+    <li>Variantes : $m_f = 50$ au lieu de $51$ et chercher la raie à $2{,}5\ \mathrm{kHz}$ dans <code>V(A,B)</code> ; relier <code>n</code> à
+      <code>O</code> et observer le courant de neutre avec l'injection ; supprimer les impulsions de l'interrupteur haut du bras $B$ et relever les
+      courants.</li>
+  </ol>
+  <p>
+    Résultats attendus : pour $m_a = 0{,}9$, environ $0{,}612 \times 0{,}9 \times 600 = 330{,}7\ \mathrm{V}$ efficaces entre phases dans les deux cas ;
+    pour $m_a = 1{,}1$, environ $404\ \mathrm{V}$ avec injection, un peu moins sans injection, avec des rangs $5$ et $7$ visibles dans le seul cas sans
+    injection. $V(n,O)$ prend les niveaux $\pm 100$ et $\pm 300\ \mathrm{V}$ ; $V(A,n)$ présente cinq niveaux, $0$, $\pm 200$ et $\pm 400\ \mathrm{V}$.
+    La raie au rang $51$, forte dans $V(A,O)$, est absente de $V(A,B)$ ; avec $m_f = 50$, elle y réapparaît. Le courant moyen de la source est égal à
+    la puissance de la charge divisée par $600\ \mathrm{V}$, aux pertes près, sans composante à $100\ \mathrm{Hz}$.
+  </p>
+  <p>
+    Anomalies à observer et à expliquer : un courant énorme à chaque front, recouvrement des commandes d'un bras ; une tension $V(A,n)$ à deux niveaux
+    seulement, $\pm 300\ \mathrm{V}$, neutre relié par erreur au point milieu ; une composante continue dans un courant de phase, bras dont un interrupteur ne reçoit plus d'ordre ; un fort
+    courant de neutre à $150\ \mathrm{Hz}$ quand <code>n</code> est relié à <code>O</code> avec injection, preuve que l'injection n'est invisible que
+    pour une étoile isolée. Variante sans LTspice : en Python, échantillonner la comparaison sur $2^{16}$ points par période, calculer
+    $v_{AB} = E(s_a - s_b)$ puis <code>numpy.fft.rfft</code>, et retrouver les valeurs de la simulation de la section E.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours, notées de 0 à 4. Le bilan affiché sous la grille est calculé dans ce
+    navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement. Aucune estimation n'est
+    faite à votre place : seul le score réellement obtenu sert de référence. Le jalon visé à la fin de ce module demande d'analyser les principaux
+    convertisseurs de puissance, leurs formes d'onde, leurs pertes, leurs protections et leur intégration dans un variateur.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Un onduleur triphasé n'a que huit états ; la table de commutation donne directement $v_{AB} = E(s_a - s_b)$ et, pour une charge équilibrée, $v_{An} = \frac{E}{3}(2s_a - s_b - s_c)$.</li>
+    <li data-rang="02">La charge ne voit pas la composante commune aux trois bras : la modulation l'utilise pour atteindre $0{,}707E$ entre phases au lieu de $0{,}612E$, mais ses sauts de $E/3$ font circuler des courants vers la terre.</li>
+    <li data-rang="03">Le vecteur spatial ramène l'onduleur à un hexagone : la modulation vectorielle combine deux sommets voisins et un vecteur nul, jusqu'au cercle inscrit ; au-delà, surmodulation puis pleine onde, $0{,}780E$.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> distinguer les trois tensions qui coexistent dans un onduleur triphasé, la tension d'un bras par
+    rapport au point milieu, la tension simple de la charge et la tension de mode commun. Les erreurs typiques en découlent : niveaux de $\pm E/2$
+    attribués à la tension simple, injection de rang 3 crue nuisible au moteur, limite linéaire placée aux sommets de l'hexagone. Le réflexe à
+    installer : écrire $v_{kO} = v_{kn} + v_{nO}$ avant tout raisonnement, et se demander laquelle des trois grandeurs on manipule.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Convertisseurs et moteurs, assemble redresseur, bus, onduleur et moteur dans un
+    variateur complet. Question à préparer : si la pompe du projet fil rouge, avec $0{,}5\ \mathrm{kg \cdot m^2}$ d'inertie, est ralentie de
+    $1475$ à $737\ \mathrm{tr/min}$ par une rampe de $0{,}2\ \mathrm{s}$, plus rapide que son ralentissement naturel, quelle énergie cinétique doit-elle
+    restituer, par quels composants de l'onduleur passe-t-elle, et que devient-elle quand le redresseur à diodes ne peut pas la renvoyer au réseau ?
+  </p>
+
+</article>
