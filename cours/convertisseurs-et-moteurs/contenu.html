@@ -1,0 +1,756 @@
+<article class="cours" data-slug="convertisseurs-et-moteurs">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/onduleurs-triphases">Onduleurs triphasés</a> s'est achevé sur une question : la pompe du projet fil rouge, avec
+      $0{,}5\ \mathrm{kg \cdot m^2}$ d'inertie, est ralentie de $1475$ à $737\ \mathrm{tr/min}$ par une rampe de $0{,}2\ \mathrm{s}$, plus rapide que son
+      ralentissement naturel de $0{,}40\ \mathrm{s}$. Quelle énergie cinétique doit-elle restituer, par où passe-t-elle, et que devient-elle derrière un
+      redresseur à diodes ? Réponse, que cette séance va démontrer pas à pas. Entre $154{,}46$ et $77{,}18\ \mathrm{rad/s}$, l'énergie cinétique baisse de
+      $\frac{1}{2} \times 0{,}5 \times (154{,}46^2 - 77{,}18^2) = 4475\ \mathrm{J}$. La pompe en absorbe elle-même $2811\ \mathrm{J}$ pendant la rampe ; le
+      reste, $1665\ \mathrm{J}$, doit être freiné par le moteur, qui fonctionne alors en génératrice. Le courant de chaque phase se retrouve déphasé de plus
+      de $90$ degrés sur sa tension, il traverse surtout les diodes de roue libre de l'onduleur et charge le bus. Après les pertes, environ $1532\ \mathrm{J}$
+      arrivent sur les condensateurs. Or le pont de diodes ne peut pas faire circuler de courant vers le réseau : la tension du bus monte, et
+      $2{,}2\ \mathrm{mF}$ passent de $540$ à $800\ \mathrm{V}$ avec seulement $383\ \mathrm{J}$. Le variateur déclenche en surtension après environ
+      $84\ \mathrm{ms}$, et la pompe finit son ralentissement en roue libre.
+    </p>
+    <p>
+      La séance s'appuie sur la puissance $P = C\Omega$ et le bilan d'énergie du cours <a href="#/cours/tension-courant-charge-et-puissance">Tension, courant,
+      charge et puissance</a> ; sur l'énergie $\frac{1}{2}CU^2$ du cours <a href="#/cours/condensateurs-et-champ-electrique">Condensateurs et champ
+      électrique</a> ; sur le glissement et le schéma équivalent des cours <a href="#/cours/moteur-asynchrone-triphase">Moteur asynchrone triphasé</a> et
+      <a href="#/cours/schema-equivalent-du-moteur-asynchrone">Schéma équivalent du moteur asynchrone</a> ; sur la loi U/f du cours
+      <a href="#/cours/variation-de-vitesse-des-moteurs-asynchrones">Variation de vitesse des moteurs asynchrones</a> ; sur le pont PD3 des cours
+      <a href="#/cours/redresseurs-triphases">Redresseurs triphasés</a> et <a href="#/cours/thyristors-et-redresseurs-commandes">Thyristors et redresseurs
+      commandés</a> ; sur le hacheur du cours <a href="#/cours/hacheurs-dc-dc">Hacheurs DC-DC</a> ; enfin sur l'onduleur et son courant de bus, vus dans
+      le cours précédent.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Jusqu'ici, chaque convertisseur a été étudié seul : le redresseur avec une charge, l'onduleur avec un bus parfait, le moteur avec une source
+    sinusoïdale. Un variateur industriel les met en série, et c'est à leurs interfaces que se jouent la plupart des choix de conception et des pannes.
+    Le bus continu y sert de tampon entre un étage d'entrée, souvent unidirectionnel, et un onduleur qui, lui, laisse passer la puissance dans les deux
+    sens sans commande particulière. Dès que la charge mécanique rend de l'énergie, la question devient : où va-t-elle ?
+  </p>
+  <ul>
+    <li><strong>Pompes et ventilateurs.</strong> Charges à couple quadratique qui freinent d'elles-mêmes : un arrêt trop rapide suffit pourtant à faire
+      déclencher le variateur en surtension.</li>
+    <li><strong>Levage, ascenseurs, convoyeurs descendants.</strong> La charge entraîne le moteur pendant toute la descente : l'énergie à évacuer est
+      permanente et se compte en dizaines ou centaines de kilojoules par cycle.</li>
+    <li><strong>Centrifugeuses, broyeurs, volants d'inertie, bancs d'essai.</strong> De fortes inerties à arrêter dans un temps imposé, parfois pour des
+      raisons de sécurité.</li>
+    <li><strong>Lignes de production à plusieurs moteurs.</strong> Enrouleurs et dérouleurs, laminoirs : certains moteurs freinent pendant que d'autres
+      tirent, et un bus continu commun permet de les compenser.</li>
+  </ul>
+  <p>
+    Comprendre la chaîne complète, c'est savoir lire un plan de couple et de vitesse, prévoir le sens de la puissance dans chaque étage, calculer
+    l'énergie que le bus peut absorber et choisir entre une rampe plus longue, une résistance de freinage, un bus commun ou un redresseur actif. C'est
+    aussi savoir diagnostiquer le défaut de surtension, l'un des plus fréquents sur les variateurs.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Décrire l'architecture interne d'un variateur de fréquence, du réseau au moteur, et expliquer le rôle de chaque étage : redresseur, précharge, bus continu, hacheur de freinage, onduleur, commande.</li>
+    <li data-rang="02">Situer un point de fonctionnement dans les quatre quadrants du plan couple et vitesse, et en déduire le sens de la puissance dans chaque étage de la chaîne.</li>
+    <li data-rang="03">Expliquer pourquoi une machine asynchrone alimentée par un variateur devient génératrice quand la fréquence descend sous la vitesse du rotor, et calculer son couple dans la zone linéaire.</li>
+    <li data-rang="04">Calculer l'énergie restituée par une charge lors d'un ralentissement ou d'une descente, l'énergie qu'un bus peut absorber et le temps avant surtension.</li>
+    <li data-rang="05">Dimensionner une résistance de freinage : valeur maximale, puissance crête, énergie par cycle et puissance moyenne.</li>
+    <li data-rang="06">Comparer rampe allongée, régulateur de surtension, hacheur de freinage, bus continu commun et redresseur actif, et choisir selon la charge et l'exploitation.</li>
+    <li data-rang="07">Diagnostiquer un déclenchement en surtension du bus à partir de ses circonstances d'apparition.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>Quatre notions suffisent pour suivre la séance.</p>
+  <ul>
+    <li><strong>Puissance et énergie mécaniques.</strong> Un couple $C$, en $\mathrm{N \cdot m}$, exercé sur un arbre qui tourne à $\Omega$, en $\mathrm{rad/s}$,
+      transmet $P = C\Omega$, en watts. Une masse en rotation d'inertie $J$, en $\mathrm{kg \cdot m^2}$, stocke $W_c = \frac{1}{2}J\Omega^2$, en joules. Conversion :
+      $\Omega = 2\pi n/60$ avec $n$ en $\mathrm{tr/min}$.</li>
+    <li><strong>Énergie d'un condensateur.</strong> $W = \frac{1}{2}CU^2$ : l'énergie croît comme le carré de la tension, si bien que monter de $540$ à
+      $800\ \mathrm{V}$ ne libère qu'une fraction modeste de place.</li>
+    <li><strong>Glissement.</strong> $g = (n_s - n)/n_s$ avec $n_s = 60f/p$. Pour $0 \lt g \lt 1$, la machine asynchrone est motrice ; pour $g \lt 0$, le
+      rotor tourne plus vite que le champ et la machine renvoie de la puissance active.</li>
+    <li><strong>Redresseur à diodes et onduleur.</strong> Le pont PD3 ne conduit que si un courant sort de sa borne positive : son courant de sortie
+      $i_r$ est toujours positif ou nul. L'onduleur, grâce aux diodes en antiparallèle de ses interrupteurs, accepte un courant de bus des deux signes.</li>
+  </ul>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Notation de la séance</span>
+    <p>
+      $\Omega$ : vitesse angulaire de l'arbre, en $\mathrm{rad/s}$, positive dans le sens choisi comme direct ; $n$ : la même vitesse en $\mathrm{tr/min}$.
+      $C_m$ : couple électromagnétique du moteur, compté positif s'il tend à faire tourner l'arbre dans le sens direct ; $C_r$ : couple résistant de
+      la charge, compté positif s'il s'oppose au sens direct. $P_m = C_m\Omega$ : puissance mécanique fournie par le moteur, positive en moteur,
+      négative en génératrice. $J$ : inertie totale ramenée à l'arbre du moteur. $E$ : tension du bus continu, borne positive par rapport à la borne
+      négative, qui sert de référence des potentiels ; $C_\mathrm{bus}$ : capacité du bus. Courants du bus, tous fléchés depuis la borne positive :
+      $i_r$, sortant du redresseur ; $i_C$, entrant dans le condensateur ; $i_h$, entrant dans le hacheur de freinage ; $i_o$, entrant dans
+      l'onduleur. $P_g$ : puissance renvoyée au bus en freinage, positive quand le bus reçoit. $\eta$ : rendement de la chaîne arbre vers bus en
+      génératrice. Les tensions et courants alternatifs sont en valeur efficace sauf mention contraire.
+    </p>
+  </div>
+  <p>
+    Mini-test de trois questions. Les réponses restent masquées, séparées de l'énoncé, jusqu'à votre tentative ou à un clic explicite.
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-chaine">Une chaîne de conversion avec un réservoir au milieu</h3>
+  <p>
+    Un variateur de fréquence enchaîne trois conversions : le redresseur transforme le réseau alternatif en tension continue, le bus la stocke dans
+    des condensateurs, l'onduleur la découpe pour reconstituer un système triphasé de fréquence et d'amplitude réglables. Tant que le moteur entraîne
+    sa charge, la puissance s'écoule du réseau vers l'arbre, et le bus reste à une tension voisine de la crête du réseau redressé. Mais l'onduleur est
+    réversible par nature : quand la charge entraîne le moteur, le courant du bus change de signe sans que la commande ait rien à faire. Le redresseur
+    à diodes, lui, ne l'est pas. L'énergie arrive alors dans un réservoir qui n'a pas d'évacuation.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Analogie contrôlée et ses limites</span>
+    <p>
+      Le bus est un réservoir d'eau sous pression. Le redresseur à diodes est une pompe munie d'un clapet anti-retour : elle peut remplir le réservoir
+      mais jamais le vider. L'onduleur et le moteur forment une pompe-turbine réversible : en temps normal, elle puise dans le réservoir pour entraîner
+      la charge ; quand la charge l'entraîne, elle refoule de l'eau dans le réservoir, dont la pression monte. La soupape de sûreté est le déclenchement
+      en surtension ; une vanne de décharge vers l'égout est le hacheur de freinage ; une pompe réversible côté réseau est le redresseur actif.
+      Limites : la pression d'un réservoir croît linéairement avec le volume stocké, alors que l'énergie d'un condensateur croît comme le carré de sa
+      tension ; la pompe-turbine n'a pas besoin d'être commandée pour changer de sens, ce sont les diodes de l'onduleur qui s'en chargent ; enfin le
+      danger électrique n'est pas une fuite mais le claquage des condensateurs et des semi-conducteurs, dimensionnés pour une tension maximale.
+    </p>
+  </div>
+
+  <h3 id="d-quadrants">Couple, vitesse et sens de la puissance</h3>
+  <p>
+    Le sens de la puissance ne dépend que des signes du couple et de la vitesse. Si le couple du moteur et la vitesse sont de même signe, le moteur
+    fournit de l'énergie à la charge ; s'ils sont de signes contraires, la charge en fournit au moteur, qui la renvoie vers le bus. Placer le point de
+    fonctionnement dans le plan couple et vitesse suffit donc à savoir dans quel sens chaque étage est traversé, et si l'étage d'entrée doit être
+    réversible.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Avant de déplacer le point ci-dessous, écrivez vos réponses : dans quels quadrants la puissance remonte-t-elle vers le bus ? Avec un pont de diodes
+      seul, que devient-elle ? Un ventilateur qui ralentit lentement, sans couple de freinage du moteur, quitte-t-il le premier quadrant ?
+    </p>
+  </div>
+  <figure id="d-quadrants-figure">
+    <div class="schema-vivant" id="d-quadrants-vivant"></div>
+    <div id="d-quadrants-curseurs"></div>
+    <div id="d-quadrants-valeurs"></div>
+    <figcaption>
+      Simulation manipulable. À gauche, le plan couple et vitesse : en abscisse le couple du moteur $C_m$, en ordonnée la vitesse $\Omega$, en
+      grandeurs réduites rapportées au point nominal ($30\ \mathrm{kW}$, $194{,}2\ \mathrm{N \cdot m}$, $1475\ \mathrm{tr/min}$). Faites glisser le point
+      de fonctionnement, ou sélectionnez-le au clavier et utilisez les flèches. Les quadrants sont numérotés dans le sens trigonométrique. À droite, la
+      chaîne du variateur : réseau, redresseur, bus, onduleur, moteur, charge, et la résistance de freinage sous le bus. Les flèches et les points qui
+      circulent donnent le sens de la puissance dans chaque liaison ; leur densité est proportionnelle à $|P_m|$. Le curseur choisit l'étage d'entrée.
+      Le bloc du bus est encadré d'un trait épais et le message passe en alerte quand l'énergie reste piégée dans les condensateurs.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Dans les quadrants 1 et 3, couple et vitesse sont de même signe : le moteur entraîne, et la puissance va du réseau
+    vers la charge. Dans les quadrants 2 et 4, ils sont de signes contraires : la charge entraîne, la puissance remonte jusqu'au bus. Avec un pont de
+    diodes seul, elle s'arrête là, et la tension monte ; avec un hacheur, elle finit en chaleur dans la résistance ; avec un redresseur actif, elle
+    retourne au réseau. Un ventilateur qui ralentit sans couple de freinage reste sur l'axe vertical, à couple nul ou légèrement positif : il ne
+    quitte le premier quadrant que si l'on exige un ralentissement plus rapide que celui que lui imposent ses frottements et son couple aérodynamique.
+  </p>
+
+  <h3 id="d-generatrice">Comment une machine asynchrone devient génératrice</h3>
+  <p>
+    Le moteur asynchrone n'a pas besoin d'un ordre pour freiner : il suffit que son rotor tourne plus vite que le champ tournant. Sur le réseau à
+    fréquence fixe, cela n'arrive que si la charge l'entraîne au-delà de la vitesse de synchronisme. Sur un variateur, c'est la commande qui provoque la
+    situation : pour ralentir, elle abaisse la fréquence plus vite que le rotor ne décélère. Le champ tourne alors moins vite que le rotor, le glissement
+    devient négatif, les courants induits au rotor changent de sens, et le couple s'oppose à la rotation. La machine prélève de l'énergie cinétique sur
+    l'arbre et la renvoie au stator : le courant de chaque phase est alors déphasé de plus de $90$ degrés sur la tension que l'onduleur impose.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-hypotheses">Hypothèses du modèle de base</h3>
+  <ul>
+    <li>Interrupteurs et diodes idéaux pour les tensions ; pertes regroupées dans un rendement $\eta$ de la chaîne arbre vers bus, supposé constant.</li>
+    <li>Grandeurs moyennées sur une période de découpage et sur une période du réseau : le bus est décrit par sa tension moyenne $E$.</li>
+    <li>Arbre rigide : moteur et charge ont la même vitesse, l'inertie totale $J$ est ramenée à l'arbre du moteur.</li>
+    <li>Le moteur suit sa consigne de vitesse tant que le couple demandé reste dans la limite de courant du variateur.</li>
+    <li>Le pont de diodes ne conduit que lorsque la tension du bus est inférieure à la crête de la tension composée redressée.</li>
+  </ul>
+
+  <h3 id="e-mecanique">L'équation mécanique et le bilan d'énergie de l'arbre</h3>
+  <p>
+    Le principe fondamental de la dynamique en rotation, appliqué à l'arbre, donne l'équation qui gouverne toute variation de vitesse :
+  </p>
+  <div class="formule-cle">
+    $$J\,\frac{\mathrm{d}\Omega}{\mathrm{d}t} = C_m - C_r$$
+    <p class="formule-cle-legende">
+      $J$ en $\mathrm{kg \cdot m^2}$, $\Omega$ en $\mathrm{rad/s}$, couples en $\mathrm{N \cdot m}$. Loi physique. Dimensions :
+      $\mathrm{kg \cdot m^2 \cdot s^{-2}} = \mathrm{N \cdot m}$. Cas limite : à vitesse constante, $C_m = C_r$ ; si le moteur ne fournit plus aucun couple,
+      $J\,\mathrm{d}\Omega/\mathrm{d}t = -C_r$, c'est le ralentissement naturel, ou roue libre.
+    </p>
+  </div>
+  <p>
+    En multipliant par $\Omega$, on obtient le bilan de puissance de l'arbre : $\frac{\mathrm{d}}{\mathrm{d}t}\left(\frac{1}{2}J\Omega^2\right) = C_m\Omega - C_r\Omega$.
+    La variation d'énergie cinétique est égale à la puissance fournie par le moteur moins celle absorbée par la charge. Pour ralentir à la décélération
+    $a = -\mathrm{d}\Omega/\mathrm{d}t \gt 0$, le moteur doit fournir $C_m = C_r - Ja$. Il devient générateur, $C_m \lt 0$, dès que la décélération demandée
+    dépasse la décélération naturelle $C_r/J$. La puissance qu'il renvoie alors vers le bus vaut
+  </p>
+  <div class="formule-cle">
+    $$P_g = -\eta\,C_m\,\Omega = \eta\,(Ja - C_r)\,\Omega \quad \text{lorsque } Ja \gt C_r$$
+    <p class="formule-cle-legende">
+      $P_g$ en watts, positive quand le bus reçoit. Approximation : $\eta$ constant, alors qu'il chute à faible puissance, où les pertes à vide du moteur
+      deviennent comparables à la puissance freinée. Cas limite : $J = 0$, aucun freinage n'est possible ni nécessaire, l'arbre suit instantanément la
+      consigne.
+    </p>
+  </div>
+
+  <h3 id="e-quadrants">Les quatre quadrants</h3>
+  <p>
+    On représente le fonctionnement d'un entraînement dans un plan dont l'abscisse est le couple $C_m$ et l'ordonnée la vitesse $\Omega$. Le choix des
+    axes et du sens direct est une convention, à fixer avant tout calcul ; le signe de $P_m = C_m\Omega$, lui, est une conséquence physique. Le schéma
+    ci-dessous résume les quatre combinaisons de signes et des applications typiques.
+  </p>
+  <figure id="e-quadrants-figure">
+    <svg viewBox="0 0 760 430" role="img" aria-label="Plan couple et vitesse : quatre quadrants numérotés dans le sens trigonométrique, quadrant 1 moteur en sens direct, quadrant 2 génératrice en sens direct, quadrant 3 moteur en sens inverse, quadrant 4 génératrice en sens inverse, avec un exemple pour chacun"><defs><marker id="fl-quad" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M60 215H700" marker-end="url(#fl-quad)"/><path d="M380 405V30" marker-end="url(#fl-quad)"/></g><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="6 5" opacity="0.6"><rect x="400" y="50" width="280" height="145" rx="10"/><rect x="80" y="50" width="280" height="145" rx="10"/><rect x="80" y="235" width="280" height="145" rx="10"/><rect x="400" y="235" width="280" height="145" rx="10"/></g><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M530 175H600" marker-end="url(#fl-quad)"/><path d="M250 175H180" marker-end="url(#fl-quad)"/><path d="M180 360H250" marker-end="url(#fl-quad)"/><path d="M600 360H530" marker-end="url(#fl-quad)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5"><text x="706" y="220">C_m</text><text x="388" y="30">Ω</text><text x="414" y="74" font-weight="600" font-size="11">Quadrant 1 : moteur, sens direct</text><text x="414" y="96">C_m &gt; 0, Ω &gt; 0, P_m &gt; 0</text><text x="414" y="118">pompe en service,</text><text x="414" y="138">montée d'une charge</text><text x="414" y="168" font-size="11">réseau vers charge</text><text x="94" y="74" font-weight="600" font-size="11">Quadrant 2 : génératrice, sens direct</text><text x="94" y="96">C_m &lt; 0, Ω &gt; 0, P_m &lt; 0</text><text x="94" y="118">freinage d'une inertie,</text><text x="94" y="138">ventilateur arrêté vite</text><text x="94" y="168" font-size="11">charge vers bus</text><text x="94" y="259" font-weight="600" font-size="11">Quadrant 3 : moteur, sens inverse</text><text x="94" y="281">C_m &lt; 0, Ω &lt; 0, P_m &gt; 0</text><text x="94" y="303">translation en marche arrière,</text><text x="94" y="323">convoyeur réversible</text><text x="94" y="353" font-size="11">réseau vers charge</text><text x="414" y="259" font-weight="600" font-size="11">Quadrant 4 : génératrice, sens inverse</text><text x="414" y="281">C_m &gt; 0, Ω &lt; 0, P_m &lt; 0</text><text x="414" y="303">descente d'une charge de levage,</text><text x="414" y="323">sens direct choisi à la montée</text><text x="414" y="353" font-size="11">charge vers bus</text></g></svg>
+    <figcaption>
+      Les quatre quadrants. Axe horizontal : couple du moteur $C_m$ ; axe vertical : vitesse $\Omega$, positive dans le sens direct. La flèche épaisse de
+      chaque cadre indique le sens du couple ; la ligne du bas, le sens de la puissance. Dans les quadrants 1 et 3, couple et vitesse ont le même signe :
+      la machine est motrice. Dans les quadrants 2 et 4, ils sont de signes contraires : la machine est génératrice et la puissance remonte vers le bus.
+      La numérotation, comme le choix des axes, est une convention ; certains ouvrages mettent la vitesse en abscisse, ce qui échange les numéros 2 et 4.
+      Il faut donc toujours relire la définition des axes avant d'interpréter un numéro de quadrant.
+    </figcaption>
+  </figure>
+  <p>
+    Une pompe ou un ventilateur ne tournent que dans un sens et ne quittent le premier quadrant que pendant un ralentissement forcé : ils sont dits à
+    un quadrant, avec des incursions dans le deuxième. Un levage travaille dans les quadrants 1 et 4, puisque le couple reste orienté vers la montée pour
+    retenir la charge quelle que soit la direction du déplacement. Un véhicule ou un convoyeur réversible parcourt les quatre quadrants.
+  </p>
+
+  <h3 id="e-asynchrone">La machine asynchrone dans les deux sens de puissance</h3>
+  <p>
+    Au voisinage du synchronisme et à flux constant, ce que maintient la loi U/f, le couple de la machine asynchrone est proportionnel à l'écart
+    entre vitesse de synchronisme et vitesse du rotor. En effet, pour $|g|$ petit, $R_2'/g$ domine $X_2'$ dans la branche rotorique : le courant
+    rotorique vaut environ $gV/R_2'$ et le couple $C \approx \frac{3p}{\omega}\cdot\frac{V^2}{R_2'}\,g$. À rapport $V/\omega$ fixé, $g\,\omega/p = \Omega_s - \Omega$
+    est l'écart de vitesse en $\mathrm{rad/s}$, et il vient :
+  </p>
+  <div class="formule-cle">
+    $$C_m \approx C_n\,\frac{n_s - n}{n_s - n_n}, \qquad n_s = \frac{60\,f}{p}$$
+    <p class="formule-cle-legende">
+      $C_n$ couple nominal en $\mathrm{N \cdot m}$, $n_n$ vitesse nominale, $n_s$ vitesse de synchronisme à la fréquence $f$, en $\mathrm{tr/min}$ ; $p$
+      nombre de paires de pôles. Approximation de la zone linéaire, valable tant que le couple reste inférieur à environ la moitié du couple maximal et
+      que le flux est maintenu. Hypothèse : écart nominal $n_s - n_n$ indépendant de la fréquence, conséquence du flux constant. Cas limite : $n = n_s$,
+      couple nul ; $n \gt n_s$, couple négatif, la machine est génératrice. Pour le moteur de la pompe, $25\ \mathrm{tr/min}$ d'écart donnent
+      $194{,}2\ \mathrm{N \cdot m}$ ; $25\ \mathrm{tr/min}$ au-dessus du synchronisme donnent environ $-194\ \mathrm{N \cdot m}$ dans ce modèle linéaire.
+    </p>
+  </div>
+  <p>
+    Pour freiner, le variateur abaisse donc sa fréquence de façon que $n_s$ passe sous la vitesse du rotor. Un écart de quelques dizaines de tours par
+    minute suffit pour obtenir le couple nominal en génératrice ; la limite de courant du variateur borne ce couple, et donc la décélération possible.
+    La simulation suivante reprend le schéma équivalent complet du moteur de la pompe, établi dans le cours <a href="#/cours/variation-de-vitesse-des-moteurs-asynchrones">Variation
+    de vitesse des moteurs asynchrones</a>, avec la loi U/f linéaire du variateur.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Le rotor tourne à $1475\ \mathrm{tr/min}$. Écrivez vos prévisions : à $50\ \mathrm{Hz}$, quel est le signe de la puissance électrique absorbée ? Si
+      la commande descend brusquement à $48\ \mathrm{Hz}$, soit $1440\ \mathrm{tr/min}$ de synchronisme, le couple sera-t-il plus fort, plus faible ou de
+      signe contraire, et que devient la puissance électrique ?
+    </p>
+  </div>
+  <figure id="e-couple-figure">
+    <div id="e-couple-curseurs"></div>
+    <div id="e-couple-trace"></div>
+    <figcaption>
+      Caractéristique couple et vitesse du moteur de la pompe, calculée par le schéma équivalent ($R_1 = 0{,}115\ \Omega$, $R_2' = 0{,}076\ \Omega$,
+      $X_1 = 0{,}36\ \Omega$, $X_2' = 0{,}48\ \Omega$, $X_m = 11{,}5\ \Omega$ à $50\ \mathrm{Hz}$, étoile équivalente, loi U/f avec $U_0 = 8\ \mathrm{V}$).
+      Le curseur de fréquence déplace toute la caractéristique, le curseur de vitesse déplace le point de fonctionnement, marqué par un disque et une
+      ligne verticale en pointillé. La courbe de couple du moteur est la courbe épaisse ; la courbe fine est le couple de la pompe, quadratique. La
+      ligne verticale en tirets longs repère la vitesse de synchronisme. Les mesures affichent le glissement, le couple, la puissance mécanique, la
+      puissance électrique absorbée au stator et le fonctionnement correspondant.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> À $50\ \mathrm{Hz}$ et $1475\ \mathrm{tr/min}$, le moteur absorbe environ $31{,}5\ \mathrm{kW}$ et fournit
+    $194\ \mathrm{N \cdot m}$. À $48\ \mathrm{Hz}$, la vitesse de synchronisme tombe à $1440\ \mathrm{tr/min}$, le glissement devient $-2{,}4\ \%$ et le
+    couple passe à environ $-295\ \mathrm{N \cdot m}$ : la machine renvoie près de $43\ \mathrm{kW}$ électriques, davantage que sa puissance nominale. Un
+    saut de fréquence trop brutal provoquerait donc une surintensité ; c'est pourquoi le variateur descend en rampe et limite son courant. Au-delà de
+    quelques pour cent de glissement négatif, le couple passe par un extremum puis décroît : la zone linéaire ne vaut qu'au voisinage du synchronisme.
+  </p>
+
+  <h3 id="e-bus">Le bus continu : un bilan d'énergie sans évacuation</h3>
+  <p>
+    La loi des nœuds appliquée à la borne positive du bus, avec les courants fléchés sur le schéma suivant, s'écrit $i_r = i_C + i_h + i_o$. Avec
+    $i_C = C_\mathrm{bus}\,\mathrm{d}E/\mathrm{d}t$, et en multipliant par $E$, on obtient le bilan d'énergie du bus.
+  </p>
+  <figure id="e-bus-figure">
+    <svg viewBox="0 0 780 360" role="img" aria-label="Bus continu d'un variateur : pont de diodes alimenté par L1, L2 et L3, condensateur du bus, hacheur de freinage formé de la résistance Rf, de l'interrupteur Th et de la diode Dh, onduleur et moteur ; courants ir, iC, ih et io fléchés depuis la borne positive, tension E fléchée vers la borne positive, borne négative prise comme référence"><defs><marker id="fl-bus" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 130H90M20 165H90M20 200H90"/><rect x="90" y="90" width="110" height="150" rx="6"/><path d="M128 178L162 178M145 178L128 152H162Z"/><path d="M128 152H162" stroke-width="2.6"/><path d="M175 90V60H690M175 240V300H690"/><path d="M290 60V160M290 176V300"/><path d="M266 160H314M266 176H314" stroke-width="3"/><path d="M430 60V90M430 150V196"/><rect x="418" y="90" width="24" height="60" rx="3"/><circle cx="430" cy="200" r="3"/><circle cx="430" cy="244" r="3"/><path d="M430 244L414 206" stroke-width="2.4"/><path d="M430 244V300"/><path d="M430 172H480V140M480 112V60"/><path d="M470 140L480 112L490 140Z"/><path d="M470 112h20" stroke-width="2.6"/><path d="M600 60V105M600 255V300"/><rect x="560" y="105" width="110" height="150" rx="6"/><path d="M670 150H712M670 180H712M670 210H712"/><circle cx="738" cy="180" r="26"/></g><g fill="currentColor" stroke="none"><circle cx="175" cy="60" r="3.6"/><circle cx="290" cy="60" r="3.6"/><circle cx="290" cy="300" r="3.6"/><circle cx="430" cy="60" r="3.6"/><circle cx="430" cy="300" r="3.6"/><circle cx="430" cy="172" r="3.6"/><circle cx="480" cy="60" r="3.6"/><circle cx="600" cy="60" r="3.6"/><circle cx="600" cy="300" r="3.6"/></g><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M200 46H250" marker-end="url(#fl-bus)"/><path d="M308 90V135" marker-end="url(#fl-bus)"/><path d="M396 96V140" marker-end="url(#fl-bus)"/><path d="M520 46H575" marker-end="url(#fl-bus)"/><path d="M238 285V78" marker-end="url(#fl-bus)" stroke-dasharray="5 4"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12.5"><text x="4" y="125">L1</text><text x="4" y="160">L2</text><text x="4" y="195">L3</text><text x="98" y="112" font-size="11">pont de diodes</text><text x="98" y="128" font-size="11">D1 à D6</text><text x="98" y="222" font-size="11">i_r ≥ 0 seulement</text><text x="210" y="40">i_r</text><text x="316" y="118">i_C</text><text x="270" y="152">+</text><text x="322" y="196">C_bus</text><text x="214" y="190">E</text><text x="362" y="122">i_h</text><text x="448" y="126">R_f</text><text x="392" y="230">T_h</text><text x="496" y="132">D_h</text><text x="530" y="40">i_o</text><text x="574" y="134" font-size="11">onduleur</text><text x="574" y="150" font-size="11">6 IGBT et</text><text x="574" y="166" font-size="11">6 diodes</text><text x="574" y="236" font-size="11">i_o &lt; 0</text><text x="574" y="250" font-size="11">en freinage</text><text x="728" y="185">M</text><text x="300" y="28" font-size="11">borne positive du bus, tension E</text><text x="250" y="326" font-size="11">borne négative, référence des potentiels 0 V</text><text x="372" y="350" font-size="11">hacheur de freinage</text></g></svg>
+    <figcaption>
+      Bus continu d'un variateur, avec ses quatre branches. La borne négative est la référence des potentiels ; la flèche en tirets $E$ désigne la tension
+      de la borne positive, et le signe $+$ marque l'armature positive du condensateur. Les flèches pleines donnent le sens positif choisi pour chaque
+      courant, toujours depuis la borne positive : $i_r$ sort du pont de diodes et ne peut pas être négatif ; $i_C$ charge le condensateur ; $i_h$
+      traverse la résistance de freinage $R_f$ quand l'interrupteur $T_h$ est fermé ; $i_o$ entre dans l'onduleur et devient négatif quand le moteur
+      freine. La diode $D_h$, montée en parallèle inverse sur $R_f$, offre un chemin au courant de l'inductance parasite de la résistance et de son câble
+      à l'ouverture de $T_h$, comme la diode de roue libre d'un hacheur abaisseur.
+    </figcaption>
+  </figure>
+  <div class="formule-cle">
+    $$\frac{\mathrm{d}}{\mathrm{d}t}\left(\frac{1}{2}C_\mathrm{bus}E^2\right) = E\,i_r - E\,i_h - E\,i_o = P_r - P_h + P_g$$
+    <p class="formule-cle-legende">
+      Puissances en watts : $P_r = Ei_r \ge 0$ fournie par le redresseur, $P_h = Ei_h$ dissipée dans le hacheur, $P_g = -Ei_o$ renvoyée par l'onduleur.
+      Loi physique : conservation de l'énergie, déduite de la loi des nœuds. En freinage, la tension du bus dépasse la crête du réseau redressé, le pont
+      se bloque et $P_r = 0$.
+    </p>
+  </div>
+  <p>
+    Sans hacheur ($P_h = 0$) et pour une puissance de freinage $P_g$ constante, l'intégration de $\frac{1}{2}C_\mathrm{bus}E^2$ entre la tension initiale
+    $E_0$ et le seuil de déclenchement $E_{\max}$ donne l'énergie que le bus peut absorber et le temps dont on dispose :
+  </p>
+  <div class="formule-cle">
+    $$W_\mathrm{bus} = \frac{1}{2}C_\mathrm{bus}\left(E_{\max}^2 - E_0^2\right), \qquad t_{\max} = \frac{C_\mathrm{bus}\left(E_{\max}^2 - E_0^2\right)}{2\,P_g}$$
+    <p class="formule-cle-legende">
+      $C_\mathrm{bus}$ en farads, tensions en volts, $W_\mathrm{bus}$ en joules, $P_g$ en watts, $t_{\max}$ en secondes. Dimensions :
+      $\mathrm{F \cdot V^2} = \mathrm{C \cdot V} = \mathrm{J}$ et $\mathrm{J/W} = \mathrm{s}$. Pour la pompe, $2{,}2\ \mathrm{mF}$ de $540$ à $800\ \mathrm{V}$
+      donnent $383\ \mathrm{J}$ : à $10\ \mathrm{kW}$, $38\ \mathrm{ms}$ seulement. Cas limite : $E_0 = E_{\max}$, aucune réserve ; c'est le cas d'un réseau
+      haut, qui rapproche $E_0$ du seuil.
+    </p>
+  </div>
+  <p>
+    Ces chiffres montrent l'ordre de grandeur décisif de la séance : un bus de variateur absorbe des centaines de joules, une inertie industrielle en
+    restitue des milliers, une descente de levage des centaines de milliers. Le bus ne peut donc servir que de tampon, jamais de stockage du freinage.
+  </p>
+
+  <h3 id="e-hacheur">Le hacheur de freinage et la résistance</h3>
+  <p>
+    Le hacheur de freinage est un interrupteur commandé $T_h$ en série avec une résistance $R_f$, entre les deux bornes du bus. Il est fermé dès que $E$
+    dépasse un seuil d'enclenchement $E_\mathrm{on}$, ouvert sous un seuil légèrement inférieur ; à fréquence élevée, cela revient à appliquer à $R_f$
+    un rapport cyclique $\alpha$, soit une puissance moyenne $\alpha E^2/R_f$. Le hacheur tient la tension du bus à $E_\mathrm{on}$ tant que la résistance
+    peut absorber la puissance renvoyée, d'où la condition de dimensionnement :
+  </p>
+  <div class="formule-cle">
+    $$R_f \le \frac{E_\mathrm{on}^2}{P_{g,\max}}, \qquad \alpha = \frac{P_g\,R_f}{E_\mathrm{on}^2}, \qquad R_f \ge R_{f,\min}$$
+    <p class="formule-cle-legende">
+      $R_f$ en ohms, $E_\mathrm{on}$ en volts, $P_{g,\max}$ puissance de freinage crête en watts, $\alpha$ sans dimension. La borne haute est une règle
+      de conception déduite de la loi de Joule ; la borne basse $R_{f,\min}$ est une donnée du constructeur, fixée par le courant admissible de $T_h$,
+      $E_\mathrm{on}/R_f$. Cas limite : $P_g$ supérieure à $E_\mathrm{on}^2/R_f$, le rapport cyclique sature à $1$ et la tension du bus repart à la hausse.
+    </p>
+  </div>
+  <p>
+    La résistance se dimensionne ensuite thermiquement sur deux grandeurs distinctes : l'énergie d'un freinage, qui fixe l'échauffement pendant
+    l'impulsion, et la puissance moyenne sur un cycle d'exploitation, qui fixe sa puissance continue. Confondre la puissance crête et la puissance
+    moyenne conduit soit à une résistance énorme, soit à une résistance qui brûle.
+  </p>
+
+  <h3 id="e-solutions">Que faire de l'énergie de freinage</h3>
+  <p>
+    Cinq stratégies existent, de la plus économique à la plus élaborée. Elles diffèrent par le matériel, par la destination de l'énergie et par la
+    maîtrise du temps d'arrêt.
+  </p>
+  <ul>
+    <li><strong>Rampe allongée et régulateur de surtension.</strong> La décélération est choisie assez lente pour que la charge freine seule, ou le
+      variateur suspend sa rampe dès que la tension du bus atteint un seuil. Aucun matériel ; le temps d'arrêt n'est plus garanti.</li>
+    <li><strong>Hacheur et résistance.</strong> L'énergie est dissipée en chaleur. Simple et robuste, indispensable en levage avec redresseur à diodes ;
+      la résistance doit être ventilée et protégée.</li>
+    <li><strong>Bus continu commun.</strong> Plusieurs onduleurs partagent un même bus : l'énergie d'un moteur qui freine alimente ceux qui tirent.
+      Utile quand les freinages et les tractions se recouvrent dans le temps.</li>
+    <li><strong>Redresseur actif.</strong> Un onduleur triphasé fonctionnant en redresseur, avec son filtre de ligne, renvoie l'énergie au réseau et
+      absorbe un courant presque sinusoïdal. Coût et complexité supérieurs ; il faut une source capable de recevoir de la puissance.</li>
+    <li><strong>Freinage par le moteur lui-même.</strong> Injection de courant continu ou surexcitation du flux : l'énergie est dissipée dans les
+      enroulements. Commode pour des arrêts occasionnels de faible énergie, au prix d'un échauffement du moteur.</li>
+  </ul>
+
+  <h3 id="e-statut">Loi, convention, approximation, règle de conception et donnée du constructeur</h3>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Catégorie</th><th>Dans cette séance</th></tr></thead>
+      <tbody>
+        <tr><td>Loi physique</td><td>Principe fondamental de la dynamique en rotation, $P = C\Omega$, conservation de l'énergie dans le bus, loi des nœuds, conduction unidirectionnelle des diodes, signe du couple asynchrone selon le glissement.</td></tr>
+        <tr><td>Convention</td><td>Sens direct de rotation, signe des couples moteur et résistant, axes du plan couple et vitesse et numérotation des quadrants, flèches des courants du bus, borne négative prise comme référence.</td></tr>
+        <tr><td>Approximation</td><td>Rendement $\eta$ constant, valeurs moyennées sur le découpage, arbre rigide, couple linéaire au voisinage du synchronisme, tension initiale du bus prise égale à $540\ \mathrm{V}$.</td></tr>
+        <tr><td>Règle de conception</td><td>$R_f \le E_\mathrm{on}^2/P_{g,\max}$ avec une marge, résistance dimensionnée à la fois sur l'énergie d'un freinage et sur la puissance moyenne, rampe de décélération plus longue que le temps critique calculé.</td></tr>
+        <tr><td>Constructeur ou norme</td><td>Seuils de surtension et d'enclenchement du hacheur, valeur minimale de $R_f$, limite de courant du variateur, catégories d'arrêt exigées par l'analyse de risque de la machine : à lire dans la documentation du variateur et les textes applicables à la machine.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Le schéma principal de la séance est l'architecture interne d'un variateur de fréquence. Il réunit sur une même figure les étages étudiés
+    séparément depuis le cours <a href="#/cours/diodes-de-puissance">Diodes de puissance</a>, et les deux sens possibles de la puissance.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 780 530" role="img" aria-label="Architecture interne d'un variateur de fréquence : réseau L1 L2 L3 et PE, fusibles, self de ligne, redresseur à diodes, précharge par résistance Rp et contacteur KMp, bus continu avec condensateur et mesure de tension, hacheur de freinage vers résistance externe Rf, onduleur à six IGBT, câble blindé, moteur et pompe ; carte de commande avec mesures, modulation, régulation, protections et liaison vers l'automate ; flux de puissance en moteur et en freinage"><defs><marker id="fl-arch" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 110H40M14 130H40M14 150H40"/><rect x="40" y="96" width="62" height="68" rx="6"/><path d="M102 130H120"/><rect x="120" y="96" width="62" height="68" rx="6"/><path d="M182 130H200"/><rect x="200" y="86" width="88" height="88" rx="6"/><path d="M288 104H312M288 156H312"/><path d="M312 104V70H700M312 156V230H700"/><rect x="322" y="58" width="44" height="24" rx="3"/><path d="M380 70h0"/><rect x="392" y="94" width="44" height="120" rx="6"/><path d="M414 70V94M414 214V230"/><rect x="470" y="94" width="72" height="120" rx="6"/><path d="M506 70V94M506 214V230"/><path d="M542 154H560V310"/><rect x="530" y="310" width="60" height="26" rx="3"/><rect x="580" y="94" width="96" height="120" rx="6"/><path d="M628 70V94M628 214V230"/><path d="M676 124H716M676 154H716M676 184H716"/><circle cx="738" cy="154" r="22"/><path d="M738 176V206"/><rect x="712" y="206" width="52" height="34" rx="8"/><rect x="200" y="372" width="476" height="76" rx="8"/></g><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="5 4" stroke-linecap="round"><path d="M414 214V372" marker-end="url(#fl-arch)"/><path d="M628 214V372" marker-start="url(#fl-arch)"/><path d="M698 140V410H676" marker-end="url(#fl-arch)"/><path d="M506 372V214" marker-end="url(#fl-arch)"/><path d="M344 82V372" marker-start="url(#fl-arch)"/><path d="M200 410H120" marker-end="url(#fl-arch)"/></g><g fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"><path d="M60 482H700" marker-end="url(#fl-arch)"/></g><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="10 6"><path d="M700 512H470" marker-end="url(#fl-arch)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11.5"><text x="2" y="96">L1 L2 L3</text><text x="2" y="182">PE</text><text x="46" y="126">fusibles</text><text x="46" y="142">aR</text><text x="126" y="126">self de</text><text x="126" y="142">ligne</text><text x="206" y="118">redresseur</text><text x="206" y="134">PD3 à</text><text x="206" y="150">diodes</text><text x="320" y="52">R_p, KM_p</text><text x="304" y="100">+</text><text x="304" y="174">-</text><text x="396" y="138">C_bus</text><text x="396" y="156">E mesurée</text><text x="474" y="130">hacheur</text><text x="474" y="146">de</text><text x="474" y="162">freinage</text><text x="536" y="328">R_f</text><text x="596" y="328" font-size="10.5">résistance externe</text><text x="586" y="130">onduleur</text><text x="586" y="146">6 IGBT,</text><text x="586" y="162">6 diodes</text><text x="586" y="178">MLI 4 kHz</text><text x="731" y="159">M</text><text x="718" y="228" font-size="10.5">pompe</text><text x="682" y="116" font-size="10.5">câble blindé</text><text x="212" y="394">carte de commande : mesures de E et des courants, MLI, loi U/f ou</text><text x="212" y="412">contrôle vectoriel, rampes, régulateur de surtension, protections,</text><text x="212" y="430">commande du hacheur et de la précharge, liaison vers l'automate</text><text x="80" y="404" font-size="10.5">automate</text><text x="62" y="472">flux de puissance en moteur : réseau vers pompe</text><text x="470" y="504">flux en freinage : pompe vers bus et R_f</text><text x="420" y="64" font-size="10.5">borne positive du bus</text><text x="640" y="246" font-size="10.5">réf. 0 V</text></g></svg>
+    <figcaption>
+      Architecture interne d'un variateur de fréquence à redresseur à diodes. Les blocs suivent le trajet de la puissance de gauche à droite :
+      fusibles ultrarapides, self de ligne, pont PD3, précharge par résistance $R_p$ court-circuitée par le contacteur $KM_p$ (vue dans le cours
+      <a href="#/cours/regime-transitoire-rc">Régime transitoire RC</a>), bus continu entre la borne positive $+$ et la borne négative $-$, prise comme
+      référence, hacheur de freinage vers la résistance externe $R_f$, onduleur, câble blindé, moteur et pompe. La flèche épaisse en trait plein est le
+      flux de puissance en moteur, du réseau vers la pompe ; la flèche en tirets longs est le flux en freinage, qui remonte de la pompe jusqu'au bus et
+      s'arrête à la résistance, puisque le pont de diodes ne la laisse pas passer. Les flèches fines en tirets courts sont les liaisons de mesure et de
+      commande avec la carte de commande : tension du bus, courants de sortie, ordres de l'onduleur, du hacheur et du contacteur de précharge,
+      échanges avec l'automate.
+    </figcaption>
+  </figure>
+  <p>
+    Le tableau suivant compare les solutions de traitement de l'énergie de freinage. Il sert de grille de choix dans la méthode de la section G et
+    dans l'application industrielle.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Solution</th><th>Destination de l'énergie</th><th>Matériel ajouté</th><th>Temps d'arrêt</th><th>Cas typiques</th></tr></thead>
+      <tbody>
+        <tr><td>Rampe allongée, régulateur de surtension</td><td>Charge et pertes</td><td>Aucun</td><td>Imposé par la charge</td><td>Pompes, ventilateurs, faibles inerties</td></tr>
+        <tr><td>Roue libre</td><td>Charge et frottements</td><td>Aucun</td><td>Non maîtrisé</td><td>Arrêt d'urgence d'une pompe, charge sans danger</td></tr>
+        <tr><td>Hacheur et résistance</td><td>Chaleur</td><td>Hacheur, souvent intégré, résistance ventilée</td><td>Maîtrisé</td><td>Levage, centrifugeuses, arrêts rapides</td></tr>
+        <tr><td>Bus continu commun</td><td>Autres moteurs du bus</td><td>Liaisons, protections, précharge commune</td><td>Maîtrisé si un consommateur existe</td><td>Enrouleurs, lignes multimoteurs</td></tr>
+        <tr><td>Redresseur actif</td><td>Réseau</td><td>Onduleur d'entrée et filtre de ligne</td><td>Maîtrisé</td><td>Levage intensif, ascenseurs, bancs d'essai</td></tr>
+        <tr><td>Injection de courant continu, surexcitation</td><td>Enroulements du moteur</td><td>Aucun</td><td>Partiellement maîtrisé</td><td>Arrêts occasionnels, faibles énergies</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    L'organigramme ci-dessous résume la démarche de résolution d'un problème de freinage : du cycle mécanique jusqu'au choix de la solution et à ses
+    contrôles.
+  </p>
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Cycle : J, C_r, vitesses, durées"] --> B["C_m = C_r - J a sur chaque phase"]
+  B --> C{"C_m change de signe ?"}
+  C -->|"Non"| D["Moteur seul : pont de diodes suffisant"]
+  C -->|"Oui"| E{"Énergie renvoyée inférieure à la réserve du bus ?"}
+  E -->|"Oui"| G["Le bus suffit"]
+  E -->|"Non"| H{"Temps d'arrêt imposé ?"}
+  H -->|"Non"| I["Rampe allongée ou régulateur de surtension"]
+  H -->|"Oui, énergie annuelle faible"| K["Hacheur : valeur de R_f, énergie, puissance moyenne"]
+  H -->|"Oui, énergie annuelle forte"| L["Redresseur actif ou bus commun"]
+  D & G & I & K & L --> M["Contrôles : dimensions, limite de courant, seuils du constructeur"]</pre>
+    <figcaption>
+      Organigramme de résolution. Les rectangles sont des calculs, les losanges des décisions. Le premier test porte sur le signe du couple moteur :
+      tant qu'il reste positif, aucune énergie ne remonte. Le deuxième compare l'énergie renvoyée à la réserve du bus ; le troisième oriente, selon le
+      temps d'arrêt exigé et l'énergie annuelle, vers une solution sans matériel, une résistance ou une récupération. Toutes les branches aboutissent aux mêmes contrôles.
+    </figcaption>
+  </figure>
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <ul>
+    <li><a href="#d-quadrants-figure" data-renvoi="d-quadrants-figure">Plan couple et vitesse et chaîne du variateur</a> : simulation manipulable, en section D.</li>
+    <li><a href="#e-quadrants-figure" data-renvoi="e-quadrants-figure">Les quatre quadrants et leurs applications</a>, en section E.</li>
+    <li><a href="#e-couple-figure" data-renvoi="e-couple-figure">Caractéristique couple et vitesse en moteur et en génératrice</a> : simulation, en section E.</li>
+    <li><a href="#e-bus-figure" data-renvoi="e-bus-figure">Bus continu, conventions et hacheur de freinage</a>, en section E.</li>
+    <li><a href="#h-figure" data-renvoi="h-figure">Bilan de puissance du levage en descente</a>, en section H.</li>
+    <li><a href="#i-figure" data-renvoi="i-figure">Destination de l'énergie au ralentissement de la pompe</a> et <a href="#i-freinage-figure" data-renvoi="i-freinage-figure">simulation du ralentissement et du bus</a>, en section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <ol>
+    <li>Fixer les conventions : sens direct de rotation, signes de $C_m$ et de $C_r$, axes du plan couple et vitesse, flèches des courants du bus,
+      référence des potentiels. Convertir les vitesses en $\mathrm{rad/s}$ et ramener inerties et couples à l'arbre du moteur.</li>
+    <li>Décrire le cycle mécanique : phases d'accélération, de vitesse constante, de ralentissement ou de descente, avec les vitesses, les durées et le
+      couple résistant en fonction de la vitesse.</li>
+    <li>Pour chaque phase, calculer le couple moteur nécessaire par $C_m = C_r + J\,\mathrm{d}\Omega/\mathrm{d}t$ et le placer dans le plan couple et
+      vitesse : identifier les phases génératrices.</li>
+    <li>Calculer la puissance renvoyée au bus $P_g = -\eta\,C_m\Omega$, sa valeur crête et l'énergie $W_g$ de chaque phase génératrice, par intégration ou
+      par bilan d'énergie cinétique et potentielle diminué du travail de la charge.</li>
+    <li>Calculer la réserve du bus $\frac{1}{2}C_\mathrm{bus}(E_{\max}^2 - E_0^2)$ avec la tension initiale la plus haute, celle du réseau haut, et le
+      temps avant surtension.</li>
+    <li>Choisir la solution avec l'organigramme et le tableau comparatif de la section F. Pour un hacheur : $R_f \le E_\mathrm{on}^2/P_{g,\max}$ avec
+      une marge, $R_f \ge R_{f,\min}$, énergie par freinage, puissance moyenne sur le cycle.</li>
+    <li>Contrôler : dimensions, ordres de grandeur, limite de courant du variateur pour le couple de freinage demandé, cohérence avec les seuils du
+      constructeur, bilan d'énergie bouclé.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Un treuil de levage descend une charge de $m = 2000\ \mathrm{kg}$ à vitesse constante $v = 0{,}25\ \mathrm{m/s}$ sur $12\ \mathrm{m}$. Le moteur
+    asynchrone tourne alors à $1450\ \mathrm{tr/min}$. Il est alimenté par un variateur dont le bus a une capacité de $1{,}1\ \mathrm{mF}$ et une
+    tension de repos de $540\ \mathrm{V}$ ; le hacheur s'enclenche à $760\ \mathrm{V}$ et le variateur déclenche à $800\ \mathrm{V}$. Ces seuils, comme
+    les rendements, sont des hypothèses d'étude. On prend $g = 9{,}81\ \mathrm{m/s^2}$.
+  </p>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <ul>
+    <li><strong>Données.</strong> Rendement mécanique du réducteur et du tambour $\eta_\text{méca} = 0{,}85$, rendement du moteur en génératrice
+      $\eta_\mathrm{mot} = 0{,}88$, rendement de l'onduleur $\eta_\mathrm{ond} = 0{,}97$ ; $20$ descentes par heure ; résistance minimale admise par le
+      constructeur supposée de $56\ \Omega$.</li>
+    <li><strong>Inconnues.</strong> Quadrant de fonctionnement, puissance renvoyée au bus, temps avant surtension sans hacheur, valeur de $R_f$, rapport
+      cyclique du hacheur, énergie par descente, puissance moyenne de la résistance.</li>
+    <li><strong>Stratégie.</strong> Partir de la puissance potentielle libérée par la charge, appliquer les rendements dans le sens génératrice, puis
+      appliquer les formules du bus et du hacheur.</li>
+  </ul>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li><strong>Quadrant.</strong> Sens direct choisi à la montée. En descente, $\Omega \lt 0$ ; le moteur retient la charge, donc $C_m \gt 0$. Couple
+      et vitesse de signes contraires : quadrant 4, génératrice.</li>
+    <li><strong>Puissance libérée par la charge.</strong> $P_\mathrm{ch} = mgv = 2000 \times 9{,}81 \times 0{,}25 = 4905\ \mathrm{W}$.</li>
+    <li><strong>Puissance sur l'arbre du moteur.</strong> En génératrice, les pertes du réducteur sont prélevées avant le moteur :
+      $P_\mathrm{arbre} = \eta_\text{méca}P_\mathrm{ch} = 0{,}85 \times 4905 = 4169\ \mathrm{W}$. Avec $\Omega = 2\pi \times 1450/60 = 151{,}84\ \mathrm{rad/s}$,
+      le couple de retenue vaut $C_m = 4169/151{,}84 = 27{,}46\ \mathrm{N \cdot m}$.</li>
+    <li><strong>Puissance renvoyée au bus.</strong> $P_g = 4169 \times 0{,}88 \times 0{,}97 = 3559\ \mathrm{W}$, soit un courant moyen
+      $i_o = -3559/540 = -6{,}59\ \mathrm{A}$ entrant dans l'onduleur.</li>
+    <li><strong>Temps avant surtension sans hacheur.</strong> Jusqu'à $760\ \mathrm{V}$ :
+      $t = \frac{1{,}1 \times 10^{-3}\,(760^2 - 540^2)}{2 \times 3559} = \frac{1{,}1 \times 10^{-3} \times 286\,000}{7118} = 44{,}2\ \mathrm{ms}$. Le bus ne
+      peut pas tenir une descente de $48\ \mathrm{s}$ : le hacheur est indispensable.</li>
+    <li><strong>Résistance.</strong> Puissance de dimensionnement avec une marge de $50\ \%$ pour les freinages en fin de descente et les variations de
+      charge : $P_{g,\max} = 1{,}5 \times 3559 = 5338\ \mathrm{W}$. D'où $R_f \le 760^2/5338 = 108{,}2\ \Omega$. On retient $R_f = 100\ \Omega$, au-dessus des
+      $56\ \Omega$ du constructeur ; courant de $T_h$ : $760/100 = 7{,}6\ \mathrm{A}$ ; puissance pendant la conduction : $760^2/100 = 5776\ \mathrm{W}$.</li>
+    <li><strong>Rapport cyclique en descente établie.</strong> $\alpha = 3559/5776 = 0{,}616$.</li>
+    <li><strong>Énergie par descente.</strong> Durée $12/0{,}25 = 48\ \mathrm{s}$ ; $W = 3559 \times 48 = 170{,}8\ \mathrm{kJ}$.</li>
+    <li><strong>Puissance moyenne de la résistance.</strong> $20 \times 170{,}8\ \mathrm{kJ}$ par heure : $P_\mathrm{moy} = 3\,416\,000/3600 = 949\ \mathrm{W}$.
+      La résistance doit tenir environ $1\ \mathrm{kW}$ en continu et $3{,}6\ \mathrm{kW}$ pendant $48\ \mathrm{s}$.</li>
+  </ol>
+  <figure id="h-figure">
+    <svg viewBox="0 0 760 300" role="img" aria-label="Bilan de puissance du treuil en descente : charge 4905 W, réducteur et tambour, arbre 4169 W, moteur en génératrice, 3669 W électriques, onduleur, bus 3559 W, hacheur et résistance de 100 ohms ; pertes à chaque étage ; quadrant 4"><defs><marker id="fl-lev" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="40" width="100" height="80" rx="8"/><rect x="160" y="40" width="100" height="80" rx="8"/><rect x="310" y="40" width="100" height="80" rx="8"/><rect x="460" y="40" width="100" height="80" rx="8"/><rect x="610" y="40" width="140" height="80" rx="8"/><path d="M60 120V180"/><rect x="30" y="180" width="60" height="44" rx="4"/></g><g fill="none" stroke="currentColor" stroke-linecap="round"><path d="M110 72H160" stroke-width="7" marker-end="url(#fl-lev)"/><path d="M260 72H310" stroke-width="6" marker-end="url(#fl-lev)"/><path d="M410 72H460" stroke-width="5.4" marker-end="url(#fl-lev)"/><path d="M560 72H610" stroke-width="5.2" marker-end="url(#fl-lev)"/><path d="M210 120V160" stroke-width="1.6" marker-end="url(#fl-lev)" stroke-dasharray="4 3"/><path d="M360 120V160" stroke-width="1.6" marker-end="url(#fl-lev)" stroke-dasharray="4 3"/><path d="M510 120V160" stroke-width="1.6" marker-end="url(#fl-lev)" stroke-dasharray="4 3"/><path d="M60 250V280" stroke-width="2" marker-end="url(#fl-lev)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11.5"><text x="18" y="64">charge</text><text x="18" y="82">2000 kg</text><text x="18" y="100">v = 0,25 m/s</text><text x="168" y="64">réducteur</text><text x="168" y="82">et tambour</text><text x="168" y="100">η = 0,85</text><text x="318" y="64">moteur en</text><text x="318" y="82">génératrice</text><text x="318" y="100">η = 0,88</text><text x="468" y="64">onduleur</text><text x="468" y="82">η = 0,97</text><text x="468" y="100">i_o = -6,59 A</text><text x="618" y="64">bus et hacheur</text><text x="618" y="82">R_f = 100 Ω</text><text x="618" y="100">α = 0,616</text><text x="135" y="30" text-anchor="middle">4905 W</text><text x="285" y="30" text-anchor="middle">4169 W</text><text x="435" y="30" text-anchor="middle">3669 W</text><text x="585" y="30" text-anchor="middle">3559 W</text><text x="190" y="176">736 W perdus</text><text x="340" y="176">500 W perdus</text><text x="490" y="176">110 W perdus</text><text x="100" y="200">masse qui descend</text><text x="100" y="218">sens de déplacement</text><text x="72" y="284">v</text><text x="330" y="226">quadrant 4 : Ω = -151,84 rad/s, C_m = +27,46 N.m</text><text x="330" y="246">P_m = C_m Ω = -4169 W : la machine reçoit</text><text x="330" y="266">énergie par descente de 12 m : 170,8 kJ en 48 s</text></g></svg>
+    <figcaption>
+      Bilan de puissance du treuil en descente établie. Les blocs sont parcourus de gauche à droite, de la charge vers la résistance : c'est le sens de
+      la puissance en génératrice. L'épaisseur des flèches horizontales décroît avec la puissance transmise, inscrite au-dessus de chacune ; les flèches verticales en tirets courts
+      sont les pertes de chaque étage. La flèche sous la masse indique le sens du déplacement, vers le bas, opposé au sens direct choisi à la montée.
+      Le cartouche rappelle les signes : vitesse négative, couple positif, puissance mécanique du moteur négative.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li><strong>Dimensions.</strong> $\mathrm{kg \cdot m \cdot s^{-2} \cdot m \cdot s^{-1}} = \mathrm{W}$ ; $\mathrm{V^2/W} = \Omega$ ; $\mathrm{F \cdot V^2/W} = \mathrm{s}$.</li>
+    <li><strong>Bilan.</strong> $4905 = 3559 + 736 + 500 + 110$ à l'arrondi près : toute la puissance libérée est retrouvée.</li>
+    <li><strong>Ordre de grandeur.</strong> Le bus absorbe au plus $\frac{1}{2} \times 1{,}1 \times 10^{-3} \times (800^2 - 540^2) = 192\ \mathrm{J}$, près de
+      neuf cents fois moins qu'une descente : la conclusion ne dépend pas de la précision des rendements.</li>
+    <li><strong>Couple et limite de courant.</strong> $27{,}5\ \mathrm{N \cdot m}$ correspond à un moteur de quelques kilowatts à son couple nominal ; le
+      variateur doit pouvoir fournir ce couple en génératrice en permanence, et davantage pour arrêter la descente.</li>
+    <li><strong>Sensibilité.</strong> Un redresseur actif récupérerait au plus $170{,}8\ \mathrm{kJ}$ par descente, soit environ $3{,}8\ \mathrm{MWh}$ par an pour
+      $20$ descentes par heure, $16$ heures par jour et $250$ jours par an : c'est ce chiffre, valorisé au prix de l'énergie, qui se compare au surcoût
+      du redresseur actif.</li>
+  </ul>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <p>
+    Retour au variateur de la pompe du projet fil rouge : moteur asynchrone de $30\ \mathrm{kW}$, $1475\ \mathrm{tr/min}$, $194{,}2\ \mathrm{N \cdot m}$ ;
+    pompe centrifuge sans hauteur statique, donc couple résistant quadratique $C_r = k\Omega^2$ avec $k = 194{,}2/154{,}46^2 = 8{,}14 \times 10^{-3}\ \mathrm{N \cdot m \cdot s^2}$ ;
+    inertie totale supposée de $0{,}5\ \mathrm{kg \cdot m^2}$ ; bus de $2{,}2\ \mathrm{mF}$ alimenté par un pont de diodes, sans hacheur à ce stade. La
+    question d'exploitation est simple : comment arrêter la pompe sans déclenchement, et faut-il une résistance de freinage ?
+  </p>
+  <figure id="i-figure">
+    <svg viewBox="0 0 760 330" role="img" aria-label="Destination de l'énergie lors d'un ralentissement de la pompe de 1475 à 737 tr/min en 0,2 s : 4475 J d'énergie cinétique, dont 2811 J absorbés par la pompe, 133 J de pertes et 1532 J renvoyés au bus, à comparer aux 383 J que le bus peut absorber entre 540 et 800 V"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M250 40V290"/><path d="M250 290H730"/></g><g fill="none" stroke="currentColor" stroke-width="2"><rect x="250" y="54" width="456" height="30" rx="3"/><rect x="250" y="104" width="286.4" height="30" rx="3"/><rect x="250" y="154" width="13.6" height="30" rx="3"/><rect x="250" y="204" width="156.1" height="30" rx="3"/><rect x="250" y="254" width="39" height="30" rx="3" stroke-dasharray="5 3"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="8" y="74">énergie cinétique libérée</text><text x="8" y="124">absorbée par la pompe</text><text x="8" y="174">pertes du moteur, onduleur</text><text x="8" y="224">renvoyée au bus</text><text x="8" y="274">réserve du bus 540 à 800 V</text><text x="566" y="124">2811 J</text><text x="276" y="174">133 J</text><text x="418" y="224">1532 J</text><text x="300" y="274">383 J</text><text x="610" y="40">4475 J</text><text x="430" y="312">longueurs proportionnelles aux énergies</text></g></svg>
+    <figcaption>
+      Destination de l'énergie lors du ralentissement de la pompe de $1475$ à $737\ \mathrm{tr/min}$ en $0{,}2\ \mathrm{s}$, avec $\eta = 0{,}92$ supposé.
+      Les longueurs des barres sont proportionnelles aux énergies. Les quatre premières barres, en trait plein, forment le bilan de l'arbre et de la
+      chaîne : $4475 \approx 2811 + 133 + 1532\ \mathrm{J}$, à l'arrondi près. La dernière
+      barre, en tirets, est la réserve du bus jusqu'au seuil de déclenchement supposé de $800\ \mathrm{V}$ : quatre fois trop petite.
+    </figcaption>
+  </figure>
+
+  <h3 id="i-donnees">Données, contraintes d'exploitation et calculs</h3>
+  <ul>
+    <li><strong>Seuils supposés.</strong> Tension de repos du bus $E_0 = 540\ \mathrm{V}$, limitation du régulateur de surtension à $760\ \mathrm{V}$,
+      déclenchement à $800\ \mathrm{V}$, rendement arbre vers bus $\eta = 0{,}92$, limite de couple à $150\ \%$ de $C_n$. Réserve du bus :
+      $383\ \mathrm{J}$ jusqu'à $800\ \mathrm{V}$, $315\ \mathrm{J}$ jusqu'à $760\ \mathrm{V}$.</li>
+    <li><strong>Rampe de $0{,}2\ \mathrm{s}$ vers $737\ \mathrm{tr/min}$.</strong> Décélération $a = 77{,}28/0{,}2 = 386{,}4\ \mathrm{rad/s^2}$, soit
+      $Ja = 193{,}2\ \mathrm{N \cdot m}$. Le moteur doit fournir $C_m = k\Omega^2 - 193{,}2$ : presque nul au début, $-144{,}7\ \mathrm{N \cdot m}$ à la fin.
+      Puissance crête renvoyée : $0{,}92 \times 11{,}46 = 10{,}54\ \mathrm{kW}$ ; énergie renvoyée : $1532\ \mathrm{J}$. Déclenchement en surtension après
+      $84\ \mathrm{ms}$, à environ $1163\ \mathrm{tr/min}$.</li>
+    <li><strong>Arrêt complet par rampe linéaire de durée $T$.</strong> Avec $a = \Omega_0/T$, le moteur devient générateur quand $k\Omega^2 \lt Ja$,
+      soit sous $\Omega^* = \sqrt{Ja/k}$. L'énergie renvoyée à l'arbre se calcule en changeant de variable, $\mathrm{d}t = \mathrm{d}\Omega/a$ :
+      $W_\mathrm{arbre} = \int_0^{\Omega^*}(Ja - k\Omega^2)\,\Omega\,\frac{\mathrm{d}\Omega}{a} = \frac{1}{a}\left(\frac{Ja\,\Omega^{*2}}{2} - \frac{k\,\Omega^{*4}}{4}\right) = \frac{J^2a}{4k}$.
+      Avec $k = C_0/\Omega_0^2$ : $W_g = \eta\,\frac{J^2\,\Omega_0^3}{4\,C_0\,T}$, formule valable tant que $\Omega^* \lt \Omega_0$.</li>
+    <li><strong>Application.</strong> Pour $T = 10\ \mathrm{s}$ : $\Omega^* = 30{,}8\ \mathrm{rad/s}$, soit $294\ \mathrm{tr/min}$ ;
+      $W_g = 0{,}92 \times \frac{0{,}25 \times 154{,}46^3}{4 \times 194{,}2 \times 10} = 109\ \mathrm{J}$, et le bus monte à environ $625\ \mathrm{V}$ dans ce modèle.
+      Rampe minimale pour rester sous $760\ \mathrm{V}$ : $T \ge \eta\,\frac{J^2\Omega_0^3}{4\,C_0 \times 315} = 3{,}5\ \mathrm{s}$.</li>
+  </ul>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Avant de lancer la simulation, écrivez vos prévisions : avec la rampe de $0{,}2\ \mathrm{s}$ et sans dispositif, à quel moment le variateur
+      déclenche-t-il ? Avec le régulateur de surtension, combien de temps faut-il pour atteindre $737\ \mathrm{tr/min}$ ? Avec un hacheur de
+      $60\ \Omega$, la tension restera-t-elle exactement à $760\ \mathrm{V}$ ?
+    </p>
+  </div>
+  <figure id="i-freinage-figure">
+    <div id="i-freinage-curseurs"></div>
+    <div id="i-freinage-vitesse"></div>
+    <div id="i-freinage-bus"></div>
+    <div id="i-freinage-lecteur"></div>
+    <div id="i-freinage-valeurs"></div>
+    <figcaption>
+      Simulation du ralentissement de la pompe. Les curseurs règlent la durée de la rampe, la vitesse visée, l'inertie, le dispositif et la résistance
+      de freinage ; tous les paramètres sont pilotés par vous seul. Le premier tracé montre la consigne de vitesse en rampe, en trait fin, et la vitesse
+      réelle, en trait épais ; le second, la tension du bus, avec en tirets les seuils de $760$ et $800\ \mathrm{V}$. Le lecteur parcourt le temps
+      simulé : la ligne verticale en pointillé marque l'instant observé, et le panneau affiche à cet instant la vitesse, le couple du moteur, la puissance
+      renvoyée au bus et sa tension. Le modèle intègre l'équation mécanique, la limite de couple et le bilan d'énergie du bus par pas de $0{,}1\ \mathrm{ms}$.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Sans dispositif, la tension atteint $800\ \mathrm{V}$ en $84\ \mathrm{ms}$ : l'onduleur se bloque et la pompe
+    ralentit en roue libre, plus lentement que demandé. Avec le régulateur de surtension, le variateur suspend sa rampe dès $760\ \mathrm{V}$ : la pompe
+    atteint $737\ \mathrm{tr/min}$ en $0{,}38\ \mathrm{s}$ environ, à peine moins que les $0{,}40\ \mathrm{s}$ de son ralentissement naturel, puisque
+    seuls les $315\ \mathrm{J}$ de réserve jusqu'à $760\ \mathrm{V}$ ont pu être freinés ; on n'a presque rien gagné en temps, mais on a évité le défaut. Avec $60\ \Omega$, la résistance ne peut absorber que $760^2/60 = 9{,}6\ \mathrm{kW}$, moins que la crête de
+    $10{,}5\ \mathrm{kW}$ : la tension dépasse un peu le seuil, vers $781\ \mathrm{V}$, sans déclencher. En allongeant la rampe, toutes les courbes
+    convergent : au-delà de $3{,}5\ \mathrm{s}$ pour un arrêt complet, le bus suffit seul.
+  </p>
+
+  <h3 id="i-compromis">Risques, choix d'ingénierie et compromis</h3>
+  <ul>
+    <li><strong>Hydraulique.</strong> Arrêter brutalement une pompe provoque un coup de bélier dans la conduite de refoulement : même si l'électronique
+      le permettait, un arrêt en $0{,}2\ \mathrm{s}$ serait indésirable. La rampe de $10\ \mathrm{s}$ retenue dans le cours
+      <a href="#/cours/variation-de-vitesse-des-moteurs-asynchrones">Variation de vitesse des moteurs asynchrones</a> est donc à conserver, avec une
+      marge d'environ trois sur la rampe critique de $3{,}5\ \mathrm{s}$.</li>
+    <li><strong>Modèle.</strong> Le rendement constant surestime l'énergie renvoyée à basse vitesse : à quelques centaines de watts, les pertes à vide
+      du moteur, de l'ordre du kilowatt pour cette puissance, absorbent tout. Le résultat de $109\ \mathrm{J}$ pour $10\ \mathrm{s}$ est donc un
+      majorant.</li>
+    <li><strong>Défaut à éviter.</strong> Un réglage erroné de la rampe, ou une commande d'arrêt rapide, déclencherait le variateur. Activer le
+      régulateur de surtension du variateur protège contre cette erreur sans aucun matériel.</li>
+    <li><strong>Arrêt d'urgence.</strong> Pour une pompe, la coupure de l'onduleur suivie d'un arrêt en roue libre ne présente pas de danger mécanique ;
+      la catégorie d'arrêt exigée reste une conclusion de l'analyse de risque de la machine, non un choix électrique.</li>
+    <li><strong>Marche sur groupe électrogène.</strong> Un groupe diesel supporte mal une puissance inverse, qui le ferait accélérer et déclencher sa
+      protection de retour de puissance : un redresseur actif devrait de toute façon y bloquer la récupération. Avec quelques centaines de joules par
+      arrêt, aucune récupération n'est justifiée.</li>
+    <li><strong>Si un arrêt rapide devenait nécessaire.</strong> Pour la rampe de $0{,}2\ \mathrm{s}$, il faudrait $R_f \le 760^2/10\,541 = 54{,}8\ \Omega$
+      et une résistance capable d'absorber $1{,}5\ \mathrm{kJ}$ par arrêt. Ce dimensionnement reste en réserve, sans être retenu.</li>
+  </ul>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Ajout au projet fil rouge</span>
+    <p>
+      Freinage et quadrants du variateur de la pompe : fonctionnement en quadrant 1, incursions en quadrant 2 au seul ralentissement ; inertie supposée
+      de $0{,}5\ \mathrm{kg \cdot m^2}$, couple quadratique de $194{,}2\ \mathrm{N \cdot m}$ à $1475\ \mathrm{tr/min}$, bus de $2{,}2\ \mathrm{mF}$ de
+      $540\ \mathrm{V}$ à $800\ \mathrm{V}$ supposés, soit $383\ \mathrm{J}$ de réserve ($315\ \mathrm{J}$ jusqu'à $760\ \mathrm{V}$) ; une rampe de
+      $0{,}2\ \mathrm{s}$ vers $737\ \mathrm{tr/min}$ libérerait $4475\ \mathrm{J}$, dont $1532\ \mathrm{J}$ renvoyés au bus, et déclencherait en
+      $84\ \mathrm{ms}$ ; arrêt complet par rampe linéaire : $W_g = \eta J^2\Omega_0^3/(4C_0T)$, $109\ \mathrm{J}$ et $625\ \mathrm{V}$ pour $10\ \mathrm{s}$,
+      rampe minimale de $3{,}5\ \mathrm{s}$. Décisions : rampe de $10\ \mathrm{s}$ conservée, régulateur de surtension activé, arrêt d'urgence en roue
+      libre sous réserve de l'analyse de risque, ni hacheur ni redresseur actif (un arrêt en $0{,}2\ \mathrm{s}$ demanderait $54{,}8\ \Omega$ et
+      $10{,}5\ \mathrm{kW}$ crête, et provoquerait un coup de bélier) ; aucune récupération sur groupe électrogène. Hypothèses à remplacer par la
+      documentation du variateur, l'inertie réelle de la pompe et un enregistrement de la tension du bus pendant un arrêt.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Erreur</th><th>Pourquoi c'est faux</th><th>Correction</th></tr></thead>
+      <tbody>
+        <tr><td>Croire qu'un moteur ne peut renvoyer d'énergie que si on le commande pour cela.</td><td>Une machine asynchrone est génératrice dès que son rotor dépasse le synchronisme ; les diodes de l'onduleur conduisent le courant inverse sans ordre.</td><td>Tout ralentissement plus rapide que le ralentissement naturel renvoie de l'énergie au bus.</td></tr>
+        <tr><td>Penser qu'inverser l'ordre des phases du réseau permet de renvoyer l'énergie par le pont de diodes.</td><td>Le pont ne conduit qu'un courant positif sur sa sortie, quel que soit l'ordre des phases.</td><td>Il faut un étage d'entrée commandé : redresseur actif ou pont à thyristors tête-bêche.</td></tr>
+        <tr><td>Calculer l'énergie à évacuer comme toute la variation d'énergie cinétique.</td><td>La charge absorbe une partie de cette énergie pendant le ralentissement, et les pertes une autre.</td><td>$W_g = \eta\,(\Delta W_c - W_\mathrm{charge})$ en ralentissement, $\eta\,(mgh\,\eta_\text{méca})$ en descente.</td></tr>
+        <tr><td>Compter sur les condensateurs du bus pour stocker un freinage.</td><td>Leur réserve se compte en centaines de joules, car l'énergie croît en $E^2$ et la marge de tension est faible.</td><td>Comparer d'emblée $\frac{1}{2}C_\mathrm{bus}(E_{\max}^2 - E_0^2)$ à l'énergie du cycle.</td></tr>
+        <tr><td>Choisir la plus petite résistance possible pour mieux freiner.</td><td>Sous $R_{f,\min}$, le courant détruit l'interrupteur du hacheur ; une faible résistance ne dissipe pas davantage en moyenne.</td><td>$R_{f,\min} \le R_f \le E_\mathrm{on}^2/P_{g,\max}$.</td></tr>
+        <tr><td>Dimensionner la résistance sur sa puissance crête seulement, ou sur sa puissance moyenne seulement.</td><td>La crête fixe la valeur ohmique, l'énergie par freinage l'échauffement pendant l'impulsion, la moyenne la tenue continue.</td><td>Spécifier les trois : valeur, énergie d'impulsion, puissance moyenne sur le cycle.</td></tr>
+        <tr><td>Lire un numéro de quadrant sans vérifier les axes.</td><td>Selon que la vitesse est en abscisse ou en ordonnée, les quadrants 2 et 4 s'échangent.</td><td>Toujours raisonner sur les signes de $C_m$ et de $\Omega$, pas sur le numéro.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Démarche de diagnostic d'un défaut de surtension du bus : noter l'instant d'apparition, en ralentissement, en descente, à l'arrêt ou en marche
+    stable. En ralentissement ou en descente, il s'agit d'énergie de freinage : vérifier la rampe, le régulateur de surtension, le hacheur et la
+    continuité de la résistance, en mesurant sa valeur à froid. En marche stable ou à l'arrêt, l'énergie vient de l'amont : réseau haut, surtensions
+    de manœuvre, condensateurs de compensation commutés au voisinage, ou d'une charge qui entraîne le moteur de façon inattendue. Un enregistrement de
+    la tension du bus, disponible dans la plupart des variateurs, tranche en quelques minutes.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic industriel et une question
+    conceptuelle sans calcul. Chaque correction reste masquée jusqu'à votre tentative ou un clic explicite ; elle se déroule ensuite étape par étape,
+    avec un tracé ou un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangées : choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Le score s'affiche à la fin et
+    alimente le bilan de la section P.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+  <h3 id="m-formules">Cinq formules essentielles</h3>
+  <ol>
+    <li>Équation mécanique : $J\,\frac{\mathrm{d}\Omega}{\mathrm{d}t} = C_m - C_r$ ; puissance du moteur $P_m = C_m\Omega$.</li>
+    <li>Puissance renvoyée au bus en ralentissement : $P_g = \eta\,(Ja - C_r)\,\Omega$ si $Ja \gt C_r$ ; en descente, $P_g = \eta\,\eta_\text{méca}\,mgv$.</li>
+    <li>Réserve du bus et temps avant surtension : $W_\mathrm{bus} = \frac{1}{2}C_\mathrm{bus}(E_{\max}^2 - E_0^2)$, $t_{\max} = W_\mathrm{bus}/P_g$.</li>
+    <li>Résistance de freinage : $R_{f,\min} \le R_f \le E_\mathrm{on}^2/P_{g,\max}$, rapport cyclique $\alpha = P_gR_f/E_\mathrm{on}^2$.</li>
+    <li>Couple asynchrone au voisinage du synchronisme : $C_m \approx C_n\,\frac{n_s - n}{n_s - n_n}$, négatif dès que $n \gt n_s$.</li>
+  </ol>
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ul>
+      <li>Un pont de diodes ne renvoie jamais d'énergie au réseau : en freinage, la tension du bus monte.</li>
+      <li>Retrancher le travail de la charge et les pertes avant de comparer l'énergie à évacuer à la réserve du bus.</li>
+      <li>Prendre la tension initiale du bus au réseau haut : c'est le cas où la réserve est la plus faible.</li>
+      <li>Vérifier que le couple de freinage demandé reste dans la limite de courant du variateur.</li>
+      <li>Une résistance de freinage se spécifie par sa valeur, son énergie d'impulsion et sa puissance moyenne.</li>
+    </ul>
+  </div>
+  <h3 id="m-resume">Résumé</h3>
+  <p>
+    Un variateur enchaîne redresseur, bus continu et onduleur. L'onduleur est réversible par ses diodes ; le pont de diodes ne l'est pas. Le signe de
+    $C_m\Omega$ indique le sens de la puissance : quadrants 1 et 3 moteurs, 2 et 4 générateurs. Le moteur asynchrone freine dès que la fréquence place
+    le synchronisme sous la vitesse du rotor. L'énergie renvoyée vaut $\eta$ fois l'énergie cinétique ou potentielle libérée, moins le travail de la
+    charge. Le bus n'en absorbe que $\frac{1}{2}C_\mathrm{bus}(E_{\max}^2 - E_0^2)$, quelques centaines de joules. Au-delà : rampe allongée, régulateur de
+    surtension, hacheur avec $R_f \le E_\mathrm{on}^2/P_{g,\max}$, bus commun ou redresseur actif, selon l'énergie et le temps d'arrêt exigé.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance, deux sur le cours précédent, <a href="#/cours/onduleurs-triphases">Onduleurs triphasés</a>, une sur le
+    cours <a href="#/cours/redresseurs-triphases">Redresseurs triphasés</a>, vieux d'une semaine, et une sur le cours
+    <a href="#/cours/systemes-triphases-equilibres">Systèmes triphasés équilibrés</a>, vieux d'un mois, dont la relation entre puissance et courant de
+    ligne sert encore à dimensionner l'arrivée d'un variateur.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : simuler dans LTspice le bus d'un variateur à pont de diodes soumis à une phase de freinage, d'abord sans hacheur puis avec un hacheur à
+    hystérésis. Prédictions à écrire avant de commencer : tension de repos du bus, temps pour atteindre $800\ \mathrm{V}$ avec $10\ \mathrm{kW}$
+    renvoyés, allure de la tension avec le hacheur, courant crête dans la résistance.
+  </p>
+  <ol>
+    <li>Circuit : trois sources sinusoïdales de $325{,}3\ \mathrm{V}$ crête, $50\ \mathrm{Hz}$, déphasées de $120$ degrés, chacune en série avec
+      $0{,}6\ \mathrm{mH}$ et $0{,}1\ \Omega$ ; pont de six diodes <code>.model DP D(Ron=5m Vfwd=0.85)</code> ; condensateur de bus
+      $2{,}2\ \mathrm{mF}$ entre <code>P</code> et <code>N</code>, <code>N</code> relié à la masse de simulation ; condition initiale
+      <code>.ic V(P)=540</code>.</li>
+    <li>Onduleur et moteur remplacés par une source de courant comportementale entre <code>P</code> et <code>N</code> :
+      <code>B1 P N I=if(time&lt;0.3, 20k/max(V(P),100), -10k/max(V(P),100))</code>, qui absorbe $20\ \mathrm{kW}$ puis renvoie $10\ \mathrm{kW}$.</li>
+    <li>Hacheur : <code>S1 P X P N SH</code> avec <code>.model SH SW(Ron=10m Roff=10Meg Vt=750 Vh=10)</code>, en série avec $R_f = 55\ \Omega$
+      de <code>X</code> à <code>N</code>, et une diode de <code>X</code> vers <code>P</code> en parallèle inverse sur $R_f$. Commencer avec le hacheur
+      déconnecté.</li>
+    <li>Simulation : <code>.tran 0 0.45 0 10u</code> ; tracer <code>V(P)</code>, le courant de <code>B1</code>, le courant des diodes du pont et celui
+      de $R_f$ ; mesurer l'instant où <code>V(P)</code> atteint $800\ \mathrm{V}$.</li>
+    <li>Variantes : $R_f = 100\ \Omega$ ; puissance renvoyée de $5$ puis $15\ \mathrm{kW}$ ; condensateur de $1{,}1\ \mathrm{mF}$ ; sources portées à
+      $440\ \mathrm{V}$ composés pour le réseau haut.</li>
+  </ol>
+  <p>
+    Résultats attendus : en motorisation, un bus voisin de $525\ \mathrm{V}$ avec une ondulation à $300\ \mathrm{Hz}$ ; au passage en freinage, les
+    diodes du pont cessent de conduire et la tension monte ; sans hacheur, $800\ \mathrm{V}$ sont atteints environ $40\ \mathrm{ms}$ après l'inversion :
+    $2{,}2 \times 10^{-3}(800^2 - 540^2)/(2 \times 10^4) = 38{,}3\ \mathrm{ms}$ depuis $540\ \mathrm{V}$, $40{,}1\ \mathrm{ms}$ depuis $525\ \mathrm{V}$. Avec le
+    hacheur, la tension oscille entre $740$ et $760\ \mathrm{V}$, la résistance reçoit des impulsions d'environ $13{,}7\ \mathrm{A}$ et sa puissance moyenne
+    est égale aux $10\ \mathrm{kW}$ renvoyés, aux pertes près. Avec $100\ \Omega$, la résistance ne peut absorber que $5{,}8\ \mathrm{kW}$ : la tension
+    repart à la hausse.
+  </p>
+  <p>
+    Anomalies à observer et à expliquer : un courant négatif dans une diode du pont, signe d'un modèle de diode mal paramétré ; une tension qui monte
+    pendant la motorisation, source <code>B1</code> de signe inversé ; une oscillation très rapide du hacheur sans hystérésis, valeur de <code>Vh</code>
+    nulle ; une surtension à l'ouverture de l'interrupteur si l'on ajoute $20\ \mu\mathrm{H}$ en série avec $R_f$ et que l'on retire la diode. Variante
+    sans LTspice : en Python, intégrer $\frac{\mathrm{d}}{\mathrm{d}t}\left(\frac{1}{2}C_\mathrm{bus}E^2\right) = P_g - P_h$ par la méthode d'Euler avec un
+    pas de $0{,}1\ \mathrm{ms}$, et retrouver les courbes de la simulation de la section I.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours, notées de 0 à 4. Le bilan affiché sous la grille est calculé dans ce
+    navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement. Aucune estimation n'est
+    faite à votre place : seul le score réellement obtenu sert de référence. Le jalon visé à la fin de ce module demande d'analyser les principaux
+    convertisseurs de puissance, leurs formes d'onde, leurs pertes, leurs protections et leur intégration dans un variateur.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Le sens de la puissance dans un variateur se lit sur les signes du couple et de la vitesse : quadrants 1 et 3 moteurs, 2 et 4 générateurs ; l'onduleur suit sans commande particulière, le pont de diodes bloque.</li>
+    <li data-rang="02">L'énergie à évacuer est l'énergie libérée moins le travail de la charge et les pertes ; le bus n'en absorbe que $\frac{1}{2}C_\mathrm{bus}(E_{\max}^2 - E_0^2)$, quelques centaines de joules.</li>
+    <li data-rang="03">Selon l'énergie et le temps d'arrêt exigé, on choisit une rampe allongée ou un régulateur de surtension, un hacheur avec $R_{f,\min} \le R_f \le E_\mathrm{on}^2/P_{g,\max}$, un bus commun ou un redresseur actif.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> tenir les signes tout au long du raisonnement. Les erreurs typiques en découlent : énergie de
+    freinage confondue avec toute la variation d'énergie cinétique, quadrant lu sur un numéro au lieu des signes, résistance dimensionnée sur la seule
+    puissance moyenne. Le réflexe à installer : écrire $C_m = C_r + J\,\mathrm{d}\Omega/\mathrm{d}t$ avec des signes explicites avant toute formule, puis
+    vérifier que le bilan d'énergie se boucle.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Compatibilité électromagnétique, étudie les perturbations que ces convertisseurs
+    produisent. Question à préparer : l'onduleur de la pompe impose des sauts de mode commun de $171$ à $189\ \mathrm{V}$ environ $24\,000$ fois par
+    seconde, et le hacheur d'un levage commute $760\ \mathrm{V}$ vers une résistance placée hors de l'armoire. Par quels chemins ces fronts de tension
+    font-ils circuler des courants jusqu'à la terre et dans les câbles de mesure voisins, et pourquoi le câble d'une résistance de freinage doit-il être
+    traité comme un câble moteur ?
+  </p>
+
+</article>
