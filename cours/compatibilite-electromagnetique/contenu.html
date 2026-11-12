@@ -1,0 +1,966 @@
+<article class="cours" data-slug="compatibilite-electromagnetique">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/convertisseurs-et-moteurs">Convertisseurs et moteurs</a> s'est achevé sur une question : l'onduleur de la pompe impose
+      des sauts de mode commun de $171$ à $189\ \mathrm{V}$ environ $24\,000$ fois par seconde, et le hacheur d'un levage commute $760\ \mathrm{V}$ vers
+      une résistance placée hors de l'armoire. Par quels chemins ces fronts font-ils circuler des courants jusqu'à la terre et dans les câbles de mesure
+      voisins ? Réponse, que cette séance va établir pas à pas. Entre chaque conducteur du câble moteur et son écran, entre les enroulements du moteur et
+      sa carcasse, il existe des capacités parasites de quelques nanofarads au total. Chaque front de tension, d'une durée de quelques dizaines de
+      nanosecondes, les charge : un courant $i = C\,\mathrm{d}v/\mathrm{d}t$ de plusieurs ampères crête part vers la terre et revient au variateur par
+      l'écran, le conducteur de protection ou la charpente métallique. Sur ce trajet, il crée des chutes de tension dans les conducteurs communs, un
+      champ magnétique qui induit des tensions dans les boucles voisines, et il charge à son tour les capacités entre câbles. Le câble d'une résistance
+      de freinage porte exactement les mêmes fronts, puisque l'interrupteur du hacheur bascule la tension du bus en quelques dizaines de nanosecondes :
+      il se traite donc comme un câble moteur, blindé, court et éloigné des câbles de mesure.
+    </p>
+    <p>
+      La séance s'appuie sur la relation $i = C\,\mathrm{d}v/\mathrm{d}t$ du cours <a href="#/cours/condensateurs-et-champ-electrique">Condensateurs et
+      champ électrique</a> ; sur l'induction $v = L\,\mathrm{d}i/\mathrm{d}t$ et la loi de Faraday du cours <a href="#/cours/inductances-et-champ-magnetique">Inductances
+      et champ magnétique</a> ; sur le circuit oscillant du cours <a href="#/cours/regime-transitoire-rlc">Régime transitoire RLC</a> ; sur le spectre
+      d'un signal rectangulaire du cours <a href="#/cours/introduction-a-fourier">Introduction à Fourier</a> et le filtrage du cours
+      <a href="#/cours/filtres-passifs">Filtres passifs</a> ; sur les durées de commutation de l'IGBT du cours <a href="#/cours/mosfet-et-igbt">MOSFET et
+      IGBT</a>, soit $76\ \mathrm{ns}$ pour la pompe ; enfin sur la tension de mode commun $v_{nO}$ du cours <a href="#/cours/onduleurs-triphases">Onduleurs
+      triphasés</a> et sur l'architecture du variateur vue dans le cours précédent.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Un convertisseur moderne commute des centaines de volts en quelques dizaines de nanosecondes et des dizaines d'ampères en quelques centaines de
+    nanosecondes. Ces fronts sont la condition de son rendement : plus la commutation est rapide, plus les pertes sont faibles. Mais ils contiennent des
+    composantes jusqu'à plusieurs dizaines de mégahertz, une gamme où les capacités parasites conduisent et où chaque fil devient une inductance. La
+    compatibilité électromagnétique, ou CEM, est l'aptitude d'un appareil à fonctionner correctement dans son environnement électromagnétique sans
+    introduire lui-même de perturbations intolérables pour les autres appareils. Elle a donc deux faces : l'émission, ce qu'un appareil rejette, et
+    l'immunité, ce qu'il supporte.
+  </p>
+  <ul>
+    <li><strong>Armoires de variateurs.</strong> Mesures analogiques qui sautent quand le moteur tourne, entrées logiques qui changent d'état seules,
+      communications qui perdent des trames : la cause est presque toujours un courant de mode commun mal canalisé.</li>
+    <li><strong>Moteurs alimentés par onduleur.</strong> Courants de roulement qui creusent les pistes, claquage d'isolation par surtension en bout de
+      câble long, échauffement des écrans.</li>
+    <li><strong>Protections et mesures.</strong> Déclenchements intempestifs de dispositifs différentiels, compteurs et analyseurs perturbés, mesures
+      d'oscilloscope faussées par la masse de la sonde.</li>
+    <li><strong>Installations photovoltaïques et bornes de recharge.</strong> Mêmes onduleurs, mêmes fronts, avec de grandes surfaces de modules qui
+      forment une capacité importante vers la terre.</li>
+  </ul>
+  <p>
+    La CEM se traite à la conception, pas à la mise en service : un plan de câblage et de mise à la masse coûte quelques heures d'étude, une recherche de
+    panne de CEM sur site peut coûter des semaines. C'est aussi un domaine où l'intuition des basses fréquences trompe systématiquement. Cette séance
+    donne les modèles qui permettent de prévoir, de chiffrer et de corriger.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Expliquer le modèle source, chemin de couplage et victime, et classer une perturbation selon son chemin : impédance commune, capacitif, inductif, rayonné, et selon son mode : différentiel ou commun.</li>
+    <li data-rang="02">Décomposer des courants en modes différentiel et commun, et expliquer pourquoi quelques centaines de milliampères de mode commun perturbent autant que des ampères de mode différentiel.</li>
+    <li data-rang="03">Calculer l'ordre de grandeur d'une perturbation : courant $C\,\mathrm{d}v/\mathrm{d}t$, tension $M\,\mathrm{d}i/\mathrm{d}t$, chute dans une impédance commune, fréquences de coupure du spectre d'un front.</li>
+    <li data-rang="04">Calculer le courant de mode commun crête d'un variateur et de son câble, $\Delta V/Z_0$ corrigé par la durée du front, et l'énergie dissipée à chaque front.</li>
+    <li data-rang="05">Dimensionner un remède : inductance d'un tore de mode commun, raccordement d'écran, séparation des câbles, choix des retours de courant.</li>
+    <li data-rang="06">Identifier les sources et les chemins de perturbation dans une armoire, et proposer un plan de zonage, de câblage et de mise à la masse.</li>
+    <li data-rang="07">Diagnostiquer une perturbation à partir de ses symptômes : dépendance à la marche du variateur, à la longueur des câbles, au raccordement des écrans.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>Quatre notions suffisent pour suivre la séance.</p>
+  <ul>
+    <li><strong>Condensateur.</strong> $i = C\,\mathrm{d}v/\mathrm{d}t$ : un condensateur ne laisse passer un courant que si la tension à ses bornes
+      varie. Son impédance en régime sinusoïdal vaut $1/(C\omega)$ : elle chute quand la fréquence monte.</li>
+    <li><strong>Inductance et mutuelle.</strong> $v = L\,\mathrm{d}i/\mathrm{d}t$ ; une boucle traversée par le flux d'un courant voisin $i_s$ voit
+      apparaître $v = M\,\mathrm{d}i_s/\mathrm{d}t$, où $M$ est l'inductance mutuelle. Impédance $L\omega$, qui croît avec la fréquence.</li>
+    <li><strong>Circuit LC série.</strong> Excité par un échelon $\Delta V$, il oscille à $f_0 = 1/(2\pi\sqrt{LC})$ avec une amplitude de courant
+      $\Delta V/Z_0$, où $Z_0 = \sqrt{L/C}$ est l'impédance caractéristique ; une résistance série amortit l'oscillation.</li>
+    <li><strong>Spectre d'un signal rectangulaire.</strong> Ses harmoniques décroissent en $1/n$, soit $-20\ \mathrm{dB}$ par décade : un front
+      idéalement raide contient des fréquences arbitrairement élevées.</li>
+  </ul>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Notation de la séance</span>
+    <p>
+      Deux conducteurs 1 et 2 portent les courants $i_1$ et $i_2$, tous deux fléchés de la source vers la charge. Courant de mode différentiel
+      $i_\mathrm{MD} = (i_1 - i_2)/2$ ; courant de mode commun $i_\mathrm{MC} = i_1 + i_2$, qui revient par la terre ou la masse. En triphasé,
+      $i_\mathrm{MC} = i_a + i_b + i_c$ et la tension de mode commun vaut $v_\mathrm{MC} = (v_a + v_b + v_c)/3$, potentiels mesurés par rapport à une
+      référence fixée : le point milieu $O$ du bus pour la source, la terre pour le câble. $E$ : tension du bus ; $\Delta V$ : saut de tension de mode
+      commun à chaque commutation, $E/3$ pour un onduleur triphasé ; $t_r$ : durée d'un front. $C_\mathrm{MC}$ et $L_\mathrm{MC}$ : capacité et
+      inductance de la boucle de mode commun ; $Z_0 = \sqrt{L_\mathrm{MC}/C_\mathrm{MC}}$, $f_0 = 1/(2\pi\sqrt{L_\mathrm{MC}C_\mathrm{MC}})$.
+      $C_c$ : capacité de couplage entre deux conducteurs ; $M$ : inductance mutuelle ; $Z_c$ : impédance commune. Tensions en volts, courants en
+      ampères, fréquences en hertz ; $\mu_0 = 4\pi \times 10^{-7}\ \mathrm{H/m}$.
+    </p>
+  </div>
+  <p>
+    Mini-test de trois questions. Les réponses restent masquées, séparées de l'énoncé, jusqu'à votre tentative ou à un clic explicite.
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-hf">À haute fréquence, un fil est une inductance et un isolant est un condensateur</h3>
+  <p>
+    En continu et à $50\ \mathrm{Hz}$, un schéma électrique dit la vérité : le courant suit les fils dessinés, et un isolant isole. Dès que les
+    fréquences atteignent le mégahertz, deux éléments invisibles sur le schéma prennent le pouvoir. Un mètre de fil a une inductance d'environ
+    $1\ \mu\mathrm{H}$, soit $63\ \Omega$ à $10\ \mathrm{MHz}$ : le conducteur vert et jaune le plus solide n'est plus un court-circuit. Cent picofarads
+    entre deux câbles voisins, ou entre un enroulement et une carcasse, ne présentent plus que $159\ \Omega$ à la même fréquence. Le courant ne suit plus
+    les fils mais le chemin de plus faible impédance, qui passe par les capacités parasites et revient par la structure métallique la plus proche.
+  </p>
+  <p>
+    Or un front de quelques dizaines de nanosecondes contient précisément ces fréquences. Chaque commutation d'un convertisseur injecte donc dans
+    l'installation des courants qui empruntent des chemins non dessinés. Toute la CEM consiste à savoir où ils passent, et à leur offrir un chemin court
+    qui ne traverse aucun circuit sensible.
+  </p>
+
+  <h3 id="d-chaine">Source, chemin de couplage et victime</h3>
+  <p>
+    Une perturbation n'existe que si trois éléments sont réunis : une source qui produit des variations rapides de tension ou de courant, un chemin qui
+    transporte une partie de cette énergie, et une victime dont le fonctionnement est altéré. Supprimer l'un des trois suffit. Le schéma suivant
+    organise toute la séance autour de cette chaîne.
+  </p>
+  <figure id="d-chaine-figure">
+    <svg viewBox="0 0 780 300" role="img" aria-label="Chaîne de la perturbation : une source à fronts rapides, quatre chemins de couplage, impédance commune, capacitif, inductif et rayonné, puis une victime ; sous chaque bloc, le type de remède correspondant"><defs><marker id="fl-chaine" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="16" y="40" width="200" height="150" rx="10"/><rect x="290" y="20" width="200" height="190" rx="10"/><rect x="564" y="40" width="200" height="150" rx="10"/></g><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M216 115H284" marker-end="url(#fl-chaine)"/><path d="M490 115H558" marker-end="url(#fl-chaine)"/></g><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="5 4" stroke-linecap="round"><path d="M116 196V236" marker-end="url(#fl-chaine)"/><path d="M390 216V236" marker-end="url(#fl-chaine)"/><path d="M664 196V236" marker-end="url(#fl-chaine)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="30" y="64" font-weight="600">source</text><text x="30" y="88">fronts dv/dt et di/dt</text><text x="30" y="110">onduleur, hacheur,</text><text x="30" y="130">bobines coupées,</text><text x="30" y="150">redresseur, arcs</text><text x="30" y="176" font-size="11">émission</text><text x="304" y="44" font-weight="600">chemins de couplage</text><text x="304" y="70">1 impédance commune</text><text x="304" y="92">2 capacitif, champ E</text><text x="304" y="114">3 inductif, champ B</text><text x="304" y="136">4 rayonné, onde</text><text x="304" y="164" font-size="11">1 : par les conducteurs</text><text x="304" y="182" font-size="11">2, 3, 4 : sans contact</text><text x="304" y="200" font-size="11">mode différentiel ou commun</text><text x="578" y="64" font-weight="600">victime</text><text x="578" y="88">entrée analogique,</text><text x="578" y="110">capteur 4-20 mA,</text><text x="578" y="130">réseau de terrain,</text><text x="578" y="150">automate, radio</text><text x="578" y="176" font-size="11">immunité</text><text x="30" y="258">agir à la source :</text><text x="30" y="276" font-size="11">fronts plus lents, boucles courtes</text><text x="304" y="258">couper ou dériver le chemin :</text><text x="304" y="276" font-size="11">distance, blindage, filtre, masse</text><text x="578" y="258">durcir la victime :</text><text x="578" y="276" font-size="11">entrée différentielle, filtrage</text></g></svg>
+    <figcaption>
+      Chaîne de la perturbation, lue de gauche à droite. Le bloc de gauche regroupe les sources, caractérisées par la vitesse de variation de leur
+      tension ou de leur courant ; le bloc central les quatre chemins, numérotés comme dans toute la séance ; le bloc de droite les victimes,
+      caractérisées par leur seuil d'immunité. Les flèches épaisses suivent le trajet de l'énergie perturbatrice ; les flèches fines en tirets mènent,
+      sous chaque bloc, au type de remède qui agit sur lui. Le chemin 1 passe par des conducteurs ; les chemins 2, 3 et 4 n'exigent aucun contact
+      électrique. Chacun peut transporter la perturbation en mode différentiel ou en mode commun, notions définies plus loin.
+    </figcaption>
+  </figure>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Analogie contrôlée et ses limites</span>
+    <p>
+      Pensez au bruit dans un immeuble. La source est un voisin qui perce un mur ; le chemin est soit la structure du bâtiment, qui transmet les
+      vibrations par contact, soit l'air, qui transporte le son sans contact ; la victime est un dormeur dont le seuil de réveil dépend de chacun. On
+      peut demander au voisin de percer moins fort, désolidariser les cloisons ou fermer les fenêtres, ou donner des bouchons d'oreille au dormeur.
+      Limites : un bruit se propage à une vitesse unique et s'atténue toujours avec la distance, alors qu'une perturbation électrique peut être
+      guidée sur des dizaines de mètres par un câble sans s'atténuer ; surtout, le courant perturbateur doit toujours revenir à sa source par une
+      boucle fermée, ce que le son n'exige pas. C'est ce retour obligatoire qui donne tout son sens à la notion de mode commun.
+    </p>
+  </div>
+
+  <h3 id="d-modes">Mode différentiel et mode commun</h3>
+  <p>
+    Un courant utile va vers la charge par un conducteur et revient par un autre : c'est le mode différentiel. Les deux conducteurs étant voisins,
+    leurs champs magnétiques, égaux et opposés, se compensent presque à quelques centimètres. Un courant parasite, lui, part souvent dans le même sens
+    sur tous les conducteurs à la fois et revient par la terre, l'écran ou la charpente : c'est le mode commun. Son aller et son retour peuvent être
+    séparés de plusieurs dizaines de centimètres, et la boucle qu'il forme rayonne et induit beaucoup plus. La simulation suivante permet de composer
+    librement les deux courants et d'observer la décomposition.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Avant de toucher les curseurs, écrivez vos réponses. Si $i_1 = 10\ \mathrm{A}$ et $i_2 = -10\ \mathrm{A}$, quel courant revient par la terre ?
+      Si $i_1 = 10{,}1\ \mathrm{A}$ et $i_2 = -9{,}9\ \mathrm{A}$, à un mètre du câble, lequel des deux modes crée le champ magnétique le plus fort ?
+      Qu'indique une pince ampèremétrique qui entoure les deux conducteurs ensemble ?
+    </p>
+  </div>
+  <figure id="d-modes-figure">
+    <div class="schema-vivant" id="d-modes-vivant"></div>
+    <div id="d-modes-curseurs"></div>
+    <div id="d-modes-valeurs"></div>
+    <figcaption>
+      Simulation manipulable. Une source alimente une charge par deux conducteurs 1 et 2, distants de $s = 1\ \mathrm{cm}$ ; le mode commun revient par
+      la charpente métallique reliée à la terre, à environ $h = 3\ \mathrm{m}$ du câble. Les curseurs règlent $i_1$ et $i_2$, fléchés tous deux de la source vers la charge,
+      c'est-à-dire de gauche à droite ; un courant négatif circule donc de droite à gauche. Les points qui circulent donnent le sens réel de chaque
+      courant ; leur vitesse croît avec son intensité. Le conducteur du bas, en trait épais hachuré, est le retour par la charpente : il porte
+      $-(i_1 + i_2)$. L'ellipse en tirets autour des deux conducteurs figure une pince ampèremétrique. Le panneau affiche les deux modes et le champ
+      magnétique qu'ils créent à $1\ \mathrm{m}$ du câble.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Avec $i_1 = 10\ \mathrm{A}$ et $i_2 = -10\ \mathrm{A}$, tout le courant revient par le conducteur 2 : le mode
+    commun est nul, aucun courant ne passe par la masse et la pince lit zéro. Avec $10{,}1$ et $-9{,}9\ \mathrm{A}$, le mode différentiel vaut toujours
+    $10\ \mathrm{A}$, mais $0{,}2\ \mathrm{A}$ reviennent par la masse. À $1\ \mathrm{m}$, le mode différentiel crée environ
+    $\mu_0 i_\mathrm{MD} s/(2\pi r^2) = 0{,}02\ \mu\mathrm{T}$ et le mode commun $\mu_0 i_\mathrm{MC}/(2\pi r) = 0{,}04\ \mu\mathrm{T}$ : deux cents
+    milliampères de mode commun perturbent deux fois plus que dix ampères de mode différentiel. La pince autour des deux conducteurs ne voit que le
+    mode commun : c'est l'outil de base du diagnostic de CEM.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-hypotheses">Hypothèses et vocabulaire</h3>
+  <ul>
+    <li>Milieux linéaires : les couplages se superposent, et chaque chemin peut être étudié seul.</li>
+    <li>Modèles à constantes localisées : capacités et inductances parasites concentrées, valables tant que la longueur des conducteurs reste petite
+      devant la longueur d'onde, $\lambda = c/f$, soit $30\ \mathrm{m}$ à $10\ \mathrm{MHz}$. Au-delà, le câble devient une ligne, puis une antenne.</li>
+    <li>Fronts de tension modélisés par des rampes de durée $t_r$ ; perturbations estimées en ordre de grandeur, à $\pm 50\ \%$ près, car les valeurs
+      parasites dépendent de la pose réelle.</li>
+    <li>Vocabulaire : on distingue les perturbations conduites, qui suivent les conducteurs et se mesurent en tension ou en courant, des
+      perturbations rayonnées, qui se mesurent en champ. Par convention, les normes de produits mesurent les premières à peu près de
+      $150\ \mathrm{kHz}$ à $30\ \mathrm{MHz}$ et les secondes au-delà ; les limites exactes et les méthodes appartiennent à la norme applicable à
+      l'appareil.</li>
+  </ul>
+
+  <h3 id="e-spectre">Le spectre d'un front : pourquoi la vitesse de commutation compte</h3>
+  <p>
+    Une tension de découpage d'amplitude $A$, de période $T = 1/f_d$, de rapport cyclique $d$ et de fronts de durée $t_r$ est un signal trapézoïdal. Sa
+    décomposition en série de Fourier donne, pour l'harmonique de rang $n$ et de fréquence $f = nf_d$, une amplitude
+  </p>
+  <div class="formule-cle">
+    $$|c_n| = 2Ad\,\left|\frac{\sin(\pi n d)}{\pi n d}\right|\,\left|\frac{\sin(\pi f t_r)}{\pi f t_r}\right|$$
+    <p class="formule-cle-legende">
+      $A$ en volts, $d$ et $n$ sans dimension, $f$ en hertz, $t_r$ en secondes : $f t_r$ est sans dimension, comme il se doit pour l'argument d'un
+      sinus. Loi mathématique, conséquence de la série de Fourier ; le trapèze est un modèle, les fronts réels sont arrondis. Dérivation : le trapèze
+      est le produit de convolution d'un rectangle de durée $dT$ par une impulsion rectangulaire de durée $t_r$ et d'aire unité ; le spectre d'une
+      convolution est le produit des spectres, et chaque rectangle apporte un facteur $\sin x/x$. Cas limite : $t_r \to 0$, le second facteur vaut $1$
+      et l'on retrouve le spectre rectangulaire du cours <a href="#/cours/introduction-a-fourier">Introduction à Fourier</a>.
+    </p>
+  </div>
+  <p>
+    En majorant chaque $|\sin x/x|$ par $\min(1, 1/x)$, on obtient une enveloppe à trois pentes : plate jusqu'à $f_1 = 1/(\pi dT)$, décroissante de
+    $20\ \mathrm{dB}$ par décade jusqu'à $f_2 = 1/(\pi t_r)$, puis de $40\ \mathrm{dB}$ par décade. La seconde cassure est la seule que le concepteur
+    contrôle directement : pour l'IGBT de la pompe, $t_r = 76\ \mathrm{ns}$ donne $f_2 = 4{,}19\ \mathrm{MHz}$ ; pour le MOSFET SiC écarté dans le
+    cours <a href="#/cours/mosfet-et-igbt">MOSFET et IGBT</a>, $13\ \mathrm{ns}$ donnent $24{,}5\ \mathrm{MHz}$. À $100\ \mathrm{MHz}$, l'enveloppe de
+    l'IGBT est $27{,}6\ \mathrm{dB}$ sous celle d'un front idéal, celle du SiC seulement $12{,}2\ \mathrm{dB}$ : $15{,}3\ \mathrm{dB}$ d'écart, soit un
+    facteur $5{,}8$ en amplitude.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Écrivez vos prévisions. Si l'on double la fréquence de découpage, l'enveloppe monte-t-elle à toutes les fréquences, seulement en bas du
+      spectre ou seulement en haut ? Si l'on divise par cinq la durée des fronts, à partir de quelle fréquence l'enveloppe change-t-elle, et de combien de décibels au plus ?
+    </p>
+  </div>
+  <figure id="e-spectre-figure">
+    <div id="e-spectre-curseurs"></div>
+    <div id="e-spectre-trace"></div>
+    <figcaption>
+      Enveloppe du spectre d'une tension de découpage trapézoïdale d'amplitude $540\ \mathrm{V}$, tracée en décibels rapportés à $1\ \mathrm{V}$ en
+      fonction du logarithme décimal de la fréquence : l'abscisse $3$ correspond à $1\ \mathrm{kHz}$, $6$ à $1\ \mathrm{MHz}$, $8$ à
+      $100\ \mathrm{MHz}$. La courbe épaisse est l'enveloppe pour les réglages choisis ; la courbe fine, celle d'un front idéalement raide ($t_r = 0$)
+      avec la même fréquence et le même rapport cyclique. Les lignes verticales en tirets repèrent les deux cassures $f_1$ et $f_2$. Les curseurs
+      règlent la fréquence de découpage, le rapport cyclique et la durée des fronts ; les mesures donnent les cassures et l'écart avec le front idéal à
+      $10$ et $100\ \mathrm{MHz}$.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Doubler la fréquence de découpage ne change pas le plateau, $2Ad$, mais double $f_1$ et relève de
+    $6\ \mathrm{dB}$ toute l'enveloppe au-delà : à fronts identiques, il y en a deux fois plus par seconde. Les cassures liées aux fronts, elles, ne
+    bougent pas. Le nombre de fronts par seconde fixe donc le niveau, la durée des fronts fixe la fréquence au-delà de laquelle ce niveau s'effondre ;
+    on retrouvera ce partage avec le courant de mode commun.
+    Diviser $t_r$ par cinq repousse $f_2$ d'autant ; au-delà de la nouvelle cassure, l'écart atteint $20\log_{10}5 = 14\ \mathrm{dB}$. Ralentir les
+    fronts, par une résistance de grille plus forte, est donc le remède à la source le plus efficace en haute fréquence, au prix de pertes de
+    commutation plus élevées : c'est le compromis rendement contre CEM.
+  </p>
+
+  <h3 id="e-modes">Modes différentiel et commun : définitions et champ rayonné</h3>
+  <p>
+    Pour deux conducteurs, tout couple de courants $(i_1, i_2)$ se décompose de façon unique en une partie qui va et revient par les deux conducteurs
+    et une partie qui part par les deux à la fois :
+  </p>
+  <div class="formule-cle">
+    $$i_\mathrm{MD} = \frac{i_1 - i_2}{2}, \qquad i_\mathrm{MC} = i_1 + i_2, \qquad i_1 = i_\mathrm{MD} + \frac{i_\mathrm{MC}}{2},\quad i_2 = -i_\mathrm{MD} + \frac{i_\mathrm{MC}}{2}$$
+    <p class="formule-cle-legende">
+      Courants en ampères, fléchés tous deux de la source vers la charge. Convention : $i_\mathrm{MC}$ est ici le courant total qui revient par la
+      terre ; certains ouvrages appellent courant de mode commun la moitié de cette valeur, portée par chaque conducteur. Loi physique sous-jacente :
+      la loi des nœuds impose que $i_\mathrm{MC}$ revienne à la source par un autre chemin. Cas limite : circuit parfaitement isolé de la terre, sans
+      capacité parasite, $i_\mathrm{MC} = 0$.
+    </p>
+  </div>
+  <p>
+    Le champ magnétique d'un conducteur rectiligne long vaut $B = \mu_0 i/(2\pi r)$, loi d'Ampère. Deux conducteurs distants de $s$ portant
+    $\pm i_\mathrm{MD}$ créent à grande distance la différence de deux champs presque égaux. Le champ du mode commun, lui, ne se compense que par son
+    retour, éloigné de $h$ :
+  </p>
+  <div class="formule-cle">
+    $$B_\mathrm{MD} \approx \frac{\mu_0\,i_\mathrm{MD}\,s}{2\pi r^2}, \qquad B_\mathrm{MC} \approx \frac{\mu_0\,i_\mathrm{MC}}{2\pi r}\ \ (r \lt h), \qquad \frac{B_\mathrm{MC}}{B_\mathrm{MD}} = \frac{i_\mathrm{MC}}{i_\mathrm{MD}}\cdot\frac{r}{s}$$
+    <p class="formule-cle-legende">
+      $B$ en teslas, distances en mètres. Approximation : $r \gg s$ pour le mode différentiel. Dimensions : $\mathrm{H \cdot m^{-1} \cdot A \cdot m / m^2} = \mathrm{Wb/m^2} = \mathrm{T}$.
+      Interprétation : à $1\ \mathrm{m}$ d'un câble dont les conducteurs sont à $1\ \mathrm{cm}$, le mode commun est cent fois plus efficace que le
+      mode différentiel. Cas limite : $s \to 0$, conducteurs confondus ou torsadés, le mode différentiel ne rayonne plus du tout.
+    </p>
+  </div>
+  <p>
+    En triphasé, la même décomposition s'écrit $i_\mathrm{MC} = i_a + i_b + i_c$. Le cours <a href="#/cours/onduleurs-triphases">Onduleurs triphasés</a> a
+    montré que la tension de mode commun $v_\mathrm{MC} = (v_{aO} + v_{bO} + v_{cO})/3$ d'un onduleur saute de $E/3$ à chaque commutation d'un bras, et
+    prend les valeurs $\pm E/6$ et $\pm E/2$. Le schéma suivant montre où ces sauts envoient le courant.
+  </p>
+  <figure id="e-modes-figure">
+    <svg viewBox="0 0 780 360" role="img" aria-label="Sortie d'un onduleur vers un moteur par un câble blindé : boucle de mode différentiel entre deux phases, et boucle de mode commun à travers les capacités des conducteurs vers l'écran et des enroulements vers la carcasse, retour par l'écran, le conducteur de protection et le plan de masse jusqu'au radiateur et au filtre du variateur"><defs><marker id="fl-modes" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="20" y="50" width="150" height="150" rx="8"/><path d="M170 90H636M170 115H626M170 140H636"/><circle cx="660" cy="115" r="34"/><path d="M20 300H760"/><path d="M95 200V300M660 149V300M212 158V300M568 158V300"/><path d="M320 140V146M320 152V158M460 140V146M460 152V158"/><path d="M610 140V190M610 202V230H660"/></g><g fill="none" stroke="currentColor" stroke-width="2.6"><path d="M310 146H330M310 152H330M450 146H470M450 152H470M598 190H622M598 202H622"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="8 5"><rect x="200" y="74" width="380" height="84" rx="16"/></g><g fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.7"><path d="M40 306l-10 10M70 306l-10 10M100 306l-10 10M130 306l-10 10M160 306l-10 10M190 306l-10 10M220 306l-10 10M250 306l-10 10M280 306l-10 10M310 306l-10 10M340 306l-10 10M370 306l-10 10M400 306l-10 10M430 306l-10 10M460 306l-10 10M490 306l-10 10M520 306l-10 10M550 306l-10 10M580 306l-10 10M610 306l-10 10M640 306l-10 10M670 306l-10 10M700 306l-10 10M730 306l-10 10M760 306l-10 10"/></g><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M250 83H340" marker-end="url(#fl-modes)"/><path d="M340 123H250" marker-end="url(#fl-modes)"/></g><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="3 4"><path d="M478 132V164" marker-end="url(#fl-modes)"/><path d="M626 176V214" marker-end="url(#fl-modes)"/><path d="M674 200V286" marker-end="url(#fl-modes)"/><path d="M556 288H230" marker-end="url(#fl-modes)"/><path d="M108 286V212" marker-end="url(#fl-modes)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="30" y="74" font-weight="600">onduleur</text><text x="30" y="98" font-size="11">bus E, point</text><text x="30" y="114" font-size="11">milieu O</text><text x="30" y="140" font-size="11">v_MC saute de</text><text x="30" y="156" font-size="11">E/3 en t_r</text><text x="30" y="182" font-size="11">radiateur au PE</text><text x="176" y="86" font-size="11">a</text><text x="176" y="111" font-size="11">b</text><text x="176" y="136" font-size="11">c</text><text x="652" y="120">M</text><text x="214" y="66" font-size="11">écran du câble, relié aux deux extrémités</text><text x="346" y="88" font-size="11">i_MD aller</text><text x="346" y="128" font-size="11">i_MD retour</text><text x="236" y="184" font-size="11">C conducteurs-écran,</text><text x="236" y="200" font-size="11">environ 100 pF/m par conducteur</text><text x="486" y="154" font-size="11">i_MC</text><text x="682" y="176" font-size="11">PE</text><text x="470" y="244" font-size="11">C_mot : enroulements</text><text x="470" y="260" font-size="11">vers carcasse</text><text x="250" y="280" font-size="11">retour de i_MC : écran, PE, plan de masse</text><text x="116" y="236" font-size="11">vers le filtre</text><text x="116" y="252" font-size="11">et le bus</text><text x="24" y="340" font-size="11">plan de masse et terre : référence des potentiels 0 V du câble</text></g></svg>
+    <figcaption>
+      Sortie d'un onduleur vers un moteur, avec la terre et le plan de masse comme référence des potentiels. Les trois phases $a$, $b$, $c$ sont
+      entourées par l'écran du câble, en tirets longs, relié au radiateur du variateur et à la carcasse du moteur. Les flèches pleines représentent le
+      mode différentiel : le courant utile part par une phase et revient par une autre, à l'intérieur du câble. Les flèches en pointillé représentent
+      le mode commun : à chaque saut de $v_\mathrm{MC}$, les capacités entre conducteurs et écran, et la capacité $C_\mathrm{mot}$ entre enroulements et
+      carcasse, se chargent ; le courant revient par l'écran, le conducteur de protection et le plan de masse jusqu'au radiateur, puis rejoint le bus
+      par les condensateurs du filtre d'entrée et par les capacités des modules de puissance. La surface comprise entre l'aller et ce retour fixe le
+      champ que la boucle rayonne.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-impedance">Chemin 1 : le couplage par impédance commune</h3>
+  <p>
+    Deux circuits qui partagent un conducteur partagent aussi la tension qui apparaît à ses bornes. Dans le schéma suivant, l'alimentation $24\ \mathrm{V}$
+    d'une électrovanne et un capteur $0$ à $10\ \mathrm{V}$ ont le même conducteur de $0\ \mathrm{V}$ entre les nœuds $A$ et $B$.
+  </p>
+  <figure id="e-impedance-figure">
+    <svg viewBox="0 0 760 340" role="img" aria-label="Couplage par impédance commune : l'alimentation 24 V d'une électrovanne et un capteur 0-10 V partagent le conducteur de 0 V entre les nœuds A et B, d'impédance Zc ; le courant i1 de l'électrovanne crée la tension Zc i1, retranchée de la tension lue par l'entrée analogique"><defs><marker id="fl-imp" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="30" y="40" width="110" height="90" rx="8"/><rect x="30" y="170" width="110" height="80" rx="8"/><rect x="600" y="40" width="130" height="90" rx="8"/><rect x="600" y="170" width="130" height="80" rx="8"/><path d="M140 64H600"/><path d="M140 110H170V292H330M410 292H560V110H600"/><path d="M140 230H170"/><path d="M560 230H600"/><path d="M140 190H600"/><rect x="330" y="278" width="80" height="28" rx="4"/></g><g fill="currentColor" stroke="none"><circle cx="170" cy="292" r="4"/><circle cx="560" cy="292" r="4"/><circle cx="170" cy="230" r="3.4"/><circle cx="560" cy="230" r="3.4"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M520 280H440" marker-end="url(#fl-imp)"/><path d="M300 52H400" marker-end="url(#fl-imp)"/><path d="M330 316H410" marker-end="url(#fl-imp)" stroke-dasharray="5 4"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="40" y="66">alimentation</text><text x="40" y="84">24 V</text><text x="40" y="104" font-size="11">borne -</text><text x="40" y="196">capteur</text><text x="40" y="214">0 à 10 V</text><text x="40" y="236" font-size="11">0 V capteur</text><text x="610" y="66">électrovanne</text><text x="610" y="84">i_1 = 2 A</text><text x="610" y="104" font-size="11">commutée</text><text x="610" y="196">entrée</text><text x="610" y="214">analogique</text><text x="610" y="236" font-size="11">0 V entrée</text><text x="408" y="44" font-size="11">i_1</text><text x="448" y="272" font-size="11">i_1</text><text x="346" y="297">Z_c</text><text x="150" y="314">A</text><text x="568" y="314">B</text><text x="250" y="182" font-size="11">signal v_s</text><text x="236" y="338" font-size="11">v_c = v_B - v_A = Z_c i_1 (flèche en tirets)</text><text x="590" y="280" font-size="11">lecture :</text><text x="590" y="296" font-size="11">v_s - Z_c i_1</text></g></svg>
+    <figcaption>
+      Couplage par impédance commune. Le conducteur de $0\ \mathrm{V}$ entre les nœuds $A$ et $B$ est commun aux deux circuits ; son impédance est
+      représentée par le rectangle $Z_c$. Les flèches pleines donnent le sens du courant $i_1$ de l'électrovanne, qui revient à la borne négative de
+      l'alimentation en traversant $Z_c$ de $B$ vers $A$ ; la flèche en tirets désigne la tension $v_c = v_B - v_A$, pointe vers $B$. Le capteur impose
+      $v_s$ par rapport à $A$, l'entrée mesure par rapport à $B$ : elle lit $v_s - Z_c i_1$. La référence des potentiels du capteur est donc déplacée
+      par le courant d'un autre circuit.
+    </figcaption>
+  </figure>
+  <div class="formule-cle">
+    $$v_c = Z_c\,i_1 = R_c\,i_1 + L_c\,\frac{\mathrm{d}i_1}{\mathrm{d}t}$$
+    <p class="formule-cle-legende">
+      $R_c$ en ohms et $L_c$ en henrys : résistance et inductance du tronçon commun. Loi physique : loi d'Ohm et loi de Faraday. Ordre de grandeur :
+      $1\ \mu\mathrm{H}$ par mètre de fil isolé loin de toute masse. Cas limite : en continu, seul $R_c i_1$ subsiste, quelques dizaines de
+      millivolts ; pendant une commutation de $2\ \mathrm{A}$ en $1\ \mu\mathrm{s}$, $2\ \mu\mathrm{H}$ ajoutent $4\ \mathrm{V}$. Dimensions :
+      $\mathrm{H \cdot A/s} = \mathrm{V \cdot s/A \cdot A/s} = \mathrm{V}$.
+    </p>
+  </div>
+  <p>
+    Le remède est structurel : des retours séparés, reliés en un seul point pour les signaux de basse fréquence, ou un plan de masse de très faible
+    impédance pour les signaux rapides, et une entrée différentielle qui mesure entre les deux fils du capteur au lieu de mesurer par rapport à un
+    $0\ \mathrm{V}$ commun.
+  </p>
+
+  <h3 id="e-capacitif">Chemin 2 : le couplage capacitif</h3>
+  <p>
+    Deux conducteurs voisins forment un condensateur. Si l'un, la source, subit une variation rapide de tension par rapport à la référence, un courant
+    traverse la capacité de couplage $C_c$ et se referme par l'impédance de la victime vers la même référence.
+  </p>
+  <figure id="e-capacitif-figure">
+    <svg viewBox="0 0 760 270" role="img" aria-label="Couplage capacitif : conducteur source à la tension vs par rapport à la référence, capacité de couplage Cc vers le conducteur victime, capacité Cv et résistance Rv de la victime vers la référence ; courant ic fléché de la source vers la victime puis vers la référence"><defs><marker id="fl-cap" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="80" cy="140" r="30"/><path d="M80 110V50H700M80 170V230H700"/><path d="M380 50V96M380 112V160"/><path d="M380 160H620"/><path d="M540 160V186M540 200V230"/><path d="M620 160V178M620 214V230"/><rect x="608" y="178" width="24" height="36" rx="3"/><path d="M62 150l9-20 9 0 9-20"/></g><g fill="none" stroke="currentColor" stroke-width="2.8"><path d="M360 96H400M360 112H400M524 186H556M524 200H556"/></g><g fill="currentColor" stroke="none"><circle cx="380" cy="50" r="3.6"/><circle cx="540" cy="160" r="3.6"/><circle cx="540" cy="230" r="3.6"/><circle cx="620" cy="230" r="3.6"/><circle cx="620" cy="160" r="3.6"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M396 124V150" marker-end="url(#fl-cap)"/><path d="M440 150H500" marker-end="url(#fl-cap)"/><path d="M646 182V212" marker-end="url(#fl-cap)"/><path d="M130 220V64" marker-end="url(#fl-cap)" stroke-dasharray="5 4"/><path d="M700 220V170" marker-end="url(#fl-cap)" stroke-dasharray="5 4"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="20" y="96" font-size="11">source</text><text x="140" y="150">v_s(t)</text><text x="140" y="168" font-size="11">saut ΔV en t_r</text><text x="300" y="40" font-size="11">conducteur source, par exemple une phase du câble moteur</text><text x="320" y="108">C_c</text><text x="404" y="140" font-size="11">i_c</text><text x="400" y="180" font-size="11">conducteur victime</text><text x="562" y="198">C_v</text><text x="652" y="200">R_v</text><text x="708" y="200">v_v</text><text x="220" y="252" font-size="11">référence commune 0 V : plan de masse ou terre</text></g></svg>
+    <figcaption>
+      Couplage capacitif, modèle à constantes localisées. Le cercle de gauche est la source, de tension $v_s$ par rapport à la référence commune,
+      tracée en bas ; la flèche en tirets $v_s$ pointe vers le conducteur source. La capacité de couplage $C_c$ relie le conducteur source au
+      conducteur victime, lui-même relié à la référence par sa capacité propre $C_v$ et par la résistance $R_v$, impédance d'entrée du circuit
+      victime. Les flèches pleines donnent le sens du courant $i_c$ pendant un front montant ; la flèche en tirets $v_v$ désigne la tension perturbatrice aux bornes de $R_v$.
+    </figcaption>
+  </figure>
+  <p>
+    La victime a aussi sa propre capacité $C_v$ vers la référence, celle de son conducteur. La loi des nœuds au conducteur victime donne
+    $C_c\,\frac{\mathrm{d}}{\mathrm{d}t}(v_s - v_v) = \frac{v_v}{R_v} + C_v\frac{\mathrm{d}v_v}{\mathrm{d}t}$. Pendant une rampe de pente
+    $S = \Delta V/t_r$, partant du repos, la solution s'écrit, avec $\tau = R_v(C_c + C_v)$ :
+  </p>
+  <div class="formule-cle">
+    $$v_v(t) = R_vC_c\,S\left(1 - e^{-t/\tau}\right) \ \ (0 \le t \le t_r), \qquad v_v \approx R_vC_c\,\frac{\mathrm{d}v_s}{\mathrm{d}t}\ \ \text{si } \tau \ll t_r, \qquad v_v \approx \frac{C_c}{C_c + C_v}\,\Delta V\ \ \text{si } \tau \gg t_r$$
+    <p class="formule-cle-legende">
+      $R_v$ en ohms, $C_c$ en farads, $S$ en volts par seconde : $\Omega \cdot \mathrm{F} \cdot \mathrm{V/s} = \mathrm{s} \cdot \mathrm{V/s} = \mathrm{V}$.
+      Après le front, $v_v$ retombe avec la constante $\tau$. Hypothèse : source de faible impédance, câble court devant la longueur d'onde. Cas
+      limites : $\tau \ll t_r$, la victime ne voit que la pente ; $\tau \gg t_r$, c'est un diviseur capacitif qui reproduit une fraction du saut
+      entier, puis décroît lentement : cas d'une entrée à haute impédance, la plus vulnérable. Si $C_v = 0$, la victime suivrait tout le saut.
+    </p>
+  </div>
+  <p>
+    Les remèdes découlent de la formule : réduire $C_c$ par la distance, qui agit comme le logarithme de l'écartement, ou mieux par un écran relié à la
+    référence qui intercepte les lignes de champ électrique ; réduire $\mathrm{d}v_s/\mathrm{d}t$ à la source ; réduire $R_v$, d'où la robustesse des
+    boucles de courant $4$-$20\ \mathrm{mA}$ à $250\ \Omega$ comparées aux entrées en tension à haute impédance.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Une phase du câble moteur, $540\ \mathrm{V}$ en $100\ \mathrm{ns}$, longe sur $5\ \mathrm{m}$ un câble de mesure, avec $10\ \mathrm{pF/m}$ de
+      couplage. Écrivez vos estimations : tension crête aux bornes d'une entrée de $250\ \Omega$ ? Puis d'une entrée de $100\ \mathrm{k\Omega}$ ? Que
+      change un écran relié à la masse ?
+    </p>
+  </div>
+  <figure id="e-capa-figure">
+    <div id="e-capa-curseurs"></div>
+    <div id="e-capa-trace"></div>
+    <figcaption>
+      Simulation du couplage capacitif. Les curseurs règlent le saut de tension de la source, la durée du front, la capacité de couplage par mètre, la
+      longueur parallèle, l'impédance de la victime et la présence d'un écran relié à la référence, supposé diviser la capacité de couplage par cent ;
+      la capacité de la victime vers la référence est fixée à $50\ \mathrm{pF/m}$.
+      La courbe épaisse est la tension perturbatrice $v_v(t)$ ; la courbe fine, la tension de la source divisée par dix, pour situer le front ; la
+      ligne verticale en tirets marque la fin du front. Les mesures donnent $C_c$, $\tau$, le plateau $R_vC_cS$ et la crête.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Avec $250\ \Omega$, $C_c = 50\ \mathrm{pF}$ et $C_v = 250\ \mathrm{pF}$, $\tau = 75\ \mathrm{ns}$ : la victime
+    tend vers le plateau $250 \times 50 \times 10^{-12} \times 5{,}4 \times 10^{9} = 67{,}5\ \mathrm{V}$ sans l'atteindre, et culmine à
+    $49{,}7\ \mathrm{V}$ à la fin du front. L'impulsion dure une centaine de nanosecondes ; la carte d'entrée la filtre en grande partie, mais ses
+    diodes de protection conduisent et peuvent la redresser en un décalage. Avec $100\ \mathrm{k\Omega}$, $\tau = 30\ \mu\mathrm{s}$ : le diviseur
+    capacitif donne $540 \times 50/300 = 90\ \mathrm{V}$, qui décroissent pendant des dizaines de microsecondes et traversent les filtres d'entrée,
+    d'où la règle : jamais d'entrée à haute impédance en câble non blindé près d'un câble moteur. L'écran ramène la crête vers $0{,}5\ \mathrm{V}$ à
+    $250\ \Omega$ et vers $1\ \mathrm{V}$ à $100\ \mathrm{k\Omega}$.
+  </p>
+
+  <h3 id="e-inductif">Chemin 3 : le couplage inductif</h3>
+  <p>
+    Un courant variable crée un champ magnétique variable ; toute boucle traversée par ce champ voit apparaître une force électromotrice, loi de
+    Faraday. Pour un conducteur source rectiligne de longueur $\ell$ et une boucle victime dont les deux côtés sont à $r_1$ et $r_2$ de la source, dans
+    un même plan, l'intégration de $B = \mu_0 i/(2\pi r)$ entre $r_1$ et $r_2$ donne le flux, donc l'inductance mutuelle :
+  </p>
+  <div class="formule-cle">
+    $$M = \frac{\mu_0\,\ell}{2\pi}\,\ln\frac{r_2}{r_1}, \qquad v_v = M\,\frac{\mathrm{d}i_s}{\mathrm{d}t}$$
+    <p class="formule-cle-legende">
+      $M$ en henrys, $\ell$ et $r$ en mètres, $\mathrm{d}i_s/\mathrm{d}t$ en ampères par seconde. Loi physique : Ampère et Faraday ; approximation :
+      $\ell$ grand devant $r_2$, effets d'extrémité négligés. Le retour du courant source, s'il est proche, se traite en ajoutant sa contribution de
+      signe opposé, ce que fait la simulation par la méthode des images. Cas limite : $r_2 = r_1$, boucle de surface nulle, $M = 0$ ; c'est le
+      principe de la paire torsadée, dont les boucles successives voient des forces électromotrices opposées. Dimensions :
+      $\mathrm{H/m \cdot m} = \mathrm{H}$.
+    </p>
+  </div>
+  <p>
+    La grandeur qui compte est donc la surface de la boucle victime et sa distance à la source. Une victime dont l'aller et le retour sont jointifs ne
+    voit presque rien ; une victime dont le retour passe par la masse, à plusieurs centimètres, forme une grande boucle. La simulation suivante place
+    un conducteur source parcouru par un courant de mode commun, à $5\ \mathrm{cm}$ au-dessus d'un chemin de câbles métallique qui sert de retour.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Avant de déplacer la victime, écrivez vos prévisions : la tension induite décroît-elle plus vite en éloignant la victime horizontalement ou en la
+      plaquant contre le chemin de câbles ? Une paire dont les conducteurs sont à $1\ \mathrm{cm}$ l'un de l'autre capte-t-elle plus ou moins qu'un fil
+      unique qui revient par la masse ?
+    </p>
+  </div>
+  <figure id="e-inductif-figure">
+    <div class="schema-vivant" id="e-inductif-vivant"></div>
+    <div id="e-inductif-curseurs"></div>
+    <div id="e-inductif-valeurs"></div>
+    <figcaption>
+      Simulation manipulable, en coupe transversale. Le trait épais hachuré en bas est le chemin de câbles métallique, plan de masse de référence. Le
+      disque marqué d'un point est le conducteur source, à $5\ \mathrm{cm}$ du plan : le courant sort de la figure, vers vous, et revient par le plan ;
+      son image, marquée d'une croix, est tracée en tirets sous le plan. Les cercles fins sont des lignes de champ. Faites glisser le conducteur
+      victime, ou sélectionnez-le au clavier et utilisez les flèches. Le curseur de boucle choisit le retour de la victime : par le plan de masse, trait
+      vertical en pointillé, ou par un second conducteur à $1\ \mathrm{cm}$ en dessous. Les mesures donnent la mutuelle par mètre, la mutuelle totale et
+      la tension induite pour la longueur parallèle et la pente de courant choisies.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Avec le retour par le plan, la mutuelle vaut $\frac{\mu_0}{2\pi}\ln(r_\mathrm{image}/r_\mathrm{source})$ par mètre :
+    à $10\ \mathrm{cm}$ de la source et à $5\ \mathrm{cm}$ du plan, $69{,}3\ \mathrm{nH/m}$, soit $34{,}7\ \mathrm{V}$ sur $10\ \mathrm{m}$ pour
+    $50\ \mathrm{A/\mu s}$. Plaquer la victime contre le plan réduit la surface de sa boucle et fait chuter la tension bien plus vite que l'éloignement
+    horizontal. Le retour par un second conducteur à $1\ \mathrm{cm}$ divise la tension par six environ à cet endroit ; la torsade, qui alterne le sens
+    des boucles, la réduit davantage. La pente de $50\ \mathrm{A/\mu s}$ n'a rien d'excessif : c'est celle d'un courant de mode commun de quelques
+    ampères qui oscille à un mégahertz, comme le montrera l'exemple de la section H.
+  </p>
+
+  <h3 id="e-rayonne">Chemin 4 : le couplage rayonné</h3>
+  <p>
+    À courte distance d'une source, à moins d'environ $\lambda/(2\pi)$, on est en champ proche : le couplage est capacitif ou inductif, et se traite
+    avec les deux modèles précédents. Au-delà, champs électrique et magnétique forment une onde qui se propage. À $30\ \mathrm{MHz}$, $\lambda = 10\ \mathrm{m}$
+    et $\lambda/(2\pi) \approx 1{,}6\ \mathrm{m}$ : dans une armoire, presque tout est en champ proche jusqu'à plusieurs dizaines de mégahertz. Un câble
+    devient une antenne efficace quand sa longueur approche le quart d'onde : $2{,}5\ \mathrm{m}$ à $30\ \mathrm{MHz}$. C'est pourquoi un câble qui
+    sort d'une armoire en emportant du courant de mode commun rayonne, alors que la même carte, dans son boîtier, ne rayonne presque pas : les câbles
+    sont les antennes, et le mode commun est leur alimentation.
+  </p>
+
+  <h3 id="e-variateur">Le courant de mode commun d'un variateur</h3>
+  <p>
+    À chaque commutation d'un bras, $v_\mathrm{MC}$ saute de $\Delta V = E/3$ en $t_r$. Ce saut est appliqué à une boucle formée de l'inductance
+    $L_\mathrm{MC}$ des conducteurs, du raccordement et d'un éventuel tore, de la résistance d'amortissement $R$ de la boucle, et de la capacité
+    $C_\mathrm{MC}$ des conducteurs vers l'écran et des enroulements vers la carcasse. Le schéma suivant donne ce modèle.
+  </p>
+  <figure id="e-boucle-figure">
+    <svg viewBox="0 0 760 280" role="img" aria-label="Modèle de la boucle de mode commun : source de tension vMC qui saute de E/3 en tr, inductance LMC du câble, du raccordement et du tore, résistance R d'amortissement, capacité CMC du câble et du moteur vers la terre ; courant iMC et retour par la terre"><defs><marker id="fl-boucle" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="90" cy="140" r="32"/><path d="M90 108V60H200M90 172V230H600V140M410 60H600V128"/><path d="M200 60c0-14 20-14 20 0c0-14 20-14 20 0c0-14 20-14 20 0c0-14 20-14 20 0"/><path d="M280 60H340"/><rect x="340" y="48" width="70" height="24" rx="3"/><path d="M576 128H624M576 140H624" stroke-width="2.8"/><path d="M76 150h8l6-20h8"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M430 46H480" marker-end="url(#fl-boucle)"/><path d="M150 214V76" marker-end="url(#fl-boucle)" stroke-dasharray="5 4"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="20" y="40" font-size="11">variateur</text><text x="160" y="134">v_MC</text><text x="160" y="152" font-size="11">saut ΔV = E/3</text><text x="160" y="168" font-size="11">en t_r</text><text x="196" y="96" font-size="11">L_MC : câble,</text><text x="196" y="112" font-size="11">raccordements, tore</text><text x="356" y="64">R</text><text x="430" y="38" font-size="11">i_MC</text><text x="634" y="128">C_MC</text><text x="634" y="146" font-size="11">câble vers écran</text><text x="634" y="162" font-size="11">et moteur</text><text x="240" y="254" font-size="11">retour par l'écran, le PE et la terre : référence 0 V</text><text x="300" y="168" font-size="11">Z_0 = √(L_MC / C_MC)</text><text x="300" y="186" font-size="11">f_0 = 1 / (2π √(L_MC C_MC))</text></g></svg>
+    <figcaption>
+      Modèle à constantes localisées de la boucle de mode commun. La source, à gauche, est la tension de mode commun de l'onduleur, rapportée au point
+      milieu du bus ; la flèche en tirets la désigne. En haut, dans l'ordre : l'inductance $L_\mathrm{MC}$, la résistance $R$ qui représente les pertes
+      de l'écran, du moteur et du tore, puis la capacité $C_\mathrm{MC}$ vers la terre, qui sert de référence. La flèche pleine donne le sens positif
+      de $i_\mathrm{MC}$. Les deux formules rappellent les grandeurs qui fixent l'amplitude et la fréquence de l'oscillation.
+    </figcaption>
+  </figure>
+  <p>
+    Sans résistance, la réponse d'un circuit LC série à une rampe de pente $S$, partant du repos, est $i(t) = C S\,(1 - \cos\omega_0 t)$ : c'est
+    l'équation du cours <a href="#/cours/regime-transitoire-rlc">Régime transitoire RLC</a> avec un second membre constant pour $\mathrm{d}v/\mathrm{d}t$.
+    Une rampe de durée $t_r$ est la différence de deux rampes infinies décalées de $t_r$ ; par superposition, après le front,
+    $i(t) = CS\,[\cos\omega_0(t - t_r) - \cos\omega_0 t]$, sinusoïde d'amplitude $2CS\,|\sin(\omega_0 t_r/2)|$. Avec $S = \Delta V/t_r$ et
+    $C\omega_0 = 1/Z_0$, il vient :
+  </p>
+  <div class="formule-cle">
+    $$\hat{I}_\mathrm{MC} = \frac{\Delta V}{Z_0}\,\left|\frac{\sin x}{x}\right| = \frac{2\,C_\mathrm{MC}\,\Delta V}{t_r}\,|\sin x|, \qquad x = \pi f_0 t_r, \qquad Z_0 = \sqrt{\frac{L_\mathrm{MC}}{C_\mathrm{MC}}}$$
+    <p class="formule-cle-legende">
+      $\Delta V$ en volts, $Z_0$ en ohms, $C_\mathrm{MC}$ en farads, $t_r$ en secondes. Approximation : boucle non amortie, crête majorante. Cas
+      limites : front très court, $x \to 0$, $\hat{I} \to \Delta V/Z_0$ ; front lent devant la période propre, le courant suit
+      $C\,\mathrm{d}v/\mathrm{d}t$ et ne dépasse pas $2C\Delta V/t_r$. Remarque : $Z_0 = \sqrt{L'/C'}$ ne dépend pas de la longueur si le câble domine ;
+      c'est aussi l'impédance caractéristique de la ligne, de sorte que la formule $\Delta V/Z_0$ donne encore le premier pic sur un câble long.
+    </p>
+  </div>
+  <p>
+    Le bilan d'énergie complète le tableau. À chaque front, la source fait passer la tension de $C_\mathrm{MC}$ de $\Delta V$ ; quand l'oscillation s'est
+    amortie, l'énergie dissipée dans la boucle vaut exactement $\frac{1}{2}C_\mathrm{MC}\Delta V^2$, quelle que soit $R$, comme pour la charge d'un
+    condensateur à travers une résistance. Avec $n_f$ fronts par seconde :
+  </p>
+  <div class="formule-cle">
+    $$P_\mathrm{MC} = n_f\cdot\frac{1}{2}\,C_\mathrm{MC}\,\Delta V^2, \qquad n_f = 6 f_d \text{ pour un onduleur triphasé}$$
+    <p class="formule-cle-legende">
+      $P_\mathrm{MC}$ en watts, $f_d$ fréquence de découpage en hertz : chaque bras commute deux fois par période. Loi physique : conservation de
+      l'énergie. Conséquence pratique : un tore de mode commun abaisse la crête et la fréquence du courant, mais pas l'énergie de chaque front, qu'il
+      dissipe en partie dans son propre noyau. Cas limite : $C_\mathrm{MC} \to 0$, câble court et moteur bien isolé, plus aucune perturbation.
+    </p>
+  </div>
+
+  <h3 id="e-remedes">Blindage, masse, terre et filtrage</h3>
+  <p>
+    <strong>Masse et terre.</strong> La terre est une fonction de sécurité : le conducteur de protection relie les masses à la prise de terre pour
+    limiter les tensions de contact et faire fonctionner les protections, à $50\ \mathrm{Hz}$. La masse, au sens de la CEM, est une référence
+    équipotentielle en haute fréquence : plaque de fond métallique, châssis, charpente, reliés entre eux par des liaisons courtes et larges. Les deux
+    se recouvrent, puisque toutes les masses sont reliées à la terre, mais leurs exigences diffèrent : un conducteur vert et jaune de $2\ \mathrm{m}$
+    est une excellente terre et une mauvaise masse à $10\ \mathrm{MHz}$, avec environ $125\ \Omega$. La règle de conception qui en découle est le
+    maillage : relier les masses en de nombreux points, par des tresses courtes ou par contact direct sur une tôle non peinte.
+  </p>
+  <p>
+    <strong>Blindage.</strong> Un écran relié à la référence intercepte le champ électrique : il supprime le couplage capacitif dès qu'il est relié en un
+    point. Contre le champ magnétique et le mode commun, il n'agit que s'il porte le courant de retour : il doit alors être relié aux deux extrémités,
+    et sur tout son pourtour. Le schéma suivant compare deux raccordements.
+  </p>
+  <figure id="e-blindage-figure">
+    <svg viewBox="0 0 780 310" role="img" aria-label="Deux raccordements d'écran sur la plaque de fond : à gauche, collier 360 degrés, retour du courant de mode commun sur tout le pourtour, inductance de l'ordre du nanohenry ; à droite, queue de cochon de 10 cm, environ 100 nH, tension L di/dt entre écran et plaque de fond"><defs><marker id="fl-bl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 220H370M410 220H760"/><path d="M30 120H200M30 160H200"/><rect x="200" y="110" width="22" height="60" rx="4"/><path d="M211 170V220"/><path d="M222 128H350M222 140H350M222 152H350"/><path d="M420 120H580M420 160H580"/><path d="M580 120C610 120 620 140 620 160V220"/><path d="M580 128H700M580 140H700M580 152H700"/></g><g fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.7"><path d="M40 226l-10 10M70 226l-10 10M100 226l-10 10M130 226l-10 10M160 226l-10 10M190 226l-10 10M220 226l-10 10M250 226l-10 10M280 226l-10 10M310 226l-10 10M340 226l-10 10M370 226l-10 10"/></g><g fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.7"><path d="M440 226l-10 10M470 226l-10 10M500 226l-10 10M530 226l-10 10M560 226l-10 10M590 226l-10 10M620 226l-10 10M650 226l-10 10M680 226l-10 10M710 226l-10 10M740 226l-10 10"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="3 4"><path d="M80 110H150" marker-end="url(#fl-bl)"/><path d="M80 170H150" marker-end="url(#fl-bl)"/><path d="M230 180V214" marker-end="url(#fl-bl)"/><path d="M440 110H510" marker-end="url(#fl-bl)"/><path d="M632 172V212" marker-end="url(#fl-bl)"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="6 4"><path d="M560 214V168" marker-end="url(#fl-bl)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="30" y="40" font-weight="600">collier 360°</text><text x="30" y="60" font-size="11">écran serré sur tout son pourtour</text><text x="30" y="76" font-size="11">contre la plaque de fond nue</text><text x="30" y="102" font-size="11">écran</text><text x="228" y="104" font-size="11">collier</text><text x="262" y="120" font-size="11">conducteurs</text><text x="30" y="256" font-size="11">L ≈ 1 nH : 0,06 V</text><text x="420" y="40" font-weight="600">queue de cochon de 10 cm</text><text x="420" y="60" font-size="11">écran torsadé en un fil</text><text x="420" y="76" font-size="11">vissé sur une borne</text><text x="420" y="102" font-size="11">écran</text><text x="600" y="114" font-size="11">conducteurs non blindés</text><text x="642" y="196" font-size="11">L ≈ 100 nH</text><text x="544" y="196" font-size="11">v</text><text x="420" y="256" font-size="11">9 A à 1 MHz : 5,9 V</text><text x="200" y="290" font-size="11">plaque de fond métallique : masse de référence 0 V</text></g></svg>
+    <figcaption>
+      Deux façons de raccorder l'écran d'un câble à la plaque de fond, qui sert de référence. Les flèches en pointillé suivent le courant de mode
+      commun qui revient par l'écran. À gauche, le collier serre l'écran sur tout son pourtour : le courant passe dans la plaque sans rétrécissement,
+      l'inductance du raccordement est de l'ordre du nanohenry. À droite, l'écran est rassemblé en une queue de cochon de $10\ \mathrm{cm}$, environ
+      $100\ \mathrm{nH}$ : le courant y crée une tension, flèche en tirets $v$, entre l'écran et la plaque, et les derniers centimètres de conducteurs
+      ne sont plus blindés. Les valeurs portées sont celles de l'exemple de la section H.
+    </figcaption>
+  </figure>
+  <p>
+    Pour les câbles de signaux de basse fréquence, on relie parfois l'écran à une seule extrémité, afin d'éviter qu'un courant à $50\ \mathrm{Hz}$ ne
+    circule entre deux terres distantes : l'écran protège alors du couplage capacitif mais plus du couplage inductif. Dans une installation dont les
+    masses sont maillées, le raccordement aux deux extrémités reste préférable ; c'est une règle de conception, que la documentation des appareils
+    précise souvent.
+  </p>
+  <p>
+    <strong>Filtrage.</strong> Un filtre CEM d'entrée sépare les deux modes. Le schéma suivant en donne la structure sur deux conducteurs ; la version
+    triphasée est identique avec trois enroulements et trois condensateurs vers la terre.
+  </p>
+  <figure id="e-filtre-figure">
+    <svg viewBox="0 0 780 330" role="img" aria-label="Filtre CEM : deux conducteurs, une self de mode commun à deux enroulements sur le même noyau avec leurs points de polarité, un condensateur X entre conducteurs, deux condensateurs Y de chaque conducteur vers la terre ; parcours du mode différentiel et du mode commun"><defs><marker id="fl-filtre" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M30 110H250M30 200H250"/><path d="M250 110c0-14 20-14 20 0c0-14 20-14 20 0c0-14 20-14 20 0c0-14 20-14 20 0"/><path d="M250 200c0-14 20-14 20 0c0-14 20-14 20 0c0-14 20-14 20 0c0-14 20-14 20 0"/><path d="M330 110H700M330 200H700"/><path d="M440 110V146M440 164V200"/><path d="M580 110V82M580 66V40H740V270H580V244M580 228V200"/><path d="M740 270V290"/><path d="M720 290H760M727 298H753M734 306H746"/></g><g fill="none" stroke="currentColor" stroke-width="1.6"><path d="M250 150H330M250 158H330"/></g><g fill="none" stroke="currentColor" stroke-width="2.8"><path d="M420 146H460M420 164H460M560 82H600M560 66H600M560 228H600M560 244H600"/></g><g fill="currentColor" stroke="none"><circle cx="246" cy="100" r="3.4"/><circle cx="246" cy="190" r="3.4"/><circle cx="440" cy="110" r="3.4"/><circle cx="440" cy="200" r="3.4"/><circle cx="580" cy="110" r="3.4"/><circle cx="580" cy="200" r="3.4"/><circle cx="740" cy="270" r="3.4"/></g><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M60 98H130" marker-end="url(#fl-filtre)"/><path d="M130 212H60" marker-end="url(#fl-filtre)"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="3 4"><path d="M690 98H630" marker-end="url(#fl-filtre)"/><path d="M690 188H630" marker-end="url(#fl-filtre)"/><path d="M612 100V50" marker-end="url(#fl-filtre)"/><path d="M612 210V258" marker-end="url(#fl-filtre)"/><path d="M752 248V280" marker-end="url(#fl-filtre)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="10" y="114">L1</text><text x="10" y="204">L2</text><text x="30" y="30" font-size="11">côté réseau</text><text x="560" y="325" font-size="11">côté variateur</text><text x="236" y="80" font-size="11">self de mode commun</text><text x="340" y="158" font-size="11">même noyau</text><text x="466" y="160">C_X</text><text x="528" y="78" font-size="11">C_Y</text><text x="528" y="240" font-size="11">C_Y</text><text x="650" y="300" font-size="11">PE, terre</text><text x="60" y="88" font-size="11">mode différentiel</text><text x="60" y="230" font-size="11">aller par L1, retour par L2</text><text x="630" y="90" font-size="11">mode commun</text></g></svg>
+    <figcaption>
+      Filtre CEM sur deux conducteurs L1 et L2, côté réseau à gauche, côté variateur à droite ; la terre, en bas à droite, est la référence. La self
+      de mode commun porte deux enroulements identiques sur le même noyau ; les points de polarité indiquent que les deux courants entrent par les
+      bornes repérées. Mode différentiel, flèches pleines : aller par L1, retour par L2, les flux s'annulent dans le noyau, la self est transparente et
+      le condensateur $C_X$ court-circuite les fréquences élevées entre conducteurs. Mode commun, flèches en pointillé venant du variateur : les deux
+      courants sont de même sens, les flux s'ajoutent, la self présente une forte inductance et les condensateurs $C_Y$ ramènent le courant vers la
+      terre, près de sa source, au lieu de le laisser partir sur le réseau.
+    </figcaption>
+  </figure>
+  <p>
+    Les condensateurs $C_Y$ sont limités par la sécurité : ils font circuler en permanence un courant de fuite vers la terre, de
+    $230 \times 2\pi \times 50 \times 100\ \mathrm{nF} = 7{,}2\ \mathrm{mA}$ pour $100\ \mathrm{nF}$ sous $230\ \mathrm{V}$, qui peut faire déclencher
+    un dispositif différentiel sensible. Leur valeur maximale et leur déconnexion éventuelle, par exemple sur un réseau à neutre isolé, sont des
+    données du constructeur.
+  </p>
+
+  <h3 id="e-statut">Loi, convention, approximation, règle de conception et donnée du constructeur</h3>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Catégorie</th><th>Dans cette séance</th></tr></thead>
+      <tbody>
+        <tr><td>Loi physique</td><td>$i = C\,\mathrm{d}v/\mathrm{d}t$, loi de Faraday et $v = M\,\mathrm{d}i/\mathrm{d}t$, loi d'Ampère, loi des nœuds qui impose le retour du mode commun, conservation de l'énergie $\frac{1}{2}C\Delta V^2$ par front, série de Fourier du trapèze.</td></tr>
+        <tr><td>Convention</td><td>Définition de $i_\mathrm{MC}$ comme courant total, et non par conducteur ; flèches des courants de la source vers la charge ; référence des potentiels au point milieu du bus ou à la terre ; décibels rapportés à $1\ \mathrm{V}$.</td></tr>
+        <tr><td>Approximation</td><td>Constantes localisées, fronts en rampe, enveloppe $\min(1, 1/x)$, $1\ \mu\mathrm{H/m}$ par fil, $100\ \mathrm{pF/m}$ par conducteur vers l'écran, boucle LC à résistance constante, écran divisant par cent la capacité de couplage.</td></tr>
+        <tr><td>Règle de conception</td><td>Zonage de l'armoire, séparation et croisement à angle droit des câbles, écrans raccordés à $360$ degrés aux deux extrémités, maillage des masses, retours de courant séparés, entrées différentielles ou en courant.</td></tr>
+        <tr><td>Constructeur ou norme</td><td>Limites d'émission et niveaux d'immunité selon l'environnement d'installation, longueur maximale de câble moteur avec ou sans filtre, valeur des condensateurs $C_Y$ et conditions de leur déconnexion, type de dispositif différentiel compatible, couples et procédés de raccordement des écrans.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Le schéma principal de la séance montre les chemins de couplage des perturbations dans une armoire de variateur : il réunit les sources, les
+    victimes et les quatre chemins, numérotés comme dans la section D.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 820 600" role="img" aria-label="Chemins de couplage des perturbations dans une armoire : zone puissance avec arrivée réseau, sectionneur, filtre CEM, variateur et contacteur, sortie du câble moteur blindé vers le moteur ; zone commande avec alimentation 24 V, automate et commutateur Ethernet ; capteur 4-20 mA sur le terrain ; chemins numérotés : 1 impédance commune, 2 capacitif, 3 inductif, 4 rayonné, 5 conduit vers le réseau"><defs><marker id="fl-arm" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><rect x="20" y="40" width="580" height="440" rx="10"/></g><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="9 6"><path d="M320 50V436"/></g><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="50" y="80" width="110" height="46" rx="6"/><rect x="50" y="150" width="110" height="56" rx="6"/><rect x="190" y="140" width="110" height="150" rx="6"/><rect x="50" y="330" width="110" height="46" rx="6"/><rect x="350" y="80" width="220" height="46" rx="6"/><rect x="350" y="150" width="220" height="90" rx="6"/><rect x="350" y="300" width="220" height="46" rx="6"/><path d="M105 20V80M105 126V150M160 178H190M460 126V150M460 240V300"/><path d="M245 290V540H402"/><circle cx="430" cy="540" r="28"/><path d="M570 210H585V525H680"/><rect x="680" y="500" width="110" height="50" rx="6"/><path d="M30 440H590" stroke-width="2.6"/></g><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="8 5"><path d="M236 300V532M254 300V532"/></g><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="3 4"><path d="M160 362C220 380 262 410 296 434" marker-end="url(#fl-arm)"/><path d="M262 400H575" marker-end="url(#fl-arm)"/><path d="M262 330C300 330 328 290 350 250" marker-end="url(#fl-arm)"/><path d="M300 550Q300 584 222 588" marker-end="url(#fl-arm)"/><path d="M130 76V28" marker-end="url(#fl-arm)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11.5"><text x="114" y="16">arrivée L1 L2 L3 PE</text><text x="150" y="64">zone puissance</text><text x="336" y="64">zone commande</text><text x="58" y="100">sectionneur,</text><text x="58" y="116">fusibles</text><text x="58" y="174">filtre CEM</text><text x="58" y="190">C_X, C_Y, self</text><text x="198" y="162">variateur</text><text x="198" y="180">redresseur,</text><text x="198" y="196">bus, onduleur</text><text x="198" y="212">IGBT 76 ns</text><text x="198" y="240">radiateur et</text><text x="198" y="256">PE sur plaque</text><text x="58" y="352">contacteur,</text><text x="58" y="368">bobine 24 V</text><text x="358" y="100">alimentation 24 V</text><text x="358" y="116">et 0 V de commande</text><text x="358" y="172">automate</text><text x="358" y="190">entrées 4-20 mA</text><text x="358" y="208">entrées logiques et 0-10 V</text><text x="358" y="322">commutateur Ethernet</text><text x="358" y="338">vers la supervision</text><text x="422" y="545">M</text><text x="690" y="522">capteur</text><text x="690" y="538">4-20 mA</text><text x="268" y="458">plaque de fond nue, maillée au PE :</text><text x="268" y="473">masse de référence 0 V</text><text x="60" y="530">câble moteur</text><text x="60" y="546">blindé</text><text x="592" y="548">câble capteur</text><text x="138" y="44" font-weight="600" font-size="13">5</text><text x="196" y="400" font-weight="600" font-size="13">1</text><text x="420" y="392" font-weight="600" font-size="13">2</text><text x="296" y="296" font-weight="600" font-size="13">3</text><text x="204" y="594" font-weight="600" font-size="13">4</text></g></svg>
+    <figcaption>
+      Chemins de couplage dans une armoire de variateur. Le cadre extérieur est l'armoire ; la ligne verticale en tirets longs sépare la zone de
+      puissance, à gauche, de la zone de commande, à droite ; la plaque de fond, en bas, est la masse de référence. Le câble moteur blindé descend du
+      variateur vers le moteur, son écran figuré en tirets. Les flèches en pointillé sont les chemins de perturbation, numérotés comme dans la section D :
+      1, impédance commune, par le conducteur de protection et le $0\ \mathrm{V}$ quand le courant de mode commun ou celui de la bobine du contacteur
+      revient par un conducteur partagé avec la commande ; 2, capacitif, du câble moteur vers le câble de capteur posé trop près de lui ; 3, inductif, de la boucle de mode commun du variateur vers les boucles des entrées de l'automate ; 4, rayonné, par le câble
+      moteur qui sert d'antenne ; 5, conduit vers le réseau d'arrivée, que le filtre CEM doit bloquer. Les sources sont l'onduleur, le hacheur s'il
+      existe et les bobines coupées ; les victimes, l'automate, ses entrées et la liaison Ethernet.
+    </figcaption>
+  </figure>
+  <p>
+    Le tableau suivant compare les remèdes. Il sert de grille de choix dans la méthode de la section G et dans l'application industrielle.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Remède</th><th>Chemin visé</th><th>Mode visé</th><th>Effet typique</th><th>Contrepartie</th></tr></thead>
+      <tbody>
+        <tr><td>Fronts ralentis, résistance de grille plus forte</td><td>Tous, à la source</td><td>Commun et différentiel</td><td>$-20\ \mathrm{dB}$ par décade de $t_r$ au-delà de $f_2$</td><td>Pertes de commutation accrues</td></tr>
+        <tr><td>Distance, croisement à angle droit</td><td>Capacitif, inductif</td><td>Les deux</td><td>Logarithmique avec l'écartement</td><td>Place, chemins de câbles séparés</td></tr>
+        <tr><td>Écran relié à $360$ degrés aux deux extrémités</td><td>Capacitif, inductif, rayonné</td><td>Commun</td><td>Retour du courant au plus près de l'aller</td><td>Coût du câble, maillage des masses indispensable</td></tr>
+        <tr><td>Paire torsadée, retour séparé</td><td>Inductif, impédance commune</td><td>Différentiel capté par la victime</td><td>Boucle de surface quasi nulle</td><td>Aucune notable</td></tr>
+        <tr><td>Tore ou self de mode commun</td><td>Conduit</td><td>Commun</td><td>Crête divisée par $\sqrt{(L + L_t)/L}$, fréquence abaissée</td><td>Saturation possible, échauffement du noyau</td></tr>
+        <tr><td>Filtre CEM d'entrée, $C_X$ et $C_Y$</td><td>Conduit vers le réseau</td><td>Les deux</td><td>Retour local du mode commun</td><td>Courant de fuite, compatibilité avec le différentiel</td></tr>
+        <tr><td>Entrée différentielle, isolée ou en courant</td><td>Tous, côté victime</td><td>Commun</td><td>Rejet du mode commun, faible impédance</td><td>Coût de la carte d'entrée</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    L'organigramme ci-dessous résume la démarche de résolution d'un problème de CEM, de l'inventaire des sources à la vérification sur site.
+  </p>
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Inventaire des sources : ΔV, t_r, Δi, fronts par seconde"] --> B["Inventaire des victimes : impédance, seuil, bande utile"]
+  B --> C{"Les deux partagent-elles un conducteur ?"}
+  C -->|"Oui"| D["Impédance commune : v = R i + L di/dt"]
+  C -->|"Non"| E{"Câbles voisins sur une grande longueur ?"}
+  D --> E
+  E -->|"Oui"| F["Capacitif R_v C_c dv/dt et inductif M di/dt"]
+  E -->|"Non"| G{"Câble long devant λ/4 ?"}
+  F --> G
+  G -->|"Oui"| H["Rayonné : réduire le mode commun du câble"]
+  G -->|"Non"| I["Comparer chaque estimation au seuil de la victime"]
+  H --> I
+  I --> J["Remède : source, chemin ou victime"]
+  J --> K["Vérification : pince sur le mode commun, mesure sur site"]</pre>
+    <figcaption>
+      Organigramme de résolution. Les rectangles sont des calculs ou des actions, les losanges des décisions. On inventorie d'abord sources et victimes
+      avec leurs grandeurs caractéristiques ; trois questions successives repèrent les chemins présents ; chaque chemin retenu donne une estimation
+      chiffrée, comparée au seuil de la victime ; le remède est choisi dans le tableau précédent, puis vérifié par mesure, en commençant par le courant
+      de mode commun à la pince.
+    </figcaption>
+  </figure>
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <ul>
+    <li><a href="#d-chaine-figure" data-renvoi="d-chaine-figure">Chaîne source, chemin et victime</a>, en section D.</li>
+    <li><a href="#d-modes-figure" data-renvoi="d-modes-figure">Modes différentiel et commun</a> : simulation manipulable, en section D.</li>
+    <li><a href="#e-spectre-figure" data-renvoi="e-spectre-figure">Enveloppe du spectre d'un front</a> : simulation, en section E.</li>
+    <li><a href="#e-modes-figure" data-renvoi="e-modes-figure">Boucles de mode différentiel et de mode commun d'un variateur</a>, en section E.</li>
+    <li><a href="#e-impedance-figure" data-renvoi="e-impedance-figure">Couplage par impédance commune</a>, <a href="#e-capacitif-figure" data-renvoi="e-capacitif-figure">couplage capacitif</a> et <a href="#e-capa-figure" data-renvoi="e-capa-figure">sa simulation</a>, en section E.</li>
+    <li><a href="#e-inductif-figure" data-renvoi="e-inductif-figure">Couplage inductif en coupe</a> : simulation manipulable, en section E.</li>
+    <li><a href="#e-boucle-figure" data-renvoi="e-boucle-figure">Modèle de la boucle de mode commun</a>, <a href="#e-blindage-figure" data-renvoi="e-blindage-figure">raccordements d'écran</a> et <a href="#e-filtre-figure" data-renvoi="e-filtre-figure">filtre CEM</a>, en section E.</li>
+    <li><a href="#h-figure" data-renvoi="h-figure">Chaîne de calcul de l'exemple</a> et <a href="#h-sim-figure" data-renvoi="h-sim-figure">simulation du courant de mode commun</a>, en section H.</li>
+    <li><a href="#i-figure" data-renvoi="i-figure">Pose des câbles de l'armoire de la pompe</a>, en section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <ol>
+    <li>Fixer les conventions : référence des potentiels, sens des courants, définition du mode commun retenue ; noter les hypothèses sur les
+      grandeurs parasites, avec leur origine : mesure, documentation ou ordre de grandeur.</li>
+    <li>Inventorier les sources : saut de tension $\Delta V$ et durée $t_r$, saut de courant $\Delta i$ et sa pente, nombre de fronts par seconde ; en
+      déduire les cassures $f_1$ et $f_2$ du spectre.</li>
+    <li>Inventorier les victimes : impédance d'entrée, mode de mesure, unipolaire ou différentiel, bande utile et seuil de perturbation admissible.</li>
+    <li>Pour chaque couple source et victime, identifier les chemins avec l'organigramme de la section F : conducteurs partagés, longueurs
+      parallèles, surfaces de boucles, longueurs de câbles devant $\lambda/4$.</li>
+    <li>Chiffrer chaque chemin : $Z_c i$ pour l'impédance commune, $R_vC_c\,\mathrm{d}v/\mathrm{d}t$ pour le capacitif, $M\,\mathrm{d}i/\mathrm{d}t$ pour
+      l'inductif, $\Delta V/Z_0$ et $\frac{1}{2}C\Delta V^2$ par front pour le mode commun d'un convertisseur.</li>
+    <li>Comparer au seuil de la victime, choisir le remède le plus économique dans le tableau comparatif, en privilégiant l'ordre source, chemin,
+      victime, et recalculer avec le remède.</li>
+    <li>Contrôler : dimensions, cas limites, bilan d'énergie, cohérence avec les données du constructeur ; prévoir la vérification sur site par une
+      mesure du courant de mode commun à la pince et par l'observation de la victime, variateur en marche puis à l'arrêt.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Un variateur de $7{,}5\ \mathrm{kW}$ alimente un moteur par $\ell = 20\ \mathrm{m}$ de câble blindé. Bus $E = 540\ \mathrm{V}$, IGBT dont les fronts
+    durent $t_r = 100\ \mathrm{ns}$, fréquence de découpage $f_d = 4\ \mathrm{kHz}$. Hypothèses d'étude sur le câble : $100\ \mathrm{pF/m}$ entre
+    chaque conducteur et l'écran, soit $C' = 300\ \mathrm{pF/m}$ pour les trois conducteurs reliés en mode commun, et une inductance de mode commun
+    $L' = 0{,}15\ \mu\mathrm{H/m}$ ; capacité entre enroulements et carcasse du moteur $C_\mathrm{mot} = 2\ \mathrm{nF}$. L'écran est d'abord raccordé
+    côté variateur par une queue de cochon de $10\ \mathrm{cm}$, soit environ $100\ \mathrm{nH}$.
+  </p>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <ul>
+    <li><strong>Données.</strong> Celles de l'énoncé ; référence des potentiels : point milieu du bus pour la source, terre pour le câble.</li>
+    <li><strong>Inconnues.</strong> Saut de mode commun et sa pente, $L_\mathrm{MC}$, $C_\mathrm{MC}$, $Z_0$, $f_0$, courant crête, énergie et
+      puissance de mode commun, tension aux bornes de la queue de cochon, effet d'un tore de $100\ \mu\mathrm{H}$.</li>
+    <li><strong>Stratégie.</strong> Modèle à constantes localisées de la section E ; formule de la crête corrigée par la durée du front ; bilan
+      d'énergie par front ; tension $L\,\mathrm{d}i/\mathrm{d}t$ évaluée à la fréquence d'oscillation.</li>
+  </ul>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li><strong>Saut de mode commun.</strong> $\Delta V = E/3 = 540/3 = 180\ \mathrm{V}$ en $100\ \mathrm{ns}$ : pente
+      $180/(100 \times 10^{-9}) = 1{,}8 \times 10^{9}\ \mathrm{V/s}$, soit $1{,}8\ \mathrm{kV/\mu s}$.</li>
+    <li><strong>Éléments de la boucle.</strong> $L_\mathrm{MC} = 0{,}15 \times 20 = 3\ \mu\mathrm{H}$ ;
+      $C_\mathrm{MC} = 300 \times 10^{-12} \times 20 + 2 \times 10^{-9} = 6 + 2 = 8\ \mathrm{nF}$.</li>
+    <li><strong>Impédance caractéristique et fréquence propre.</strong> $Z_0 = \sqrt{3 \times 10^{-6}/8 \times 10^{-9}} = \sqrt{375} = 19{,}4\ \Omega$ ;
+      $f_0 = 1/(2\pi\sqrt{3 \times 10^{-6} \times 8 \times 10^{-9}}) = 1/(2\pi \times 1{,}549 \times 10^{-7}) = 1{,}03\ \mathrm{MHz}$.</li>
+    <li><strong>Courant crête.</strong> $x = \pi f_0 t_r = \pi \times 1{,}027 \times 10^{6} \times 10^{-7} = 0{,}323$ ; $\sin x/x = 0{,}983$ ;
+      $\hat{I}_\mathrm{MC} = (180/19{,}36) \times 0{,}983 = 9{,}30 \times 0{,}983 = 9{,}13\ \mathrm{A}$. Le modèle purement capacitif aurait donné
+      $C\,\mathrm{d}v/\mathrm{d}t = 8 \times 10^{-9} \times 1{,}8 \times 10^{9} = 14{,}4\ \mathrm{A}$ : il surestime ici, car le front est déjà court
+      devant la demi-période propre de $487\ \mathrm{ns}$.</li>
+    <li><strong>Énergie et puissance.</strong> Par front : $\frac{1}{2} \times 8 \times 10^{-9} \times 180^2 = 129{,}6\ \mu\mathrm{J}$ ;
+      $n_f = 6 \times 4000 = 24\,000$ fronts par seconde ; $P_\mathrm{MC} = 24\,000 \times 129{,}6 \times 10^{-6} = 3{,}11\ \mathrm{W}$, dissipés dans
+      l'écran, le moteur, les raccordements et les semi-conducteurs.</li>
+    <li><strong>Queue de cochon.</strong> À $f_0$, $100\ \mathrm{nH}$ présentent $2\pi \times 1{,}027 \times 10^{6} \times 10^{-7} = 0{,}645\ \Omega$ : la
+      tension entre l'écran et la plaque de fond atteint $0{,}645 \times 9{,}13 = 5{,}9\ \mathrm{V}$ crête à chaque front, appliquée à tout ce qui est
+      référencé à cet écran. Avec un collier $360$ degrés d'environ $1\ \mathrm{nH}$ : $0{,}06\ \mathrm{V}$.</li>
+    <li><strong>Tore de mode commun de $100\ \mu\mathrm{H}$.</strong> $L_\mathrm{MC} = 103\ \mu\mathrm{H}$ ; $Z_0 = \sqrt{103 \times 10^{-6}/8 \times 10^{-9}} = 113{,}5\ \Omega$ ;
+      $f_0 = 175\ \mathrm{kHz}$ ; $x = 0{,}055$, $\sin x/x = 0{,}999$ ; $\hat{I}_\mathrm{MC} = 180/113{,}5 = 1{,}59\ \mathrm{A}$, presque six fois moins.
+      L'énergie par front reste $129{,}6\ \mu\mathrm{J}$.</li>
+  </ol>
+  <figure id="h-figure">
+    <svg viewBox="0 0 780 300" role="img" aria-label="Chaîne de calcul de l'exemple : saut de 180 V en 100 ns, L 3 µH et C 8 nF, Z0 19,4 ohms et f0 1,03 MHz, crête 9,13 A, puis queue de cochon 5,9 V ou collier 0,06 V ; avec un tore de 100 µH, Z0 113,5 ohms, f0 175 kHz, crête 1,59 A ; énergie par front inchangée 129,6 µJ, 3,11 W"><defs><marker id="fl-h" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="10" y="40" width="150" height="80" rx="8"/><rect x="200" y="40" width="160" height="80" rx="8"/><rect x="400" y="40" width="160" height="80" rx="8"/><rect x="600" y="40" width="170" height="80" rx="8"/><rect x="400" y="170" width="160" height="80" rx="8" stroke-dasharray="7 5"/><rect x="600" y="170" width="170" height="80" rx="8" stroke-dasharray="7 5"/><rect x="10" y="170" width="350" height="80" rx="8"/></g><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M160 80H200" marker-end="url(#fl-h)"/><path d="M360 80H400" marker-end="url(#fl-h)"/><path d="M560 80H600" marker-end="url(#fl-h)"/><path d="M480 120V170" marker-end="url(#fl-h)" stroke-dasharray="7 5"/><path d="M560 210H600" marker-end="url(#fl-h)" stroke-dasharray="7 5"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="20" y="64">ΔV = E/3</text><text x="20" y="84">= 180 V</text><text x="20" y="104" font-size="11">en 100 ns</text><text x="210" y="64">L_MC = 3 µH</text><text x="210" y="84">C_MC = 8 nF</text><text x="210" y="104" font-size="11">câble 20 m, moteur</text><text x="410" y="64">Z_0 = 19,4 Ω</text><text x="410" y="84">f_0 = 1,03 MHz</text><text x="410" y="104" font-size="11">x = 0,323</text><text x="610" y="64">crête 9,13 A</text><text x="610" y="84" font-size="11">queue de cochon 5,9 V</text><text x="610" y="102" font-size="11">collier 360° 0,06 V</text><text x="410" y="194">avec tore 100 µH</text><text x="410" y="214">Z_0 = 113,5 Ω</text><text x="410" y="234">f_0 = 175 kHz</text><text x="610" y="194">crête 1,59 A</text><text x="610" y="214" font-size="11">presque six fois</text><text x="610" y="232" font-size="11">moins</text><text x="20" y="194">bilan d'énergie, avec ou sans tore :</text><text x="20" y="216">½ C ΔV² = 129,6 µJ par front</text><text x="20" y="238">× 24 000 fronts/s = 3,11 W</text><text x="10" y="284" font-size="11">trait plein : câble seul ; tirets : avec tore de mode commun</text></g></svg>
+    <figcaption>
+      Chaîne de calcul de l'exemple, lue de gauche à droite sur la première ligne : source, éléments de la boucle, grandeurs caractéristiques,
+      courant crête et tension aux bornes du raccordement d'écran. Les cadres en tirets reprennent le calcul avec un tore de mode commun. Le cadre
+      du bas rappelle que l'énergie par front, et donc la puissance de mode commun, ne dépend que de $C_\mathrm{MC}$ et de $\Delta V$ : le tore change
+      la forme du courant, pas l'énergie à dissiper.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li><strong>Dimensions.</strong> $\sqrt{\mathrm{H/F}} = \sqrt{\mathrm{V \cdot s/A \cdot V/(A \cdot s)}} = \mathrm{V/A} = \Omega$ ;
+      $1/\sqrt{\mathrm{H \cdot F}} = 1/\sqrt{\mathrm{s^2}} = \mathrm{s^{-1}}$ ; $\mathrm{F \cdot V^2} = \mathrm{J}$.</li>
+    <li><strong>Cas limites.</strong> $x$ petit : la crête tend vers $\Delta V/Z_0$ ; la formule capacitive donne une borne haute,
+      $2C\Delta V/t_r \cdot |\sin x| = 28{,}8 \times 0{,}317 = 9{,}13\ \mathrm{A}$, même résultat par l'autre forme de la formule.</li>
+    <li><strong>Ordre de grandeur.</strong> Quelques ampères crête de mode commun pour un variateur de quelques kilowatts et quelques dizaines de mètres
+      de câble : c'est l'ordre de grandeur relevé à la pince sur les installations.</li>
+    <li><strong>Bilan.</strong> $3{,}11\ \mathrm{W}$ représentent $0{,}04\ \%$ de $7{,}5\ \mathrm{kW}$ : la CEM n'est pas un problème de rendement, mais de
+      chemin. Trois watts à large spectre, mal canalisés, suffisent à perturber des signaux de quelques millivolts.</li>
+  </ul>
+
+  <h3 id="h-simulation">Contrôle par simulation sur une période de découpage</h3>
+  <p>
+    La formule suppose un front isolé et une boucle sans pertes. La simulation suivante intègre le circuit RLC de la section E sur une période complète,
+    avec les six fronts de mode commun d'une modulation sinus-triangle centrée ($m_a = 0{,}8$), une résistance d'amortissement réglable et un tore
+    éventuel.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Écrivez vos prévisions : avec $5\ \Omega$ d'amortissement, la crête simulée sera-t-elle supérieure ou inférieure aux $9{,}13\ \mathrm{A}$ calculés ?
+      En passant de $4$ à $16\ \mathrm{kHz}$, que deviennent la crête et la puissance de mode commun ? En allongeant le câble à $85\ \mathrm{m}$, la crête
+      change-t-elle beaucoup ?
+    </p>
+  </div>
+  <figure id="h-sim-figure">
+    <div id="h-sim-curseurs"></div>
+    <div id="h-sim-periode"></div>
+    <div id="h-sim-zoom"></div>
+    <div id="h-sim-lecteur"></div>
+    <div id="h-sim-valeurs"></div>
+    <figcaption>
+      Simulation du courant de mode commun. Les curseurs règlent la longueur du câble, la durée des fronts, l'inductance d'un tore, la fréquence de
+      découpage et la résistance d'amortissement ; la capacité du moteur reste de $2\ \mathrm{nF}$. Premier tracé : sur une période de découpage, la
+      tension de mode commun $v_\mathrm{MC}$ divisée par vingt, en trait fin, et le courant $i_\mathrm{MC}$, en trait épais, dont chaque front produit
+      une salve. Second tracé : agrandissement des premières microsecondes après le premier front. Le lecteur parcourt la période : la ligne verticale
+      en pointillé marque l'instant observé et le panneau affiche $v_\mathrm{MC}$ et $i_\mathrm{MC}$ à cet instant. Le modèle intègre le circuit par pas
+      de $2\ \mathrm{ns}$ au plus.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Avec $5\ \Omega$, la crête simulée vaut environ $7{,}6\ \mathrm{A}$ : l'amortissement agit dès le premier quart de
+    période, et la formule non amortie reste un majorant. La puissance dissipée, environ $3{,}0\ \mathrm{W}$, retrouve le bilan
+    $n_f \cdot \frac{1}{2}C\Delta V^2$. À $16\ \mathrm{kHz}$, chaque salve est identique, la crête ne change pas, mais il y en a quatre fois plus : la
+    puissance et la valeur efficace du courant croissent, d'où l'intérêt d'une fréquence de découpage modérée pour la CEM, à l'opposé du bruit acoustique.
+    Sur $85\ \mathrm{m}$, $L$ et $C$ croissent ensemble : $Z_0$ passe seulement de $19{,}4$ à $21{,}5\ \Omega$ et la crête reste voisine de
+    $7\ \mathrm{A}$, mais la fréquence propre descend et l'énergie par front est multipliée par $3{,}4$, à $446\ \mu\mathrm{J}$. Le tore abaisse la
+    crête entre $1{,}3$ et $1{,}7\ \mathrm{A}$ selon l'amortissement ; avec une boucle peu amortie, les salves durent plus longtemps, ce que corrigent
+    les pertes du noyau, représentées en augmentant la résistance.
+  </p>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <p>
+    Retour au projet fil rouge : le variateur de la pompe, onduleur à IGBT de fronts $76\ \mathrm{ns}$, bus de $540\ \mathrm{V}$, découpage à
+    $4\ \mathrm{kHz}$, alimente le moteur de $30\ \mathrm{kW}$ par $85\ \mathrm{m}$ de câble blindé. L'armoire du variateur est voisine de l'armoire
+    automate, qui reçoit les capteurs $4$-$20\ \mathrm{mA}$ de pression et de débit, surveille le bus $24\ \mathrm{V}$ secouru et communique avec la
+    supervision par Ethernet. La question d'exploitation : identifier les sources et les chemins de perturbation, chiffrer le courant de mode commun et
+    décider des règles de câblage et de mise à la masse.
+  </p>
+
+  <h3 id="i-donnees">Données, contraintes d'exploitation et calculs</h3>
+  <ul>
+    <li><strong>Hypothèses.</strong> $100\ \mathrm{pF/m}$ par conducteur vers l'écran, $L' = 0{,}15\ \mu\mathrm{H/m}$, capacité du moteur de
+      $30\ \mathrm{kW}$ vers sa carcasse $6\ \mathrm{nF}$ ; $\Delta V = 180\ \mathrm{V}$.</li>
+    <li><strong>Boucle de mode commun.</strong> $L_\mathrm{MC} = 0{,}15 \times 85 = 12{,}75\ \mu\mathrm{H}$ ; $C_\mathrm{MC} = 300\ \mathrm{pF/m} \times 85 + 6\ \mathrm{nF} = 31{,}5\ \mathrm{nF}$ ;
+      $Z_0 = 20{,}1\ \Omega$ ; $f_0 = 251\ \mathrm{kHz}$ ; $x = \pi \times 251 \times 10^3 \times 76 \times 10^{-9} = 0{,}060$ ; crête
+      $180/20{,}1 = 8{,}9\ \mathrm{A}$ par front, environ $7{,}5\ \mathrm{A}$ avec $5\ \Omega$ d'amortissement.</li>
+    <li><strong>Énergie.</strong> $\frac{1}{2} \times 31{,}5 \times 10^{-9} \times 180^2 = 510\ \mu\mathrm{J}$ par front ; $24\,000$ fronts par seconde ;
+      $12{,}2\ \mathrm{W}$ dissipés dans la boucle.</li>
+    <li><strong>Tore de mode commun supposé de $100\ \mu\mathrm{H}$ en sortie du variateur.</strong> $Z_0 = \sqrt{112{,}75 \times 10^{-6}/31{,}5 \times 10^{-9}} = 59{,}8\ \Omega$ ;
+      $f_0 = 84\ \mathrm{kHz}$ ; crête $3{,}0\ \mathrm{A}$. La self de sortie triphasée prévue dans le cours <a href="#/cours/onduleurs-triphases">Onduleurs
+      triphasés</a> agit surtout sur le mode différentiel et sur la pente de tension au moteur : sur un noyau à trois colonnes, les flux de mode commun
+      ne trouvent pas de chemin magnétique, et elle ne remplace pas le tore.</li>
+    <li><strong>Victimes.</strong> Une entrée $4$-$20\ \mathrm{mA}$ de $250\ \Omega$ en câble non blindé posé à quelques centimètres du câble moteur sur
+      $5\ \mathrm{m}$ verrait environ $50\ \mathrm{V}$ d'impulsion par couplage capacitif, avec les valeurs de la simulation de la section E ; une boucle de capteur de $10\ \mathrm{m}$ dont le retour passe par la masse, à
+      $10\ \mathrm{cm}$ du câble, verrait environ $35\ \mathrm{V}$ par couplage inductif sous $50\ \mathrm{A/\mu s}$.</li>
+  </ul>
+  <p>
+    Le tableau suivant identifie les sources, les chemins et les victimes de l'installation, avec la décision retenue pour chacun.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Source</th><th>Chemin</th><th>Victime</th><th>Décision</th></tr></thead>
+      <tbody>
+        <tr><td>Fronts de l'onduleur, $8{,}9\ \mathrm{A}$ de mode commun</td><td>3 et 4 : boucle de mode commun, câble antenne</td><td>Entrées de l'automate, Ethernet, roulements du moteur</td><td>Câble blindé, écran en collier $360$ degrés aux deux extrémités, tore de mode commun, câble moteur sans interruption de l'écran</td></tr>
+        <tr><td>Câble moteur, $540\ \mathrm{V}$ en $76\ \mathrm{ns}$</td><td>2 : capacitif</td><td>Câbles de capteurs voisins</td><td>Chemins de câbles séparés, écartement d'au moins $30\ \mathrm{cm}$ comme règle de conception, croisements à angle droit</td></tr>
+        <tr><td>Courant de mode commun dans le PE</td><td>1 : impédance commune</td><td>$0\ \mathrm{V}$ de commande, références analogiques</td><td>$0\ \mathrm{V}$ de commande séparé du PE, relié à la masse en un point défini ; entrées analogiques différentielles</td></tr>
+        <tr><td>Bobines de contacteurs coupées</td><td>1 et 2 : salves conduites</td><td>Alimentation $24\ \mathrm{V}$, entrées logiques</td><td>Diode ou circuit RC sur chaque bobine, vu dans le cours <a href="#/cours/regime-transitoire-rl">Régime transitoire RL</a></td></tr>
+        <tr><td>Redresseur et onduleur côté réseau</td><td>5 : conduit</td><td>Réseau du site, autres appareils</td><td>Filtre CEM d'entrée du variateur, $C_Y$ compatibles avec le schéma de liaison à la terre et le dispositif différentiel</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <figure id="i-figure">
+    <svg viewBox="0 0 780 330" role="img" aria-label="Pose des câbles : à gauche, coupe d'un chemin de câbles métallique à cloison, câble moteur blindé d'un côté, câbles de capteurs en paires torsadées blindées de l'autre, écartement d'au moins 30 cm ; à droite, vue de dessus d'un croisement à angle droit entre le câble moteur et un câble de capteur"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M30 120V230H370V120"/><path d="M200 140V230"/><circle cx="90" cy="206" r="22"/><circle cx="270" cy="216" r="12"/><circle cx="300" cy="216" r="12"/><circle cx="330" cy="216" r="12"/><path d="M450 170H760" stroke-width="7"/><path d="M600 40V300" stroke-width="3"/></g><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="4 3"><circle cx="90" cy="206" r="27"/><circle cx="270" cy="216" r="15"/><circle cx="300" cy="216" r="15"/><circle cx="330" cy="216" r="15"/></g><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M112 252H258"/><path d="M112 246v12M258 246v12"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="30" y="40" font-weight="600">chemin de câbles, coupe</text><text x="30" y="60" font-size="11">métallique, relié à la masse à</text><text x="30" y="76" font-size="11">chaque tronçon, cloison centrale</text><text x="40" y="160" font-size="11">câble moteur</text><text x="40" y="176" font-size="11">blindé</text><text x="226" y="160" font-size="11">paires torsadées</text><text x="226" y="176" font-size="11">blindées 4-20 mA</text><text x="120" y="276" font-size="11">au moins 30 cm (règle de conception)</text><text x="30" y="306" font-size="11">fond du chemin : plan de masse au plus près des câbles</text><text x="450" y="40" font-weight="600">croisement, vue de dessus</text><text x="456" y="160" font-size="11">câble moteur</text><text x="610" y="60" font-size="11">câble de capteur</text><text x="610" y="200" font-size="11">angle droit :</text><text x="610" y="216" font-size="11">longueur parallèle</text><text x="610" y="232" font-size="11">et mutuelle quasi nulles</text></g></svg>
+    <figcaption>
+      Pose des câbles retenue pour la pompe. À gauche, coupe d'un chemin de câbles métallique : le câble moteur, à gauche de la cloison, et les paires
+      torsadées blindées des capteurs, à droite, sont tous posés au fond, contre le métal, qui sert de plan de masse et réduit la surface de chaque
+      boucle ; les cercles en tirets figurent les écrans ; la cote indique l'écartement minimal retenu. À droite, vue de dessus d'un croisement
+      inévitable : le trait épais est le câble moteur, le trait fin le câble de capteur, qui le croise à angle droit pour annuler la longueur
+      parallèle, donc les couplages capacitif et inductif.
+    </figcaption>
+  </figure>
+
+  <h3 id="i-compromis">Risques, choix d'ingénierie et compromis</h3>
+  <ul>
+    <li><strong>Fréquence de découpage.</strong> Passer à $8\ \mathrm{kHz}$ réduirait le bruit acoustique du moteur mais doublerait la puissance de mode
+      commun, à $24{,}5\ \mathrm{W}$, et les pertes de l'onduleur. Les $4\ \mathrm{kHz}$ sont conservés.</li>
+    <li><strong>Semi-conducteurs.</strong> Le MOSFET SiC écarté dans le cours <a href="#/cours/mosfet-et-igbt">MOSFET et IGBT</a> aurait repoussé la
+      cassure $f_2$ de $4{,}2$ à $24{,}5\ \mathrm{MHz}$ : la CEM confirme ce choix.</li>
+    <li><strong>Roulements.</strong> La tension de mode commun se retrouve en partie sur l'arbre par les capacités internes du moteur ; des courants de
+      roulement peuvent apparaître. Le tore réduit ce risque ; un roulement isolé ou un balai de mise à la masse de l'arbre se décide avec le
+      constructeur du moteur, au vu de la surveillance des roulements déjà prévue.</li>
+    <li><strong>Dispositif différentiel.</strong> Le courant de mode commun qui revient par le filtre d'entrée reste local ; celui qui passerait par la
+      terre de l'installation serait vu par un différentiel en amont. Le type de dispositif compatible avec un variateur est une donnée du
+      constructeur, et le schéma de liaison à la terre, qui conditionne aussi les condensateurs $C_Y$, sera traité dans le cours Sécurité électrique et
+      schémas de liaison à la terre.</li>
+    <li><strong>Incertitudes.</strong> Les capacités par mètre, l'inductance de mode commun et l'amortissement sont des hypothèses : à $\pm 50\ \%$
+      près, elles changent la crête de $\pm 25\ \%$ environ, sans changer les décisions. La mesure à la pince à la mise en service les remplacera.</li>
+  </ul>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Ajout au projet fil rouge</span>
+    <p>
+      Plan CEM de l'armoire du variateur de la pompe et de l'armoire automate : armoire en deux zones, puissance et commande, sur plaque de fond nue
+      maillée au PE ; câble moteur blindé de $85\ \mathrm{m}$, écran en collier $360$ degrés aux deux extrémités, sans queue de cochon ; boucle de mode
+      commun supposée de $12{,}75\ \mu\mathrm{H}$ et $31{,}5\ \mathrm{nF}$ ($100\ \mathrm{pF/m}$ par conducteur, $6\ \mathrm{nF}$ pour le moteur),
+      $Z_0 = 20{,}1\ \Omega$, $f_0 = 251\ \mathrm{kHz}$, $8{,}9\ \mathrm{A}$ crête par front, $510\ \mu\mathrm{J}$ par front et $12{,}2\ \mathrm{W}$ à
+      $4\ \mathrm{kHz}$ ; tore de mode commun de $100\ \mu\mathrm{H}$ supposés en sortie, $3{,}0\ \mathrm{A}$ crête et $84\ \mathrm{kHz}$, en complément de la
+      self de sortie ; découpage maintenu à $4\ \mathrm{kHz}$ ; capteurs $4$-$20\ \mathrm{mA}$ en paires torsadées blindées, dans un chemin de câbles
+      séparé, à au moins $30\ \mathrm{cm}$ du câble moteur, croisements à angle droit ; entrées analogiques différentielles, $0\ \mathrm{V}$ de commande
+      séparé du PE et relié à la masse en un point ; diodes ou circuits RC sur les bobines de contacteurs ; Ethernet en câble blindé ; filtre CEM
+      d'entrée avec condensateurs $C_Y$ compatibles avec le schéma de liaison à la terre et le dispositif différentiel. Hypothèses à remplacer par les
+      documentations du variateur, du câble et du moteur, et par une mesure du courant de mode commun à la pince à la mise en service.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Erreur</th><th>Pourquoi c'est faux</th><th>Correction</th></tr></thead>
+      <tbody>
+        <tr><td>Croire qu'un gros conducteur de terre règle tout problème de CEM.</td><td>À $10\ \mathrm{MHz}$, deux mètres de conducteur présentent plus de $100\ \Omega$ : la section joue sur la résistance, pas sur l'inductance.</td><td>Liaisons courtes et larges, maillage, plaque de fond nue ; le conducteur de protection reste indispensable pour la sécurité.</td></tr>
+        <tr><td>Raccorder l'écran du câble moteur par une queue de cochon.</td><td>Son inductance crée une tension $L\,\mathrm{d}i/\mathrm{d}t$ de plusieurs volts et laisse les conducteurs non blindés sur quelques centimètres.</td><td>Collier $360$ degrés sur la plaque de fond, aux deux extrémités.</td></tr>
+        <tr><td>Penser qu'un écran relié à une seule extrémité protège contre le champ magnétique.</td><td>Sans courant de retour dans l'écran, le flux de la source traverse la boucle victime comme sans écran.</td><td>Relier aux deux extrémités dès que le couplage inductif ou le mode commun domine, avec des masses maillées.</td></tr>
+        <tr><td>Chercher la perturbation dans les courants de phase mesurés séparément.</td><td>Le mode commun est une petite différence entre de grands courants : chaque pince le noie dans le courant utile.</td><td>Pince autour de toutes les phases à la fois, sans le PE : elle lit directement $i_\mathrm{MC}$.</td></tr>
+        <tr><td>Croire qu'un tore de mode commun supprime l'énergie de mode commun.</td><td>L'énergie $\frac{1}{2}C\Delta V^2$ par front est fixée par la capacité et le saut de tension.</td><td>Le tore réduit la crête et la fréquence ; seules une capacité plus faible, un câble plus court ou moins de fronts réduisent l'énergie.</td></tr>
+        <tr><td>Confondre la terre et la masse, et vouloir relier toutes les masses en un seul point.</td><td>Le point unique est une règle de basse fréquence ; en haute fréquence, un long conducteur vers ce point est une inductance.</td><td>Point unique pour les références analogiques lentes, maillage pour les masses et les écrans.</td></tr>
+        <tr><td>Juger un câble suffisant parce que la perturbation mesurée à l'oscilloscope disparaît avec une autre sonde.</td><td>La boucle de masse de la sonde capte elle-même le champ : la mesure fait partie du chemin.</td><td>Ressort de masse court, sonde différentielle, mesure du mode commun à la pince.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Démarche de diagnostic d'une perturbation : vérifier d'abord qu'elle dépend du fonctionnement de la source, en arrêtant le variateur, puis en le
+    faisant tourner à vide et en charge. Mesurer le courant de mode commun à la pince sur le câble moteur et sur les câbles de la victime. Repérer les
+    conducteurs partagés, les longueurs parallèles et les raccordements d'écran ; débrancher temporairement un écran à une extrémité, ou ajouter un
+    tore sur le câble de la victime, et observer l'effet : un effet net désigne le chemin. Corriger au plus près de la source, puis vérifier par la même
+    mesure.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic industriel et une question
+    conceptuelle sans calcul. Chaque correction reste masquée jusqu'à votre tentative ou un clic explicite ; elle se déroule ensuite étape par étape,
+    avec un tracé ou un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangées : choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Le score s'affiche à la fin et
+    alimente le bilan de la section P.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+  <h3 id="m-formules">Cinq formules essentielles</h3>
+  <ol>
+    <li>Modes : $i_\mathrm{MD} = (i_1 - i_2)/2$, $i_\mathrm{MC} = i_1 + i_2$ ; champs $B_\mathrm{MC}/B_\mathrm{MD} = (i_\mathrm{MC}/i_\mathrm{MD})(r/s)$.</li>
+    <li>Couplage capacitif : $v_v \approx R_vC_c\,\mathrm{d}v_s/\mathrm{d}t$ si $R_vC_c \ll t_r$.</li>
+    <li>Couplage inductif : $v_v = M\,\mathrm{d}i_s/\mathrm{d}t$, $M = \frac{\mu_0\ell}{2\pi}\ln(r_2/r_1)$ ; impédance commune : $v_c = R_ci + L_c\,\mathrm{d}i/\mathrm{d}t$.</li>
+    <li>Spectre d'un front : cassures $f_1 = 1/(\pi dT)$ et $f_2 = 1/(\pi t_r)$, puis $-40\ \mathrm{dB}$ par décade.</li>
+    <li>Mode commun d'un variateur : $\hat{I} = (\Delta V/Z_0)\,|\sin x/x|$, $x = \pi f_0t_r$, $\Delta V = E/3$ ; $P_\mathrm{MC} = 6f_d \cdot \frac{1}{2}C_\mathrm{MC}\Delta V^2$.</li>
+  </ol>
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ul>
+      <li>Tout courant revient à sa source : chercher le chemin de retour du mode commun avant toute autre chose.</li>
+      <li>À haute fréquence, un fil est une inductance d'environ $1\ \mu\mathrm{H/m}$ et une capacité parasite un passage.</li>
+      <li>Écrans du câble moteur raccordés à $360$ degrés, aux deux extrémités, sans queue de cochon.</li>
+      <li>Séparer, plaquer contre la masse et croiser à angle droit les câbles de puissance et de mesure.</li>
+      <li>Les valeurs parasites sont des hypothèses : vérifier par une mesure du courant de mode commun à la pince.</li>
+    </ul>
+  </div>
+  <h3 id="m-resume">Résumé</h3>
+  <p>
+    Une perturbation exige une source, un chemin et une victime. Les fronts rapides des convertisseurs contiennent des fréquences jusqu'à $1/(\pi t_r)$
+    et au-delà. Quatre chemins existent : impédance commune, capacitif en $C\,\mathrm{d}v/\mathrm{d}t$, inductif en $M\,\mathrm{d}i/\mathrm{d}t$,
+    rayonné par les câbles. Le mode commun, qui revient par la terre, est le plus perturbateur, car sa boucle est grande. Dans un variateur, chaque
+    saut de $E/3$ excite la boucle câble et moteur : crête $\Delta V/Z_0$, énergie $\frac{1}{2}C\Delta V^2$ par front. On agit à la source en
+    ralentissant les fronts, sur le chemin par la distance, le blindage à $360$ degrés, le maillage et le filtrage, et sur la victime par des entrées
+    différentielles ou en courant.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance, deux sur le cours précédent, <a href="#/cours/convertisseurs-et-moteurs">Convertisseurs et moteurs</a>, une
+    sur le cours <a href="#/cours/thyristors-et-redresseurs-commandes">Thyristors et redresseurs commandés</a>, vieux d'une semaine, et une sur le cours
+    <a href="#/cours/puissance-en-triphase">Puissance en triphasé</a>, vieux d'un mois, dont la méthode des deux wattmètres sert encore à contrôler la
+    puissance d'un variateur.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : simuler dans LTspice la boucle de mode commun d'un variateur, d'abord en constantes localisées puis avec une ligne, et comparer à la
+    formule de la section E. Prédictions à écrire avant de commencer : crête et fréquence de l'oscillation pour $20\ \mathrm{m}$ de câble, effet d'un
+    tore de $100\ \mu\mathrm{H}$, allure du courant avec un câble modélisé en ligne.
+  </p>
+  <ol>
+    <li>Source : <code>V1 S 0 PULSE(-90 90 1u 100n 100n 50u 125u)</code>, saut de $180\ \mathrm{V}$ en $100\ \mathrm{ns}$, deux fronts par période de
+      $125\ \mu\mathrm{s}$ pour alléger la simulation.</li>
+    <li>Boucle à constantes localisées : <code>L1 S A 3u</code>, <code>R1 A B 5</code>, <code>C1 B 0 8n</code> ; simulation
+      <code>.tran 0 20u 0 2n</code> ; tracer <code>I(L1)</code>, mesurer la crête et la période de l'oscillation.</li>
+    <li>Variantes : <code>L1</code> à $103\ \mu\mathrm{H}$ pour le tore ; <code>R1</code> à $1$ puis $20\ \Omega$ ; durée de front de $13$ puis
+      $300\ \mathrm{ns}$ ; vérifier la formule $\hat{I} = (\Delta V/Z_0)|\sin x/x|$ et le bilan d'énergie avec
+      <code>.meas tran W integ I(R1)*I(R1)*5</code>.</li>
+    <li>Ligne : supprimer <code>L1</code> et <code>C1</code>, relier la source par <code>R1 S A 5</code>, puis ajouter
+      <code>T1 A 0 M 0 Z0=22.4 Td=134n</code>, avec $Z_0 = \sqrt{L'/C'}$ et $T_d = \ell\sqrt{L'C'}$ pour $20\ \mathrm{m}$, et <code>C2 M 0 2n</code>
+      pour le moteur ; comparer le premier palier de courant à $180/(22{,}4 + 5) = 6{,}6\ \mathrm{A}$, ou à $180/22{,}4 = 8{,}0\ \mathrm{A}$ avec
+      <code>R1</code> très faible.</li>
+  </ol>
+  <p>
+    Résultats attendus : en constantes localisées, une sinusoïde amortie de $1{,}03\ \mathrm{MHz}$ de crête voisine de $7{,}6\ \mathrm{A}$ avec
+    $5\ \Omega$, $9{,}1\ \mathrm{A}$ avec une résistance très faible ; avec le tore, environ $1{,}6\ \mathrm{A}$ à $175\ \mathrm{kHz}$ ; l'énergie
+    dissipée par front tend vers $129{,}6\ \mu\mathrm{J}$ quel que soit <code>R1</code>. Avec la ligne, un courant en escalier : un premier palier de
+    $6{,}6\ \mathrm{A}$ avec $5\ \Omega$ pendant l'aller et retour de $268\ \mathrm{ns}$, puis des réflexions sur la capacité du moteur ; la fréquence d'oscillation
+    globale reste proche de celle du modèle localisé, ce qui justifie ce dernier pour un ordre de grandeur.
+  </p>
+  <p>
+    Anomalies à observer et à expliquer : une oscillation non amortie qui ne décroît jamais, résistance oubliée ou nulle ; une crête très supérieure à
+    $\Delta V/Z_0$, pas de calcul trop grand devant $t_r$ ; une énergie par front différente de $\frac{1}{2}C\Delta V^2$, fenêtre d'intégration qui
+    coupe l'oscillation avant son extinction. Variante sans LTspice : en Python, intégrer
+    $L\,\mathrm{d}i/\mathrm{d}t = v_\mathrm{MC} - Ri - v_C$ et $C\,\mathrm{d}v_C/\mathrm{d}t = i$ par la méthode d'Euler semi-implicite avec un pas de
+    $1\ \mathrm{ns}$, et retrouver les courbes de la section H.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours, notées de 0 à 4. Le bilan affiché sous la grille est calculé dans ce
+    navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement. Aucune estimation n'est
+    faite à votre place : seul le score réellement obtenu sert de référence. Le jalon visé à la fin de ce module demande d'analyser les principaux
+    convertisseurs de puissance, leurs formes d'onde, leurs pertes, leurs protections et leur intégration dans un variateur.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Une perturbation est une chaîne source, chemin, victime ; les fronts rapides alimentent quatre chemins, et le mode commun, qui revient par la terre en formant une grande boucle, est le plus perturbateur.</li>
+    <li data-rang="02">Chaque saut de $E/3$ d'un onduleur excite la boucle câble et moteur : crête $\Delta V/Z_0$, énergie $\frac{1}{2}C_\mathrm{MC}\Delta V^2$ par front, que le tore étale sans la supprimer.</li>
+    <li data-rang="03">Les remèdes se choisissent dans l'ordre source, chemin, victime : fronts maîtrisés, câbles séparés et croisés, écrans à $360$ degrés aux deux extrémités, masses maillées, filtres, entrées différentielles.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> raisonner sur des éléments absents du schéma. Les erreurs typiques en découlent : chercher le
+    problème dans les fils dessinés, prendre un conducteur de terre pour une masse de haute fréquence, oublier le chemin de retour du mode commun. Le
+    réflexe à installer : pour chaque front, écrire $C\,\mathrm{d}v/\mathrm{d}t$ et $L\,\mathrm{d}i/\mathrm{d}t$ avec des valeurs parasites estimées,
+    puis dessiner la boucle complète par laquelle le courant revient à sa source.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Thermique des composants de puissance, étudie où va la chaleur. Question à préparer :
+    l'onduleur de la pompe dissipe $214\ \mathrm{W}$ au point de service et ses jonctions ne doivent pas dépasser $150\ \mathrm{^\circ C}$, dans une
+    armoire à $40\ \mathrm{^\circ C}$. Comment les résistances thermiques de la jonction au boîtier, du boîtier au dissipateur et du dissipateur à
+    l'air se combinent-elles, et quelle résistance thermique maximale faut-il exiger du dissipateur ?
+  </p>
+
+</article>
