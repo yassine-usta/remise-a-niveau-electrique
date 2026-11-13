@@ -1,0 +1,939 @@
+<article class="cours" data-slug="thermique-des-composants-de-puissance">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/compatibilite-electromagnetique">Compatibilité électromagnétique</a> s'est achevé sur une question : l'onduleur de la
+      pompe dissipe $214\ \mathrm{W}$ au point de service, ses jonctions ne doivent pas dépasser $150\ ^\circ\mathrm{C}$ et l'air de l'armoire peut
+      atteindre $40\ ^\circ\mathrm{C}$ ; quelle résistance thermique maximale faut-il exiger du dissipateur ? Réponse, que la section H établira pas à
+      pas : si l'on s'en tenait à ces seules données, $0{,}47\ \mathrm{K/W}$. Mais ce chiffre est faux pour deux raisons que cette séance va rendre
+      évidentes. D'une part, un dissipateur se dimensionne au point le plus chaud, c'est-à-dire au régime nominal de $310\ \mathrm{W}$ et non au point de
+      service, et avec une marge sous la limite du catalogue : on trouve alors $0{,}23\ \mathrm{K/W}$. D'autre part, le même dissipateur porte aussi le
+      pont de diodes d'entrée, qui ajoute $146\ \mathrm{W}$ et dont les puces sont les plus mal refroidies : il faut finalement
+      $0{,}13\ \mathrm{K/W}$, ce qui impose une ventilation forcée.
+    </p>
+    <p>
+      La séance s'appuie sur les pertes calculées dans les cours <a href="#/cours/diodes-de-puissance">Diodes de puissance</a>,
+      <a href="#/cours/redresseurs-triphases">Redresseurs triphasés</a> et <a href="#/cours/mosfet-et-igbt">MOSFET et IGBT</a>, qui donnait déjà la
+      relation $T_j = T_{ref} + R_{th}P$ et la boucle entre pertes et température ; sur la loi d'Ohm et la résistivité du cours
+      <a href="#/cours/loi-d-ohm-et-resistivite">Loi d'Ohm et résistivité</a>, dont la conduction thermique est la transposition exacte ; sur les lois
+      de Kirchhoff du cours <a href="#/cours/lois-de-kirchhoff">Lois de Kirchhoff</a> et la superposition du cours
+      <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes de Thévenin, Norton et superposition</a> ; enfin sur la charge
+      exponentielle du cours <a href="#/cours/regime-transitoire-rc">Régime transitoire RC</a>, qui décrit l'échauffement d'un corps doté d'une
+      capacité thermique.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Un convertisseur au rendement de $98\ \%$ transforme encore $2\ \%$ de sa puissance en chaleur, et cette chaleur naît dans quelques centimètres
+    carrés de silicium. Pour un variateur de $30\ \mathrm{kW}$, cela représente près d'un demi-kilowatt concentré dans des puces d'environ un
+    centimètre carré, soit une densité de flux de l'ordre de $50$ à $100\ \mathrm{W/cm^2}$, dix fois celle d'une plaque de cuisson. La température de
+    la jonction fixe à la fois ce que le composant peut faire et combien de temps il le fera.
+  </p>
+  <ul>
+    <li><strong>Limite absolue.</strong> Au-delà de la température maximale de jonction indiquée par le fabricant, souvent $150$ ou
+      $175\ ^\circ\mathrm{C}$, les caractéristiques ne sont plus garanties ; bien au-delà, la puce se détruit par emballement ou par fusion des
+      métallisations.</li>
+    <li><strong>Calibre réel.</strong> Le courant nominal d'un module ne veut rien dire sans ses conditions de refroidissement : le même IGBT de
+      $100\ \mathrm{A}$ ne délivre qu'une fraction de ce courant si sa chaleur est mal évacuée, et la documentation précise toujours à quelle
+      température de boîtier le calibre est donné.</li>
+    <li><strong>Durée de vie.</strong> Chaque cycle de température dilate différemment le silicium, le cuivre et la céramique : les brasures se
+      fissurent, les fils de liaison se décollent. La fiabilité d'un variateur, d'un onduleur photovoltaïque ou d'une traction ferroviaire se calcule
+      en cycles thermiques.</li>
+    <li><strong>Conception de l'armoire.</strong> La chaleur extraite du composant doit encore quitter l'armoire : débit des ventilateurs, filtres,
+      climatisation, montage traversant. Une armoire mal ventilée fait déclencher un variateur parfaitement dimensionné.</li>
+  </ul>
+  <p>
+    La thermique est aussi le terrain où se rejoignent toutes les séances de ce module : les pertes de conduction et de commutation des cours
+    précédents n'ont de sens que traduites en degrés. Le jalon de fin de module demande d'analyser les convertisseurs, leurs pertes, leurs protections
+    et leur intégration dans un variateur ; cette séance fournit l'outil qui relie les pertes à la tenue réelle.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Expliquer le trajet de la chaleur depuis la jonction jusqu'à l'air, couche par couche, et l'analogie électrique qui le modélise : température et potentiel, flux et courant, résistance et capacité thermiques.</li>
+    <li data-rang="02">Calculer une résistance thermique de conduction et de convection à partir de la géométrie et des matériaux, et en vérifier l'unité.</li>
+    <li data-rang="03">Calculer la température de jonction de plusieurs composants montés sur un dissipateur commun, et en déduire la résistance thermique maximale du dissipateur.</li>
+    <li data-rang="04">Interpréter une impédance thermique transitoire $Z_{th}(t)$ et l'utiliser pour une impulsion ou un régime cyclique.</li>
+    <li data-rang="05">Dimensionner un dissipateur et la ventilation d'une armoire pour un variateur, avec les marges et les hypothèses explicites.</li>
+    <li data-rang="06">Estimer l'amplitude des cycles thermiques d'un onduleur à basse fréquence de sortie et comparer qualitativement leurs effets sur la durée de vie.</li>
+    <li data-rang="07">Diagnostiquer un défaut thermique à partir de mesures de températures : encrassement, interface sèche, ventilateur défaillant, air ambiant trop chaud.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>Quatre notions suffisent pour suivre la séance.</p>
+  <ul>
+    <li><strong>Pertes d'un semi-conducteur.</strong> Une diode ou un IGBT modélisé par un seuil $V_0$ et une résistance $r$ dissipe en conduction
+      $P = V_0 I_{moy} + r I_{eff}^2$ ; il faut y ajouter les pertes de commutation $f\,(E_{on} + E_{off})$ et de recouvrement $f\,E_{rec}$.</li>
+    <li><strong>Résistance électrique.</strong> $R = \rho\ell/S = \ell/(\sigma S)$ : elle croît avec la longueur et décroît avec la section.</li>
+    <li><strong>Énergie et capacité thermique.</strong> Un corps de masse $m$ et de capacité thermique massique $c$ s'échauffe de
+      $\Delta T = W/(mc)$ quand il reçoit l'énergie $W$ sans en perdre. Aluminium : $c \approx 900\ \mathrm{J/(kg\,K)}$ ; cuivre :
+      $385\ \mathrm{J/(kg\,K)}$.</li>
+    <li><strong>Premier ordre.</strong> Un circuit RC alimenté par un échelon de courant $I$ voit sa tension tendre vers $RI$ selon
+      $RI(1 - e^{-t/\tau})$, avec $\tau = RC$ ; à $t = \tau$, $63\ \%$ du chemin est fait, à $3\tau$, $95\ \%$.</li>
+  </ul>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Notation de la séance</span>
+    <p>
+      Températures en degrés Celsius, écarts de température en kelvins : un écart de $1\ \mathrm{K}$ vaut un écart de $1\ ^\circ\mathrm{C}$. Indices :
+      $j$ pour la jonction, c'est-à-dire la zone active de la puce ; $c$ pour le boîtier, mesuré sous la puce, sur la semelle ; $h$ pour le dissipateur,
+      au contact du boîtier ; $a$ pour l'air ambiant qui refroidit le dissipateur. $P$ : puissance dissipée, c'est-à-dire flux de chaleur, en watts.
+      $R_{th,jc}$, $R_{th,ch}$, $R_{th,ha}$ : résistances thermiques jonction-boîtier, boîtier-dissipateur et dissipateur-air, en $\mathrm{K/W}$ ; on
+      les écrit aussi $R_{jc}$, $R_{ch}$, $R_{ha}$, et $R_{jh} = R_{jc} + R_{ch}$. $C_{th}$ : capacité thermique en $\mathrm{J/K}$ ;
+      $Z_{th}(t)$ : impédance thermique transitoire en $\mathrm{K/W}$. $\lambda$ : conductivité thermique en $\mathrm{W/(m\,K)}$ ; $h$ : coefficient
+      d'échange en $\mathrm{W/(m^2\,K)}$. Convention : le flux de chaleur est compté positif de la jonction vers l'air, et la température de l'air
+      $T_a$ sert de référence, comme la masse d'un circuit électrique.
+    </p>
+  </div>
+  <p>
+    Mini-test de trois questions. Les réponses restent masquées, séparées de l'énoncé, jusqu'à votre tentative ou à un clic explicite.
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-source">La chaleur naît dans une couche très mince et doit traverser un empilement</h3>
+  <p>
+    Dans un IGBT ou une diode, les pertes sont produites dans les quelques dizaines de micromètres où le champ électrique et le courant coexistent :
+    la zone de jonction, près de la face supérieure de la puce. Cette chaleur n'a qu'une sortie praticable : vers le bas, à travers la puce, la
+    brasure, le cuivre et la céramique isolante du substrat, la seconde brasure, la semelle de cuivre, la graisse thermique, puis le dissipateur
+    d'aluminium, qui la cède enfin à l'air. Chaque couche oppose une résistance au passage du flux, et chaque résistance traversée par un flux crée
+    un écart de température, exactement comme un courant crée une chute de tension. La jonction est donc le point le plus chaud, et sa température
+    est la somme de tous ces écarts ajoutée à celle de l'air.
+  </p>
+  <p>
+    Le schéma suivant montre cet empilement en coupe. Il fixe les quatre températures de référence de la séance et la manière dont le flux s'élargit
+    en descendant.
+  </p>
+  <figure id="d-coupe-figure">
+    <svg viewBox="0 0 780 430" role="img" aria-label="Coupe d'un module de puissance monté sur un dissipateur : puce de silicium, brasure, substrat cuivre céramique cuivre, brasure, semelle de cuivre, graisse thermique, dissipateur à ailettes, air ; repères des températures de jonction, de boîtier, de dissipateur et de l'air ; cône d'épanouissement du flux de chaleur"><defs><marker id="fl-coupe" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><rect x="250" y="56" width="110" height="20"/><path d="M262 56C280 14 360 14 404 92"/><path d="M290 56C306 26 360 26 410 92" stroke-width="1.2"/><rect x="246" y="76" width="118" height="6"/><rect x="200" y="82" width="180" height="16"/><rect x="396" y="82" width="64" height="16"/><rect x="190" y="98" width="280" height="18"/><rect x="200" y="116" width="260" height="14"/><rect x="200" y="130" width="260" height="6"/><rect x="120" y="136" width="420" height="30"/><rect x="120" y="166" width="420" height="6"/><rect x="80" y="172" width="500" height="38"/><path d="M95 210V330H107V210M137 210V330H149V210M179 210V330H191V210M221 210V330H233V210M263 210V330H275V210M305 210V330H317V210M347 210V330H359V210M389 210V330H401V210M431 210V330H443V210M473 210V330H485V210M515 210V330H527V210M557 210V330H569V210"/></g><g fill="none" stroke="currentColor" stroke-width="1" opacity="0.6"><path d="M196 104l8 -6M212 112l14 -14M234 112l14 -14M256 112l14 -14M278 112l14 -14M300 112l14 -14M322 112l14 -14M344 112l14 -14M366 112l14 -14M388 112l14 -14M410 112l14 -14M432 112l14 -14M454 112l14 -14"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="6 5" stroke-linecap="round"><path d="M250 76L150 210"/><path d="M360 76L460 210"/></g><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M305 80V160" marker-end="url(#fl-coupe)"/><path d="M262 120L232 196" marker-end="url(#fl-coupe)"/><path d="M348 120L378 196" marker-end="url(#fl-coupe)"/><path d="M150 346V390" marker-end="url(#fl-coupe)"/><path d="M300 346V390" marker-end="url(#fl-coupe)"/><path d="M450 346V390" marker-end="url(#fl-coupe)"/></g><g fill="none" stroke="currentColor" stroke-width="1.1" stroke-dasharray="2 3"><path d="M250 66H40M120 151H40M80 191H40"/><path d="M610 66H580M610 90H580M610 107H580M610 123H580M610 151H580M610 169H580M610 260H580"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="10" y="62" font-weight="600">T_j</text><text x="10" y="78" font-size="10.5">jonction</text><text x="10" y="147" font-weight="600">T_c</text><text x="10" y="163" font-size="10.5">boîtier</text><text x="10" y="187" font-weight="600">T_h</text><text x="10" y="203" font-size="10.5">dissip.</text><text x="370" y="30" font-size="11">fil de liaison en aluminium</text><text x="618" y="70">puce Si, 0,1 à 0,4 mm</text><text x="618" y="94">cuivre du substrat</text><text x="618" y="111">céramique Al2O3 ou AlN</text><text x="618" y="127">cuivre du substrat</text><text x="618" y="141" font-size="10.5">brasures : 2 couches</text><text x="618" y="155">semelle cuivre, 3 mm</text><text x="618" y="173">graisse, 20 à 100 µm</text><text x="618" y="264">dissipateur aluminium</text><text x="618" y="280" font-size="10.5">base et ailettes</text><text x="110" y="410">air ambiant T_a : le flux quitte les ailettes par convection</text><text x="618" y="204" font-size="10.5">tirets : cône d'épanouissement</text><text x="316" y="134" font-size="11">flux P</text></g></svg>
+    <figcaption>
+      Coupe d'un module de puissance monté sur son dissipateur, épaisseurs non à l'échelle. De haut en bas : la puce de silicium, dont la face
+      supérieure porte la jonction et reçoit les fils de liaison ; sa brasure ; le substrat isolant formé d'une céramique, hachurée, entre deux couches
+      de cuivre ; une seconde brasure ; la semelle de cuivre, dont la face inférieure sous la puce définit la température de boîtier $T_c$ ; la couche de
+      graisse ; le dissipateur à ailettes, dont la base définit $T_h$. Les flèches épaisses donnent le sens du flux de chaleur $P$, de la jonction vers
+      l'air ; les deux traits en tirets bordent le cône dans lequel le flux s'élargit en descendant, ce qui réduit la résistance des couches basses.
+      Les repères pointillés à gauche placent les quatre températures de référence ; ceux de droite nomment chaque couche.
+    </figcaption>
+  </figure>
+
+  <h3 id="d-analogie">L'analogie électrique, et ses limites</h3>
+  <p>
+    La conduction de la chaleur obéit à une loi de même forme que la loi d'Ohm : le flux qui traverse une couche est proportionnel à l'écart de
+    température entre ses faces. On peut donc représenter le trajet de la chaleur par un circuit : la température joue le rôle du potentiel, le flux
+    de chaleur celui du courant, la résistance thermique celui de la résistance, et la capacité thermique, qui stocke de l'énergie quand la
+    température monte, celui d'un condensateur relié à la référence. La puce qui dissipe $P$ est une source de courant, puisque ses pertes sont fixées
+    par le fonctionnement électrique et non par sa température, du moins en première approximation. L'air ambiant est la masse du circuit.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Analogie contrôlée et ses limites</span>
+    <p>
+      Température et potentiel, flux et courant, $R_{th}$ et $R$, $C_{th}$ et $C$ : les équations sont identiques, et tous les outils des circuits
+      linéaires s'appliquent, lois des nœuds et des mailles, superposition, régimes transitoires. Limites : il n'existe aucun équivalent thermique de
+      l'inductance, donc jamais d'oscillation ni de dépassement, une température ne fait que monter ou descendre vers son équilibre ; le flux de chaleur
+      s'étale en trois dimensions au lieu de suivre un fil, si bien qu'une résistance thermique dépend de la surface réellement traversée ; la
+      convection et le rayonnement ne sont pas linéaires, et la résistance d'un dissipateur varie avec le débit d'air et l'écart de température ; enfin
+      il n'existe pas d'isolant thermique parfait, l'air lui-même conduit un peu, et la chaleur fuit aussi par les bornes et le circuit imprimé.
+    </p>
+  </div>
+  <p>
+    La simulation suivante représente ce circuit pour un seul composant monté sur son propre dissipateur. Elle trace l'escalier des températures,
+    de la jonction à l'air, et anime le flux de chaleur.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Avant de toucher les curseurs, écrivez vos réponses. Un IGBT dissipe $43\ \mathrm{W}$ avec $R_{jc} = 0{,}22$, $R_{ch} = 0{,}08$ et
+      $R_{ha} = 1\ \mathrm{K/W}$ dans un air à $40\ ^\circ\mathrm{C}$. Quelle marche de l'escalier est la plus haute ? Si l'on oublie la graisse et que
+      $R_{ch}$ passe à $0{,}5\ \mathrm{K/W}$, de combien la jonction monte-t-elle ? Que deviennent toutes les températures si l'air passe de $40$ à
+      $50\ ^\circ\mathrm{C}$ ?
+    </p>
+  </div>
+  <figure id="d-escalier-figure">
+    <div class="schema-vivant" id="d-escalier-vivant"></div>
+    <div id="d-escalier-curseurs"></div>
+    <div id="d-escalier-valeurs"></div>
+    <figcaption>
+      Simulation manipulable. À gauche, la chaîne thermique : quatre nœuds, jonction, boîtier, dissipateur et air, reliés par les trois résistances
+      thermiques ; les points qui descendent figurent le flux de chaleur, de la jonction vers l'air, et leur vitesse croît avec la puissance. À droite,
+      l'escalier des températures : chaque palier est la température d'un nœud, chaque marche l'écart $R\,P$ aux bornes d'une résistance. Le trait
+      en tirets longs marque la limite de conception de $125\ ^\circ\mathrm{C}$, le trait en pointillés serrés la limite du catalogue de
+      $150\ ^\circ\mathrm{C}$. Les curseurs règlent la puissance, les trois résistances et la température de l'air ; le panneau affiche les
+      températures et la marge.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Avec les valeurs de départ, la jonction atteint $40 + 43 \times 1{,}30 = 96\ ^\circ\mathrm{C}$ et la plus haute
+    marche est celle du dissipateur, $43\ \mathrm{K}$, parce que $R_{ha}$ est la plus grande des trois résistances : c'est presque toujours le cas
+    pour un composant seul. Sans graisse, $R_{ch} = 0{,}5\ \mathrm{K/W}$ ajoute $0{,}42 \times 43 = 18\ \mathrm{K}$ à la jonction : une couche de
+    quelques dizaines de micromètres oubliée ajoute à elle seule près de la moitié de la marche du dissipateur. Enfin, dix degrés de plus dans l'air décalent
+    tout l'escalier de dix degrés, sans changer une seule marche : les écarts dépendent du flux, pas de la référence, exactement comme les chutes de
+    tension d'un circuit ne dépendent pas du potentiel de la masse.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-hypotheses">Hypothèses et vocabulaire</h3>
+  <ul>
+    <li>Les pertes $P$ sont connues : elles viennent des modèles des cours précédents ou de la documentation du constructeur. On les suppose d'abord
+      indépendantes de la température, puis on lève cette hypothèse.</li>
+    <li>Le flux de chaleur est d'abord supposé unidimensionnel : il traverse chaque couche perpendiculairement à ses faces. L'épanouissement latéral
+      est ensuite pris en compte par une surface efficace.</li>
+    <li>Les propriétés des matériaux sont supposées constantes : c'est une approximation, la conductivité du silicium baisse d'environ $30\ \%$ entre
+      $25$ et $125\ ^\circ\mathrm{C}$.</li>
+    <li>Les températures $T_c$ et $T_h$ sont des températures locales, sous la puce considérée ; un dissipateur n'est jamais isotherme.</li>
+    <li>Régime permanent : toutes les températures sont stables, aucune énergie n'est stockée. Régime transitoire : les capacités thermiques se
+      chargent ou se déchargent.</li>
+  </ul>
+
+  <h3 id="e-conduction">Conduction : la loi de Fourier et la résistance thermique</h3>
+  <p>
+    Dans un solide, la chaleur passe des zones chaudes vers les zones froides par l'agitation du réseau cristallin et, dans les métaux, par les
+    électrons libres. La loi de Fourier, établie expérimentalement, relie la densité de flux $\varphi$, en $\mathrm{W/m^2}$, au gradient de
+    température : $\vec{\varphi} = -\lambda\,\overrightarrow{\mathrm{grad}}\,T$. Le signe moins traduit que le flux descend la pente de température.
+    Considérons une plaque d'épaisseur $e$ et de surface $S$, dont les faces sont aux températures $T_1 &gt; T_2$, sans perte latérale. En régime
+    permanent, le flux total $P = \varphi S$ est le même à toute profondeur, puisque rien ne s'accumule : $\mathrm{d}T/\mathrm{d}x$ est donc
+    constant, la température décroît linéairement, et $\varphi = \lambda(T_1 - T_2)/e$.
+  </p>
+  <figure id="e-conduction-figure">
+    <svg viewBox="0 0 660 270" role="img" aria-label="Plaque d'épaisseur e et de surface S traversée par un flux P de la face chaude à T1 vers la face froide à T2 ; au-dessus, profil linéaire de la température dans l'épaisseur"><defs><marker id="fl-cond" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M260 110L300 80H400L360 110Z"/><path d="M260 110V230H360V110"/><path d="M360 230L400 200V80"/></g><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="4 4"><path d="M260 30V100M360 30V100"/></g><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M120 170H240" marker-end="url(#fl-cond)"/><path d="M380 170H520" marker-end="url(#fl-cond)"/><path d="M260 40L360 80"/></g><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M268 250H352" marker-end="url(#fl-cond)" marker-start="url(#fl-cond)"/><path d="M200 40H600" stroke-dasharray="2 4"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="200" y="36">T_1</text><text x="410" y="100">T_2</text><text x="410" y="56" font-size="11">profil linéaire de T dans l'épaisseur</text><text x="300" y="266">e</text><text x="300" y="160">λ</text><text x="410" y="132">S : surface traversée</text><text x="120" y="160">flux P entrant</text><text x="424" y="160">flux P sortant</text><text x="40" y="200" font-size="11">face chaude à T_1</text><text x="40" y="216" font-size="11">face gauche</text><text x="430" y="216" font-size="11">face froide à T_2, droite</text></g></svg>
+    <figcaption>
+      Plaque traversée par un flux de chaleur. La face gauche est maintenue à $T_1$, la face droite à $T_2 &lt; T_1$ ; les deux flèches horizontales
+      indiquent le flux $P$, qui entre par la face chaude et ressort entier par la face froide. Au-dessus de la plaque, le trait oblique représente le
+      profil de température dans l'épaisseur $e$, cotée par la double flèche du bas : il est linéaire en régime permanent quand $\lambda$ est
+      constante. $S$ est l'aire d'une face, perpendiculaire au flux.
+    </figcaption>
+  </figure>
+  <div class="formule-cle">
+    $$R_{th} = \frac{T_1 - T_2}{P} = \frac{e}{\lambda S}$$
+    <p class="formule-cle-legende">
+      $R_{th}$ résistance thermique de conduction en $\mathrm{K/W}$ ; $e$ épaisseur en $\mathrm{m}$ ; $\lambda$ conductivité thermique en
+      $\mathrm{W/(m\,K)}$ ; $S$ surface traversée en $\mathrm{m^2}$. Hypothèses : flux unidimensionnel, régime permanent, $\lambda$ constante. Unités :
+      $\mathrm{m}/(\mathrm{W\,m^{-1}\,K^{-1}} \cdot \mathrm{m^2}) = \mathrm{K/W}$. Interprétation : c'est exactement $R = \ell/(\sigma S)$ avec
+      $\lambda$ à la place de $\sigma$. Cas limites : $e \to 0$ ou $\lambda \to \infty$ donnent $R_{th} \to 0$, couche transparente ; une lame d'air,
+      $\lambda = 0{,}026\ \mathrm{W/(m\,K)}$, devient presque un isolant.
+    </p>
+  </div>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Matériau</th><th>$\lambda$ en $\mathrm{W/(m\,K)}$, ordre de grandeur</th><th>Rôle dans l'empilement</th></tr></thead>
+      <tbody>
+        <tr><td>Cuivre</td><td>$390$</td><td>Pistes du substrat, semelle : étaler le flux</td></tr>
+        <tr><td>Aluminium et alliages de dissipateurs</td><td>$150$ à $220$</td><td>Dissipateur : léger, bon marché, facile à extruder</td></tr>
+        <tr><td>Silicium</td><td>$150$ à $25\ ^\circ\mathrm{C}$, environ $100$ à $125\ ^\circ\mathrm{C}$</td><td>Puce</td></tr>
+        <tr><td>Nitrure d'aluminium AlN</td><td>$150$ à $180$</td><td>Céramique isolante performante, plus chère</td></tr>
+        <tr><td>Alumine $\mathrm{Al_2O_3}$</td><td>$20$ à $30$</td><td>Céramique isolante courante</td></tr>
+        <tr><td>Brasures</td><td>$30$ à $60$</td><td>Liaisons mécaniques et thermiques</td></tr>
+        <tr><td>Graisse ou pâte thermique</td><td>$0{,}5$ à $5$</td><td>Combler les vides entre semelle et dissipateur</td></tr>
+        <tr><td>Air immobile</td><td>$0{,}026$</td><td>Ce qu'il faut chasser de toutes les interfaces</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Deux calculs montrent les ordres de grandeur. Une alumine de $0{,}38\ \mathrm{mm}$ sous une puce d'un centimètre carré oppose
+    $R = 0{,}38 \times 10^{-3}/(24 \times 10^{-4}) = 0{,}158\ \mathrm{K/W}$ si l'on néglige l'épanouissement, contre $0{,}022\ \mathrm{K/W}$ en
+    nitrure d'aluminium : la céramique, choisie pour isoler électriquement, est souvent la couche la plus résistive du substrat. Entre une semelle et
+    un dissipateur, sur $10\ \mathrm{cm^2}$, une couche de graisse de $50\ \mu\mathrm{m}$ à $1\ \mathrm{W/(m\,K)}$ oppose $0{,}05\ \mathrm{K/W}$ ; la
+    même épaisseur d'air, $1{,}92\ \mathrm{K/W}$, trente-huit fois plus. Les surfaces usinées ne se touchent qu'en quelques points : sans graisse,
+    l'essentiel de l'interface est de l'air. La graisse n'est pas un bon conducteur, elle est simplement bien meilleure que l'air qu'elle remplace, et
+    elle doit rester la plus mince possible, d'où un couple de serrage imposé par le fabricant.
+  </p>
+  <p>
+    L'épanouissement du flux, visible sur la coupe de la section D, ne se calcule simplement que par approximation : on admet souvent que le flux
+    s'élargit selon un cône d'environ $45$ degrés dans les couches épaisses et bonnes conductrices, ce qui augmente la surface efficace des couches
+    basses. C'est pourquoi le fabricant mesure $R_{jc}$ directement, au lieu de la calculer couche par couche, et pourquoi la valeur de sa
+    documentation fait foi.
+  </p>
+
+  <h3 id="e-convection">Convection et rayonnement : du dissipateur à l'air</h3>
+  <p>
+    À la surface du dissipateur, la chaleur passe dans l'air par convection : l'air réchauffé au contact du métal est emporté et remplacé par de
+    l'air plus froid, soit par la seule poussée d'Archimède, en convection naturelle, soit par un ventilateur, en convection forcée. On résume ce
+    phénomène complexe par une relation empirique, dite loi de Newton du refroidissement, $P = hS(T_s - T_a)$, qui définit le coefficient d'échange
+    $h$. Le métal rayonne aussi, selon la loi de Stefan-Boltzmann $P = \varepsilon\sigma S(T_s^4 - T_a^4)$, températures absolues en kelvins.
+  </p>
+  <div class="formule-cle">
+    $$R_{ha} = \frac{1}{(h_{conv} + h_r)\,S_{eff}}, \qquad h_r \approx 4\varepsilon\sigma T_m^3$$
+    <p class="formule-cle-legende">
+      $R_{ha}$ en $\mathrm{K/W}$ ; $h_{conv}$ coefficient de convection en $\mathrm{W/(m^2\,K)}$, de $5$ à $10$ en convection naturelle et de $25$ à
+      $250$ en convection forcée ; $h_r$ coefficient de rayonnement linéarisé ; $\varepsilon$ émissivité, sans unité ; $\sigma = 5{,}67 \times
+      10^{-8}\ \mathrm{W/(m^2\,K^4)}$ ; $T_m$ température absolue moyenne entre surface et air ; $S_{eff}$ surface d'échange efficace en
+      $\mathrm{m^2}$, inférieure à la surface développée, car le pied d'une ailette est plus chaud que son extrémité. Dérivation de $h_r$ :
+      $T_s^4 - T_a^4 = (T_s - T_a)(T_s + T_a)(T_s^2 + T_a^2) \approx (T_s - T_a) \cdot 4T_m^3$. Unités : $\mathrm{W\,m^{-2}\,K^{-1}} \cdot \mathrm{m^2}
+      = \mathrm{W/K}$, dont l'inverse est en $\mathrm{K/W}$. Cas limite : sans écoulement d'air, $h_{conv}$ ne s'annule pas, la convection naturelle
+      subsiste, mais elle est cinq à vingt fois plus faible.
+    </p>
+  </div>
+  <p>
+    À $70\ ^\circ\mathrm{C}$ de moyenne, soit $343\ \mathrm{K}$, une surface anodisée noire d'émissivité $0{,}9$ rayonne avec
+    $h_r = 4 \times 0{,}9 \times 5{,}67 \times 10^{-8} \times 343^3 = 8{,}2\ \mathrm{W/(m^2\,K)}$, autant que la convection naturelle ; un aluminium
+    brut d'émissivité $0{,}05$, seulement $0{,}46\ \mathrm{W/(m^2\,K)}$. Mais entre deux ailettes serrées, chaque face rayonne vers sa voisine aussi
+    chaude qu'elle : seule l'enveloppe extérieure du dissipateur compte pour le rayonnement. En convection forcée, $h_r$ devient négligeable. Ordre de
+    grandeur décisif pour la suite : obtenir $R_{ha} = 0{,}12\ \mathrm{K/W}$ exige $hS = 8{,}3\ \mathrm{W/K}$, soit $1{,}4\ \mathrm{m^2}$ de surface
+    efficace en convection naturelle avec $h = 6$, mais seulement $0{,}21\ \mathrm{m^2}$ en convection forcée avec $h = 40$. C'est pourquoi tous les
+    variateurs de quelques dizaines de kilowatts sont ventilés. Au-delà, on passe au refroidissement liquide, avec des plaques à eau de quelques
+    centièmes de kelvin par watt.
+  </p>
+
+  <h3 id="e-chaine">La chaîne en régime permanent et le dissipateur partagé</h3>
+  <p>
+    Pour un composant seul, le flux $P$ traverse les trois résistances en série : la loi des mailles du circuit équivalent donne
+    $T_j - T_a = P(R_{jc} + R_{ch} + R_{ha})$. Dans un convertisseur, plusieurs puces partagent la même semelle et le même dissipateur : chaque
+    interrupteur a sa propre résistance $R_{jh,k}$ jusqu'au dissipateur, mais tous les flux se rejoignent au nœud $h$. La loi des nœuds impose alors
+    que le flux qui traverse $R_{ha}$ soit la somme des pertes, d'où la température du dissipateur, puis celle de chaque jonction.
+  </p>
+  <figure id="e-commun-figure">
+    <svg viewBox="0 0 720 320" role="img" aria-label="Réseau thermique de trois composants sur un dissipateur commun : trois sources de flux P1, P2, P3, leurs résistances jonction-dissipateur jusqu'au nœud h, puis la résistance dissipateur-air commune jusqu'à la référence T_a ; le flux total est la somme des trois"><defs><marker id="fl-commun" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><circle cx="120" cy="60" r="18"/><circle cx="320" cy="60" r="18"/><circle cx="520" cy="60" r="18"/><path d="M120 78V100M320 78V100M520 78V100"/><rect x="108" y="100" width="24" height="60"/><rect x="308" y="100" width="24" height="60"/><rect x="508" y="100" width="24" height="60"/><path d="M120 160V190H520V160M320 160V190"/><path d="M320 190V210"/><rect x="308" y="210" width="24" height="50"/><path d="M320 260V285M120 285H600"/><path d="M120 42V24H600V285M320 42V24M520 42V24" stroke-dasharray="2 5" stroke-width="1.2"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M120 50V70" marker-end="url(#fl-commun)"/><path d="M320 50V70" marker-end="url(#fl-commun)"/><path d="M520 50V70" marker-end="url(#fl-commun)"/><path d="M360 196V250" marker-end="url(#fl-commun)"/></g><g fill="none" stroke="currentColor" stroke-width="1" opacity="0.6"><path d="M130 285l-10 10M170 285l-10 10M210 285l-10 10M250 285l-10 10M290 285l-10 10M330 285l-10 10M370 285l-10 10M410 285l-10 10M450 285l-10 10M490 285l-10 10M530 285l-10 10M570 285l-10 10"/></g><g fill="currentColor" stroke="none"><circle cx="320" cy="190" r="4.5"/><circle cx="120" cy="88" r="3.5"/><circle cx="320" cy="88" r="3.5"/><circle cx="520" cy="88" r="3.5"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="146" y="64">P_1</text><text x="346" y="64">P_2</text><text x="546" y="64">P_3</text><text x="140" y="96" font-size="11">T_j1</text><text x="340" y="96" font-size="11">T_j2</text><text x="540" y="96" font-size="11">T_j3</text><text x="140" y="136">R_jh,1</text><text x="340" y="136">R_jh,2</text><text x="540" y="136">R_jh,3</text><text x="150" y="182" font-size="11">nœud h : T_h</text><text x="372" y="230">R_ha</text><text x="372" y="248" font-size="11">flux P_1 + P_2 + P_3</text><text x="130" y="310">référence : air ambiant T_a, toutes les températures en sont des élévations</text><text x="610" y="160" font-size="10.5">retour fictif</text><text x="610" y="174" font-size="10.5">des sources</text></g></svg>
+    <figcaption>
+      Réseau thermique de trois composants montés sur un dissipateur commun, en régime permanent. Chaque cercle est une source de flux, la puissance
+      dissipée par une puce ; la petite flèche dans le cercle et le sens de lecture de haut en bas indiquent que la chaleur va de la jonction vers
+      l'air. Les rectangles sont des résistances thermiques. Les trois flux se rejoignent au nœud $h$, le dissipateur, puis traversent ensemble la
+      résistance commune $R_{ha}$, où la flèche latérale rappelle que le flux est la somme des trois. La ligne hachurée du bas est la référence de
+      température, l'air ambiant ; le trait pointillé qui revient vers les sources ferme le circuit, comme le fil de masse d'un schéma électrique, et
+      n'a pas d'existence physique.
+    </figcaption>
+  </figure>
+  <div class="formule-cle">
+    $$T_h = T_a + R_{ha}\sum_k P_k, \qquad T_{j,k} = T_h + R_{jh,k}P_k, \qquad R_{ha,max} = \min_k \frac{T_{j,lim} - R_{jh,k}P_k - T_a}{\sum_k P_k}$$
+    <p class="formule-cle-legende">
+      $T_h$ température du dissipateur en $^\circ\mathrm{C}$ ; $P_k$ pertes du composant $k$ en $\mathrm{W}$ ; $R_{jh,k} = R_{jc,k} + R_{ch,k}$ en
+      $\mathrm{K/W}$ ; $T_{j,lim}$ limite de conception de la jonction. Hypothèses : régime permanent, dissipateur isotherme sous les puces, pertes
+      indépendantes de la température, couplage entre puces négligé dans la semelle. Dérivation : loi des nœuds au nœud $h$, puis loi des mailles
+      sur chaque branche ; on exige $T_{j,k} \le T_{j,lim}$ pour tous les $k$, donc $T_h$ inférieure au plus petit des $T_{j,lim} - R_{jh,k}P_k$.
+      Interprétation : le composant qui fixe le dissipateur n'est pas forcément celui qui dissipe le plus, mais celui dont le produit $R_{jh}P$ est
+      le plus grand. Cas limite : un seul composant redonne $T_j = T_a + P(R_{jh} + R_{ha})$. Unités : $\mathrm{K/W} \times \mathrm{W} = \mathrm{K}$.
+    </p>
+  </div>
+
+  <h3 id="e-boucle">Quand les pertes dépendent de la température</h3>
+  <p>
+    Les pertes de conduction d'un MOSFET croissent avec la température, car $R_{DS(on)}$ augmente d'environ $0{,}5$ à $1\ \%$ par kelvin. Avec un
+    modèle linéaire $P = P_0[1 + a(T_j - T_0)]$, la relation $T_j = T_a + R_{th}P$ devient une équation du premier degré en $T_j$ :
+  </p>
+  <div class="formule-cle">
+    $$T_j = \frac{T_a + R_{th}P_0(1 - aT_0)}{1 - aR_{th}P_0}, \qquad \text{solution stable si } aR_{th}P_0 &lt; 1$$
+    <p class="formule-cle-legende">
+      $a$ coefficient de température des pertes en $\mathrm{K^{-1}}$ ; $P_0$ pertes à la température $T_0$ en $\mathrm{W}$ ; $R_{th}$ résistance de
+      la jonction à l'air en $\mathrm{K/W}$. Dérivation : $T_j - aR_{th}P_0T_j = T_a + R_{th}P_0 - aR_{th}P_0T_0$. Unités : $aR_{th}P_0$ est en
+      $\mathrm{K^{-1}} \cdot \mathrm{K/W} \cdot \mathrm{W}$, sans dimension, comme un gain de boucle. Interprétation : chaque kelvin de plus produit
+      $aR_{th}P_0$ kelvins supplémentaires ; si ce gain atteint $1$, l'échauffement s'entretient sans limite : c'est l'emballement thermique. Cas
+      limite : $a = 0$ redonne $T_j = T_a + R_{th}P_0$. Pour un IGBT, le seuil $V_{CE0}$ décroît avec la température tandis que $r_{CE}$ croît, et
+      les énergies de commutation augmentent typiquement de quelques dixièmes de pour cent par kelvin : on calcule les pertes aux valeurs de la documentation à
+      $125$ ou $150\ ^\circ\mathrm{C}$, ce qui est prudent.
+    </p>
+  </div>
+
+  <h3 id="e-transitoire">Capacité thermique et régime transitoire</h3>
+  <p>
+    Chaque couche stocke de l'énergie quand sa température monte : sa capacité thermique vaut $C_{th} = mc = \rho_m V c$, en $\mathrm{J/K}$. La puce
+    et son substrat, quelques dixièmes de gramme, se réchauffent en quelques millisecondes ; la semelle de cuivre, quelques dizaines de grammes, en
+    quelques secondes ; un dissipateur de plusieurs kilogrammes, en plusieurs minutes. Un composant peut donc supporter pendant une milliseconde une
+    puissance qui le détruirait en régime permanent, parce que la chaleur n'a pas encore quitté la puce : c'est la capacité locale qui l'absorbe.
+  </p>
+  <p>
+    Deux représentations équivalentes du même comportement existent. Le réseau de Cauer suit la physique : une capacité par couche, reliée à la
+    référence, et une résistance entre couches ; ses nœuds intermédiaires sont de vraies températures. Le réseau de Foster est un ajustement
+    mathématique : des cellules $r_i C_i$ en parallèle mises en série, dont les nœuds internes n'ont aucun sens physique, mais dont la réponse
+    s'écrit en une ligne. Les fabricants donnent la courbe $Z_{th,jc}(t)$ et, souvent, les coefficients $r_i$ et $\tau_i$ de Foster.
+  </p>
+  <figure id="e-reseaux-figure">
+    <svg viewBox="0 0 760 400" role="img" aria-label="En haut, réseau de Cauer : source de flux P, nœuds j, c et h, résistances R_jc, R_ch, R_ha en série, capacités de chaque nœud vers la référence T_a. En bas, réseau de Foster : quatre cellules résistance et capacité en parallèle mises en série entre j et h, la température du dissipateur imposée en bas"><defs><marker id="fl-res" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><circle cx="70" cy="110" r="18"/><path d="M70 92V60H160M70 128V170H680"/><rect x="160" y="50" width="70" height="20"/><path d="M230 60H330"/><rect x="330" y="50" width="70" height="20"/><path d="M400 60H500"/><rect x="500" y="50" width="70" height="20"/><path d="M570 60H680V170"/><path d="M230 60V100M400 60V100M570 60V100"/><path d="M216 100H244M386 100H414M556 100H584" stroke-width="2.6"/><path d="M216 110H244M386 110H414M556 110H584" stroke-width="2.6"/><path d="M230 110V170M400 110V170M570 110V170"/><circle cx="70" cy="300" r="18"/><path d="M70 282V250H130M70 318V350H680"/><path d="M130 250V230H210V250M130 250V270H210V250"/><rect x="152" y="222" width="36" height="16"/><path d="M164 262V278M176 262V278" stroke-width="2.6"/><path d="M130 270H164M176 270H210"/><path d="M210 250H260"/><path d="M260 250V230H340V250M260 250V270H340V250"/><rect x="282" y="222" width="36" height="16"/><path d="M294 262V278M306 262V278" stroke-width="2.6"/><path d="M260 270H294M306 270H340"/><path d="M340 250H390"/><path d="M390 250V230H470V250M390 250V270H470V250"/><rect x="412" y="222" width="36" height="16"/><path d="M424 262V278M436 262V278" stroke-width="2.6"/><path d="M390 270H424M436 270H470"/><path d="M470 250H520"/><path d="M520 250V230H600V250M520 250V270H600V250"/><rect x="542" y="222" width="36" height="16"/><path d="M554 262V278M566 262V278" stroke-width="2.6"/><path d="M520 270H554M566 270H600"/><path d="M600 250H680"/><rect x="664" y="280" width="32" height="40" rx="4"/><path d="M680 250V280M680 320V350"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M70 120V100" marker-end="url(#fl-res)"/><path d="M70 310V290" marker-end="url(#fl-res)"/></g><g fill="none" stroke="currentColor" stroke-width="1" opacity="0.6"><path d="M90 170l-10 10M150 170l-10 10M210 170l-10 10M270 170l-10 10M330 170l-10 10M390 170l-10 10M450 170l-10 10M510 170l-10 10M570 170l-10 10M630 170l-10 10M90 350l-10 10M150 350l-10 10M210 350l-10 10M270 350l-10 10M330 350l-10 10M390 350l-10 10M450 350l-10 10M510 350l-10 10M570 350l-10 10M630 350l-10 10"/></g><g fill="currentColor" stroke="none"><circle cx="230" cy="60" r="4"/><circle cx="400" cy="60" r="4"/><circle cx="570" cy="60" r="4"/><circle cx="130" cy="250" r="4"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="10" y="24" font-weight="600">réseau de Cauer : une cellule par couche physique</text><text x="96" y="114">P</text><text x="168" y="44">R_jc</text><text x="338" y="44">R_ch</text><text x="508" y="44">R_ha</text><text x="214" y="88" font-size="11">j</text><text x="384" y="88" font-size="11">c</text><text x="554" y="88" font-size="11">h</text><text x="250" y="110" font-size="11">C_j</text><text x="420" y="110" font-size="11">C_c</text><text x="590" y="110" font-size="11">C_h</text><text x="300" y="194" font-size="11">référence T_a : air ambiant</text><text x="10" y="206" font-weight="600">réseau de Foster : ajustement de Z_th entre j et h</text><text x="96" y="304">P</text><text x="118" y="244" font-size="11">j</text><text x="146" y="216" font-size="11">r_1</text><text x="276" y="216" font-size="11">r_2</text><text x="406" y="216" font-size="11">r_3</text><text x="536" y="216" font-size="11">r_4</text><text x="146" y="294" font-size="11">C_1</text><text x="276" y="294" font-size="11">C_2</text><text x="406" y="294" font-size="11">C_3</text><text x="536" y="294" font-size="11">C_4</text><text x="704" y="296" font-size="11">T_h</text><text x="704" y="312" font-size="11">imposée</text><text x="300" y="376" font-size="11">référence : température du dissipateur</text></g></svg>
+    <figcaption>
+      Deux réseaux équivalents. En haut, le réseau de Cauer : la source de flux $P$ injecte la chaleur au nœud $j$, la flèche dans le cercle indiquant
+      le sens du flux ; les rectangles sont les résistances des couches, les paires de traits épais parallèles les capacités de chaque nœud, toutes
+      reliées à la référence hachurée, l'air ambiant. Les températures des nœuds $j$, $c$ et $h$, mesurées par rapport à cette référence, ont un sens
+      physique. En bas, le réseau de Foster : quatre cellules formées chacune d'une résistance $r_i$ et d'une capacité $C_i$ en parallèle, mises en
+      série entre la jonction et le dissipateur, dont la température est imposée par le rectangle arrondi de droite. Les nœuds entre cellules n'ont pas
+      de sens physique : seule la température du nœud $j$ en a un.
+    </figcaption>
+  </figure>
+  <div class="formule-cle">
+    $$Z_{th}(t) = \frac{T_j(t) - T_{ref}}{P}\Big|_{\text{échelon de }P} = \sum_{i} r_i\left(1 - e^{-t/\tau_i}\right), \qquad \tau_i = r_iC_i, \qquad Z_{th}(\infty) = \sum_i r_i = R_{th}$$
+    <p class="formule-cle-legende">
+      $Z_{th}(t)$ impédance thermique transitoire en $\mathrm{K/W}$, réponse de la jonction à un échelon de puissance de $1\ \mathrm{W}$ ; $r_i$ en
+      $\mathrm{K/W}$, $C_i$ en $\mathrm{J/K}$, $\tau_i$ en secondes ; $T_{ref}$ température de la référence supposée fixe pendant l'échelon.
+      Hypothèses : système linéaire, propriétés constantes. Dérivation : chaque cellule de Foster est un circuit RC parallèle alimenté par le même
+      flux $P$ ; sa tension suit $r_iP(1 - e^{-t/\tau_i})$, comme le circuit RC du cours <a href="#/cours/regime-transitoire-rc">Régime transitoire
+      RC</a> ; les écarts s'additionnent en série. Unités : $\mathrm{K/W} \cdot \mathrm{J/K} = \mathrm{J/W} = \mathrm{s}$. Cas limites : pour
+      $t \ll \tau_1$, $Z_{th}(t) \approx t/C_j$, seule la capacité de la puce travaille ; pour $t \gg \tau_{max}$, on retrouve $R_{th}$.
+    </p>
+  </div>
+  <p>
+    Pour une impulsion unique de durée $t_p$, la jonction atteint $T_{ref} + P\,Z_{th}(t_p)$. Par superposition, la fin de l'impulsion se traite
+    comme l'ajout d'un échelon de $-P$ à l'instant $t_p$. Pour des impulsions répétées de puissance $P_{pk}$, de durée $t_p$ et de rapport cyclique
+    $D$, on utilise l'approximation prudente $\Delta T_{max} \approx P_{pk}[D\,R_{th} + (1 - D)Z_{th}(t_p)]$ : la valeur moyenne plus l'ondulation de
+    la dernière impulsion. Exemple avec le modèle de Foster de l'IGBT de la section F : $P_{pk} = 100\ \mathrm{W}$, $t_p = 10\ \mathrm{ms}$ toutes les
+    $40\ \mathrm{ms}$ ; la formule donne $13{,}1\ \mathrm{K}$, le calcul exact $12{,}1\ \mathrm{K}$, alors que la seule valeur moyenne
+    $D\,P_{pk}R_{th}$ n'en donne que $7{,}5$.
+  </p>
+  <p>
+    La simulation suivante calcule la réponse d'un réseau de Cauer à trois cellules : un IGBT, sa semelle et son propre dissipateur, sur une échelle
+    de temps logarithmique qui va de la dizaine de microsecondes à plusieurs heures. Le lecteur fait avancer le temps ; les trois colonnes animées
+    montrent l'élévation de température de chaque couche à l'instant affiché.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Pour $43\ \mathrm{W}$ en échelon, combien de temps faut-il, à votre avis, pour que la jonction ait fait la moitié de son échauffement final ?
+      Une impulsion de $400\ \mathrm{W}$ pendant $10\ \mathrm{ms}$ fait-elle monter la jonction de plus ou de moins de $50\ \mathrm{K}$ ? Si l'on
+      double la masse du dissipateur, la crête de cette impulsion change-t-elle ?
+    </p>
+  </div>
+  <figure id="e-transitoire-figure">
+    <div id="e-transitoire-curseurs"></div>
+    <div id="e-transitoire-trace"></div>
+    <div class="schema-vivant" id="e-transitoire-vivant"></div>
+    <div id="e-transitoire-lecteur"></div>
+    <div id="e-transitoire-valeurs"></div>
+    <figcaption>
+      Simulation manipulable du réseau de Cauer : $R_{jc} = 0{,}22\ \mathrm{K/W}$ et $C_j = 0{,}3\ \mathrm{J/K}$ pour la puce et son substrat,
+      $R_{ch} = 0{,}08\ \mathrm{K/W}$ et $C_c = 20\ \mathrm{J/K}$ pour la semelle, $R_{ha}$ et la masse du dissipateur réglables, aluminium à
+      $900\ \mathrm{J/(kg\,K)}$, air à $40\ ^\circ\mathrm{C}$. L'axe horizontal porte le logarithme décimal du temps en secondes : $-3$ correspond à
+      une milliseconde, $3$ à mille secondes. Les trois courbes donnent les températures de la jonction, du boîtier et du dissipateur, identifiées par
+      la légende du tracé ; le trait vertical en pointillés suit le temps du lecteur. Les trois colonnes sous le tracé, de gauche à droite jonction,
+      boîtier et dissipateur, montent avec leur élévation de température à cet instant. Le mode impulsion coupe la puissance après la durée réglée.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Pour l'échelon de $43{,}2\ \mathrm{W}$, la jonction gagne $1{,}3\ \mathrm{K}$ en $10\ \mathrm{ms}$,
+    $7{,}4\ \mathrm{K}$ en $100\ \mathrm{ms}$ et $10{,}9\ \mathrm{K}$ en une seconde : à ce stade, la puce a fait presque tout son écart propre, mais le
+    dissipateur n'a pas bougé. La moitié de l'échauffement final de $56\ \mathrm{K}$ n'est atteinte qu'après environ $210\ \mathrm{s}$, trois minutes et demie, car c'est le
+    dissipateur, de constante de temps voisine de $R_{ha}C_h = 1 \times 450 = 450\ \mathrm{s}$, qui porte l'essentiel de l'écart ; il atteint
+    $63\ \%$ de sa valeur finale en $471\ \mathrm{s}$ et $95\ \%$ en $1430\ \mathrm{s}$, soit environ vingt-quatre minutes. L'impulsion de
+    $400\ \mathrm{W}$ pendant $10\ \mathrm{ms}$ ne fait monter la jonction que de $12{,}4\ \mathrm{K}$, car $Z_{th}(10\ \mathrm{ms}) = 0{,}031\
+    \mathrm{K/W}$, alors qu'en régime permanent elle provoquerait $520\ \mathrm{K}$. Doubler la masse du dissipateur ne change rien à cette crête :
+    pendant dix millisecondes, la chaleur n'a pas quitté la puce. Le dissipateur fixe la température moyenne et le comportement sur des minutes ; la
+    puce et son substrat fixent la tenue aux impulsions.
+  </p>
+
+  <h3 id="e-cycles">Cycles thermiques et durée de vie</h3>
+  <p>
+    Le silicium se dilate de $2{,}6 \times 10^{-6}$ par kelvin, l'alumine de $7 \times 10^{-6}$, le cuivre de $17 \times 10^{-6}$ et l'aluminium de
+    $23 \times 10^{-6}$. À chaque montée en température, ces couches collées les unes aux autres veulent s'allonger différemment : les brasures et
+    les pieds des fils de liaison encaissent des déformations de cisaillement. Répétées des millions de fois, elles provoquent des fissures de
+    fatigue. Deux familles de cycles se distinguent : les cycles de puissance, rapides, de quelques secondes ou moins, qui sollicitent surtout la
+    puce, ses fils de liaison et sa brasure, et les cycles thermiques lents, de plusieurs minutes, qui sollicitent la brasure entre substrat et
+    semelle. Le symptôme d'un vieillissement est une montée progressive de $V_{CE(sat)}$, quand des fils se décollent, ou de $R_{th,jc}$, quand une
+    brasure se fissure.
+  </p>
+  <p>
+    Les essais de cyclage montrent que le nombre de cycles avant défaillance $N_f$ décroît très vite avec l'amplitude $\Delta T_j$ et augmente
+    quand la température moyenne $T_m$ baisse. Pour raisonner, on utilisera une loi de forme puissance, dite de Coffin-Manson, avec des paramètres
+    supposés : $N_f = N_{ref}(\Delta T_{ref}/\Delta T_j)^n$, $n = 5$, $N_{ref} = 2 \times 10^6$ cycles à $\Delta T_{ref} = 40\ \mathrm{K}$, à
+    température moyenne donnée. Elle dit l'essentiel : diviser l'amplitude par deux multiplie la durée de vie par trente-deux. Les valeurs réelles
+    viennent des courbes de cyclage du fabricant, et leur extrapolation aux très petites amplitudes reste incertaine. Quand les cycles sont variés,
+    on additionne les fractions de vie consommées, $\sum n_i/N_{f,i}$, et la défaillance est attendue quand la somme atteint $1$ : c'est la règle de
+    Miner, elle aussi une approximation.
+  </p>
+  <p>
+    Un onduleur crée des cycles à la fréquence de sortie : chaque IGBT ne conduit qu'une demi-période, ses pertes suivent donc une demi-sinusoïde
+    déformée, et sa jonction se réchauffe puis se refroidit à chaque période. À $50\ \mathrm{Hz}$, la demi-période de $10\ \mathrm{ms}$ est courte
+    devant les constantes de temps de la puce et l'ondulation reste faible ; à $1\ \mathrm{Hz}$, la jonction a le temps de suivre la puissance. La
+    simulation suivante calcule ce régime périodique avec le modèle de Foster de l'IGBT de la pompe, dont les pertes sont celles du cours
+    <a href="#/cours/mosfet-et-igbt">MOSFET et IGBT</a>.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      À courant nominal, $52{,}6\ \mathrm{A}$, l'ondulation de la température de jonction est-elle plus grande à $50\ \mathrm{Hz}$ ou à
+      $1\ \mathrm{Hz}$ de fréquence de sortie ? Dans quel rapport, à peu près ? La température moyenne de la jonction change-t-elle beaucoup ? Pour
+      un convoyeur qui démarre en charge et reste à basse vitesse, quel paramètre faudrait-il limiter ?
+    </p>
+  </div>
+  <figure id="e-cycles-figure">
+    <div id="e-cycles-curseurs"></div>
+    <div id="e-cycles-puissance"></div>
+    <div id="e-cycles-trace"></div>
+    <div id="e-cycles-lecteur"></div>
+    <div id="e-cycles-valeurs"></div>
+    <figcaption>
+      Simulation manipulable. Pertes instantanées d'un IGBT d'onduleur moyennées sur chaque période de découpage, puis température de sa jonction en
+      régime établi, sur une période de la fréquence de sortie ; l'axe horizontal porte l'angle électrique du courant de phase, de $0$ à
+      $360$ degrés. Modèle de Foster jonction-dissipateur : $r_i = 0{,}018$, $0{,}052$, $0{,}11$ et $0{,}12\ \mathrm{K/W}$, de somme
+      $0{,}30\ \mathrm{K/W}$, $\tau_i = 0{,}8\ \mathrm{ms}$, $8\ \mathrm{ms}$, $60\ \mathrm{ms}$ et $0{,}4\ \mathrm{s}$, supposés ; dissipateur à
+      température fixe pendant la période. Bus de $540\ \mathrm{V}$, découpage à $4\ \mathrm{kHz}$, indice de modulation proportionnel à la fréquence
+      selon la loi tension sur fréquence. Le point mobile, piloté par le lecteur, parcourt la période sur les deux tracés ; les traits horizontaux
+      en tirets du second tracé marquent la température moyenne et la crête.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> À $50\ \mathrm{Hz}$ et courant nominal, l'IGBT dissipe $43{,}2\ \mathrm{W}$ en moyenne, sa jonction est en
+    moyenne $13{,}0\ \mathrm{K}$ au-dessus du dissipateur et ondule de $6{,}2\ \mathrm{K}$, avec une crête $3{,}6\ \mathrm{K}$ au-dessus de la
+    moyenne. À $1\ \mathrm{Hz}$, les pertes moyennes baissent un peu, $31{,}4\ \mathrm{W}$, parce que la tension de sortie est faible et que la
+    diode conduit une plus grande part de la période ; mais l'ondulation monte à $21{,}7\ \mathrm{K}$, trois fois et demie plus, et la crête dépasse la
+    moyenne de $14\ \mathrm{K}$. Avec la loi supposée, un cycle d'un hertz consomme $(21{,}7/6{,}2)^5 \approx 540$ fois plus de durée de vie qu'un cycle
+    de $50\ \mathrm{Hz}$ ; ces cycles étant cinquante fois plus rares, l'usure par heure de fonctionnement reste environ onze fois plus rapide. C'est pourquoi les constructeurs de variateurs déclassent le
+    courant admissible en dessous de quelques hertz : une donnée à lire dans leur documentation. Pour un convoyeur qui reste longtemps à basse vitesse
+    en pleine charge, on limite le courant ou on choisit un calibre supérieur ; pour la pompe, dont le couple est quadratique, le courant à basse
+    vitesse est faible et le problème ne se pose pas.
+  </p>
+
+  <h3 id="e-statut">Loi, convention, approximation, règle de conception et donnée du constructeur</h3>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Catégorie</th><th>Dans cette séance</th></tr></thead>
+      <tbody>
+        <tr><td>Loi physique</td><td>Conservation de l'énergie, qui donne la loi des nœuds thermique et $C_{th}\,\mathrm{d}T/\mathrm{d}t$ ; loi de Fourier de la conduction ; loi de Stefan-Boltzmann du rayonnement ; dilatation thermique des matériaux.</td></tr>
+        <tr><td>Convention</td><td>Flux compté positif de la jonction vers l'air ; air ambiant pris comme référence ; définitions de $T_c$ sous la puce et de $T_h$ au contact du boîtier, qui varient selon les fabricants ; $Z_{th}$ définie comme réponse à un échelon de $1\ \mathrm{W}$.</td></tr>
+        <tr><td>Approximation</td><td>Flux unidimensionnel et cône d'épanouissement ; loi de Newton du refroidissement et $h$ constant ; rayonnement linéarisé ; dissipateur isotherme ; propriétés indépendantes de la température ; réseaux de Cauer et de Foster à nombre fini de cellules ; formule des impulsions répétées ; loi de Coffin-Manson et règle de Miner.</td></tr>
+        <tr><td>Règle de conception</td><td>Jonction limitée en service continu à $25$ ou $50\ \mathrm{K}$ sous la limite du catalogue, ici $125\ ^\circ\mathrm{C}$ pour $150\ ^\circ\mathrm{C}$ ; dimensionnement au point de fonctionnement le plus chaud et à la température d'air maximale ; ventilation dimensionnée pour quelques kelvins d'échauffement de l'air de l'armoire ; graisse au couple de serrage prescrit.</td></tr>
+        <tr><td>Donnée du constructeur</td><td>$T_{j,max}$, $R_{th,jc}$, $R_{th,ch}$ avec la graisse spécifiée, courbe $Z_{th}(t)$ et coefficients de Foster, résistance du dissipateur en fonction du débit, courbes de cyclage en puissance, déclassement du variateur en fréquence de sortie, en température d'air, en fréquence de découpage et en altitude.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Le schéma principal de la séance est le réseau thermique équivalent du variateur de la pompe au régime nominal : dix-huit puces sur un
+    dissipateur commun, refroidi par l'air d'une armoire elle-même ventilée par l'air du local. Toutes les valeurs sont celles de la section I.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 840 480" role="img" aria-label="Réseau thermique du variateur de la pompe : trois groupes de six sources de flux, IGBT, diodes d'onduleur et diodes du pont, avec leurs résistances jusqu'au nœud du dissipateur commun ; capacité du dissipateur et capteur de température ; résistance dissipateur-air ventilé jusqu'au nœud air de l'armoire ; résistance de ventilation de l'armoire jusqu'à la référence air du local"><defs><marker id="fl-princ" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><circle cx="150" cy="70" r="20"/><circle cx="380" cy="70" r="20"/><circle cx="610" cy="70" r="20"/><path d="M150 90V110M380 90V110M610 90V110"/><rect x="138" y="110" width="24" height="56"/><rect x="368" y="110" width="24" height="56"/><rect x="598" y="110" width="24" height="56"/><path d="M150 166V200H610V166M380 166V200"/><path d="M300 200V230M300 240V430"/><path d="M286 230H314M286 240H314" stroke-width="2.8"/><path d="M380 200V240"/><rect x="368" y="240" width="24" height="56"/><path d="M380 296V330"/><path d="M560 200V214"/><rect x="544" y="214" width="32" height="20" rx="3"/><path d="M536 240L584 208" stroke-width="1.4"/><path d="M380 330V360"/><rect x="368" y="360" width="24" height="44"/><path d="M380 404V430M200 430H700"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M150 60V80" marker-end="url(#fl-princ)"/><path d="M380 60V80" marker-end="url(#fl-princ)"/><path d="M610 60V80" marker-end="url(#fl-princ)"/><path d="M350 246V292" marker-end="url(#fl-princ)"/><path d="M350 364V400" marker-end="url(#fl-princ)"/><path d="M584 224H620" stroke-dasharray="4 4" marker-end="url(#fl-princ)"/></g><g fill="none" stroke="currentColor" stroke-width="1" opacity="0.6"><path d="M220 430l-10 10M260 430l-10 10M300 430l-10 10M340 430l-10 10M380 430l-10 10M420 430l-10 10M460 430l-10 10M500 430l-10 10M540 430l-10 10M580 430l-10 10M620 430l-10 10M660 430l-10 10M700 430l-10 10"/></g><g fill="currentColor" stroke="none"><circle cx="380" cy="200" r="5"/><circle cx="380" cy="330" r="5"/><circle cx="150" cy="100" r="3.5"/><circle cx="380" cy="100" r="3.5"/><circle cx="610" cy="100" r="3.5"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="60" y="30" font-weight="600">6 IGBT d'onduleur</text><text x="290" y="30" font-weight="600">6 diodes d'onduleur</text><text x="530" y="30" font-weight="600">6 diodes du pont</text><text x="176" y="66">43,2 W</text><text x="406" y="66">8,4 W</text><text x="636" y="66">24,3 W</text><text x="30" y="104" font-size="11">T_j = 107,6 °C</text><text x="262" y="104" font-size="11">T_j = 98,8 °C</text><text x="636" y="104" font-size="11">T_j = 118,9 °C</text><text x="172" y="144">0,30 K/W</text><text x="402" y="144">0,50 K/W</text><text x="632" y="144">1,0 K/W</text><text x="392" y="194" font-size="11">nœud h : dissipateur commun</text><text x="392" y="210" font-size="11">T_h = 94,6 °C</text><text x="186" y="250" font-size="11">C_h = 3600 J/K</text><text x="186" y="266" font-size="11">4 kg d'aluminium</text><text x="596" y="206" font-size="11">capteur CTN</text><text x="626" y="228" font-size="11">vers la commande</text><text x="400" y="262">R_ha = 0,12 K/W</text><text x="430" y="282" font-size="11">455 W, ventilateur interne</text><text x="392" y="326" font-size="11">nœud : air de l'armoire, T_a = 40 °C</text><text x="400" y="380">R_v = 1/(ρ c_p Q) = 0,0091 K/W</text><text x="430" y="398" font-size="11">550 W, 329 m³/h</text><text x="210" y="460" font-size="11">référence : air du local, 35 °C au plus</text></g></svg>
+    <figcaption>
+      Réseau thermique du variateur de la pompe au régime nominal. En haut, trois sources de flux, chacune représentant six puces identiques ; la
+      flèche dans chaque cercle indique le sens du flux, de la puce vers le bas du schéma, c'est-à-dire vers l'air. Chaque groupe traverse sa
+      résistance jonction-dissipateur, rectangle, jusqu'au nœud $h$, le dissipateur commun, dont la capacité $C_h$, deux traits épais, est reliée à la
+      référence hachurée du bas, et dont la température est mesurée par une thermistance à coefficient négatif, petit rectangle
+      barré, câblée vers la commande. Le flux total de $455\ \mathrm{W}$ traverse $R_{ha}$ jusqu'à l'air de l'armoire, puis, ajouté aux
+      $95\ \mathrm{W}$ des autres appareils, la résistance équivalente de la ventilation $R_v$ jusqu'à la référence hachurée : l'air du local. Les
+      petites flèches latérales indiquent les flux qui traversent $R_{ha}$ et $R_v$. Dans le réseau, chaque nœud porte son élévation au-dessus de cette référence ; les
+      températures annotées sont les valeurs absolues correspondantes, calculées en section I.
+    </figcaption>
+  </figure>
+  <p>
+    Le tracé suivant donne l'impédance thermique transitoire jonction-dissipateur de l'IGBT de la pompe, calculée avec le modèle de Foster supposé
+    de la section E. C'est la courbe qu'on lit dans la documentation d'un module pour traiter une impulsion ou un régime cyclique.
+  </p>
+  <figure id="f-zth-figure">
+    <div id="f-zth-trace"></div>
+    <figcaption>
+      Impédance thermique $Z_{th,jh}(t)$ de l'IGBT, en $\mathrm{K/W}$, en fonction du logarithme décimal du temps en secondes. Les points repérés
+      donnent $0{,}021\ \mathrm{K/W}$ à $1\ \mathrm{ms}$, $0{,}075$ à $10\ \mathrm{ms}$, $0{,}186$ à $0{,}1\ \mathrm{s}$ et $0{,}290$ à $1\ \mathrm{s}$ ;
+      le trait horizontal en tirets marque la valeur finale $R_{th,jh} = 0{,}30\ \mathrm{K/W}$, atteinte en quelques secondes. La pente de la courbe
+      se lit comme la capacité de la couche qui travaille à chaque échelle de temps : puce, substrat, puis semelle.
+    </figcaption>
+  </figure>
+  <p>
+    Le tableau suivant compare les modes de refroidissement. Les plages de $R_{ha}$ sont des ordres de grandeur pour des dissipateurs de
+    convertisseurs de quelques kilowatts à quelques dizaines de kilowatts ; la valeur exacte vient toujours de la documentation du dissipateur.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Mode</th><th>$R_{ha}$, ordre de grandeur</th><th>Avantages</th><th>Contreparties</th></tr></thead>
+      <tbody>
+        <tr><td>Convection naturelle</td><td>$0{,}3$ à $2\ \mathrm{K/W}$</td><td>Aucune pièce mobile, silencieux, sans entretien</td><td>Encombrant et lourd, ailettes verticales et espace libre exigés</td></tr>
+        <tr><td>Convection forcée</td><td>$0{,}03$ à $0{,}3\ \mathrm{K/W}$</td><td>Compact, standard des variateurs</td><td>Ventilateur à surveiller et à remplacer, poussière, bruit, défaillance brutale</td></tr>
+        <tr><td>Refroidissement liquide</td><td>$0{,}005$ à $0{,}05\ \mathrm{K/W}$</td><td>Très fortes puissances, chaleur évacuée hors du local</td><td>Circuit d'eau, fuites, condensation, coût</td></tr>
+        <tr><td>Montage traversant</td><td>Celle du dissipateur, dans l'air du local</td><td>La chaleur ne charge pas l'armoire</td><td>Découpe et joint d'armoire, dissipateur exposé à la poussière du local</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    L'organigramme ci-dessous résume la démarche de dimensionnement thermique, des pertes jusqu'à la vérification sur site.
+  </p>
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Pertes au point le plus chaud"] --> B["Données : R_jc, R_ch, Z_th, T_j maximale"]
+  B --> C["Limite T_j,lim et air le plus chaud T_a"]
+  C --> D["T_h,max : plus petit des T_j,lim - R_jh,k P_k"]
+  D --> E["R_ha,max = (T_h,max - T_a) / somme des pertes"]
+  E --> F{"R_ha,max ≥ 0,5 K/W ?"}
+  F -->|"Oui"| G["Convection naturelle envisageable"]
+  F -->|"Non"| H{"R_ha,max ≥ 0,05 K/W ?"}
+  H -->|"Oui"| I["Convection forcée"]
+  H -->|"Non"| J["Refroidissement liquide"]
+  G --> K["Impulsions, surcharges, cycles"]
+  I --> K
+  J --> K
+  K --> L["Ventilation de l'armoire et défaillances"]
+  L --> M["Mesure de T_h et de l'air, comparaison"]</pre>
+    <figcaption>
+      Organigramme de dimensionnement thermique. Les rectangles sont des calculs, les losanges des décisions. On part des pertes au point le plus
+      chaud, on fixe la limite de conception et l'air le plus chaud, on en déduit la température admissible du dissipateur, puis sa résistance
+      maximale ; deux seuils indicatifs orientent le mode de refroidissement. On vérifie ensuite les régimes transitoires, la ventilation de
+      l'armoire et les défaillances, avant de confronter le calcul à une mesure.
+    </figcaption>
+  </figure>
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <ul>
+    <li><a href="#d-coupe-figure" data-renvoi="d-coupe-figure">Coupe d'un module sur son dissipateur</a>, en section D.</li>
+    <li><a href="#d-escalier-figure" data-renvoi="d-escalier-figure">Escalier des températures et flux de chaleur</a> : simulation manipulable, en section D.</li>
+    <li><a href="#e-conduction-figure" data-renvoi="e-conduction-figure">Conduction dans une plaque</a>, en section E.</li>
+    <li><a href="#e-commun-figure" data-renvoi="e-commun-figure">Composants sur un dissipateur commun</a>, en section E.</li>
+    <li><a href="#e-reseaux-figure" data-renvoi="e-reseaux-figure">Réseaux de Cauer et de Foster</a> et <a href="#e-transitoire-figure" data-renvoi="e-transitoire-figure">simulation du régime transitoire</a>, en section E.</li>
+    <li><a href="#e-cycles-figure" data-renvoi="e-cycles-figure">Cycles thermiques à la fréquence de sortie</a> : simulation, en section E.</li>
+    <li><a href="#h-figure" data-renvoi="h-figure">Escalier des températures de l'exemple</a> et <a href="#h-carte-figure" data-renvoi="h-carte-figure">carte de conception du dissipateur</a>, en section H.</li>
+    <li><a href="#i-figure" data-renvoi="i-figure">Deux implantations de l'armoire du variateur</a>, en section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <ol>
+    <li>Fixer les conventions et les hypothèses : référence de température, sens du flux, point de fonctionnement retenu, origine de chaque donnée,
+      mesure, documentation ou valeur supposée.</li>
+    <li>Calculer les pertes de chaque puce au point de fonctionnement le plus chaud : courant maximal, tension de bus maximale, fréquence de découpage
+      la plus haute, paramètres des composants pris à chaud.</li>
+    <li>Rassembler les données thermiques : $R_{jc}$ et $R_{ch}$ de chaque puce, $Z_{th}(t)$ si un régime transitoire intervient, $T_{j,max}$ du
+      catalogue ; choisir la limite de conception $T_{j,lim}$ avec une marge de $25$ à $50\ \mathrm{K}$.</li>
+    <li>Déterminer la température d'air maximale vue par le dissipateur : air du local le plus chaud, augmenté de l'échauffement de l'armoire.</li>
+    <li>Calculer $T_{h,max} = \min_k(T_{j,lim} - R_{jh,k}P_k)$, puis $R_{ha,max} = (T_{h,max} - T_a)/\sum P_k$, et choisir le mode de
+      refroidissement et le dissipateur, avec sa courbe en fonction du débit d'air.</li>
+    <li>Recalculer toutes les températures de jonction avec le dissipateur retenu ; si les pertes dépendent de la température, itérer jusqu'à
+      convergence et vérifier $aR_{th}P_0 &lt; 1$.</li>
+    <li>Traiter les régimes variables : impulsions avec $Z_{th}(t_p)$, surcharges avec la constante de temps du dissipateur, cycles à basse fréquence
+      de sortie et à chaque démarrage, en estimant la consommation de durée de vie.</li>
+    <li>Dimensionner l'évacuation hors de l'armoire, $Q = P/(\rho c_p\Delta T_{air})$, et étudier les défaillances : ventilateur arrêté, filtres
+      colmatés, air trop chaud.</li>
+    <li>Contrôler : unités, ordre de grandeur, cas limites, bilan d'énergie ; prévoir la mesure de $T_h$ et de l'air à la mise en service, à pleine
+      charge et après stabilisation.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    On reprend la question de transition du cours précédent : quelle résistance thermique exiger du dissipateur de l'onduleur de la pompe ? On
+    traite d'abord l'onduleur seul ; la section I y ajoutera le pont d'entrée, qui partage le même dissipateur.
+  </p>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <ul>
+    <li><strong>Composants :</strong> six IGBT $1200\ \mathrm{V}$, $100\ \mathrm{A}$ et six diodes, modèle du cours
+      <a href="#/cours/mosfet-et-igbt">MOSFET et IGBT</a>, découpage à $4\ \mathrm{kHz}$.</li>
+    <li><strong>Pertes au régime nominal :</strong> $52{,}6\ \mathrm{A}$, $\cos\varphi = 0{,}86$, $m = 1$, bus de $540\ \mathrm{V}$ : par IGBT
+      $30{,}0\ \mathrm{W}$ de conduction et $13{,}2\ \mathrm{W}$ de commutation, soit $43{,}2\ \mathrm{W}$ ; par diode $4{,}95 + 3{,}41 =
+      8{,}36\ \mathrm{W}$.</li>
+    <li><strong>Pertes au point de service :</strong> $39{,}6\ \mathrm{A}$, $\cos\varphi = 0{,}82$, $m = 0{,}85$, bus de $524\ \mathrm{V}$ : par IGBT
+      $28{,}2\ \mathrm{W}$, par diode $7{,}40\ \mathrm{W}$.</li>
+    <li><strong>Résistances thermiques supposées :</strong> IGBT $R_{jc} = 0{,}22$ et $R_{ch} = 0{,}08\ \mathrm{K/W}$, soit $R_{jh} = 0{,}30$ ; diode
+      $R_{jc} = 0{,}38$ et $R_{ch} = 0{,}12\ \mathrm{K/W}$, soit $R_{jh} = 0{,}50$.</li>
+    <li><strong>Limites :</strong> $T_{j,max} = 150\ ^\circ\mathrm{C}$ au catalogue, limite de conception $T_{j,lim} = 125\ ^\circ\mathrm{C}$, air de
+      l'armoire à $40\ ^\circ\mathrm{C}$ au plus.</li>
+  </ul>
+  <p>
+    <strong>Inconnues :</strong> la résistance $R_{ha,max}$ selon la question posée, puis selon une démarche correcte ; les températures de jonction
+    et de boîtier avec le dissipateur choisi ; la marge. <strong>Stratégie :</strong> méthode de la section G, en comparant les deux jeux
+    d'hypothèses pour mesurer l'erreur commise.
+  </p>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li>Pertes totales. Point de service : $6 \times (28{,}24 + 7{,}40) = 213{,}9\ \mathrm{W}$. Nominal : $6 \times (43{,}24 + 8{,}36) =
+      309{,}6\ \mathrm{W}$.</li>
+    <li>Réponse littérale à la question, point de service et $150\ ^\circ\mathrm{C}$. IGBT : $T_h \le 150 - 0{,}30 \times 28{,}24 =
+      141{,}5\ ^\circ\mathrm{C}$ ; diode : $150 - 0{,}50 \times 7{,}40 = 146{,}3\ ^\circ\mathrm{C}$. La plus petite borne est celle de l'IGBT, d'où
+      $R_{ha} \le (141{,}5 - 40)/213{,}9 = 0{,}475\ \mathrm{K/W}$.</li>
+    <li>Démarche correcte, nominal et $125\ ^\circ\mathrm{C}$. IGBT : $T_h \le 125 - 0{,}30 \times 43{,}24 = 125 - 12{,}97 = 112{,}0\ ^\circ\mathrm{C}$ ;
+      diode : $125 - 0{,}50 \times 8{,}36 = 125 - 4{,}18 = 120{,}8\ ^\circ\mathrm{C}$. D'où $T_{h,max} = 112{,}0\ ^\circ\mathrm{C}$ et
+      $R_{ha,max} = (112{,}0 - 40)/309{,}6 = 0{,}233\ \mathrm{K/W}$, deux fois moins que la réponse littérale.</li>
+    <li>Choix : un dissipateur ventilé de $0{,}20\ \mathrm{K/W}$ au débit de son ventilateur, valeur supposée lue sur la courbe du fabricant.</li>
+    <li>Vérification au nominal : $T_h = 40 + 0{,}20 \times 309{,}6 = 101{,}9\ ^\circ\mathrm{C}$ ; IGBT : $T_c = 101{,}9 + 0{,}08 \times 43{,}24 =
+      105{,}4\ ^\circ\mathrm{C}$ et $T_j = 101{,}9 + 12{,}97 = 114{,}9\ ^\circ\mathrm{C}$ ; diode : $T_j = 101{,}9 + 4{,}18 = 106{,}1\ ^\circ\mathrm{C}$.</li>
+    <li>Ondulation à $50\ \mathrm{Hz}$ : la simulation de la section E donne une crête $3{,}6\ \mathrm{K}$ au-dessus de la moyenne, soit
+      $118{,}5\ ^\circ\mathrm{C}$ au plus pour l'IGBT, sous les $125\ ^\circ\mathrm{C}$.</li>
+    <li>Au point de service, avec ce dissipateur : $T_h = 40 + 0{,}20 \times 213{,}9 = 82{,}8\ ^\circ\mathrm{C}$ et $T_j = 82{,}8 + 0{,}30 \times
+      28{,}24 = 91{,}2\ ^\circ\mathrm{C}$ pour l'IGBT.</li>
+  </ol>
+  <p>
+    Résultat : un dissipateur d'au plus $0{,}233\ \mathrm{K/W}$ pour l'onduleur seul ; avec $0{,}20\ \mathrm{K/W}$, la jonction la plus chaude atteint
+    $114{,}9\ ^\circ\mathrm{C}$ en moyenne et $118{,}5\ ^\circ\mathrm{C}$ en crête, soit $10\ \mathrm{K}$ de marge sur la limite de conception et
+    $35\ \mathrm{K}$ sur celle du catalogue. Le schéma suivant représente cet escalier au régime nominal.
+  </p>
+  <figure id="h-figure">
+    <svg viewBox="0 0 720 360" role="img" aria-label="Escalier des températures de l'exemple au régime nominal : air 40 °C, dissipateur 101,9 °C, boîtier de l'IGBT 105,4 °C, jonction de l'IGBT 114,9 °C, jonction de la diode 106,1 °C ; limites de conception 125 °C et du catalogue 150 °C"><defs><marker id="fl-hex" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="1.4"><path d="M80 320V20M80 320H680"/><path d="M76 296H84M76 230H84M76 164H84M76 98H84M76 32H84"/></g><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="10 6"><path d="M80 109H680"/></g><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 4"><path d="M80 54H680"/></g><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M110 296H210V159.8H330V152.1H450V131.2H560"/><path d="M330 159.8H450V150.6H560" stroke-width="2" stroke-dasharray="6 4"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M226 290V166" marker-end="url(#fl-hex)"/><path d="M466 151V137" marker-end="url(#fl-hex)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="36" y="300">40</text><text x="36" y="234">70</text><text x="28" y="168">100</text><text x="28" y="102">130</text><text x="28" y="36">160</text><text x="10" y="16" font-size="11">°C</text><text x="112" y="286" font-size="11">air 40,0</text><text x="214" y="150" font-size="11">dissipateur 101,9</text><text x="236" y="220" font-size="11">R_ha × 309,6 W</text><text x="236" y="236" font-size="11">= 61,9 K</text><text x="334" y="143" font-size="11">boîtier 105,4</text><text x="476" y="124" font-size="11">jonction IGBT 114,9</text><text x="476" y="168" font-size="11">jonction diode 106,1</text><text x="560" y="103" font-size="11">125 : conception</text><text x="560" y="48" font-size="11">150 : catalogue</text><text x="120" y="344" font-size="11">air</text><text x="230" y="344" font-size="11">dissipateur h</text><text x="350" y="344" font-size="11">boîtier c</text><text x="470" y="344" font-size="11">jonction j</text></g></svg>
+    <figcaption>
+      Escalier des températures de l'exemple au régime nominal, avec le dissipateur de $0{,}20\ \mathrm{K/W}$. L'axe vertical est gradué en degrés
+      Celsius, l'axe horizontal suit la chaîne de l'air vers la jonction. Le trait plein épais est le chemin de l'IGBT, le trait en tirets celui de la
+      diode, qui partage le même dissipateur. La grande flèche verticale mesure la marche du dissipateur, $61{,}9\ \mathrm{K}$, provoquée par la somme
+      des pertes ; la petite flèche, la marche de jonction à boîtier de l'IGBT. Le trait en tirets longs marque la limite de conception de
+      $125\ ^\circ\mathrm{C}$, le trait en pointillés serrés la limite du catalogue de $150\ ^\circ\mathrm{C}$.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li>Unités : $(\mathrm{^\circ C} - \mathrm{^\circ C})/\mathrm{W} = \mathrm{K/W}$ ; $\mathrm{K/W} \times \mathrm{W} = \mathrm{K}$, ajouté à une
+      température en degrés Celsius.</li>
+    <li>Ordre de grandeur : $0{,}2\ \mathrm{K/W}$ pour $300\ \mathrm{W}$ correspond à un dissipateur ventilé de quelques kilogrammes, cohérent avec
+      un variateur de $30\ \mathrm{kW}$ et avec le tableau de la section F.</li>
+    <li>Répartition : la marche du dissipateur, $61{,}9\ \mathrm{K}$, domine celles des puces, $13\ \mathrm{K}$ au plus : c'est le propre d'un
+      dissipateur partagé, où $R_{ha}$ voit la somme des pertes.</li>
+    <li>Cas limite et sens physique : avec la réponse littérale de $0{,}475\ \mathrm{K/W}$, le régime nominal donnerait
+      $T_h = 40 + 0{,}475 \times 309{,}6 = 187\ ^\circ\mathrm{C}$ et $T_j = 200\ ^\circ\mathrm{C}$ : l'onduleur serait détruit au premier été où la
+      pompe tournerait à pleine vitesse. Dimensionner au point de service est l'erreur la plus coûteuse de cet exemple.</li>
+    <li>Bilan d'énergie : en régime permanent, les $309{,}6\ \mathrm{W}$ produits sont entièrement évacués par $R_{ha}$ ; aucune énergie n'est stockée.</li>
+  </ul>
+
+  <h3 id="h-carte">Contrôle graphique : la carte de conception du dissipateur</h3>
+  <p>
+    Pour une répartition des pertes fixée, la condition $T_j \le T_{j,lim}$ s'écrit $R_{ha} \le (T_{j,lim} - T_a)/P - R_{jh}\,k_T$, où
+    $k_T = 43{,}24/309{,}6 = 0{,}140$ est la part des pertes totales dissipée par un IGBT. Dans le plan des pertes totales et de la résistance du
+    dissipateur, la frontière est une hyperbole décalée : sous elle, la conception est valable. La carte suivante permet de déplacer le point de
+    fonctionnement à la souris ou au clavier.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Placez mentalement le point de la réponse littérale, $213{,}9\ \mathrm{W}$ et $0{,}475\ \mathrm{K/W}$ : sur quelle frontière tombe-t-il ? Où
+      tombe le dissipateur de $0{,}20\ \mathrm{K/W}$ au nominal ? Si l'air de l'armoire monte à $50\ ^\circ\mathrm{C}$, ce dissipateur reste-t-il
+      valable ?
+    </p>
+  </div>
+  <figure id="h-carte-figure">
+    <div class="schema-vivant" id="h-carte-vivant"></div>
+    <div id="h-carte-curseurs"></div>
+    <div id="h-carte-valeurs"></div>
+    <figcaption>
+      Carte de conception manipulable. Axe horizontal : pertes totales de l'onduleur, de $0$ à $600\ \mathrm{W}$ ; axe vertical : résistance
+      thermique du dissipateur, de $0$ à $0{,}6\ \mathrm{K/W}$. La courbe en trait plein est la frontière pour une jonction d'IGBT à
+      $125\ ^\circ\mathrm{C}$, la courbe en tirets celle de $150\ ^\circ\mathrm{C}$ ; la zone hachurée sous la courbe pleine est la zone de conception
+      valable. Les deux traits verticaux fins repèrent le point de service et le régime nominal. Le point déplaçable, entouré d'un cercle, est le
+      couple choisi ; le curseur règle la température de l'air ; le panneau affiche les températures et le verdict.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Le point de la réponse littérale tombe exactement sur la frontière de $150\ ^\circ\mathrm{C}$ au point de service,
+    ce qui était sa définition, mais il est loin au-dessus de la frontière de $125\ ^\circ\mathrm{C}$ dès que les pertes augmentent. Au nominal, la
+    frontière de conception passe par $0{,}233\ \mathrm{K/W}$, et le dissipateur de $0{,}20\ \mathrm{K/W}$ se trouve dans la zone valable. Si l'air
+    de l'armoire atteint $50\ ^\circ\mathrm{C}$, la frontière descend à $(125 - 50)/309{,}6 - 0{,}042 = 0{,}200\ \mathrm{K/W}$ : le même
+    dissipateur est exactement à la limite. La température de l'air est donc un paramètre aussi important que le dissipateur lui-même, ce qui mène
+    à la ventilation de l'armoire.
+  </p>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <p>
+    Projet fil rouge : le variateur de la pompe porte sur le même dissipateur l'onduleur de la section H et le pont de diodes d'entrée du cours
+    <a href="#/cours/diodes-de-puissance">Diodes de puissance</a>, dont les pertes ont été affinées dans le cours
+    <a href="#/cours/redresseurs-triphases">Redresseurs triphasés</a>. Il est installé dans une armoire du local technique, avec la self de ligne, le
+    filtre CEM, l'alimentation $24\ \mathrm{V}$ et l'automate du cours <a href="#/cours/compatibilite-electromagnetique">Compatibilité
+    électromagnétique</a>. Il faut dimensionner le dissipateur, la ventilation de l'armoire, et vérifier la surcharge, la panne du ventilateur et
+    les cycles thermiques.
+  </p>
+
+  <h3 id="i-donnees">Données, contraintes d'exploitation et calculs</h3>
+  <ul>
+    <li>Pont d'entrée au nominal : $24{,}3\ \mathrm{W}$ par diode, soit $145{,}8\ \mathrm{W}$ pour six, avec $R_{jh} = 1{,}0\ \mathrm{K/W}$ par diode ;
+      au point de service, $76{,}6\ \mathrm{W}$ au total. Onduleur : $309{,}6\ \mathrm{W}$ au nominal, $213{,}9\ \mathrm{W}$ au point de service.</li>
+    <li>Local technique à $35\ ^\circ\mathrm{C}$ au plus, air de l'armoire limité à $40\ ^\circ\mathrm{C}$, soit $5\ \mathrm{K}$ d'échauffement ; autres
+      appareils de l'armoire : $95\ \mathrm{W}$ supposés, self de ligne, filtre, alimentation et automate.</li>
+    <li>Dissipateur ventilé supposé : $4\ \mathrm{kg}$ d'aluminium, $C_h = 4 \times 900 = 3600\ \mathrm{J/K}$ ; $0{,}12\ \mathrm{K/W}$ au débit nominal
+      de son ventilateur interne, environ $0{,}6\ \mathrm{K/W}$ ventilateur arrêté.</li>
+  </ul>
+  <ol>
+    <li>Pertes totales au nominal : $309{,}6 + 145{,}8 = 455{,}4\ \mathrm{W}$.</li>
+    <li>Bornes de $T_h$ : IGBT $112{,}0\ ^\circ\mathrm{C}$, diode d'onduleur $120{,}8\ ^\circ\mathrm{C}$, diode du pont $125 - 1{,}0 \times 24{,}3 =
+      100{,}7\ ^\circ\mathrm{C}$. Le pont fixe la limite, bien qu'il dissipe moins par puce que l'IGBT : son produit $R_{jh}P$ est le plus grand.</li>
+    <li>$R_{ha,max} = (100{,}7 - 40)/455{,}4 = 0{,}133\ \mathrm{K/W}$ ; dissipateur retenu : $0{,}12\ \mathrm{K/W}$.</li>
+    <li>Températures au nominal : $T_h = 40 + 0{,}12 \times 455{,}4 = 94{,}6\ ^\circ\mathrm{C}$ ; IGBT $94{,}6 + 13{,}0 = 107{,}6\ ^\circ\mathrm{C}$,
+      $111{,}2\ ^\circ\mathrm{C}$ en crête avec l'ondulation à $50\ \mathrm{Hz}$ ; diode d'onduleur $98{,}8\ ^\circ\mathrm{C}$ ; diode du pont
+      $118{,}9\ ^\circ\mathrm{C}$, marge de $6{,}1\ \mathrm{K}$. Au point de service : $290{,}5\ \mathrm{W}$, $T_h = 74{,}9\ ^\circ\mathrm{C}$, IGBT
+      $83{,}3\ ^\circ\mathrm{C}$.</li>
+    <li>Ventilation de l'armoire. L'air qui traverse l'armoire avec un débit $Q$ emporte $P = \rho c_pQ\,\Delta T_{air}$, avec
+      $\rho c_p \approx 1{,}2 \times 1005 = 1206\ \mathrm{J/(m^3\,K)}$ : c'est une résistance thermique équivalente $R_v = 1/(\rho c_pQ)$. Avec le
+      dissipateur à l'intérieur, $P = 455{,}4 + 95 = 550\ \mathrm{W}$ et $Q = 550/(1206 \times 5) = 0{,}091\ \mathrm{m^3/s}$, soit
+      $329\ \mathrm{m^3/h}$, et $R_v = 0{,}0091\ \mathrm{K/W}$. En montage traversant, le dissipateur dépasse à l'arrière de l'armoire, dans l'air du
+      local ; s'il emporte environ $90\ \%$ des pertes du variateur, valeur supposée, il reste $0{,}1 \times 455{,}4 + 95 = 141\ \mathrm{W}$ dans
+      l'armoire, soit $84\ \mathrm{m^3/h}$, et le dissipateur voit de l'air à $35$ au lieu de $40\ ^\circ\mathrm{C}$.</li>
+    <li>Surcharge de $150\ \%$ pendant $60\ \mathrm{s}$, valeur supposée annoncée par le constructeur : IGBT $74{,}7\ \mathrm{W}$, diode d'onduleur
+      $13{,}7\ \mathrm{W}$, diode du pont environ $39{,}8\ \mathrm{W}$, soit $314\ \mathrm{W}$ de plus en tout. Le dissipateur, de constante de temps
+      $\tau_h = 0{,}12 \times 3600 = 432\ \mathrm{s}$, ne monte que de $314 \times 0{,}12 \times (1 - e^{-60/432}) = 4{,}9\ \mathrm{K}$, au lieu des
+      $37{,}7\ \mathrm{K}$ du régime permanent. En revanche, les puces suivent en une seconde : IGBT $99{,}5 + 0{,}30 \times 74{,}7 =
+      121{,}9\ ^\circ\mathrm{C}$, diode du pont $99{,}5 + 39{,}8 = 139{,}4\ ^\circ\mathrm{C}$. La surcharge est tenue sous la limite du catalogue, mais
+      elle consomme la marge : elle doit rester exceptionnelle. Prolongée, elle porterait l'IGBT à $155\ ^\circ\mathrm{C}$ : c'est au modèle thermique
+      interne du variateur de la couper.</li>
+    <li>Panne du ventilateur : $R_{ha}$ passe à environ $0{,}6\ \mathrm{K/W}$, la température d'équilibre serait $40 + 0{,}6 \times 455{,}4 =
+      313\ ^\circ\mathrm{C}$. Partant de $94{,}6\ ^\circ\mathrm{C}$, le dissipateur atteint la borne de $100{,}7\ ^\circ\mathrm{C}$ en
+      $t = 0{,}6 \times 3600 \times \ln[(313{,}2 - 94{,}6)/(313{,}2 - 100{,}7)] = 61\ \mathrm{s}$. Ventilateur arrêté, le variateur ne peut évacuer
+      que $(100{,}7 - 40)/0{,}6 \approx 100\ \mathrm{W}$ : moins que les pertes du point de service. La seule réaction sûre est l'alarme puis l'arrêt
+      contrôlé.</li>
+    <li>Cycles thermiques : avec $20$ démarrages quotidiens supposés, la jonction de l'IGBT passe d'environ $40$ à $83\ ^\circ\mathrm{C}$, soit
+      $\Delta T_j = 43\ \mathrm{K}$, $7300$ cycles par an ; la loi supposée donne $N_f = 2 \times 10^6 \times (40/43{,}3)^5 = 1{,}3 \times 10^6$
+      cycles, plus d'un siècle. L'ondulation de $4{,}4\ \mathrm{K}$ à $42{,}25\ \mathrm{Hz}$ est encore moins sévère, avec l'incertitude d'une loi
+      extrapolée aux faibles amplitudes. Pour cette pompe, ce ne sont pas les puces qui limiteront la durée de vie, mais le ventilateur et les
+      condensateurs du bus, dont la durée de vie double à peu près chaque fois que leur température baisse de $10\ \mathrm{K}$, selon une règle
+      empirique des fabricants.</li>
+  </ol>
+  <figure id="i-figure">
+    <svg viewBox="0 0 840 400" role="img" aria-label="Deux implantations de l'armoire du variateur de la pompe. À gauche, dissipateur à l'intérieur : 550 W à évacuer, entrée d'air filtrée en bas, ventilateur d'extraction en haut, 329 m³/h. À droite, montage traversant : le dissipateur dépasse à l'arrière dans l'air du local, 141 W restent dans l'armoire, 84 m³/h"><defs><marker id="fl-arm2" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="40" y="60" width="300" height="290" rx="6"/><rect x="480" y="60" width="300" height="290" rx="6"/></g><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="80" y="110" width="110" height="170" rx="4"/><path d="M190 130H230M190 150H230M190 170H230M190 190H230M190 210H230M190 230H230M190 250H230"/><rect x="250" y="200" width="70" height="40" rx="3"/><rect x="250" y="250" width="70" height="40" rx="3"/><circle cx="290" cy="80" r="14"/><path d="M60 330H120" stroke-width="3"/><rect x="650" y="110" width="130" height="170" rx="4"/><path d="M780 130H830M780 150H830M780 170H830M780 190H830M780 210H830M780 230H830M780 250H830"/><path d="M772 116H790M772 274H790" stroke-width="3"/><rect x="500" y="200" width="70" height="40" rx="3"/><rect x="500" y="250" width="70" height="40" rx="3"/><circle cx="580" cy="80" r="14"/><path d="M500 330H560" stroke-width="3"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M90 380V340" marker-end="url(#fl-arm2)"/><path d="M290 66V30" marker-end="url(#fl-arm2)"/><path d="M210 290V140" stroke-dasharray="6 5" marker-end="url(#fl-arm2)"/><path d="M530 380V340" marker-end="url(#fl-arm2)"/><path d="M580 66V30" marker-end="url(#fl-arm2)"/><path d="M806 300V110" stroke-dasharray="6 5" marker-end="url(#fl-arm2)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="40" y="50" font-weight="600">a. dissipateur intérieur</text><text x="480" y="50" font-weight="600">b. montage traversant</text><text x="92" y="200">variateur</text><text x="92" y="216" font-size="11">455 W</text><text x="254" y="224" font-size="10.5">automate</text><text x="254" y="274" font-size="10.5">self, alim.</text><text x="310" y="40" font-size="11">extraction</text><text x="130" y="336" font-size="11">entrée filtrée</text><text x="60" y="370" font-size="11">air du local 35 °C</text><text x="120" y="104" font-size="11">air armoire 40 °C</text><text x="60" y="300" font-size="11">550 W ; 329 m³/h</text><text x="662" y="200">variateur</text><text x="662" y="216" font-size="11">10 % dedans</text><text x="640" y="100" font-size="10.5">découpe et joint</text><text x="504" y="224" font-size="10.5">automate</text><text x="504" y="274" font-size="10.5">self, alim.</text><text x="600" y="40" font-size="11">extraction</text><text x="570" y="336" font-size="11">entrée filtrée</text><text x="500" y="370" font-size="11">air du local 35 °C</text><text x="500" y="308" font-size="11">141 W ; 84 m³/h</text><text x="660" y="304" font-size="10.5">dissipateur dans</text><text x="660" y="318" font-size="10.5">l'air du local</text></g></svg>
+    <figcaption>
+      Deux implantations de l'armoire de la pompe, vues de côté, arrière à droite de chaque armoire. Les flèches pleines verticales sont les flux
+      d'air : entrée filtrée en bas, extraction par le ventilateur, cercle, en haut. Les flèches en tirets suivent l'air qui traverse les ailettes du
+      dissipateur, représentées par les traits horizontaux. En a, le dissipateur est dans l'armoire : toute la chaleur du variateur réchauffe l'air
+      de l'armoire, qu'il faut renouveler à $329\ \mathrm{m^3/h}$ pour rester à $40\ ^\circ\mathrm{C}$. En b, les ailettes traversent la paroi arrière
+      par une découpe munie d'un joint, repérée par deux traits épais sur la paroi, et se trouvent dans l'air du local : il ne reste que $141\ \mathrm{W}$ à extraire.
+    </figcaption>
+  </figure>
+
+  <h3 id="i-compromis">Risques, choix d'ingénierie et compromis</h3>
+  <ul>
+    <li>Point de dimensionnement : le nominal à $40\ ^\circ\mathrm{C}$ d'air, jamais le point de service ; la pompe peut tourner à pleine vitesse en
+      été, quand la demande est forte et le local le plus chaud.</li>
+    <li>Composant limitant : le pont d'entrée, avec $6{,}1\ \mathrm{K}$ de marge seulement. Un module de pont mieux refroidi, de $R_{jh}$ plus faible,
+      ou des diodes de plus fort calibre donneraient de la marge à moindre coût qu'un dissipateur plus gros : on agit sur la branche limitante.</li>
+    <li>Montage traversant ou intérieur : le traversant divise par quatre le débit d'air de l'armoire et donne $5\ \mathrm{K}$ de plus au dissipateur,
+      mais il exige une découpe étanche et expose les ailettes à la poussière du local ; il est retenu ici, avec nettoyage des ailettes inscrit au plan
+      de maintenance.</li>
+    <li>Ventilateurs : pièces d'usure, dont la durée de vie dépend de la température et figure dans la documentation. On surveille leur rotation,
+      on les remplace préventivement, et l'on remonte à l'automate l'alarme de température du variateur avant son déclenchement.</li>
+    <li>Marche dégradée : sur alarme thermique, l'automate peut réduire la consigne de vitesse, puisque les pertes de la pompe baissent fortement avec
+      la vitesse ; sur défaut de ventilateur, il prévoit l'arrêt contrôlé et le basculement vers une pompe de secours si le procédé l'exige.</li>
+    <li>Altitude, fréquence de découpage et température d'air au-delà de $40\ ^\circ\mathrm{C}$ imposent des déclassements donnés par le
+      constructeur : on les applique au lieu de les recalculer.</li>
+  </ul>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Ajout au projet fil rouge</span>
+    <p>
+      Bilan thermique du variateur de la pompe et de son armoire. Dissipateur commun : $455\ \mathrm{W}$ au nominal, dont $310\ \mathrm{W}$ d'onduleur et
+      $146\ \mathrm{W}$ de pont, composant limitant le pont ($R_{jh} = 1{,}0\ \mathrm{K/W}$), $R_{ha} \le 0{,}133\ \mathrm{K/W}$, dissipateur ventilé de
+      $0{,}12\ \mathrm{K/W}$ et $4\ \mathrm{kg}$ retenu ; $T_h = 94{,}6\ ^\circ\mathrm{C}$, IGBT à $107{,}6\ ^\circ\mathrm{C}$, pont à
+      $118{,}9\ ^\circ\mathrm{C}$ dans un air à $40\ ^\circ\mathrm{C}$ ; montage traversant ($141\ \mathrm{W}$ et $84\ \mathrm{m^3/h}$ dans l'armoire,
+      contre $550\ \mathrm{W}$ et $329\ \mathrm{m^3/h}$) ; surcharge de $150\ \%$ pendant $60\ \mathrm{s}$ tenue ($139\ ^\circ\mathrm{C}$ au pont) ;
+      panne de ventilateur : limite atteinte en $61\ \mathrm{s}$, alarme puis arrêt contrôlé ; cycles de démarrage non limitants. Hypothèses à remplacer
+      par les documentations du variateur et du dissipateur et par une mesure de $T_h$ à pleine charge à la mise en service.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Erreur</th><th>Pourquoi c'est faux</th><th>Correction</th></tr></thead>
+      <tbody>
+        <tr><td>Dimensionner au point de service ou à l'air du local</td><td>La jonction doit tenir au point le plus chaud, pertes maximales et air le plus chaud ; dans l'exemple, la réponse littérale mène à $200\ ^\circ\mathrm{C}$ au nominal.</td><td>Pertes au nominal, paramètres à chaud, air de l'armoire au plus chaud, limite de conception.</td></tr>
+        <tr><td>Calculer chaque puce comme si elle avait son propre dissipateur</td><td>$R_{ha}$ est traversée par la somme des pertes : $T_h = T_a + R_{ha}\sum P_k$.</td><td>Loi des nœuds au dissipateur, puis une branche par puce ; chercher le plus grand $R_{jh}P$.</td></tr>
+        <tr><td>Prendre $T_{j,max}$ du catalogue comme objectif</td><td>Aucune marge pour l'incertitude des pertes, des résistances et de l'air, et durée de vie réduite.</td><td>Viser $25$ à $50\ \mathrm{K}$ de moins en service continu, ici $125\ ^\circ\mathrm{C}$.</td></tr>
+        <tr><td>Utiliser $R_{th}$ pour une impulsion brève</td><td>Pendant quelques millisecondes, seule la capacité de la puce travaille : $Z_{th}(t_p)$ est bien plus petite que $R_{th}$.</td><td>$\Delta T = P\,Z_{th}(t_p)$ pour une impulsion, formule des impulsions répétées sinon.</td></tr>
+        <tr><td>Utiliser la seule puissance moyenne pour un régime cyclique</td><td>La valeur moyenne ignore l'ondulation : à $1\ \mathrm{Hz}$ de sortie, la crête dépasse la moyenne de $14\ \mathrm{K}$.</td><td>Ajouter l'ondulation calculée avec $Z_{th}$ ou une simulation, et appliquer le déclassement du constructeur.</td></tr>
+        <tr><td>Monter un module sans graisse ou mal serré</td><td>Les surfaces ne se touchent qu'en quelques points : l'air de l'interface multiplie $R_{ch}$ par des dizaines.</td><td>Graisse mince et régulière, couple de serrage et ordre de serrage prescrits.</td></tr>
+        <tr><td>Calculer les pertes à $25\ ^\circ\mathrm{C}$</td><td>$R_{DS(on)}$, $r_{CE}$ et les énergies de commutation augmentent avec la température : les pertes sont sous-estimées.</td><td>Paramètres à $125$ ou $150\ ^\circ\mathrm{C}$, ou itération pertes et température avec contrôle de $aR_{th}P_0 &lt; 1$.</td></tr>
+        <tr><td>Confondre température de boîtier et température d'air</td><td>Entre les deux se trouvent $R_{ch}$ et $R_{ha}$, souvent la plus grande marche de l'escalier.</td><td>Nommer chaque température par son indice et vérifier à quel point elle est mesurée.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Pour le diagnostic sur site, deux mesures suffisent souvent à localiser un défaut : la température du dissipateur, donnée par le capteur du
+    variateur, et celle de l'air qui entre dans ses ailettes. À pertes égales, si $T_h - T_a$ a augmenté, c'est $R_{ha}$ qui a changé : ailettes
+    encrassées, filtres colmatés, ventilateur ralenti. Si $T_h - T_a$ n'a pas changé mais que l'air est plus chaud, c'est l'armoire ou le local. Si
+    $T_h$ est normale et que le variateur signale une surchauffe de jonction par son modèle interne, c'est une surcharge, une fréquence de découpage
+    trop élevée ou une interface dégradée entre module et dissipateur.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic industriel et une question
+    conceptuelle sans calcul. Chaque correction reste masquée jusqu'à votre tentative ou un clic explicite ; elle se déroule ensuite étape par étape,
+    avec un tracé ou un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangées : choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Le score s'affiche à la fin et
+    alimente le bilan de la section P.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+  <h3 id="m-formules">Cinq formules essentielles</h3>
+  <ol>
+    <li>Conduction : $R_{th} = e/(\lambda S)$ ; convection et rayonnement : $R_{ha} = 1/[(h_{conv} + h_r)S_{eff}]$, $h_r \approx 4\varepsilon\sigma T_m^3$.</li>
+    <li>Chaîne en régime permanent : $T_j = T_a + P(R_{jc} + R_{ch} + R_{ha})$.</li>
+    <li>Dissipateur partagé : $T_h = T_a + R_{ha}\sum P_k$, $T_{j,k} = T_h + R_{jh,k}P_k$, $R_{ha,max} = \min_k(T_{j,lim} - R_{jh,k}P_k - T_a)/\sum P_k$.</li>
+    <li>Régime transitoire : $Z_{th}(t) = \sum r_i(1 - e^{-t/\tau_i})$, $\tau = R_{th}C_{th}$, $C_{th} = mc$ ; impulsion : $\Delta T = P\,Z_{th}(t_p)$.</li>
+    <li>Ventilation d'une armoire : $Q = P/(\rho c_p\Delta T_{air})$, avec $\rho c_p \approx 1206\ \mathrm{J/(m^3\,K)}$, soit $R_v = 1/(\rho c_pQ)$.</li>
+  </ol>
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ul>
+      <li>Dimensionner au point le plus chaud : pertes nominales, paramètres à chaud, air de l'armoire au plus chaud.</li>
+      <li>Sur un dissipateur partagé, la puce limitante est celle du plus grand $R_{jh}P$, pas celle qui dissipe le plus.</li>
+      <li>Garder $25$ à $50\ \mathrm{K}$ de marge sous $T_{j,max}$ en service continu.</li>
+      <li>Pour une impulsion ou un cycle, raisonner en $Z_{th}(t)$, jamais en $R_{th}$ seule ni en puissance moyenne seule.</li>
+      <li>Les résistances thermiques, les courbes $Z_{th}$ et les lois de cyclage sont des données du constructeur : les valeurs de cette séance sont supposées.</li>
+    </ul>
+  </div>
+  <h3 id="m-resume">Résumé</h3>
+  <p>
+    La chaleur produite dans la jonction traverse la puce, le substrat, la semelle, la graisse et le dissipateur avant de passer dans l'air. Chaque
+    couche est une résistance thermique : $\Delta T = R_{th}P$, comme $U = RI$. En conduction, $R_{th} = e/(\lambda S)$ ; à la surface,
+    $R_{ha} = 1/(hS)$, d'où la ventilation forcée des variateurs. Sur un dissipateur partagé, $R_{ha}$ voit la somme des pertes et la puce
+    limitante est celle du plus grand $R_{jh}P$. Les capacités thermiques donnent l'impédance $Z_{th}(t)$ : la puce tient de fortes impulsions
+    brèves, le dissipateur filtre les surcharges sur des minutes. Les cycles de température fatiguent brasures et fils de liaison, surtout à basse
+    fréquence de sortie. On dimensionne au point le plus chaud, avec une marge, puis on vérifie transitoires, ventilation de l'armoire et pannes.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance, deux sur le cours précédent, <a href="#/cours/compatibilite-electromagnetique">Compatibilité
+    électromagnétique</a>, une sur le cours <a href="#/cours/mosfet-et-igbt">MOSFET et IGBT</a>, vieux d'une semaine, dont les pertes alimentent tout
+    le calcul thermique, et une sur le cours <a href="#/cours/charges-triphasees-desequilibrees">Charges triphasées déséquilibrées</a>, vieux d'un
+    mois, dont le courant de neutre échauffe aussi les conducteurs d'une armoire.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : simuler dans LTspice le réseau de Cauer de la section E grâce à l'analogie électrique, puis calculer en Python les cycles thermiques
+    de la section E. Prédictions à écrire avant de commencer : temps nécessaire pour que la jonction atteigne la moitié de son échauffement final,
+    crête d'une impulsion de $400\ \mathrm{W}$ pendant $10\ \mathrm{ms}$, ondulation à $1$ et à $50\ \mathrm{Hz}$.
+  </p>
+  <ol>
+    <li>Conventions : un volt représente un kelvin d'élévation au-dessus de l'air, un ampère un watt, un ohm un kelvin par watt, un farad un joule
+      par kelvin, et le nœud $0$ est l'air ambiant.</li>
+    <li>Circuit : <code>I1 0 J PULSE(0 43.2 0 1u 1u 1e4 2e4)</code>, qui injecte $43{,}2\ \mathrm{W}$ dans le nœud de jonction ;
+      <code>R1 J C 0.22</code>, <code>C1 J 0 0.3</code>, <code>R2 C H 0.08</code>, <code>C2 C 0 20</code>, <code>R3 H 0 1</code>,
+      <code>C3 H 0 450</code>.</li>
+    <li>Simulation : <code>.tran 0 3000 0 0.5</code> ; tracer <code>V(J)</code>, <code>V(C)</code> et <code>V(H)</code> avec un axe des temps
+      logarithmique ; mesurer les valeurs à $10\ \mathrm{ms}$, $1\ \mathrm{s}$, $450\ \mathrm{s}$ et $3000\ \mathrm{s}$ avec <code>.meas</code>.</li>
+    <li>Impulsion : remplacer la source par <code>PULSE(0 400 0 1u 1u 10m 100)</code>, simuler <code>.tran 0 0.2 0 10u</code> et relever la crête de
+      <code>V(J)</code> ; recommencer avec <code>C3 H 0 900</code>.</li>
+    <li>Cycles en Python : reprendre le modèle de Foster de la section E, $r_i$ et $\tau_i$, et mettre à jour chaque cellule par
+      $\theta_i \leftarrow \theta_ie^{-\Delta t/\tau_i} + r_iP(1 - e^{-\Delta t/\tau_i})$ avec les pertes instantanées de l'IGBT sur une période de la
+      fréquence de sortie, en répétant les périodes jusqu'au régime établi.</li>
+  </ol>
+  <p>
+    Résultats attendus : $V(J)$ vaut environ $1{,}3\ \mathrm{V}$ à $10\ \mathrm{ms}$, $10{,}9\ \mathrm{V}$ à $1\ \mathrm{s}$, $39{,}4\ \mathrm{V}$ à
+    $450\ \mathrm{s}$ et tend vers $56{,}2\ \mathrm{V}$, soit $96\ ^\circ\mathrm{C}$ dans un air à $40\ ^\circ\mathrm{C}$ ; la moitié est atteinte vers
+    $210\ \mathrm{s}$. L'impulsion donne une crête voisine de $12{,}4\ \mathrm{V}$, inchangée avec <code>C3</code> doublé. En Python, l'ondulation
+    vaut environ $6{,}2\ \mathrm{K}$ à $50\ \mathrm{Hz}$ et $21{,}7\ \mathrm{K}$ à $1\ \mathrm{Hz}$ au courant nominal, comme dans la simulation de la
+    section E.
+  </p>
+  <p>
+    Anomalies à observer et à expliquer : une courbe plate dès l'instant initial, parce qu'une source continue fait calculer à LTspice le point de
+    fonctionnement final avant la simulation, d'où la source en impulsion qui démarre à zéro ou l'option <code>uic</code> ; des températures
+    négatives, source orientée à l'envers ; une crête d'impulsion très différente, pas de calcul trop grand devant la constante de temps de la puce,
+    environ $66\ \mathrm{ms}$ ; une valeur finale fausse, unités mal saisies, par exemple <code>450m</code> au lieu de <code>450</code>. Variante
+    expérimentale : une résistance de puissance boulonnée sur un petit dissipateur, alimentée sous une puissance connue, avec un thermocouple sous la
+    résistance et un autre sur les ailettes ; on relève la montée en température toutes les trente secondes et l'on en déduit $R_{ha}$ et la constante
+    de temps, en notant l'écart dû à la position du thermocouple.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours, notées de 0 à 4. Le bilan affiché sous la grille est calculé dans ce
+    navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement. Aucune estimation n'est
+    faite à votre place : seul le score réellement obtenu sert de référence. Le jalon visé à la fin de ce module demande d'analyser les principaux
+    convertisseurs de puissance, leurs formes d'onde, leurs pertes, leurs protections et leur intégration dans un variateur : la thermique en est le
+    maillon qui relie les pertes à la tenue réelle.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">La chaleur suit un circuit : $\Delta T = R_{th}P$ couche par couche, $R_{th} = e/(\lambda S)$ en conduction et $1/(hS)$ à la surface ; sur un dissipateur partagé, $R_{ha}$ voit la somme des pertes et la puce limitante est celle du plus grand $R_{jh}P$.</li>
+    <li data-rang="02">Les capacités thermiques créent $Z_{th}(t)$ : la puce absorbe les impulsions de quelques millisecondes, le dissipateur les surcharges de quelques minutes ; les cycles de température, surtout à basse fréquence de sortie, fatiguent le module.</li>
+    <li data-rang="03">On dimensionne au point le plus chaud, avec une marge sous $T_{j,max}$, puis on vérifie les régimes transitoires, la ventilation de l'armoire et les pannes de refroidissement, en remplaçant chaque valeur supposée par la donnée du constructeur.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> choisir la bonne grandeur pour la bonne échelle de temps. Les erreurs typiques en découlent :
+    utiliser $R_{th}$ pour une impulsion brève, la puissance moyenne pour un régime cyclique, ou le point de service pour un dimensionnement. Le
+    réflexe à installer : pour chaque situation, comparer sa durée aux constantes de temps de la puce, de la semelle et du dissipateur, puis
+    décider quelles capacités travaillent.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Protections des convertisseurs, étudie ce qui doit couper avant que la chaleur ne
+    détruise. Question à préparer : un court-circuit en sortie de l'onduleur de la pompe fait passer environ $800\ \mathrm{A}$ dans un IGBT sous
+    $540\ \mathrm{V}$. Quelle énergie la puce reçoit-elle en $10\ \mathrm{\mu s}$, et pourquoi le dissipateur, la semelle et même le substrat
+    n'y sont-ils d'aucun secours ? En déduire le temps de réaction qu'il faut exiger de la protection, et le rôle des fusibles rapides, des
+    circuits d'aide à la commutation et de la précharge du bus.
+  </p>
+
+</article>
