@@ -1,0 +1,986 @@
+<article class="cours" data-slug="protections-des-convertisseurs">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/thermique-des-composants-de-puissance">Thermique des composants de puissance</a> s'est achevé sur une question : un
+      court-circuit en sortie de l'onduleur de la pompe fait passer environ $800\ \mathrm{A}$ dans un IGBT sous $540\ \mathrm{V}$ ; quelle énergie la
+      puce reçoit-elle en $10\ \mu\mathrm{s}$, et pourquoi ni le dissipateur, ni la semelle, ni même le substrat n'y sont d'aucun secours ? Réponse,
+      établie en section E : la puce reçoit $W = EIt = 540 \times 800 \times 10 \times 10^{-6} = 4{,}32\ \mathrm{J}$. En $10\ \mu\mathrm{s}$, la
+      chaleur ne parcourt qu'une trentaine de micromètres dans le silicium, moins que l'épaisseur de la puce : tout se passe comme si la puce était
+      thermiquement isolée. Avec une capacité thermique d'environ $0{,}02\ \mathrm{J/K}$, elle s'échauffe d'au moins $217\ \mathrm{K}$. Aucun
+      refroidissement n'agit à cette échelle : seule une coupure électronique en quelques microsecondes sauve le composant, et c'est l'objet de cette
+      séance.
+    </p>
+    <p>
+      La séance s'appuie sur l'inductance et la continuité du courant du cours <a href="#/cours/inductances-et-champ-magnetique">Inductances et
+      champ magnétique</a>, sur la charge exponentielle du cours <a href="#/cours/regime-transitoire-rc">Régime transitoire RC</a> et sur le circuit
+      oscillant du cours <a href="#/cours/regime-transitoire-rlc">Régime transitoire RLC</a> ; sur le pont d'entrée, la précharge et les fusibles
+      ultrarapides vus dans les cours <a href="#/cours/diodes-de-puissance">Diodes de puissance</a> et
+      <a href="#/cours/redresseurs-triphases">Redresseurs triphasés</a> ; sur la commutation des IGBT du cours
+      <a href="#/cours/mosfet-et-igbt">MOSFET et IGBT</a> ; sur l'architecture du variateur et la surtension de freinage du cours
+      <a href="#/cours/convertisseurs-et-moteurs">Convertisseurs et moteurs</a> ; sur les boucles parasites du cours
+      <a href="#/cours/compatibilite-electromagnetique">Compatibilité électromagnétique</a> ; enfin sur l'impédance thermique du cours précédent.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Un convertisseur de puissance manipule des énergies considérables avec des composants minuscules. Le bus continu du variateur de la pompe
+    stocke environ $320\ \mathrm{J}$ ; un IGBT de $100\ \mathrm{A}$ tient sur une puce d'un centimètre carré ; une erreur de commande de quelques
+    microsecondes suffit à court-circuiter le bus à travers un bras de l'onduleur. Sans protections, la moindre perturbation se termine en explosion
+    du module, en incendie d'armoire ou en arrêt prolongé du procédé.
+  </p>
+  <ul>
+    <li><strong>Disponibilité du procédé.</strong> Une protection mal réglée déclenche à tort, une protection absente laisse détruire le
+      convertisseur. Dans les deux cas, la pompe s'arrête ; dans le second, pour des jours.</li>
+    <li><strong>Sécurité des personnes.</strong> Un bus continu reste chargé plusieurs minutes après la coupure ; un module qui éclate projette du
+      plasma ; une isolation défaillante met la carcasse du moteur sous tension. Ces risques se traitent par conception, pas par consigne seule.</li>
+    <li><strong>Coût et durée de vie.</strong> Chaque surtension non écrêtée, chaque appel de courant à la mise sous tension consomme une part de
+      la vie des condensateurs, des diodes et des fusibles.</li>
+    <li><strong>Diagnostic.</strong> Les codes de défaut d'un variateur, surintensité, surtension, sous-tension, défaut terre, défaut de précharge,
+      surchauffe, ne se lisent correctement que si l'on sait quelle protection les émet, ce qu'elle mesure et à quelle vitesse elle agit.</li>
+  </ul>
+  <p>
+    Cette séance clôt les notions du module : elle relie les pertes et la thermique, les commutations, la CEM et l'architecture du variateur à la
+    question qui les résume toutes, ce qui doit couper, sur quelle mesure, en combien de temps et pour protéger quoi. Le jalon de fin de module
+    demande précisément d'analyser les protections des convertisseurs et leur intégration dans un variateur.
+  </p>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Expliquer pourquoi un court-circuit doit être coupé en quelques microsecondes, en calculant l'énergie reçue par la puce et son échauffement adiabatique.</li>
+    <li data-rang="02">Calculer la surtension à l'ouverture $E + L\,\mathrm{d}i/\mathrm{d}t$ et dimensionner un condensateur de découplage ou un circuit d'aide à la commutation.</li>
+    <li data-rang="03">Dimensionner une précharge du bus : courant d'appel, constante de temps, énergie dissipée, critère de fermeture du contacteur.</li>
+    <li data-rang="04">Comparer l'intégrale de Joule d'un fusible ultrarapide à celle du semi-conducteur protégé et expliquer ce qu'un fusible peut et ne peut pas protéger.</li>
+    <li data-rang="05">Choisir et régler les protections d'un bus continu : seuils de surtension et de sous-tension, tension assignée des condensateurs, résistances de décharge, délai d'intervention.</li>
+    <li data-rang="06">Interpréter une carte temps-courant pour vérifier qu'une protection agit avant la limite du composant, selon le chemin du défaut.</li>
+    <li data-rang="07">Diagnostiquer un défaut de variateur à partir de ses symptômes : précharge défaillante, surtension, déclenchement intempestif en surintensité, défaut d'isolement.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>Quatre notions suffisent pour suivre la séance.</p>
+  <ul>
+    <li><strong>Inductance.</strong> $v_L = L\,\mathrm{d}i/\mathrm{d}t$ : le courant dans une inductance ne peut pas varier instantanément, et l'énergie
+      $\tfrac12 LI^2$ qu'elle stocke doit aller quelque part quand on l'interrompt.</li>
+    <li><strong>Condensateur et circuit RC.</strong> $i_C = C\,\mathrm{d}v/\mathrm{d}t$, énergie $\tfrac12 CV^2$ ; chargé par une source $V$ à travers
+      $R$, $v_C = V(1 - e^{-t/\tau})$ avec $\tau = RC$.</li>
+    <li><strong>Circuit LC.</strong> Une inductance et un condensateur échangent leur énergie à la pulsation $\omega_0 = 1/\sqrt{LC}$ ; l'impédance
+      caractéristique $Z_0 = \sqrt{L/C}$ relie l'amplitude du courant à celle de la tension : $\hat{v} = Z_0\hat{\imath}$.</li>
+    <li><strong>Échauffement adiabatique.</strong> Un corps de capacité thermique $C_{th} = mc$ qui reçoit l'énergie $W$ trop vite pour la céder
+      s'échauffe de $\Delta T = W/C_{th}$.</li>
+  </ul>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Notation de la séance</span>
+    <p>
+      $E$ : tension du bus continu, en volts, borne positive notée $+$, borne négative $-$, cette dernière servant de référence de potentiel des
+      commandes de grille basses. $v_{CE}$ : tension collecteur-émetteur d'un IGBT, comptée positive du collecteur vers l'émetteur, en convention
+      récepteur avec le courant de collecteur $i_C$. $L_\sigma$ : inductance parasite de la boucle de commutation, en henrys ; on la décompose en
+      $L_b$, celle des barres entre les condensateurs électrolytiques et le module, et $L_m$, celle du module. $C$ : capacité du bus ; $C_s$ :
+      condensateur de découplage à film placé au plus près du module. $\hat{V}$ : crête de la tension composée du réseau. $R_p$ : résistance de
+      précharge, court-circuitée par le contacteur KM2. $I^2t$ : intégrale de Joule $\int i^2\,\mathrm{d}t$, en $\mathrm{A^2s}$. $V_{CES}$ : tension
+      maximale collecteur-émetteur du catalogue. Les valeurs propres à la pompe sont celles du projet fil rouge ; celles qui ne viennent pas d'un
+      cours précédent sont supposées et signalées.
+    </p>
+  </div>
+  <p>
+    Mini-test de trois questions. Les réponses restent masquées, séparées de l'énoncé, jusqu'à votre tentative ou à un clic explicite.
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-menaces">Trois familles de menaces, trois échelles de temps</h3>
+  <p>
+    Tout ce qui détruit un convertisseur se ramène à trois causes. La surintensité apporte à la puce plus d'énergie qu'elle ne peut en évacuer. La
+    surtension dépasse la tenue d'une jonction ou d'un isolant, qui claque en avalanche ou en arc. Le défaut lent, isolement dégradé, ventilateur
+    arrêté, condensateur vieilli, use le matériel jusqu'à la panne. Ce qui distingue ces menaces, c'est leur vitesse : une surtension de commutation
+    dure quelques dizaines de nanosecondes, un court-circuit détruit une puce en une dizaine de microsecondes, un fusible fond en quelques
+    millisecondes, une précharge dure quelques centaines de millisecondes, une surcharge thermique se développe en secondes ou en minutes.
+  </p>
+  <p>
+    Une protection n'est donc jamais universelle. Chacune associe une mesure, une décision et une action, et n'est efficace que dans une bande de
+    temps et pour les défauts que sa mesure voit. La frise ci-dessous place les menaces et les protections de la séance sur une échelle de temps
+    logarithmique ; elle sert de fil conducteur à toute la séance.
+  </p>
+  <figure id="d-frise-figure">
+    <svg viewBox="0 0 800 330" role="img" aria-label="Frise logarithmique des temps, de 10 nanosecondes à 1000 secondes : menaces au-dessus de l'axe, protections au-dessous, chacune placée à son échelle de temps"><defs><marker id="fl-frise" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M40 165H770" marker-end="url(#fl-frise)"/><path d="M60 158V172M126 158V172M192 158V172M258 158V172M324 158V172M390 158V172M456 158V172M522 158V172M588 158V172M654 158V172M720 158V172"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="62" y="40" width="150" height="44" rx="6"/><rect x="232" y="40" width="150" height="44" rx="6"/><rect x="402" y="40" width="130" height="44" rx="6"/><rect x="552" y="40" width="200" height="44" rx="6"/><rect x="62" y="236" width="150" height="56" rx="6" stroke-dasharray="7 4"/><rect x="232" y="236" width="150" height="56" rx="6" stroke-dasharray="7 4"/><rect x="402" y="236" width="130" height="56" rx="6" stroke-dasharray="7 4"/><rect x="552" y="236" width="200" height="56" rx="6" stroke-dasharray="7 4"/></g><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 4"><path d="M137 84V158M307 84V158M467 84V158M652 84V158M137 172V236M307 172V236M467 172V236M652 172V236"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="44" y="194" font-size="11">10 ns</text><text x="180" y="194" font-size="11">1 µs</text><text x="310" y="194" font-size="11">100 µs</text><text x="444" y="194" font-size="11">10 ms</text><text x="580" y="194" font-size="11">1 s</text><text x="700" y="194" font-size="11">100 s</text><text x="690" y="152" font-size="11">temps</text><text x="70" y="58">surtension de</text><text x="70" y="76">commutation L di/dt</text><text x="240" y="58">court-circuit dans</text><text x="240" y="76">un IGBT : 10 µs</text><text x="410" y="58">appel de courant</text><text x="410" y="76">à la mise sous tension</text><text x="560" y="58">surcharge, surchauffe,</text><text x="560" y="76">surtension de freinage</text><text x="70" y="256">découplage C_s,</text><text x="70" y="274">ouverture douce</text><text x="240" y="256">désaturation dans</text><text x="240" y="274">le driver : 2 à 5 µs</text><text x="410" y="256">fusible aR : ms ;</text><text x="410" y="274">précharge : 0,1 à 1 s</text><text x="560" y="256">modèle thermique, seuils</text><text x="560" y="274">du bus, régulateur</text><text x="44" y="24" font-weight="600">menaces : cadres en trait plein</text><text x="44" y="318" font-weight="600">protections : cadres en tirets</text></g></svg>
+    <figcaption>
+      Frise des échelles de temps. L'axe horizontal est logarithmique : chaque graduation multiplie le temps par dix, de $10\ \mathrm{ns}$ à
+      $1000\ \mathrm{s}$. Au-dessus de l'axe, en cadres à trait plein, les menaces ; au-dessous, en cadres en tirets, les protections qui leur
+      répondent, reliées par des pointillés à leur échelle de temps. Lecture essentielle : un fusible, qui agit en millisecondes, est mille fois trop
+      lent pour sauver un IGBT en court-circuit, et un modèle thermique, qui agit en secondes, ne voit pas une surtension de commutation.
+    </figcaption>
+  </figure>
+
+  <h3 id="d-belier">Le coup de bélier électrique, et ses limites</h3>
+  <p>
+    Fermer brusquement une vanne sur une conduite où l'eau circule vite provoque un coup de bélier : la masse d'eau en mouvement ne peut pas
+    s'arrêter instantanément, la pression grimpe et peut faire éclater la conduite. L'inductance parasite d'un convertisseur joue le rôle de cette
+    masse d'eau. Quand un IGBT coupe un courant en cent nanosecondes, le courant qui circulait dans les barres et le module doit s'arrêter aussi vite,
+    et la tension $L\,\mathrm{d}i/\mathrm{d}t$ s'ajoute à celle du bus aux bornes de l'interrupteur. Les remèdes sont les mêmes qu'en hydraulique :
+    fermer plus lentement, c'est l'ouverture douce ; placer un réservoir tampon près de la vanne, c'est le condensateur de découplage ; raccourcir la
+    conduite, c'est réduire la surface de la boucle par des barres laminées.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Analogie contrôlée et ses limites</span>
+    <p>
+      Masse d'eau et inductance, pression et tension, débit et courant, réservoir et condensateur : les équations de l'inertie sont de même forme. Limites :
+      la surtension électrique se propage à la vitesse de la lumière dans des boucles de quelques centimètres et n'a pas de temps de propagation
+      appréciable, alors que le coup de bélier est une onde qui parcourt la conduite ; l'IGBT, contrairement à une vanne, peut entrer en avalanche
+      et être détruit en une seule surtension ; enfin un composant électrique coupe un courant de défaut en se mettant lui-même en danger, ce qui
+      n'a pas d'équivalent dans une vanne. L'analogie aide à sentir le sens des effets, pas à les calculer.
+    </p>
+  </div>
+
+  <h3 id="d-puce">Pourquoi la puce est seule face au court-circuit</h3>
+  <p>
+    Le cours précédent a montré que la chaleur met des millisecondes à traverser l'empilement d'un module. Un court-circuit dure des microsecondes :
+    pendant ce temps, la chaleur produite dans la zone de champ de la puce n'a pas quitté le silicium. Le composant se comporte comme un corps isolé
+    qui accumule toute l'énergie reçue, et son échauffement est fixé par sa seule capacité thermique. D'où la règle qui organise toute la protection
+    contre les courts-circuits : on ne refroidit pas un court-circuit, on l'interrompt, et assez tôt pour que l'énergie accumulée reste supportable.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-hypotheses">Hypothèses et vocabulaire</h3>
+  <ul>
+    <li><strong>Protection.</strong> Une chaîne mesure, décision, action. La mesure peut être une tension, un courant, une température ; la
+      décision, un comparateur câblé, un calcul du microcontrôleur ou la fusion d'un élément ; l'action, le blocage des impulsions de commande,
+      l'ouverture d'un contacteur, la coupure par fusible ou l'écrêtage par un composant de protection.</li>
+    <li><strong>État sûr.</strong> Pour un onduleur, c'est presque toujours l'état bloqué : tous les IGBT ouverts, le moteur en roue libre, le
+      courant se refermant par les diodes vers le bus. Bloquer les impulsions n'isole pas le moteur du bus et ne décharge pas le bus.</li>
+    <li><strong>Sélectivité temporelle.</strong> Les protections sont empilées de la plus rapide, la plus locale, à la plus lente, la plus globale :
+      chacune doit agir avant la limite du composant qu'elle protège et, autant que possible, sans faire agir la suivante.</li>
+    <li><strong>Hypothèses de calcul.</strong> Composants idéalisés sauf mention contraire ; inductances parasites localisées ; échauffements de
+      court-circuit calculés en adiabatique ; source réseau modélisée par sa crête redressée et son inductance de commutation. Les seuils et les
+      tenues des composants de la pompe sont des valeurs supposées, à remplacer par la documentation du variateur.</li>
+  </ul>
+
+  <h3 id="e-surintensite">Surintensités : surcharge et court-circuit</h3>
+  <p>
+    Une surcharge est un courant supérieur au nominal mais du même ordre, qui dure : un couple résistant excessif, une pompe qui aspire un fluide
+    trop visqueux. Elle échauffe lentement les puces, les condensateurs et le moteur ; le cours précédent l'a traitée par le modèle thermique et la
+    mesure de température du dissipateur. Un court-circuit est un courant limité seulement par les impédances parasites et par l'IGBT lui-même. On
+    distingue le court-circuit de bras, deux IGBT d'un même bras conduisant ensemble à la suite d'une erreur de commande ou d'un composant claqué ;
+    le court-circuit entre phases ou vers la terre en sortie, à travers le câble du moteur ; et l'enclenchement sur un défaut existant.
+  </p>
+  <p>
+    <strong>La désaturation.</strong> Un IGBT commandé avec $v_{GE} = 15\ \mathrm{V}$ ne laisse passer qu'un courant de saturation $I_{sat}$, de
+    quatre à huit fois son courant nominal. Au-delà, il quitte la zone saturée : sa tension $v_{CE}$ remonte jusqu'à la tension du bus tandis que le
+    courant reste plafonné à $I_{sat}$. C'est à la fois une chance, car le composant limite lui-même le courant, et un danger, car il dissipe alors
+    $EI_{sat}$, soit $540 \times 800 = 432\ \mathrm{kW}$ pour la pompe. La protection par détection de désaturation exploite ce symptôme : le driver
+    surveille $v_{CE}$ pendant la conduction ; si elle dépasse quelques volts alors que l'IGBT est commandé, c'est qu'il est en court-circuit.
+  </p>
+  <p>
+    <strong>Énergie reçue et échauffement.</strong> Pendant une durée $t_{cc}$ de court-circuit désaturé, la puce reçoit
+  </p>
+  <div class="formule-cle">$$W = \int_0^{t_{cc}} v_{CE}\,i_C\,\mathrm{d}t \approx E\,I_{sat}\,t_{cc}, \qquad \Delta T_j \approx \frac{W}{\rho\,c\,A\,e}$$</div>
+  <p>
+    avec $W$ en joules, $E$ en volts, $I_{sat}$ en ampères, $t_{cc}$ en secondes ; $\rho = 2330\ \mathrm{kg/m^3}$ et $c = 712\ \mathrm{J/(kg\,K)}$
+    la masse volumique et la capacité thermique massique du silicium, $A$ la surface active de la puce en $\mathrm{m^2}$ et $e$ l'épaisseur qui
+    s'échauffe, en mètres. Hypothèses : tension et courant constants pendant le défaut, chaleur répartie dans l'épaisseur $e$, aucune fuite
+    vers le substrat. Dérivation : la puissance $v_{CE}i_C$ intégrée donne l'énergie ; en adiabatique, toute l'énergie élève la température de la
+    masse $\rho A e$. Vérification dimensionnelle : $\mathrm{V \cdot A \cdot s} = \mathrm{J}$, et $\mathrm{J}/(\mathrm{kg/m^3} \cdot
+    \mathrm{J/(kg\,K)} \cdot \mathrm{m^2} \cdot \mathrm{m}) = \mathrm{K}$.
+  </p>
+  <p>
+    La validité de l'hypothèse adiabatique se juge par la longueur de diffusion thermique $\ell = \sqrt{\alpha t}$, où
+    $\alpha = \lambda/(\rho c)$ est la diffusivité, en $\mathrm{m^2/s}$. Elle découle de l'équation de la chaleur
+    $\partial T/\partial t = \alpha\,\partial^2 T/\partial x^2$ : par analyse dimensionnelle, la seule longueur qu'on peut construire avec $\alpha$ et
+    $t$ est $\sqrt{\alpha t}$. Pour le silicium, $\lambda = 148\ \mathrm{W/(m\,K)}$ donne $\alpha = 148/(2330 \times 712) = 8{,}9 \times
+    10^{-5}\ \mathrm{m^2/s}$ ; en $10\ \mu\mathrm{s}$, $\ell = \sqrt{8{,}9 \times 10^{-5} \times 10^{-5}} = 30\ \mu\mathrm{m}$. La chaleur n'a même pas
+    traversé une puce de $120\ \mu\mathrm{m}$, ce qui demanderait $e^2/\alpha = 160\ \mu\mathrm{s}$ : la brasure et le substrat ne voient rien.
+  </p>
+  <p>
+    Application à la question de transition : pour une puce de $1\ \mathrm{cm^2}$ et $120\ \mu\mathrm{m}$, $C_{puce} = 2330 \times 712 \times
+    10^{-4} \times 1{,}2 \times 10^{-4} = 0{,}0199\ \mathrm{J/K}$ ; $4{,}32\ \mathrm{J}$ l'échauffent de $217\ \mathrm{K}$. Interprétation : partie de
+    $108\ ^\circ\mathrm{C}$, la puce dépasserait $320\ ^\circ\mathrm{C}$ en moyenne, davantage près de la surface où la chaleur est produite.
+    Cas limites : si $t_{cc} \to 0$, $W \to 0$ et la puce ne souffre pas, d'où l'intérêt d'une détection rapide ; si $t_{cc}$ dépasse quelques
+    centaines de microsecondes, la chaleur gagne le substrat et le modèle adiabatique devient pessimiste, mais le composant est détruit bien avant.
+    C'est pourquoi les constructeurs garantissent une tenue en court-circuit limitée, typiquement $10\ \mu\mathrm{s}$ pour une tension de bus et une
+    température de départ maximales données : c'est une donnée du constructeur, pas une loi.
+  </p>
+  <p>
+    Le schéma suivant montre comment un driver de grille détecte la désaturation. Il faut l'avoir en tête pour comprendre le réglage du temps de
+    masquage.
+  </p>
+  <figure id="e-desat-figure">
+    <svg viewBox="0 0 780 360" role="img" aria-label="Détection de désaturation dans le driver isolé d'un IGBT : diode haute tension et résistance vers le collecteur, condensateur de masquage, comparateur à 7 volts, logique de défaut, ouverture douce de la grille et signal de défaut renvoyé à travers la barrière d'isolement"><defs><marker id="fl-desat" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M640 20V125L614 150M614 190L640 215V320"/><path d="M614 130V210" stroke-width="2.6"/><path d="M604 130V210"/><path d="M570 170H604"/><rect x="520" y="158" width="50" height="24" rx="2"/><path d="M240 170H520"/><rect x="100" y="120" width="140" height="80" rx="6"/><path d="M330 30V90L270 60Z"/><path d="M270 60H170V120"/><path d="M330 45H450"/><rect x="450" y="37" width="40" height="16" rx="2"/><path d="M490 45H500"/><path d="M500 33V57L520 45Z"/><path d="M520 33V57"/><path d="M520 45H640"/><path d="M420 45V180M420 188V320"/><path d="M402 180H438M402 188H438" stroke-width="2.8"/><path d="M330 75H350V100M350 108V320"/><path d="M338 100H362M344 108H356" stroke-width="2.4"/><path d="M350 320H640"/><path d="M20 140H100M100 190H20"/><path d="M80 10V350" stroke-dasharray="8 5" stroke-width="1.6"/></g><g fill="none" stroke="currentColor" stroke-width="1.6"><path d="M660 60V100" marker-end="url(#fl-desat)"/><path d="M250 186H300" marker-end="url(#fl-desat)"/><path d="M96 190H36" marker-end="url(#fl-desat)"/><path d="M628 204L638 213" marker-end="url(#fl-desat)"/></g><g fill="currentColor" stroke="none"><circle cx="420" cy="45" r="4"/><circle cx="640" cy="45" r="4"/><circle cx="420" cy="320" r="4"/><circle cx="640" cy="320" r="4"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="650" y="24">C, collecteur</text><text x="650" y="336">E, émetteur</text><text x="668" y="86">i_C</text><text x="588" y="160">G</text><text x="512" y="200" font-size="11">R_g, R_soft</text><text x="462" y="30">R</text><text x="496" y="24">diode HT</text><text x="262" y="22">comparateur</text><text x="336" y="40" font-size="11">+</text><text x="336" y="72" font-size="11">-</text><text x="362" y="108" font-size="11">V_ref = 7 V</text><text x="372" y="62" font-size="10.5">broche</text><text x="444" y="190">C_bl</text><text x="110" y="146">logique de</text><text x="110" y="164">défaut et</text><text x="110" y="182">verrouillage</text><text x="290" y="162" font-size="11">ordre d'ouverture douce</text><text x="10" y="132" font-size="11">commande</text><text x="10" y="210" font-size="11">défaut vers</text><text x="10" y="224" font-size="11">la carte</text><text x="86" y="300" font-size="11">barrière d'isolement</text><text x="420" y="345" font-size="11">référence : émetteur de l'IGBT</text><text x="444" y="250" font-size="11">masquage : C_bl se charge</text><text x="444" y="266" font-size="11">tant que v_CE est élevée</text></g></svg>
+    <figcaption>
+      Détection de désaturation. À droite, l'IGBT, collecteur $C$ en haut, émetteur $E$ en bas, courant $i_C$ descendant, grille $G$ commandée par le
+      driver à travers $R_g$. La diode haute tension, en série avec la résistance de protection $R$, relie le collecteur à la broche de mesure : quand
+      l'IGBT est saturé, $v_{CE}$ vaut un ou deux volts et la diode conduit, ce qui maintient la broche bas ; quand $v_{CE}$ monte vers $E$, la diode
+      se bloque et le courant interne du driver charge le condensateur de masquage $C_{bl}$, deux traits épais, relié à la broche. Le comparateur,
+      triangle, entrée $+$ sur la broche et entrée $-$ sur la référence $V_{ref} = 7\ \mathrm{V}$, symbole de pile, bascule quand la tension dépasse le seuil ; la logique verrouille le défaut, ordonne une ouverture douce de la
+      grille par $R_{soft}$, plus grande que $R_g$, et renvoie un signal de défaut à la carte de commande à travers la barrière d'isolement, trait
+      vertical en tirets. Toutes les tensions du driver sont référencées à l'émetteur de l'IGBT. Le temps de charge de $C_{bl}$ masque la mise en
+      conduction, pendant laquelle $v_{CE}$ est encore élevée sans défaut.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Le temps de masquage, un compromis.</strong> À chaque mise en conduction, $v_{CE}$ part de $E$ et met quelques centaines de nanosecondes à
+    une microseconde pour tomber : sans masquage, le driver déclencherait à chaque commutation. Le masquage $t_{bl}$, de $1$ à $5\ \mu\mathrm{s}$
+    selon les drivers, retarde la surveillance. Trop court, il provoque des déclenchements intempestifs ; trop long, il laisse la puce accumuler
+    l'énergie du défaut. Le temps total jusqu'à l'extinction vaut $t_{bl} + t_{filtre} + t_{off}$, et il doit rester inférieur à la tenue garantie.
+  </p>
+  <p>
+    <strong>Seuils de courant.</strong> Les capteurs de courant de phase, à effet Hall ou à shunt, alimentent un comparateur câblé de surintensité
+    instantanée, réglé pour la pompe à $160\ \mathrm{A}$ crête, environ deux fois la crête nominale de $74{,}4\ \mathrm{A}$, qui bloque les impulsions
+    en environ $5\ \mu\mathrm{s}$, temps de réponse du capteur compris. Mais un court-circuit de bras ne passe pas par les phases : il se referme dans
+    le bras, entre les bornes du bus, et seuls la désaturation ou un shunt dans la liaison négative du bus le voient. Chaque protection ne voit que
+    les défauts qui empruntent son chemin de mesure.
+  </p>
+  <p>
+    La simulation suivante reproduit un enclenchement sur court-circuit. Elle trace le courant de collecteur, la tension $v_{CE}$ et l'échauffement
+    adiabatique de la puce pendant les trente premières microsecondes.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Avec les valeurs de départ, bus de $540\ \mathrm{V}$, boucle de $0{,}1\ \mu\mathrm{H}$, saturation à $800\ \mathrm{A}$, masquage de
+      $3\ \mu\mathrm{s}$ et ouverture douce de $1\ \mu\mathrm{s}$ : combien de temps le courant met-il à atteindre la saturation ? L'échauffement
+      sera-t-il plus proche de $20$, de $90$ ou de $220\ \mathrm{K}$ ? Que se passe-t-il si l'on désactive la désaturation et que le défaut est un
+      court-circuit de bras ? Et si la boucle vaut $20\ \mu\mathrm{H}$, comme pour un court-circuit au bout du câble du moteur ?
+    </p>
+  </div>
+  <figure id="e-desat-sim">
+    <div id="e-desat-curseurs"></div>
+    <div id="e-desat-trace"></div>
+    <div id="e-desat-temp"></div>
+    <div class="schema-vivant" id="e-desat-vivant"></div>
+    <div id="e-desat-lecteur"></div>
+    <div id="e-desat-valeurs"></div>
+    <figcaption>
+      Simulation manipulable de l'enclenchement d'un IGBT sur court-circuit. Le premier tracé donne le courant de collecteur $i_C$ en ampères et la
+      tension $v_{CE}$ en volts sur le même axe gradué ; le trait horizontal en tirets marque la tenue $V_{CES} = 1200\ \mathrm{V}$, le trait
+      vertical en tirets serrés la tenue en court-circuit de $10\ \mu\mathrm{s}$. Le second tracé donne l'échauffement adiabatique de la puce. Le
+      schéma vivant montre l'état du driver, masquage, surveillance, ouverture douce, bloqué, et une colonne dont la hauteur suit la température de
+      jonction. Les curseurs règlent la tension du bus, l'inductance de la boucle en échelle logarithmique, le courant de saturation, le masquage,
+      la durée d'ouverture douce et les protections actives ; le lecteur parcourt le temps.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Avec $0{,}1\ \mu\mathrm{H}$, le courant monte à $E/L = 5400\ \mathrm{A/\mu s}$ et sature en
+    $0{,}15\ \mu\mathrm{s}$ : l'IGBT passe presque tout le défaut désaturé, sous la pleine tension du bus. Le comparateur, actif après les
+    $3\ \mu\mathrm{s}$ de masquage, déclenche à $3{,}5\ \mu\mathrm{s}$ ; l'ouverture douce dure $1\ \mu\mathrm{s}$. L'énergie vaut environ
+    $1{,}7\ \mathrm{J}$ et l'échauffement $85\ \mathrm{K}$ : c'est la valeur intermédiaire qu'il fallait prédire. Sans désaturation, un court-circuit
+    de bras n'est vu par aucun capteur de phase et le courant persiste jusqu'à la destruction. Avec $20\ \mu\mathrm{H}$, la montée ne vaut plus que
+    $27\ \mathrm{A/\mu s}$ : le courant n'atteint pas la saturation avant que le seuil instantané de $160\ \mathrm{A}$ n'agisse, et l'énergie reçue
+    est faible. Les deux protections sont complémentaires : la désaturation pour les boucles courtes, le seuil de courant pour les défauts lointains.
+  </p>
+
+  <h3 id="e-surtension">Surtensions à l'ouverture et circuits d'aide à la commutation</h3>
+  <p>
+    Quand l'IGBT bas d'un bras s'ouvre, le courant de charge passe dans la diode haute. Le courant de la boucle formée par le condensateur du bus,
+    les barres, le module et cette diode varie de $I$ à zéro en un temps de descente $t_f$. La loi des mailles le long de cette boucle donne, pendant
+    la descente,
+  </p>
+  <div class="formule-cle">$$v_{CE,max} = E + L_\sigma\left|\frac{\mathrm{d}i}{\mathrm{d}t}\right| \approx E + L_\sigma\,\frac{I}{t_f}$$</div>
+  <p>
+    avec $v_{CE,max}$ et $E$ en volts, $L_\sigma$ en henrys, $I$ en ampères et $t_f$ en secondes. Hypothèses : descente linéaire du courant,
+    inductance localisée, diode idéale, bus de tension constante. Dérivation : la maille s'écrit $E = v_{CE} + v_{D} + L_\sigma\,\mathrm{d}i/\mathrm{d}t$ ;
+    la diode conduit, $v_D \approx 0$, et $\mathrm{d}i/\mathrm{d}t = -I/t_f$, d'où $v_{CE} = E + L_\sigma I/t_f$. Dimension :
+    $\mathrm{H \cdot A/s} = \mathrm{V \cdot s/A \cdot A/s} = \mathrm{V}$. Interprétation : l'inductance refuse la variation de courant et la convertit en
+    tension, exactement comme le coup de bélier. Cas limites : $L_\sigma \to 0$ ou $t_f \to \infty$, aucune surtension ; $t_f \to 0$, surtension
+    infinie, en pratique limitée par l'avalanche du composant. Ordres de grandeur pour la pompe : $L_\sigma = L_b + L_m = 60 + 20 = 80\ \mathrm{nH}$
+    supposés ; couper $160\ \mathrm{A}$ en $100\ \mathrm{ns}$ ajoute $128\ \mathrm{V}$, mais couper $800\ \mathrm{A}$ de court-circuit à la même vitesse
+    ajoute $640\ \mathrm{V}$, soit $1440\ \mathrm{V}$ sous un bus de $800\ \mathrm{V}$ : l'IGBT de $1200\ \mathrm{V}$ serait détruit. C'est la raison
+    de l'ouverture douce : en $1\ \mu\mathrm{s}$, la surtension tombe à $64\ \mathrm{V}$.
+  </p>
+  <p>
+    Le schéma suivant précise la boucle de commutation et l'emplacement du condensateur de découplage, qui partage la boucle en deux.
+  </p>
+  <figure id="e-boucle-figure">
+    <svg viewBox="0 0 780 330" role="img" aria-label="Boucle de commutation d'un bras d'onduleur : condensateur électrolytique du bus, inductance des barres L_b, condensateur de découplage C_s au plus près du module, inductance interne L_m, IGBT haut et bas avec diodes antiparallèles, charge inductive ; grande boucle et petite boucle repérées"><defs><marker id="fl-boucle" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M80 60H160M256 60H400M464 60H600M80 280H600"/><path d="M160 60C168 46 184 46 192 60C200 46 216 46 224 60C232 46 248 46 256 60"/><path d="M400 60C408 46 424 46 432 60C440 46 456 46 464 60"/><path d="M80 60V150M80 162V280"/><path d="M60 150H100M60 162H100" stroke-width="2.8"/><path d="M340 60V150M340 160V280"/><path d="M322 150H358M322 160H358" stroke-width="2.8"/><path d="M600 60V84L588 96M588 124L600 136V170"/><path d="M588 90V130" stroke-width="2.8"/><path d="M580 90V130M566 110H580"/><path d="M600 70H640V104M640 130V160H600"/><path d="M630 130H650L640 104Z"/><path d="M630 104H650"/><path d="M600 170V194L588 206M588 234L600 246V280"/><path d="M588 200V240" stroke-width="2.8"/><path d="M580 200V240M566 220H580"/><path d="M600 180H640V214M640 240V270H600"/><path d="M630 240H650L640 214Z"/><path d="M630 214H650"/><path d="M600 170H680V176C694 184 694 196 680 204C694 212 694 224 680 232V250"/></g><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="7 5"><rect x="44" y="22" width="626" height="280" rx="16"/></g><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="2 4"><rect x="316" y="32" width="346" height="260" rx="12"/></g><g fill="none" stroke="currentColor" stroke-width="1.8"><path d="M186 104H236" marker-end="url(#fl-boucle)"/><path d="M480 104H520" marker-end="url(#fl-boucle)"/><path d="M712 186V230" marker-end="url(#fl-boucle)"/></g><g fill="currentColor" stroke="none"><circle cx="340" cy="60" r="3.5"/><circle cx="340" cy="280" r="3.5"/><circle cx="600" cy="170" r="3.5"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="62" y="52">+</text><text x="88" y="296" font-size="11">- : référence</text><text x="104" y="160">C, 2,2 mF</text><text x="104" y="176" font-size="11">électrolytique</text><text x="168" y="86">L_b = 60 nH</text><text x="242" y="108" font-size="11">i_b</text><text x="364" y="152">C_s</text><text x="364" y="168" font-size="11">film 2,2 µF</text><text x="404" y="86">L_m = 20 nH</text><text x="526" y="108" font-size="11">i</text><text x="544" y="114">T1</text><text x="656" y="122">D1</text><text x="544" y="224">T2</text><text x="656" y="232">D2</text><text x="690" y="160" font-size="11">charge</text><text x="720" y="214">I</text><text x="44" y="322" font-size="11">tirets longs : grande boucle L_b + L_m ; pointillés : petite boucle L_m</text></g></svg>
+    <figcaption>
+      Boucle de commutation d'un bras. À gauche, le condensateur électrolytique du bus, bornes $+$ en haut et $-$ en bas, cette dernière prise comme
+      référence de potentiel. Les barres apportent l'inductance $L_b$ jusqu'au condensateur de découplage $C_s$, monté au plus près du module, puis
+      le module ajoute $L_m$ jusqu'aux interrupteurs : l'IGBT haut T1 et sa diode D1, l'IGBT bas T2 et sa diode D2. La charge inductive, à droite,
+      impose le courant $I$, flèche descendante. Quand T2 s'ouvre, $I$ passe dans D1 : le courant $i$ de la boucle s'annule. Sans $C_s$, toute la
+      grande boucle, cadre en tirets longs, subit la variation rapide ; avec $C_s$, seule la petite boucle, cadre en pointillés, la subit, tandis que
+      le courant $i_b$ des barres s'éteint plus lentement en chargeant $C_s$.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Condensateur de découplage.</strong> Avec $C_s$, la surtension rapide ne dépend plus que de $L_m$. Mais l'énergie $\tfrac12 L_bI^2$
+    stockée dans les barres doit passer dans $C_s$. Si la coupure est rapide devant la période d'oscillation de $L_b$ et $C_s$, le bilan d'énergie
+    donne $\tfrac12 L_bI^2 = \tfrac12 C_s\Delta V^2$, soit
+  </p>
+  <div class="formule-cle">$$\Delta V_{C_s} = I\sqrt{\frac{L_b}{C_s}} = Z_0 I, \qquad v_{CE,max} \le E + L_m\frac{I}{t_f} + I\sqrt{\frac{L_b}{C_s}}$$</div>
+  <p>
+    avec $\Delta V_{C_s}$ en volts, $L_b$ en henrys, $C_s$ en farads. La borne additionne deux crêtes qui ne coïncident pas exactement : elle est
+    prudente. Dimension : $\sqrt{\mathrm{H/F}} = \sqrt{\mathrm{V\,s/A} \cdot \mathrm{V/(A\,s)}} = \mathrm{V/A} = \Omega$. Pour la pompe,
+    $C_s = 2{,}2\ \mu\mathrm{F}$ supposé : $Z_0 = \sqrt{60 \times 10^{-9}/2{,}2 \times 10^{-6}} = 0{,}165\ \Omega$ et la fréquence d'oscillation vaut
+    $1/(2\pi\sqrt{L_bC_s}) = 438\ \mathrm{kHz}$. Cas limites : $C_s \to \infty$, $\Delta V \to 0$ ; $C_s \to 0$, on retrouve la grande boucle. Limite
+    du modèle : quand l'ouverture est lente et comparable à la période d'oscillation, $C_s$ peut ajouter une surtension oscillante au lieu de la
+    réduire ; c'est ce que montre la simulation suivante.
+  </p>
+  <p>
+    <strong>Circuits d'aide à la commutation.</strong> On les appelle aussi snubbers. Trois familles coexistent.
+  </p>
+  <ul>
+    <li><strong>Condensateur de découplage seul</strong>, à film, de faible inductance, aux bornes de chaque module : solution standard des
+      variateurs à IGBT, sans pertes notables.</li>
+    <li><strong>Circuit RC d'amortissement</strong> : une résistance proche de $Z_0$ en série avec un condensateur plusieurs fois plus grand que la
+      capacité qui oscille ; il amortit les oscillations parasites, au prix de pertes $C_{RC}E^2f$ à chaque cycle de charge et de décharge.</li>
+    <li><strong>Circuit RCD d'ouverture</strong> : un condensateur $C_{sn}$ chargé par une diode aux bornes de l'interrupteur absorbe le courant pendant
+      la descente et ralentit la montée de tension. Si le courant de l'interrupteur décroît linéairement, celui du condensateur croît comme $It/t_f$ ;
+      sa tension vaut $It^2/(2C_{sn}t_f)$ et atteint $E$ à la fin de la descente si $C_{sn} = It_f/(2E)$. L'énergie $\tfrac12 C_{sn}E^2$ est perdue dans
+      la résistance à chaque cycle. Pour $160\ \mathrm{A}$, $t_f = 200\ \mathrm{ns}$ et $E = 540\ \mathrm{V}$ : $C_{sn} = 29{,}6\ \mathrm{nF}$,
+      $4{,}32\ \mathrm{mJ}$ par cycle, $17{,}3\ \mathrm{W}$ par interrupteur à $4\ \mathrm{kHz}$. C'est pourquoi les IGBT modernes, à aire de
+      sécurité en blocage étendue, s'en passent ; les thyristors et les montages à très fort $\mathrm{d}v/\mathrm{d}t$ les gardent.</li>
+  </ul>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Bus à $800\ \mathrm{V}$, coupure de $160\ \mathrm{A}$ en $100\ \mathrm{ns}$, $L_b = 60\ \mathrm{nH}$, $L_m = 20\ \mathrm{nH}$. Estimez la crête de
+      $v_{CE}$ sans condensateur de découplage, puis avec $2{,}2\ \mu\mathrm{F}$. Ensuite, réglez le courant à $800\ \mathrm{A}$ : quelle durée
+      d'ouverture faut-il pour rester sous $960\ \mathrm{V}$, soit $80\ \%$ de $V_{CES}$ ? Le condensateur de découplage aide-t-il autant quand
+      l'ouverture dure $1\ \mu\mathrm{s}$ ?
+    </p>
+  </div>
+  <figure id="e-ouverture-sim">
+    <div id="e-ouverture-curseurs"></div>
+    <div id="e-ouverture-trace"></div>
+    <div id="e-ouverture-valeurs"></div>
+    <figcaption>
+      Simulation manipulable de l'ouverture d'un IGBT. Le tracé donne la tension $v_{CE}$ en volts et le courant de l'interrupteur en ampères sur le
+      même axe gradué, en fonction du temps en microsecondes ; l'ouverture commence à $0{,}3\ \mu\mathrm{s}$. Le trait horizontal en tirets longs
+      marque $V_{CES} = 1200\ \mathrm{V}$, celui en tirets courts la règle de conception de $960\ \mathrm{V}$. Modèle : bus idéal, barres $L_b$,
+      condensateur $C_s$, module $L_m$, résistance série de $50\ \mathrm{m\Omega}$ supposée, courant de l'interrupteur décroissant linéairement.
+      Un condensateur réglé à zéro signifie l'absence de découplage.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Sans découplage, la crête vaut $800 + 80 \times 10^{-9} \times 160/10^{-7} = 928\ \mathrm{V}$, rectangle de
+    surtension pendant la descente. Avec $2{,}2\ \mu\mathrm{F}$, elle tombe vers $828\ \mathrm{V}$ : il ne reste que $32\ \mathrm{V}$ dus à $L_m$ et
+    une oscillation à $438\ \mathrm{kHz}$ d'amplitude bornée par $Z_0I = 26\ \mathrm{V}$. À $800\ \mathrm{A}$, une ouverture de $100\ \mathrm{ns}$
+    donne $1440\ \mathrm{V}$ sans découplage et environ $940\ \mathrm{V}$ avec, sans aucune marge ; une ouverture douce de $1\ \mu\mathrm{s}$ donne
+    $864\ \mathrm{V}$ sans découplage et environ $880\ \mathrm{V}$ avec : quand l'ouverture est lente, le condensateur n'aide plus, l'énergie des
+    barres oscille dans $C_s$. Les deux moyens se complètent : le découplage pour les commutations normales rapides, l'ouverture douce pour les
+    forts courants de défaut.
+  </p>
+
+  <h3 id="e-bus">Surtensions et sous-tensions du bus continu</h3>
+  <p>
+    La tension du bus peut monter pour quatre raisons : un réseau haut, $1{,}1 \times 400\sqrt2 = 622\ \mathrm{V}$ à vide ; une surtension
+    transitoire du réseau, coup de foudre lointain ou manœuvre ; l'énergie renvoyée par le moteur au freinage, étudiée dans le cours
+    <a href="#/cours/convertisseurs-et-moteurs">Convertisseurs et moteurs</a> ; enfin une mise sous tension sans précharge, qui fait osciller le bus
+    au-delà de la crête du réseau. Elle descend lors d'un creux ou d'une coupure du réseau, ou quand la précharge n'est pas court-circuitée.
+  </p>
+  <p>
+    <strong>Le bus, absorbeur de surtensions transitoires.</strong> Une impulsion d'énergie $W$ qui arrive dans un bus de capacité $C$ à la tension $E$
+    élève sa tension de $\Delta V$ tel que $\tfrac12 C(E + \Delta V)^2 - \tfrac12 CE^2 = W$, soit, pour $\Delta V \ll E$,
+  </p>
+  <div class="formule-cle">$$\Delta V \approx \frac{W}{C\,E}$$</div>
+  <p>
+    avec $W$ en joules, $C$ en farads, $E$ et $\Delta V$ en volts. Dimension : $\mathrm{J/(F\,V)} = \mathrm{(C\,V)/(C/V \cdot V)} = \mathrm{V}$.
+    Hypothèse : toute l'énergie entre dans le condensateur. Pour la pompe, $1\ \mathrm{J}$ élève le bus de $1/(2{,}2 \times 10^{-3} \times 540) =
+    0{,}84\ \mathrm{V}$. Interprétation : un gros bus est un excellent écrêteur ; les varistances d'entrée servent d'abord aux diodes du pont et à
+    l'isolement du côté alternatif. Cas limite : un bus de quelques microfarads, comme dans les variateurs à bus réduit, ne joue plus ce rôle et
+    exige des écrêteurs dimensionnés pour l'énergie entière.
+  </p>
+  <p>
+    <strong>La chaîne de protection en tension.</strong> Elle s'étage du plus doux au plus brutal : un régulateur logiciel qui allonge la décélération
+    dès $760\ \mathrm{V}$ ; un comparateur câblé qui bloque les impulsions à $800\ \mathrm{V}$ ; des condensateurs assignés à $900\ \mathrm{V}$,
+    deux rangées de $450\ \mathrm{V}$ en série ; des IGBT de $1200\ \mathrm{V}$ dont la marge couvre la surtension de commutation. Côté bas, un seuil
+    de sous-tension, $400\ \mathrm{V}$ supposés, bloque l'onduleur pour éviter de tirer un courant excessif sur un bus effondré et de refermer KM2 sur
+    un écart de tension.
+  </p>
+
+  <h3 id="e-fusibles">Fusibles ultrarapides et intégrale de Joule</h3>
+  <p>
+    Un fusible est un ruban d'argent calibré, entouré de sable de silice. Quand le courant est élevé, le ruban chauffe sans avoir le temps de céder
+    sa chaleur : comme la puce en court-circuit, il est adiabatique. Sa résistance $R$ et sa capacité thermique $C_{th}$ fixent l'échauffement
+    $\Delta T = \int R\,i^2\,\mathrm{d}t / C_{th}$. La grandeur qui gouverne la fusion n'est donc ni le courant ni la durée, mais l'intégrale de Joule
+  </p>
+  <div class="formule-cle">$$I^2t = \int_0^t i^2\,\mathrm{d}\tau, \qquad I^2t_{total,\ fusible} \lt I^2t_{admissible,\ semi\text{-}conducteur}$$</div>
+  <p>
+    en $\mathrm{A^2s}$. Hypothèses : échauffement adiabatique, résistance constante. Dérivation : $\Delta T = \int R\,i^2\,\mathrm{d}t / C_{th} =
+    (R/C_{th})\,I^2t$, donc à ruban donné la fusion survient pour une valeur fixée de $I^2t$. Dimension : $\mathrm{\Omega \cdot A^2 \cdot s}/(\mathrm{J/K}) =
+    \mathrm{K}$. Cas limites : pour un courant faible et durable, l'hypothèse adiabatique tombe, le ruban cède sa chaleur et ne fond jamais,
+    d'où l'absence de protection en surcharge des fusibles aR ; pour un courant très fort, la fusion survient en une fraction de milliseconde. Interprétation : un courant de $1000\ \mathrm{A}$ pendant
+    $1\ \mathrm{ms}$ et un courant de $316\ \mathrm{A}$ pendant $10\ \mathrm{ms}$ apportent la même énergie au ruban, $1000\ \mathrm{A^2s}$. On
+    distingue l'$I^2t$ de préarc, jusqu'à la fusion du ruban, et l'$I^2t$ d'arc, pendant lequel l'arc dans le sable s'allonge, développe une tension
+    supérieure à celle du réseau et force le courant vers zéro. Leur somme, l'$I^2t$ total, dépend de la tension et du facteur de puissance du
+    circuit : c'est une donnée du constructeur, donnée à une tension précise. Un fusible ultrarapide limite le courant : il coupe avant la première
+    crête du courant présumé, si bien que le courant coupé est très inférieur au courant de court-circuit du réseau.
+  </p>
+  <p>
+    Règles de choix, qui sont des règles de conception : la classe aR protège les semi-conducteurs contre les courts-circuits seulement, pas contre
+    les surcharges ; la tension assignée doit couvrir la tension du circuit, et en continu il faut une tenue en courant continu explicite, car l'arc
+    n'y bénéficie d'aucun passage par zéro et la constante de temps $L/R$ du circuit allonge la coupure ; l'$I^2t$ total doit rester inférieur à
+    celui du composant protégé, avec une marge ; l'$I^2t$ de préarc doit dépasser celui des appels normaux, mise sous tension comprise. Pour le
+    pont d'entrée de la pompe, le cours <a href="#/cours/diodes-de-puissance">Diodes de puissance</a> donnait $5000\ \mathrm{A^2s}$ pour les diodes ;
+    des fusibles aR de $80\ \mathrm{A}$ supposés, de $700\ \mathrm{A^2s}$ de préarc et environ $2450\ \mathrm{A^2s}$ au total sous $400\ \mathrm{V}$,
+    conviennent.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Le courant présumé d'un court-circuit au pont vaut $10\ \mathrm{kA}$ efficaces. Le fusible fondra-t-il avant ou après la crête de
+      $14{,}1\ \mathrm{kA}$, qui survient à $5\ \mathrm{ms}$ ? Le courant coupé sera-t-il de l'ordre de $2$, de $10$ ou de $14\ \mathrm{kA}$ ? Si le
+      courant présumé triple, l'$I^2t$ total change-t-il beaucoup ?
+    </p>
+  </div>
+  <figure id="e-fusible-sim">
+    <div id="e-fusible-curseurs"></div>
+    <div id="e-fusible-trace"></div>
+    <div id="e-fusible-lecteur"></div>
+    <div id="e-fusible-valeurs"></div>
+    <figcaption>
+      Simulation manipulable de la coupure par un fusible ultrarapide. Le tracé donne, en kiloampères et en fonction du temps en millisecondes, le
+      courant présumé, sinusoïde que le réseau ferait circuler sans fusible, enclenchée au passage par zéro de la tension pour un circuit
+      supposé résistif, et le courant réellement coupé : il suit le présumé jusqu'à la fusion, puis décroît pendant l'arc. Le trait vertical en
+      tirets marque la fin du préarc. Modèle simplifié : arc de décroissance linéaire, $I^2t$ total égal à $3{,}5$ fois le préarc, valeur supposée.
+      Le lecteur parcourt le temps et le panneau suit l'$I^2t$ accumulé, comparé aux $5000\ \mathrm{A^2s}$ des diodes du pont.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> À $10\ \mathrm{kA}$ présumés, le ruban fond en $0{,}47\ \mathrm{ms}$, quand le courant ne vaut que
+    $2{,}1\ \mathrm{kA}$ ; l'arc l'annule en environ $1{,}2\ \mathrm{ms}$. Le courant coupé reste à $15\ \%$ de la crête présumée, et l'$I^2t$ total,
+    $2450\ \mathrm{A^2s}$, ne dépend presque pas du courant présumé : c'est ce qui permet de coordonner un fusible avec un semi-conducteur. Mais
+    même ce fusible met encore environ $0{,}2\ \mathrm{ms}$ à fondre au plus fort courant présumé, vingt fois la tenue d'un IGBT en court-circuit, et un IGBT saturé à
+    $800\ \mathrm{A}$ ne fait passer que $6{,}4\ \mathrm{A^2s}$ en $10\ \mu\mathrm{s}$, bien trop peu pour le faire fondre. Le fusible ne protège pas
+    l'IGBT ; il limite les dégâts une fois le composant détruit et protège le pont, les câbles et l'armoire.
+  </p>
+
+  <h3 id="e-precharge">Précharge du bus</h3>
+  <p>
+    Un condensateur déchargé est un court-circuit. Raccordé directement au réseau par le pont, il n'est limité que par l'inductance de commutation et
+    les résistances, et le circuit LC ainsi formé oscille : le courant atteint des centaines d'ampères et la tension du bus dépasse la crête du réseau
+    avant que les diodes ne bloquent le retour. La précharge insère une résistance $R_p$ pendant la charge, puis la court-circuite par un contacteur
+    ou un thyristor. En approximant la sortie du pont par sa crête $\hat{V}$, la loi des mailles $\hat{V} = R_pi + v_C$ et $i = C\,\mathrm{d}v_C/\mathrm{d}t$
+    donnent la charge du cours <a href="#/cours/regime-transitoire-rc">Régime transitoire RC</a> :
+  </p>
+  <div class="formule-cle">$$i(t) = \frac{\hat{V}}{R_p}e^{-t/\tau}, \qquad \tau = R_pC, \qquad W_{R_p} = \int_0^\infty R_p i^2\,\mathrm{d}t = \tfrac12 C\hat{V}^2$$</div>
+  <p>
+    avec $i$ en ampères, $\hat{V}$ en volts, $R_p$ en ohms, $C$ en farads, $\tau$ en secondes et $W_{R_p}$ en joules. Dérivation de l'énergie :
+    $\int_0^\infty R_p(\hat{V}/R_p)^2e^{-2t/\tau}\mathrm{d}t = (\hat{V}^2/R_p)(\tau/2) = \tfrac12 C\hat{V}^2$. Interprétation remarquable : la résistance
+    dissipe exactement l'énergie finalement stockée, quelle que soit sa valeur ; elle fixe seulement la pointe et la durée. Dimension :
+    $\mathrm{\Omega \cdot F} = \mathrm{(V/A)(A\,s/V)} = \mathrm{s}$. Cas limites : $R_p \to 0$, pointe infinie dans le modèle, limitée en réalité
+    par le réseau ; $R_p \to \infty$, la charge ne finit jamais. Pour la pompe, $R_p = 47\ \Omega$ et $C = 2{,}2\ \mathrm{mF}$ : $12{,}0\ \mathrm{A}$ au
+    plus, $\tau = 103\ \mathrm{ms}$, $352\ \mathrm{J}$ au plus dans $R_p$. Le pont ne conduit en réalité que lorsque la tension redressée dépasse
+    $v_C$, ce qui ralentit la fin de charge.
+  </p>
+  <p>
+    <strong>Critère de fermeture de KM2.</strong> Fermer trop tôt reporte l'appel de courant au moment de la fermeture : l'écart restant
+    $\hat{V} - v_C$ se décharge à travers la seule inductance du réseau, avec une pointe voisine de $(\hat{V} - v_C)/Z_0$ où
+    $Z_0 = \sqrt{L/C}$. On ferme donc quand le bus a atteint un seuil, $95\ \%$ de la crête pour la pompe, et l'on vérifie que la tension ne monte
+    plus. Trois défaillances sont à prévoir : KM2 collé, qui supprime la précharge ; KM2 qui ne se ferme pas, la résistance restant en série avec
+    la charge et brûlant au démarrage du moteur ; mises sous tension répétées, chacune déposant jusqu'à $352\ \mathrm{J}$ dans $R_p$.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Sans précharge, réglez $R_p$ à zéro : la pointe sera-t-elle de l'ordre de $50$, de $500$ ou de $5000\ \mathrm{A}$ ? La tension du bus
+      restera-t-elle sous la crête de $566\ \mathrm{V}$ ? Avec $47\ \Omega$, que devient la pointe à la fermeture de KM2 si le seuil passe de
+      $95\ \%$ à $70\ \%$ ? L'énergie dissipée dans $R_p$ change-t-elle si l'on double $R_p$ ?
+    </p>
+  </div>
+  <figure id="e-precharge-sim">
+    <div class="schema-vivant" id="e-precharge-vivant"></div>
+    <div id="e-precharge-curseurs"></div>
+    <div id="e-precharge-courant"></div>
+    <div id="e-precharge-tension"></div>
+    <div id="e-precharge-lecteur"></div>
+    <div id="e-precharge-valeurs"></div>
+    <figcaption>
+      Simulation manipulable de la mise sous tension du bus de la pompe. En haut, le circuit : réseau triphasé, pont de diodes, inductance de
+      commutation équivalente de deux phases, $1{,}21\ \mathrm{mH}$, résistance de précharge $R_p$ en parallèle avec le contact KM2, condensateur du
+      bus avec sa barre de charge, borne $+$ en haut, borne $-$ en référence. Les points mobiles figurent le courant à l'instant du lecteur, d'autant
+      plus rapides que le courant est fort ; ils passent par $R_p$ tant que KM2 est ouvert, par KM2 ensuite. Les deux tracés donnent le courant et
+      la tension du bus en fonction du temps, en échelle logarithmique de $0{,}1\ \mathrm{ms}$ à $1\ \mathrm{s}$ ; le trait vertical en tirets
+      marque la fermeture de KM2, les traits horizontaux en tirets la crête du réseau et le seuil de $800\ \mathrm{V}$. Mise sous tension au
+      maximum de la tension redressée, cas le plus défavorable.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Sans précharge, le courant culmine vers $580\ \mathrm{A}$ en quelques millisecondes et le bus monte à environ
+    $893\ \mathrm{V}$, au-delà du seuil de $800\ \mathrm{V}$ et presque à la tension assignée des condensateurs ; au réseau haut, $640\ \mathrm{A}$ et
+    $982\ \mathrm{V}$. L'$I^2t$ de cet appel, environ $910\ \mathrm{A^2s}$, dépasse le préarc des fusibles : sans précharge, ils fondraient ou
+    vieilliraient à chaque mise sous tension. Avec $47\ \Omega$, la pointe vaut $12\ \mathrm{A}$ et KM2 se ferme vers $0{,}45\ \mathrm{s}$ sur une
+    seconde pointe de $17\ \mathrm{A}$ ; avec un seuil de $70\ \%$, l'écart restant donne une pointe de plus de $100\ \mathrm{A}$. Doubler $R_p$
+    divise la pointe par deux, double la durée, mais ne change pas l'énergie dissipée.
+  </p>
+
+  <h3 id="e-decharge">Décharge du bus et sécurité d'intervention</h3>
+  <p>
+    Après la coupure du réseau, le bus reste chargé : le moteur arrêté et l'onduleur bloqué ne consomment plus rien. Des résistances de décharge, ou
+    les résistances d'équilibrage des condensateurs en série, le déchargent selon $v(t) = V_0e^{-t/(R_dC)}$. Le temps pour atteindre une tension
+    jugée sans danger $V_s$ vaut
+  </p>
+  <div class="formule-cle">$$t_s = R_dC\,\ln\frac{V_0}{V_s}, \qquad P_d = \frac{E^2}{R_d}$$</div>
+  <p>
+    avec $t_s$ en secondes, $R_d$ en ohms, $C$ en farads, $V_0$ et $V_s$ en volts, $P_d$ la puissance dissipée en permanence en service, en watts.
+    Hypothèses : aucune autre charge, capacité constante. Dérivation : $V_s = V_0e^{-t_s/(R_dC)}$, dont on prend le logarithme. Dimension :
+    $\mathrm{\Omega \cdot F} = \mathrm{s}$ et $\mathrm{V^2/\Omega} = \mathrm{W}$. Cas limites : $V_s \to 0$ demande un temps infini, d'où le choix
+    d'un seuil sans danger ; $R_d \to \infty$, le bus reste chargé indéfiniment. Pour la pompe, deux résistances d'équilibrage de $47\ \mathrm{k\Omega}$ supposées, soit
+    $R_d = 94\ \mathrm{k\Omega}$ : $\tau = 207\ \mathrm{s}$, $3{,}1\ \mathrm{W}$ en service, et depuis $800\ \mathrm{V}$ il faut
+    $207 \ln(800/50) = 573\ \mathrm{s}$, près de dix minutes, pour descendre à $50\ \mathrm{V}$. Compromis : décharger en une minute depuis
+    $622\ \mathrm{V}$ demanderait $10{,}8\ \mathrm{k\Omega}$ et $27\ \mathrm{W}$ perdus en permanence. Règle de sécurité, qui ne se discute pas : le
+    délai affiché sur le variateur est un minimum, et l'absence de tension se vérifie toujours au voltmètre sur les bornes du bus avant toute
+    intervention, car une résistance coupée laisse le bus chargé pendant des heures.
+  </p>
+
+  <h3 id="e-isolation">Isolation, défauts à la terre et surveillance</h3>
+  <p>
+    Le bus du variateur flotte à des centaines de volts par rapport à la terre, et les émetteurs des IGBT hauts sautent de $0$ à $E$ à chaque
+    commutation. Les drivers de grille, les mesures de tension et de courant et les liaisons vers la carte de commande traversent donc une barrière
+    d'isolement galvanique : optocoupleurs, coupleurs capacitifs ou magnétiques, alimentations à transformateur. Cette barrière doit tenir la
+    tension de service, les surtensions transitoires et des fronts de $\mathrm{d}v/\mathrm{d}t$ de plusieurs kilovolts par microseconde ; ses distances
+    d'isolement dans l'air et de ligne de fuite relèvent des normes de produit et du constructeur.
+  </p>
+  <p>
+    En sortie, un défaut entre une phase et la carcasse du moteur fait circuler un courant qui ne revient pas par les autres phases. La somme des trois
+    courants de phase, nulle en fonctionnement sain si l'on néglige les fuites capacitives étudiées dans le cours
+    <a href="#/cours/compatibilite-electromagnetique">Compatibilité électromagnétique</a>, devient alors égale au courant de défaut : le variateur la
+    calcule et déclenche au-delà d'un seuil, $16\ \mathrm{A}$ en $10\ \mathrm{ms}$ supposés pour la pompe, soit $30\ \%$ du courant nominal. La valeur de
+    ce courant dépend du schéma de liaison à la terre, que le cours Sécurité électrique et schémas de liaison à la terre étudiera. Cette détection
+    protège le variateur ; la protection des personnes contre les contacts indirects reste assurée par l'installation en amont.
+  </p>
+
+  <h3 id="e-coordination">Coordination : la carte temps-courant</h3>
+  <p>
+    Toutes ces protections se résument sur un même plan : en abscisse le courant de défaut, en ordonnée sa durée, toutes deux en échelle
+    logarithmique. Chaque protection y trace la courbe de son temps de coupure ; le composant y trace sa limite. Une protection est efficace pour un
+    défaut si sa courbe passe sous la limite du composant à ce courant, et si elle voit ce défaut. La carte suivante applique cette lecture à un IGBT
+    de l'onduleur de la pompe.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Placez mentalement trois défauts : $300\ \mathrm{A}$ pendant $1\ \mathrm{ms}$ en court-circuit entre phases ; $800\ \mathrm{A}$ pendant
+      $20\ \mu\mathrm{s}$ en court-circuit de bras ; $70\ \mathrm{A}$ pendant $100\ \mathrm{s}$. Pour chacun, quelle protection agit la première, et
+      l'IGBT survit-il ? Que change, pour le premier, le passage en court-circuit de bras ?
+    </p>
+  </div>
+  <figure id="e-carte-figure">
+    <div class="schema-vivant" id="e-carte-vivant"></div>
+    <div id="e-carte-curseurs"></div>
+    <div id="e-carte-valeurs"></div>
+    <figcaption>
+      Carte temps-courant de l'IGBT de la pompe, axes logarithmiques : courant de $10\ \mathrm{A}$ à $2\ \mathrm{kA}$, durée de $1\ \mu\mathrm{s}$ à
+      $1000\ \mathrm{s}$. Le trait plein épais est la limite de l'IGBT : à gauche, limite thermique d'un courant continu calculée avec
+      l'impédance thermique du cours précédent, pour $42\ \mathrm{K}$ d'échauffement admis ; à droite de $560\ \mathrm{A}$, désaturation et tenue de
+      $10\ \mu\mathrm{s}$. Les courbes de protection sont en tirets : modèle thermique, seuil instantané de $160\ \mathrm{A}$, désaturation, défaut
+      terre ; le fusible aR d'entrée, en pointillés, est donné pour comparaison. Les courbes des protections qui ne voient pas le chemin choisi
+      sont estompées. Le point déplaçable figure un défaut, courant et durée ; le panneau indique quelle protection agit, en combien de temps, et si
+      l'IGBT survit.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> À $300\ \mathrm{A}$ entre phases, le seuil instantané coupe en $5\ \mu\mathrm{s}$, loin sous la limite thermique
+    de $2{,}2\ \mathrm{ms}$ environ. À $800\ \mathrm{A}$ en court-circuit de bras, seule la désaturation agit, en $4{,}5\ \mu\mathrm{s}$, sous
+    la tenue de $10\ \mu\mathrm{s}$. À $70\ \mathrm{A}$, le modèle thermique déclenche en environ $90\ \mathrm{s}$, alors que l'IGBT, d'après sa
+    seule impédance thermique, tiendrait indéfiniment : le modèle protège aussi le moteur et les condensateurs, et il est volontairement prudent.
+    Le cas instructif est le court-circuit de bras à $300\ \mathrm{A}$, qui peut survenir avec une tension de grille insuffisante : sous le seuil
+    de désaturation et hors du chemin des capteurs de phase, il n'est vu par rien. C'est pourquoi les drivers surveillent aussi leur propre
+    alimentation et verrouillent la commande en sous-tension de grille.
+  </p>
+
+  <h3 id="e-statut">Loi, convention, approximation, règle de conception et donnée du constructeur</h3>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Nature</th><th>Exemples de la séance</th></tr></thead>
+      <tbody>
+        <tr><td>Loi physique</td><td>$v_L = L\,\mathrm{d}i/\mathrm{d}t$ ; conservation de l'énergie, d'où $\tfrac12 L_bI^2 = \tfrac12 C_s\Delta V^2$ et $W_{R_p} = \tfrac12 C\hat{V}^2$ ; échauffement $W/C_{th}$ ; diffusion $\ell = \sqrt{\alpha t}$.</td></tr>
+        <tr><td>Convention</td><td>Convention récepteur pour $v_{CE}$ et $i_C$ ; borne $-$ du bus comme référence ; flux et courants comptés positifs dans le sens des flèches des schémas.</td></tr>
+        <tr><td>Approximation</td><td>Courant de descente linéaire ; inductances localisées ; échauffement adiabatique sur l'épaisseur entière de la puce ; sortie du pont assimilée à sa crête pour la précharge ; arc de fusible à décroissance linéaire.</td></tr>
+        <tr><td>Règle de conception</td><td>$v_{CE,max} \le 80\ \%$ de $V_{CES}$ ; extinction d'un court-circuit en moins de la moitié de la tenue garantie si possible ; fermeture de KM2 au-delà de $90$ à $95\ \%$ de la crête ; $I^2t$ total du fusible inférieur à celui du composant avec marge ; préarc supérieur aux appels normaux.</td></tr>
+        <tr><td>Norme ou constructeur</td><td>Tenue en court-circuit et $V_{CES}$ de l'IGBT ; seuils du variateur ; $I^2t$ des fusibles et des diodes ; tension assignée et courant d'ondulation des condensateurs ; délai de décharge affiché ; distances d'isolement et essais diélectriques ; exigences de sécurité de la machine.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Le schéma principal de la séance est la chaîne de protections autour de l'onduleur du variateur de la pompe, du réseau jusqu'au moteur. Chaque
+    protection y figure à l'endroit où elle mesure et à l'endroit où elle agit ; les valeurs sont celles des sections H et I.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 940 540" role="img" aria-label="Chaîne de protections du variateur de la pompe : réseau L1 L2 L3 et PE, fusibles aR, varistances, self de ligne, pont de diodes, précharge Rp et KM2, condensateurs du bus avec résistances d'équilibrage, mesure de tension du bus, condensateur de découplage, onduleur à six IGBT avec drivers à détection de désaturation, capteurs de courant de phase, câble et moteur avec sonde thermique, capteur de température du dissipateur, carte de commande qui reçoit les défauts et agit"><defs><marker id="fl-princ" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M20 92H52M20 112H52M20 132H52"/><rect x="52" y="86" width="30" height="12" rx="2"/><rect x="52" y="106" width="30" height="12" rx="2"/><rect x="52" y="126" width="30" height="12" rx="2"/><path d="M82 92H150M82 112H150M82 132H150"/><rect x="104" y="96" width="14" height="32" rx="2"/><path d="M111 92V96M111 128V132"/><rect x="150" y="84" width="46" height="56" rx="6"/><path d="M196 92H214M196 112H214M196 132H214"/><rect x="214" y="72" width="70" height="80" rx="6"/><path d="M284 84H300V60H330M284 140H300V300"/><path d="M300 60V30H340L364 18M372 30H400V60"/><rect x="330" y="52" width="50" height="16" rx="2"/><path d="M380 60H860"/><path d="M300 300H860"/><path d="M420 60V150M420 210V300"/><path d="M402 150H438M402 160H438M402 200H438M402 210H438" stroke-width="2.8"/><path d="M420 160V200"/><path d="M460 60V100M460 260V300"/><rect x="452" y="100" width="16" height="60"/><rect x="452" y="200" width="16" height="60"/><path d="M460 160V200"/><path d="M420 180H460"/><rect x="496" y="140" width="96" height="60" rx="6"/><path d="M510 60V140M510 200V300" stroke-width="1.4"/><path d="M620 60V160M620 200V300"/><path d="M604 160H636M604 170H636" stroke-width="2.6"/><path d="M620 170V200"/><rect x="660" y="80" width="40" height="200" rx="6"/><rect x="720" y="80" width="40" height="200" rx="6"/><rect x="780" y="80" width="40" height="200" rx="6"/><path d="M680 60V80M740 60V80M800 60V80M680 280V300M740 280V300M800 280V300"/><path d="M700 180H712M760 180H772M820 180H832"/><path d="M846 140H878L888 160M846 180H878M846 220H878L888 200"/><circle cx="862" cy="140" r="7"/><circle cx="862" cy="180" r="7"/><circle cx="862" cy="220" r="7"/><circle cx="904" cy="180" r="26"/><rect x="640" y="330" width="200" height="40" rx="6"/><rect x="520" y="330" width="90" height="40" rx="6"/><rect x="200" y="440" width="640" height="56" rx="8"/><path d="M14 520H920"/><path d="M904 206V520"/></g><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="5 4"><path d="M500 200V440"/><path d="M740 370V440"/><path d="M690 282V330M750 282V330M810 282V330"/><path d="M565 370V440"/><path d="M862 228V468H840"/><path d="M904 154V120H932V482H840"/><path d="M292 440V20H346"/><path d="M90 140V200H240V440"/></g><g fill="none" stroke="currentColor" stroke-width="1.8"><path d="M440 46H490" marker-end="url(#fl-princ)"/><path d="M850 126H874" marker-end="url(#fl-princ)"/><path d="M28 80H48" marker-end="url(#fl-princ)"/></g><g fill="currentColor" stroke="none"><circle cx="420" cy="60" r="3.5"/><circle cx="460" cy="60" r="3.5"/><circle cx="620" cy="60" r="3.5"/><circle cx="420" cy="300" r="3.5"/><circle cx="460" cy="300" r="3.5"/><circle cx="620" cy="300" r="3.5"/><circle cx="510" cy="60" r="3"/><circle cx="510" cy="300" r="3"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11"><text x="2" y="96">L1</text><text x="2" y="116">L2</text><text x="2" y="136">L3</text><text x="44" y="78">fusibles aR</text><text x="44" y="160">80 A</text><text x="96" y="150">RV</text><text x="152" y="76">self 3 %</text><text x="216" y="66" font-size="10">pont D1 à D6</text><text x="226" y="116" font-size="10.5">1600 V</text><text x="312" y="14">KM2</text><text x="328" y="86">R_p 47 Ω</text><text x="404" y="40">+ E</text><text x="340" y="230">C 2,2 mF</text><text x="340" y="246">900 V</text><text x="474" y="96">47 kΩ</text><text x="474" y="276">47 kΩ</text><text x="502" y="160">mesure E</text><text x="502" y="176">&gt; 800 V</text><text x="502" y="192">&lt; 400 V</text><text x="632" y="186">C_s</text><text x="664" y="98">T1</text><text x="664" y="270">T4</text><text x="724" y="98">T3</text><text x="724" y="270">T6</text><text x="784" y="98">T5</text><text x="784" y="270">T2</text><text x="703" y="174" font-size="10">U</text><text x="763" y="174" font-size="10">V</text><text x="823" y="174" font-size="10">W</text><text x="834" y="144" font-size="10">U</text><text x="834" y="184" font-size="10">V</text><text x="834" y="224" font-size="10">W</text><text x="846" y="252">capteurs</text><text x="895" y="184">M</text><text x="907" y="148" font-size="10">sonde</text><text x="908" y="232" font-size="10">PE</text><text x="304" y="318">- E : référence des mesures du bus</text><text x="648" y="348">drivers isolés : désat.,</text><text x="648" y="362">sous-tension de grille</text><text x="526" y="348">CTN du</text><text x="526" y="362">dissipateur</text><text x="212" y="460">carte de commande : seuils E, 160 A crête, défaut terre, modèle thermique ;</text><text x="212" y="476">blocage des impulsions, ouverture de KM2, journal des défauts,</text><text x="212" y="490">relais de défaut vers l'automate</text><text x="20" y="514">PE</text><text x="100" y="196">surveillance des fusibles</text><text x="500" y="40">puissance en moteur</text><text x="878" y="114" font-size="10.5">vers M</text></g></svg>
+    <figcaption>
+      Chaîne de protections du variateur de la pompe. Puissance de gauche à droite, flèches en trait plein : réseau L1, L2, L3, fusibles aR, varistances
+      RV entre phases, self de ligne, pont de diodes ; précharge par $R_p$ shuntée par le contact KM2 sur la barre $+E$ ; condensateur du bus de
+      $2{,}2\ \mathrm{mF}$, formé de deux rangées de $450\ \mathrm{V}$, deux traits épais, avec ses résistances d'équilibrage de
+      $47\ \mathrm{k\Omega}$ ; mesure de la tension du bus, référencée à la barre $-E$ ; condensateur de découplage $C_s$ ; trois bras de l'onduleur,
+      T1 à T6 ; capteurs de courant sur les phases U, V, W ; moteur M avec sa sonde thermique, carcasse reliée au PE. En tirets, les liaisons de
+      signal : mesures et défauts qui remontent vers la carte de commande, ordres qui en repartent vers KM2 et les drivers. Le seul défaut que la carte
+      ne voit pas par ses capteurs de phase, le court-circuit de bras, est traité localement par les drivers, plus rapides que toute autre mesure.
+    </figcaption>
+  </figure>
+  <p>
+    L'organigramme ci-dessous résume la démarche pour choisir les protections d'un bus continu, la question centrale de la séance.
+  </p>
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Données : réseau, bus, composants"] --> B["Plage de tension du bus"]
+  B --> C["Seuils et tenue des condensateurs"]
+  C --> D["Précharge : R_p, énergie, seuil de KM2"]
+  D --> E{"Pointe acceptable ?"}
+  E -->|"Non"| D
+  E -->|"Oui"| F["Boucle : L_sigma, C_s, surtension"]
+  F --> G{"v_CE sous 80 % de V_CES ?"}
+  G -->|"Non"| H["Réduire L_sigma, découpler, ouvrir doucement"]
+  H --> F
+  G -->|"Oui"| I["Court-circuit : désaturation, énergie"]
+  I --> J{"Extinction avant la tenue ?"}
+  J -->|"Non"| I
+  J -->|"Oui"| K["Fusibles : I²t, tension continue"]
+  K --> L["Décharge et isolement"]
+  L --> M["Carte temps-courant et contrôles"]</pre>
+    <figcaption>
+      Organigramme de choix des protections d'un bus continu. Les rectangles sont des calculs, les losanges des vérifications ; une vérification
+      négative renvoie à l'étape qui doit être reprise. On part de la plage de tension du bus pour fixer les seuils et la tenue des condensateurs,
+      puis on traite la mise sous tension, les commutations, les courts-circuits, les fusibles et enfin la décharge, avant de tout reporter sur la
+      carte temps-courant.
+    </figcaption>
+  </figure>
+  <p>
+    Le tableau suivant compare les protections de la séance : ce que chacune mesure, les défauts qu'elle voit, sa vitesse et ses limites.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Protection</th><th>Mesure</th><th>Défauts vus</th><th>Temps d'action</th><th>Action</th><th>Limites</th></tr></thead>
+      <tbody>
+        <tr><td>Désaturation</td><td>$v_{CE}$ pendant la conduction</td><td>Court-circuit de bras, entre phases, à la terre, boucle courte</td><td>$2$ à $5\ \mu\mathrm{s}$</td><td>Ouverture douce locale, défaut verrouillé</td><td>Masquage obligatoire ; aveugle sous le courant de désaturation</td></tr>
+        <tr><td>Seuil de courant instantané</td><td>Courants de phase</td><td>Courts-circuits en sortie, surintensités brusques</td><td>Environ $5\ \mu\mathrm{s}$</td><td>Blocage des impulsions</td><td>Ne voit pas le court-circuit de bras</td></tr>
+        <tr><td>Découplage et ouverture douce</td><td>Aucune, passive ou intégrée au driver</td><td>Surtension de commutation</td><td>Dizaines de ns</td><td>Limite $L\,\mathrm{d}i/\mathrm{d}t$</td><td>Oscillation LC, pertes accrues en ouverture lente</td></tr>
+        <tr><td>Seuils du bus</td><td>Tension $E$</td><td>Surtension de freinage, réseau haut, sous-tension</td><td>$10$ à $100\ \mu\mathrm{s}$</td><td>Blocage, régulation de la décélération</td><td>Ne protège pas d'une surtension locale de commutation</td></tr>
+        <tr><td>Fusible aR</td><td>$I^2t$ dans le ruban</td><td>Court-circuit côté réseau, composant claqué</td><td>$0{,}2$ à $10\ \mathrm{ms}$</td><td>Coupure définitive</td><td>Trop lent pour un IGBT ; aucune protection en surcharge</td></tr>
+        <tr><td>Précharge</td><td>Tension du bus ou temporisation</td><td>Appel de courant à la mise sous tension</td><td>$0{,}1$ à $1\ \mathrm{s}$</td><td>Limitation puis court-circuit de $R_p$</td><td>Énergie à chaque mise sous tension ; KM2 collé ou ouvert</td></tr>
+        <tr><td>Défaut terre</td><td>Somme des courants de phase</td><td>Phase à la carcasse ou à la terre</td><td>Quelques ms</td><td>Blocage des impulsions</td><td>Fuites capacitives ; dépend du schéma de liaison à la terre</td></tr>
+        <tr><td>Modèle thermique et CTN</td><td>Courant efficace, température</td><td>Surcharge, ventilation défaillante</td><td>Secondes à minutes</td><td>Réduction de courant, puis arrêt</td><td>Inutile contre les courts-circuits</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <ul>
+    <li><a href="#d-frise-figure" data-renvoi="d-frise-figure">Frise des échelles de temps des menaces et des protections</a>, en section D.</li>
+    <li><a href="#e-desat-figure" data-renvoi="e-desat-figure">Détection de désaturation dans le driver</a> et <a href="#e-desat-sim" data-renvoi="e-desat-sim">simulation de l'enclenchement sur court-circuit</a>, en section E.</li>
+    <li><a href="#e-boucle-figure" data-renvoi="e-boucle-figure">Boucle de commutation et condensateur de découplage</a> et <a href="#e-ouverture-sim" data-renvoi="e-ouverture-sim">simulation de l'ouverture</a>, en section E.</li>
+    <li><a href="#e-fusible-sim" data-renvoi="e-fusible-sim">Coupure par un fusible ultrarapide</a> : simulation, en section E.</li>
+    <li><a href="#e-precharge-sim" data-renvoi="e-precharge-sim">Mise sous tension du bus, avec et sans précharge</a> : circuit animé et simulation, en section E.</li>
+    <li><a href="#e-carte-figure" data-renvoi="e-carte-figure">Carte temps-courant de l'IGBT</a> : point déplaçable, en section E.</li>
+    <li><a href="#h-figure" data-renvoi="h-figure">Échelle des tensions du bus et de l'IGBT</a>, en section H.</li>
+    <li><a href="#i-sequence" data-renvoi="i-sequence">Séquence de mise sous tension et de traitement des défauts</a>, en section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <ol>
+    <li>Fixer les conventions et les hypothèses : référence de potentiel, sens des courants, origine de chaque donnée, mesure, documentation ou
+      valeur supposée.</li>
+    <li>Établir la plage de tension du bus : crête du réseau haut à vide, surtension de freinage admise, transitoires, et en déduire les seuils de
+      régulation et de déclenchement puis la tension assignée des condensateurs, avec une marge.</li>
+    <li>Dimensionner la précharge : $R_p \ge \hat{V}_{max}/I_{max}$, $\tau = R_pC$, énergie $\tfrac12 C\hat{V}^2$ par mise sous tension, seuil de
+      fermeture du contacteur, cadence admissible de mises sous tension, surveillance du contacteur.</li>
+    <li>Évaluer la boucle de commutation : $L_b$, $L_m$, $C_s$ ; vérifier $E_{max} + L_mI/t_f + I\sqrt{L_b/C_s} \le 0{,}8\,V_{CES}$ au courant maximal
+      coupé normalement, puis au courant de court-circuit avec l'ouverture douce.</li>
+    <li>Régler la protection de court-circuit : courant de désaturation, masquage, filtre, ouverture douce ; calculer l'énergie
+      $W \approx EI_{sat}t_{cc}$ et vérifier $t_{cc}$ contre la tenue garantie ; vérifier quels défauts chaque mesure voit.</li>
+    <li>Choisir les fusibles : classe aR, tension assignée, en continu si nécessaire, $I^2t$ total inférieur à celui du composant protégé, préarc
+      supérieur aux appels normaux.</li>
+    <li>Prévoir la décharge et la sécurité : $t_s = R_dC\ln(V_0/V_s)$, pertes permanentes, délai affiché, vérification d'absence de tension ;
+      isolement des commandes et détection de défaut terre.</li>
+    <li>Reporter les protections et les limites sur la carte temps-courant, défaut par défaut, et contrôler unités, ordres de grandeur, bilans
+      d'énergie et cas limites.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <p>
+    Travail central de la séance : choisir les protections du bus continu du variateur de la pompe et vérifier leur cohérence.
+  </p>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <ul>
+    <li><strong>Réseau :</strong> $400\ \mathrm{V}$ à $\pm 10\ \%$, crête composée $\hat{V} = 400\sqrt2 = 565{,}7\ \mathrm{V}$, $622{,}3\ \mathrm{V}$ au réseau
+      haut ; inductance de commutation de $0{,}603\ \mathrm{mH}$ et résistance de $0{,}099\ \Omega$ par phase, d'après le cours
+      <a href="#/cours/redresseurs-triphases">Redresseurs triphasés</a>.</li>
+    <li><strong>Bus :</strong> $C = 2{,}2\ \mathrm{mF}$, $540\ \mathrm{V}$ nominaux, régulateur de surtension dès $760\ \mathrm{V}$ et déclenchement à
+      $800\ \mathrm{V}$, valeurs du cours <a href="#/cours/convertisseurs-et-moteurs">Convertisseurs et moteurs</a> ; précharge $R_p = 47\ \Omega$.</li>
+    <li><strong>Onduleur :</strong> IGBT $1200\ \mathrm{V}$, $100\ \mathrm{A}$ ; tenue en court-circuit de $10\ \mu\mathrm{s}$ sous $800\ \mathrm{V}$ au plus,
+      courant de saturation de $800\ \mathrm{A}$, $L_b = 60\ \mathrm{nH}$, $L_m = 20\ \mathrm{nH}$, $C_s = 2{,}2\ \mu\mathrm{F}$, courant maximal coupé
+      normalement $160\ \mathrm{A}$ en $t_f = 100\ \mathrm{ns}$ : valeurs supposées.</li>
+    <li><strong>Inconnues :</strong> tension assignée des condensateurs ; pointe, énergie et seuil de précharge ; marge de l'IGBT à l'ouverture ;
+      réglage de la désaturation et énergie de court-circuit ; résistances de décharge et délai d'intervention.</li>
+    <li><strong>Stratégie :</strong> suivre la méthode de la section G, borne par borne, en calculant chaque grandeur au cas le plus défavorable.</li>
+  </ul>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li><strong>Plage de tension et condensateurs.</strong> Le bus atteint $622{,}3\ \mathrm{V}$ à vide au réseau haut, et jusqu'à $800\ \mathrm{V}$
+      au déclenchement. Deux rangées de $450\ \mathrm{V}$ en série donnent $900\ \mathrm{V}$ : marge de $100\ \mathrm{V}$, soit $12{,}5\ \%$ au-dessus
+      du seuil. Une impulsion de $1\ \mathrm{J}$ venue du réseau élève le bus de $1/(2{,}2 \times 10^{-3} \times 540) = 0{,}84\ \mathrm{V}$ :
+      négligeable.</li>
+    <li><strong>Précharge.</strong> Pointe : $565{,}7/47 = 12{,}0\ \mathrm{A}$, $622{,}3/47 = 13{,}2\ \mathrm{A}$ au réseau haut. Constante de temps :
+      $47 \times 2{,}2 \times 10^{-3} = 0{,}1034\ \mathrm{s}$. Énergie dans $R_p$ : au plus $\tfrac12 \times 2{,}2 \times 10^{-3} \times 565{,}7^2 =
+      352\ \mathrm{J}$, $426\ \mathrm{J}$ au réseau haut. Fermeture de KM2 à $95\ \%$ de la crête : $\tau\ln 20 = 0{,}31\ \mathrm{s}$ dans le
+      modèle RC, environ $0{,}45\ \mathrm{s}$ dans la simulation qui tient compte de la conduction intermittente du pont ; écart restant
+      $28\ \mathrm{V}$, pointe à la fermeture d'environ $28/Z_0$, avec $Z_0 = \sqrt{1{,}206 \times 10^{-3}/2{,}2 \times 10^{-3}} = 0{,}740\ \Omega$,
+      soit $38\ \mathrm{A}$ au plus, $17\ \mathrm{A}$ simulés grâce à l'amortissement.</li>
+    <li><strong>Sans précharge, pour mémoire.</strong> Borne non amortie : $565{,}7/0{,}740 = 764\ \mathrm{A}$ ; la simulation donne $580\ \mathrm{A}$
+      et un bus à $893\ \mathrm{V}$, au-delà du seuil de déclenchement : la précharge est indispensable.</li>
+    <li><strong>Ouverture normale.</strong> Sans $C_s$ : $800 + 80 \times 10^{-9} \times 160/10^{-7} = 928\ \mathrm{V}$. Avec $C_s$ :
+      $800 + 20 \times 10^{-9} \times 160/10^{-7} + 160\sqrt{60 \times 10^{-9}/2{,}2 \times 10^{-6}} = 800 + 32 + 26{,}4 = 858\ \mathrm{V}$. Règle des
+      $80\ \%$ : $960\ \mathrm{V}$. Les deux passent, mais le découplage porte la marge de $32$ à $102\ \mathrm{V}$.</li>
+    <li><strong>Ouverture d'un court-circuit.</strong> À $800\ \mathrm{A}$ en $100\ \mathrm{ns}$ sans $C_s$ : $800 + 640 = 1440\ \mathrm{V}$, refusé.
+      Ouverture douce en $1\ \mu\mathrm{s}$ avec $C_s$ : $800 + 20 \times 10^{-9} \times 800/10^{-6} + 800 \times 0{,}165 = 800 + 16 + 132 =
+      948\ \mathrm{V}$, sous $960\ \mathrm{V}$ ; la simulation donne environ $880\ \mathrm{V}$.</li>
+    <li><strong>Désaturation.</strong> Masquage $3\ \mu\mathrm{s}$, filtre $0{,}5\ \mu\mathrm{s}$, ouverture douce $1\ \mu\mathrm{s}$ : extinction en
+      $4{,}5\ \mu\mathrm{s}$, moins de la moitié de la tenue. Énergie en supposant l'IGBT désaturé dès l'enclenchement :
+      $540 \times 800 \times 3{,}5 \times 10^{-6} = 1{,}512\ \mathrm{J}$, plus l'ouverture douce, courant moyen $400\ \mathrm{A}$ sous
+      $540 + 64 = 604\ \mathrm{V}$ pendant $1\ \mu\mathrm{s}$ : $0{,}242\ \mathrm{J}$. Total $1{,}75\ \mathrm{J}$, soit $1{,}75/0{,}0199 = 88\ \mathrm{K}$,
+      contre $217\ \mathrm{K}$ pour $10\ \mu\mathrm{s}$ ; la simulation, qui tient compte de la montée du courant, donne $85\ \mathrm{K}$.</li>
+    <li><strong>Décharge.</strong> Les deux résistances d'équilibrage de $47\ \mathrm{k\Omega}$ forment $R_d = 94\ \mathrm{k\Omega}$ : $3{,}1\ \mathrm{W}$
+      en service, $\tau = 207\ \mathrm{s}$ ; de $800$ à $50\ \mathrm{V}$, $573\ \mathrm{s}$ ; de $622$ à $50\ \mathrm{V}$, $521\ \mathrm{s}$. On affiche
+      un délai de dix minutes au moins, et l'on vérifie l'absence de tension avant d'intervenir.</li>
+  </ol>
+  <p>
+    <strong>Résultat :</strong> condensateurs de $900\ \mathrm{V}$ ; précharge de $47\ \Omega$ fermée à $95\ \%$, environ $0{,}45\ \mathrm{s}$ ;
+    découplage de $2{,}2\ \mu\mathrm{F}$ ; désaturation à $7\ \mathrm{V}$, masquage de $3\ \mu\mathrm{s}$, ouverture douce de $1\ \mu\mathrm{s}$ ;
+    décharge en moins de dix minutes. La figure suivante range toutes ces tensions sur une même échelle.
+  </p>
+  <figure id="h-figure">
+    <svg viewBox="0 0 640 470" role="img" aria-label="Échelle verticale des tensions de 450 à 1250 volts : bus en charge, nominal, crête du réseau, réseau haut, régulateur, déclenchement, bornes de surtension à l'ouverture, tension assignée des condensateurs, règle des 80 pour cent et tenue de l'IGBT"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M320 450V40"/><path d="M300 408H340M300 395H340M300 382H340M300 354H340M300 285H340M300 265H340M300 236H340M300 215H340M300 191H340M300 185H340"/><path d="M290 65H350" stroke-width="3"/></g><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="6 4"><path d="M330 395V265"/></g><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 3"><path d="M310 265V185"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11.5"><text x="350" y="412">514 V : bus à pleine charge</text><text x="70" y="399">nominal du bus : 540 V</text><text x="350" y="386">566 V : crête du réseau</text><text x="76" y="358">réseau haut à vide : 622 V</text><text x="350" y="289">760 V : régulateur</text><text x="64" y="269">déclenchement : 800 V</text><text x="350" y="240">858 V : ouverture de 160 A</text><text x="56" y="219">condensateurs : 900 V</text><text x="350" y="195">948 V : court-circuit, douce</text><text x="44" y="189">règle de 80 % : 960 V</text><text x="76" y="69">tenue V_CES : 1200 V</text><text x="350" y="130">marge de l'IGBT au-delà</text><text x="350" y="146">de la règle : 240 V</text><text x="330" y="34">tension en V</text><text x="338" y="330" font-size="10.5">exploitation</text><text x="230" y="230" font-size="10.5">défauts</text></g></svg>
+    <figcaption>
+      Échelle des tensions du bus et de l'IGBT de la pompe, de $450$ à $1250\ \mathrm{V}$, à l'échelle. Les graduations courtes repèrent chaque niveau ;
+      le trait épais en haut est la tenue $V_{CES}$. Le segment en tirets, à droite de l'axe, couvre la plage d'exploitation, du nominal au
+      déclenchement ; le segment en pointillés, à gauche, couvre la plage des défauts, du déclenchement à la règle des $80\ \%$. Chaque marche
+      garde un écart : le seuil sous les condensateurs, les bornes de surtension sous la règle de conception, la règle sous la tenue du catalogue.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li><strong>Unités :</strong> $\mathrm{H \cdot A/s} = \mathrm{V}$ ; $\mathrm{\Omega \cdot F} = \mathrm{s}$ ; $\mathrm{F \cdot V^2} = \mathrm{J}$ ;
+      $\mathrm{V \cdot A \cdot s} = \mathrm{J}$ ; $\mathrm{J}/(\mathrm{J/K}) = \mathrm{K}$.</li>
+    <li><strong>Bilan d'énergie :</strong> l'énergie stockée dans le bus vaut $\tfrac12 C E^2 = 321\ \mathrm{J}$ à $540\ \mathrm{V}$ ; la précharge en
+      dissipe autant, $352\ \mathrm{J}$ au plus pour la crête de $566\ \mathrm{V}$. L'énergie des barres à $800\ \mathrm{A}$,
+      $\tfrac12 \times 60 \times 10^{-9} \times 800^2 = 19{,}2\ \mathrm{mJ}$, élève $C_s$ de $\sqrt{2 \times 0{,}0192/2{,}2 \times 10^{-6}} = 132\ \mathrm{V}$ :
+      même résultat que $Z_0I$.</li>
+    <li><strong>Ordres de grandeur :</strong> quelques joules suffisent à détruire une puce, quelques centaines de joules sont stockés dans le bus,
+      quelques millijoules dans les barres ; une précharge de quelques dizaines d'ohms pour quelques millifarads donne une constante de temps de
+      l'ordre de $0{,}1\ \mathrm{s}$.</li>
+    <li><strong>Cas limites :</strong> sans $L_\sigma$, aucune surtension ; sans masquage, déclenchements à chaque commutation ; sans $R_d$, bus chargé
+      indéfiniment ; avec $C_s$ infini, seule $L_m$ compte.</li>
+  </ul>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <p>
+    Le variateur de la pompe est choisi sur catalogue : on ne conçoit pas ses protections internes, mais on doit vérifier qu'elles conviennent à
+    l'installation, régler celles qui sont paramétrables et organiser leur exploitation. C'est l'élément ajouté cette semaine au projet fil rouge.
+  </p>
+
+  <h3 id="i-donnees">Données, contraintes d'exploitation et décisions</h3>
+  <ul>
+    <li><strong>Contraintes d'exploitation :</strong> pompe en service $6000\ \mathrm{h}$ par an, redémarrage automatique après une coupure du réseau
+      exigé par le procédé, basculement sur groupe électrogène avec reprise par paliers, interventions par un électricien du site.</li>
+    <li><strong>Entrée :</strong> fusibles aR de $80\ \mathrm{A}$ supposés, $2450\ \mathrm{A^2s}$ au total sous $400\ \mathrm{V}$, pour des diodes de
+      $5000\ \mathrm{A^2s}$, préarc de $700\ \mathrm{A^2s}$ supérieur à l'appel de précharge, négligeable ; un contact de surveillance des fusibles
+      remonte à l'automate. Varistances et self de ligne conservées.</li>
+    <li><strong>Précharge :</strong> $47\ \Omega$, fermeture de KM2 au-delà de $95\ \%$ de la crête et après stabilisation de la tension. La résistance
+      reçoit jusqu'à $426\ \mathrm{J}$ par mise sous tension : on suppose qu'elle en tolère trois successives puis une par minute, à confirmer par le
+      constructeur ; l'automate temporise donc les remises sous tension et le redémarrage automatique attend la confirmation de fermeture de KM2.</li>
+    <li><strong>Tension du bus :</strong> régulateur dès $760\ \mathrm{V}$, déclenchement à $800\ \mathrm{V}$, sous-tension à $400\ \mathrm{V}$ ; rampe de
+      décélération de $10\ \mathrm{s}$ conservée, sans hacheur de freinage.</li>
+    <li><strong>Courts-circuits :</strong> désaturation dans les drivers, seuil instantané de $160\ \mathrm{A}$, défaut terre à $16\ \mathrm{A}$ ; ces
+      réglages sont internes au variateur et figurent dans sa documentation.</li>
+    <li><strong>Surcharges :</strong> modèle thermique à $150\ \%$ pendant $60\ \mathrm{s}$, capteur du dissipateur, sonde du moteur câblée sur
+      l'entrée prévue du variateur.</li>
+    <li><strong>Sécurité d'intervention :</strong> délai affiché de dix minutes, procédure de consignation avec vérification au voltmètre sur les
+      bornes du bus, accessibles par les bornes prévues à cet effet.</li>
+  </ul>
+  <p>
+    La séquence suivante décrit la mise sous tension et le traitement des défauts telle que l'automate et le variateur doivent l'appliquer.
+  </p>
+  <figure id="i-sequence">
+    <pre class="mermaid">flowchart TD
+  A["Réseau présent"] --> B["Précharge par R_p"]
+  B --> C{"Bus à 95 % et stable ?"}
+  C -->|"Non, après 2 s"| D["Défaut de précharge"]
+  C -->|"Oui"| E["Fermeture de KM2"]
+  E --> F["Prêt : marche autorisée"]
+  F --> G["Marche de la pompe"]
+  G --> H{"Défaut ?"}
+  H -->|"Désaturation, 160 A"| I["Blocage, défaut verrouillé"]
+  H -->|"Tension du bus"| J["Blocage, réarmement limité"]
+  H -->|"Thermique"| K["Réduction de vitesse, arrêt"]
+  I --> L["Diagnostic avant réarmement"]
+  D --> L
+  J --> F
+  K --> F</pre>
+    <figcaption>
+      Séquence de mise sous tension et de traitement des défauts. De haut en bas : précharge, contrôle de la tension du bus avec un délai de
+      deux secondes, fermeture de KM2, autorisation de marche. En marche, trois familles de défauts sont traitées différemment : un court-circuit
+      bloque et verrouille, car réarmer sur un défaut franc détruirait le module ; une surtension ou une sous-tension, souvent liée au réseau,
+      autorise un nombre limité de réarmements automatiques ; une surcharge thermique réduit d'abord la vitesse.
+    </figcaption>
+  </figure>
+
+  <h3 id="i-compromis">Risques, choix d'ingénierie et compromis</h3>
+  <ul>
+    <li><strong>Disponibilité contre protection.</strong> Un réarmement automatique après une surtension de réseau évite un déplacement de nuit ; après
+      une désaturation, il risquerait de refermer sur un court-circuit franc. On le limite à trois tentatives en dix minutes pour les défauts de
+      tension, et on l'interdit pour les courts-circuits.</li>
+    <li><strong>Redémarrage automatique contre précharge.</strong> Des micro-coupures répétées enchaînent des précharges : la temporisation de
+      l'automate protège $R_p$, au prix d'un redémarrage retardé.</li>
+    <li><strong>Décharge rapide contre pertes.</strong> Un délai d'une minute coûterait $27\ \mathrm{W}$ permanents, environ $160\ \mathrm{kWh}$ par
+      an ; on garde dix minutes et la vérification au voltmètre.</li>
+    <li><strong>Seuil de défaut terre contre déclenchements intempestifs.</strong> Le câble blindé de $85\ \mathrm{m}$ et le filtre CEM font circuler
+      des courants de fuite capacitifs ; un seuil trop bas déclencherait à chaque démarrage. Le seuil de $16\ \mathrm{A}$ et le filtrage temporel
+      suffisent à protéger le variateur ; la protection des personnes relève de l'installation, avec un dispositif différentiel compatible avec
+      les courants continus et de haute fréquence si l'analyse du schéma de liaison à la terre l'exige.</li>
+    <li><strong>Risque résiduel.</strong> Un IGBT claqué en court-circuit franc décharge les $321\ \mathrm{J}$ du bus dans le module. Ni la
+      désaturation ni le fusible d'entrée ne l'empêchent ; l'armoire doit contenir l'éclatement et le variateur se remplace. C'est un risque
+      accepté, rare, couvert par un variateur de rechange au magasin.</li>
+  </ul>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Erreur</th><th>Pourquoi c'est faux</th><th>Correction</th></tr></thead>
+      <tbody>
+        <tr><td>Croire qu'un fusible ultrarapide protège l'IGBT</td><td>Il fond en quelques dixièmes de milliseconde, vingt fois au moins la tenue de l'IGBT, et un IGBT saturé à $800\ \mathrm{A}$ ne lui apporte que $6{,}4\ \mathrm{A^2s}$ en $10\ \mu\mathrm{s}$.</td><td>Désaturation dans le driver ; le fusible limite les conséquences et protège le pont et les câbles.</td></tr>
+        <tr><td>Penser que les capteurs de courant voient tous les courts-circuits</td><td>Un court-circuit de bras se referme entre les bornes du bus sans passer par les phases.</td><td>Vérifier, défaut par défaut, quelle mesure le voit ; désaturation ou shunt dans le bus.</td></tr>
+        <tr><td>Couper un courant de défaut aussi vite qu'un courant normal</td><td>$L_\sigma I/t_f$ croît avec le courant : $640\ \mathrm{V}$ ajoutés à $800\ \mathrm{A}$ en $100\ \mathrm{ns}$.</td><td>Ouverture douce, découplage, barres laminées.</td></tr>
+        <tr><td>Croire qu'une résistance de précharge plus grande dissipe moins</td><td>Elle dissipe toujours $\tfrac12 C\hat{V}^2$ ; seules la pointe et la durée changent.</td><td>Choisir $R_p$ pour la pointe et vérifier sa tenue en énergie et en cadence.</td></tr>
+        <tr><td>Fermer KM2 sur temporisation fixe trop courte</td><td>L'écart restant se décharge à travers la seule inductance du réseau : plus de $200\ \mathrm{A}$ si l'on ferme à $0{,}1\ \mathrm{s}$.</td><td>Fermeture sur seuil de tension et stabilité, avec temporisation de secours en défaut.</td></tr>
+        <tr><td>Utiliser un fusible pour courant alternatif sur un bus continu</td><td>Sans passage par zéro, l'arc peut ne pas s'éteindre, surtout si $L/R$ est grand.</td><td>Fusible à tension assignée en continu explicite, pour la constante de temps du circuit.</td></tr>
+        <tr><td>Intervenir après avoir seulement attendu le délai affiché</td><td>Une résistance de décharge coupée laisse le bus chargé des heures.</td><td>Vérifier l'absence de tension au voltmètre sur les bornes du bus.</td></tr>
+        <tr><td>Régler le masquage de désaturation au plus long pour éviter les déclenchements</td><td>Chaque microseconde ajoute $0{,}43\ \mathrm{J}$ et $22\ \mathrm{K}$ à la puce.</td><td>Masquage juste supérieur à la durée de mise en conduction mesurée, extinction sous la moitié de la tenue.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Pour le diagnostic sur site, le code de défaut oriente vers la protection, et les circonstances vers la cause. Un défaut de surintensité dès
+    l'ordre de marche, moteur à l'arrêt, évoque un court-circuit du câble ou du moteur : on mesure l'isolement du câble et du moteur, variateur
+    déconnecté. Une surintensité en fin d'accélération évoque une rampe trop courte ou une charge bloquée. Une surtension en décélération relève du
+    freinage ; une surtension à la mise sous tension, d'une précharge court-circuitée ou d'un réseau anormalement haut. Un défaut de précharge
+    répété évoque un contacteur KM2 usé ou une résistance coupée. Un défaut terre qui apparaît par temps humide évoque un isolement dégradé du
+    moteur ou de ses boîtes de raccordement.
+  </p>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic industriel et une question
+    conceptuelle sans calcul. Chaque correction reste masquée jusqu'à votre tentative ou un clic explicite ; elle se déroule ensuite étape par étape,
+    avec un tracé ou un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangées : choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Le score s'affiche à la fin et
+    alimente le bilan de la section P.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+  <h3 id="m-formules">Cinq formules essentielles</h3>
+  <ol>
+    <li>Surtension à l'ouverture : $v_{CE,max} = E + L_\sigma I/t_f$ ; avec découplage, $v_{CE,max} \le E + L_mI/t_f + I\sqrt{L_b/C_s}$.</li>
+    <li>Énergie de court-circuit : $W \approx EI_{sat}t_{cc}$ ; échauffement adiabatique $\Delta T = W/(\rho cAe)$, valable si $\sqrt{\alpha t} \lt e$.</li>
+    <li>Précharge : $I_{max} = \hat{V}/R_p$, $\tau = R_pC$, $W_{R_p} = \tfrac12 C\hat{V}^2$ ; pointe à la fermeture $\approx (\hat{V} - v_C)/\sqrt{L/C}$.</li>
+    <li>Fusible : $I^2t = \int i^2\,\mathrm{d}t$, $I^2t_{total} \lt I^2t_{composant}$ ; circuit RCD d'ouverture : $C_{sn} = It_f/(2E)$, pertes $\tfrac12 C_{sn}E^2f$.</li>
+    <li>Bus : $\Delta V \approx W/(CE)$ pour une impulsion ; décharge $t_s = R_dC\ln(V_0/V_s)$, pertes $E^2/R_d$.</li>
+  </ol>
+  <div class="encadre attention">
+    <span class="encadre-titre">Cinq points de vigilance</span>
+    <ul>
+      <li>Un court-circuit se coupe en microsecondes : seule l'électronique du driver est assez rapide, ni le fusible ni le refroidissement.</li>
+      <li>Chaque protection ne voit que les défauts de son chemin de mesure : vérifier défaut par défaut.</li>
+      <li>Plus le courant coupé est fort, plus l'ouverture doit être douce et la boucle courte.</li>
+      <li>La précharge dissipe toujours $\tfrac12 C\hat{V}^2$ et sa fermeture doit attendre que le bus soit chargé.</li>
+      <li>Un bus continu se vérifie au voltmètre avant toute intervention, quel que soit le délai écoulé.</li>
+    </ul>
+  </div>
+  <h3 id="m-resume">Résumé</h3>
+  <p>
+    Un convertisseur se protège contre trois menaces : surintensité, surtension et défauts lents, chacune à son échelle de temps. Un court-circuit
+    désature l'IGBT, qui reçoit $EI_{sat}t$ sans pouvoir l'évacuer : la désaturation détectée par le driver doit couper en quelques microsecondes,
+    avec une ouverture douce pour limiter $L_\sigma\,\mathrm{d}i/\mathrm{d}t$. Le découplage au plus près du module réduit la surtension des
+    commutations normales. La précharge limite l'appel de courant et évite la surtension du bus à la mise sous tension ; elle dissipe
+    $\tfrac12 C\hat{V}^2$. Les fusibles aR, coordonnés par leur $I^2t$, protègent le pont et limitent les dégâts, mais pas l'IGBT. Les seuils du bus,
+    la décharge et l'isolement complètent la chaîne, qu'on vérifie sur une carte temps-courant.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance, deux sur le cours précédent,
+    <a href="#/cours/thermique-des-composants-de-puissance">Thermique des composants de puissance</a>, une sur le cours
+    <a href="#/cours/hacheurs-dc-dc">Hacheurs DC-DC</a>, vieux d'une semaine, dont les interrupteurs demandent les mêmes protections, et une sur le
+    cours <a href="#/cours/harmoniques-et-qualite-de-l-energie">Harmoniques et qualité de l'énergie</a>, vieux d'un mois, car le courant d'entrée du
+    pont et sa précharge sont des charges non linéaires.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : simuler dans LTspice la mise sous tension du bus avec et sans précharge, puis l'ouverture d'un IGBT avec et sans découplage, et
+    recalculer en Python l'énergie d'un court-circuit. Prédictions à écrire avant de commencer : pointe de courant et tension maximale du bus sans
+    précharge ; crête de $v_{CE}$ avec et sans $C_s$ ; échauffement de la puce pour un masquage de $3$ puis de $6\ \mu\mathrm{s}$.
+  </p>
+  <ol>
+    <li>Mise sous tension : trois sources sinusoïdales de $326{,}6\ \mathrm{V}$ crête à $50\ \mathrm{Hz}$ déphasées de $120$ degrés, en étoile ; une
+      inductance de $0{,}603\ \mathrm{mH}$ et une résistance de $0{,}099\ \Omega$ par phase ; un pont de six diodes de puissance ; $R_p = 47\ \Omega$
+      en parallèle avec un interrupteur commandé <code>S1</code> fermé à $0{,}45\ \mathrm{s}$ ; <code>C1 P N 2.2m</code>. Lancer
+      <code>.tran 0 1 0 2u</code>, puis recommencer avec <code>R_p</code> réduite à $1\ \mathrm{m\Omega}$, et décaler l'instant de mise sous tension
+      pour trouver le cas le plus défavorable.</li>
+    <li>Ouverture : <code>V1 1 0 800</code>, <code>Lb 1 2 60n</code>, <code>Rs 2 3 50m</code>, <code>Cs 3 0 2.2u</code>, <code>Lm 3 4 20n</code>,
+      et une source de courant comportementale entre <code>4</code> et <code>0</code> qui impose $160\ \mathrm{A}$ puis une descente linéaire en
+      $100\ \mathrm{ns}$ à partir de $0{,}3\ \mu\mathrm{s}$ ; initialiser <code>Lb</code> à $160\ \mathrm{A}$ et <code>Cs</code> à $792\ \mathrm{V}$.
+      Lancer <code>.tran 0 4u 0 0.2n uic</code>, mesurer le maximum de <code>V(4)</code> avec <code>.meas</code>, puis supprimer <code>Cs</code>.</li>
+    <li>Python : reprendre le modèle de la simulation de section E, courant $\min(Et/L, I_{sat})$, tension de saturation $0{,}85 + 0{,}011\,i$,
+      tension du bus une fois désaturé, détection à $\max(t_{bl}, t_{7\,V}) + 0{,}5\ \mu\mathrm{s}$, ouverture linéaire ; intégrer $v_{CE}i_C$ par la
+      méthode des trapèzes et diviser par $0{,}0199\ \mathrm{J/K}$.</li>
+  </ol>
+  <p>
+    Résultats attendus : sans précharge, une pointe de l'ordre de $500$ à $600\ \mathrm{A}$ et un bus au-delà de $850\ \mathrm{V}$ selon le modèle
+    des diodes ; avec $47\ \Omega$, environ $12\ \mathrm{A}$ puis une seconde pointe d'une vingtaine d'ampères à la fermeture. Pour l'ouverture,
+    environ $828\ \mathrm{V}$ avec <code>Cs</code> et $928\ \mathrm{V}$ sans. En Python, environ $1{,}7\ \mathrm{J}$ et $85\ \mathrm{K}$ pour un masquage
+    de $3\ \mu\mathrm{s}$, environ $3{,}0\ \mathrm{J}$ et $150\ \mathrm{K}$ pour $6\ \mu\mathrm{s}$, désaturation seule ; la simulation de section E, où le seuil de $160\ \mathrm{A}$ reste actif, coupe alors dès $5\ \mu\mathrm{s}$.
+  </p>
+  <p>
+    Anomalies à observer et à expliquer : une pointe de mise sous tension nulle, parce que LTspice calcule d'abord le point de fonctionnement et
+    trouve le condensateur déjà chargé, d'où les sources qui démarrent à zéro ou l'option <code>uic</code> ; des oscillations à haute fréquence
+    non amorties, pas de calcul trop grand ou résistance série absente ; une surtension d'ouverture négative, source de courant orientée à
+    l'envers ; un échauffement Python dix fois trop grand, microsecondes saisies en millisecondes. Variante expérimentale, sous la responsabilité
+    d'une personne habilitée et sur une alimentation de laboratoire limitée en courant : charger un condensateur de quelques centaines de
+    microfarads sous $30\ \mathrm{V}$ à travers une résistance, relever la tension à l'oscilloscope et vérifier $\tau$ et l'énergie dissipée dans
+    la résistance par un thermocouple, puis vérifier la décharge par une résistance connue.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours, notées de 0 à 4. Le bilan affiché sous la grille est calculé dans ce
+    navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement. Aucune estimation n'est
+    faite à votre place : seul le score réellement obtenu sert de référence. Le jalon visé à la fin de ce module demande d'analyser les principaux
+    convertisseurs de puissance, leurs formes d'onde, leurs pertes, leurs protections et leur intégration dans un variateur : cette séance en
+    apporte le dernier maillon.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Un court-circuit désature l'IGBT, qui reçoit $EI_{sat}t$ sans pouvoir l'évacuer : la désaturation détectée par le driver coupe en quelques microsecondes, par une ouverture douce, et rien d'autre n'est assez rapide.</li>
+    <li data-rang="02">Toute variation de courant dans une boucle parasite crée $L\,\mathrm{d}i/\mathrm{d}t$ : on raccourcit la boucle, on découple au plus près du module et on ralentit l'ouverture des forts courants, en gardant $v_{CE}$ sous $80\ \%$ de $V_{CES}$.</li>
+    <li data-rang="03">Le bus se protège à l'entrée, par la précharge et des fusibles coordonnés par leur $I^2t$, et dans sa plage de tension, par des seuils étagés, une tenue suffisante des condensateurs et une décharge vérifiée au voltmètre ; chaque protection ne voit que les défauts de son chemin de mesure.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> associer chaque défaut à la bonne protection. Les erreurs typiques en découlent : attendre d'un
+    fusible qu'il sauve un IGBT, d'un capteur de phase qu'il voie un court-circuit de bras, d'un modèle thermique qu'il agisse sur un défaut
+    brutal. Le réflexe à installer : pour chaque défaut, tracer son chemin, estimer sa durée, puis chercher la protection qui le voit et agit avant
+    la limite du composant.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Révision 8 et étude de cas variateur, rassemble l'électronique de puissance, la CEM,
+    la thermique et les protections autour d'un variateur industriel. Question à préparer : le variateur de la pompe déclenche en surintensité à
+    chaque démarrage, une à deux secondes après l'ordre de marche, mais seulement depuis le remplacement du câble du moteur par un câble plus long.
+    Quelles mesures feriez-vous, dans quel ordre, pour départager un défaut d'isolement, un courant de mode commun excessif et un réglage de rampe
+    inadapté, et quelles protections de cette séance vous renseignent sur chacune de ces causes ?
+  </p>
+
+</article>
