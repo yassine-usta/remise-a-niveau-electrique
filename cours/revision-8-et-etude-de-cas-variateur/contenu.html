@@ -1,0 +1,1071 @@
+<article class="cours" data-slug="revision-8-et-etude-de-cas-variateur">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/protections-des-convertisseurs">Protections des convertisseurs</a> s'est achevé sur une question : le variateur de la
+      pompe déclenche en surintensité à chaque démarrage, une à deux secondes après l'ordre de marche, mais seulement depuis le remplacement du câble
+      du moteur par un câble plus long ; quelles mesures faire, dans quel ordre, pour départager un défaut d'isolement, un courant de mode commun
+      excessif et un réglage de rampe inadapté ? Réponse de méthode, détaillée en section I. On lit d'abord le journal de défauts du variateur : le
+      code exact (surintensité instantanée, désaturation ou défaut terre), le courant, la fréquence et la tension du bus au déclenchement. On mesure
+      ensuite l'isolement du câble et du moteur, <strong>déconnectés du variateur</strong>, puis le courant de mode commun à la pince haute fréquence
+      autour des trois phases. On essaie enfin une rampe plus longue. Un indice oriente avant toute mesure : chaque impulsion de modulation applique
+      la pleine tension du bus, dès la première milliseconde et quelle que soit la fréquence de sortie. Un phénomène lié aux fronts, mode commun ou
+      claquage d'isolant sous les surtensions de commutation, se manifeste donc dès les premières impulsions. Un déclenchement qui attend que la
+      fréquence atteigne $5$ à $10\ \mathrm{Hz}$ suit plutôt une grandeur qui croît avec la vitesse : courant de charge, réglage de rampe ou de
+      tension à basse fréquence, mécanique. L'indice oriente sans prouver ; seules les mesures concluent.
+    </p>
+    <p>
+      Cette séance de révision rassemble le module : les onduleurs du cours <a href="#/cours/onduleurs-monophases">Onduleurs monophasés</a> et du cours
+      <a href="#/cours/onduleurs-triphases">Onduleurs triphasés</a>, la chaîne et les quadrants du cours
+      <a href="#/cours/convertisseurs-et-moteurs">Convertisseurs et moteurs</a>, les couplages du cours
+      <a href="#/cours/compatibilite-electromagnetique">Compatibilité électromagnétique</a>, le réseau thermique du cours
+      <a href="#/cours/thermique-des-composants-de-puissance">Thermique des composants de puissance</a> et les protections du cours précédent. Elle
+      réutilise aussi le modèle du bus du cours <a href="#/cours/redresseurs-triphases">Redresseurs triphasés</a>, la charge à puissance constante du
+      cours <a href="#/cours/revision-7-et-mini-projet-alimentation">Révision 7 et mini-projet alimentation</a> et la loi de commande du cours
+      <a href="#/cours/variation-de-vitesse-des-moteurs-asynchrones">Variation de vitesse des moteurs asynchrones</a>.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Un variateur de fréquence est le point de rencontre de tout ce que le parcours a construit depuis le cours <a href="#/cours/diodes-de-puissance">Diodes de puissance</a> : un
+    redresseur, un bus continu, un onduleur à modulation, des drivers, des capteurs, une commande, un dissipateur, des filtres et des protections. Sur
+    un site industriel, c'est aussi l'équipement de puissance sur lequel on intervient le plus souvent, et presque toujours pour la même raison : il
+    s'est arrêté en affichant un code de défaut, et le procédé attend.
+  </p>
+  <ul>
+    <li><strong>Le code n'est pas la cause.</strong> Un défaut de surtension du bus peut venir d'une rampe trop courte, d'un réseau trop haut ou d'un
+      paramètre réinitialisé ; un défaut de sous-tension, d'un creux du réseau ou d'un contacteur de précharge resté ouvert. Remonter du code à la
+      cause exige de savoir ce que chaque protection mesure et quand elle agit.</li>
+    <li><strong>Remplacer n'est pas réparer.</strong> Changer un variateur qui déclenche parce que le câble ou le moteur est en défaut détruit souvent
+      le variateur neuf. Le diagnostic évite des coûts directs et des arrêts répétés.</li>
+    <li><strong>La sécurité commence avant la mesure.</strong> Un bus continu reste chargé des minutes après la coupure, et certaines mesures, comme
+      l'essai d'isolement, détruisent l'électronique si elles sont faites variateur raccordé.</li>
+    <li><strong>Chaque grandeur a son réservoir.</strong> Les défauts typiques d'un variateur se comprennent comme le débordement d'un des réservoirs
+      d'énergie du système : le condensateur du bus, l'inertie de la machine entraînée, la capacité thermique du dissipateur, les capacités parasites
+      du câble.</li>
+  </ul>
+  <p>
+    Cette séance clôt le module consacré aux onduleurs, aux variateurs et à leur intégration. Elle ne présente pas de nouveau composant : elle
+    construit une méthode de diagnostic fondée sur trois calculs de révision, la tension du bus en charge, l'énergie de décélération et
+    l'échauffement transitoire du dissipateur, et l'applique au variateur de la pompe du projet fil rouge.
+  </p>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Jalon de fin de module</span>
+    <p>
+      Le jalon visé à la fin de ce module demande d'analyser les principaux convertisseurs de puissance, leurs formes d'onde, leurs pertes, leurs
+      protections et leur intégration dans un variateur. La synthèse de la section E reprend chacun de ces points, les exercices de la section K en
+      testent l'usage, et le bilan de la section P relie vos résultats à ce jalon.
+    </p>
+  </div>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Expliquer le rôle de chaque bloc d'un variateur industriel, la grandeur qu'il impose et la protection qui le surveille, sur un schéma fonctionnel détaillé.</li>
+    <li data-rang="02">Calculer la tension du bus sous une charge à puissance constante selon la tension du réseau, et la puissance maximale transmissible quand la résistance de précharge reste en circuit.</li>
+    <li data-rang="03">Calculer l'énergie renvoyée au bus par une décélération sur charge quadratique, la tension atteinte et la rampe minimale, et interpréter l'effet du régulateur de surtension.</li>
+    <li data-rang="04">Calculer les températures du dissipateur et des puces en régime établi et transitoire, et estimer le temps avant déclenchement après une panne de ventilation.</li>
+    <li data-rang="05">Comparer les courants de mode commun pour deux longueurs de câble et en déduire ce qui change réellement.</li>
+    <li data-rang="06">Diagnostiquer un défaut de variateur à partir de son code, du moment où il survient et de mesures choisies dans un ordre justifié par la sécurité, le coût et le pouvoir discriminant.</li>
+    <li data-rang="07">Hiérarchiser des actions correctives en pesant le risque, le coût et l'arrêt du procédé.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>Quatre notions des cours précédents suffisent.</p>
+  <ul>
+    <li><strong>Bus d'un redresseur triphasé.</strong> Dans le modèle à courant lissé, le pont de diodes se comporte comme une source de Thévenin :
+      $V_{bus} = V_0 - R\,I_d$, avec $V_0 = \tfrac{3\sqrt2}{\pi}U - 2V_{F0} \approx 1{,}3505\,U - 1{,}7\ \mathrm{V}$ et, pour la pompe,
+      $R = 0{,}389\ \Omega$ (commutation, résistances et diodes). C'est une borne basse : à faible charge, le condensateur remonte vers la crête
+      $\sqrt2\,U$.</li>
+    <li><strong>Énergies stockées.</strong> Un condensateur sous la tension $V$ stocke $\tfrac12 CV^2$ ; une machine tournante, $\tfrac12 J\Omega^2$,
+      avec $J$ en $\mathrm{kg\cdot m^2}$ et $\Omega$ en $\mathrm{rad/s}$.</li>
+    <li><strong>Thermique du premier ordre.</strong> En régime établi, $T_h = T_a + R_{ha}P$ ; un dissipateur de capacité $C_{th}$ suit une
+      exponentielle de constante de temps $\tau = R_{ha}C_{th}$.</li>
+    <li><strong>Mode commun.</strong> À chaque commutation d'un bras, la tension de mode commun saute de $E/3$ et excite le circuit formé par
+      l'inductance $L$ et la capacité $C$ du câble et du moteur vers la terre, d'impédance caractéristique $Z_0 = \sqrt{L/C}$.</li>
+  </ul>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Notation de la séance</span>
+    <p>
+      $U$ : tension composée efficace du réseau. $E$ ou $V_{bus}$ : tension du bus continu, borne $+E$ et borne $-E$, cette dernière servant de
+      référence de potentiel aux mesures de la carte de commande et aux drivers des IGBT bas. $I_d$ : courant moyen du bus, compté positif du pont vers
+      l'onduleur ; l'onduleur est en convention récepteur, le pont en convention générateur. $P$ : puissance prélevée sur le bus par l'onduleur.
+      $\Omega$ : vitesse de l'arbre, $\Omega_0 = 154{,}46\ \mathrm{rad/s}$ à $1475\ \mathrm{tr/min}$. $C_0 = 194{,}2\ \mathrm{N\cdot m}$ : couple de
+      la pompe à $\Omega_0$, avec un couple de charge quadratique $C_r = C_0(\Omega/\Omega_0)^2$. $J$ : inertie totale ramenée à l'arbre ; $\eta$ :
+      rendement de la chaîne moteur et onduleur en génératrice. $T$ : durée de rampe, définie comme chez les constructeurs pour un passage de
+      $50\ \mathrm{Hz}$ à zéro. $C = 2{,}2\ \mathrm{mF}$ : capacité du bus. $R_{ha}$, $C_{th}$ : résistance et capacité thermiques du dissipateur ;
+      $T_a$ : température de l'air de l'armoire. Les valeurs propres à la pompe viennent du projet fil rouge ; les autres sont supposées et signalées.
+    </p>
+  </div>
+  <p>
+    Mini-test de trois questions. Les réponses restent masquées, séparées de l'énoncé, jusqu'à votre tentative ou à un clic explicite.
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+
+  <h3 id="d-reservoirs">Un variateur, quatre réservoirs</h3>
+  <p>
+    Suivez l'énergie. Elle entre par le réseau, traverse le pont et s'accumule dans le condensateur du bus, qui sert de réservoir tampon de quelques
+    centaines de joules. L'onduleur la puise et la transmet au moteur, qui la stocke en partie dans l'inertie de la pompe, un réservoir mécanique de
+    quelques milliers de joules, avant de la céder à l'eau. Une petite fraction, quelques centaines de watts, se perd dans les semi-conducteurs et
+    s'accumule dans le dissipateur, réservoir thermique de plusieurs milliers de joules par kelvin. Enfin, à chaque front de commutation, une petite
+    quantité d'énergie charge les capacités parasites du câble et du moteur, et revient par la terre.
+  </p>
+  <p>
+    Chaque réservoir a sa capacité, sa constante de temps et son trop-plein. Le bus déborde en quelques dizaines de millisecondes si l'inertie se
+    vide trop vite vers lui : c'est le défaut de surtension. Il se vide si l'entrée est obstruée, contacteur de précharge resté ouvert ou phase
+    perdue : c'est la sous-tension. Le dissipateur déborde en une minute si la ventilation s'arrête, en une heure s'il s'encrasse : c'est la
+    surchauffe. Les capacités du câble débordent à chaque front si le câble s'allonge : c'est le mode commun. L'animation ci-dessous montre les flux
+    d'énergie et le niveau des réservoirs pendant un cycle de la pompe : démarrage, régime, ralentissement, arrêt.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de lancer l'animation</span>
+    <p>
+      Pendant l'accélération, dans quel sens circule l'énergie entre le bus et le moteur ? Pendant le ralentissement ? Le niveau du bus monte-t-il
+      pendant l'accélération, pendant le régime ou pendant le ralentissement ? Que devrait-il se passer si l'on raccourcit la rampe de
+      ralentissement à $2\ \mathrm{s}$ ?
+    </p>
+  </div>
+  <figure id="d-flux-figure">
+    <svg viewBox="0 0 820 330" role="img" aria-label="Chaîne réseau, pont, bus, onduleur, moteur et pompe, avec dissipateur : des points mobiles matérialisent le flux d'énergie et trois jauges donnent le niveau du bus, l'énergie cinétique de la pompe et la puissance perdue"><defs><marker id="fl-flux" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="20" y="60" width="100" height="60" rx="8"/><rect x="170" y="60" width="100" height="60" rx="8"/><rect x="320" y="45" width="120" height="90" rx="8"/><rect x="490" y="60" width="100" height="60" rx="8"/><rect x="640" y="60" width="160" height="60" rx="8"/><rect x="250" y="200" width="260" height="50" rx="8" stroke-dasharray="7 4"/></g><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path id="d-flux-p1" d="M120 90H170"/><path id="d-flux-p2" d="M270 90H320"/><path id="d-flux-p3" d="M440 90H490"/><path id="d-flux-p4" d="M590 90H640"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="3 4" stroke-linecap="round"><path id="d-flux-p5" d="M220 120V225H250"/><path id="d-flux-p6" d="M540 120V225H510"/></g><g fill="none" stroke="currentColor" stroke-width="1.4"><rect x="350" y="150" width="60" height="12" rx="3"/><rect x="690" y="134" width="60" height="12" rx="3"/><rect x="300" y="268" width="160" height="12" rx="3"/></g><g fill="currentColor" stroke="none"><rect id="d-jauge-bus" x="351" y="151" width="20" height="10" rx="2" opacity="0.75"/><rect id="d-jauge-cin" x="691" y="135" width="0" height="10" rx="2" opacity="0.75"/><rect id="d-jauge-pertes" x="301" y="269" width="20" height="10" rx="2" opacity="0.75"/></g><g id="d-flux-points" fill="currentColor" stroke="none"></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="44" y="86">réseau</text><text x="36" y="104">400 V, 50 Hz</text><text x="200" y="86">pont</text><text x="186" y="104">de diodes</text><text x="352" y="72">bus continu</text><text x="340" y="92">C = 2,2 mF</text><text x="336" y="112" id="d-flux-vbus">540 V</text><text x="505" y="86">onduleur</text><text x="510" y="104">6 IGBT</text><text x="652" y="86">moteur et pompe</text><text x="652" y="104" id="d-flux-vitesse">0 tr/min</text><text x="262" y="222">dissipateur : pertes du pont</text><text x="262" y="240">et de l'onduleur (trait pointillé)</text><text x="300" y="300">puissance perdue</text><text x="610" y="160">énergie cinétique</text><text x="22" y="30" font-weight="600" id="d-flux-phase">phase : arrêt</text><text x="22" y="320" id="d-flux-sens">flux : nul</text></g></svg>
+    <div id="d-flux-curseurs"></div>
+    <div id="d-flux-lecteur"></div>
+    <div id="d-flux-valeurs"></div>
+    <figcaption>
+      Flux d'énergie dans le variateur de la pompe pendant un cycle de $40\ \mathrm{s}$. Les boîtes en trait plein sont les étages de puissance ; les
+      points mobiles sur les liaisons épaisses matérialisent le sens et l'intensité du flux, plus nombreux et plus rapides quand la puissance est
+      grande. Les liaisons en trait pointillé portent les pertes vers le dissipateur, boîte en tirets. Trois jauges horizontales donnent le niveau du
+      bus entre $500$ et $800\ \mathrm{V}$, l'énergie cinétique de la pompe rapportée à sa valeur à $1475\ \mathrm{tr/min}$, et la puissance perdue.
+      Le lecteur fait avancer le temps : accélération en rampe vers $1250\ \mathrm{tr/min}$, régime, puis ralentissement selon la rampe réglée par le
+      curseur, et arrêt ; le régulateur de surtension est supposé désactivé, comme après une réinitialisation des paramètres. Les puissances sont celles du modèle de la section E ; la jauge des pertes est schématique.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Pendant l'accélération et le régime, l'énergie va du réseau vers la pompe ; le bus se tient un peu sous
+    $540\ \mathrm{V}$, d'autant plus bas que la puissance est grande, parce que le pont et la self de ligne présentent une résistance équivalente.
+    Pendant le ralentissement, la pompe freine d'abord seule : tant que son couple de charge dépasse le couple de décélération demandé par la rampe,
+    le moteur reste en traction. Sous une certaine vitesse, l'inertie doit être freinée par le moteur, qui devient générateur : les points repartent
+    vers le bus, et le pont de diodes, unidirectionnel, ne peut rien renvoyer au réseau. Le bus monte. Avec une rampe de $10\ \mathrm{s}$, il
+    plafonne vers $625\ \mathrm{V}$ ; avec $2\ \mathrm{s}$, il franchit le seuil de $800\ \mathrm{V}$ et le variateur
+    déclenche : l'inertie a vidé son réservoir dans un réservoir trop petit. C'est la première signature de la séance, que la section E chiffre.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Analogie contrôlée et ses limites</span>
+    <p>
+      Réservoirs et vases communicants : le niveau d'un réservoir joue le rôle de la tension, ou de la température, et le débit celui de la puissance.
+      L'analogie dit juste qu'un réservoir petit déborde vite et qu'un défaut se reconnaît au réservoir qui déborde. Ses limites sont nettes : le
+      "niveau" du bus est une tension et son énergie croît comme son carré, si bien que les derniers volts avant le seuil coûtent plus de joules
+      que les premiers ; le moteur et le pont ne sont pas de simples tuyaux, puisque l'un change de sens de transfert et que l'autre interdit le
+      retour ; enfin le réservoir thermique se vide en permanence vers l'air, alors que le bus, pont bloqué, ne se vide presque pas.
+    </p>
+  </div>
+
+  <h3 id="d-signatures">Un défaut, une signature dans le temps</h3>
+  <p>
+    La deuxième idée du diagnostic est temporelle. Chaque cause laisse une empreinte : le moment où elle apparaît dans le cycle, mise sous tension,
+    premières impulsions, accélération, régime, ralentissement, et le rythme auquel elle revient, à chaque démarrage, l'après-midi en été, au premier
+    démarrage du matin. Un défaut d'isolement apparaît souvent au premier démarrage après une période humide ; une surchauffe, quand l'air et la
+    charge sont au plus haut ; une surtension, en ralentissement ; un défaut de précharge, à la mise sous tension ; un contacteur de précharge
+    resté ouvert, quelques secondes après l'ordre de marche, quand la puissance demandée dépasse ce que la résistance laisse passer.
+  </p>
+  <p>
+    Cette empreinte vaut un premier tri, gratuit et sans risque : elle se lit dans le journal du variateur et dans le témoignage de l'exploitant, avant
+    d'ouvrir l'armoire. Comme en médecine, le symptôme seul ne conclut pas : deux causes peuvent laisser la même empreinte, et c'est alors une mesure
+    choisie pour les départager qui tranche.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie médicale</span>
+    <p>
+      Contrairement à un patient, un variateur peut être arrêté, consigné, mesuré composant par composant et rejoué à l'identique : le diagnostic
+      technique peut et doit être confirmé par une mesure reproductible. Inversement, certaines mesures sont destructives ou dangereuses, comme
+      l'essai d'isolement sous $500$ ou $1000\ \mathrm{V}$ appliqué à un variateur raccordé : l'ordre des mesures n'est pas seulement une question
+      d'efficacité, c'est une question de sécurité et de non-aggravation.
+    </p>
+  </div>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-hypotheses">Hypothèses et cadre</h3>
+  <p>
+    Les calculs de la séance portent sur le variateur de la pompe tel que le projet fil rouge l'a construit : réseau $400\ \mathrm{V}$, pont de
+    diodes avec self de ligne, bus de $2{,}2\ \mathrm{mF}$, onduleur à IGBT en modulation vectorielle à $4\ \mathrm{kHz}$, câble blindé de
+    $85\ \mathrm{m}$, moteur asynchrone de $30\ \mathrm{kW}$ en loi U/f. Les hypothèses sont les suivantes.
+  </p>
+  <ul>
+    <li>Le pont est décrit par son modèle de Thévenin à courant lissé ; le condensateur du bus est assez grand pour que la tension moyenne suffise.</li>
+    <li>L'onduleur et le moteur régulés prélèvent une puissance $P$ fixée par le point de fonctionnement, indépendante de la tension du bus : c'est une
+      charge à puissance constante, comme le hacheur du cours <a href="#/cours/revision-7-et-mini-projet-alimentation">Révision 7 et mini-projet
+      alimentation</a>.</li>
+    <li>La pompe centrifuge, sans hauteur statique, oppose un couple quadratique $C_r = C_0(\Omega/\Omega_0)^2$ ; l'inertie $J = 0{,}5\ \mathrm{kg\cdot
+      m^2}$ et le rendement en génératrice $\eta = 0{,}92$ sont supposés.</li>
+    <li>Le dissipateur est un corps isotherme de capacité $C_{th} = 3600\ \mathrm{J/K}$, soit $4\ \mathrm{kg}$ d'aluminium, et de résistance
+      $R_{ha} = 0{,}12\ \mathrm{K/W}$ ventilateur en marche ; les pertes des puces sont réparties comme au cours
+      <a href="#/cours/thermique-des-composants-de-puissance">Thermique des composants de puissance</a>.</li>
+    <li>Les seuils de protection sont ceux du cours précédent : régulateur de surtension dès $760\ \mathrm{V}$, déclenchement à $800\ \mathrm{V}$,
+      sous-tension à $400\ \mathrm{V}$, seuil instantané de $160\ \mathrm{A}$ crête, défaut terre à $16\ \mathrm{A}$ en $10\ \mathrm{ms}$. Le seuil de
+      surchauffe du dissipateur est supposé à $100\ \mathrm{^\circ C}$, juste sous la limite de $100{,}7\ \mathrm{^\circ C}$ qui protège le pont au
+      nominal.</li>
+  </ul>
+
+  <h3 id="e-synthese">Synthèse du module : six cours, un seul appareil</h3>
+  <p>
+    Chaque cours du module a éclairé un bloc ou une contrainte du variateur. Le tableau rassemble, pour chacun, la relation centrale, ce qu'elle
+    impose au variateur de la pompe et le défaut typique qui en découle. Il sert de carte de révision avant l'étude de cas.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Cours</th><th>Relation centrale</th><th>Conséquence pour le variateur de la pompe</th><th>Défaut typique associé</th></tr></thead>
+      <tbody>
+        <tr><td><a href="#/cours/onduleurs-monophases">Onduleurs monophasés</a></td><td>Fondamental $\hat{V}_1 = m_a E$ en modulation sinusoïdale ; ondulation $\Delta I \propto E/(Lf_d)$</td><td>Le découpage fixe le spectre des courants et la puissance pulsée du bus</td><td>Résonance d'un filtre de sortie mal amorti</td></tr>
+        <tr><td><a href="#/cours/onduleurs-triphases">Onduleurs triphasés</a></td><td>Tension composée maximale $E/\sqrt2$ efficace en vectorielle ; mode commun en sauts de $E/3$</td><td>$m = 0{,}915$ au point de service ; saturation de la loi U/f dès $45{,}3\ \mathrm{Hz}$ sous le bus minimal</td><td>Couple insuffisant à pleine vitesse sous réseau bas</td></tr>
+        <tr><td><a href="#/cours/convertisseurs-et-moteurs">Convertisseurs et moteurs</a></td><td>Pont unidirectionnel : en quadrant 2, l'énergie s'accumule dans $C$</td><td>Rampe de $10\ \mathrm{s}$, régulateur de surtension, ni hacheur ni redresseur actif</td><td>Surtension du bus en ralentissement</td></tr>
+        <tr><td><a href="#/cours/compatibilite-electromagnetique">Compatibilité électromagnétique</a></td><td>$\hat{\imath}_{mc} = (E/3)/Z_0$ par front, $Z_0 = \sqrt{L/C}$</td><td>$8{,}9\ \mathrm{A}$ crête par front sur $85\ \mathrm{m}$, écran relié à $360$ degrés, tore de mode commun</td><td>Mesures perturbées, roulements, déclenchements parasites</td></tr>
+        <tr><td><a href="#/cours/thermique-des-composants-de-puissance">Thermique des composants de puissance</a></td><td>$T_j = T_a + R_{ha}\sum P + R_{jh}P_k$ ; $\tau = R_{ha}C_{th} = 432\ \mathrm{s}$</td><td>Dissipateur de $0{,}12\ \mathrm{K/W}$, $94{,}6\ \mathrm{^\circ C}$ au nominal, pont limitant</td><td>Surchauffe par encrassement ou panne de ventilateur</td></tr>
+        <tr><td><a href="#/cours/protections-des-convertisseurs">Protections des convertisseurs</a></td><td>Désaturation en microsecondes ; $\tfrac12 C\hat{V}^2$ dans la précharge ; $I^2t$ des fusibles</td><td>Seuils étagés du bus, précharge de $47\ \Omega$, fusibles aR de $80\ \mathrm{A}$</td><td>Défaut de précharge, court-circuit, défaut terre</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Deux fils relient ces lignes. Le premier est le bus continu, au centre de la chaîne : sa tension dépend du réseau et de la charge en amont, du
+    freinage en aval, et presque toutes les protections le surveillent. Le second est la chaleur : chaque watt de pertes calculé dans les cours de
+    composants finit dans le dissipateur. Les trois calculs qui suivent chiffrent ces deux fils.
+  </p>
+
+  <h3 id="e-bus">Le bus en charge : une source de Thévenin qui alimente une puissance constante</h3>
+  <p>
+    Vu de l'onduleur, le réseau, la self de ligne et le pont se résument à une source $V_0$ derrière une résistance $R$, et le condensateur lisse la
+    tension. L'onduleur, lui, prélève une puissance $P$ fixée par la pompe. Le schéma ci-dessous représente cette situation, y compris la résistance de
+    précharge $R_p$ que le contacteur KM2 court-circuite en service normal.
+  </p>
+  <figure id="e-modele-figure">
+    <svg viewBox="0 0 700 240" role="img" aria-label="Modèle du bus : source V0 avec sa borne plus en haut, résistance R, résistance de précharge Rp en parallèle avec le contact KM2, condensateur C entre les barres plus E et moins E, charge à puissance constante P ; courant Id vers la droite sur la barre plus E ; tension Vbus fléchée vers la barre plus E"><defs><marker id="fl-modele" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="70" cy="125" r="26"/><path d="M70 99V70H120M200 70H240M240 70V30H280M310 30H360V70M240 70H260M340 70H380M380 70H450M450 70V112M450 132V180M450 70H560V100M560 160V180M70 151V180H560"/><rect x="120" y="58" width="80" height="24" rx="3"/><rect x="260" y="58" width="80" height="24" rx="3"/><path d="M280 30L306 18"/><path d="M426 112H474M426 132H474" stroke-width="3"/><rect x="520" y="100" width="80" height="60" rx="6"/><path d="M440 190H460M444 196H456M448 202H452" stroke-width="1.6"/><path d="M450 180V190"/></g><g fill="none" stroke="currentColor" stroke-width="1.6"><path d="M392 52H428" marker-end="url(#fl-modele)"/><path d="M500 172V80" marker-end="url(#fl-modele)"/><path d="M30 165V90" marker-end="url(#fl-modele)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="64" y="118">+</text><text x="64" y="142">V0</text><text x="8" y="80">V0</text><text x="124" y="102">R = 0,389 Ω</text><text x="262" y="102">Rp = 47 Ω</text><text x="268" y="14">KM2</text><text x="392" y="44">Id</text><text x="414" y="160">C</text><text x="506" y="80">Vbus</text><text x="528" y="126">charge</text><text x="528" y="144">P = Vbus Id</text><text x="384" y="64">+E</text><text x="466" y="208">-E, référence</text><text x="610" y="90">onduleur</text><text x="610" y="108">et moteur</text><text x="610" y="126">régulés</text></g></svg>
+    <figcaption>
+      Modèle du bus continu vu de l'onduleur. La source $V_0$, borne $+$ en haut, et la résistance $R = 0{,}389\ \Omega$ représentent le réseau, la self
+      de ligne et le pont. La résistance de précharge $R_p = 47\ \Omega$ est en série sur la barre $+E$ ; le contact KM2, dessiné ouvert au repos,
+      la court-circuite une fois le bus chargé. Le courant $I_d$ est compté positif vers l'onduleur, en convention générateur pour la source et
+      récepteur pour la charge. La tension $V_{bus}$ est fléchée de la barre $-E$, référence des mesures, vers la barre $+E$. La charge régulée prélève
+      $P = V_{bus}I_d$ quelle que soit la tension.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Dérivation.</strong> La loi des mailles donne $V_{bus} = V_0 - R_t I_d$, avec $R_t = R$ en service normal et $R_t = R + R_p$ si KM2 est
+    ouvert. La charge impose $I_d = P/V_{bus}$. En remplaçant :
+  </p>
+  <div class="formule-cle">
+    $$V_{bus}^2 - V_0\,V_{bus} + R_tP = 0 \quad\Longrightarrow\quad V_{bus} = \frac{V_0 + \sqrt{V_0^2 - 4R_tP}}{2}$$
+  </div>
+  <p>
+    Variables : $V_{bus}$ et $V_0$ en volts, $R_t$ en ohms, $P$ en watts. Vérification dimensionnelle : $R_tP$ s'exprime en
+    $\Omega \cdot \mathrm{W} = \mathrm{V^2}$, homogène à $V_{bus}^2$. On retient la racine haute : la racine basse correspond à un fonctionnement à fort
+    courant et faible tension, instable, car une charge à puissance constante présente une résistance incrémentale négative, $\mathrm{d}V/\mathrm{d}I
+    = -V/I$ : si la tension baisse, le courant monte, ce qui creuse la tension. Interprétation : la tension baisse avec la puissance, d'autant plus que
+    la source est résistante.
+  </p>
+  <p>
+    Cas limites. Si $P \to 0$, $V_{bus} \to V_0$ : à vide, plus de chute. Si $R_t \to 0$, $V_{bus} = V_0$ quelle que soit la puissance. Si le
+    discriminant s'annule, la solution disparaît : c'est la puissance maximale transmissible,
+  </p>
+  <div class="formule-cle">
+    $$P_{max} = \frac{V_0^2}{4R_t}, \qquad \text{atteinte pour } V_{bus} = \frac{V_0}{2}$$
+  </div>
+  <p>
+    C'est le théorème du transfert maximal de puissance du cours <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes de Thévenin,
+    Norton et superposition</a>, vu sous un nouvel angle. En service normal, $P_{max} = 538{,}5^2/(4 \times 0{,}389) = 186\ \mathrm{kW}$ : aucune
+    limite pratique, le bus de la pompe descend seulement à $514{,}1\ \mathrm{V}$ pour les $32{,}2\ \mathrm{kW}$ de la pleine vitesse. Si KM2 reste
+    ouvert, $R_t = 47{,}389\ \Omega$ et $P_{max} = 538{,}5^2/(4 \times 47{,}389) = 1530\ \mathrm{W}$ : le variateur ne peut plus fournir que
+    $5\ \%$ de la puissance de la pompe. Le bus franchit le seuil de sous-tension de $400\ \mathrm{V}$ dès que
+    $P = 400 \times (538{,}5 - 400)/47{,}389 = 1169\ \mathrm{W}$, avec $2{,}92\ \mathrm{A}$ et $401\ \mathrm{W}$ dissipés dans une résistance de
+    précharge conçue pour des impulsions de quelques centaines de millisecondes.
+  </p>
+  <p>
+    La simulation suivante place le point de fonctionnement dans le plan puissance prélevée, tension du réseau. L'axe des puissances est
+    logarithmique pour montrer à la fois le service normal, en dizaines de kilowatts, et la zone d'effondrement avec KM2 ouvert, autour du
+    kilowatt.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      KM2 fermé, à quelle tension du réseau le bus passe-t-il sous le seuil de repli de $510\ \mathrm{V}$ à pleine puissance ? Plutôt vers
+      $360$, $400$ ou $430\ \mathrm{V}$ ? KM2 ouvert, la zone utilisable s'étend-elle jusqu'à $1$, $5$ ou $20\ \mathrm{kW}$ ? Un réseau plus haut
+      aide-t-il beaucoup dans ce cas ?
+    </p>
+  </div>
+  <figure id="e-bus-sim">
+    <div class="schema-vivant" id="e-bus-vivant"></div>
+    <div id="e-bus-curseurs"></div>
+    <div id="e-bus-valeurs"></div>
+    <figcaption>
+      Fenêtre de fonctionnement du bus. Abscisse : puissance prélevée par l'onduleur, en échelle logarithmique de $0{,}1$ à $40\ \mathrm{kW}$ ;
+      ordonnée : tension composée du réseau, de $340$ à $440\ \mathrm{V}$. Les frontières tracées sont les lieux où le bus vaut $510\ \mathrm{V}$, seuil
+      de repli, en tirets longs, et $400\ \mathrm{V}$, seuil de sous-tension, en tirets courts ; la frontière en trait plein marque la puissance maximale
+      transmissible, au-delà de laquelle aucune tension d'équilibre n'existe. Le point déplaçable fixe la puissance et la tension du réseau ; le
+      curseur choisit l'état de KM2. Le panneau donne la tension du bus, le courant, l'état du variateur et la puissance perdue dans $R_p$.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> KM2 fermé, la frontière de $510\ \mathrm{V}$ coupe la pleine puissance de $32{,}2\ \mathrm{kW}$ vers
+    $397\ \mathrm{V}$ de réseau : c'est le seuil de repli jugé fragile au cours <a href="#/cours/redresseurs-triphases">Redresseurs triphasés</a>,
+    atteint pour un réseau à peine bas. La frontière de $400\ \mathrm{V}$ et l'effondrement sont hors du cadre : la source est raide. KM2 ouvert,
+    tout bascule autour du kilowatt : sous-tension dès $1{,}17\ \mathrm{kW}$ à $400\ \mathrm{V}$ de réseau, effondrement à $1{,}53\ \mathrm{kW}$, et un
+    réseau à $440\ \mathrm{V}$ ne gagne qu'une vingtaine de pour cent, car $P_{max}$ croît comme $V_0^2$. Une pompe dont la puissance croît comme le
+    cube de la fréquence franchit ce seuil quelques secondes après l'ordre de marche : c'est l'empreinte du contacteur de précharge resté ouvert,
+    étudiée en section I.
+  </p>
+
+  <h3 id="e-freinage">Le bus en ralentissement : l'énergie que l'inertie renvoie</h3>
+  <p>
+    Pendant une rampe de décélération linéaire, la commande impose $\mathrm{d}\Omega/\mathrm{d}t = -\Omega_0/T$. Le principe fondamental de la
+    dynamique appliqué à l'arbre s'écrit $J\,\mathrm{d}\Omega/\mathrm{d}t = C_m - C_r$, d'où le couple que doit fournir le moteur :
+  </p>
+  <div class="formule-cle">
+    $$C_m = C_0\left(\frac{\Omega}{\Omega_0}\right)^2 - \frac{J\Omega_0}{T}$$
+  </div>
+  <p>
+    Tant que le couple de charge dépasse le couple de décélération $J\Omega_0/T$, $C_m$ reste positif : le moteur est encore en traction, la pompe
+    freine seule et plus vite que la rampe ne l'exige si le moteur cessait de pousser. Sous la vitesse $\Omega_x$ où les deux couples s'égalent, le
+    moteur doit freiner : il devient générateur, quadrant 2, et renvoie au bus la puissance $\eta\,|C_m|\,\Omega$. Le graphique suivant montre cette
+    frontière pour une rampe de $2\ \mathrm{s}$.
+  </p>
+  <figure id="e-couples-figure">
+    <svg viewBox="0 0 560 300" role="img" aria-label="Couples pendant une rampe de 2 secondes : parabole du couple de charge de la pompe, droite horizontale du couple de décélération J Omega0 sur T à 38,6 newtons mètres, intersection à 68,9 radians par seconde ; zone hachurée de freinage générateur sous cette vitesse"><defs><marker id="fl-couples" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker><pattern id="hachures-couples" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V8" stroke="currentColor" stroke-width="1.2"/></pattern></defs><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M60 260H530" marker-end="url(#fl-couples)"/><path d="M60 260V20" marker-end="url(#fl-couples)"/><path d="M170 256V264M280 256V264M390 256V264M500 256V264M56 205H64M56 150H64M56 95H64M56 40H64"/></g><path d="M60 217.5 L249.4 217.5 L239.9 221.7 L230.5 225.6 L221.0 229.3 L211.5 232.8 L202.1 236.1 L192.6 239.2 L183.1 242.1 L173.6 244.7 L164.2 247.2 L154.7 249.4 L145.2 251.4 L135.8 253.2 L126.3 254.8 L116.8 256.2 L107.4 257.3 L97.9 258.3 L88.4 259.0 L78.9 259.6 L69.5 259.9 L60.0 260.0 Z" fill="url(#hachures-couples)" stroke="none" opacity="0.7"/><path d="M60.0 260.0 L70.6 259.9 L81.2 259.5 L91.9 258.8 L102.5 257.9 L113.1 256.7 L123.7 255.2 L134.3 253.5 L145.0 251.5 L155.6 249.2 L166.2 246.6 L176.8 243.8 L187.4 240.8 L198.0 237.4 L208.7 233.8 L219.3 230.0 L229.9 225.8 L240.5 221.4 L251.1 216.7 L261.8 211.8 L272.4 206.6 L283.0 201.1 L293.6 195.4 L304.2 189.4 L314.9 183.1 L325.5 176.6 L336.1 169.7 L346.7 162.7 L357.3 155.3 L368.0 147.7 L378.6 139.8 L389.2 131.7 L399.8 123.3 L410.4 114.6 L421.1 105.7 L431.7 96.4 L442.3 87.0 L452.9 77.2 L463.5 67.2 L474.1 56.9 L484.8 46.4" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M60 217.5H500" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="8 5"/><path d="M249.4 217.5V260" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 4"/><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11.5"><text x="160" y="278">40</text><text x="270" y="278">80</text><text x="378" y="278">120</text><text x="488" y="278">160</text><text x="30" y="209">50</text><text x="24" y="154">100</text><text x="24" y="99">150</text><text x="24" y="44">200</text><text x="440" y="296">Ω (rad/s)</text><text x="68" y="18">couple (N.m)</text><text x="330" y="60">couple de charge</text><text x="330" y="76">C0 (Ω/Ω0)², trait plein</text><text x="300" y="210">J Ω0 / T = 38,6 N.m, tirets</text><text x="200" y="196">Ωx = 68,9 rad/s</text><text x="70" y="236">freinage</text><text x="70" y="250">générateur</text><text x="430" y="40">C0 = 194,2</text></g></svg>
+    <figcaption>
+      Couples pendant une rampe de $2\ \mathrm{s}$, $J = 0{,}5\ \mathrm{kg\cdot m^2}$. Abscisse : vitesse $\Omega$ en $\mathrm{rad/s}$ ; ordonnée :
+      couple en $\mathrm{N\cdot m}$. La parabole en trait plein est le couple de charge de la pompe ; la droite en tirets, le couple de décélération
+      $J\Omega_0/T$ que la rampe impose. À droite de leur intersection, la charge freine seule et le moteur pousse encore ; à gauche, dans la zone
+      hachurée, le moteur doit fournir un couple de freinage égal à l'écart entre les deux courbes, et l'énergie correspondante part vers le bus.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Dérivation de l'énergie renvoyée.</strong> La vitesse frontière vérifie $C_0(\Omega_x/\Omega_0)^2 = J\Omega_0/T$, soit
+    $\Omega_x^2 = J\Omega_0^3/(C_0T)$. En changeant de variable, $\mathrm{d}t = -T\,\mathrm{d}\Omega/\Omega_0$, l'énergie renvoyée vaut
+  </p>
+  <p>
+    $$W_g = \eta\int_0^{\Omega_x}\left(\frac{J\Omega_0}{T} - \frac{C_0\Omega^2}{\Omega_0^2}\right)\Omega\,\frac{T}{\Omega_0}\,\mathrm{d}\Omega
+    = \frac{\eta T}{\Omega_0}\left[\frac{J\Omega_0\Omega_x^2}{2T} - \frac{C_0\Omega_x^4}{4\Omega_0^2}\right]$$
+  </p>
+  <p>
+    En reportant $\Omega_x^2$, le premier terme vaut $J^2\Omega_0^4/(2C_0T^2)$ et le second $J^2\Omega_0^4/(4C_0T^2)$ ; leur différence, multipliée par
+    $\eta T/\Omega_0$, donne :
+  </p>
+  <div class="formule-cle">
+    $$W_g = \frac{\eta\,J^2\,\Omega_0^3}{4\,C_0\,T}, \qquad V_{max} = \sqrt{V_0^2 + \frac{2W_g}{C}}, \qquad T_{min} = \frac{\eta\,J^2\,\Omega_0^3}{2\,C_0\,C\,(V_{lim}^2 - V_0^2)}$$
+  </div>
+  <p>
+    Variables : $W_g$ en joules, $J$ en $\mathrm{kg\cdot m^2}$, $\Omega_0$ en $\mathrm{rad/s}$, $C_0$ en $\mathrm{N\cdot m}$, $T$ en secondes, $C$ en farads.
+    Vérification dimensionnelle : $J^2\Omega_0^3/(C_0T)$ s'exprime en $\mathrm{kg^2m^4s^{-3}}/(\mathrm{kg\,m^2s^{-2}}\cdot\mathrm{s}) =
+    \mathrm{kg\,m^2s^{-2}} = \mathrm{J}$. La deuxième formule est le bilan $\tfrac12 CV_{max}^2 = \tfrac12 CV_0^2 + W_g$, pont bloqué ; la troisième
+    l'inverse pour $V_{max} = V_{lim}$.
+  </p>
+  <p>
+    Interprétation. L'énergie renvoyée décroît comme $1/T$ : doubler la rampe la divise par deux. Elle croît comme $J^2$, et non comme $J$ : une
+    inertie double contient deux fois plus d'énergie cinétique, mais elle impose aussi un couple de décélération double, qui fait apparaître le
+    freinage à une vitesse plus haute, où chaque joule restant est encore là. Elle ne dépend pas de la vitesse de départ, pourvu que celle-ci dépasse
+    $\Omega_x$ : au-dessus, la pompe absorbe tout. Cas limites : $T \to \infty$ donne $W_g \to 0$, la pompe freine seule ; $C_0 \to 0$, une charge
+    sans couple, fait diverger la formule, qui suppose $\Omega_x \leq \Omega_0$, soit $T \geq J\Omega_0/C_0 = 0{,}40\ \mathrm{s}$ : en deçà, toute
+    l'énergie cinétique, $\tfrac12 J\Omega_0^2 = 5965\ \mathrm{J}$, est disponible pour le freinage.
+  </p>
+  <p>
+    Pour la pompe, $\eta J^2\Omega_0^3/(4C_0) = 0{,}92 \times 0{,}25 \times 154{,}46^3/(4 \times 194{,}2) = 1091\ \mathrm{J\cdot s}$. Avec
+    $T = 10\ \mathrm{s}$, $W_g = 109\ \mathrm{J}$ et $V_{max} = 625\ \mathrm{V}$ depuis $540\ \mathrm{V}$ ; la réserve jusqu'à $760\ \mathrm{V}$ vaut
+    $\tfrac12 \times 2{,}2 \times 10^{-3}(760^2 - 540^2) = 314{,}6\ \mathrm{J}$, d'où $T_{min} = 1091/314{,}6 = 3{,}47\ \mathrm{s}$. Le régulateur de
+    surtension intervient quand la tension atteint $760\ \mathrm{V}$ : il réduit le couple de freinage pour ne plus rien renvoyer, ce qui allonge la
+    rampe réelle. Il évite le déclenchement, mais il ne fait pas disparaître l'énergie : sans résistance de freinage, l'arrêt dure ce que la pompe
+    met à freiner seule.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Rampe de $2\ \mathrm{s}$, régulateur désactivé : le variateur déclenche-t-il au début, au milieu ou vers la fin de la rampe ? Régulateur
+      activé : l'arrêt dure-t-il $2$, $5$ ou $20\ \mathrm{s}$ ? Et si le bus part de $622\ \mathrm{V}$, réseau haut à vide, la rampe de
+      $3{,}5\ \mathrm{s}$ suffit-elle encore ?
+    </p>
+  </div>
+  <figure id="e-decel-sim">
+    <div id="e-decel-curseurs"></div>
+    <div id="e-decel-vitesse"></div>
+    <div id="e-decel-bus"></div>
+    <div id="e-decel-lecteur"></div>
+    <div id="e-decel-valeurs"></div>
+    <figcaption>
+      Simulation manipulable de l'arrêt de la pompe depuis $1475\ \mathrm{tr/min}$. Le premier tracé donne la vitesse de consigne de la rampe et la
+      vitesse réelle, en $\mathrm{tr/min}$ ; le second, la tension du bus, avec en tirets le seuil du régulateur à $760\ \mathrm{V}$ et le seuil de
+      déclenchement à $800\ \mathrm{V}$. Le trait vertical en pointillé suit l'instant donné par le lecteur. Les curseurs règlent la durée de rampe,
+      l'inertie, la tension initiale du bus et le régulateur de surtension. Le modèle intègre l'équation mécanique et le bilan d'énergie du bus, pont
+      bloqué ; après un déclenchement, les impulsions sont bloquées et la pompe s'arrête en roue libre.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Avec $2\ \mathrm{s}$ et sans régulateur, rien ne se passe pendant plus d'une seconde, jusqu'à $1{,}1\ \mathrm{s}$ : la vitesse est
+    encore au-dessus de $\Omega_x$ et la pompe freine seule. Puis le bus monte de plus en plus vite et atteint $800\ \mathrm{V}$ vers $1{,}6\ \mathrm{s}$,
+    vers la fin de la rampe, parce que l'énergie arrive aux basses vitesses. Le variateur déclenche, la pompe finit en roue libre et met une vingtaine
+    de secondes à passer sous $30\ \mathrm{tr/min}$, freinée par son seul couple quadratique qui s'évanouit avec la vitesse. Avec le régulateur, le bus
+    plafonne à $760\ \mathrm{V}$ et l'arrêt dure presque autant : le régulateur transforme un défaut en roue libre contrôlée. Depuis $622\ \mathrm{V}$, la
+    réserve tombe à $209\ \mathrm{J}$ et la rampe minimale passe à $5{,}2\ \mathrm{s}$ : $3{,}5\ \mathrm{s}$ ne suffit plus. Enfin, l'inertie pèse au
+    carré : avec $0{,}8\ \mathrm{kg\cdot m^2}$, il faut $8{,}9\ \mathrm{s}$ depuis $540\ \mathrm{V}$.
+  </p>
+  <p>
+    Plusieurs remèdes existent contre la surtension de freinage ; ils ne se valent pas selon l'application. Le tableau les compare pour la pompe.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Remède</th><th>Effet sur l'arrêt</th><th>Coût et contraintes</th><th>Préférable quand</th></tr></thead>
+      <tbody>
+        <tr><td>Rampe allongée, $T \geq T_{min}$ avec marge</td><td>Arrêt en $T$, sans défaut</td><td>Nul ; exige de connaître $J$</td><td>Charge qui freine seule, arrêts peu fréquents : la pompe</td></tr>
+        <tr><td>Régulateur de surtension</td><td>Pas de défaut, arrêt allongé autant que nécessaire</td><td>Nul ; durée d'arrêt non garantie</td><td>Filet de sécurité derrière une rampe correcte</td></tr>
+        <tr><td>Hacheur et résistance de freinage</td><td>Arrêt court garanti</td><td>Résistance, hacheur, chaleur dans l'armoire</td><td>Forte inertie, arrêts fréquents ou imposés : levage, centrifugeuses</td></tr>
+        <tr><td>Redresseur actif ou bus commun</td><td>Arrêt court, énergie récupérée</td><td>Coût élevé, harmoniques et réglages ; inutile sur groupe électrogène</td><td>Énergie de freinage importante et répétitive</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="e-thermique">L'échauffement du dissipateur : régime établi et transitoire</h3>
+  <p>
+    Le bilan d'énergie du dissipateur isotherme s'écrit $C_{th}\,\mathrm{d}T_h/\mathrm{d}t = P - (T_h - T_a)/R_{ha}$ : la puissance perdue entre, la
+    convection en extrait d'autant plus que le dissipateur est chaud. En régime établi, $T_{h\infty} = T_a + R_{ha}P$. Si les conditions changent à
+    l'instant zéro, panne du ventilateur ou encrassement brutal, le dissipateur part de $T_{h0}$ et rejoint la nouvelle valeur finale avec la
+    constante de temps $\tau = R_{ha}C_{th}$ de la nouvelle situation :
+  </p>
+  <div class="formule-cle">
+    $$T_h(t) = T_{h\infty} - (T_{h\infty} - T_{h0})\,e^{-t/\tau}, \qquad t_{lim} = \tau\,\ln\frac{T_{h\infty} - T_{h0}}{T_{h\infty} - T_{lim}}$$
+  </div>
+  <p>
+    Variables : températures en $\mathrm{^\circ C}$, $R_{ha}$ en $\mathrm{K/W}$, $C_{th}$ en $\mathrm{J/K}$, $\tau$ et $t_{lim}$ en secondes. Dimension :
+    $\mathrm{K/W} \times \mathrm{J/K} = \mathrm{J/W} = \mathrm{s}$. Cas limites : si $T_{h\infty} \leq T_{lim}$, le logarithme n'existe pas, la limite
+    n'est jamais atteinte ; si $T_{h\infty} \gg T_{lim}$, $t_{lim} \approx \tau(T_{lim} - T_{h0})/(T_{h\infty} - T_{h0}) = C_{th}(T_{lim} - T_{h0})/
+    (P - (T_{h0} - T_a)/R_{ha})$ : au début, le dissipateur s'échauffe comme un corps isolé. Les jonctions suivent avec leurs propres écarts,
+    $T_j = T_h + R_{jh}P_k$, établis en quelques secondes.
+  </p>
+  <p>
+    Au nominal, les pertes valent $455{,}4\ \mathrm{W}$ et $T_h = 40 + 0{,}12 \times 455{,}4 = 94{,}6\ \mathrm{^\circ C}$. Si le ventilateur s'arrête,
+    $R_{ha}$ passe à environ $0{,}6\ \mathrm{K/W}$, la valeur finale à $313\ \mathrm{^\circ C}$ et la constante de temps à $0{,}6 \times 3600 =
+    2160\ \mathrm{s}$ : le seuil de $100\ \mathrm{^\circ C}$ est atteint en $2160\ln(218{,}6/213{,}2) = 54\ \mathrm{s}$. Au point de service,
+    $290{,}5\ \mathrm{W}$, le dissipateur part de $74{,}9\ \mathrm{^\circ C}$ et le même calcul donne environ sept minutes, calculées en exercice.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Point de service, air à $45\ \mathrm{^\circ C}$, ailettes encrassées à $0{,}18\ \mathrm{K/W}$ : le seuil de $100\ \mathrm{^\circ C}$ est-il atteint ?
+      En combien de temps, approximativement ? Que se passe-t-il si le débit demandé monte vers $44\ \mathrm{Hz}$ ?
+    </p>
+  </div>
+  <figure id="e-therm-sim">
+    <div id="e-therm-curseurs"></div>
+    <div id="e-therm-trace"></div>
+    <div id="e-therm-lecteur"></div>
+    <div id="e-therm-valeurs"></div>
+    <figcaption>
+      Simulation manipulable de l'échauffement du dissipateur après un changement de refroidissement à l'instant zéro. Avant, le dissipateur est en
+      régime établi à $0{,}12\ \mathrm{K/W}$ ; à partir de zéro, il prend la résistance réglée par le curseur. Les trois courbes donnent la température
+      du dissipateur, celle de la jonction la plus chaude du pont et celle d'un IGBT ; les tirets marquent le seuil de surchauffe de
+      $100\ \mathrm{^\circ C}$ et la limite de conception des jonctions de $125\ \mathrm{^\circ C}$. Les pertes suivent la fréquence de la pompe par un
+      modèle linéaire en puissance ajusté sur les deux points calculés au cours précédent ; les pertes des puces sont prises proportionnelles aux pertes
+      totales, ce qui surestime un peu les écarts au point de service.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> À $45\ \mathrm{^\circ C}$ avec $0{,}18\ \mathrm{K/W}$, la valeur finale au point de service vaut
+    $45 + 0{,}18 \times 290{,}5 = 97{,}3\ \mathrm{^\circ C}$, sous le seuil : pas de déclenchement, mais aucune marge, et la montée prend une dizaine de
+    minutes puisque $\tau$ vaut alors $648\ \mathrm{s}$. Il suffit que la demande pousse la pompe au-delà de $43{,}1\ \mathrm{Hz}$ pour franchir
+    $100\ \mathrm{^\circ C}$ : le défaut n'apparaît que l'après-midi, en été, au fort débit, et disparaît après refroidissement. Voilà une signature
+    typique de l'encrassement, très différente de la panne de ventilateur, qui déclenche en une minute à pleine charge quelle que soit la saison. Remarquez enfin
+    la sensibilité de ce dernier chiffre : à $50\ \mathrm{Hz}$, le modèle de pertes de la simulation donne $458{,}6\ \mathrm{W}$ au lieu de
+    $455{,}4\ \mathrm{W}$, et le temps avant $100\ \mathrm{^\circ C}$ passe de $54$ à $49\ \mathrm{s}$. Partant à $5\ \mathrm{K}$ du seuil, ce
+    temps dépend fortement des données : un calcul de délai proche d'un seuil s'accompagne toujours d'une marge, et justifie une alarme anticipée.
+  </p>
+
+  <h3 id="e-mode-commun">Le câble et le mode commun : ce que change la longueur</h3>
+  <p>
+    Le circuit de mode commun relie le point milieu fictif de l'onduleur à la terre, à travers l'inductance des conducteurs du câble et les capacités
+    entre conducteurs et écran, puis l'écran et le PE qui ramènent le courant au variateur. Le schéma ASCII ci-dessous en donne le modèle à
+    constantes localisées.
+  </p>
+  <figure id="e-mc-figure">
+<pre class="ascii">
+   onduleur                 câble blindé, longueur l                      moteur
+  (3 phases                                                             (carcasse
+   en parallèle)                                                         au PE)
+       o--->---[ L = 0,15 µH/m x l ]------+-------------------------------+
+       |  i_mc                            |                               |
+  v_mc |  sauts de E/3                  ===  C = 300 pF/m x l           ===  6 nF
+       |  à chaque                        |    (3 conducteurs            |   (bobinage
+       |  commutation                     |     vers l'écran)            |    vers carcasse)
+       o---<------------------------------+-------- écran et PE ---------+
+  -E et PE du variateur                     retour du courant de mode commun
+</pre>
+    <figcaption>
+      Modèle de mode commun du départ moteur. La source $v_{mc}$ est la tension de mode commun de l'onduleur, comptée de la référence du variateur
+      vers les trois phases mises en parallèle ; elle saute de $E/3 = 180\ \mathrm{V}$ à chaque commutation d'un bras. Le courant $i_{mc}$ sort par les
+      phases, sens de la flèche, traverse les capacités réparties du câble et celle du bobinage, et revient par l'écran et le PE. C'est ce courant que la
+      pince haute fréquence mesure autour des trois phases, et qu'une détection de défaut terre par somme des courants peut voir.
+    </figcaption>
+  </figure>
+  <p>
+    Un saut de tension $E/3$ appliqué à un circuit LC au repos produit un courant oscillant d'amplitude $(E/3)/Z_0$ à la fréquence
+    $f_0 = 1/(2\pi\sqrt{LC})$, et charge la capacité avec l'énergie $\tfrac12 C(E/3)^2$, dissipée à chaque front dans les résistances du circuit. Avec
+    six fronts par période de découpage et trois bras, $24\,000$ fronts par seconde à $4\ \mathrm{kHz}$. Vérification dimensionnelle : $(E/3)/Z_0$ s'exprime
+    en $\mathrm{V}/\Omega = \mathrm{A}$, et $\tfrac12 C(E/3)^2$ en $\mathrm{F \cdot V^2} = \mathrm{J}$. Cas limites : un câble sans inductance,
+    $L \to 0$, donnerait une crête infinie, bornée en pratique par la résistance de la boucle et la vitesse des fronts ; un câble très court,
+    $C \to 6\ \mathrm{nF}$, réduit l'énergie par front à celle du seul bobinage. Le tableau compare le câble d'origine et un câble de
+    $150\ \mathrm{m}$.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Grandeur</th><th class="nombre">$85\ \mathrm{m}$</th><th class="nombre">$150\ \mathrm{m}$</th><th>Évolution</th></tr></thead>
+      <tbody>
+        <tr><td>$L$, inductance de boucle</td><td class="nombre">$12{,}75\ \mu\mathrm{H}$</td><td class="nombre">$22{,}5\ \mu\mathrm{H}$</td><td>Proportionnelle à $l$</td></tr>
+        <tr><td>$C$, capacité câble et moteur</td><td class="nombre">$31{,}5\ \mathrm{nF}$</td><td class="nombre">$51{,}0\ \mathrm{nF}$</td><td>Affine en $l$</td></tr>
+        <tr><td>$Z_0 = \sqrt{L/C}$</td><td class="nombre">$20{,}1\ \Omega$</td><td class="nombre">$21{,}0\ \Omega$</td><td>Presque inchangée</td></tr>
+        <tr><td>Crête par front, $(E/3)/Z_0$</td><td class="nombre">$8{,}9\ \mathrm{A}$</td><td class="nombre">$8{,}6\ \mathrm{A}$</td><td>Presque inchangée</td></tr>
+        <tr><td>$f_0$</td><td class="nombre">$251\ \mathrm{kHz}$</td><td class="nombre">$149\ \mathrm{kHz}$</td><td>Oscillation plus lente</td></tr>
+        <tr><td>Énergie par front, $\tfrac12 C(E/3)^2$</td><td class="nombre">$510\ \mu\mathrm{J}$</td><td class="nombre">$826\ \mu\mathrm{J}$</td><td>$+62\ \%$</td></tr>
+        <tr><td>Puissance à $24\,000$ fronts par seconde</td><td class="nombre">$12{,}2\ \mathrm{W}$</td><td class="nombre">$19{,}8\ \mathrm{W}$</td><td>$+62\ \%$</td></tr>
+        <tr><td>Charge déplacée par front, $C\,E/3$</td><td class="nombre">$5{,}7\ \mu\mathrm{C}$</td><td class="nombre">$9{,}2\ \mu\mathrm{C}$</td><td>$+62\ \%$</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Conclusion contre-intuitive : allonger le câble ne fait presque pas monter la crête du courant de mode commun, fixée par l'impédance
+    caractéristique, qui est une propriété par mètre. Ce qui croît, ce sont la charge, l'énergie et la durée de chaque oscillation : les pertes dans
+    le tore et dans le câble, le risque de saturation du tore, qui dépend des volts-secondes appliqués, et le courant moyen redressé vu par une
+    détection lente. Une valeur moyenne reste toutefois modeste : $9{,}2\ \mu\mathrm{C} \times 24\,000 = 0{,}22\ \mathrm{A}$, à comparer au seuil de
+    $16\ \mathrm{A}$ du défaut terre. Un courant de mode commun excessif se démontre donc par une mesure de crête à la pince, comparée à cette
+    prévision, pas par une intuition sur la longueur.
+  </p>
+
+  <h3 id="e-signatures">Matrice des signatures : du code de défaut à la cause</h3>
+  <p>
+    Le tableau suivant croise, pour chaque défaut typique, la protection qui le signale, la grandeur qu'elle mesure, le moment du cycle où il survient
+    et la première vérification, sûre et peu coûteuse, qui départage les causes. Il est le cœur de la méthode de diagnostic.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Défaut</th><th>Protection et code</th><th>Mesure</th><th>Quand</th><th>Causes à départager</th><th>Première vérification</th></tr></thead>
+      <tbody>
+        <tr><td>Court-circuit de bras, IGBT claqué</td><td>Désaturation, court-circuit</td><td>$v_{CE}$ dans le driver</td><td>Dès la première impulsion</td><td>Module détruit, driver, commande</td><td>Hors tension et bus déchargé : test des diodes et IGBT au multimètre ; réarmement interdit</td></tr>
+        <tr><td>Court-circuit en sortie</td><td>Seuil instantané $160\ \mathrm{A}$, désaturation</td><td>Courants de phase</td><td>Premières impulsions</td><td>Câble écrasé, bornier, bobinage</td><td>Câble et moteur déconnectés : résistances entre phases, puis isolement</td></tr>
+        <tr><td>Défaut d'isolement</td><td>Défaut terre, $16\ \mathrm{A}$ en $10\ \mathrm{ms}$</td><td>Somme des trois courants</td><td>Souvent au premier démarrage après humidité</td><td>Moteur humide, câble blessé, fuites capacitives</td><td>Essai d'isolement câble et moteur déconnectés du variateur</td></tr>
+        <tr><td>Surtension du bus</td><td>Surtension, $800\ \mathrm{V}$</td><td>$V_{bus}$</td><td>Ralentissement ; parfois à vide, réseau haut</td><td>Rampe trop courte, régulateur désactivé, inertie, réseau</td><td>Paramètres de rampe et du régulateur ; enregistrement de $V_{bus}$ pendant un arrêt</td></tr>
+        <tr><td>Sous-tension</td><td>Sous-tension, $400\ \mathrm{V}$</td><td>$V_{bus}$</td><td>Creux du réseau ; quelques secondes après la marche</td><td>Réseau, phase perdue, KM2 ouvert</td><td>Tension réseau à la centrale ; état réel de KM2 et de sa bobine</td></tr>
+        <tr><td>Défaut de précharge</td><td>Précharge, $2\ \mathrm{s}$</td><td>$V_{bus}$ ou retour de KM2</td><td>Mise sous tension</td><td>$R_p$ coupée, fusible d'entrée, KM2</td><td>Continuité de $R_p$ et des fusibles, hors tension</td></tr>
+        <tr><td>Perte d'une phase réseau</td><td>Ondulation du bus, contact de fusible</td><td>Ondulation à $100\ \mathrm{Hz}$ de $V_{bus}$</td><td>En charge</td><td>Fusible aR fondu, sectionneur, réseau</td><td>Tensions entre phases en amont et en aval des fusibles</td></tr>
+        <tr><td>Surchauffe du dissipateur</td><td>Surchauffe, CTN à $100\ \mathrm{^\circ C}$</td><td>$T_h$</td><td>Forte charge, air chaud ; en une minute si ventilateur arrêté</td><td>Encrassement, ventilateur, air de l'armoire</td><td>Ventilateur en marche ? Écart de température de l'air ; ailettes</td></tr>
+        <tr><td>Surcharge du moteur</td><td>Modèle thermique, $150\ \%$ pendant $60\ \mathrm{s}$</td><td>Courant efficace intégré</td><td>En régime, progressive</td><td>Pompe obstruée, roulement, réglage du courant</td><td>Courant mesuré au point de service comparé aux $39{,}6\ \mathrm{A}$ attendus</td></tr>
+        <tr><td>Perte de consigne</td><td>Rupture de boucle $4$-$20\ \mathrm{mA}$</td><td>Courant de consigne sous environ $3{,}6\ \mathrm{mA}$</td><td>À tout moment</td><td>Fil coupé, bornier, sortie de l'automate</td><td>Courant de boucle à l'ampèremètre</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Deux enseignements. D'abord, plusieurs causes partagent un code : la sous-tension signale autant le réseau que le contacteur de précharge ; c'est
+    le moment du cycle qui les départage. Ensuite, la première vérification est presque toujours une mesure hors tension ou une lecture de paramètre :
+    on ne remet pas sous tension un variateur en défaut de court-circuit, et l'on n'applique jamais un essai d'isolement aux bornes de sortie d'un
+    variateur raccordé, car la tension d'essai détruirait les semi-conducteurs et les condensateurs du filtre.
+  </p>
+
+  <h3 id="e-securite">Sécurité d'intervention et ordre des mesures</h3>
+  <p>
+    Avant toute mesure dans l'armoire, on consigne : séparation du réseau par le sectionneur, condamnation, puis attente du délai affiché pour la
+    décharge du bus, dix minutes pour la pompe, et vérification d'absence de tension au voltmètre sur les bornes $+E$ et $-E$ du bus, car une
+    résistance de décharge coupée laisse le bus chargé. Les mesures sous tension, enregistrement de $V_{bus}$, pince de mode commun, tensions du
+    réseau, se font avec un équipement adapté à la catégorie de mesure et par une personne habilitée. L'ordre des mesures suit trois critères : la
+    sécurité et la non-aggravation d'abord, le coût et la durée ensuite, le pouvoir discriminant enfin, une mesure qui élimine la moitié des
+    hypothèses valant mieux qu'une mesure qui en confirme une.
+  </p>
+
+  <h3 id="e-statut">Loi, convention, approximation, règle de conception et donnée du constructeur</h3>
+  <ul>
+    <li><strong>Lois physiques :</strong> loi des mailles et conservation de l'énergie du bus, $\tfrac12 CV^2$ ; principe fondamental de la dynamique de
+      l'arbre ; bilan thermique du dissipateur ; solution du circuit LC excité par un échelon.</li>
+    <li><strong>Conventions :</strong> $I_d$ positif du pont vers l'onduleur ; tension du bus fléchée de $-E$ vers $+E$ ; durée de rampe définie pour
+      $50\ \mathrm{Hz}$ à zéro ; mode commun compté par rapport à la référence du variateur.</li>
+    <li><strong>Approximations :</strong> modèle de Thévenin à courant lissé du pont ; charge à puissance constante ; couple de pompe quadratique sans
+      hauteur statique ; dissipateur isotherme ; pertes des puces proportionnelles aux pertes totales ; circuit de mode commun à constantes
+      localisées ; rendement constant en génératrice.</li>
+    <li><strong>Règles de conception :</strong> seuil de repli de $510\ \mathrm{V}$ ; rampe choisie avec une marge sur $T_{min}$ ; limite de
+      conception des jonctions à $125\ \mathrm{^\circ C}$ ; essai d'isolement toujours variateur déconnecté ; mesure de première intention hors tension.</li>
+    <li><strong>Données de constructeur ou supposées :</strong> seuils du régulateur et des protections, $760$, $800$ et $400\ \mathrm{V}$, seuil de
+      surchauffe de $100\ \mathrm{^\circ C}$, codes de défaut et leurs libellés, délai de décharge, longueur de câble maximale admise, critère
+      d'acceptation de la résistance d'isolement ; inertie et rendement de la pompe.</li>
+  </ul>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Le schéma principal de la séance est le schéma fonctionnel détaillé d'un variateur industriel, appliqué à celui de la pompe. Il réunit sur une
+    même page les étages de puissance, les mesures, les protections qui exploitent chaque mesure, la commande et les échanges avec l'automate. C'est
+    la carte qu'on garde sous les yeux pendant un diagnostic : chaque code de défaut y correspond à un point de mesure.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 1040 560" role="img" aria-label="Schéma fonctionnel du variateur de la pompe : réseau L1 L2 L3, fusibles aR, filtre CEM, self de ligne, pont de diodes, barres plus E et moins E avec précharge Rp et KM2, condensateurs du bus, mesure de la tension du bus, découplage, onduleur à six IGBT et drivers, capteurs de courant, self de sortie et tore, câble blindé, moteur avec sonde ; dessous, alimentation auxiliaire, ventilateur et sonde du dissipateur, carte de commande, entrées et sorties vers l'automate ; liaisons au conducteur de protection"><defs><marker id="fl-princ" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="50" y="85" width="90" height="50" rx="6"/><rect x="160" y="85" width="90" height="50" rx="6"/><rect x="270" y="85" width="80" height="50" rx="6"/><rect x="370" y="85" width="80" height="50" rx="6"/><rect x="760" y="55" width="90" height="130" rx="6"/><rect x="890" y="85" width="40" height="70" rx="5"/><circle cx="1000" cy="120" r="26"/><rect x="490" y="62" width="40" height="16" rx="2"/><rect x="40" y="310" width="230" height="60" rx="8"/><rect x="40" y="400" width="230" height="60" rx="8"/><rect x="330" y="310" width="430" height="150" rx="8"/><rect x="800" y="310" width="220" height="150" rx="8"/></g><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M20 110H50M140 110H160M250 110H270M350 110H370"/><path d="M450 95H470V70H490M530 70H760M450 125H470V170H760"/><path d="M480 70V42H496M522 42H545V70M496 42L516 31"/><path d="M850 95H890M850 120H890M850 145H890M930 95H974M930 120H974M930 145H974"/></g><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M28 104L36 116M34 104L42 116M40 104L48 116"/><path d="M600 70V100M600 108V132M600 140V170M586 100H614M586 108H614M586 132H614M586 140H614"/><path d="M640 70V96M640 144V170"/><rect x="634" y="96" width="12" height="20" rx="2"/><rect x="634" y="124" width="12" height="20" rx="2"/><path d="M640 116V124M600 120H640"/><path d="M690 70V106M690 134V170"/><circle cx="690" cy="120" r="14"/><path d="M730 70V114M730 126V170M720 114H740M720 126H740"/><circle cx="870" cy="95" r="6"/><circle cx="870" cy="120" r="6"/><circle cx="870" cy="145" r="6"/><ellipse cx="952" cy="120" rx="16" ry="40" stroke-dasharray="4 3"/></g><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M575 170V262H230V310"/><path d="M270 340H330" marker-end="url(#fl-princ)"/><path d="M155 370V400" marker-end="url(#fl-princ)"/><path d="M660 58H690" marker-end="url(#fl-princ)"/></g><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="6 4" stroke-linecap="round"><path d="M690 134V196"/><path d="M690 258V310" marker-end="url(#fl-princ)"/><path d="M870 151V290H745V310" marker-end="url(#fl-princ)"/><path d="M830 310V185" marker-start="url(#fl-princ)" marker-end="url(#fl-princ)"/><path d="M535 310V182M535 160V80M535 58V48" marker-end="url(#fl-princ)"/><path d="M95 135V290H345V310" marker-end="url(#fl-princ)"/><path d="M270 430H330" marker-end="url(#fl-princ)"/><path d="M760 385H800" marker-start="url(#fl-princ)" marker-end="url(#fl-princ)"/><path d="M1000 146V170H1030V480H545V460" marker-end="url(#fl-princ)"/></g><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M205 135V150M193 150H217M197 155H213M201 160H209"/><path d="M952 160V176M940 176H964M944 181H960M948 186H956"/><path d="M981 139L974 150M964 150H984M967 155H981M971 160H977"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="10" y="80">L1 L2 L3</text><text x="10" y="64" font-size="10.5">400 V, 50 Hz</text><text x="64" y="106">fusibles</text><text x="64" y="124">aR 80 A</text><text x="170" y="106">filtre CEM</text><text x="176" y="124">CX et CY</text><text x="286" y="106">self de</text><text x="286" y="124">ligne</text><text x="390" y="106">pont</text><text x="380" y="124">6 diodes</text><text x="452" y="62">+E</text><text x="452" y="192">-E, référence</text><text x="482" y="96" font-size="11">Rp 47 Ω</text><text x="500" y="24" font-size="11">KM2</text><text x="664" y="52" font-size="11">Id</text><text x="560" y="60" font-size="10.5">C, 2 x 450 V</text><text x="586" y="96" font-size="11">+</text><text x="650" y="92" font-size="10.5">47 kΩ</text><text x="686" y="124" font-size="11">V</text><text x="736" y="96" font-size="10.5">Cs</text><text x="770" y="78">onduleur</text><text x="770" y="96">6 IGBT</text><text x="770" y="114">drivers</text><text x="770" y="132" font-size="10.5">désaturation</text><text x="770" y="148" font-size="10.5">à 7 V</text><text x="854" y="88" font-size="10.5">U</text><text x="854" y="113" font-size="10.5">V</text><text x="854" y="138" font-size="10.5">W</text><text x="884" y="172" font-size="10.5">self, tore</text><text x="930" y="62" font-size="10.5">câble 85 m</text><text x="930" y="76" font-size="10.5">blindé</text><text x="990" y="118">M</text><text x="990" y="134" font-size="11">3~</text><text x="992" y="196" font-size="10.5">sonde</text><text x="590" y="208" font-size="11">Ubus : précharge 2 s,</text><text x="590" y="222" font-size="11">sous-tension 400 V,</text><text x="590" y="236" font-size="11">régulateur 760 V,</text><text x="590" y="250" font-size="11">surtension 800 V</text><text x="876" y="208" font-size="11">courants : seuil</text><text x="876" y="222" font-size="11">160 A crête ; somme :</text><text x="876" y="236" font-size="11">défaut terre 16 A ;</text><text x="876" y="250" font-size="11">modèle thermique</text><text x="876" y="272" font-size="11">i_U, i_V, i_W</text><text x="100" y="160" font-size="10.5">contact de fusion</text><text x="52" y="336">alimentation auxiliaire</text><text x="52" y="354" font-size="11">à découpage, depuis le bus</text><text x="52" y="426">ventilateur du dissipateur</text><text x="52" y="444" font-size="11">sonde CTN : Th, seuil 100 °C</text><text x="344" y="334" font-weight="600">carte de commande</text><text x="344" y="356" font-size="11">rampes 10 s, loi U/f, modulation vectorielle 4 kHz</text><text x="344" y="374" font-size="11">limitation de courant, régulateur de surtension</text><text x="344" y="392" font-size="11">modèle thermique du moteur, gestion de KM2</text><text x="344" y="410" font-size="11">journal des défauts : code, courant, fréquence,</text><text x="344" y="428" font-size="11">tension du bus, température, horodatage</text><text x="344" y="446" font-size="11">réarmement : 3 essais en 10 min, jamais après court-circuit</text><text x="812" y="334" font-weight="600">vers l'automate</text><text x="812" y="356" font-size="11">marche, arrêt, sens</text><text x="812" y="374" font-size="11">consigne 4-20 mA</text><text x="812" y="392" font-size="11">relais de défaut</text><text x="812" y="410" font-size="11">alarmes : surchauffe,</text><text x="812" y="428" font-size="11">fusibles, KM2</text><text x="812" y="446" font-size="11">Ethernet : mesures, journal</text><text x="541" y="290" font-size="11">ordre KM2</text><text x="700" y="290" font-size="11">Ubus</text><text x="282" y="424" font-size="11">Th</text><text x="236" y="256" font-size="11">alimentation depuis le bus</text><text x="560" y="496" font-size="11">sonde du moteur vers la carte</text><text x="24" y="524" font-size="11">puissance : traits épais ; mesures et ordres : tirets ; alimentations auxiliaires : traits fins</text><text x="24" y="546" font-size="11">symbole de terre : PE des condensateurs CY, de l'écran du câble aux deux extrémités et de la carcasse du moteur</text></g></svg>
+    <figcaption>
+      Schéma fonctionnel détaillé du variateur de la pompe. Puissance en traits épais, de gauche à droite en traction : réseau L1, L2, L3, fusibles aR
+      avec contact de fusion, filtre CEM dont les condensateurs CY rejoignent le PE, self de ligne, pont de six diodes, barres $+E$ et $-E$, cette
+      dernière servant de référence de potentiel. Sur la barre $+E$, la précharge $R_p$ et son contact KM2, dessiné ouvert ; le courant $I_d$ est
+      fléché vers l'onduleur. Entre les barres : condensateur du bus en deux rangées de $450\ \mathrm{V}$ avec ses résistances d'équilibrage, mesure de
+      $U_{bus}$, découplage $C_s$. L'onduleur et ses drivers à détection de désaturation alimentent les phases U, V, W à travers les capteurs de
+      courant, la self de sortie et le tore de mode commun, puis le câble blindé de $85\ \mathrm{m}$, écran figuré par l'ellipse en tirets, et le moteur
+      à sonde. En tirets, les mesures qui remontent vers la carte de commande et les ordres qui en repartent ; en traits fins, l'alimentation
+      auxiliaire tirée du bus, qui alimente la carte et le ventilateur ; les symboles de terre marquent les liaisons au PE. Sous chaque point de mesure, la liste des
+      protections qui l'exploitent.
+    </figcaption>
+  </figure>
+  <p>
+    Lecture du schéma pour le diagnostic : un défaut de tension se lit sur la seule mesure $U_{bus}$, qui sert quatre protections ; les défauts de
+    courant passent par les capteurs de phase, sauf le court-circuit de bras, traité dans les drivers sans passer par la carte ; la surchauffe vient de
+    la sonde du dissipateur ; les défauts d'entrée remontent par le contact des fusibles. Une alimentation auxiliaire tirée du bus explique aussi un
+    symptôme déroutant : quand le bus s'effondre, la carte de commande s'éteint, et un défaut de sous-tension peut ne laisser qu'une trace incomplète
+    dans le journal.
+  </p>
+  <p>
+    L'organigramme suivant résume la démarche de diagnostic construite dans la séance.
+  </p>
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Défaut signalé par le variateur ou l'exploitant"] --> B["Lire le journal : code, courant, fréquence, tension du bus, température, heure"]
+  B --> C["Situer le défaut dans le cycle : mise sous tension, premières impulsions, rampe, régime, ralentissement"]
+  C --> D["Lister les causes compatibles avec la matrice des signatures"]
+  D --> E{"Réarmement autorisé ?"}
+  E -->|"Non : court-circuit ou désaturation"| F["Consigner, attendre la décharge, vérifier l'absence de tension"]
+  E -->|"Oui"| G["Prévoir les valeurs attendues par le calcul"]
+  F --> G
+  G --> H["Mesure la plus sûre et la plus discriminante d'abord"]
+  H --> I{"Mesure conforme à une seule cause ?"}
+  I -->|"Non"| D
+  I -->|"Oui"| J["Action corrective et justification"]
+  J --> K["Essai de vérification dans les conditions du défaut"]
+  K --> L{"Défaut disparu ?"}
+  L -->|"Non"| D
+  L -->|"Oui"| M["Consigner au registre, mettre à jour le plan de maintenance"]</pre>
+    <figcaption>
+      Organigramme de diagnostic d'un variateur. Les rectangles sont des actions, les losanges des décisions ; chaque branche "Non" renvoie à
+      l'étape à reprendre. Deux points le distinguent d'un simple dépannage : la prévision chiffrée des valeurs attendues avant la mesure, qui rend
+      une mesure discriminante, et l'essai de vérification dans les conditions du défaut, sans lequel une cause supposée n'est pas une cause
+      démontrée.
+    </figcaption>
+  </figure>
+  <p>
+    Le tableau comparatif suivant reprend l'image des réservoirs de la section D en ordres de grandeur pour la pompe : capacité, constante de temps,
+    défaut quand le réservoir déborde ou se vide, et protection qui le surveille.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Réservoir</th><th>Capacité</th><th>Échelle de temps</th><th>Défaut</th><th>Protection</th></tr></thead>
+      <tbody>
+        <tr><td>Condensateur du bus</td><td>$315\ \mathrm{J}$ entre $540$ et $760\ \mathrm{V}$</td><td>Dizaines de millisecondes</td><td>Surtension, sous-tension</td><td>Mesure $U_{bus}$ : seuils et régulateur</td></tr>
+        <tr><td>Inertie de la pompe</td><td>$5965\ \mathrm{J}$ à $1475\ \mathrm{tr/min}$</td><td>Secondes</td><td>Renvoi d'énergie au bus</td><td>Rampe et régulateur de surtension</td></tr>
+        <tr><td>Dissipateur</td><td>$3600\ \mathrm{J/K}$</td><td>$432\ \mathrm{s}$ ventilé, $2160\ \mathrm{s}$ sans ventilation</td><td>Surchauffe</td><td>Sonde CTN, modèle thermique</td></tr>
+        <tr><td>Puce d'IGBT</td><td>Environ $0{,}02\ \mathrm{J/K}$</td><td>Microsecondes en court-circuit</td><td>Destruction par court-circuit</td><td>Désaturation dans le driver</td></tr>
+        <tr><td>Capacités du câble</td><td>$510\ \mu\mathrm{J}$ par front</td><td>Quelques microsecondes par front</td><td>Courant de mode commun</td><td>Écran, tore, aucune protection dédiée</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <ul>
+    <li><a href="#d-flux-figure" data-renvoi="d-flux-figure">Flux d'énergie et réservoirs pendant un cycle de la pompe</a> : animation, en section D.</li>
+    <li><a href="#e-modele-figure" data-renvoi="e-modele-figure">Modèle du bus vu de l'onduleur</a> et <a href="#e-bus-sim" data-renvoi="e-bus-sim">fenêtre de fonctionnement du bus</a>, en section E.</li>
+    <li><a href="#e-couples-figure" data-renvoi="e-couples-figure">Couples pendant une rampe de décélération</a> et <a href="#e-decel-sim" data-renvoi="e-decel-sim">simulation de l'arrêt de la pompe</a>, en section E.</li>
+    <li><a href="#e-therm-sim" data-renvoi="e-therm-sim">Échauffement du dissipateur après un changement de refroidissement</a> : simulation, en section E.</li>
+    <li><a href="#e-mc-figure" data-renvoi="e-mc-figure">Modèle de mode commun du départ moteur</a>, en section E.</li>
+    <li><a href="#g-arbre-figure" data-renvoi="g-arbre-figure">Arbre de diagnostic interactif</a>, en section G.</li>
+    <li><a href="#h-courbe-figure" data-renvoi="h-courbe-figure">Tension maximale du bus en fonction de la rampe</a>, en section H.</li>
+    <li><a href="#i-chrono-figure" data-renvoi="i-chrono-figure">Chronogramme du démarrage avec KM2 sain ou resté ouvert</a> : animation, en section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <p>La procédure suivante s'applique à tout défaut de variateur, et plus largement à tout convertisseur de puissance en exploitation.</p>
+  <ol>
+    <li><strong>Recueillir sans toucher.</strong> Code exact, valeurs enregistrées au déclenchement, historique des défauts, heure, conditions
+      d'exploitation, travaux récents. Un témoignage se recoupe avec le journal, jamais l'inverse.</li>
+    <li><strong>Situer le défaut dans le cycle.</strong> Mise sous tension, premières impulsions, accélération, régime, ralentissement, arrêt ; et sa
+      récurrence : chaque fois, par temps chaud, au premier démarrage.</li>
+    <li><strong>Lister les causes compatibles.</strong> Avec la matrice des signatures de la section E, retenir toutes les causes qui produisent ce code
+      à ce moment, y compris hors du variateur : réseau, câble, moteur, mécanique, paramètres.</li>
+    <li><strong>Décider du réarmement.</strong> Jamais après un court-circuit ou une désaturation tant que la cause n'est pas trouvée ; au plus le
+      nombre d'essais prévu pour les défauts de tension.</li>
+    <li><strong>Prévoir par le calcul.</strong> Pour chaque cause, chiffrer ce que les mesures devraient montrer : tension du bus, temps de
+      déclenchement, température, courant de mode commun. Sans prévision, une mesure ne départage rien.</li>
+    <li><strong>Sécuriser.</strong> Consigner, attendre la décharge, vérifier l'absence de tension sur le bus avant toute intervention dans l'armoire.</li>
+    <li><strong>Mesurer dans le bon ordre.</strong> D'abord les mesures sûres, rapides et discriminantes : lecture de paramètres, continuité et
+      résistances hors tension, essai d'isolement variateur déconnecté ; ensuite les enregistrements sous tension.</li>
+    <li><strong>Conclure sur une seule cause.</strong> Si plusieurs causes restent compatibles, revenir à l'étape 3 avec une nouvelle mesure.</li>
+    <li><strong>Corriger et justifier.</strong> Choisir l'action qui supprime la cause, pas seulement le symptôme, en pesant le risque, le coût et
+      l'arrêt du procédé.</li>
+    <li><strong>Vérifier et documenter.</strong> Rejouer les conditions du défaut, constater sa disparition, consigner la cause, l'action et les valeurs
+      mesurées, et mettre à jour le plan de maintenance.</li>
+  </ol>
+  <p>
+    L'arbre interactif ci-dessous applique les étapes 1 à 3 et 7 aux quatre codes les plus fréquents. Choisissez un code, puis le moment où il
+    survient : le chemin se trace et la cause probable s'affiche avec la première mesure à faire.
+  </p>
+  <figure id="g-arbre-figure">
+    <div class="schema-vivant" id="g-arbre-vivant"></div>
+    <div id="g-arbre-choix"></div>
+    <div id="g-arbre-verdict"></div>
+    <figcaption>
+      Arbre de diagnostic. À gauche, la racine : un défaut signalé ; au centre, les quatre codes ; à droite, le moment du cycle. Les liaisons du chemin
+      choisi se tracent en trait épais et les autres s'estompent ; le panneau sous l'arbre donne la cause la plus probable, la valeur que le calcul
+      permet d'attendre et la première mesure. L'arbre trie, il ne conclut pas : la conclusion revient toujours à une mesure.
+    </figcaption>
+  </figure>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    <strong>Situation.</strong> Après le remplacement de la carte de commande du variateur de la pompe, chargée avec les paramètres d'usine, la pompe
+    déclenche en surtension du bus à chaque arrêt commandé depuis la pleine vitesse. Le journal indique un déclenchement environ $1{,}6\ \mathrm{s}$
+    après l'ordre d'arrêt. Les paramètres lus montrent une rampe de décélération de $2\ \mathrm{s}$ et un régulateur de surtension désactivé ; les
+    paramètres sauvegardés avant le remplacement indiquaient $10\ \mathrm{s}$ et un régulateur actif.
+  </p>
+  <p>
+    <strong>Données.</strong> Vitesse initiale $1475\ \mathrm{tr/min}$ ; couple de la pompe $C_0 = 194{,}2\ \mathrm{N\cdot m}$ à cette vitesse, quadratique ;
+    inertie supposée $J = 0{,}5\ \mathrm{kg\cdot m^2}$ ; rendement en génératrice supposé $\eta = 0{,}92$ ; bus $C = 2{,}2\ \mathrm{mF}$ à
+    $V_0 = 540\ \mathrm{V}$ au début du freinage ; seuils $760\ \mathrm{V}$ et $800\ \mathrm{V}$.
+  </p>
+  <p>
+    <strong>Inconnues.</strong> La vitesse où commence le freinage générateur, l'énergie renvoyée, la tension qu'atteindrait le bus, la rampe minimale,
+    la sensibilité à l'inertie, et la décision.
+  </p>
+  <p>
+    <strong>Stratégie.</strong> Vérifier que la cause supposée, la rampe de $2\ \mathrm{s}$ sans régulateur, explique quantitativement le symptôme,
+    tension au-delà de $800\ \mathrm{V}$ et instant du déclenchement ; puis dimensionner la rampe avec une marge sur l'incertitude de l'inertie.
+  </p>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li><strong>Vitesse angulaire.</strong> $\Omega_0 = 1475 \times 2\pi/60 = 154{,}46\ \mathrm{rad/s}$.</li>
+    <li><strong>Couple de décélération imposé.</strong> $J\Omega_0/T = 0{,}5 \times 154{,}46/2 = 38{,}62\ \mathrm{N\cdot m}$, soit $19{,}9\ \%$ de $C_0$.</li>
+    <li><strong>Vitesse frontière.</strong> $\Omega_x = \Omega_0\sqrt{J\Omega_0/(C_0T)} = 154{,}46 \times \sqrt{38{,}62/194{,}2} = 154{,}46 \times 0{,}4459
+      = 68{,}88\ \mathrm{rad/s}$, soit $658\ \mathrm{tr/min}$. La rampe l'atteint à $t = 2 \times (1 - 0{,}4459) = 1{,}11\ \mathrm{s}$.</li>
+    <li><strong>Énergie renvoyée.</strong> $W_g = \eta J^2\Omega_0^3/(4C_0T) = 0{,}92 \times 0{,}25 \times 3{,}6851 \times 10^6/(4 \times 194{,}2 \times 2)
+      = 847\,580/1553{,}6 = 545{,}6\ \mathrm{J}$.</li>
+    <li><strong>Tension sans régulateur ni déclenchement.</strong> $V_{max} = \sqrt{540^2 + 2 \times 545{,}6/2{,}2 \times 10^{-3}} = \sqrt{291\,600 +
+      495\,970} = \sqrt{787\,570} = 887\ \mathrm{V}$, au-delà du seuil de $800\ \mathrm{V}$ : le déclenchement est inévitable. La réserve jusqu'à
+      $800\ \mathrm{V}$ vaut $\tfrac12 \times 2{,}2 \times 10^{-3}(800^2 - 540^2) = 383{,}2\ \mathrm{J}$, épuisée avant la fin de la rampe ; la simulation
+      de la section E place l'instant à $1{,}64\ \mathrm{s}$, en accord avec le journal.</li>
+    <li><strong>Rampe minimale.</strong> Réserve jusqu'au régulateur : $\tfrac12 \times 2{,}2 \times 10^{-3}(760^2 - 540^2) = 314{,}6\ \mathrm{J}$ ;
+      $T_{min} = 1091{,}1/314{,}6 = 3{,}47\ \mathrm{s}$.</li>
+    <li><strong>Sensibilité à l'inertie.</strong> $J$ est supposée ; la pompe, l'accouplement et l'eau entraînée peuvent la porter à
+      $0{,}8\ \mathrm{kg\cdot m^2}$. Comme $W_g \propto J^2$, $T_{min} = 3{,}47 \times (0{,}8/0{,}5)^2 = 8{,}88\ \mathrm{s}$.</li>
+    <li><strong>Pire cas de tension initiale.</strong> Réseau haut à vide, le bus part de $622{,}3\ \mathrm{V}$ : réserve
+      $\tfrac12 \times 2{,}2 \times 10^{-3}(760^2 - 622{,}3^2) = 209{,}4\ \mathrm{J}$, d'où $T_{min} = 1091{,}1/209{,}4 = 5{,}21\ \mathrm{s}$ avec
+      $0{,}5\ \mathrm{kg\cdot m^2}$, et $13{,}3\ \mathrm{s}$ si l'on cumule les deux pires cas.</li>
+    <li><strong>Décision.</strong> Restaurer la rampe de $10\ \mathrm{s}$ et réactiver le régulateur de surtension. La rampe couvre seule l'inertie
+      majorée sous bus nominal ; le cumul improbable des deux pires cas reste couvert par le régulateur, qui allonge alors l'arrêt sans déclencher.
+      Corriger la procédure de remplacement : sauvegarde et rechargement des paramètres, puis essai d'arrêt avec enregistrement de $V_{bus}$.</li>
+  </ol>
+  <p>
+    La courbe ci-dessous trace la tension maximale du bus en fonction de la rampe pour les deux inerties, et place les points calculés.
+  </p>
+  <figure id="h-courbe-figure">
+    <div id="h-courbe"></div>
+    <figcaption>
+      Tension maximale atteinte par le bus, pont bloqué, sans régulateur ni déclenchement, en fonction de la durée de rampe $T$, depuis
+      $V_0 = 540\ \mathrm{V}$. Deux courbes : inertie de $0{,}5\ \mathrm{kg\cdot m^2}$ et inertie majorée de $0{,}8\ \mathrm{kg\cdot m^2}$. Les tirets
+      horizontaux marquent $760$ et $800\ \mathrm{V}$ ; les points repèrent la rampe d'usine de $2\ \mathrm{s}$, la rampe minimale de $3{,}47\ \mathrm{s}$
+      et la rampe retenue de $10\ \mathrm{s}$.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li><strong>Dimensions.</strong> $J^2\Omega_0^3/(C_0T)$ est une énergie, vérifiée en section E ; $2W/C$ est en $\mathrm{J/F} = \mathrm{V^2}$.</li>
+    <li><strong>Ordre de grandeur.</strong> Les $545{,}6\ \mathrm{J}$ renvoyés ne représentent que $9\ \%$ de l'énergie cinétique de $5965\ \mathrm{J}$ :
+      la pompe en absorbe l'essentiel, ce qui est attendu pour une charge quadratique freinée en $2\ \mathrm{s}$.</li>
+    <li><strong>Cas limite.</strong> Pour $T = 10\ \mathrm{s}$, on retrouve $109\ \mathrm{J}$ et $625\ \mathrm{V}$, les valeurs du cours
+      <a href="#/cours/convertisseurs-et-moteurs">Convertisseurs et moteurs</a>.</li>
+    <li><strong>Accord avec le symptôme.</strong> L'instant calculé du déclenchement, $1{,}64\ \mathrm{s}$, concorde avec le journal, et le freinage ne
+      commence qu'après $1{,}11\ \mathrm{s}$ : la cause est démontrée quantitativement, pas seulement plausible.</li>
+    <li><strong>Bilan d'énergie.</strong> Après déclenchement, le bus reste vers $800\ \mathrm{V}$ et se décharge lentement par ses résistances
+      d'équilibrage, $3{,}1\ \mathrm{W}$ : l'énergie stockée, $704\ \mathrm{J}$ à $800\ \mathrm{V}$, justifie le délai de décharge affiché.</li>
+  </ul>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+
+  <h3 id="i-contexte">Dossier de diagnostic du variateur de la pompe</h3>
+  <p>
+    La pompe alimente le procédé du site ; son arrêt prolongé arrête la production, et la pompe de secours, si elle existe, n'a pas de variateur.
+    Les interventions dans l'armoire se font par une personne habilitée, après consignation et attente de la décharge du bus ; le variateur est le
+    seul équipement de la chaîne dont le remplacement demande plusieurs jours d'approvisionnement. Trois défauts réels ou plausibles sont traités
+    ci-dessous comme des dossiers : symptômes, hypothèses, valeurs attendues, mesures et décision. Les données de chaque dossier sont celles du projet
+    fil rouge ; les relevés de terrain sont imaginés pour l'exercice et signalés comme tels.
+  </p>
+
+  <h3 id="i-cas-km2">Dossier 1 : sous-tension quelques secondes après chaque ordre de marche</h3>
+  <p>
+    <strong>Symptômes.</strong> Depuis le remplacement du contacteur de précharge, le variateur se met sous tension sans défaut et affiche un bus de
+    $564\ \mathrm{V}$ à l'arrêt. À chaque ordre de marche, il déclenche en sous-tension après environ trois secondes ; une odeur de chaud vient de la
+    zone de précharge. <strong>Hypothèses.</strong> Creux du réseau, perte d'une phase, ou KM2 qui ne se ferme pas. <strong>Valeurs attendues.</strong>
+    Un creux du réseau serait aléatoire et visible sur l'enregistreur de la centrale de mesure du tableau ; une phase perdue donnerait une forte
+    ondulation du bus en charge, et le défaut surviendrait plutôt à forte puissance. KM2 ouvert, en revanche, limite la puissance à
+    $1{,}53\ \mathrm{kW}$ : le bus passe sous $400\ \mathrm{V}$ dès $1{,}17\ \mathrm{kW}$. Avec la rampe de $10\ \mathrm{s}$ et la puissance de la pompe
+    prise cubique en fréquence, $19{,}7\ \mathrm{kW}$ au bus à $42{,}25\ \mathrm{Hz}$, ce seuil est franchi à $16{,}5\ \mathrm{Hz}$, soit
+    $3{,}3\ \mathrm{s}$ après l'ordre de marche : exactement le symptôme.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de lancer l'animation</span>
+    <p>
+      KM2 sain, de combien le bus descend-il entre l'arrêt et $6\ \mathrm{s}$ de rampe ? KM2 resté ouvert, la tension baisse-t-elle de façon
+      régulière ou s'effondre-t-elle brusquement à l'approche du seuil ? Pourquoi ?
+    </p>
+  </div>
+  <figure id="i-chrono-figure">
+    <div id="i-chrono-curseurs"></div>
+    <div id="i-chrono-puissance"></div>
+    <div id="i-chrono-bus"></div>
+    <div id="i-chrono-lecteur"></div>
+    <div id="i-chrono-valeurs"></div>
+    <figcaption>
+      Chronogramme des six premières secondes après l'ordre de marche, dans le modèle à courant lissé. Le premier tracé donne la puissance
+      prélevée sur le bus, en kilowatts, avec en tirets la puissance maximale transmissible quand KM2 reste ouvert, $1{,}53\ \mathrm{kW}$ ; le second,
+      la tension du bus, avec en tirets le seuil de sous-tension de $400\ \mathrm{V}$. Le trait vertical en pointillé suit l'instant du lecteur, et le
+      panneau donne la fréquence, la puissance, la tension, le courant et la puissance dissipée dans $R_p$ à cet instant. Le curseur choisit KM2 fermé
+      ou resté ouvert. Après un déclenchement, la puissance tombe à zéro et le bus remonte par la précharge, avec la constante de temps
+      $R_pC = 103\ \mathrm{ms}$.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> KM2 sain, le bus ne descend que d'environ $5\ \mathrm{V}$ en six secondes : la puissance n'atteint que
+    $7{,}1\ \mathrm{kW}$ à $30\ \mathrm{Hz}$ et la source est raide. KM2 ouvert, la tension baisse d'abord lentement, puis de plus en plus vite : l'équation du second degré
+    a une pente infinie au point d'effondrement, où ses deux racines se rejoignent. La charge à puissance constante accélère la chute : moins de
+    tension, plus de courant, plus de chute dans $R_p$. <strong>Mesures.</strong> Hors tension et consigné : vérifier la bobine de KM2 et son
+    alimentation, le contact de puissance au multimètre en manœuvrant le contacteur à la main si sa construction le permet, puis la résistance
+    $R_p$, qui a pu chauffer au-delà de sa tenue : $401\ \mathrm{W}$ au moment du déclenchement, à chaque essai. Relevé imaginé : la bobine du
+    contacteur neuf, en $230\ \mathrm{V}$, avait été câblée sur la sortie $24\ \mathrm{V}$ de la carte, prévue pour une bobine $24\ \mathrm{V}$ continu.
+    <strong>Décision.</strong> Remplacer KM2 par la référence prévue, contrôler $R_p$, et faire remonter vers l'automate l'état réel de KM2 par un
+    contact auxiliaire, pour qu'un défaut de précharge soit signalé avant la marche au lieu d'une sous-tension après.
+  </p>
+
+  <h3 id="i-cas-chaleur">Dossier 2 : déclenchements en surchauffe l'après-midi, en été</h3>
+  <p>
+    <strong>Symptômes.</strong> Trois déclenchements en surchauffe du dissipateur en une semaine de juillet, tous entre $14$ et $17\ \mathrm{h}$, quand
+    la demande pousse la pompe vers $44\ \mathrm{Hz}$ ; jamais le matin ni en hiver. Le variateur redémarre après refroidissement.
+    <strong>Hypothèses.</strong> Ventilateur arrêté, ailettes encrassées, air de l'armoire trop chaud, ou sonde défaillante. <strong>Valeurs
+    attendues.</strong> Un ventilateur arrêté déclencherait en une minute environ à pleine charge et en sept minutes au point de service, toute saison
+    confondue : la signature saisonnière l'écarte, sans l'exclure tout à fait. Propre, à $0{,}12\ \mathrm{K/W}$ et $40\ \mathrm{^\circ C}$, le dissipateur
+    serait à $78{,}8\ \mathrm{^\circ C}$ à $44\ \mathrm{Hz}$ ; pour atteindre $100\ \mathrm{^\circ C}$ à $45\ \mathrm{^\circ C}$ d'air, il faut
+    $R_{ha} \geq 0{,}17\ \mathrm{K/W}$. <strong>Mesure.</strong> Relevé imaginé en marche stable au point de service, l'après-midi : $T_h = 97{,}3\
+    \mathrm{^\circ C}$ affichés, air de l'armoire à $45\ \mathrm{^\circ C}$ au thermomètre, pertes estimées à $290{,}5\ \mathrm{W}$. D'où
+    $R_{ha} = (97{,}3 - 45)/290{,}5 = 0{,}180\ \mathrm{K/W}$, soit $50\ \%$ de plus que la valeur saine ; le ventilateur tourne. La sonde est cohérente,
+    puisque la valeur calculée concorde avec la valeur affichée. À $44\ \mathrm{Hz}$, $323{,}6\ \mathrm{W}$ de pertes donnent
+    $45 + 0{,}18 \times 323{,}6 = 103{,}2\ \mathrm{^\circ C}$ : déclenchement. <strong>Décision.</strong> Nettoyer les ailettes, côté extérieur du
+    montage traversant, vérifier le débit du ventilateur et l'extraction de l'armoire, puis contrôler que $R_{ha}$ revient vers
+    $0{,}12\ \mathrm{K/W}$ par le même calcul. Inscrire le nettoyage au plan de maintenance avant chaque été, et faire remonter $T_h$ à l'automate
+    pour une alarme anticipée à $90\ \mathrm{^\circ C}$.
+  </p>
+
+  <h3 id="i-cas-cable">Dossier 3 : surintensité au démarrage depuis le remplacement du câble</h3>
+  <p>
+    C'est la question laissée ouverte par le cours précédent. Le câble blindé de $85\ \mathrm{m}$ a été remplacé par un câble de $150\ \mathrm{m}$, posé
+    par un autre chemin. Depuis, le variateur déclenche une à deux secondes après l'ordre de marche, en surintensité selon l'exploitant. Le tableau
+    rassemble les hypothèses, ce que chacune prédit et la mesure qui la départage. Il illustre l'étape 5 de la méthode : chiffrer avant de mesurer.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Hypothèse</th><th>Ce qu'elle prédit</th><th>Mesure discriminante</th><th>Coût et risque</th></tr></thead>
+      <tbody>
+        <tr><td>Code mal lu par l'exploitant</td><td>Le journal peut montrer un défaut terre, ou une désaturation, au lieu d'une surintensité</td><td>Lecture du journal : code, courant, fréquence, tension du bus</td><td>Nul ; toujours en premier</td></tr>
+        <tr><td>Défaut d'isolement du câble neuf, blessé à la pose</td><td>Défaut terre ou surintensité dès les premières impulsions, chaque impulsion portant la pleine tension du bus</td><td>Essai d'isolement câble et moteur déconnectés du variateur, phase par phase vers le PE</td><td>Faible, hors tension ; jamais variateur raccordé</td></tr>
+        <tr><td>Courant de mode commun excessif</td><td>Crête presque inchangée, environ $8{,}6\ \mathrm{A}$ par front, énergie par front $+62\ \%$ ; tore proche de la saturation ; phénomène présent dès la première impulsion</td><td>Pince haute fréquence autour des trois phases, crête comparée à la prévision, avec et sans tore</td><td>Mesure sous tension, personne habilitée</td></tr>
+        <tr><td>Réglage ou mécanique</td><td>Déclenchement lié à la fréquence atteinte, $5$ à $10\ \mathrm{Hz}$ après $1$ à $2\ \mathrm{s}$ de rampe ; courant qui croît avant le déclenchement</td><td>Journal : fréquence au déclenchement ; essai avec rampe doublée ; rotation libre de la pompe à la main, consignée</td><td>Faible</td></tr>
+        <tr><td>Écran mal raccordé au nouveau chemin</td><td>Courant de mode commun qui revient par la structure et les autres câbles ; perturbations des capteurs</td><td>Continuité de l'écran et colliers à $360$ degrés aux deux extrémités</td><td>Faible, hors tension</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Ordre retenu : journal, puis isolement et continuité de l'écran hors tension, puis pince sous tension, enfin essais de réglage. La longueur de
+    $150\ \mathrm{m}$ doit aussi être comparée à la longueur maximale admise par le constructeur pour ce calibre de variateur avec self de sortie,
+    donnée qui ne se déduit d'aucun calcul de ce cours. L'indice temporel, un déclenchement qui attend $1$ à $2\ \mathrm{s}$, oriente vers la
+    dernière hypothèse ; il ne dispense d'aucune mesure, car un défaut d'isolement qui ne claque qu'une fois chaud, ou une détection qui intègre le
+    courant de fuite, peut retarder un phénomène lié aux fronts. Ce dossier reste volontairement ouvert : sa conclusion dépend des mesures, que la
+    question de diagnostic de la section K vous demande d'interpréter.
+  </p>
+
+  <h3 id="i-fil-rouge">Projet fil rouge : plan de diagnostic et de maintenance du variateur de la pompe</h3>
+  <p>
+    L'élément ajouté cette semaine au projet est le plan de diagnostic du variateur, qui relie chaque défaut à une remontée vers l'automate, une
+    réaction automatique et une première action de maintenance. Il complète les protections choisies au cours précédent et prépare la supervision.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Défaut ou alarme</th><th>Remontée vers l'automate</th><th>Réaction automatique</th><th>Première action de maintenance</th></tr></thead>
+      <tbody>
+        <tr><td>Court-circuit, désaturation</td><td>Code par Ethernet, relais de défaut</td><td>Aucun réarmement ; pompe de secours si disponible</td><td>Consignation ; test des modules, câble et moteur déconnectés</td></tr>
+        <tr><td>Défaut terre</td><td>Code, relais de défaut</td><td>Aucun réarmement automatique</td><td>Essai d'isolement câble et moteur déconnectés ; séchage si humidité</td></tr>
+        <tr><td>Surtension du bus</td><td>Code, $V_{bus}$ au déclenchement</td><td>Trois essais en dix minutes</td><td>Rampe et régulateur ; $V_{bus}$ enregistrée pendant un arrêt</td></tr>
+        <tr><td>Sous-tension</td><td>Code, état de KM2, tension du réseau</td><td>Trois essais en dix minutes si le réseau est revenu</td><td>KM2 et sa bobine ; centrale de mesure du tableau</td></tr>
+        <tr><td>Précharge, état de KM2</td><td>Contact auxiliaire de KM2</td><td>Marche interdite tant que KM2 n'est pas fermé</td><td>$R_p$, fusibles d'entrée, KM2</td></tr>
+        <tr><td>Fusible aR fondu</td><td>Contact de fusion</td><td>Arrêt, marche interdite</td><td>Recherche du court-circuit amont avant tout remplacement</td></tr>
+        <tr><td>Température du dissipateur</td><td>$T_h$ en continu</td><td>Alarme à $90\ \mathrm{^\circ C}$, réduction du débit, arrêt à $100\ \mathrm{^\circ C}$</td><td>Ventilateur, ailettes ; $R_{ha} = (T_h - T_a)/P$</td></tr>
+        <tr><td>Surcharge du moteur</td><td>Courant moteur, état du modèle thermique</td><td>Alarme puis arrêt</td><td>Hydraulique de la pompe, roulements</td></tr>
+        <tr><td>Perte de consigne</td><td>Courant de boucle</td><td>Repli à une vitesse de sécurité définie avec le procédé</td><td>Boucle $4$-$20\ \mathrm{mA}$</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Maintenance préventive associée : sauvegarde des paramètres à chaque modification et avant tout remplacement de carte ; nettoyage des ailettes et
+    contrôle du ventilateur avant l'été ; essai d'isolement annuel du câble et du moteur, variateur déconnecté, avec suivi de la tendance plutôt que
+    d'une valeur isolée ; suivi de l'ondulation du bus comme indicateur du vieillissement des condensateurs ; enregistrement de $V_{bus}$ pendant un
+    arrêt après toute modification mécanique de la pompe.
+  </p>
+
+  <h3 id="i-compromis">Risques, choix d'ingénierie et compromis</h3>
+  <ul>
+    <li><strong>Réarmement automatique ou disponibilité.</strong> Réarmer automatiquement les défauts de tension améliore la disponibilité après un
+      creux du réseau, mais masque un défaut récurrent comme celui du dossier 1 ; d'où la limite à trois essais et l'enregistrement de chaque essai.</li>
+    <li><strong>Rampe longue ou arrêt rapide.</strong> Une rampe de $10\ \mathrm{s}$ protège le bus et limite le coup de bélier hydraulique, mais ne
+    convient pas à un arrêt d'urgence ; celui-ci se fait en roue libre, sous réserve de l'analyse de risque du procédé.</li>
+    <li><strong>Câble long ou variateur près du moteur.</strong> Rapprocher le variateur du moteur réduit le mode commun et les surtensions aux bornes
+      du moteur, mais expose l'électronique à un environnement plus dur et éloigne la maintenance ; garder le câble long impose la self de sortie et le
+      respect de la longueur maximale du constructeur.</li>
+    <li><strong>Alarme anticipée ou déclenchement.</strong> Une alarme à $90\ \mathrm{^\circ C}$ et une réduction automatique du débit laissent le temps
+      d'agir ; elles demandent une décision du procédé sur le débit minimal acceptable.</li>
+    <li><strong>Remplacement ou réparation.</strong> Remplacer le variateur sans avoir trouvé la cause externe, câble, moteur, réseau, expose le neuf
+      au même défaut ; le diagnostic coûte quelques heures, un variateur détruit plusieurs jours d'arrêt.</li>
+  </ul>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Réarmer sans lire le journal.</strong> Le code et les valeurs enregistrées sont la première donnée du diagnostic ; un réarmement
+      répété après un court-circuit peut achever un module déjà affaibli. Correction : lire, noter, puis décider du réarmement selon la nature du défaut.</li>
+    <li><strong>Mesurer l'isolement variateur raccordé.</strong> La tension d'essai de $500$ ou $1000\ \mathrm{V}$ continu, appliquée aux bornes de
+      sortie, traverse les semi-conducteurs, les condensateurs du filtre et les varistances, et détruit l'électronique ou fausse la mesure. Correction :
+      déconnecter câble et moteur du variateur avant l'essai.</li>
+    <li><strong>Croire que le régulateur de surtension raccourcit l'arrêt.</strong> Il évite le déclenchement en refusant l'énergie, ce qui allonge
+      la rampe réelle ; sans résistance de freinage, rien ne consomme l'énergie de l'inertie à part la charge et les pertes.</li>
+    <li><strong>Raisonner en inertie proportionnelle.</strong> L'énergie renvoyée croît comme $J^2$ : une inertie réelle $1{,}6$ fois plus grande que
+      prévu multiplie la rampe nécessaire par $2{,}56$. Correction : majorer $J$ et vérifier par un enregistrement de $V_{bus}$.</li>
+    <li><strong>Conclure qu'un câble deux fois plus long double la crête de mode commun.</strong> La crête est fixée par $Z_0$, propriété par mètre ;
+      ce qui croît, ce sont la charge, l'énergie et la durée des oscillations. Correction : comparer une mesure de crête à la prévision.</li>
+    <li><strong>Intervenir sur un bus supposé déchargé.</strong> Le délai affiché suppose des résistances de décharge intactes. Correction : toujours
+      vérifier l'absence de tension au voltmètre sur $+E$ et $-E$.</li>
+    <li><strong>Confondre le code et la cause.</strong> Une sous-tension n'est pas forcément le réseau, une surchauffe pas forcément le ventilateur.
+      Correction : situer le défaut dans le cycle et chiffrer chaque hypothèse.</li>
+    <li><strong>Remplacer avant de diagnostiquer.</strong> Un variateur neuf raccordé à un câble en défaut est détruit à son tour. Correction :
+      contrôler câble et moteur avant toute remise en service d'un variateur remplacé.</li>
+  </ol>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic industriel et une
+    question conceptuelle sans calcul. Les solutions sont présentes dans la page mais restent masquées jusqu'à votre tentative ou à un clic explicite ;
+    chaque correction se révèle étape par étape, avec un tracé ou un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangées : choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Le score est calculé dans ce
+    navigateur et repris par la grille d'auto-évaluation.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+  <h3 id="m-formules">Cinq formules essentielles</h3>
+  <div class="formule-cle">$$V_{bus} = \frac{V_0 + \sqrt{V_0^2 - 4R_tP}}{2}, \qquad P_{max} = \frac{V_0^2}{4R_t}$$</div>
+  <div class="formule-cle">$$W_g = \frac{\eta J^2\Omega_0^3}{4C_0T}, \qquad V_{max} = \sqrt{V_0^2 + \frac{2W_g}{C}}$$</div>
+  <div class="formule-cle">$$T_{min} = \frac{\eta J^2\Omega_0^3}{2C_0C\,(V_{lim}^2 - V_0^2)}$$</div>
+  <div class="formule-cle">$$T_h(t) = T_{h\infty} - (T_{h\infty} - T_{h0})\,e^{-t/(R_{ha}C_{th})}, \qquad R_{ha} = \frac{T_h - T_a}{P}$$</div>
+  <div class="formule-cle">$$\hat{\imath}_{mc} = \frac{E/3}{Z_0}, \qquad Z_0 = \sqrt{L/C}, \qquad W_{front} = \tfrac12 C\left(\frac{E}{3}\right)^2$$</div>
+  <h3 id="m-vigilance">Cinq points de vigilance</h3>
+  <ul>
+    <li>Jamais d'essai d'isolement aux bornes d'un variateur raccordé.</li>
+    <li>Jamais d'intervention sans vérification de l'absence de tension sur le bus, quel que soit le délai écoulé.</li>
+    <li>Jamais de réarmement répété après un court-circuit ou une désaturation.</li>
+    <li>Toujours sauvegarder les paramètres avant de remplacer une carte, et les comparer après.</li>
+    <li>Toujours chiffrer la valeur attendue avant de mesurer : une mesure sans prévision ne départage rien.</li>
+  </ul>
+  <h3 id="m-resume">Résumé</h3>
+  <p>
+    Un variateur est une chaîne de réservoirs : condensateur du bus, inertie de la machine, dissipateur, capacités du câble. Ses défauts typiques
+    sont des débordements. Le bus, source de Thévenin chargée à puissance constante, vérifie $V^2 - V_0V + RP = 0$ : la puissance est bornée à
+    $V_0^2/4R$, ce qui trahit un contacteur de précharge resté ouvert. En ralentissement, une charge quadratique renvoie
+    $\eta J^2\Omega_0^3/(4C_0T)$, d'où une rampe minimale très sensible à l'inertie ; le régulateur évite le déclenchement sans raccourcir l'arrêt.
+    Le dissipateur se diagnostique par $R_{ha} = (T_h - T_a)/P$ et son transitoire exponentiel. Allonger un câble ne change presque pas la crête de
+    mode commun. Diagnostiquer, c'est lire le journal, situer le défaut dans le cycle, chiffrer chaque hypothèse, mesurer en sécurité dans l'ordre le
+    plus discriminant, corriger, puis vérifier.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance, deux sur le cours précédent,
+    <a href="#/cours/protections-des-convertisseurs">Protections des convertisseurs</a>, une sur le cours
+    <a href="#/cours/revision-7-et-mini-projet-alimentation">Révision 7 et mini-projet alimentation</a>, vieux d'une semaine, dont la charge à
+    puissance constante sert ici au bus du variateur, et une sur le cours <a href="#/cours/filtres-passifs">Filtres passifs</a>, vieux d'un mois, car
+    le découpage du variateur perturbe les mesures analogiques qu'un filtre doit protéger.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : reproduire en Python les trois calculs de la séance et simuler dans LTspice l'effondrement d'un bus alimentant une charge à puissance
+    constante à travers une résistance de précharge. Prédictions à écrire avant de commencer : instant du déclenchement en surtension pour une rampe
+    de $2\ \mathrm{s}$ ; puissance d'effondrement avec $R_p = 47\ \Omega$ ; temps avant $100\ \mathrm{^\circ C}$ après une panne de ventilateur au point
+    de service.
+  </p>
+  <ol>
+    <li>Python, décélération : intégrer par pas de $0{,}1\ \mathrm{ms}$ l'équation $J\,\mathrm{d}\Omega/\mathrm{d}t = C_m - C_0(\Omega/\Omega_0)^2$ avec
+      $C_m = C_0(\Omega/\Omega_0)^2 - J\Omega_0/T$, et, quand $C_m$ est négatif, $\mathrm{d}(V^2)/\mathrm{d}t = -2\eta C_m\Omega/C$ ; arrêter le freinage
+      quand $V$ atteint $800\ \mathrm{V}$, puis laisser la pompe ralentir seule. Tracer $V(t)$ et $\Omega(t)$ pour $T = 2$, $3{,}5$ et $10\ \mathrm{s}$.</li>
+    <li>Python, thermique : résoudre $C_{th}\,\mathrm{d}T_h/\mathrm{d}t = P - (T_h - T_a)/R_{ha}$ avec $C_{th} = 3600\ \mathrm{J/K}$, à partir du régime
+      établi à $0{,}12\ \mathrm{K/W}$, après passage à $0{,}6\ \mathrm{K/W}$ ; comparer à la formule analytique.</li>
+    <li>LTspice, bus et charge à puissance constante : <code>V1 1 0 538.5</code>, <code>R1 1 2 0.389</code>, <code>Rp 2 3 47</code>, un interrupteur
+      commandé en parallèle sur <code>Rp</code>, <code>C1 3 0 2.2m</code> avec condition initiale $538{,}5\ \mathrm{V}$, et une source de courant
+      comportementale <code>B1 3 0 I=V(P)/max(V(3),50)</code>, où <code>V(P)</code> est une source de tension qui représente la puissance, en rampe de
+      $0$ à $3000$ en $6\ \mathrm{s}$. Lancer <code>.tran 0 6 0 1m uic</code> interrupteur ouvert, puis fermé.</li>
+  </ol>
+  <p>
+    Résultats attendus : déclenchement vers $1{,}64\ \mathrm{s}$ pour $T = 2\ \mathrm{s}$, $V_{max}$ de $758\ \mathrm{V}$ pour $3{,}5\ \mathrm{s}$ et de
+    $625\ \mathrm{V}$ pour $10\ \mathrm{s}$ ; environ $430\ \mathrm{s}$ avant $100\ \mathrm{^\circ C}$ au point de service ; dans LTspice, interrupteur
+    ouvert, $400\ \mathrm{V}$ vers $1{,}17\ \mathrm{kW}$, soit $2{,}34\ \mathrm{s}$ avec cette rampe, puis effondrement brutal vers $1{,}5\ \mathrm{kW}$ ;
+    interrupteur fermé, une baisse de quelques volts seulement.
+  </p>
+  <p>
+    Anomalies à observer et à expliquer : une tension de bus qui monte pendant toute la rampe en Python, signe que le freinage est compté dès le
+    début sans tester le signe de $C_m$ ; une température qui dépasse la valeur finale, pas d'intégration trop grand ; dans LTspice, un échec de
+    convergence à l'effondrement, normal puisque la solution disparaît, d'où le <code>max(V(3),50)</code> qui borne le courant ; un bus qui ne baisse
+    pas, interrupteur commandé à l'envers. Variante expérimentale, sous la responsabilité d'une personne habilitée et sur une alimentation de
+    laboratoire limitée en courant : alimenter un petit convertisseur abaisseur régulé, charge à puissance constante, à travers une résistance de
+    quelques ohms, et relever la tension d'entrée en augmentant la charge jusqu'au décrochage.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours, notées de 0 à 4. Le bilan affiché sous la grille est calculé dans ce
+    navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement. Aucune estimation n'est
+    faite à votre place : seul le score réellement obtenu sert de référence.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Bilan du jalon de fin de module</span>
+    <p>
+      Le jalon demande d'analyser les principaux convertisseurs de puissance, leurs formes d'onde, leurs pertes, leurs protections et leur
+      intégration dans un variateur. Pour le vérifier sur vos propres résultats : la tension du bus et l'énergie de freinage relèvent des exercices
+      fondamental 1 et avancé ; les pertes et la thermique, de l'exercice fondamental 2 et du dossier 2 ; les protections et leur intégration, de
+      l'exercice de lecture de schéma et de la question de diagnostic ; les formes d'onde du découpage et du mode commun, des questions de quiz
+      correspondantes. Si l'un de ces blocs reste sous la moitié des réussites, reprenez le cours concerné du tableau de synthèse de la section E
+      avant d'aborder le module suivant.
+    </p>
+  </div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Un variateur est une chaîne de réservoirs d'énergie, bus, inertie, dissipateur, capacités du câble ; chaque défaut typique est le débordement ou le tarissement de l'un d'eux, et se reconnaît au moment du cycle où il survient.</li>
+    <li data-rang="02">Trois calculs de révision suffisent à chiffrer la plupart des diagnostics : le bus à puissance constante, $V^2 - V_0V + R_tP = 0$ ; l'énergie de freinage d'une charge quadratique, $\eta J^2\Omega_0^3/(4C_0T)$ ; le transitoire thermique du dissipateur, de constante $R_{ha}C_{th}$.</li>
+    <li data-rang="03">Diagnostiquer, c'est lire le journal, situer le défaut, chiffrer chaque hypothèse, puis mesurer en sécurité dans l'ordre le plus discriminant ; jamais d'essai d'isolement variateur raccordé, jamais d'intervention sans vérifier l'absence de tension sur le bus.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> tenir ensemble le calcul et la méthode. Les erreurs typiques consistent à mesurer sans avoir
+    chiffré ce qu'on attend, ce qui empêche de conclure, ou à conclure sur un code sans situer le défaut dans le cycle. Le réflexe à installer :
+    pour chaque hypothèse, une valeur attendue et une mesure qui la confirme ou l'écarte.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Modélisation des systèmes dynamiques, ouvre le module d'automatique. Le régulateur
+    de surtension du bus agit sur le couple de freinage en fonction de la tension mesurée. Question à préparer : en partant des deux équations de cette
+    séance, $J\,\mathrm{d}\Omega/\mathrm{d}t = C_m - C_r(\Omega)$ et $\tfrac12 C\,\mathrm{d}(V^2)/\mathrm{d}t = -\eta C_m\Omega$, quelles sont les
+    variables d'état du système formé par la pompe et le bus, quelles en sont l'entrée et la sortie, et quelle difficulté faut-il lever pour en tirer
+    une fonction de transfert autour d'un point de fonctionnement ?
+  </p>
+
+</article>
