@@ -1,0 +1,956 @@
+<article class="cours" data-slug="modelisation-des-systemes-dynamiques">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/revision-8-et-etude-de-cas-variateur">Révision 8 et étude de cas variateur</a> s'est achevé sur une question : à
+      partir des deux équations $J\,\mathrm{d}\Omega/\mathrm{d}t = C_m - C_r(\Omega)$ et $\tfrac12 C\,\mathrm{d}(V^2)/\mathrm{d}t = -\eta C_m\Omega$,
+      quelles sont les variables d'état du système formé par la pompe et le bus, quelles en sont l'entrée et la sortie, et quelle difficulté faut-il
+      lever pour en tirer une fonction de transfert ? Réponse. Les variables d'état sont les grandeurs attachées aux deux réservoirs d'énergie : la
+      vitesse $\Omega$, qui porte l'énergie cinétique $\tfrac12 J\Omega^2$, et la tension $V$ du bus, qui porte l'énergie $\tfrac12 CV^2$. L'entrée
+      de commande est le couple $C_m$ imposé par le variateur ; le couple de la pompe $C_r(\Omega)$ dépend de l'état, et une éventuelle variation de
+      la charge hydraulique joue le rôle de perturbation. La sortie est ce que l'on mesure et veut maîtriser : la tension $V$ pour le régulateur de
+      surtension. La difficulté est la non-linéarité : le couple de la pompe varie comme $\Omega^2$, la puissance renvoyée est le produit
+      $C_m\Omega$ et le bilan porte sur $V^2$. Une fonction de transfert n'existe que pour un modèle linéaire ; il faut donc
+      <strong>linéariser autour d'un point de fonctionnement</strong>. C'est l'un des quatre gestes de cette séance.
+    </p>
+    <p>
+      Cette séance ouvre le module d'automatique. Elle réutilise les équations différentielles des cours
+      <a href="#/cours/regime-transitoire-rc">Régime transitoire RC</a>, <a href="#/cours/regime-transitoire-rl">Régime transitoire RL</a> et
+      <a href="#/cours/regime-transitoire-rlc">Régime transitoire RLC</a>, la mise en équations matricielle du cours
+      <a href="#/cours/methodes-de-resolution-systematique">Méthodes de résolution systématique</a>, les impédances complexes du cours
+      <a href="#/cours/impedances-en-regime-sinusoidal">Impédances en régime sinusoïdal</a> et le moteur du cours
+      <a href="#/cours/machine-a-courant-continu">Machine à courant continu</a>.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Réguler une vitesse, une température, une pression ou la tension d'un bus, c'est agir sur un système dont on ne voit la réponse qu'après un
+    certain temps. Pour choisir et régler un régulateur, il faut savoir comment ce système réagit : vite ou lentement, avec ou sans oscillation,
+    avec quel gain. Le <strong>modèle dynamique</strong> est cette connaissance mise en équations. Toute l'automatique qui suit en dépend : les
+    indicateurs de réponse du cours Réponse temporelle et performances, les diagrammes du cours Diagrammes de Bode, les critères du cours Critères de
+    stabilité et le réglage du cours Correcteurs P, PI, PD et PID partent tous d'une fonction de transfert.
+  </p>
+  <ul>
+    <li><strong>Le même langage pour des physiques différentes.</strong> Un circuit RLC, une masse suspendue, un moteur, un dissipateur et une cuve
+      se décrivent par les mêmes équations différentielles. Une fois modélisés, ils se traitent avec les mêmes outils.</li>
+    <li><strong>Un modèle se choisit.</strong> Le variateur de la pompe contient des constantes de temps qui vont de la milliseconde, pour le bus, à
+      plusieurs minutes, pour le dissipateur. Un bon modèle ne garde que ce qui compte à l'échelle de temps du problème posé.</li>
+    <li><strong>Les vrais systèmes sont non linéaires.</strong> Couple quadratique d'une pompe, saturation d'un courant, rampe d'un variateur : la
+      linéarisation autour d'un point de fonctionnement est l'outil qui rend ces systèmes accessibles, à condition d'en connaître le domaine de
+      validité.</li>
+    <li><strong>Le modèle sert aussi au diagnostic.</strong> Un système qui répond plus lentement que son modèle signale une inertie, un frottement
+      ou une limitation inattendus, comme on le verra en section I.</li>
+  </ul>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Jalon visé par le module</span>
+    <p>
+      À la fin du module d'automatique et du module de mesure qui le suit, le jalon du parcours demande de modéliser et réguler un système simple,
+      d'utiliser correctement les instruments de mesure et de concevoir une chaîne d'acquisition industrielle. Cette séance en pose la première
+      pierre : sans modèle, pas de régulation raisonnée.
+    </p>
+  </div>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Établir, à partir des lois physiques, l'équation différentielle d'un circuit électrique et d'un système mécanique simples, en identifiant entrée, sortie, perturbation et hypothèses.</li>
+    <li data-rang="02">Choisir des variables d'état justifiées par les réservoirs d'énergie et écrire la représentation d'état $\dot{x} = Ax + Bu$, $y = Cx + Du$.</li>
+    <li data-rang="03">Calculer une fonction de transfert, son gain statique, ses pôles, et l'identifier aux formes canoniques du premier et du second ordre ($K$, $\tau$, $\omega_0$, $\zeta$).</li>
+    <li data-rang="04">Linéariser un modèle non linéaire autour d'un point d'équilibre et chiffrer l'erreur commise selon l'amplitude des variations.</li>
+    <li data-rang="05">Construire et réduire un schéma bloc comportant une boucle de rétroaction interne, comme la force électromotrice d'un moteur.</li>
+    <li data-rang="06">Comparer les constantes de temps d'un système et justifier la réduction d'un modèle, en chiffrant l'erreur de l'approximation.</li>
+    <li data-rang="07">Diagnostiquer l'écart entre la réponse mesurée d'un entraînement et son modèle à partir de la forme de la réponse.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>Quatre notions suffisent.</p>
+  <ul>
+    <li><strong>Équation du premier ordre.</strong> $\tau\,\dot{y} + y = Ku$ a pour réponse à un échelon d'amplitude $U$, depuis le repos,
+      $y(t) = KU\left(1 - e^{-t/\tau}\right)$ : $63\ \%$ de la valeur finale à $t = \tau$, $95\ \%$ à $3\tau$. Pour un circuit RL,
+      $\tau = L/R$ ; pour un circuit RC, $\tau = RC$.</li>
+    <li><strong>Équation du second ordre.</strong> $\ddot{y} + 2\zeta\omega_0\dot{y} + \omega_0^2 y = \omega_0^2 Ku$, avec la pulsation propre
+      $\omega_0$ en $\mathrm{rad/s}$ et le coefficient d'amortissement $\zeta$ sans dimension. Régime pseudo-périodique si $\zeta &lt; 1$, critique
+      si $\zeta = 1$, apériodique si $\zeta &gt; 1$.</li>
+    <li><strong>Développement limité au premier ordre.</strong> Près d'un point $x_0$, $f(x_0 + \delta x) \approx f(x_0) + f'(x_0)\,\delta x$ ;
+      pour deux variables, on ajoute $\dfrac{\partial f}{\partial u}\,\delta u$.</li>
+    <li><strong>Mécanique de rotation.</strong> $J\,\mathrm{d}\Omega/\mathrm{d}t = \sum C$, avec $J$ en $\mathrm{kg\cdot m^2}$, $\Omega$ en
+      $\mathrm{rad/s}$ et les couples en $\mathrm{N\cdot m}$ ; $1\ \mathrm{tr/min} = 2\pi/60\ \mathrm{rad/s}$.</li>
+  </ul>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Notation de la séance</span>
+    <p>
+      $u$ : entrée de commande ; $y$ : sortie mesurée ; $d$ : perturbation ; $x$ : vecteur d'état. Le point au-dessus d'une grandeur désigne sa
+      dérivée temporelle. $s$ : variable de Laplace, en $\mathrm{s^{-1}}$ ; une majuscule $Y(s)$ désigne la transformée de $y(t)$. $H(s)$ : fonction de
+      transfert. $\delta x$ : petite variation autour d'un point de fonctionnement noté avec l'indice $0$ ou $s$ (service). Tensions fléchées en
+      convention récepteur pour les dipôles passifs, la masse servant de référence de potentiel ; couples moteurs comptés positifs dans le sens de
+      rotation, couples résistants comptés positifs en sens opposé. Pompe du projet fil rouge : $J = 0{,}5\ \mathrm{kg\cdot m^2}$ (supposée),
+      $C_r = C_0(\Omega/\Omega_0)^2$ avec $C_0 = 194{,}2\ \mathrm{N\cdot m}$ à $\Omega_0 = 154{,}46\ \mathrm{rad/s}$ ($1475\ \mathrm{tr/min}$),
+      point de service à $\Omega_s = 130{,}90\ \mathrm{rad/s}$ ($1250\ \mathrm{tr/min}$).
+    </p>
+  </div>
+  <p>
+    Mini-test de trois questions. Les réponses restent masquées, séparées de l'énoncé, jusqu'à votre tentative ou à un clic explicite.
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+  <h3 id="d-memoire">Un système dynamique est un système qui se souvient</h3>
+  <p>
+    Une résistance seule répond instantanément : la tension impose le courant au même instant. Dès qu'un élément stocke de l'énergie, la réponse
+    dépend de ce qui s'est passé avant. Un condensateur ne peut pas changer de tension instantanément, car il faudrait lui apporter une énergie
+    finie en un temps nul, donc une puissance infinie. Une inductance ne peut pas changer de courant instantanément, une masse de vitesse, un
+    dissipateur de température. Chaque réservoir d'énergie est une mémoire.
+  </p>
+  <p>
+    D'où l'idée centrale de cette séance : <strong>l'état</strong> d'un système est l'ensemble minimal de grandeurs qui suffit, avec les entrées
+    futures, à prédire tout son avenir. Les candidates naturelles sont les grandeurs attachées aux réservoirs : tensions des condensateurs, courants
+    des inductances, vitesses des masses, positions des ressorts, températures des corps. Le nombre de réservoirs indépendants donne
+    <strong>l'ordre</strong> du système.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Réservoir</th><th>Énergie stockée</th><th>Variable d'état</th><th>Ce qui ne peut pas sauter</th><th>Ordre de grandeur, pompe du site</th></tr></thead>
+      <tbody>
+        <tr><td>Condensateur du bus</td><td>$\tfrac12 CV^2$</td><td>tension $V$</td><td>tension</td><td>$2{,}2\ \mathrm{mF}$, $\tau \approx 0{,}9\ \mathrm{ms}$</td></tr>
+        <tr><td>Inductance d'un enroulement</td><td>$\tfrac12 Li^2$</td><td>courant $i$</td><td>courant</td><td>quelques millisecondes</td></tr>
+        <tr><td>Inertie de l'arbre</td><td>$\tfrac12 J\Omega^2$</td><td>vitesse $\Omega$</td><td>vitesse</td><td>$0{,}5\ \mathrm{kg\cdot m^2}$, $\tau \approx 0{,}23\ \mathrm{s}$ à couple imposé</td></tr>
+        <tr><td>Ressort, élasticité</td><td>$\tfrac12 kx^2$</td><td>position $x$</td><td>position</td><td>torsion de l'arbre, négligée ici</td></tr>
+        <tr><td>Masse thermique</td><td>$C_{th}T$ (au-dessus d'une référence)</td><td>température $T$</td><td>température</td><td>$3600\ \mathrm{J/K}$, $\tau = 432\ \mathrm{s}$</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Analogie de la photographie, et ses limites</span>
+    <p>
+      On peut se représenter l'état comme une photographie qui suffit à reprendre un film interrompu : si l'on connaît la vitesse et la position
+      d'une masse au moment de la pause, on sait comment le film continue. L'analogie a trois limites. D'abord, une photographie ordinaire ne
+      montre que des positions ; l'état contient aussi des vitesses, c'est-à-dire des grandeurs que l'œil ne voit pas sur une image fixe. Ensuite,
+      l'état n'est pas unique : on peut décrire le même circuit par la charge et le courant, ou par deux combinaisons de ces grandeurs, comme on
+      peut photographier une scène sous plusieurs angles. Enfin, la photographie ne prédit l'avenir que si l'on connaît aussi les entrées futures :
+      l'état résume le passé, pas ce que l'opérateur fera ensuite.
+    </p>
+  </div>
+
+  <h3 id="d-analogie">Deux physiques, une même équation</h3>
+  <p>
+    Un circuit RLC série et une masse reliée à un ressort et à un amortisseur obéissent à la même équation du second ordre. Dans l'analogie dite
+    force-tension, l'inductance joue le rôle de la masse, car elle s'oppose aux variations de courant comme la masse s'oppose aux variations de
+    vitesse ; la résistance joue le rôle du frottement visqueux, qui dissipe ; l'inverse de la capacité joue le rôle de la raideur, qui stocke une
+    énergie de position. La charge correspond à la position, le courant à la vitesse.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Électrique</th><th>Mécanique de translation</th><th>Mécanique de rotation</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td>tension $u$ (V)</td><td>force $F$ (N)</td><td>couple $C$ (N.m)</td><td>effort, cause</td></tr>
+        <tr><td>courant $i$ (A)</td><td>vitesse $v$ (m/s)</td><td>vitesse $\Omega$ (rad/s)</td><td>flux</td></tr>
+        <tr><td>charge $q$ (C)</td><td>position $x$ (m)</td><td>angle $\theta$ (rad)</td><td>intégrale du flux</td></tr>
+        <tr><td>inductance $L$ (H)</td><td>masse $m$ (kg)</td><td>inertie $J$ (kg.m²)</td><td>stocke l'énergie du flux</td></tr>
+        <tr><td>résistance $R$ (Ω)</td><td>frottement $f$ (N.s/m)</td><td>frottement $f$ (N.m.s/rad)</td><td>dissipe</td></tr>
+        <tr><td>inverse de la capacité $1/C$ (F⁻¹)</td><td>raideur $k$ (N/m)</td><td>raideur $k$ (N.m/rad)</td><td>stocke l'énergie de position</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limites de l'analogie électromécanique</span>
+    <p>
+      L'analogie est exacte pour les modèles linéaires idéalisés, et seulement pour eux. Un frottement réel est souvent sec (constant) ou
+      quadratique, pas visqueux ; un ressort se plastifie, une inductance sature, un condensateur fuit. L'analogie choisie est aussi une convention :
+      une autre analogie, dite force-courant, associe la masse à la capacité et convient mieux aux structures en parallèle. Enfin, la topologie ne se
+      transpose pas toujours : des éléments mécaniques solidaires d'un même point se traduisent par des éléments électriques en série dans une
+      analogie et en parallèle dans l'autre.
+    </p>
+  </div>
+  <p>
+    La simulation suivante anime une masse, un ressort et un amortisseur, trace la trajectoire de l'état dans le plan position, vitesse, et donne
+    les valeurs du circuit RLC équivalent. Le point déplaçable du plan d'état fixe l'état initial ; le lecteur fait avancer le temps.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Avec $m = 1\ \mathrm{kg}$, $k = 100\ \mathrm{N/m}$ et $f = 4\ \mathrm{N\cdot s/m}$, la masse lâchée à $8\ \mathrm{cm}$ sans vitesse
+      oscille-t-elle ? Quelle forme prendra la trajectoire dans le plan position, vitesse : une droite, une spirale ou une courbe qui rejoint
+      l'origine sans tourner ? Que devient cette forme si l'on porte $f$ à $30\ \mathrm{N\cdot s/m}$ ? Deux états initiaux différents peuvent-ils
+      conduire à la même position à un instant donné, puis à des avenirs différents ?
+    </p>
+  </div>
+  <figure id="d-etat-sim">
+    <div class="schema-vivant" id="d-etat-vivant"></div>
+    <div id="d-etat-lecteur"></div>
+    <div id="d-etat-curseurs"></div>
+    <div id="d-etat-valeurs"></div>
+    <div id="d-etat-trace"></div>
+    <figcaption>
+      Système masse, ressort, amortisseur. En haut à gauche, la masse se déplace horizontalement ; sa position $x$ est comptée positive vers la
+      droite à partir de la position de repos du ressort ; le trait vertical en pointillé marque la position d'équilibre $F_0/k$ ; la flèche au-dessus de la masse indique le sens et
+      la valeur de sa vitesse $v$. À droite, le plan d'état : abscisse $x$ en centimètres, ordonnée $v$ en centimètres par seconde ; le trait plein
+      est la trajectoire parcourue depuis l'instant initial, le petit cercle plein l'état courant, et le point déplaçable l'état initial. Les
+      curseurs règlent la masse, la raideur, le frottement visqueux et une force constante appliquée à partir de $t = 0$. Le tracé du bas montre
+      $x(t)$ sur toute la durée simulée ; le panneau donne $\omega_0$, $\zeta$, le régime et le circuit RLC équivalent.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Avec $\zeta = 0{,}2$, la masse oscille et la trajectoire est une spirale qui s'enroule vers l'origine : à chaque
+    tour, l'amortisseur dissipe une partie de l'énergie, qui s'échange entre le ressort, quand la trajectoire croise l'axe des positions, et la masse,
+    quand elle croise l'axe des vitesses. Avec $f = 30\ \mathrm{N\cdot s/m}$, $\zeta = 1{,}5$ : la trajectoire rejoint l'origine sans tourner, le
+    régime est apériodique. Deux états initiaux de même position mais de vitesses différentes donnent des avenirs différents : la position seule ne
+    suffit pas, il faut l'état complet, ici deux grandeurs pour deux réservoirs. Enfin, deux trajectoires ne se croisent jamais dans le plan d'état
+    d'un système invariant : en un point donné, l'avenir est unique. Une force constante déplace seulement le point d'arrivée, en $x = F_0/k$ : c'est
+    le gain statique de la fonction de transfert position sur force, $1/k$.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-definitions">Définitions et hypothèses</h3>
+  <ul>
+    <li><strong>Système, entrée, sortie, perturbation.</strong> Un système transforme des entrées en sorties. On distingue l'entrée de commande
+      $u$, que l'on choisit (tension appliquée, consigne de fréquence), la perturbation $d$, que l'on subit (couple de charge, température
+      ambiante), et la sortie $y$, que l'on mesure. Ce découpage est une <em>convention</em> liée au problème posé : la tension du bus est une
+      sortie pour le régulateur de surtension et une entrée pour l'onduleur.</li>
+    <li><strong>Causalité.</strong> La sortie à l'instant $t$ ne dépend que des entrées antérieures ou simultanées. C'est une
+      <em>loi</em> pour tout système physique.</li>
+    <li><strong>Linéarité.</strong> Un système est linéaire s'il vérifie la superposition : la réponse à $a u_1 + b u_2$ est
+      $a y_1 + b y_2$, depuis un état initial nul. Aucun système réel ne l'est exactement : la linéarité est une <em>approximation</em> valable
+      dans un domaine.</li>
+    <li><strong>Invariance.</strong> Les paramètres ne dépendent pas du temps. Approximation encore : une résistance chauffe, une cuve se vide.</li>
+  </ul>
+  <p>
+    Les outils de cette séance, représentation d'état linéaire et fonction de transfert, supposent un système linéaire, invariant, à paramètres
+    localisés (décrit par des équations différentielles ordinaires et non par des équations aux dérivées partielles, ce qui exclut une ligne longue
+    ou la diffusion de la chaleur dans un mur épais).
+  </p>
+
+  <h3 id="e-mise-en-equations">Mise en équations : un circuit et un système mécanique</h3>
+  <p>
+    <strong>Circuit RLC série.</strong> Une source de tension $e(t)$ alimente une résistance $R$, une inductance $L$ et un condensateur $C$ en série ;
+    la sortie est la tension $u_C$ du condensateur. Le schéma ci-dessous fixe les conventions.
+  </p>
+  <figure id="e-rlc-figure">
+    <svg viewBox="0 0 640 230" role="img" aria-label="Circuit RLC série : source e à gauche, borne plus en haut, résistance R, inductance L et condensateur C ; courant i dans le sens horaire ; tensions uR, uL et uC fléchées en convention récepteur ; masse en bas comme référence de potentiel"><defs><marker id="e-rlc-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="80" cy="120" r="26"/><path d="M80 94V50H160M240 50H290M290 50C298 36 306 36 314 50C322 36 330 36 338 50C346 36 354 36 362 50C370 36 378 36 386 50M386 50H500V100M500 140V190H80V146"/><rect x="160" y="38" width="80" height="24" rx="3"/><path d="M476 100H524M476 140H524" stroke-width="3"/><path d="M80 190V200M70 200H90M74 206H86M78 212H82" stroke-width="1.6"/></g><g fill="none" stroke="currentColor" stroke-width="1.6"><path d="M108 40H146" marker-end="url(#e-rlc-fl)"/><path d="M236 80H164" marker-end="url(#e-rlc-fl)"/><path d="M382 80H290" marker-end="url(#e-rlc-fl)"/><path d="M550 160V84" marker-end="url(#e-rlc-fl)"/><path d="M36 150V92" marker-end="url(#e-rlc-fl)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13"><text x="74" y="114">+</text><text x="72" y="134">e</text><text x="14" y="86">e(t)</text><text x="112" y="32">i</text><text x="194" y="30">R</text><text x="186" y="98">uR</text><text x="330" y="28">L</text><text x="326" y="98">uL</text><text x="532" y="126">C</text><text x="558" y="124">uC</text><text x="100" y="222">masse, référence de potentiel</text></g></svg>
+    <figcaption>
+      Circuit RLC série. La source $e(t)$, borne $+$ en haut, est en convention générateur ; le courant $i$ est compté positif dans le sens horaire,
+      de la borne $+$ vers la résistance. Les trois dipôles passifs sont en convention récepteur : chaque flèche de tension pointe vers la borne par
+      laquelle entre le courant. La masse en bas est la référence de potentiel ; $u_C$ est la tension du nœud supérieur du condensateur par rapport à
+      la masse.
+    </figcaption>
+  </figure>
+  <p>
+    Lois utilisées : loi des mailles $e = u_R + u_L + u_C$ (loi physique : conservation de l'énergie), et lois constitutives $u_R = Ri$,
+    $u_L = L\,\mathrm{d}i/\mathrm{d}t$, $i = C\,\mathrm{d}u_C/\mathrm{d}t$ (modèles idéaux). En remplaçant $i$ par $C\dot{u}_C$ :
+  </p>
+  <div class="formule-cle">
+    $$LC\,\ddot{u}_C + RC\,\dot{u}_C + u_C = e(t)$$
+    <p class="formule-cle-legende">
+      $L$ en henrys, $C$ en farads, $R$ en ohms, tensions en volts. Vérification dimensionnelle : $LC$ est en $\mathrm{s^2}$
+      ($\mathrm{H\cdot F} = \frac{\mathrm{V\,s}}{\mathrm{A}}\cdot\frac{\mathrm{A\,s}}{\mathrm{V}}$) et $RC$ en secondes, donc chaque terme est en volts.
+    </p>
+  </div>
+  <p>
+    <strong>Masse, ressort, amortisseur.</strong> Une masse $m$ glisse sans frottement sec ; un ressort de raideur $k$ la rappelle vers la position
+    d'équilibre, un amortisseur visqueux exerce $-f\dot{x}$ et une force extérieure $F(t)$ est appliquée, comptée positive dans le sens des $x$
+    croissants. Le principe fondamental de la dynamique, loi physique, donne $m\ddot{x} = F - kx - f\dot{x}$ :
+  </p>
+  <div class="formule-cle">
+    $$m\,\ddot{x} + f\,\dot{x} + k\,x = F(t)$$
+    <p class="formule-cle-legende">
+      $m$ en kg, $f$ en $\mathrm{N\cdot s/m}$, $k$ en $\mathrm{N/m}$, $x$ en m, $F$ en N. Chaque terme est en newtons. En divisant par $k$, on
+      retrouve la forme du circuit : $\frac{m}{k}\ddot{x} + \frac{f}{k}\dot{x} + x = F/k$, avec $m/k \leftrightarrow LC$ et $f/k \leftrightarrow RC$.
+    </p>
+  </div>
+  <p>
+    Les deux équations ont la même forme canonique $\ddot{y} + 2\zeta\omega_0\dot{y} + \omega_0^2 y = \omega_0^2 K u$. Par identification :
+  </p>
+  <div class="formule-cle">
+    $$\omega_0 = \frac{1}{\sqrt{LC}} = \sqrt{\frac{k}{m}}, \qquad \zeta = \frac{R}{2}\sqrt{\frac{C}{L}} = \frac{f}{2\sqrt{km}}, \qquad K = 1 \ \text{(circuit)}, \ \ K = \frac{1}{k} \ \text{(masse)}$$
+    <p class="formule-cle-legende">
+      Interprétation : $\omega_0$ ne dépend que des deux réservoirs, l'amortissement que du rapport entre la dissipation et l'échange d'énergie. Cas
+      limites : si $R \to 0$ ou $f \to 0$, $\zeta \to 0$ et l'oscillation ne s'éteint jamais ; si $L \to 0$ ou $m \to 0$, $\zeta \to \infty$ et le
+      système redevient du premier ordre, de constante $RC$ ou $f/k$. Dimension : $\sqrt{\mathrm{F/H}} = \sqrt{(\mathrm{s}/\Omega)/(\Omega\,\mathrm{s})} = 1/\Omega$, donc $R\sqrt{C/L}$ est sans
+      dimension.
+    </p>
+  </div>
+
+  <h3 id="e-etat">Représentation d'état</h3>
+  <p>
+    Une équation d'ordre $n$ se réécrit en $n$ équations du premier ordre, une par variable d'état. Pour le circuit RLC, les réservoirs imposent le
+    choix $x_1 = u_C$ et $x_2 = i$ :
+  </p>
+  <div class="formule-cle">
+    $$\dot{u}_C = \frac{1}{C}\,i, \qquad \dot{i} = \frac{1}{L}\left(e - Ri - u_C\right)
+    \quad\Longleftrightarrow\quad
+    \begin{pmatrix}\dot{u}_C\\ \dot{i}\end{pmatrix} =
+    \begin{pmatrix}0 & \frac{1}{C}\\ -\frac{1}{L} & -\frac{R}{L}\end{pmatrix}
+    \begin{pmatrix}u_C\\ i\end{pmatrix} +
+    \begin{pmatrix}0\\ \frac{1}{L}\end{pmatrix} e,
+    \qquad y = \begin{pmatrix}1 & 0\end{pmatrix}\begin{pmatrix}u_C\\ i\end{pmatrix}$$
+    <p class="formule-cle-legende">
+      Forme générale : $\dot{x} = Ax + Bu$, $y = Cx + Du$. $A$ (matrice d'état, en $\mathrm{s^{-1}}$ pour des grandeurs de même unité) décrit
+      l'évolution libre, $B$ l'action de l'entrée, $C$ ce que l'on mesure, $D$ la transmission directe, nulle ici. Attention : la lettre $C$ désigne
+      ici une matrice de sortie et non la capacité ; le contexte lève l'ambiguïté.
+    </p>
+  </div>
+  <p>
+    Pourquoi ce choix ? Parce que $u_C$ et $i$ sont continues : connaître leur valeur à un instant suffit pour repartir, comme l'a montré la
+    simulation de la section D. On pourrait choisir la charge $q$ et le courant, ou $u_C$ et sa dérivée : la représentation d'état n'est pas unique,
+    mais l'ordre l'est. Les valeurs propres de $A$ ne dépendent pas du choix ; ce sont les pôles du système. Le nombre de variables d'état, lui, ne se
+    choisit pas : deux réservoirs indépendants, deux variables. Deux condensateurs en parallèle ne forment qu'un réservoir, car leurs tensions sont
+    liées.
+  </p>
+  <p>
+    La représentation d'état est la forme qu'attendent les outils de simulation numérique, qui intègrent $\dot{x} = f(x, u)$ pas à pas, et elle
+    reste valable pour un modèle non linéaire, plusieurs entrées et plusieurs sorties. C'est la méthode systématique du cours
+    <a href="#/cours/methodes-de-resolution-systematique">Méthodes de résolution systématique</a> étendue aux systèmes à mémoire.
+  </p>
+
+  <h3 id="e-transfert">Fonction de transfert</h3>
+  <p>
+    La transformée de Laplace associe à $y(t)$, nulle pour $t &lt; 0$, la fonction $Y(s) = \int_0^\infty y(t)\,e^{-st}\,\mathrm{d}t$. Sa propriété
+    utile ici : $\mathcal{L}\{\dot{y}\} = sY(s) - y(0)$. <strong>Avec des conditions initiales nulles</strong>, dériver revient à multiplier par $s$,
+    et l'équation différentielle devient une équation algébrique. Pour le circuit RLC :
+  </p>
+  <div class="formule-cle">
+    $$\left(LCs^2 + RCs + 1\right)U_C(s) = E(s) \quad\Longrightarrow\quad H(s) = \frac{U_C(s)}{E(s)} = \frac{1}{LCs^2 + RCs + 1} = \frac{\omega_0^2}{s^2 + 2\zeta\omega_0 s + \omega_0^2}$$
+    <p class="formule-cle-legende">
+      Définition : la fonction de transfert est le rapport des transformées de la sortie et de l'entrée, toutes conditions initiales nulles. Elle ne
+      dépend que du système, pas du signal. Ordre : degré du dénominateur, ici 2. Gain statique : $H(0) = 1$, valeur finale de $u_C$ pour un échelon
+      unité, puisqu'en continu le condensateur se charge à la tension de la source. Pôles : racines du dénominateur.
+    </p>
+  </div>
+  <p>
+    Le lien avec le régime sinusoïdal est immédiat : pour $s = j\omega$, on retrouve le diviseur d'impédances du cours
+    <a href="#/cours/impedances-en-regime-sinusoidal">Impédances en régime sinusoïdal</a>, $Z_C/(Z_R + Z_L + Z_C)$. On peut donc écrire une fonction
+    de transfert directement avec les impédances opérationnelles $Z_L = Ls$ et $Z_C = 1/(Cs)$, sans repasser par l'équation différentielle. Depuis la
+    représentation d'état, on obtient de même $H(s) = C(sI - A)^{-1}B + D$ : les pôles sont les valeurs propres de $A$.
+  </p>
+  <div class="formule-cle">
+    $$\text{premier ordre : } H(s) = \frac{K}{1 + \tau s}, \qquad \text{second ordre : } H(s) = \frac{K\,\omega_0^2}{s^2 + 2\zeta\omega_0 s + \omega_0^2}$$
+    <p class="formule-cle-legende">
+      $K$ : gain statique, dans l'unité de la sortie divisée par celle de l'entrée. $\tau$ : constante de temps, en secondes ; pôle en $s = -1/\tau$.
+      Pour $\zeta \geq 1$, le second ordre se factorise en deux premiers ordres de constantes $\tau_1$ et $\tau_2$, avec $\tau_1\tau_2 = 1/\omega_0^2$
+      et $\tau_1 + \tau_2 = 2\zeta/\omega_0$. Un pôle à partie réelle négative donne un mode qui s'éteint ; positive, un mode qui diverge.
+    </p>
+  </div>
+  <div class="encadre attention">
+    <span class="encadre-titre">Ce que la fonction de transfert ne dit pas</span>
+    <p>
+      Elle suppose un état initial nul : la réponse d'un circuit dont le condensateur est déjà chargé contient en plus une réponse libre que $H(s)$
+      ignore. Elle ne décrit que le lien entre une entrée et une sortie : un mode interne qui n'influence pas la sortie choisie, ou que l'entrée
+      n'excite pas, peut disparaître par simplification d'un pôle et d'un zéro, tout en existant physiquement. Et elle n'existe que pour un modèle
+      linéaire invariant.
+    </p>
+  </div>
+
+  <h3 id="e-linearisation">Linéarisation autour d'un point de fonctionnement</h3>
+  <p>
+    Soit un modèle non linéaire $\dot{x} = f(x, u)$. Un <strong>point d'équilibre</strong> $(x_0, u_0)$ vérifie $f(x_0, u_0) = 0$ : l'état n'y évolue
+    plus. Pour de petites variations $x = x_0 + \delta x$ et $u = u_0 + \delta u$, le développement limité au premier ordre donne, puisque
+    $f(x_0, u_0) = 0$ :
+  </p>
+  <div class="formule-cle">
+    $$\delta\dot{x} \approx \left.\frac{\partial f}{\partial x}\right|_0 \delta x + \left.\frac{\partial f}{\partial u}\right|_0 \delta u$$
+    <p class="formule-cle-legende">
+      Le modèle obtenu est linéaire en $\delta x$ et $\delta u$, et ses coefficients dépendent du point choisi. Hypothèse : variations petites devant
+      l'échelle de courbure de $f$. Si l'on linéarisait autour d'un point qui n'est pas d'équilibre, le terme constant $f(x_0, u_0)$ resterait et
+      l'état dériverait : on ne décrirait pas des petites variations autour d'un régime stable.
+    </p>
+  </div>
+  <p>
+    <strong>Application à la pompe, couple imposé.</strong> Si le variateur impose le couple, par exemple en commande vectorielle, le modèle est
+    $J\dot{\Omega} = C_m - C_0(\Omega/\Omega_0)^2$. Équilibre au point de service : $C_{m0} = C_0(\Omega_s/\Omega_0)^2 = 194{,}2 \times
+    (130{,}90/154{,}46)^2 = 139{,}47\ \mathrm{N\cdot m}$. Dérivée du couple résistant :
+  </p>
+  <div class="formule-cle">
+    $$b = \left.\frac{\mathrm{d}C_r}{\mathrm{d}\Omega}\right|_{\Omega_s} = \frac{2C_0\Omega_s}{\Omega_0^2}, \qquad J\,\delta\dot{\Omega} = \delta C_m - b\,\delta\Omega
+    \quad\Longrightarrow\quad \frac{\delta\Omega(s)}{\delta C_m(s)} = \frac{1/b}{1 + (J/b)\,s}$$
+    <p class="formule-cle-legende">
+      $b$ en $\mathrm{N\cdot m\cdot s/rad}$ : la pompe se comporte, pour les petites variations, comme un frottement visqueux équivalent. Valeurs :
+      $b = 2 \times 194{,}2 \times 130{,}90/154{,}46^2 = 2{,}131\ \mathrm{N\cdot m\cdot s/rad}$, $\tau = J/b = 0{,}5/2{,}131 = 0{,}235\ \mathrm{s}$,
+      gain $1/b = 0{,}469\ \mathrm{rad/s}$ par $\mathrm{N\cdot m}$. Dimension : $J/b$ en
+      $\mathrm{kg\cdot m^2}/(\mathrm{N\cdot m\cdot s}) = \mathrm{s}$. Cas limite : à l'arrêt, $b = 0$ et $\tau \to \infty$ ; la pompe n'offre plus
+      aucun frein aux petites variations et seule l'inertie compte.
+    </p>
+  </div>
+  <p>
+    La tangente remplace la parabole. L'erreur se calcule exactement : $C_r(\Omega_s + \delta\Omega) - C_r(\Omega_s) - b\,\delta\Omega =
+    C_0\,\delta\Omega^2/\Omega_0^2$. Rapportée à la variation exacte, elle vaut $2{,}4\ \%$ pour une hausse de vitesse de $5\ \%$, $4{,}8\ \%$ pour
+    $10\ \%$ et $9{,}1\ \%$ pour $20\ \%$ ; un peu plus pour les baisses, $11\ \%$ pour $-20\ \%$. La simulation suivante permet de déplacer le point de fonctionnement sur la courbe et de comparer
+    les réponses du modèle non linéaire et du modèle linéarisé à un échelon de couple.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Pour un échelon de couple de $+10\ \%$ au point de service, le modèle linéaire prévoit-il une vitesse finale trop haute ou trop basse ? Et
+      pour un échelon de $-10\ \%$ ? Le modèle linéarisé à $600\ \mathrm{tr/min}$ est-il plus rapide ou plus lent que celui du point de service ?
+    </p>
+  </div>
+  <figure id="e-lin-sim">
+    <div class="schema-vivant" id="e-lin-vivant"></div>
+    <div id="e-lin-curseurs"></div>
+    <div id="e-lin-lecteur"></div>
+    <div id="e-lin-valeurs"></div>
+    <div id="e-lin-trace"></div>
+    <figcaption>
+      Linéarisation du couple de la pompe. En haut, la caractéristique couple résistant en fonction de la vitesse, en trait plein, et sa tangente au
+      point de fonctionnement, en tirets ; le point déplaçable glisse sur la courbe et fixe la vitesse d'équilibre. Pendant la lecture, le petit
+      cercle plein suit l'état du modèle non linéaire sur la parabole, et le petit carré celui du modèle linéarisé sur la tangente. Le curseur règle
+      l'amplitude de l'échelon de couple en pour cent du couple d'équilibre. En bas, la variation de vitesse des deux modèles en fonction du temps ;
+      le panneau donne $b$, $\tau$, le gain et l'écart final entre les deux modèles.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Pour $+10\ \%$, le modèle linéaire prévoit $+6{,}54\ \mathrm{rad/s}$ contre $+6{,}39\ \mathrm{rad/s}$ en réalité :
+    la tangente sous-estime la remontée du couple résistant quand la vitesse augmente, donc surestime la vitesse finale, de $2{,}4\ \%$. Pour
+    $-10\ \%$, c'est l'inverse : $-6{,}54$ contre $-6{,}72\ \mathrm{rad/s}$. L'erreur change de signe avec la variation, signature d'une non-linéarité
+    quadratique. À $600\ \mathrm{tr/min}$, $b$ est deux fois plus petit qu'à $1250\ \mathrm{tr/min}$ : le modèle linéarisé est deux fois plus lent et
+    deux fois plus sensible. Un régulateur réglé au point de service sera donc plus mou aux basses vitesses : c'est la raison d'être des régulateurs
+    à paramètres adaptés au point de fonctionnement.
+  </p>
+
+  <h3 id="e-blocs">Schémas blocs et rétroaction</h3>
+  <p>
+    Un schéma bloc représente chaque relation par un bloc qui multiplie le signal entrant par une fonction de transfert, et chaque loi d'addition par
+    un sommateur dont les signes sont indiqués. Trois règles suffisent pour réduire un schéma, représentées ci-dessous.
+  </p>
+  <figure id="e-algebre-figure">
+    <svg viewBox="0 0 680 300" role="img" aria-label="Trois associations de blocs : série, deux blocs G1 et G2 à la suite équivalent à G1 G2 ; parallèle, deux blocs dont les sorties s'additionnent équivalent à G1 plus G2 ; rétroaction négative, bloc G en chaîne directe et bloc H en retour vers un sommateur de signe moins, équivalent à G sur 1 plus G H"><defs><marker id="e-alg-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="80" y="20" width="70" height="40" rx="5"/><rect x="200" y="20" width="70" height="40" rx="5"/><path d="M30 40H76" marker-end="url(#e-alg-fl)"/><path d="M150 40H196" marker-end="url(#e-alg-fl)"/><path d="M270 40H316" marker-end="url(#e-alg-fl)"/><rect x="120" y="90" width="70" height="36" rx="5"/><rect x="120" y="140" width="70" height="36" rx="5"/><path d="M30 133H70V108H116" marker-end="url(#e-alg-fl)"/><path d="M70 133V158H116" marker-end="url(#e-alg-fl)"/><path d="M190 108H250V121" marker-end="url(#e-alg-fl)"/><path d="M190 158H250V145" marker-end="url(#e-alg-fl)"/><circle cx="250" cy="133" r="12"/><path d="M262 133H316" marker-end="url(#e-alg-fl)"/><circle cx="80" cy="240" r="12"/><rect x="130" y="220" width="70" height="40" rx="5"/><rect x="130" y="270" width="70" height="26" rx="5"/><path d="M30 240H66" marker-end="url(#e-alg-fl)"/><path d="M92 240H126" marker-end="url(#e-alg-fl)"/><path d="M200 240H316" marker-end="url(#e-alg-fl)"/><path d="M260 240V283H204" marker-end="url(#e-alg-fl)"/><path d="M130 283H80V254" marker-end="url(#e-alg-fl)"/><rect x="430" y="20" width="110" height="40" rx="5"/><rect x="430" y="113" width="110" height="40" rx="5"/><rect x="430" y="220" width="110" height="40" rx="5"/><path d="M380 40H426" marker-end="url(#e-alg-fl)"/><path d="M540 40H590" marker-end="url(#e-alg-fl)"/><path d="M380 133H426" marker-end="url(#e-alg-fl)"/><path d="M540 133H590" marker-end="url(#e-alg-fl)"/><path d="M380 240H426" marker-end="url(#e-alg-fl)"/><path d="M540 240H590" marker-end="url(#e-alg-fl)"/><path d="M340 40H360M340 133H360M340 240H360" stroke-dasharray="3 4"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13"><text x="104" y="45">G1</text><text x="224" y="45">G2</text><text x="144" y="113">G1</text><text x="144" y="163">G2</text><text x="236" y="118">+</text><text x="236" y="160">+</text><text x="157" y="245">G</text><text x="158" y="288">H</text><text x="62" y="232">+</text><text x="86" y="262">-</text><text x="36" y="232">r</text><text x="300" y="232">y</text><text x="96" y="232">ε</text><text x="458" y="45">G1 G2</text><text x="450" y="138">G1 + G2</text><text x="480" y="234">G</text><text x="458" y="256">1 + G H</text><text x="350" y="20">série</text><text x="342" y="100">parallèle</text><text x="338" y="212">rétroaction</text></g><g fill="none" stroke="currentColor" stroke-width="1.4"><path d="M446 240H526"/></g></svg>
+    <figcaption>
+      Algèbre des schémas blocs. Les flèches indiquent le sens de propagation des signaux ; un sommateur, cercle, additionne ses entrées avec le
+      signe porté à côté de chaque flèche entrante. En haut, deux blocs en série se multiplient. Au milieu, deux blocs en parallèle dont les sorties
+      s'ajoutent se somment. En bas, la rétroaction négative : la sortie $y$ est ramenée par le bloc $H$ et retranchée à l'entrée $r$, ce qui donne
+      l'écart $\varepsilon$. À droite, le bloc équivalent de chaque association.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Dérivation de la rétroaction.</strong> $\varepsilon = r - Hy$ et $y = G\varepsilon$, donc $y = Gr - GHy$, soit
+    $y(1 + GH) = Gr$ et :
+  </p>
+  <div class="formule-cle">
+    $$\frac{Y(s)}{R(s)} = \frac{G(s)}{1 + G(s)H(s)}$$
+    <p class="formule-cle-legende">
+      Pour une rétroaction positive, le signe du dénominateur devient moins. Cas limites : si $GH \gg 1$, $Y/R \approx 1/H$, la boucle ne dépend
+      presque plus de $G$ ; si $H = 0$, on retrouve la chaîne directe $G$. Le produit $GH$, sans dimension, est le gain de boucle.
+    </p>
+  </div>
+
+  <h3 id="e-moteur">Le moteur à courant continu : une rétroaction interne</h3>
+  <p>
+    Le moteur à courant continu à aimants couple un circuit électrique et un système mécanique. Côté électrique, la loi des mailles donne
+    $u = Ri + L\,\mathrm{d}i/\mathrm{d}t + e$ ; côté mécanique, $J\,\mathrm{d}\Omega/\mathrm{d}t = C_m - f\Omega - C_r$. Le couplage passe par les
+    deux relations du cours <a href="#/cours/machine-a-courant-continu">Machine à courant continu</a>, $e = K\Phi\,\Omega$ et $C_m = K\Phi\, i$, avec la
+    même constante $K\Phi$ en $\mathrm{V\cdot s/rad}$ ou $\mathrm{N\cdot m/A}$, ce qu'impose la conservation de la puissance, $e\,i = C_m\Omega$. On
+    note ici $K = K\Phi$.
+  </p>
+  <p>
+    En transformée de Laplace, conditions initiales nulles : $I(s) = \dfrac{U(s) - E(s)}{R + Ls}$ et
+    $\Omega(s) = \dfrac{C_m(s) - C_r(s)}{Js + f}$. Le schéma bloc qui en résulte, ci-dessous, fait apparaître une boucle : la force électromotrice
+    $e$, proportionnelle à la vitesse, est retranchée à la tension appliquée. Personne ne l'a construite : c'est la physique du moteur. La
+    simulation suivante utilise ce même schéma, anime les signaux qui y circulent et trace la réponse à un échelon de tension.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Moteur de l'actionneur de vanne du projet fil rouge, alimenté par un échelon de $24\ \mathrm{V}$. Le courant de démarrage atteint-il
+      $24/1{,}2 = 20\ \mathrm{A}$ ? Pourquoi le courant retombe-t-il ensuite presque à zéro alors que la tension reste appliquée ? Si l'on décuple
+      l'inductance, la vitesse finale change-t-elle ? Et la forme du démarrage ?
+    </p>
+  </div>
+  <figure id="e-moteur-sim">
+    <div class="schema-vivant" id="e-moteur-vivant">
+      <svg id="e-moteur-svg" viewBox="0 0 720 250" role="img" aria-label="Schéma bloc du moteur à courant continu : sommateur u plus, e moins ; bloc 1 sur R plus L s donnant i ; bloc K donnant Cm ; sommateur Cm plus, Cr moins ; bloc 1 sur J s plus f donnant Omega ; retour par un bloc K donnant e vers le premier sommateur"><defs><marker id="e-mot-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="90" cy="90" r="14"/><rect x="140" y="66" width="110" height="48" rx="6"/><rect x="290" y="66" width="60" height="48" rx="6"/><circle cx="400" cy="90" r="14"/><rect x="450" y="66" width="110" height="48" rx="6"/><rect x="310" y="176" width="60" height="44" rx="6"/><path id="e-mot-c1" d="M20 90H72" marker-end="url(#e-mot-fl)"/><path id="e-mot-c2" d="M104 90H136" marker-end="url(#e-mot-fl)"/><path id="e-mot-c3" d="M250 90H286" marker-end="url(#e-mot-fl)"/><path id="e-mot-c4" d="M350 90H382" marker-end="url(#e-mot-fl)"/><path id="e-mot-c5" d="M400 24V72" marker-end="url(#e-mot-fl)"/><path id="e-mot-c6" d="M414 90H446" marker-end="url(#e-mot-fl)"/><path id="e-mot-c7" d="M560 90H690" marker-end="url(#e-mot-fl)"/><path id="e-mot-c8" d="M620 90V198H374" marker-end="url(#e-mot-fl)"/><path id="e-mot-c9" d="M310 198H90V108" marker-end="url(#e-mot-fl)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13"><text x="154" y="95">1/(R + Ls)</text><text x="314" y="95">K</text><text x="464" y="95">1/(Js + f)</text><text x="334" y="203">K</text><text x="66" y="80">+</text><text x="98" y="124">-</text><text x="376" y="80">+</text><text x="408" y="62">-</text><text x="24" y="80">u</text><text x="104" y="60">u - e</text><text x="262" y="80">i</text><text x="356" y="80">Cm</text><text x="408" y="34">Cr</text><text x="664" y="80">Ω</text><text x="200" y="190">e = K Ω</text><text x="140" y="140">électrique</text><text x="470" y="140">mécanique</text></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text id="e-mot-vu" x="14" y="40">u = 0 V</text><text id="e-mot-vi" x="214" y="56">i = 0 A</text><text id="e-mot-vc" x="268" y="140">Cm = 0</text><text id="e-mot-vw" x="580" y="60">Ω = 0</text><text id="e-mot-ve" x="150" y="226">e = 0 V</text></g><g id="e-mot-points" fill="currentColor" stroke="none"></g></svg>
+    </div>
+    <div id="e-moteur-lecteur"></div>
+    <div id="e-moteur-curseurs"></div>
+    <div id="e-moteur-valeurs"></div>
+    <div id="e-moteur-trace-w"></div>
+    <div id="e-moteur-trace-i"></div>
+    <figcaption>
+      Schéma bloc du moteur à courant continu et réponse à un échelon de tension. Les signaux circulent dans le sens des flèches ; le premier
+      sommateur forme $u - e$, le second $C_m - C_r$ ; la branche du bas ramène la force électromotrice $e = K\Omega$, retranchée à la tension
+      appliquée : c'est une rétroaction négative interne. Pendant la lecture, des points parcourent chaque liaison, d'autant plus nombreux que le
+      signal est grand, et les valeurs instantanées s'affichent sur le schéma. Les curseurs règlent l'inductance, l'inertie et un couple de charge.
+      Le premier tracé compare la vitesse du modèle complet du second ordre à celle du modèle réduit du premier ordre ; le second trace le courant.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Réduction du schéma.</strong> La chaîne directe de $U$ vers $\Omega$ vaut $G = \dfrac{K}{(R + Ls)(Js + f)}$ et le retour $H = K$. Par la
+    formule de rétroaction :
+  </p>
+  <div class="formule-cle">
+    $$\frac{\Omega(s)}{U(s)} = \frac{K}{(R + Ls)(Js + f) + K^2} = \frac{K}{LJ\,s^2 + (RJ + Lf)\,s + (Rf + K^2)}, \qquad
+    \frac{\Omega(s)}{C_r(s)} = -\frac{R + Ls}{LJ\,s^2 + (RJ + Lf)\,s + (Rf + K^2)}$$
+    <p class="formule-cle-legende">
+      Gain statique en vitesse : $K/(Rf + K^2)$, en $\mathrm{rad/s}$ par volt ; si $f \to 0$, il tend vers $1/K$ : à vide, la force électromotrice
+      équilibre exactement la tension. Le même dénominateur apparaît pour les deux entrées : les pôles appartiennent au système, pas à l'entrée.
+      Le couple de charge, lui, fait chuter la vitesse en régime établi de $R/(Rf + K^2)$ par $\mathrm{N\cdot m}$.
+    </p>
+  </div>
+  <p>
+    <strong>Réduction d'ordre.</strong> On définit la constante de temps électrique $\tau_e = L/R$ et la constante électromécanique
+    $\tau_m = RJ/(Rf + K^2)$. Si $f$ est négligeable devant $K^2/R$ et si $\tau_e \ll \tau_m$, le dénominateur se factorise approximativement en
+    $(Rf + K^2)(1 + \tau_e s)(1 + \tau_m s)$, puis, en négligeant $\tau_e$ :
+  </p>
+  <div class="formule-cle">
+    $$\frac{\Omega(s)}{U(s)} \approx \frac{K/(Rf + K^2)}{1 + \tau_m s}, \qquad \tau_m = \frac{RJ}{Rf + K^2} \approx \frac{RJ}{K^2}$$
+    <p class="formule-cle-legende">
+      Interprétation : $\tau_m$ n'est pas $J/f$. Le frein qui ralentit les variations de vitesse est surtout électrique : toute variation de vitesse
+      modifie $e$, donc le courant, donc le couple. Le moteur se comporte comme un frottement visqueux équivalent $K^2/R$. Dimension : $RJ/K^2$ en
+      $\Omega\cdot\mathrm{kg\cdot m^2}/(\mathrm{V\cdot s})^2 = \mathrm{s}$, puisque $\mathrm{V\cdot A\cdot s} = \mathrm{J} = \mathrm{kg\cdot m^2/s^2}$.
+      Règle pratique (règle de conception, non loi) : l'approximation est bonne si $\tau_e/\tau_m$ reste sous $0{,}1$ environ.
+    </p>
+  </div>
+  <p>
+    <strong>Interprétation de la simulation.</strong> Le courant ne monte pas à $20\ \mathrm{A}$ : l'inductance retarde sa croissance pendant que la
+    vitesse, donc $e$, s'établit déjà ; il plafonne à $15{,}6\ \mathrm{A}$ vers $1{,}9\ \mathrm{ms}$ puis retombe à $0{,}17\ \mathrm{A}$, juste ce qu'il
+    faut pour vaincre le frottement, car $e$ rejoint presque $u$. Décupler $L$ ne change pas la vitesse finale, fixée par le gain statique, mais rend
+    le démarrage oscillant : $\zeta$ diminue comme $1/\sqrt{L}$ et la boucle interne de la force électromotrice devient moins amortie. Avec
+    l'inductance nominale, le modèle réduit est un peu trop lent ($t_{95}$ de $14{,}6$ contre $12{,}6\ \mathrm{ms}$) car $\tau_e/\tau_m = 0{,}17$
+    n'est pas petit. Un couple de charge fait baisser la vitesse finale et remonter le courant final : c'est la droite de charge du cours
+    <a href="#/cours/machine-a-courant-continu">Machine à courant continu</a> vue en dynamique.
+  </p>
+
+  <h3 id="e-echelles">Choisir le niveau de détail : séparation des échelles de temps</h3>
+  <p>
+    Le variateur de la pompe contient au moins cinq réservoirs : le condensateur du bus, les inductances du moteur, l'inertie de l'arbre, la masse
+    thermique du dissipateur, sans compter le réseau hydraulique. Un modèle complet aurait de nombreuses variables d'état. Mais leurs constantes de
+    temps s'étalent sur six décades. Le diagramme ci-dessous les situe sur une échelle logarithmique.
+  </p>
+  <figure id="e-echelles-figure">
+    <svg viewBox="0 0 700 210" role="img" aria-label="Échelle logarithmique des constantes de temps de 0,1 milliseconde à 1000 secondes : bus continu 0,88 ms, actionneur de vanne 3,8 ms, vitesse sous commande U sur f 6,6 ms, pompe à couple imposé 0,235 s, rampe du variateur 10 s, dissipateur 432 s ; fenêtre d'intérêt d'une régulation de vitesse entre 10 ms et 10 s"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M40 120H670"/><path d="M40 114V126M130 114V126M220 114V126M310 114V126M400 114V126M490 114V126M580 114V126M670 114V126"/><rect x="220" y="100" width="270" height="40" rx="6" stroke-dasharray="6 5"/></g><g fill="none" stroke="currentColor" stroke-width="1.2"><path d="M125 115V58M182 115V82M203 125V182M343 115V58M490 115V82M637 115V58"/></g><g fill="currentColor" stroke="none"><circle cx="125" cy="120" r="5"/><circle cx="182" cy="120" r="5"/><circle cx="203" cy="120" r="5"/><circle cx="343" cy="120" r="5"/><circle cx="490" cy="120" r="5"/><circle cx="637" cy="120" r="5"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11.5"><text x="20" y="156">0,1 ms</text><text x="116" y="156">1 ms</text><text x="209" y="156">10 ms</text><text x="293" y="156">0,1 s</text><text x="390" y="156">1 s</text><text x="476" y="156">10 s</text><text x="563" y="156">100 s</text><text x="650" y="156">1000 s</text><text x="87" y="52">bus 0,88 ms</text><text x="141" y="76">vanne 3,8 ms</text><text x="169" y="196">U/f 6,6 ms</text><text x="247" y="52">pompe, couple imposé 0,235 s</text><text x="456" y="76">rampe 10 s</text><text x="579" y="52">dissipateur 432 s</text><text x="250" y="176">fenêtre d'une régulation de vitesse</text></g></svg>
+    <figcaption>
+      Constantes de temps du groupe de pompage, sur un axe logarithmique en secondes, une graduation par décade de $0{,}1\ \mathrm{ms}$ à
+      $1000\ \mathrm{s}$. Chaque point plein est une constante calculée dans cette séance ou dans les cours précédents, avec des paramètres en partie
+      supposés. Le rectangle en tirets marque la fenêtre de temps qui intéresse une régulation de vitesse ou de pression, de $10\ \mathrm{ms}$ à
+      $10\ \mathrm{s}$ : les phénomènes plus rapides y paraissent instantanés, les plus lents y paraissent figés.
+    </figcaption>
+  </figure>
+  <p>
+    D'où la règle : un phénomène dix fois plus rapide que la fenêtre d'intérêt se traite en <strong>quasi-statique</strong>, par sa relation de régime
+    établi, et sa variable d'état disparaît ; un phénomène dix fois plus lent se traite comme un <strong>paramètre constant</strong>. Pour réguler la
+    vitesse de la pompe, le bus, à $0{,}88\ \mathrm{ms}$, est quasi statique ; la température du dissipateur, à $432\ \mathrm{s}$, est une constante.
+    Il reste l'inertie et la rampe. Le même raisonnement, appliqué au moteur à courant continu, justifie de négliger $\tau_e$ devant $\tau_m$ ; il
+    devient faux quand les échelles se rapprochent, comme on l'a vu pour l'actionneur de vanne.
+  </p>
+  <p>
+    Exemple de quasi-statique : linéarisé autour de $V_s = 523{,}87\ \mathrm{V}$ et de $P = 19{,}7\ \mathrm{kW}$, le bus obéit à
+    $C\,\delta\dot{V} = -g\,\delta V - \delta P/V_s$ avec $g = 1/R - P/V_s^2 = 2{,}571 - 0{,}072 = 2{,}499\ \mathrm{S}$, d'où
+    $\tau = C/g = 2{,}2 \times 10^{-3}/2{,}499 = 0{,}88\ \mathrm{ms}$. Le terme $-P/V_s^2$ est la résistance incrémentale négative de la charge à
+    puissance constante, vue au cours précédent : elle allonge la constante de temps de $2{,}9\ \%$ par rapport à $RC = 0{,}856\ \mathrm{ms}$, et
+    deviendrait déstabilisante si $P/V_s^2$ dépassait $1/R$.
+  </p>
+
+  <h3 id="e-comparaison">Quatre représentations : laquelle choisir ?</h3>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Représentation</th><th>Forme</th><th>Points forts</th><th>Limites</th><th>Préférable quand</th></tr></thead>
+      <tbody>
+        <tr><td>Équation différentielle</td><td>$a_2\ddot{y} + a_1\dot{y} + a_0y = b_0u$</td><td>directement issue des lois physiques</td><td>pénible au-delà de l'ordre 2, une seule sortie</td><td>premier modèle d'un système simple</td></tr>
+        <tr><td>Représentation d'état</td><td>$\dot{x} = Ax + Bu$, $y = Cx + Du$</td><td>non linéaire possible, plusieurs entrées et sorties, conditions initiales, simulation</td><td>moins parlante pour le réglage fréquentiel</td><td>simulation, systèmes couplés, commande moderne</td></tr>
+        <tr><td>Fonction de transfert</td><td>$H(s) = N(s)/D(s)$</td><td>pôles, gain, lien direct avec Bode et le réglage</td><td>linéaire, invariant, état initial nul, une entrée et une sortie</td><td>réglage d'un régulateur classique</td></tr>
+        <tr><td>Schéma bloc</td><td>blocs, sommateurs, boucles</td><td>montre la structure, les perturbations et les boucles internes</td><td>se réduit à une fonction de transfert pour calculer</td><td>communication entre disciplines, architecture d'une boucle</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="e-statut">Loi, convention, approximation, règle de conception et donnée du constructeur</h3>
+  <ul>
+    <li><strong>Lois physiques :</strong> lois de Kirchhoff, principe fondamental de la dynamique, conservation de l'énergie dans le couplage
+      $e\,i = C_m\Omega$, causalité.</li>
+    <li><strong>Conventions :</strong> choix de l'entrée, de la sortie et de la perturbation ; sens positifs des courants et des couples ; signes des
+      sommateurs ; analogie force-tension plutôt que force-courant ; choix des variables d'état parmi les représentations possibles.</li>
+    <li><strong>Approximations :</strong> linéarité, invariance, paramètres localisés, frottement visqueux, linéarisation au premier ordre,
+      réduction d'ordre par séparation des constantes de temps, glissement proportionnel au couple sous commande U/f.</li>
+    <li><strong>Règles de conception :</strong> un rapport de dix entre constantes de temps pour négliger la plus petite ; variations de quelques
+      pour cent autour du point de fonctionnement pour faire confiance au modèle linéarisé ; validation de tout modèle par un essai.</li>
+    <li><strong>Données du constructeur ou du site :</strong> inertie du moteur et de la pompe, constante $K\Phi$, inductance, rampes et boucles internes
+      du variateur. Les valeurs de cette séance qui ne viennent pas du projet fil rouge sont supposées et signalées comme telles.</li>
+  </ul>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Le schéma principal de la séance résume la chaîne de modélisation sur l'exemple de l'actionneur de vanne : du système physique aux lois, des lois
+    à l'état, de l'état à la fonction de transfert et au schéma bloc, puis à la validation par l'essai.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 720 354" role="img" aria-label="Chaîne de modélisation en six étapes : système physique moteur et vanne, lois physiques, équations différentielles, représentation d'état, fonction de transfert et schéma bloc, validation par un essai indiciel avec retour vers les hypothèses si l'écart est trop grand"><defs><marker id="f-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="20" width="210" height="120" rx="8"/><rect x="255" y="20" width="210" height="120" rx="8"/><rect x="500" y="20" width="210" height="120" rx="8"/><rect x="10" y="190" width="210" height="120" rx="8"/><rect x="255" y="190" width="210" height="120" rx="8"/><rect x="500" y="190" width="210" height="120" rx="8"/><path d="M220 80H251" marker-end="url(#f-fl)"/><path d="M465 80H496" marker-end="url(#f-fl)"/><path d="M605 140V160H115V186" marker-end="url(#f-fl)"/><path d="M220 250H251" marker-end="url(#f-fl)"/><path d="M465 250H496" marker-end="url(#f-fl)"/><path d="M605 310V330H237V152H360V144" marker-end="url(#f-fl)" stroke-dasharray="6 5"/><circle cx="50" cy="100" r="18"/><path d="M68 100H120M120 86V114M120 100H170"/><path d="M150 88L190 112M150 112L190 88" stroke-width="1.4"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11.5"><text x="22" y="40">1. Système physique</text><text x="44" y="105">M</text><text x="72" y="80">réducteur</text><text x="150" y="132">vanne</text><text x="267" y="40">2. Lois et hypothèses</text><text x="267" y="62">u = R i + L di/dt + e</text><text x="267" y="82">J dΩ/dt = Cm - f Ω - Cr</text><text x="267" y="102">e = K Ω ; Cm = K i</text><text x="267" y="124">linéaire, sans saturation</text><text x="512" y="40">3. Variables d'état</text><text x="512" y="62">x = (i, Ω) : 2 réservoirs</text><text x="512" y="82">ẋ = A x + B u + Bd Cr</text><text x="512" y="102">y = Ω</text><text x="512" y="124">ordre 2</text><text x="22" y="210">4. Laplace, CI nulles</text><text x="22" y="232">Ω/U = K / D(s)</text><text x="22" y="252">D = LJ s² + (RJ + Lf) s</text><text x="22" y="270">    + (Rf + K²)</text><text x="22" y="292">pôles, gain, τe, τm</text><text x="267" y="210">5. Schéma bloc</text><text x="267" y="232">boucle interne e = K Ω</text><text x="267" y="252">entrée u, perturbation Cr</text><text x="267" y="272">réduction : G / (1 + G H)</text><text x="267" y="292">modèle réduit si τe ≪ τm</text><text x="512" y="210">6. Validation</text><text x="512" y="232">essai indiciel mesuré</text><text x="512" y="252">gain, 63 %, forme</text><text x="512" y="272">écart acceptable : utiliser</text><text x="512" y="292">sinon : revoir 2</text><text x="250" y="346">retour aux hypothèses si l'essai contredit le modèle</text></g></svg>
+    <figcaption>
+      Chaîne de modélisation, à lire dans l'ordre des numéros. Les flèches en trait plein indiquent le passage d'une étape à la suivante ; la flèche
+      en tirets ramène de la validation aux hypothèses quand l'essai contredit le modèle. L'étape 1 représente l'actionneur : moteur M, réducteur et
+      vanne. Les étapes 2 à 5 sont des transformations mathématiques exactes une fois les hypothèses posées ; seule l'étape 6 confronte le modèle au
+      réel.
+    </figcaption>
+  </figure>
+
+  <p>
+    L'organigramme suivant résume les choix à faire en modélisant. Il sert de méthode quand on découvre un système nouveau.
+  </p>
+  <figure>
+    <pre class="mermaid">flowchart TD
+  A["Question posée : quelle sortie, quelle entrée, quelle échelle de temps ?"] --> B["Recenser les réservoirs d'énergie"]
+  B --> C{"Constante de temps dans la fenêtre d'intérêt ?"}
+  C -->|"Beaucoup plus rapide"| D["Relation quasi statique, pas de variable d'état"]
+  C -->|"Beaucoup plus lente"| E["Paramètre constant"]
+  C -->|"Comparable"| F["Variable d'état conservée"]
+  D --> G["Écrire les lois physiques et constitutives"]
+  E --> G
+  F --> G
+  G --> H{"Modèle linéaire ?"}
+  H -->|"Non"| I["Chercher le point d'équilibre puis linéariser"]
+  H -->|"Oui"| J["Représentation d'état et fonction de transfert"]
+  I --> J
+  J --> K["Contrôle : dimensions, gain statique, cas limites, pôles"]
+  K --> L{"Accord avec un essai ?"}
+  L -->|"Non"| B
+  L -->|"Oui"| M["Modèle utilisable dans son domaine de validité"]</pre>
+    <figcaption>
+      Organigramme de modélisation. Les losanges sont des décisions, les rectangles des actions ; les libellés des flèches donnent la réponse qui
+      oriente le chemin. La boucle de retour depuis l'essai rappelle qu'un modèle est une hypothèse tant qu'il n'a pas été confronté au réel.
+    </figcaption>
+  </figure>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <ul>
+    <li><a href="#d-etat-sim" data-renvoi="d-etat-sim">Masse, ressort, amortisseur et plan d'état</a>, section D : réservoirs, état, trajectoires.</li>
+    <li><a href="#e-rlc-figure" data-renvoi="e-rlc-figure">Circuit RLC série avec ses conventions</a>, section E.</li>
+    <li><a href="#e-lin-sim" data-renvoi="e-lin-sim">Linéarisation du couple de la pompe</a>, section E.</li>
+    <li><a href="#e-algebre-figure" data-renvoi="e-algebre-figure">Algèbre des schémas blocs</a>, section E.</li>
+    <li><a href="#e-moteur-sim" data-renvoi="e-moteur-sim">Schéma bloc du moteur à courant continu animé</a>, section E.</li>
+    <li><a href="#e-echelles-figure" data-renvoi="e-echelles-figure">Échelle des constantes de temps du groupe de pompage</a>, section E.</li>
+    <li><a href="#e-comparaison" data-renvoi="e-comparaison">Tableau comparatif des quatre représentations</a>, section E.</li>
+    <li><a href="#h-courbe-fig" data-renvoi="h-courbe-fig">Réponse indicielle de l'actionneur, modèle complet et réduit</a>, section H.</li>
+    <li><a href="#i-pompe-figure" data-renvoi="i-pompe-figure">Schéma bloc de la pompe sous commande U/f</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <ol>
+    <li><strong>Poser la question.</strong> Quelle sortie veut-on prédire ou maîtriser, avec quelle entrée de commande, quelles perturbations, sur
+      quelle échelle de temps ?</li>
+    <li><strong>Recenser les réservoirs d'énergie</strong> et estimer leurs constantes de temps ; décider lesquels deviennent des variables d'état,
+      des relations quasi statiques ou des paramètres constants.</li>
+    <li><strong>Fixer les conventions</strong> sur un schéma : sens positifs, polarités, référence de potentiel, signes des couples.</li>
+    <li><strong>Écrire les lois physiques</strong> (mailles, nœuds, dynamique, bilans d'énergie) <strong>et les lois constitutives</strong>, en
+      notant chaque hypothèse.</li>
+    <li><strong>Choisir les variables d'état</strong>, une par réservoir indépendant, et écrire $\dot{x} = f(x, u, d)$.</li>
+    <li><strong>Si le modèle est non linéaire</strong>, calculer le point d'équilibre $f(x_0, u_0, d_0) = 0$, puis les dérivées partielles en ce point.</li>
+    <li><strong>Passer en Laplace</strong>, conditions initiales nulles, ou réduire le schéma bloc ; écrire $H(s)$ pour chaque couple entrée,
+      sortie utile.</li>
+    <li><strong>Identifier la forme canonique</strong> : gain statique, constantes de temps ou $\omega_0$ et $\zeta$, pôles.</li>
+    <li><strong>Contrôler</strong> : dimensions, gain statique comparé au régime établi calculé directement, cas limites, bilan d'énergie, signe
+      des pôles.</li>
+    <li><strong>Réduire si c'est justifié</strong>, en chiffrant l'erreur, puis <strong>valider</strong> par un essai et noter le domaine de
+      validité.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Actionneur de la vanne de refoulement du projet fil rouge. Moteur à aimants : $K = K\Phi = 0{,}070\ \mathrm{V\cdot s/rad}$ et
+    $R = 1{,}2\ \Omega$ (données du projet). Valeurs supposées : inductance $L = 1{,}0\ \mathrm{mH}$, inertie totale ramenée à l'arbre du moteur
+    $J = 2{,}0 \times 10^{-5}\ \mathrm{kg\cdot m^2}$ (rotor et réducteur ; la vanne, vue à travers un rapport de $3000$, est négligeable), frottement
+    visqueux $f = 3{,}6 \times 10^{-5}\ \mathrm{N\cdot m\cdot s/rad}$, déduit d'un courant à vide d'environ $0{,}17\ \mathrm{A}$. Entrée : échelon de
+    $24\ \mathrm{V}$ aux bornes, moteur au repos, sans charge, sans limitation de courant.
+  </p>
+  <p>
+    Inconnues : représentation d'état, fonction de transfert $\Omega/U$, pôles, $\omega_0$ et $\zeta$, vitesse finale, courant final ; constantes
+    $\tau_e$ et $\tau_m$ et validité du modèle réduit. Stratégie : deux réservoirs, inductance et inertie, donc l'état $x = (i, \Omega)$ ; écrire les
+    deux équations, passer en Laplace, factoriser, comparer au modèle réduit, contrôler par le régime établi et par un bilan de puissance.
+  </p>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li><strong>Représentation d'état.</strong> $\dot{i} = (u - Ri - K\Omega)/L$ et $\dot{\Omega} = (Ki - f\Omega - C_r)/J$ :
+      $$A = \begin{pmatrix}-R/L & -K/L\\ K/J & -f/J\end{pmatrix} = \begin{pmatrix}-1200 & -70\\ 3500 & -1{,}8\end{pmatrix}\ \mathrm{(SI)}, \quad
+      B = \begin{pmatrix}1/L\\ 0\end{pmatrix} = \begin{pmatrix}1000\\ 0\end{pmatrix}$$</li>
+    <li><strong>Coefficients du dénominateur.</strong> $LJ = 10^{-3} \times 2 \times 10^{-5} = 2{,}0 \times 10^{-8}\ \mathrm{H\cdot kg\cdot m^2}$ ;
+      $RJ + Lf = 2{,}4 \times 10^{-5} + 3{,}6 \times 10^{-8} = 2{,}4036 \times 10^{-5}$ ;
+      $Rf + K^2 = 4{,}32 \times 10^{-5} + 4{,}9 \times 10^{-3} = 4{,}9432 \times 10^{-3}$.
+      $$\frac{\Omega(s)}{U(s)} = \frac{0{,}070}{2{,}0 \times 10^{-8}\,s^2 + 2{,}4036 \times 10^{-5}\,s + 4{,}9432 \times 10^{-3}}$$</li>
+    <li><strong>Forme canonique.</strong> $\omega_0 = \sqrt{4{,}9432 \times 10^{-3}/2{,}0 \times 10^{-8}} = 497{,}2\ \mathrm{rad/s}$ ;
+      $\zeta = 2{,}4036 \times 10^{-5}/\left(2\sqrt{2{,}0 \times 10^{-8} \times 4{,}9432 \times 10^{-3}}\right) = 1{,}209$ : apériodique.</li>
+    <li><strong>Pôles.</strong> Discriminant $(2{,}4036 \times 10^{-5})^2 - 4 \times 2{,}0 \times 10^{-8} \times 4{,}9432 \times 10^{-3} =
+      5{,}777 \times 10^{-10} - 3{,}955 \times 10^{-10} = 1{,}823 \times 10^{-10}$, racine $1{,}350 \times 10^{-5}$.
+      $s_{1,2} = (-2{,}4036 \times 10^{-5} \pm 1{,}350 \times 10^{-5})/(4{,}0 \times 10^{-8})$, soit $s_1 = -263{,}4\ \mathrm{s^{-1}}$ et
+      $s_2 = -938{,}4\ \mathrm{s^{-1}}$. Constantes de temps : $\tau_1 = 3{,}80\ \mathrm{ms}$, $\tau_2 = 1{,}07\ \mathrm{ms}$.</li>
+    <li><strong>Gain statique et régime établi.</strong> $K/(Rf + K^2) = 0{,}070/4{,}9432 \times 10^{-3} = 14{,}16\ \mathrm{rad/s}$ par volt, donc
+      $\Omega_\infty = 24 \times 14{,}16 = 339{,}9\ \mathrm{rad/s}$, soit $3245\ \mathrm{tr/min}$ au moteur. Courant final :
+      $i_\infty = f\Omega_\infty/K = 3{,}6 \times 10^{-5} \times 339{,}9/0{,}070 = 0{,}175\ \mathrm{A}$.</li>
+    <li><strong>Modèle réduit.</strong> $\tau_e = L/R = 0{,}83\ \mathrm{ms}$ ; $\tau_m = RJ/(Rf + K^2) = 2{,}4 \times 10^{-5}/4{,}9432 \times 10^{-3}
+      = 4{,}86\ \mathrm{ms}$ ; rapport $\tau_e/\tau_m = 0{,}17$. Modèle réduit : $\Omega/U \approx 14{,}16/(1 + 0{,}00486\,s)$.</li>
+    <li><strong>Comparaison.</strong> Le modèle complet atteint $63\ \%$ de la vitesse finale à $5{,}0\ \mathrm{ms}$ et $95\ \%$ à $12{,}6\ \mathrm{ms}$ ;
+      le modèle réduit à $4{,}86$ et $14{,}6\ \mathrm{ms}$. Le courant crête vaut $15{,}6\ \mathrm{A}$ à $1{,}9\ \mathrm{ms}$ dans le modèle complet ;
+      le modèle réduit, qui suppose le courant instantané, prévoit $20\ \mathrm{A}$ à l'instant initial.</li>
+  </ol>
+  <p>
+    Le tracé suivant superpose les deux réponses. Il est calculé dans le navigateur avec les données ci-dessus.
+  </p>
+  <figure id="h-courbe-fig">
+    <div id="h-courbe"></div>
+    <figcaption>
+      Réponse de la vitesse de l'actionneur à un échelon de $24\ \mathrm{V}$ : modèle complet du second ordre et modèle réduit du premier ordre,
+      nommés dans la légende. La ligne horizontale en tirets marque $63\ \%$ de la vitesse finale, les repères verticaux en pointillé les instants
+      où chaque modèle l'atteint.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li><strong>Dimensions.</strong> $LJ$ en $\mathrm{H\cdot kg\cdot m^2}$, multiplié par $s^2$ en $\mathrm{s^{-2}}$, donne
+      $\Omega\cdot\mathrm{s}\cdot\mathrm{kg\cdot m^2}\cdot\mathrm{s^{-2}} = \Omega\cdot\mathrm{N\cdot m\cdot s}$, de même unité que $K^2$ en
+      $(\mathrm{V\cdot s})^2 = \Omega\cdot\mathrm{A}\cdot\mathrm{V\cdot s^2} = \Omega\cdot\mathrm{J\cdot s} = \Omega\cdot\mathrm{N\cdot m\cdot s}$.</li>
+    <li><strong>Régime établi direct.</strong> Sans dérivées : $u = Ri + K\Omega$ et $Ki = f\Omega$, d'où
+      $\Omega = Ku/(Rf + K^2)$ : même résultat, $339{,}9\ \mathrm{rad/s}$. Comparaison avec la plaque : $2780\ \mathrm{tr/min}$ à $3\ \mathrm{A}$ en
+      charge, cohérent avec $3245\ \mathrm{tr/min}$ à vide, puisque $(24 - 1{,}2 \times 3)/0{,}070 = 291\ \mathrm{rad/s} = 2783\ \mathrm{tr/min}$.</li>
+    <li><strong>Bilan de puissance.</strong> $u\,i_\infty = 24 \times 0{,}1748 = 4{,}195\ \mathrm{W}$ ; $Ri_\infty^2 + f\Omega_\infty^2 = 0{,}037 +
+      4{,}158 = 4{,}195\ \mathrm{W}$. Le bilan est fermé.</li>
+    <li><strong>Pôles.</strong> $\tau_1 + \tau_2 = 4{,}86\ \mathrm{ms} = (RJ + Lf)/(Rf + K^2)$ et $\tau_1\tau_2 = 4{,}05 \times 10^{-6}\ \mathrm{s^2} =
+      LJ/(Rf + K^2)$ : les identités de la factorisation sont vérifiées. Le modèle réduit garde la somme des constantes de temps, ce qui explique
+      qu'il soit juste en moyenne mais trop lent à la fin et trop rapide au début.</li>
+    <li><strong>Ordre de grandeur.</strong> Énergie cinétique finale $\tfrac12 J\Omega_\infty^2 = 1{,}16\ \mathrm{J}$, apportée en une dizaine de
+      millisecondes par une puissance de l'ordre de $24\ \mathrm{V} \times 10\ \mathrm{A}$ : cohérent.</li>
+  </ul>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Limite du modèle linéaire sur ce cas</span>
+    <p>
+      L'actionneur réel limite son courant à $3\ \mathrm{A}$ (décision du projet fil rouge) : le courant crête de $15{,}6\ \mathrm{A}$ n'existera pas.
+      La limitation est une saturation, non linéaire ; tant qu'elle est active, le couple vaut $K \times 3 = 0{,}21\ \mathrm{N\cdot m}$ et la vitesse
+      croît en rampe, puis le modèle linéaire reprend la main. Un modèle linéaire décrit le comportement hors saturation ; il ne dit rien des
+      grands mouvements.
+    </p>
+  </div>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <h3 id="i-contexte">Modèle dynamique du groupe de pompage pour la future régulation</h3>
+  <p>
+    Le module d'automatique conduira à concevoir une régulation sur le site du projet fil rouge. Avant de choisir un régulateur, l'équipe
+    automatisme demande à l'électricien un modèle du groupe de pompage : comment la vitesse répond-elle à la consigne envoyée au variateur en
+    $4$-$20\ \mathrm{mA}$ ? Le variateur fonctionne en commande U/f, comme décidé au cours
+    <a href="#/cours/revision-6-et-selection-d-un-entrainement">Révision 6 et sélection d'un entraînement</a> : il n'impose pas le couple mais la
+    fréquence, donc la vitesse de synchronisme $\Omega_{sync}$.
+  </p>
+  <p>
+    <strong>Modèle.</strong> Dans la partie linéaire de la caractéristique, sous flux constant, le couple du moteur asynchrone est proportionnel à
+    l'écart entre vitesse de synchronisme et vitesse : $C_m = k_g(\Omega_{sync} - \Omega)$, approximation vue au cours
+    <a href="#/cours/variation-de-vitesse-des-moteurs-asynchrones">Variation de vitesse des moteurs asynchrones</a>. Plaque du moteur :
+    $194{,}2\ \mathrm{N\cdot m}$ pour un glissement de $1500 - 1475 = 25\ \mathrm{tr/min}$, soit $2{,}618\ \mathrm{rad/s}$, d'où
+    $k_g = 194{,}2/2{,}618 = 74{,}18\ \mathrm{N\cdot m\cdot s/rad}$. Le modèle complet est $J\dot{\Omega} = k_g(\Omega_{sync} - \Omega) -
+    C_0(\Omega/\Omega_0)^2$, en amont duquel la rampe du variateur limite la vitesse de variation de $\Omega_{sync}$.
+  </p>
+  <figure id="i-pompe-figure">
+    <svg viewBox="0 0 720 230" role="img" aria-label="Schéma bloc de la pompe sous commande U sur f : consigne 4-20 mA, mise à l'échelle, rampe limitant la pente, vitesse de synchronisme, sommateur plus Omega sync moins Omega, gain kg donnant Cm, sommateur Cm plus, Cr moins, bloc 1 sur J s donnant Omega, retour de Omega vers le premier sommateur et vers le bloc de la pompe b qui donne delta Cr"><defs><marker id="i-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="60" width="90" height="50" rx="6"/><rect x="130" y="60" width="90" height="50" rx="6"/><path d="M146 98L166 72H204" stroke-width="1.4"/><circle cx="262" cy="85" r="13"/><rect x="300" y="62" width="64" height="46" rx="6"/><circle cx="410" cy="85" r="13"/><rect x="450" y="62" width="80" height="46" rx="6"/><rect x="470" y="160" width="100" height="44" rx="6"/><path d="M100 85H126" marker-end="url(#i-fl)"/><path d="M220 85H245" marker-end="url(#i-fl)"/><path d="M275 85H296" marker-end="url(#i-fl)"/><path d="M364 85H393" marker-end="url(#i-fl)"/><path d="M423 85H446" marker-end="url(#i-fl)"/><path d="M530 85H690" marker-end="url(#i-fl)"/><path d="M620 85V182H574" marker-end="url(#i-fl)"/><path d="M470 182H410V102" marker-end="url(#i-fl)"/><path d="M620 182V214H262V102" marker-end="url(#i-fl)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="18" y="82">consigne</text><text x="18" y="100">4-20 mA</text><text x="140" y="56">rampe</text><text x="140" y="126">≤ 15,7 rad/s²</text><text x="226" y="64">Ωsync</text><text x="244" y="78">+</text><text x="266" y="110">-</text><text x="322" y="90">kg</text><text x="368" y="74">Cm</text><text x="392" y="78">+</text><text x="414" y="110">-</text><text x="470" y="90">1/(Js)</text><text x="660" y="74">Ω</text><text x="480" y="187">Cr(Ω) ≈ b δΩ</text><text x="424" y="150">Cr</text><text x="300" y="228">retour de vitesse : glissement</text></g></svg>
+    <figcaption>
+      Schéma bloc de la pompe sous commande U/f. De gauche à droite : la consigne analogique, convertie en vitesse de synchronisme, passe par la
+      rampe du variateur, qui limite la pente ; le premier sommateur forme le glissement $\Omega_{sync} - \Omega$, que le gain $k_g$ convertit en
+      couple moteur ; le second sommateur retranche le couple de la pompe, qui dépend de la vitesse ; l'intégrateur $1/(Js)$ donne la vitesse. Deux
+      retours partent de $\Omega$ : vers le bloc de la pompe et vers le premier sommateur. Le second n'est pas un capteur : c'est la physique du
+      glissement.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Linéarisation au point de service.</strong> Équilibre : $C_{m0} = C_r(\Omega_s) = 139{,}47\ \mathrm{N\cdot m}$, glissement
+    $139{,}47/74{,}18 = 1{,}880\ \mathrm{rad/s}$, donc $\Omega_{sync} = 132{,}78\ \mathrm{rad/s}$ et une fréquence de $42{,}27\ \mathrm{Hz}$, conforme aux
+    $42{,}25\ \mathrm{Hz}$ du point de service retenu au cours précédent. Petites variations :
+  </p>
+  <div class="formule-cle">
+    $$J\,\delta\dot{\Omega} = k_g\,\delta\Omega_{sync} - (k_g + b)\,\delta\Omega \quad\Longrightarrow\quad
+    \frac{\delta\Omega(s)}{\delta\Omega_{sync}(s)} = \frac{k_g/(k_g + b)}{1 + \dfrac{J}{k_g + b}\,s} = \frac{0{,}972}{1 + 0{,}00655\,s}$$
+    <p class="formule-cle-legende">
+      $k_g + b = 74{,}18 + 2{,}13 = 76{,}31\ \mathrm{N\cdot m\cdot s/rad}$ ; $\tau = 0{,}5/76{,}31 = 6{,}55\ \mathrm{ms}$ ; gain $0{,}972$ : $2{,}8\ \%$ d'une
+      variation de consigne est absorbé par le glissement. Comparé au cas à couple imposé ($0{,}235\ \mathrm{s}$), le moteur asynchrone, raide en
+      vitesse, rend la mécanique trente-six fois plus rapide.
+    </p>
+  </div>
+  <p>
+    <strong>Conséquence pratique.</strong> Avec une rampe de $10\ \mathrm{s}$ pour $50\ \mathrm{Hz}$, la vitesse de synchronisme ne peut varier que de
+    $157{,}1/10 = 15{,}7\ \mathrm{rad/s^2}$. Un échelon de consigne de $2\ \mathrm{Hz}$ demande $0{,}4\ \mathrm{s}$ de rampe, soixante fois la constante
+    de $6{,}55\ \mathrm{ms}$. Pour la future régulation, le modèle utile est donc : un limiteur de pente, non linéaire, suivi d'un premier ordre très
+    rapide, presque un gain unité. Pour de petites corrections plus lentes que la rampe, le groupe se résume à un gain de $0{,}972$. La dynamique qui
+    dominera la boucle sera celle du réseau hydraulique et du capteur, à modéliser au cours Révision 9 et mini-projet régulation.
+  </p>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : ce que cette séance ajoute</span>
+    <p>
+      Fiche de modèle dynamique du groupe de pompage, remise à l'équipe automatisme. État retenu : la vitesse $\Omega$ ; bus continu
+      ($0{,}88\ \mathrm{ms}$) traité en quasi-statique, température du dissipateur ($432\ \mathrm{s}$) traitée en paramètre. Modèle non linéaire :
+      $J\dot{\Omega} = k_g(\Omega_{sync} - \Omega) - C_0(\Omega/\Omega_0)^2$, rampe de $15{,}7\ \mathrm{rad/s^2}$ en amont. Linéarisé au point de service :
+      $\delta\Omega/\delta\Omega_{sync} = 0{,}972/(1 + 0{,}00655\,s)$ ; à couple imposé, pour comparaison, $0{,}469/(1 + 0{,}235\,s)$ en
+      $\mathrm{rad/s}$ par $\mathrm{N\cdot m}$. Domaine de validité : variations de vitesse de $\pm 10\ \%$ (erreur de linéarisation sous $5\ \%$),
+      couple sous le nominal, rampe non saturée. Actionneur de vanne : $\Omega/U = 14{,}16/((1 + 0{,}0038\,s)(1 + 0{,}00107\,s))$, limitation à
+      $3\ \mathrm{A}$ hors modèle. Hypothèses à lever par un essai : inertie de $0{,}5\ \mathrm{kg\cdot m^2}$ supposée, pente $k_g$ tirée de la plaque,
+      dynamique du flux rotorique négligée.
+    </p>
+  </div>
+
+  <h3 id="i-validation">Validation sur site : un essai, trois lectures</h3>
+  <p>
+    Procédure d'essai proposée, à réaliser avec l'exploitant et le procédé en état de l'accepter. Au point de service stabilisé, appliquer un échelon
+    de consigne de $+2\ \mathrm{Hz}$, enregistrer la vitesse estimée par le variateur et la pression de refoulement à $100\ \mathrm{Hz}$ au moins, puis
+    revenir au point initial. Trois lectures :
+  </p>
+  <ul>
+    <li><strong>Forme.</strong> Une montée linéaire de $0{,}4\ \mathrm{s}$ révèle la rampe ; une exponentielle révèle une dynamique du premier ordre ;
+      un dépassement révèle une dynamique d'ordre supérieur ou une boucle interne du variateur.</li>
+    <li><strong>Gain.</strong> Variation finale de vitesse rapportée à la variation de consigne : $0{,}972$ attendu ; un écart notable signale une
+      pente $k_g$ différente de la plaque.</li>
+    <li><strong>Symétrie.</strong> Comparer l'échelon montant et le descendant : une asymétrie signe une non-linéarité, couple quadratique ou
+      limitation.</li>
+  </ul>
+
+  <h3 id="i-compromis">Risques, choix d'ingénierie et compromis</h3>
+  <ul>
+    <li><strong>Modèle physique ou identifié ?</strong> Le modèle physique, dit de boîte blanche, explique et extrapole, mais dépend de paramètres
+      incertains. Le modèle identifié par essai, dit de boîte noire, colle aux mesures mais ne vaut qu'autour du point d'essai. Le compromis retenu,
+      boîte grise : structure physique, paramètres recalés par l'essai.</li>
+    <li><strong>Précision ou simplicité ?</strong> Garder le bus et le flux rotorique ajouterait trois variables d'état pour des phénomènes cent fois
+      plus rapides que la boucle visée. Le gain de précision ne justifie pas la complexité.</li>
+    <li><strong>Essai et procédé.</strong> Un échelon trop grand fait sortir du domaine linéaire et perturbe le réseau d'eau ; trop petit, il se perd
+      dans le bruit de mesure. Quelques pour cent de la consigne sont un bon compromis.</li>
+    <li><strong>Risque principal.</strong> Régler une boucle sur un modèle valable à pleine vitesse puis l'utiliser à basse vitesse, où la pompe
+      freine deux fois moins : la boucle devient plus lente, voire oscillante selon le régulateur.</li>
+  </ul>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Confondre état et sortie.</strong> La sortie est ce que l'on mesure ; l'état est ce qui suffit à prédire. Pour le moteur, la vitesse
+      seule ne suffit pas : à vitesse égale, deux courants différents donnent deux avenirs différents. Correction : une variable par réservoir.</li>
+    <li><strong>Oublier les conditions initiales.</strong> $\mathcal{L}\{\dot{y}\} = sY - y(0)$ : remplacer la dérivée par $s$ suppose $y(0) = 0$. Un
+      condensateur préchargé ajoute une réponse libre que $H(s)$ ne contient pas. Correction : raisonner en écarts par rapport à l'état initial ou
+      utiliser la représentation d'état.</li>
+    <li><strong>Linéariser hors d'un point d'équilibre.</strong> Sans $f(x_0, u_0) = 0$, un terme constant subsiste et le modèle dérive. Correction :
+      calculer d'abord l'équilibre, ici $C_{m0} = C_r(\Omega_s)$.</li>
+    <li><strong>Utiliser le modèle linéarisé loin du point.</strong> Pour la pompe, l'erreur atteint $9$ à $11\ \%$ pour $\pm 20\ \%$ de vitesse et le
+      modèle à $1250\ \mathrm{tr/min}$ est deux fois trop rapide à $600\ \mathrm{tr/min}$. Correction : indiquer le domaine de validité.</li>
+    <li><strong>Se tromper de signe dans une boucle.</strong> La force électromotrice est retranchée à la tension ; l'écrire avec un signe plus
+      donne une rétroaction positive et un moteur qui s'emballe dans le modèle. Correction : vérifier sur le schéma que la boucle s'oppose à la
+      cause, et que le gain statique a le bon signe.</li>
+    <li><strong>Mélanger tours par minute et radians par seconde.</strong> $b = 2C_0\Omega_s/\Omega_0^2$ change d'un facteur $2\pi/60$ si l'on
+      mélange les unités. Correction : tout en SI avant de dériver.</li>
+    <li><strong>Prendre $\tau_m = J/f$.</strong> Pour l'actionneur, $J/f = 0{,}56\ \mathrm{s}$ alors que $\tau_m = 4{,}9\ \mathrm{ms}$ : le frein
+      dominant est la force électromotrice, équivalente à $K^2/R$. Correction : réduire le schéma avec la boucle interne.</li>
+    <li><strong>Réduire l'ordre sans vérifier le rapport.</strong> Négliger $\tau_e$ quand $\tau_e/\tau_m = 0{,}17$ fausse $t_{95}$ de $15\ \%$ et
+      le courant crête de $28\ \%$. Correction : chiffrer le rapport, et comparer les deux modèles si l'enjeu le justifie.</li>
+  </ol>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic industriel et une question
+    conceptuelle sans calcul. Les solutions sont présentes dans la page mais restent masquées jusqu'à votre tentative ou à un clic explicite ;
+    chaque correction se révèle étape par étape, avec un tracé ou un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangées : choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Le score est calculé dans ce
+    navigateur et repris par la grille d'auto-évaluation.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+  <h3 id="m-formules">Cinq formules essentielles</h3>
+  <div class="formule-cle">$$\dot{x} = Ax + Bu, \qquad y = Cx + Du, \qquad H(s) = C(sI - A)^{-1}B + D$$</div>
+  <div class="formule-cle">$$H(s) = \frac{K}{1 + \tau s}, \qquad H(s) = \frac{K\omega_0^2}{s^2 + 2\zeta\omega_0 s + \omega_0^2}, \qquad \omega_0 = \frac{1}{\sqrt{LC}}, \ \zeta = \frac{R}{2}\sqrt{\frac{C}{L}}$$</div>
+  <div class="formule-cle">$$\delta\dot{x} = \left.\frac{\partial f}{\partial x}\right|_0\delta x + \left.\frac{\partial f}{\partial u}\right|_0\delta u, \qquad f(x_0, u_0) = 0$$</div>
+  <div class="formule-cle">$$\frac{Y}{R} = \frac{G}{1 + GH}$$</div>
+  <div class="formule-cle">$$\frac{\Omega}{U} = \frac{K}{(R + Ls)(Js + f) + K^2} \approx \frac{K/(Rf + K^2)}{1 + \tau_m s}, \qquad \tau_m = \frac{RJ}{Rf + K^2}$$</div>
+  <h3 id="m-vigilance">Cinq points de vigilance</h3>
+  <ul>
+    <li>Une variable d'état par réservoir d'énergie indépendant, ni plus ni moins.</li>
+    <li>Une fonction de transfert suppose des conditions initiales nulles et un modèle linéaire invariant.</li>
+    <li>Linéariser autour d'un point d'équilibre, et toujours écrire le domaine de validité.</li>
+    <li>Vérifier le signe de chaque boucle et le gain statique avant d'exploiter un schéma bloc.</li>
+    <li>Ne négliger une constante de temps que devant une autre au moins dix fois plus grande, et valider par un essai.</li>
+  </ul>
+  <h3 id="m-resume">Résumé</h3>
+  <p>
+    Un système dynamique se souvient : chaque réservoir d'énergie, condensateur, inductance, inertie, masse thermique, porte une variable d'état
+    continue. Les lois physiques et constitutives donnent des équations différentielles, réécrites en représentation d'état $\dot{x} = Ax + Bu$.
+    Avec des conditions initiales nulles, Laplace les transforme en fonction de transfert, caractérisée par son gain statique et ses pôles, et
+    identifiée aux formes canoniques du premier et du second ordre. Un modèle non linéaire se linéarise autour d'un point d'équilibre, dans un
+    domaine à chiffrer. Les schémas blocs révèlent les boucles internes, comme la force électromotrice d'un moteur, et se réduisent par
+    $G/(1 + GH)$. Enfin, on ne garde que les constantes de temps de la fenêtre d'intérêt, et l'on valide le modèle par un essai.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance, deux sur le cours précédent,
+    <a href="#/cours/revision-8-et-etude-de-cas-variateur">Révision 8 et étude de cas variateur</a>, dont les équations de la pompe et du bus ont servi
+    ici, une sur le cours <a href="#/cours/onduleurs-monophases">Onduleurs monophasés</a>, vieux d'une semaine, et une sur le cours
+    <a href="#/cours/introduction-a-fourier">Introduction à Fourier</a>, vieux d'un mois, car la superposition qui justifie la fonction de transfert
+    est celle qui permet de traiter un signal harmonique par harmonique.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : vérifier par le calcul et la simulation les deux modèles de la séance. Prédictions à écrire avant de commencer : dépassement du circuit
+    RLC de l'exercice fondamental 1 ; courant crête de l'actionneur ; écart final entre modèle linéaire et non linéaire de la pompe pour un échelon de
+    couple de $+30\ \%$.
+  </p>
+  <ol>
+    <li><strong>Python, sans bibliothèque.</strong> Écrire une fonction qui intègre $\dot{x} = f(x, u)$ par la méthode de Runge-Kutta d'ordre 4, pas
+      de $10\ \mu\mathrm{s}$. L'appliquer à l'actionneur, état $(i, \Omega)$, échelon de $24\ \mathrm{V}$, et tracer $i(t)$ et $\Omega(t)$ sur
+      $30\ \mathrm{ms}$. Comparer à la solution analytique $\Omega(t) = \Omega_\infty\left[1 + \dfrac{s_2e^{s_1t} - s_1e^{s_2t}}{s_1 - s_2}\right]$.
+      Si NumPy et SciPy sont disponibles, comparer avec <code>scipy.signal.lti</code> et <code>step</code> à partir des matrices $A$, $B$, $C$, $D$.</li>
+    <li><strong>Python, pompe.</strong> Intégrer $J\dot{\Omega} = C_m - C_0(\Omega/\Omega_0)^2$ et le modèle linéarisé pour des échelons de
+      $\pm 10\ \%$ et $\pm 30\ \%$ du couple d'équilibre ; tracer l'écart final en fonction de l'amplitude.</li>
+    <li><strong>LTspice, circuit RLC.</strong> <code>V1 in 0 PULSE(0 1 1m 1u 1u 1 2)</code>, <code>R1 in a 10</code>, <code>L1 a b 10m</code>,
+      <code>C1 b 0 100u</code>, et en parallèle le modèle par fonction de transfert
+      <code>E1 out 0 in 0 Laplace=1/(1e-6*s*s + 1e-3*s + 1)</code>. Lancer <code>.tran 0 20m 0 1u</code> et superposer <code>V(b)</code> et
+      <code>V(out)</code>.</li>
+    <li><strong>LTspice, moteur par analogie.</strong> Partie électrique : <code>V1 in 0 PULSE(0 24 1m 1u 1u 1 2)</code>, <code>R1 in a 1.2</code>,
+      <code>L1 a b 1m</code>, <code>B1 b 0 V=0.07*V(w)</code>. Partie mécanique, où la tension du nœud <code>w</code> vaut numériquement
+      $\Omega$ en $\mathrm{rad/s}$ : <code>B2 0 w I=0.07*I(L1)</code>, <code>Cj w 0 20u</code> pour $J$, <code>Rf w 0 27.78k</code> pour $1/f$.
+      Lancer <code>.tran 0 31m 0 1u</code>.</li>
+  </ol>
+  <p>
+    Résultats attendus : circuit RLC, dépassement de $16{,}3\ \%$ à $3{,}63\ \mathrm{ms}$ après l'échelon, courbes <code>V(b)</code> et
+    <code>V(out)</code> confondues ; actionneur, courant crête de $15{,}6\ \mathrm{A}$ environ $1{,}9\ \mathrm{ms}$ après l'échelon, $63\ \%$ de la vitesse
+    finale à $5{,}0\ \mathrm{ms}$, $V(w)$ final de $339{,}9\ \mathrm{V}$, soit $339{,}9\ \mathrm{rad/s}$, courant final de $0{,}175\ \mathrm{A}$ ; pompe,
+    écart final de $2{,}4\ \%$ à $\pm 10\ \%$ et d'environ $7\ \%$ à $+30\ \%$.
+  </p>
+  <p>
+    Anomalies à observer et à expliquer : une vitesse qui croît sans limite, signe d'une force électromotrice ajoutée au lieu d'être retranchée
+    (rétroaction positive) ; une vitesse finale de $3245\ \mathrm{rad/s}$, erreur d'un facteur $2\pi/60$ inversé quelque part ; un courant
+    initialement à $20\ \mathrm{A}$, inductance oubliée ; dans LTspice, une source <code>B2</code> branchée à l'envers, qui fait tourner le moteur en
+    sens inverse de la tension ; en Python, une oscillation numérique si le pas dépasse environ $2\ \mathrm{ms}$, plus grand que la plus petite
+    constante de temps. Variante expérimentale, sous la responsabilité d'une personne habilitée : alimenter un petit moteur à courant continu par une
+    alimentation de laboratoire limitée en courant et relever à l'oscilloscope le courant de démarrage à travers un shunt.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours, notées de 0 à 4. Le bilan affiché sous la grille est calculé dans ce
+    navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement. Aucune estimation n'est
+    faite à votre place : seul le score réellement obtenu sert de référence.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Lire votre bilan</span>
+    <p>
+      Les exercices fondamentaux testent la mise en équations et l'identification des formes canoniques ; l'exercice intermédiaire 1 et la question
+      de linéarisation du quiz, la linéarisation ; la lecture de schéma et l'exercice avancé, les schémas blocs et la réduction d'ordre ; la question
+      de diagnostic, l'usage d'un modèle face à un essai. Un bloc réussi à moins de la moitié indique la notion à reprendre avant le cours Réponse
+      temporelle et performances, qui exploitera directement ces fonctions de transfert.
+    </p>
+  </div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">L'état d'un système est porté par ses réservoirs d'énergie : une variable continue par réservoir indépendant, et le nombre de réservoirs donne l'ordre.</li>
+    <li data-rang="02">La fonction de transfert, rapport des transformées à conditions initiales nulles, résume un modèle linéaire par son gain statique et ses pôles ; un modèle non linéaire se linéarise autour d'un point d'équilibre, dans un domaine à chiffrer.</li>
+    <li data-rang="03">Un bon modèle ne garde que les dynamiques de la fenêtre de temps utile : plus rapides, elles deviennent quasi statiques ; plus lentes, des paramètres ; et tout modèle se valide par un essai.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> passer de la physique au formalisme sans perdre le sens. Les erreurs typiques sont un signe
+    faux dans une boucle, une linéarisation hors équilibre ou une réduction d'ordre non justifiée. Le réflexe à installer : vérifier le gain statique
+    par un calcul direct en régime établi et comparer les constantes de temps avant de simplifier.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Réponse temporelle et performances, exploitera ces modèles. Question à préparer : le
+    circuit RLC de l'exercice fondamental 1, $\omega_0 = 1000\ \mathrm{rad/s}$ et $\zeta = 0{,}5$, et le modèle réduit de l'actionneur,
+    $14{,}16/(1 + 0{,}00486\,s)$, reçoivent chacun un échelon. Sans calcul détaillé, lequel présente un dépassement, et comment lire, sur chaque
+    fonction de transfert, le temps nécessaire pour atteindre $95\ \%$ de la valeur finale ?
+  </p>
+
+</article>
