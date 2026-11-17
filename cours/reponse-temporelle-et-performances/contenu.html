@@ -1,0 +1,902 @@
+<article class="cours" data-slug="reponse-temporelle-et-performances">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/modelisation-des-systemes-dynamiques">Modélisation des systèmes dynamiques</a> s'est achevé sur une question : le
+      circuit RLC de pulsation propre $\omega_0 = 1000\ \mathrm{rad/s}$ et d'amortissement $\zeta = 0{,}5$, et le modèle réduit de l'actionneur de vanne,
+      $14{,}16/(1 + 0{,}00486\,s)$, reçoivent chacun un échelon ; lequel dépasse sa valeur finale, et comment lire sur chaque fonction de transfert le
+      temps nécessaire pour atteindre $95\ \%$ de la valeur finale ? Réponse. Seul le circuit RLC dépasse : avec $\zeta &lt; 1$, ses deux pôles sont
+      complexes et la réponse oscille, ici avec un dépassement de $16{,}3\ \%$. Le premier ordre ne dépasse jamais : il atteint $95\ \%$ de sa valeur
+      finale en $3\tau$, soit $14{,}6\ \mathrm{ms}$. Pour le second ordre, l'enveloppe de l'oscillation décroît comme $e^{-\zeta\omega_0 t}$ ; une
+      estimation est donc $3/(\zeta\omega_0) = 6\ \mathrm{ms}$, alors que la valeur exacte, calculée dans cette séance, est $5{,}29\ \mathrm{ms}$. Dans
+      les deux cas, la durée se lit sur la <strong>partie réelle du pôle le plus lent</strong> : $1/\tau$ pour le premier ordre, $\zeta\omega_0$ pour le
+      second. C'est le fil conducteur de cette séance.
+    </p>
+    <p>
+      La séance réutilise l'équation du premier ordre des cours <a href="#/cours/regime-transitoire-rc">Régime transitoire RC</a> et
+      <a href="#/cours/regime-transitoire-rl">Régime transitoire RL</a>, le classement des régimes du cours
+      <a href="#/cours/regime-transitoire-rlc">Régime transitoire RLC</a>, et les fonctions de transfert, pôles et schémas blocs du cours précédent.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Une régulation ne se juge pas à son schéma mais à sa réponse : la vitesse rejoint-elle la consigne, en combien de temps, en la dépassant de
+    combien, et avec quel écart résiduel ? Ces quatre questions définissent les <strong>indicateurs de performance temporelle</strong> : temps de
+    montée, dépassement, temps d'établissement et erreur statique, auxquels s'ajoute la condition préalable à tout le reste, la stabilité. Ils forment
+    le vocabulaire commun du cahier des charges, de la mise en service et de la réception d'une boucle.
+  </p>
+  <ul>
+    <li><strong>Un cahier des charges s'écrit en indicateurs.</strong> "Pression rétablie à $5\ \%$ près en moins de $5\ \mathrm{s}$, sans dépasser
+      $10\ \%$, sans écart permanent" : chaque mot correspond à un indicateur chiffré, mesurable sur un enregistrement.</li>
+    <li><strong>Les indicateurs se lisent sur les pôles.</strong> Pour les modèles du premier et du second ordre établis au cours précédent, des
+      formules relient directement $\tau$, $\omega_0$ et $\zeta$ aux indicateurs : on peut prévoir la réponse avant de l'essayer, et choisir un réglage
+      pour obtenir une réponse voulue.</li>
+    <li><strong>Précision et rapidité se disputent la stabilité.</strong> Augmenter le gain d'une boucle réduit l'erreur statique mais fait dépasser et
+      osciller : ce dilemme, chiffré ici sur l'actionneur de vanne, justifie toute la suite du module.</li>
+    <li><strong>Un essai indiciel est un outil de diagnostic.</strong> Un dépassement anormal, une erreur qui apparaît, un temps d'établissement qui
+      s'allonge renseignent sur ce qui a changé dans le procédé.</li>
+  </ul>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Jalon visé par le module</span>
+    <p>
+      À la fin du module d'automatique et du module de mesure qui le suit, le jalon du parcours demande de modéliser et réguler un système simple.
+      Après le modèle, cette séance fixe le critère : savoir ce que l'on attend d'une boucle et le vérifier sur une réponse.
+    </p>
+  </div>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Définir et mesurer sur un enregistrement le temps de montée, le temps de pic, le dépassement, le temps d'établissement et l'erreur statique, en précisant les conventions retenues.</li>
+    <li data-rang="02">Calculer les indicateurs d'un premier ordre à partir de $K$ et $\tau$, et identifier $K$ et $\tau$ à partir d'une réponse mesurée.</li>
+    <li data-rang="03">Dériver le dépassement et le temps de pic d'un second ordre, et calculer ses indicateurs à partir de $\omega_0$ et $\zeta$, ou l'inverse.</li>
+    <li data-rang="04">Interpréter la position des pôles dans le plan complexe : stabilité, oscillation, rapidité, pôles dominants.</li>
+    <li data-rang="05">Calculer l'erreur statique d'une boucle à retour unitaire selon sa classe, pour un échelon et pour une rampe, avec le théorème de la valeur finale.</li>
+    <li data-rang="06">Dimensionner le gain d'un correcteur proportionnel pour un dépassement imposé, et chiffrer le compromis entre précision et dépassement.</li>
+    <li data-rang="07">Diagnostiquer une réponse anormale en distinguant ce qui modifie les pôles de ce qui ne modifie que la valeur finale.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>Quatre rappels suffisent.</p>
+  <ul>
+    <li><strong>Exponentielle et logarithme.</strong> $e^{-t/\tau} = \alpha$ équivaut à $t = \tau\ln(1/\alpha)$ ; $\ln 9 = 2{,}197$, $\ln 20 = 2{,}996$,
+      $\ln 50 = 3{,}912$.</li>
+    <li><strong>Formes canoniques.</strong> Premier ordre $H(s) = K/(1 + \tau s)$, pôle $-1/\tau$. Second ordre
+      $H(s) = K\omega_0^2/(s^2 + 2\zeta\omega_0 s + \omega_0^2)$ ; pour $\zeta &lt; 1$, pôles $-\zeta\omega_0 \pm j\omega_0\sqrt{1 - \zeta^2}$.</li>
+    <li><strong>Gain statique.</strong> Pour un système stable, la valeur finale de la réponse à un échelon d'amplitude $U$ est $H(0)\,U$.</li>
+    <li><strong>Rétroaction.</strong> Une chaîne directe $G$ bouclée par un retour unitaire soustrait donne $G/(1 + G)$ ; l'écart vaut
+      $\varepsilon = r - y$.</li>
+  </ul>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Notation de la séance</span>
+    <p>
+      $r$ : consigne ; $y$ : sortie ; $y_\infty$ : valeur finale ; $\varepsilon = r - y$ : écart, $\varepsilon_s$ sa valeur finale, ou erreur
+      statique. $t_r$ : temps de montée de $10$ à $90\ \%$ de $y_\infty$ ; $t_{pic}$ : instant du premier maximum ; $D$ : dépassement en pour cent de
+      $y_\infty$ ; $t_5$ et $t_2$ : temps d'établissement à $\pm 5\ \%$ et $\pm 2\ \%$ de $y_\infty$. $\sigma = \zeta\omega_0$ : opposé de la partie réelle
+      des pôles complexes, en $\mathrm{s^{-1}}$ ; $\omega_d = \omega_0\sqrt{1 - \zeta^2}$ : pseudo-pulsation, en $\mathrm{rad/s}$. $L(s)$ : fonction de
+      transfert en boucle ouverte, $T(s)$ : en boucle fermée. Actionneur de vanne du projet fil rouge (moteur à courant continu, $L$, $J$ et $f$
+      supposés) : $\Omega/U = G_0/(\tau_1\tau_2 s^2 + (\tau_1 + \tau_2)s + 1)$ avec $G_0 = 14{,}16\ \mathrm{rad/(s\cdot V)}$,
+      $\tau_1 = 3{,}797\ \mathrm{ms}$ et $\tau_2 = 1{,}066\ \mathrm{ms}$.
+    </p>
+  </div>
+  <p>
+    Mini-test de trois questions. Les réponses restent masquées, séparées de l'énoncé, jusqu'à votre tentative ou à un clic explicite.
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+  <h3 id="d-ralentir">Pourquoi une réponse prend du temps, et pourquoi elle ralentit en approchant</h3>
+  <p>
+    Changer la sortie d'un système dynamique, c'est remplir ou vider un réservoir d'énergie : charger un condensateur, accélérer une inertie,
+    chauffer une masse. La source ne fournit qu'une puissance finie, donc le remplissage prend du temps. Dans un premier ordre, la vitesse de
+    remplissage est en outre <strong>proportionnelle à ce qui reste à faire</strong> : le courant de charge d'un condensateur est proportionnel à
+    l'écart entre la tension de la source et la sienne. Au début, l'écart est grand et la sortie monte vite ; près du but, l'écart et la vitesse
+    s'effondrent ensemble. D'où une approche asymptotique, sans dépassement, et une durée qui ne dépend pas de l'amplitude : doubler l'objectif double
+    aussi la vitesse initiale.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Analogie de la cuve qui se remplit, et ses limites</span>
+    <p>
+      Une cuve alimentée par un débit constant se vide par un orifice dont le débit croît avec la hauteur d'eau. Le niveau monte jusqu'à ce que les
+      deux débits s'égalisent ; la montée ralentit à mesure que la fuite rattrape l'alimentation. La section de la cuve joue la capacité, la
+      résistance de l'orifice la résistance : $\tau = RS$, comme $RC$. Limites : un orifice réel laisse passer un débit proportionnel à la racine de la
+      hauteur, pas à la hauteur ; le modèle linéaire n'est valable qu'autour d'un niveau, comme la pompe linéarisée du cours précédent. La cuve ne
+      peut pas non plus avoir de hauteur négative, et une cuve qui déborde introduit une saturation. Enfin, une cuve seule ne dépasse jamais son
+      niveau final : il faut un second réservoir, une inertie, pour obtenir un dépassement.
+    </p>
+  </div>
+  <p>
+    La simulation suivante anime la cuve et trace la hauteur d'eau. Les curseurs règlent le débit d'entrée, la section et la résistance de sortie ;
+    le lecteur fait avancer le temps.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Avec $S = 0{,}5\ \mathrm{m^2}$, $R = 200\ \mathrm{s/m^2}$ et $Q_e = 5\ \mathrm{L/s}$, quelle hauteur finale, et en combien de temps la cuve
+      atteint-elle $95\ \%$ de cette hauteur ? Si l'on double le débit d'entrée, le temps d'établissement double-t-il, reste-t-il identique ou
+      diminue-t-il ? Et si l'on double la section ?
+    </p>
+  </div>
+  <figure id="d-cuve-sim">
+    <div class="schema-vivant" id="d-cuve-vivant"></div>
+    <div id="d-cuve-lecteur"></div>
+    <div id="d-cuve-curseurs"></div>
+    <div id="d-cuve-valeurs"></div>
+    <div id="d-cuve-trace"></div>
+    <figcaption>
+      Cuve du premier ordre. À gauche, la cuve, de section $S$, reçoit par le haut le débit $Q_e$, indiqué par la flèche d'entrée, et se vide par
+      l'orifice du bas avec le débit $q_s = h/R$, indiqué par la flèche de sortie ; la hauteur $h$ est comptée depuis le fond, référence des hauteurs.
+      Le trait horizontal en tirets marque la hauteur finale $h_\infty = RQ_e$, le trait en pointillé $95\ \%$ de cette hauteur. À droite, les jauges
+      comparent les deux débits. Le tracé du bas montre $h(t)$ sur toute la durée simulée, avec la tangente à l'origine nommée dans la légende, la hauteur finale en
+      tirets, $95\ \%$ de celle-ci en pointillé, la verticale de $3\tau$ et le repère de l'instant courant.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> La hauteur finale vaut $RQ_e = 200 \times 0{,}005 = 1\ \mathrm{m}$ et $\tau = RS = 100\ \mathrm{s}$ : la cuve
+    atteint $95\ \%$ du niveau final en $3\tau \approx 300\ \mathrm{s}$. Doubler le débit double la hauteur finale et la pente initiale
+    $Q_e/S$, mais pas le temps d'établissement : c'est la signature d'un système linéaire, dont la forme de réponse ne dépend pas de l'amplitude. Doubler
+    la section double $\tau$ sans changer la hauteur finale : le réservoir est plus grand, il faut plus longtemps pour le remplir. La tangente à
+    l'origine coupe la hauteur finale exactement à $t = \tau$ : si la cuve gardait sa vitesse initiale, elle serait pleine en $\tau$.
+  </p>
+
+  <h3 id="d-depasser">Pourquoi un second ordre dépasse</h3>
+  <p>
+    Avec deux réservoirs qui échangent de l'énergie, une inertie et un ressort par exemple, la sortie arrive sur la valeur finale avec une vitesse non
+    nulle : l'énergie cinétique accumulée l'emporte au-delà. Le ressort la ramène, et la sortie oscille autour de la valeur finale jusqu'à ce que
+    l'amortissement ait dissipé l'énergie en trop. Le dépassement dépend donc du rapport entre l'énergie dissipée et l'énergie échangée, c'est-à-dire
+    de $\zeta$ seul ; la vitesse de l'oscillation dépend de $\omega_0$.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Analogie du conducteur qui s'arrête au feu, et ses limites</span>
+    <p>
+      Un conducteur qui freine trop tard dépasse la ligne ; qui freine trop tôt arrive lentement. Le bon conducteur freine juste ce qu'il faut pour
+      arriver vite, avec un léger dépassement toléré, c'est l'optimum autour de $\zeta = 0{,}7$ que cette séance établit. Limites : un conducteur
+      anticipe en regardant la ligne, alors qu'un système passif ne prévoit rien ; et le conducteur ne recule pas après avoir dépassé, alors qu'un
+      second ordre revient et oscille.
+    </p>
+  </div>
+
+  <h3 id="d-erreur">Pourquoi un correcteur proportionnel laisse un écart, et pourquoi trop de gain fait osciller</h3>
+  <p>
+    Un correcteur proportionnel agit en proportion de l'écart : $u = K_p\varepsilon$. Or, en régime établi, le procédé a besoin d'une commande non
+    nulle pour maintenir sa sortie, une tension pour vaincre la force électromotrice d'un moteur, une puissance pour compenser les pertes d'un four.
+    Cette commande ne peut venir que d'un écart non nul : l'erreur statique est le prix de la commande en régime établi. Plus $K_p$ est grand, plus
+    l'écart nécessaire est petit. Mais une correction forte qui arrive en retard, à cause des réservoirs, dépasse la cible, comme une douche dont on
+    tourne trop vite le mitigeur alors que l'eau met du temps à arriver : on alterne trop chaud et trop froid. Si la correction est assez forte et
+    assez tardive, les oscillations ne s'amortissent plus : la boucle devient instable.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-indicateurs">Signaux d'essai et définitions des indicateurs</h3>
+  <p>
+    Trois signaux d'essai servent à caractériser un système linéaire : l'<strong>échelon</strong>, qui représente un changement de consigne ou une
+    perturbation brutale ; la <strong>rampe</strong>, qui représente une consigne qui évolue à vitesse constante, par exemple la rampe d'un variateur ;
+    l'<strong>impulsion</strong>, choc bref dont la réponse est la dérivée de la réponse indicielle. L'échelon est le plus utilisé : il est facile à
+    produire sur un site, et sa réponse contient toute l'information d'un système linéaire.
+  </p>
+  <figure id="e-signaux-figure">
+    <svg viewBox="0 0 700 190" role="img" aria-label="Trois signaux d'essai sur trois petits repères : échelon d'amplitude U appliqué à t = 0, rampe de pente a démarrant à t = 0, impulsion brève à t = 0"><defs><marker id="e-sig-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M30 140H210" marker-end="url(#e-sig-fl)"/><path d="M50 150V30" marker-end="url(#e-sig-fl)"/><path d="M260 140H440" marker-end="url(#e-sig-fl)"/><path d="M280 150V30" marker-end="url(#e-sig-fl)"/><path d="M490 140H670" marker-end="url(#e-sig-fl)"/><path d="M510 150V30" marker-end="url(#e-sig-fl)"/></g><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M40 140H80V70H200"/><path d="M270 140H300L420 50"/><path d="M500 140H544V48H550V140H660"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="60" y="26">u(t)</text><text x="190" y="160">t</text><text x="74" y="160">0</text><text x="120" y="62">U</text><text x="80" y="182">échelon</text><text x="290" y="26">u(t)</text><text x="420" y="160">t</text><text x="294" y="160">0</text><text x="352" y="76">pente a</text><text x="320" y="182">rampe</text><text x="520" y="26">u(t)</text><text x="650" y="160">t</text><text x="540" y="160">0</text><text x="560" y="64">aire 1</text><text x="540" y="182">impulsion</text></g></svg>
+    <figcaption>
+      Signaux d'essai, tous appliqués à l'instant $t = 0$ à un système au repos. À gauche, l'échelon d'amplitude $U$ ; au centre, la rampe de pente
+      $a$, en unités de la grandeur par seconde ; à droite, l'impulsion, rectangle très bref d'aire unité. Les axes portent le temps en abscisse et le
+      signal d'entrée $u$ en ordonnée.
+    </figcaption>
+  </figure>
+  <p>
+    Sur la réponse à un échelon, on définit les indicateurs suivants, représentés sur le schéma principal de la section F. Leur définition précise est
+    une <em>convention</em>, qu'il faut toujours rappeler dans un cahier des charges.
+  </p>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Indicateur</th><th>Définition retenue</th><th>Autres conventions courantes</th><th>Ce qu'il mesure</th></tr></thead>
+      <tbody>
+        <tr><td>Valeur finale $y_\infty$</td><td>limite de $y(t)$ quand $t \to \infty$</td><td>moyenne des derniers points d'un enregistrement</td><td>gain statique</td></tr>
+        <tr><td>Erreur statique $\varepsilon_s$</td><td>$r - y_\infty$, en unités de la sortie ou en pour cent de $r$</td><td>erreur de position, écart permanent</td><td>précision</td></tr>
+        <tr><td>Temps de montée $t_r$</td><td>de $10\ \%$ à $90\ \%$ de $y_\infty$</td><td>de $0$ à $100\ \%$ pour un système qui dépasse ; de $5$ à $95\ \%$</td><td>rapidité du début</td></tr>
+        <tr><td>Temps de pic $t_{pic}$</td><td>instant du premier maximum</td><td>aucune</td><td>rapidité de l'oscillation</td></tr>
+        <tr><td>Dépassement $D$</td><td>$(y_{max} - y_\infty)/y_\infty$, en pour cent</td><td>rapporté à la consigne, ce qui est différent si $\varepsilon_s \neq 0$</td><td>amortissement</td></tr>
+        <tr><td>Temps d'établissement $t_5$</td><td>dernier instant où $y$ entre dans $y_\infty \pm 5\ \%$ pour ne plus en sortir</td><td>$\pm 2\ \%$, $\pm 1\ \%$, ou une bande absolue</td><td>durée totale du transitoire</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="e-premier-ordre">Premier ordre : indicateurs et identification</h3>
+  <p>
+    <strong>Hypothèses.</strong> Système linéaire, invariant, au repos à $t = 0$, de fonction de transfert $H(s) = K/(1 + \tau s)$ ; échelon d'amplitude
+    $U$. <strong>Dérivation.</strong> $Y(s) = \dfrac{KU}{s(1 + \tau s)} = KU\left(\dfrac{1}{s} - \dfrac{\tau}{1 + \tau s}\right)$, d'où
+  </p>
+  <div class="formule-cle">
+    $$y(t) = KU\left(1 - e^{-t/\tau}\right), \qquad \dot{y}(0^+) = \frac{KU}{\tau}$$
+    <p class="formule-cle-legende">
+      $K$ : gain statique, en unités de sortie par unité d'entrée ; $\tau$ : constante de temps, en secondes ; $U$ : amplitude de l'échelon. Valeur
+      finale $KU$. La tangente à l'origine, de pente $KU/\tau$, coupe la valeur finale à $t = \tau$. Dimension : $t/\tau$ est sans dimension, et la
+      pente $KU/\tau$ est en unités de sortie par seconde.
+    </p>
+  </div>
+  <p>
+    Chaque indicateur s'obtient en résolvant $1 - e^{-t/\tau} = \alpha$, soit $t = \tau\ln\dfrac{1}{1 - \alpha}$ :
+  </p>
+  <div class="formule-cle">
+    $$t_{10} = \tau\ln\frac{10}{9}, \quad t_{90} = \tau\ln 10 \;\Rightarrow\; t_r = \tau\ln 9 = 2{,}20\,\tau ; \qquad t_5 = \tau\ln 20 = 3{,}00\,\tau ; \qquad t_2 = \tau\ln 50 = 3{,}91\,\tau ; \qquad D = 0$$
+    <p class="formule-cle-legende">
+      Interprétation : un premier ordre ne dépasse jamais, et tous ses indicateurs de durée sont proportionnels à $\tau$, seul paramètre de rapidité.
+      Ils ne dépendent ni de $K$ ni de $U$. Cas limites : $\tau \to 0$, la sortie suit instantanément, c'est un gain pur ; $\tau \to \infty$, la sortie
+      ne bouge plus, et sur les premiers instants $y \approx KUt/\tau$ : le système se comporte comme un intégrateur.
+    </p>
+  </div>
+  <figure id="e-premier-figure">
+    <svg viewBox="0 0 640 300" role="img" aria-label="Réponse indicielle d'un premier ordre normalisée : courbe exponentielle de 0 à 1, tangente à l'origine qui coupe la valeur finale à t = tau, repères 63 % à tau, 95 % à 3 tau, temps de montée entre 10 et 90 %"><defs><marker id="e-po-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-linecap="round"><path d="M60 250H600" stroke-width="1.4" marker-end="url(#e-po-fl)"/><path d="M70 260V36" stroke-width="1.4" marker-end="url(#e-po-fl)"/><path d="M70 60H590" stroke-width="1.2" stroke-dasharray="7 5"/><path d="M70 250L170 60" stroke-width="1.4" stroke-dasharray="7 5"/><path d="M70 129.9H170V250M70 69.5H370V250" stroke-width="1" stroke-dasharray="2 4"/><path d="M80.5 231V250M300.3 79V250" stroke-width="1" stroke-dasharray="2 4"/><path d="M84 272H296" stroke-width="1.2" marker-start="url(#e-po-fl)" marker-end="url(#e-po-fl)"/><path id="e-po-courbe" d="M70.0 250.0 L80.0 231.9 L90.0 215.6 L100.0 200.8 L110.0 187.4 L120.0 175.2 L130.0 164.3 L140.0 154.4 L150.0 145.4 L160.0 137.2 L170.0 129.9 L180.0 123.2 L190.0 117.2 L200.0 111.8 L210.0 106.9 L220.0 102.4 L230.0 98.4 L240.0 94.7 L250.0 91.4 L260.0 88.4 L270.0 85.7 L280.0 83.3 L290.0 81.1 L300.0 79.0 L310.0 77.2 L320.0 75.6 L330.0 74.1 L340.0 72.8 L350.0 71.6 L360.0 70.5 L370.0 69.5 L380.0 68.6 L390.0 67.7 L400.0 67.0 L410.0 66.3 L420.0 65.7 L430.0 65.2 L440.0 64.7 L450.0 64.3 L460.0 63.8 L470.0 63.5 L480.0 63.1 L490.0 62.8 L500.0 62.6 L510.0 62.3 L520.0 62.1 L530.0 61.9 L540.0 61.7 L550.0 61.6 L560.0 61.4 L570.0 61.3" stroke-width="2.6"/></g><g fill="currentColor" stroke="none"><circle cx="170" cy="129.9" r="4.5"/><circle cx="370" cy="69.5" r="4.5"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="78" y="32">y / (K U)</text><text x="560" y="244">t</text><text x="40" y="64">1</text><text x="26" y="134">0,632</text><text x="30" y="74">0,95</text><text x="44" y="254">0</text><text x="164" y="266">τ</text><text x="358" y="266">3τ</text><text x="140" y="292">tr = 2,20 τ (10 à 90 %)</text><text x="184" y="126">63,2 % à t = τ</text><text x="380" y="88">95 % à 3τ : t5</text><text x="176" y="52">tangente à l'origine</text><text x="430" y="52">valeur finale</text></g></svg>
+    <figcaption>
+      Réponse indicielle normalisée d'un premier ordre, $y/(KU)$ en fonction du temps gradué en constantes de temps. Trait plein épais : la réponse.
+      Tirets : la valeur finale et la tangente à l'origine, qui la coupe à $t = \tau$. Pointillés : les lectures à $63{,}2\ \%$ pour $t = \tau$, à
+      $95\ \%$ pour $t = 3\tau$, et les instants $t_{10}$ et $t_{90}$ qui bornent le temps de montée, coté par la flèche double sous l'axe.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Identification à partir d'un essai.</strong> On lit $K = \Delta y_\infty/\Delta u$, puis $\tau$ comme l'instant où la sortie atteint
+    $63{,}2\ \%$ de sa variation. La lecture à $63\ \%$ est plus robuste que celle de la tangente, sensible au bruit ; une lecture à $95\ \%$, divisée
+    par $3$, sert de contrôle. Si les deux estimations de $\tau$ diffèrent nettement, le système n'est pas un premier ordre pur : un retard ou un
+    second pôle s'y cache.
+  </p>
+
+  <h3 id="e-second-ordre">Second ordre : dépassement, temps de pic et temps d'établissement</h3>
+  <p>
+    <strong>Hypothèses.</strong> $H(s) = \dfrac{K\omega_0^2}{s^2 + 2\zeta\omega_0 s + \omega_0^2}$ avec $0 &lt; \zeta &lt; 1$, sans zéro, système au repos.
+    <strong>Dérivation.</strong> La décomposition de $Y(s) = H(s)\,U/s$ et le retour au temps, vus au cours
+    <a href="#/cours/regime-transitoire-rlc">Régime transitoire RLC</a>, donnent :
+  </p>
+  <div class="formule-cle">
+    $$y(t) = KU\left[1 - \frac{e^{-\sigma t}}{\sqrt{1 - \zeta^2}}\sin\left(\omega_d t + \varphi\right)\right], \qquad \sigma = \zeta\omega_0, \quad \omega_d = \omega_0\sqrt{1 - \zeta^2}, \quad \cos\varphi = \zeta$$
+    <p class="formule-cle-legende">
+      $\omega_0$ en $\mathrm{rad/s}$, $\zeta$ sans dimension. À $t = 0$, $\sin\varphi = \sqrt{1 - \zeta^2}$ et $y(0) = 0$ : la condition initiale est
+      respectée. Les pôles valent $-\sigma \pm j\omega_d$ : leur partie réelle fixe l'amortissement de l'enveloppe, leur partie imaginaire la
+      pseudo-pulsation.
+    </p>
+  </div>
+  <p>
+    En dérivant, les termes en cosinus se compensent et il reste $\dot{y}(t) = KU\dfrac{\omega_0}{\sqrt{1 - \zeta^2}}\,e^{-\sigma t}\sin(\omega_d t)$. La
+    dérivée s'annule pour $\omega_d t = k\pi$ ; le premier maximum est en $k = 1$. En ce point, $\sin(\pi + \varphi) = -\sin\varphi = -\sqrt{1 - \zeta^2}$,
+    donc $y_{max} = KU\left(1 + e^{-\sigma\pi/\omega_d}\right)$ :
+  </p>
+  <div class="formule-cle">
+    $$t_{pic} = \frac{\pi}{\omega_d} = \frac{\pi}{\omega_0\sqrt{1 - \zeta^2}}, \qquad D = \exp\left(-\frac{\pi\zeta}{\sqrt{1 - \zeta^2}}\right), \qquad \zeta = \frac{-\ln D}{\sqrt{\pi^2 + \ln^2 D}}$$
+    <p class="formule-cle-legende">
+      Le dépassement ne dépend que de $\zeta$ : $16{,}3\ \%$ pour $\zeta = 0{,}5$, $9{,}5\ \%$ pour $0{,}6$, $4{,}6\ \%$ pour $0{,}7$. La troisième
+      formule, obtenue en inversant la deuxième, sert à identifier $\zeta$ sur un essai. Cas limites : $\zeta \to 0$, $D \to 100\ \%$ et l'oscillation
+      ne s'amortit plus ; $\zeta \to 1$, $D \to 0$ et $t_{pic} \to \infty$, il n'y a plus de maximum. Dimension : $\omega_d t$ est en radians, $D$ est
+      sans dimension.
+    </p>
+  </div>
+  <p>
+    <strong>Temps d'établissement.</strong> L'écart à la valeur finale est borné par l'enveloppe $KU\,e^{-\sigma t}/\sqrt{1 - \zeta^2}$. Elle passe sous
+    $5\ \%$ de $KU$ pour $t = \left[\ln 20 + \ln\left(1/\sqrt{1 - \zeta^2}\right)\right]/\sigma$, ce qui donne la règle approchée et majorante :
+  </p>
+  <div class="formule-cle">
+    $$t_5 \approx \frac{3}{\zeta\omega_0} = \frac{3}{\sigma}, \qquad t_2 \approx \frac{4}{\zeta\omega_0}$$
+    <p class="formule-cle-legende">
+      Interprétation : le temps d'établissement se lit sur la partie réelle des pôles, comme $3\tau$ pour un premier ordre dont le pôle vaut $-1/\tau$.
+      C'est une <em>approximation</em> : la réponse réelle peut entrer dans la bande avant que l'enveloppe n'y soit. Elle est correcte à $20\ \%$ près
+      pour $\zeta$ entre $0{,}2$ et $0{,}6$, et devient fausse au-delà de $0{,}7$, où le temps d'établissement augmente alors que la formule le
+      prédit en baisse. On utilise alors le tableau ci-dessous, calculé numériquement.
+    </p>
+  </div>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>$\zeta$</th><th>$D$ (%)</th><th>$\omega_0 t_r$</th><th>$\omega_0 t_{pic}$</th><th>$\omega_0 t_5$ exact</th><th>$3/\zeta$, approché</th></tr></thead>
+      <tbody>
+        <tr><td>0,2</td><td>52,7</td><td>1,20</td><td>3,21</td><td>13,7</td><td>15,0</td></tr>
+        <tr><td>0,3</td><td>37,2</td><td>1,32</td><td>3,29</td><td>10,1</td><td>10,0</td></tr>
+        <tr><td>0,4</td><td>25,4</td><td>1,46</td><td>3,43</td><td>7,61</td><td>7,50</td></tr>
+        <tr><td>0,5</td><td>16,3</td><td>1,64</td><td>3,63</td><td>5,29</td><td>6,00</td></tr>
+        <tr><td>0,6</td><td>9,48</td><td>1,85</td><td>3,93</td><td>5,23</td><td>5,00</td></tr>
+        <tr><td>0,7</td><td>4,60</td><td>2,13</td><td>4,40</td><td>2,90</td><td>4,29</td></tr>
+        <tr><td>0,8</td><td>1,52</td><td>2,47</td><td>5,24</td><td>3,39</td><td>3,75</td></tr>
+        <tr><td>0,9</td><td>0,15</td><td>2,88</td><td>7,21</td><td>4,02</td><td>3,33</td></tr>
+        <tr><td>1,0 (critique)</td><td>0</td><td>3,36</td><td>sans objet</td><td>4,74</td><td>3,00</td></tr>
+        <tr><td>1,5</td><td>0</td><td>5,86</td><td>sans objet</td><td>8,26</td><td>2,00</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Le temps d'établissement à $5\ \%$ passe par un minimum de $2{,}87/\omega_0$ vers $\zeta = 0{,}69$, valeur pour laquelle le dépassement vaut
+    exactement $5\ \%$ : le premier maximum touche le bord de la bande sans en sortir. Juste au-dessous, il en sort, et $t_5$ saute au retour
+    suivant dans la bande, d'où le passage brutal de $2{,}90$ à $5{,}23$ entre $\zeta = 0{,}7$ et $0{,}6$. Ce minimum est l'origine de la
+    <em>règle de conception</em> courante "viser $\zeta \approx 0{,}7$" : réponse rapide, dépassement d'environ $5\ \%$. Avec une bande de $2\ \%$,
+    l'optimum se déplace vers $\zeta \approx 0{,}78$.
+  </p>
+  <p>
+    <strong>Régime apériodique, $\zeta \geq 1$.</strong> Les deux pôles sont réels, $-1/\tau_1$ et $-1/\tau_2$. Si $\tau_1$ est au moins cinq fois plus
+    grande que $\tau_2$, la réponse ressemble à un premier ordre de constante $\tau_1 + \tau_2$, conformément à la réduction d'ordre du cours
+    précédent. Au régime critique $\zeta = 1$, $y(t) = KU\left[1 - (1 + \omega_0 t)e^{-\omega_0 t}\right]$ et $t_5 = 4{,}74/\omega_0$.
+  </p>
+  <p>
+    La simulation suivante place les pôles dans le plan complexe et trace la réponse correspondante, avec ses indicateurs. Le point déplaçable fixe le
+    pôle du demi-plan supérieur ; son conjugué suit par symétrie. Un curseur ajoute un troisième pôle réel, pour juger de la notion de pôles dominants.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      En déplaçant le pôle verticalement, à partie réelle constante, le temps d'établissement change-t-il ? Et le dépassement ? En le déplaçant le long
+      d'une demi-droite issue de l'origine, que reste-t-il constant ? Que se passe-t-il quand le pôle franchit l'axe imaginaire ? Un troisième pôle en
+      $-20\ \mathrm{s^{-1}}$ modifie-t-il beaucoup une réponse dont les pôles complexes ont une partie réelle de $-1\ \mathrm{s^{-1}}$ ?
+    </p>
+  </div>
+  <figure id="e-poles-sim">
+    <div class="schema-vivant" id="e-poles-vivant"></div>
+    <div id="e-poles-lecteur"></div>
+    <div id="e-poles-curseurs"></div>
+    <div id="e-poles-valeurs"></div>
+    <div id="e-poles-trace"></div>
+    <figcaption>
+      Pôles et réponse indicielle. En haut, le plan complexe : abscisse, partie réelle $\mathrm{Re}(s)$ en $\mathrm{s^{-1}}$ ; ordonnée, partie
+      imaginaire $\mathrm{Im}(s)$ en $\mathrm{rad/s}$. Les croix sont les pôles ; le point déplaçable fixe le pôle du haut, son conjugué suit. La demi-droite
+      en tirets correspond à $\zeta = 0{,}7$, la verticale en pointillé à la partie réelle $-\sigma$ du pôle courant ; le demi-plan de droite, hachuré,
+      est la zone d'instabilité ; le carré sur l'axe réel est le troisième pôle quand il est actif. Pendant la lecture, un petit cercle parcourt la
+      réponse. En bas, la réponse à un échelon unité de gain statique $1$, avec la bande de tolérance en tirets, le temps d'établissement et le premier
+      maximum repérés ; le panneau donne $\omega_0$, $\zeta$ et les indicateurs calculés numériquement.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> À partie réelle constante, $\sigma$ ne change pas : l'enveloppe et donc le temps d'établissement approché restent
+    les mêmes, mais $\omega_d$ augmente, l'oscillation s'accélère et le dépassement croît, car $\zeta = \sigma/\omega_0$ diminue. Sur une demi-droite
+    issue de l'origine, l'angle avec l'axe réel négatif vaut $\arccos\zeta$ : $\zeta$, donc le dépassement, reste constant, et seule l'échelle de temps
+    change, la réponse se contracte quand on s'éloigne de l'origine. Au franchissement de l'axe imaginaire, $\sigma$ devient négatif et l'enveloppe
+    croît : la réponse diverge, le système est instable. Un troisième pôle vingt fois plus à gauche ne retarde la réponse que de quelques centièmes de
+    seconde : les pôles les plus proches de l'axe imaginaire dominent. Ramené à $-1{,}5\ \mathrm{s^{-1}}$, il ralentit la montée et réduit le
+    dépassement : le modèle du second ordre ne suffit plus.
+  </p>
+
+  <h3 id="e-stabilite">Pôles et stabilité</h3>
+  <p>
+    <strong>Définition.</strong> Un système linéaire est stable si toute entrée bornée produit une sortie bornée ; de façon équivalente pour un modèle
+    à paramètres localisés, si sa réponse libre revient à zéro quel que soit l'état initial. Chaque pôle $p$ contribue à la réponse libre par un mode
+    $e^{pt}$, d'où la condition, qui est un <em>théorème</em> sur les modèles linéaires :
+  </p>
+  <div class="formule-cle">
+    $$\text{stable} \iff \mathrm{Re}(p_k) &lt; 0 \ \text{pour tous les pôles } p_k$$
+    <p class="formule-cle-legende">
+      Un pôle à partie réelle positive donne un mode qui croît exponentiellement : instable. Un pôle nul donne un mode constant, un intégrateur : la
+      réponse à un échelon croît comme une rampe. Une paire de pôles imaginaires purs donne une oscillation entretenue. Ces deux derniers cas, dits à la
+      limite de stabilité, ne sont pas acceptables pour une boucle fermée, car la moindre dérive de paramètre les fait basculer.
+    </p>
+  </div>
+  <ul>
+    <li><strong>Lecture qualitative du plan complexe.</strong> Plus un pôle est à gauche, plus son mode s'éteint vite ; plus il est loin de l'axe réel,
+      plus il oscille vite ; plus l'angle avec l'axe réel négatif est grand, moins il est amorti.</li>
+    <li><strong>Pôles dominants.</strong> Un pôle dont la partie réelle est au moins cinq à dix fois plus grande, en valeur absolue, que celle des pôles
+      les plus lents contribue peu à la réponse : on le néglige. C'est une <em>règle de conception</em>, à vérifier par simulation quand l'enjeu le
+      justifie.</li>
+    <li><strong>Zéros.</strong> Un zéro ne change pas la stabilité mais modifie la forme : un zéro à gauche proche des pôles dominants augmente le
+      dépassement ; un zéro à partie réelle positive fait partir la réponse dans le mauvais sens avant qu'elle ne se redresse. Les formules de cette
+      séance supposent l'absence de zéro.</li>
+    <li><strong>La boucle déplace les pôles.</strong> Un procédé stable peut donner une boucle fermée instable, et l'inverse : les pôles de
+      $T = L/(1 + L)$ sont les racines de $1 + L(s) = 0$, qui dépendent du gain. Le cours Critères de stabilité donnera les outils pour décider sans
+      calculer les racines.</li>
+  </ul>
+
+  <h3 id="e-erreur">Erreur statique et classe d'une boucle</h3>
+  <p>
+    On considère la boucle à retour unitaire ci-dessous : le correcteur $C(s)$ et le procédé $G(s)$ forment la boucle ouverte $L(s) = C(s)G(s)$, la
+    consigne $r$ est comparée à la mesure, et une perturbation $d$ s'ajoute à l'entrée du procédé.
+  </p>
+  <figure id="e-boucle-figure">
+    <svg viewBox="0 0 700 220" role="img" aria-label="Boucle à retour unitaire : consigne r, sommateur r plus, y moins donnant l'écart epsilon, correcteur C de s donnant u, sommateur u plus d plus avec la perturbation d, procédé G de s donnant y, retour unitaire de y vers le premier sommateur"><defs><marker id="e-bo-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="110" cy="90" r="14"/><rect x="170" y="64" width="110" height="52" rx="6"/><circle cx="340" cy="90" r="14"/><rect x="400" y="64" width="110" height="52" rx="6"/><path d="M30 90H92" marker-end="url(#e-bo-fl)"/><path d="M124 90H166" marker-end="url(#e-bo-fl)"/><path d="M280 90H322" marker-end="url(#e-bo-fl)"/><path d="M340 24V72" marker-end="url(#e-bo-fl)"/><path d="M354 90H396" marker-end="url(#e-bo-fl)"/><path d="M510 90H660" marker-end="url(#e-bo-fl)"/><path d="M600 90V180H110V108" marker-end="url(#e-bo-fl)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13"><text x="200" y="95">C(s)</text><text x="430" y="95">G(s)</text><text x="40" y="80">r</text><text x="86" y="80">+</text><text x="118" y="126">-</text><text x="136" y="80">ε</text><text x="292" y="80">u</text><text x="316" y="80">+</text><text x="346" y="62">+</text><text x="350" y="34">d</text><text x="630" y="80">y</text><text x="250" y="200">retour unitaire : mesure = y</text><text x="196" y="142">correcteur</text><text x="430" y="142">procédé</text></g></svg>
+    <figcaption>
+      Boucle à retour unitaire. Les flèches donnent le sens des signaux. Le premier sommateur forme l'écart $\varepsilon = r - y$, avec les signes
+      portés à côté des flèches ; le second ajoute la perturbation $d$, par exemple un couple de charge, à la commande $u$. Le capteur est supposé
+      parfait et de gain unité : la mesure est égale à $y$. La boucle ouverte est le produit $L = CG$ parcouru en coupant le retour.
+    </figcaption>
+  </figure>
+  <p>
+    Sans perturbation, $\varepsilon = r - L\varepsilon$, donc $E(s) = R(s)/(1 + L(s))$. On écrit $L(s) = \dfrac{K_b\,N(s)}{s^{\alpha}\,M(s)}$ avec
+    $N(0) = M(0) = 1$ : $K_b$ est le gain de boucle et $\alpha$, nombre d'intégrateurs de la boucle ouverte, est sa <strong>classe</strong>. Le
+    théorème de la valeur finale, $\varepsilon_s = \lim_{s \to 0} sE(s)$, valable <strong>seulement si la boucle fermée est stable</strong>, donne :
+  </p>
+  <div class="formule-cle">
+    $$\text{échelon } r = R_0 : \ \varepsilon_s = \lim_{s\to 0}\frac{R_0}{1 + L(s)} = \begin{cases}\dfrac{R_0}{1 + K_b} & \alpha = 0\\[4pt] 0 & \alpha \geq 1\end{cases}
+    \qquad \text{rampe } r = at : \ \varepsilon_s = \lim_{s\to 0}\frac{a}{s\,(1 + L(s))} = \begin{cases}\infty & \alpha = 0\\[2pt] \dfrac{a}{K_b} & \alpha = 1\\[2pt] 0 & \alpha \geq 2\end{cases}$$
+    <p class="formule-cle-legende">
+      $K_b$ est sans dimension pour la classe $0$, en $\mathrm{s^{-1}}$ pour la classe $1$ : $a/K_b$ a bien l'unité de la sortie. L'erreur en rampe d'une
+      boucle de classe 1 s'appelle erreur de traînage : la sortie suit la consigne avec un décalage constant. Cas limite : $K_b \to \infty$ annule
+      toutes ces erreurs, mais un gain infini n'est jamais compatible avec la stabilité.
+    </p>
+  </div>
+  <p>
+    <strong>Perturbation.</strong> Pour une perturbation en échelon $d$ entrant comme sur la figure, l'écart final vaut, en classe 0,
+    $-G(0)\,d/(1 + K_b)$ : la boucle divise l'effet de la perturbation par $1 + K_b$ sans l'annuler. Pour l'annuler, il faut un intégrateur
+    <strong>dans le correcteur</strong>, c'est-à-dire en amont du point d'entrée de la perturbation : un intégrateur placé dans le procédé, après ce point,
+    annule l'erreur due à la consigne mais pas celle due à la perturbation. C'est le rôle de l'action intégrale étudiée au cours Correcteurs P, PI, PD et
+    PID.
+  </p>
+  <p>
+    <strong>Le dilemme précision et dépassement.</strong> Appliquons un correcteur proportionnel $C = K_p$ à l'actionneur de vanne, en boucle de vitesse
+    avec une mesure de gain unité. Avec $K_b = K_pG_0$ :
+  </p>
+  <div class="formule-cle">
+    $$T(s) = \frac{K_b}{\tau_1\tau_2\,s^2 + (\tau_1 + \tau_2)\,s + 1 + K_b}, \qquad \omega_0 = \sqrt{\frac{1 + K_b}{\tau_1\tau_2}}, \qquad \zeta = \frac{\tau_1 + \tau_2}{2\sqrt{\tau_1\tau_2\,(1 + K_b)}} = \frac{1{,}209}{\sqrt{1 + K_b}}, \qquad \varepsilon_s = \frac{1}{1 + K_b}$$
+    <p class="formule-cle-legende">
+      Le gain de boucle accélère la boucle, $\omega_0$ croît comme $\sqrt{1 + K_b}$, et réduit l'erreur statique comme $1/(1 + K_b)$, mais il réduit
+      l'amortissement comme $1/\sqrt{1 + K_b}$. Le produit $\zeta\omega_0 = (\tau_1 + \tau_2)/(2\tau_1\tau_2) = 600{,}9\ \mathrm{s^{-1}}$ ne dépend pas
+      de $K_p$ : les pôles se déplacent verticalement, à partie réelle constante. Une erreur statique de $5\ \%$ exige $K_b = 19$, d'où $\zeta = 0{,}27$
+      et $41\ \%$ de dépassement ; un dépassement de $5\ \%$ exige $\zeta = 0{,}69$, d'où $K_b = 2{,}07$ et $33\ \%$ d'erreur statique.
+    </p>
+  </div>
+  <p>
+    La simulation suivante applique ce correcteur à l'actionneur pour un petit échelon de consigne, assez petit pour que la tension et le courant
+    restent dans le domaine linéaire. Le schéma bloc affiche les signaux en direct ; le petit plan complexe trace le chemin des pôles de la boucle
+    fermée quand $K_p$ varie.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Partant de $K_p = 0{,}2\ \mathrm{V\cdot s/rad}$, que deviennent l'erreur statique et le dépassement si l'on décuple le gain ? La boucle peut-elle
+      devenir instable avec ce procédé du second ordre ? Un couple de charge appliqué en cours de route modifie-t-il le dépassement de la réponse à la
+      consigne, ou seulement sa valeur finale ?
+    </p>
+  </div>
+  <figure id="e-boucle-sim">
+    <div class="schema-vivant" id="e-boucle-vivant">
+      <svg id="e-boucle-svg" viewBox="0 0 720 300" role="img" aria-label="Schéma bloc de la boucle de vitesse : consigne Omega c, sommateur, correcteur Kp, actionneur G de s, vitesse Omega, retour de mesure ; couple de charge entrant au procédé ; valeurs instantanées affichées ; petit plan complexe à droite avec les pôles de la boucle fermée"><defs><marker id="e-bs-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="80" cy="90" r="14"/><rect x="130" y="66" width="70" height="48" rx="6"/><rect x="250" y="66" width="140" height="48" rx="6"/><path d="M14 90H62" marker-end="url(#e-bs-fl)"/><path d="M94 90H126" marker-end="url(#e-bs-fl)"/><path d="M200 90H246" marker-end="url(#e-bs-fl)"/><path d="M320 22V62" marker-end="url(#e-bs-fl)"/><path d="M390 90H460" marker-end="url(#e-bs-fl)"/><path d="M430 90V170H80V108" marker-end="url(#e-bs-fl)"/><rect x="490" y="20" width="210" height="200" rx="6" stroke-width="1.2"/><path d="M500 120H690M660 30V210" stroke-width="1" stroke-dasharray="3 4"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13"><text x="154" y="95">Kp</text><text x="262" y="88">actionneur</text><text x="280" y="106">G(s)</text><text x="56" y="80">+</text><text x="88" y="126">-</text><text x="14" y="80">Ωc</text><text x="440" y="80">Ω</text><text x="328" y="36">Cr</text><text x="160" y="190">mesure de vitesse, gain 1</text><text x="500" y="236">pôles de la boucle fermée</text><text x="664" y="44">Im</text><text x="500" y="114">Re</text></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text id="e-bs-veps" x="96" y="60">ε = 0</text><text id="e-bs-vu" x="196" y="140">u = 0 V</text><text id="e-bs-vw" x="400" y="60">Ω = 0</text><text id="e-bs-vi" x="300" y="140">i = 0 A</text></g><g id="e-bs-plan" fill="none" stroke="currentColor"></g></svg>
+    </div>
+    <div id="e-boucle-lecteur"></div>
+    <div id="e-boucle-curseurs"></div>
+    <div id="e-boucle-valeurs"></div>
+    <div id="e-boucle-trace"></div>
+    <figcaption>
+      Boucle de vitesse proportionnelle de l'actionneur de vanne. À gauche, le schéma bloc : le sommateur forme $\varepsilon = \Omega_c - \Omega$ ; le
+      correcteur $K_p$ donne la tension $u$ ; le couple de charge $C_r$ entre dans l'actionneur ; la mesure de vitesse, de gain unité, ferme la boucle.
+      Les valeurs instantanées de $\varepsilon$, $u$, du courant $i$ et de $\Omega$ s'affichent pendant la lecture. À droite, le plan complexe des pôles
+      de la boucle fermée, axes gradués en $\mathrm{s^{-1}}$ : le trait fin est leur chemin quand $K_p$ va de $0$ à $2\ \mathrm{V\cdot s/rad}$, les croix
+      leur position pour le gain choisi. En bas, la vitesse et la consigne en fonction du temps, nommées dans la légende ; le couple de charge, s'il est
+      réglé, s'applique à $t = 10\ \mathrm{ms}$.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Avec $K_p = 2\ \mathrm{V\cdot s/rad}$, l'erreur statique tombe à $3{,}4\ \%$ mais le dépassement atteint $49\ \%$ :
+    $\zeta = 0{,}22$. Les pôles montent verticalement sans jamais franchir l'axe imaginaire, car leur partie réelle reste $-600{,}9\ \mathrm{s^{-1}}$ : un
+    procédé du second ordre sans retard, bouclé par un gain proportionnel, reste stable quel que soit le gain, mais devient de plus en plus oscillant.
+    Un retard ou un troisième pôle, toujours présents en réalité (filtre de mesure, échantillonnage, inductance négligée ailleurs), finiraient par le
+    rendre instable : ce sera l'objet du cours Critères de stabilité. Le couple de charge ne change ni $\zeta$ ni $\omega_0$ : il ne modifie que la
+    valeur finale, conformément à la linéarité, en ajoutant un écart que seule une action intégrale pourrait annuler. Le courant de pointe croît avec
+    $K_p$ : au-delà d'environ $0{,}33\ \mathrm{V\cdot s/rad}$ pour cet échelon de $20\ \mathrm{rad/s}$, la limitation à $3\ \mathrm{A}$ du projet serait
+    atteinte et le modèle linéaire cesserait de décrire la réponse.
+  </p>
+
+  <h3 id="e-methodes">Quatre façons d'obtenir les indicateurs : laquelle choisir ?</h3>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Méthode</th><th>Principe</th><th>Points forts</th><th>Limites</th><th>Préférable quand</th></tr></thead>
+      <tbody>
+        <tr><td>Formules analytiques</td><td>$3\tau$, $\pi/\omega_d$, $e^{-\pi\zeta/\sqrt{1-\zeta^2}}$, $3/\sigma$</td><td>immédiates, montrent l'influence de chaque paramètre</td><td>premier ou second ordre pur, sans zéro ; $3/\sigma$ approché</td><td>prédimensionnement, réglage au tableau</td></tr>
+        <tr><td>Tableau ou abaque</td><td>valeurs normalisées en fonction de $\zeta$</td><td>exact pour le second ordre pur, y compris $t_5$</td><td>un seul modèle ; interpolation</td><td>réglage fin d'un second ordre dominant</td></tr>
+        <tr><td>Simulation numérique</td><td>intégration de $\dot{x} = f(x, u)$, mesure sur la courbe</td><td>tout ordre, zéros, saturations, non-linéarités</td><td>ne vaut que ce que vaut le modèle ; n'explique pas</td><td>vérification d'un réglage, effet des limitations</td></tr>
+        <tr><td>Essai sur site</td><td>échelon réel, enregistrement</td><td>seule vérité sur le système réel</td><td>bruit, contraintes du procédé, petits échelons seulement</td><td>mise en service, réception, diagnostic</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="e-statut">Loi, convention, approximation, règle de conception et donnée du constructeur</h3>
+  <ul>
+    <li><strong>Lois et théorèmes :</strong> la solution exacte des équations du premier et du second ordre ; la condition de stabilité sur les parties
+      réelles des pôles ; le théorème de la valeur finale, sous condition de stabilité.</li>
+    <li><strong>Conventions :</strong> bornes du temps de montée ($10$ à $90\ \%$), largeur de la bande d'établissement ($5\ \%$ ou $2\ \%$),
+      dépassement rapporté à la valeur finale ; signe de l'écart $\varepsilon = r - y$.</li>
+    <li><strong>Approximations :</strong> $t_5 \approx 3/\sigma$ ; réduction à des pôles dominants ; modèle linéaire, donc indicateurs indépendants de
+      l'amplitude, valables pour de petits échelons seulement.</li>
+    <li><strong>Règles de conception :</strong> viser $\zeta$ entre $0{,}6$ et $0{,}8$ ; négliger un pôle cinq à dix fois plus rapide ; rendre les
+      maillons internes d'une boucle, capteur et actionneur, environ dix fois plus rapides que la boucle elle-même.</li>
+    <li><strong>Données du constructeur ou du site :</strong> rampes et limitations du variateur, limitation de courant de l'actionneur, temps de
+      réponse des capteurs, tolérances imposées par le procédé. Les valeurs de l'actionneur qui ne viennent pas du projet fil rouge sont supposées.</li>
+  </ul>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Le schéma principal de la séance rassemble tous les indicateurs sur une même réponse indicielle : un second ordre de pulsation propre
+    $\omega_0 = 1\ \mathrm{rad/s}$ et d'amortissement $\zeta = 0{,}45$, dont la valeur finale vaut $0{,}9$ pour une consigne unité, ce qui fait
+    apparaître une erreur statique de $10\ \%$.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 720 390" role="img" aria-label="Réponse indicielle annotée : consigne à 1, valeur finale à 0,9, erreur statique entre les deux, bande de plus ou moins 5 %, dépassement de 20,5 % au premier maximum, temps de pic 3,52 s, temps de montée de 10 à 90 % de 1,55 s, temps d'établissement à 5 % de 5,25 s"><defs><marker id="f-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-linecap="round"><path d="M60 300H700" stroke-width="1.4" marker-end="url(#f-fl)"/><path d="M70 310V40" stroke-width="1.4" marker-end="url(#f-fl)"/><path d="M70 100H690" stroke-width="1.4" stroke-dasharray="9 5"/><path d="M70 120H690" stroke-width="1.2" stroke-dasharray="3 4"/><path d="M250 111H690M250 129H690" stroke-width="1" stroke-dasharray="6 4"/><path d="M94.2 282V300M171.5 138V300M245.9 83V300M332.4 129V300" stroke-width="1" stroke-dasharray="2 4"/><path d="M70 282H94.2M70 138H171.5" stroke-width="1" stroke-dasharray="2 4"/><path d="M98 330H168" stroke-width="1.2" marker-start="url(#f-fl)" marker-end="url(#f-fl)"/><path d="M74 360H328" stroke-width="1.2" marker-start="url(#f-fl)" marker-end="url(#f-fl)"/><path d="M262 86V117" stroke-width="1.2" marker-start="url(#f-fl)" marker-end="url(#f-fl)"/><path d="M680 103V117" stroke-width="1.2" marker-start="url(#f-fl)" marker-end="url(#f-fl)"/><path d="M70.0 300.0 L74.0 299.4 L78.0 297.8 L82.0 295.2 L86.0 291.7 L90.0 287.3 L94.0 282.3 L98.0 276.6 L102.0 270.3 L106.0 263.5 L110.0 256.3 L114.0 248.8 L118.0 241.0 L122.0 233.0 L126.0 224.8 L130.0 216.6 L134.0 208.4 L138.0 200.1 L142.0 192.0 L146.0 184.0 L150.0 176.1 L154.0 168.4 L158.0 161.0 L162.0 153.8 L166.0 147.0 L170.0 140.4 L174.0 134.2 L178.0 128.3 L182.0 122.7 L186.0 117.6 L190.0 112.8 L194.0 108.4 L198.0 104.3 L202.0 100.7 L206.0 97.4 L210.0 94.5 L214.0 91.9 L218.0 89.7 L222.0 87.8 L226.0 86.3 L230.0 85.1 L234.0 84.2 L238.0 83.5 L242.0 83.2 L246.0 83.0 L250.0 83.2 L254.0 83.5 L258.0 84.0 L262.0 84.8 L266.0 85.7 L270.0 86.7 L274.0 87.9 L278.0 89.2 L282.0 90.6 L286.0 92.0 L290.0 93.6 L294.0 95.2 L298.0 96.8 L302.0 98.5 L306.0 100.2 L310.0 101.9 L314.0 103.6 L318.0 105.3 L322.0 106.9 L326.0 108.5 L330.0 110.1 L334.0 111.6 L338.0 113.1 L342.0 114.5 L346.0 115.8 L350.0 117.1 L354.0 118.3 L358.0 119.5 L362.0 120.5 L366.0 121.5 L370.0 122.4 L374.0 123.2 L378.0 124.0 L382.0 124.7 L386.0 125.3 L390.0 125.8 L394.0 126.2 L398.0 126.6 L402.0 126.9 L406.0 127.2 L410.0 127.4 L414.0 127.5 L418.0 127.6 L422.0 127.6 L426.0 127.6 L430.0 127.5 L434.0 127.4 L438.0 127.2 L442.0 127.0 L446.0 126.8 L450.0 126.6 L454.0 126.3 L458.0 126.0 L462.0 125.7 L466.0 125.4 L470.0 125.1 L474.0 124.7 L478.0 124.4 L482.0 124.1 L486.0 123.7 L490.0 123.4 L494.0 123.0 L498.0 122.7 L502.0 122.3 L506.0 122.0 L510.0 121.7 L514.0 121.4 L518.0 121.1 L522.0 120.8 L526.0 120.6 L530.0 120.3 L534.0 120.1 L538.0 119.9 L542.0 119.7 L546.0 119.5 L550.0 119.3 L554.0 119.2 L558.0 119.0 L562.0 118.9 L566.0 118.8 L570.0 118.7 L574.0 118.6 L578.0 118.6 L582.0 118.5 L586.0 118.5 L590.0 118.5 L594.0 118.4 L598.0 118.4 L602.0 118.4 L606.0 118.5 L610.0 118.5 L614.0 118.5 L618.0 118.6 L622.0 118.6 L626.0 118.6 L630.0 118.7 L634.0 118.8 L638.0 118.8 L642.0 118.9 L646.0 119.0 L650.0 119.0 L654.0 119.1 L658.0 119.2 L662.0 119.2 L666.0 119.3 L670.0 119.4" stroke-width="2.6"/></g><g fill="currentColor" stroke="none"><circle cx="245.9" cy="83" r="4.5"/><circle cx="94.2" cy="282" r="3.5"/><circle cx="171.5" cy="138" r="3.5"/><circle cx="332.4" cy="129" r="4"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="78" y="36">y(t)</text><text x="650" y="292">t (s)</text><text x="44" y="104">1</text><text x="34" y="124">0,9</text><text x="44" y="304">0</text><text x="28" y="286">10 %</text><text x="28" y="142">90 %</text><text x="430" y="92">consigne r = 1</text><text x="470" y="148">valeur finale y∞ = 0,9</text><text x="560" y="164">bande ± 5 % de y∞</text><text x="630" y="88">εs = 0,1</text><text x="270" y="74">D = 20,5 % de y∞</text><text x="226" y="316">tpic = 3,52 s</text><text x="100" y="348">tr = 1,55 s</text><text x="140" y="380">t5 = 5,25 s</text><text x="340" y="316">entrée définitive dans la bande</text></g></svg>
+    <figcaption>
+      Réponse indicielle annotée. Abscisse : temps en secondes, de $0$ à $12\ \mathrm{s}$ ; ordonnée : sortie $y$. Le trait plein épais est la réponse.
+      La longue ligne en tirets est la consigne $r = 1$, appliquée en échelon à $t = 0$ ; la ligne en pointillé serré, la valeur finale $0{,}9$ ;
+      les deux lignes en tirets courts, à droite, bornent la bande de $\pm 5\ \%$ autour de la valeur finale. Les flèches doubles cotent l'erreur
+      statique entre consigne et valeur finale, le dépassement au premier maximum, le temps de montée entre les passages à $10\ \%$ et $90\ \%$ de la
+      valeur finale, et le temps d'établissement depuis l'échelon jusqu'à l'entrée définitive dans la bande. Le dépassement se mesure par rapport à la
+      valeur finale, non à la consigne : ici le maximum dépasse aussi la consigne, mais ce n'est pas une règle.
+    </figcaption>
+  </figure>
+
+  <p>
+    Le tableau suivant compare les deux modèles de référence de la séance. Il sert de mémo pour passer de la fonction de transfert aux indicateurs et
+    inversement.
+  </p>
+  <div class="cadre-tableau" id="f-comparatif">
+    <table>
+      <thead><tr><th>Grandeur</th><th>Premier ordre $K/(1 + \tau s)$</th><th>Second ordre $K\omega_0^2/(s^2 + 2\zeta\omega_0 s + \omega_0^2)$, $\zeta &lt; 1$</th></tr></thead>
+      <tbody>
+        <tr><td>Pôles</td><td>$-1/\tau$, réel</td><td>$-\zeta\omega_0 \pm j\omega_0\sqrt{1 - \zeta^2}$</td></tr>
+        <tr><td>Valeur finale</td><td>$KU$</td><td>$KU$</td></tr>
+        <tr><td>Dépassement</td><td>aucun</td><td>$e^{-\pi\zeta/\sqrt{1 - \zeta^2}}$, ne dépend que de $\zeta$</td></tr>
+        <tr><td>Temps de montée</td><td>$2{,}20\,\tau$</td><td>tableau, de $1{,}64/\omega_0$ ($\zeta = 0{,}5$) à $2{,}13/\omega_0$ ($\zeta = 0{,}7$)</td></tr>
+        <tr><td>Temps de pic</td><td>sans objet</td><td>$\pi/\omega_d$</td></tr>
+        <tr><td>Temps d'établissement à $5\ \%$</td><td>$3{,}00\,\tau$</td><td>$\approx 3/(\zeta\omega_0)$, exact dans le tableau, minimum $2{,}87/\omega_0$ vers $\zeta = 0{,}69$</td></tr>
+        <tr><td>Paramètre de rapidité</td><td>$\tau$</td><td>$\omega_0$ à $\zeta$ fixé ; $\zeta\omega_0$ pour l'établissement</td></tr>
+        <tr><td>Identification sur essai</td><td>$K$ par la valeur finale, $\tau$ à $63{,}2\ \%$</td><td>$\zeta$ par $D$, puis $\omega_0$ par $t_{pic}$</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    L'organigramme suivant résume la démarche d'analyse d'une réponse, qu'elle vienne d'un modèle ou d'un essai.
+  </p>
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Réponse indicielle : modèle ou essai"] --> B{"Le système est-il stable ?"}
+  B -->|"Non : pôle à droite, réponse divergente"| X["Aucun indicateur n'a de sens : revoir le réglage"]
+  B -->|"Oui"| C["Valeur finale et erreur statique"]
+  C --> D{"La réponse dépasse-t-elle sa valeur finale ?"}
+  D -->|"Non"| E["Premier ordre ou second ordre apériodique"]
+  D -->|"Oui"| F["Second ordre dominant : ζ par D, ω0 par tpic"]
+  E --> G["τ à 63 %, contrôle par t5 = 3τ"]
+  F --> H["t5 par le tableau ou 3/(ζ ω0)"]
+  G --> I{"Les indicateurs respectent-ils le cahier des charges ?"}
+  H --> I
+  I -->|"Oui"| J["Vérifier l'amplitude : saturation, rampe, limitation"]
+  I -->|"Erreur trop grande"| K["Gain ou action intégrale"]
+  I -->|"Trop lent ou trop oscillant"| L["Déplacer les pôles : réglage du correcteur"]</pre>
+    <figcaption>
+      Organigramme d'analyse d'une réponse temporelle. Les losanges sont des décisions, les rectangles des actions ; les libellés des flèches donnent la
+      réponse qui oriente le chemin. La stabilité est testée en premier, car aucun indicateur n'a de sens pour un système qui diverge ; la vérification
+      finale de l'amplitude rappelle que les formules supposent un comportement linéaire.
+    </figcaption>
+  </figure>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <ul>
+    <li><a href="#d-cuve-sim" data-renvoi="d-cuve-sim">Cuve du premier ordre animée</a>, section D : ralentissement à l'approche, indépendance vis-à-vis de l'amplitude.</li>
+    <li><a href="#e-signaux-figure" data-renvoi="e-signaux-figure">Signaux d'essai : échelon, rampe, impulsion</a>, section E.</li>
+    <li><a href="#e-premier-figure" data-renvoi="e-premier-figure">Réponse indicielle annotée du premier ordre</a>, section E.</li>
+    <li><a href="#e-poles-sim" data-renvoi="e-poles-sim">Plan des pôles et réponse indicielle</a>, section E : dépassement, établissement, stabilité, pôles dominants.</li>
+    <li><a href="#e-boucle-figure" data-renvoi="e-boucle-figure">Boucle à retour unitaire avec perturbation</a>, section E.</li>
+    <li><a href="#e-boucle-sim" data-renvoi="e-boucle-sim">Boucle de vitesse proportionnelle de l'actionneur</a>, section E : dilemme précision et dépassement.</li>
+    <li><a href="#e-methodes" data-renvoi="e-methodes">Tableau comparatif des méthodes d'obtention des indicateurs</a>, section E.</li>
+    <li><a href="#h-courbe-fig" data-renvoi="h-courbe-fig">Réponse de la boucle de vitesse de l'exemple résolu</a>, section H.</li>
+    <li><a href="#i-pompe-fig" data-renvoi="i-pompe-fig">Réponse du groupe de pompage limitée par la rampe</a>, section I.</li>
+    <li><a href="#i-chaine-figure" data-renvoi="i-chaine-figure">Chaîne de la future régulation de pression et temps caractéristiques</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <ol>
+    <li><strong>Préciser la question et les conventions</strong> : quelle sortie, quel signal d'essai, quelle bande d'établissement, dépassement rapporté
+      à la valeur finale ou à la consigne.</li>
+    <li><strong>Écrire la fonction de transfert concernée</strong> : procédé seul, ou boucle fermée $T = L/(1 + L)$ pour la consigne, et
+      $G/(1 + L)$ pour une perturbation à l'entrée du procédé.</li>
+    <li><strong>Vérifier la stabilité</strong> : pôles à partie réelle strictement négative. Sinon, s'arrêter : les indicateurs n'existent pas.</li>
+    <li><strong>Calculer la valeur finale</strong> par le gain statique, et l'erreur statique par la classe de la boucle ou le théorème de la valeur
+      finale.</li>
+    <li><strong>Identifier la forme</strong> : premier ordre ($\tau$), second ordre ($\omega_0$, $\zeta$), ou ordre supérieur à réduire par pôles
+      dominants, en chiffrant le rapport des parties réelles.</li>
+    <li><strong>Calculer les indicateurs</strong> par les formules ($3\tau$, $\pi/\omega_d$, $D(\zeta)$), le tableau, ou une simulation si le modèle
+      a des zéros ou un ordre élevé.</li>
+    <li><strong>Contrôler</strong> : dimensions, cas limites, cohérence entre $t_r$, $t_{pic}$ et $t_5$ (dans cet ordre croissant pour un système qui
+      dépasse), comparaison de $3/\sigma$ au tableau.</li>
+    <li><strong>Vérifier le domaine linéaire</strong> : commande initiale, courant de pointe, rampe, saturation pour l'amplitude d'échelon considérée.</li>
+    <li><strong>Pour un dimensionnement</strong>, traduire le cahier des charges en contraintes sur les pôles ($\zeta \geq \zeta_{min}$ pour le
+      dépassement, $\sigma \geq 3/t_5$ pour la durée, classe pour l'erreur), puis chercher le réglage qui les respecte et noter le compromis.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Boucle de vitesse de l'actionneur de la vanne de refoulement, correcteur proportionnel $K_p = 0{,}2\ \mathrm{V\cdot s/rad}$, mesure de vitesse de gain
+    unité. Procédé : modèle complet du cours précédent, $\Omega/U = G_0/(\tau_1\tau_2 s^2 + (\tau_1 + \tau_2)s + 1)$ avec $G_0 = 14{,}16\ \mathrm{rad/(s\cdot V)}$,
+    $\tau_1\tau_2 = 4{,}046 \times 10^{-6}\ \mathrm{s^2}$ et $\tau_1 + \tau_2 = 4{,}862\ \mathrm{ms}$ ($K = 0{,}070\ \mathrm{V\cdot s/rad}$ et
+    $R = 1{,}2\ \Omega$ du projet ; $L = 1\ \mathrm{mH}$, $J = 2 \times 10^{-5}\ \mathrm{kg\cdot m^2}$ et $f = 3{,}6 \times 10^{-5}\ \mathrm{N\cdot m\cdot s/rad}$
+    supposés). Échelon de consigne de $20\ \mathrm{rad/s}$ depuis le repos, sans couple de charge.
+  </p>
+  <p>
+    Inconnues : fonction de transfert en boucle fermée, stabilité, valeur finale et erreur statique, $\omega_0$, $\zeta$, dépassement, temps de pic,
+    temps de montée, temps d'établissement à $5\ \%$ ; vérification du domaine linéaire. Stratégie : réduire la boucle par $T = L/(1 + L)$, identifier
+    la forme canonique du second ordre, appliquer les formules et le tableau, puis contrôler par une simulation numérique et par le régime établi.
+  </p>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li><strong>Gain de boucle.</strong> $K_b = K_pG_0 = 0{,}2 \times 14{,}16 = 2{,}832$, sans dimension, puisque $K_p$ est en $\mathrm{V\cdot s/rad}$ et
+      $G_0$ en $\mathrm{rad/(s\cdot V)}$.</li>
+    <li><strong>Boucle fermée.</strong>
+      $$T(s) = \frac{K_b}{\tau_1\tau_2\,s^2 + (\tau_1 + \tau_2)\,s + 1 + K_b} = \frac{2{,}832}{4{,}046 \times 10^{-6}\,s^2 + 4{,}862 \times 10^{-3}\,s + 3{,}832}$$
+      Les coefficients sont tous positifs : pour un second ordre, cela suffit à garantir deux pôles à partie réelle négative. La boucle est stable.</li>
+    <li><strong>Valeur finale et erreur statique.</strong> $T(0) = 2{,}832/3{,}832 = 0{,}739$ ; $\Omega_\infty = 0{,}739 \times 20 = 14{,}78\ \mathrm{rad/s}$.
+      Erreur statique $\varepsilon_s = 20/3{,}832 = 5{,}22\ \mathrm{rad/s}$, soit $26{,}1\ \%$ de la consigne : boucle de classe 0, $\varepsilon_s = 1/(1 + K_b)$.</li>
+    <li><strong>Forme canonique.</strong> $\omega_0 = \sqrt{3{,}832/4{,}046 \times 10^{-6}} = \sqrt{9{,}471 \times 10^{5}} = 973{,}2\ \mathrm{rad/s}$ ;
+      $\zeta = 4{,}862 \times 10^{-3}/\left(2\sqrt{4{,}046 \times 10^{-6} \times 3{,}832}\right) = 4{,}862 \times 10^{-3}/7{,}875 \times 10^{-3} = 0{,}617$.
+      D'où $\sigma = \zeta\omega_0 = 600{,}9\ \mathrm{s^{-1}}$ et $\omega_d = 973{,}2\sqrt{1 - 0{,}381} = 765{,}6\ \mathrm{rad/s}$.</li>
+    <li><strong>Dépassement et temps de pic.</strong> $D = \exp(-\pi \times 0{,}617/0{,}787) = e^{-2{,}466} = 8{,}49\ \%$, soit
+      $\Omega_{max} = 14{,}78 \times 1{,}0849 = 16{,}04\ \mathrm{rad/s}$ ; $t_{pic} = \pi/765{,}6 = 4{,}10\ \mathrm{ms}$.</li>
+    <li><strong>Temps d'établissement.</strong> Approximation $3/\sigma = 4{,}99\ \mathrm{ms}$ ; majorant par l'enveloppe
+      $(\ln 20 + \ln 1{,}271)/600{,}9 = 3{,}236/600{,}9 = 5{,}39\ \mathrm{ms}$. Le tableau, entre $\zeta = 0{,}6$ ($5{,}23$) et $0{,}7$ ($2{,}90$), ne
+      s'interpole pas ici, car $t_5$ y saute ; comme $D = 8{,}5\ \%$ dépasse $5\ \%$, le premier maximum sort de la bande et $t_5$ est donné par un retour
+      ultérieur : la simulation donne $t_5 = 5{,}33\ \mathrm{ms}$.</li>
+    <li><strong>Temps de montée.</strong> Le tableau donne $\omega_0 t_r \approx 1{,}85 + 0{,}17 \times (2{,}13 - 1{,}85) = 1{,}90$, soit
+      $t_r \approx 1{,}95\ \mathrm{ms}$ ; la simulation donne $1{,}95\ \mathrm{ms}$.</li>
+    <li><strong>Domaine linéaire.</strong> Tension initiale $u(0^+) = K_p \times 20 = 4\ \mathrm{V}$, sous les $24\ \mathrm{V}$ disponibles ; courant de
+      pointe simulé $2{,}02\ \mathrm{A}$, sous la limitation de $3\ \mathrm{A}$ ; tension finale $u_\infty = 0{,}2 \times 5{,}22 = 1{,}04\ \mathrm{V}$. Le
+      modèle linéaire est applicable à cet échelon.</li>
+  </ol>
+  <p>
+    Le tracé suivant superpose la réponse simulée, la consigne et l'enveloppe $\Omega_\infty\left(1 \pm e^{-\sigma t}/\sqrt{1 - \zeta^2}\right)$. Il est
+    calculé dans le navigateur avec les données ci-dessus.
+  </p>
+  <figure id="h-courbe-fig">
+    <div id="h-courbe"></div>
+    <figcaption>
+      Réponse de la boucle de vitesse à un échelon de consigne de $20\ \mathrm{rad/s}$ : vitesse simulée, consigne et enveloppes, nommées dans la
+      légende. La ligne horizontale en tirets marque la valeur finale, les lignes en tirets courts la bande de $\pm 5\ \%$ ; les repères verticaux en
+      pointillé marquent le temps de pic et le temps d'établissement.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li><strong>Dimensions.</strong> $\tau_1\tau_2 s^2$ et $(\tau_1 + \tau_2)s$ sont sans dimension, comme $1 + K_b$ ; $\omega_0 = \sqrt{(1 + K_b)/(\tau_1\tau_2)}$
+      est en $\mathrm{s^{-1}}$, soit des $\mathrm{rad/s}$.</li>
+    <li><strong>Régime établi direct.</strong> Sans dérivées : $u = Ri + K\Omega$, $Ki = f\Omega$ et $u = K_p(20 - \Omega)$. D'où
+      $\Omega = K_p \times 20/(K_p + (Rf + K^2)/K) = 4/(0{,}2 + 0{,}0706) = 14{,}78\ \mathrm{rad/s}$ : même résultat.</li>
+    <li><strong>Invariant de la boucle.</strong> $\zeta\omega_0 = 0{,}617 \times 973{,}2 = 600{,}9\ \mathrm{s^{-1}} = (\tau_1 + \tau_2)/(2\tau_1\tau_2)$ :
+      la partie réelle des pôles ne dépend pas de $K_p$, comme prévu.</li>
+    <li><strong>Ordre des durées.</strong> $t_r = 1{,}95 &lt; t_{pic} = 4{,}10 &lt; t_5 = 5{,}33\ \mathrm{ms}$ : cohérent pour un système qui dépasse.
+      Comparé au procédé seul en boucle ouverte ($t_5 = 12{,}6\ \mathrm{ms}$ environ, au cours précédent), la boucle est plus de deux fois plus rapide,
+      au prix d'un dépassement et d'une erreur de $26\ \%$.</li>
+    <li><strong>Ordre de grandeur énergétique.</strong> Énergie cinétique finale $\tfrac12 J\Omega_\infty^2 = 0{,}5 \times 2 \times 10^{-5} \times 14{,}78^2 =
+      2{,}2\ \mathrm{mJ}$, apportée en quelques millisecondes par une puissance de l'ordre de $4\ \mathrm{V} \times 1\ \mathrm{A}$ : cohérent.</li>
+  </ul>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Ce que cet exemple ne dit pas</span>
+    <p>
+      Pour un échelon de $100\ \mathrm{rad/s}$, la tension initiale atteindrait $20\ \mathrm{V}$ et le courant dépasserait largement $3\ \mathrm{A}$ : la
+      limitation imposerait une montée en rampe et les indicateurs calculés ici ne vaudraient plus. Un actionneur de vanne est d'ailleurs régulé en
+      position, la boucle de vitesse servant de boucle interne : l'erreur de $26\ \%$ en vitesse n'empêche pas une position finale exacte, puisque la
+      boucle de position contient l'intégration de la vitesse, donc un intégrateur, et se trouve de classe 1.
+    </p>
+  </div>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <h3 id="i-contexte">Les performances de la chaîne de pompage et le cahier des charges de la régulation de pression</h3>
+  <p>
+    Le groupe de pompage du projet fil rouge doit maintenir la pression de refoulement malgré les variations de soutirage. Avant de concevoir le
+    régulateur, il faut savoir ce que l'on peut demander à la boucle, et donc connaître les temps caractéristiques des maillons déjà modélisés. Le
+    modèle linéarisé du cours précédent, sous commande U/f, au point de service : $\delta\Omega/\delta\Omega_{sync} = 0{,}972/(1 + 0{,}00655\,s)$.
+  </p>
+  <ul>
+    <li><strong>Indicateurs du premier ordre seul.</strong> $t_r = 2{,}197 \times 6{,}55 = 14{,}4\ \mathrm{ms}$, $t_5 = 2{,}996 \times 6{,}55 = 19{,}6\ \mathrm{ms}$,
+      $t_2 = 25{,}6\ \mathrm{ms}$. Gain $0{,}972$ : en boucle ouverte, la vitesse reste à $2{,}8\ \%$ sous la vitesse de synchronisme, à cause du
+      glissement ; c'est une erreur statique de boucle ouverte, que seule une mesure de vitesse ou une compensation de glissement corrigerait.</li>
+    <li><strong>Effet de la rampe.</strong> La rampe du variateur, $10\ \mathrm{s}$ pour $50\ \mathrm{Hz}$, limite la pente de $\Omega_{sync}$ à
+      $15{,}71\ \mathrm{rad/s^2}$. Un échelon de consigne de $2\ \mathrm{Hz}$ ($\Delta\Omega_{sync} = 6{,}283\ \mathrm{rad/s}$ pour un moteur à deux
+      paires de pôles) devient une rampe de $0{,}400\ \mathrm{s}$. La vitesse suit cette rampe avec un retard d'une constante de temps : l'écart à
+      $0{,}972$ fois la rampe se stabilise à $0{,}972 \times 15{,}71 \times 0{,}00655 = 0{,}100\ \mathrm{rad/s}$, l'erreur de traînage d'un premier
+      ordre. Résultat : $t_r = 0{,}320\ \mathrm{s}$ et $t_5 = 0{,}387\ \mathrm{s}$, vingt fois plus que le premier ordre seul.</li>
+  </ul>
+  <p>
+    Le tracé suivant compare la réponse du groupe avec et sans rampe. Les curseurs règlent l'amplitude de l'échelon de consigne et la durée de rampe
+    paramétrée dans le variateur.
+  </p>
+  <figure id="i-pompe-fig">
+    <div id="i-pompe-curseurs"></div>
+    <div id="i-pompe-valeurs"></div>
+    <div id="i-pompe-trace"></div>
+    <figcaption>
+      Variation de vitesse du groupe de pompage après un échelon de consigne au point de service : sans rampe, premier ordre de $6{,}55\ \mathrm{ms}$ ;
+      avec rampe, vitesse de synchronisme limitée en pente puis premier ordre ; et la vitesse de synchronisme rampée elle-même. Les trois courbes sont
+      nommées dans la légende ; le repère vertical en pointillé marque le temps d'établissement à $5\ \%$ avec rampe.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Leçon.</strong> Le temps d'établissement du groupe ne se lit pas sur son pôle mais sur la rampe, une non-linéarité : il est proportionnel à
+    l'amplitude de l'échelon, contrairement à celui d'un système linéaire. Les indicateurs linéaires ne valent que pour des corrections assez petites ou
+    assez lentes pour ne pas solliciter la rampe.
+  </p>
+
+  <figure id="i-chaine-figure">
+    <svg viewBox="0 0 720 250" role="img" aria-label="Chaîne de la future régulation de pression : consigne de pression, sommateur, régulateur à définir, variateur avec rampe 0,4 s pour 2 Hz, pompe 19,6 ms, réseau hydraulique à modéliser, capteur de pression, retour ; temps d'établissement visé 4 s"><defs><marker id="i-ch-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="70" cy="80" r="13"/><rect x="110" y="55" width="100" height="50" rx="6"/><rect x="245" y="55" width="110" height="50" rx="6"/><rect x="390" y="55" width="100" height="50" rx="6"/><rect x="525" y="55" width="110" height="50" rx="6"/><rect x="400" y="150" width="120" height="44" rx="6"/><path d="M14 80H53" marker-end="url(#i-ch-fl)"/><path d="M83 80H106" marker-end="url(#i-ch-fl)"/><path d="M210 80H241" marker-end="url(#i-ch-fl)"/><path d="M355 80H386" marker-end="url(#i-ch-fl)"/><path d="M490 80H521" marker-end="url(#i-ch-fl)"/><path d="M635 80H706" marker-end="url(#i-ch-fl)"/><path d="M670 80V172H524" marker-end="url(#i-ch-fl)"/><path d="M400 172H70V97" marker-end="url(#i-ch-fl)"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="8" y="50">p consigne</text><text x="50" y="70">+</text><text x="76" y="112">-</text><text x="120" y="78">régulateur</text><text x="120" y="96">à définir</text><text x="255" y="78">variateur</text><text x="255" y="96">rampe</text><text x="400" y="78">pompe</text><text x="400" y="96">t5 = 19,6 ms</text><text x="535" y="78">réseau</text><text x="535" y="96">hydraulique</text><text x="680" y="70">p</text><text x="410" y="170">capteur de</text><text x="410" y="186">pression</text><text x="120" y="130">PI : classe 1</text><text x="245" y="130">0,4 s pour 2 Hz</text><text x="525" y="130">à modéliser</text><text x="410" y="214">t5 ≤ 0,4 s</text><text x="90" y="240">boucle visée : t5 ≈ 4 s, D ≤ 10 %, εs = 0</text></g></svg>
+    <figcaption>
+      Chaîne de la future régulation de pression. Les flèches donnent le sens des signaux ; le sommateur forme l'écart entre la consigne de pression et
+      la mesure. Sous chaque bloc, son temps caractéristique ou l'exigence qui lui est imposée : la rampe du variateur, $0{,}4\ \mathrm{s}$ pour une
+      correction de $2\ \mathrm{Hz}$ ; la pompe, $19{,}6\ \mathrm{ms}$ ; le capteur, au plus $0{,}4\ \mathrm{s}$ ; le réseau hydraulique reste à
+      modéliser au cours Révision 9 et mini-projet régulation.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Cahier des performances proposé pour la régulation de pression.</strong> Chaque exigence est justifiée, et distinguée de ce qui dépend du
+    procédé.
+  </p>
+  <ul>
+    <li><strong>Dépassement de consigne au plus $10\ \%$</strong> : une surpression brève sollicite la soupape et les joints ; d'où $\zeta \geq 0{,}59$ pour
+      un comportement dominant du second ordre. Seuil à confirmer par l'exploitant, il dépend de l'installation.</li>
+    <li><strong>Temps d'établissement à $5\ \%$ d'environ $4\ \mathrm{s}$, entre $3$ et $5\ \mathrm{s}$.</strong> Avec $\zeta = 0{,}7$, cela correspond à
+      $\omega_0 = 2{,}90/4 = 0{,}725\ \mathrm{rad/s}$. Pour une correction de $2\ \mathrm{Hz}$, la vitesse demandée varie alors au plus de
+      $0{,}459 \times 0{,}725 \times 6{,}283 = 2{,}09\ \mathrm{rad/s^2}$, sept fois et demie sous la rampe : la boucle reste dans le domaine linéaire. Une
+      boucle visée en $0{,}4\ \mathrm{s}$ saturerait la rampe à chaque correction.</li>
+    <li><strong>Erreur statique nulle</strong> en consigne et vis-à-vis d'un échelon de soutirage : le groupe de pompage est de classe 0, il faut donc un
+      intégrateur dans le régulateur, c'est-à-dire au moins un PI.</li>
+    <li><strong>Maillons internes dix fois plus rapides que la boucle</strong> (règle de conception) : pompe ($19{,}6\ \mathrm{ms}$) et rampe pour les
+      petites corrections conviennent ; le capteur de pression devra avoir $t_5 \leq 0{,}4\ \mathrm{s}$, soit une constante de temps au plus
+      $0{,}13\ \mathrm{s}$, filtrage compris.</li>
+  </ul>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : ce que cette séance ajoute</span>
+    <p>
+      Cahier des performances de la régulation de pression et indicateurs des maillons modélisés. Groupe de pompage en U/f au point de service :
+      $t_r = 14{,}4\ \mathrm{ms}$, $t_5 = 19{,}6\ \mathrm{ms}$, gain $0{,}972$ (erreur de glissement de $2{,}8\ \%$ en boucle ouverte) ; avec la rampe de
+      $10\ \mathrm{s}$ pour $50\ \mathrm{Hz}$, un échelon de $2\ \mathrm{Hz}$ s'établit en $0{,}387\ \mathrm{s}$ ($t_r = 0{,}320\ \mathrm{s}$, traînage de
+      $0{,}100\ \mathrm{rad/s}$), durée proportionnelle à l'amplitude. Boucle de vitesse P de l'actionneur de vanne ($K_p = 0{,}2\ \mathrm{V\cdot s/rad}$,
+      échelon de $20\ \mathrm{rad/s}$) : $\zeta = 0{,}617$, $\omega_0 = 973\ \mathrm{rad/s}$, $D = 8{,}5\ \%$, $t_5 = 5{,}33\ \mathrm{ms}$, erreur de
+      $26{,}1\ \%$ acceptable en boucle interne d'un positionneur ; courant de pointe $2{,}02\ \mathrm{A}$ sous la limitation de $3\ \mathrm{A}$, qui serait
+      atteinte au-delà de $K_p \approx 0{,}33\ \mathrm{V\cdot s/rad}$. Exigences de la régulation de pression : $D \leq 10\ \%$, $t_5 \approx 4\ \mathrm{s}$
+      ($\zeta \approx 0{,}7$, $\omega_0 \approx 0{,}73\ \mathrm{rad/s}$), erreur statique nulle donc action intégrale, capteur de $t_5 \leq 0{,}4\ \mathrm{s}$.
+      Seuils à valider par l'exploitant, réseau hydraulique et capteur encore à modéliser.
+    </p>
+  </div>
+
+  <h3 id="i-compromis">Risques, choix d'ingénierie et compromis</h3>
+  <ul>
+    <li><strong>Rapidité ou douceur ?</strong> Une boucle de pression rapide réagit mieux aux appels de débit, mais sollicite la rampe, fatigue la
+      mécanique et risque des coups de bélier. Le temps d'établissement de $4\ \mathrm{s}$ est un compromis, pas une limite physique.</li>
+    <li><strong>Précision ou dépassement ?</strong> Avec un correcteur proportionnel seul, on ne peut avoir à la fois une erreur faible et un dépassement
+      faible, comme l'a montré l'actionneur. L'action intégrale lève le dilemme, au prix d'un risque d'oscillation et de saturation à traiter.</li>
+    <li><strong>Indicateurs mesurés sur quel échelon ?</strong> La réception doit préciser l'amplitude : un petit échelon mesure la dynamique linéaire, un
+      grand échelon mesure surtout les limitations. Les deux sont utiles et ne doivent pas être confondus.</li>
+    <li><strong>Risque principal.</strong> Régler la boucle à pleine vitesse puis l'exploiter à basse vitesse, où la pompe linéarisée est plus lente et
+      moins amortie : vérifier les indicateurs aux deux extrémités de la plage d'exploitation.</li>
+  </ul>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Rapporter le dépassement à la consigne.</strong> Si l'erreur statique n'est pas nulle, $(y_{max} - r)/r$ diffère de
+      $(y_{max} - y_\infty)/y_\infty$, et seule la seconde suit la formule $e^{-\pi\zeta/\sqrt{1-\zeta^2}}$. Sur le schéma principal, $20{,}5\ \%$ de la valeur
+      finale font seulement $8{,}5\ \%$ au-dessus de la consigne. Correction : toujours préciser la référence.</li>
+    <li><strong>Appliquer $t_5 = 3/(\zeta\omega_0)$ pour $\zeta \geq 0{,}7$.</strong> Pour $\zeta = 1$, la formule donne $3/\omega_0$ alors que la valeur
+      exacte est $4{,}74/\omega_0$, soit $37\ \%$ d'erreur ; pour $\zeta = 1{,}5$, l'erreur dépasse un facteur quatre. Correction : utiliser le tableau, ou
+      le pôle dominant en régime apériodique.</li>
+    <li><strong>Calculer une erreur statique sur une boucle instable.</strong> Le théorème de la valeur finale donne alors un nombre fini qui ne
+      correspond à rien, car la sortie diverge. Correction : vérifier d'abord la stabilité.</li>
+    <li><strong>Croire qu'un gain élevé suffit à la précision.</strong> Il réduit l'erreur comme $1/(1 + K_b)$ mais détruit l'amortissement, et la
+      commande sature. Correction : chercher l'intégrateur dans la boucle, ou la classe nécessaire.</li>
+    <li><strong>Confondre temps de montée et temps d'établissement.</strong> Un système peu amorti monte très vite ($t_r = 1{,}20/\omega_0$ pour
+      $\zeta = 0{,}2$) mais s'établit très lentement ($13{,}7/\omega_0$). Correction : le cahier des charges doit fixer les deux, ou au moins
+      $t_5$ et $D$.</li>
+    <li><strong>Prendre l'intégrateur du procédé pour une garantie contre les perturbations.</strong> Un intégrateur situé après le point d'entrée de
+      la perturbation n'annule pas son effet. Correction : placer l'intégrateur dans le correcteur.</li>
+    <li><strong>Mesurer des indicateurs sur un grand échelon et les comparer au modèle linéaire.</strong> La rampe du variateur ou la limitation de
+      courant imposent alors leur propre durée, proportionnelle à l'amplitude. Correction : faire des échelons de quelques pour cent, et vérifier que
+      deux amplitudes différentes donnent la même forme normalisée.</li>
+    <li><strong>Négliger un pôle trop proche.</strong> Un troisième pôle seulement deux fois plus rapide que les pôles dominants ralentit la montée et
+      modifie le dépassement de façon visible. Correction : appliquer la règle de cinq à dix, ou simuler.</li>
+  </ol>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic industriel et une question
+    conceptuelle sans calcul. Les solutions sont présentes dans la page mais restent masquées jusqu'à votre tentative ou à un clic explicite ;
+    chaque correction se révèle étape par étape, avec un tracé ou un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangées : choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Le score est calculé dans ce
+    navigateur et repris par la grille d'auto-évaluation.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+  <h3 id="m-formules">Cinq formules essentielles</h3>
+  <div class="formule-cle">$$y(t) = KU\left(1 - e^{-t/\tau}\right), \qquad t_r = 2{,}20\,\tau, \qquad t_5 = 3{,}00\,\tau$$</div>
+  <div class="formule-cle">$$t_{pic} = \frac{\pi}{\omega_0\sqrt{1 - \zeta^2}}, \qquad D = e^{-\pi\zeta/\sqrt{1 - \zeta^2}}, \qquad \zeta = \frac{-\ln D}{\sqrt{\pi^2 + \ln^2 D}}$$</div>
+  <div class="formule-cle">$$t_5 \approx \frac{3}{\zeta\omega_0} \ \ (0{,}2 \lesssim \zeta \lesssim 0{,}6), \qquad t_{5,min} = \frac{2{,}87}{\omega_0} \ \text{vers} \ \zeta = 0{,}69$$</div>
+  <div class="formule-cle">$$\text{stable} \iff \mathrm{Re}(p_k) &lt; 0 \ \ \forall k, \qquad \varepsilon_s = \lim_{s \to 0} s\,\frac{R(s)}{1 + L(s)}$$</div>
+  <div class="formule-cle">$$\varepsilon_{s,\text{échelon}} = \frac{R_0}{1 + K_b} \ (\text{classe } 0), \qquad \varepsilon_{s,\text{rampe}} = \frac{a}{K_b} \ (\text{classe } 1)$$</div>
+  <h3 id="m-vigilance">Cinq points de vigilance</h3>
+  <ul>
+    <li>Toujours vérifier la stabilité avant de calculer un indicateur ou une valeur finale.</li>
+    <li>Préciser les conventions : $10$ à $90\ \%$, bande de $5$ ou $2\ \%$, dépassement rapporté à la valeur finale.</li>
+    <li>La formule $3/(\zeta\omega_0)$ est une approximation, fausse au-delà de $\zeta \approx 0{,}7$.</li>
+    <li>Les indicateurs d'un modèle linéaire ne dépendent pas de l'amplitude ; une rampe ou une saturation, si.</li>
+    <li>Un correcteur proportionnel sur un procédé de classe 0 laisse une erreur ; l'annuler demande un intégrateur dans le correcteur.</li>
+  </ul>
+  <h3 id="m-resume">Résumé</h3>
+  <p>
+    Une réponse indicielle se résume par cinq indicateurs : valeur finale et erreur statique pour la précision, temps de montée, temps de pic et temps
+    d'établissement pour la rapidité, dépassement pour l'amortissement. Un premier ordre ne dépasse jamais et s'établit à $5\ \%$ en $3\tau$. Un second
+    ordre sous-amorti dépasse de $e^{-\pi\zeta/\sqrt{1-\zeta^2}}$, culmine en $\pi/\omega_d$ et s'établit en environ $3/(\zeta\omega_0)$, avec un optimum
+    vers $\zeta = 0{,}7$. La stabilité exige des pôles à partie réelle négative ; les pôles les plus proches de l'axe imaginaire dominent. L'erreur
+    statique dépend de la classe de la boucle : un correcteur proportionnel laisse $1/(1 + K_b)$ et augmenter le gain dégrade l'amortissement. Enfin,
+    ces résultats linéaires ne valent qu'en l'absence de rampe ou de saturation.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance, deux sur le cours précédent,
+    <a href="#/cours/modelisation-des-systemes-dynamiques">Modélisation des systèmes dynamiques</a>, dont les fonctions de transfert ont servi ici, une
+    sur le cours <a href="#/cours/onduleurs-triphases">Onduleurs triphasés</a>, vieux d'une semaine, et une sur le cours
+    <a href="#/cours/revision-4-et-mini-projet-qualite-reseau">Révision 4 et mini-projet qualité réseau</a>, vieux d'un mois.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : mesurer les indicateurs sur une simulation et les comparer aux formules. Prédictions à écrire avant de commencer : dépassement et temps
+    de pic du circuit RLC ci-dessous ; effet sur $t_5$ du passage de $R = 10\ \Omega$ à $R = 14\ \Omega$ ; erreur statique de la boucle de vitesse de
+    l'exemple résolu si l'on double $K_p$.
+  </p>
+  <ol>
+    <li><strong>LTspice, second ordre électrique.</strong> <code>V1 in 0 PULSE(0 1 1m 1u 1u 1 2)</code>, <code>R1 in a {R}</code>, <code>L1 a b 10m</code>,
+      <code>C1 b 0 100u</code>, <code>.step param R list 10 14 20</code>, <code>.tran 0 20m 0 1u</code>. Mesurer avec
+      <code>.meas tran vmax MAX V(b)</code>, <code>.meas tran tmax WHEN V(b)=vmax</code>, puis lire le temps d'établissement sur la courbe, curseurs
+      placés à $0{,}95$ et $1{,}05\ \mathrm{V}$. Ici $\omega_0 = 1000\ \mathrm{rad/s}$ et $\zeta = R/20$.</li>
+    <li><strong>Python, sans bibliothèque.</strong> Écrire une fonction <code>indicateurs(t, y, tol)</code> qui renvoie $y_\infty$, $t_r$, $t_{pic}$, $D$ et
+      $t_5$ à partir de deux listes ; l'appliquer à la réponse du second ordre canonique pour $\zeta$ de $0{,}1$ à $1{,}5$ par pas de $0{,}05$ et retrouver
+      le tableau de la section E, en particulier le saut de $t_5$ vers $\zeta = 0{,}69$.</li>
+    <li><strong>Python, boucle de vitesse.</strong> Intégrer par Runge-Kutta d'ordre 4, pas de $1\ \mu\mathrm{s}$, l'état $(i, \Omega)$ de l'actionneur avec
+      $u = K_p(\Omega_c - \Omega)$, pour $K_p = 0{,}1$, $0{,}2$, $0{,}4$ et $0{,}8\ \mathrm{V\cdot s/rad}$ ; tracer erreur statique, dépassement et courant de
+      pointe en fonction de $K_p$.</li>
+    <li><strong>Variante LTspice de la boucle.</strong> Reprendre le moteur par analogie du cours précédent et remplacer la source <code>V1</code> par
+      <code>B1 in 0 V=0.2*(20-V(w))</code>, la consigne étant appliquée à $t = 0$.</li>
+  </ol>
+  <p>
+    Résultats attendus : pour $R = 10\ \Omega$, $V_{max} = 1{,}163\ \mathrm{V}$ environ $3{,}63\ \mathrm{ms}$ après l'échelon et $t_5 \approx 5{,}3\ \mathrm{ms}$ ;
+    pour $R = 14\ \Omega$ ($\zeta = 0{,}7$), $D \approx 4{,}6\ \%$ et $t_5 \approx 2{,}9\ \mathrm{ms}$, le plus court des trois ; pour $R = 20\ \Omega$ (critique),
+    pas de dépassement et $t_5 \approx 4{,}7\ \mathrm{ms}$. Boucle de vitesse : à $K_p = 0{,}2$, $\Omega_\infty = 14{,}78\ \mathrm{rad/s}$, $D = 8{,}5\ \%$,
+    $t_{pic} = 4{,}10\ \mathrm{ms}$, courant de pointe $2{,}02\ \mathrm{A}$ ; à $K_p = 0{,}4$, erreur statique de $15{,}0\ \%$ et dépassement d'environ $19\ \%$.
+  </p>
+  <p>
+    Anomalies à observer et à expliquer : un temps d'établissement qui varie selon le pas de calcul, signe d'un pas trop grand ou d'une détection
+    imprécise de la sortie de bande ; une valeur finale qui ne converge pas parce que la simulation est trop courte pour un système peu amorti ; une
+    vitesse qui diverge, signe d'un retour de mesure ajouté au lieu d'être soustrait ; un dépassement plus grand que prévu dans LTspice si la résistance
+    série de l'inductance ou de la source a été oubliée ou ajoutée par défaut. Variante expérimentale, sous la responsabilité d'une personne habilitée :
+    relever à l'oscilloscope la réponse d'un circuit RLC de laboratoire à un signal carré basse fréquence, et mesurer $D$ et $t_{pic}$ pour en déduire
+    $\zeta$ et $\omega_0$.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours, notées de 0 à 4. Le bilan affiché sous la grille est calculé dans ce
+    navigateur à partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement. Aucune estimation n'est
+    faite à votre place : seul le score réellement obtenu sert de référence.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Lire votre bilan</span>
+    <p>
+      Les exercices fondamentaux testent les formules du premier et du second ordre ; l'exercice intermédiaire 1 l'identification sur un essai ;
+      l'exercice intermédiaire 2 et les questions de classe du quiz l'erreur statique ; l'exercice avancé le dimensionnement d'un gain ; la question de
+      diagnostic la distinction entre ce qui déplace les pôles et ce qui ne change que la valeur finale. Un bloc réussi à moins de la moitié indique la
+      notion à reprendre avant le cours Diagrammes de Bode, qui reliera ces mêmes indicateurs au comportement fréquentiel.
+    </p>
+  </div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">La rapidité se lit sur la partie réelle des pôles dominants ($3\tau$, environ $3/(\zeta\omega_0)$), le dépassement sur leur angle, c'est-à-dire sur $\zeta$ seul, et la stabilité sur le signe de leur partie réelle.</li>
+    <li data-rang="02">L'erreur statique dépend de la classe de la boucle : $1/(1 + K_b)$ en classe 0 pour un échelon, nulle dès qu'un intégrateur est présent, à placer dans le correcteur pour rejeter aussi les perturbations.</li>
+    <li data-rang="03">Augmenter le gain d'un correcteur proportionnel améliore la précision mais dégrade l'amortissement ; et tous ces indicateurs supposent un comportement linéaire, que rampes et saturations peuvent invalider.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> le temps d'établissement du second ordre. La formule $3/(\zeta\omega_0)$ est séduisante mais
+    approchée, et la discontinuité de $t_5$ autour de $\zeta = 0{,}69$ surprend. Le réflexe à installer : vérifier le dépassement par rapport à la largeur
+    de bande, puis utiliser le tableau ou une simulation.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Diagrammes de Bode, regardera les mêmes systèmes en régime sinusoïdal. Question à
+    préparer : la boucle de vitesse de l'exemple résolu a une pulsation propre de $973\ \mathrm{rad/s}$ et un amortissement de $0{,}617$. Si l'on
+    injecte une consigne sinusoïdale de faible amplitude, à basse fréquence puis vers $973\ \mathrm{rad/s}$ puis bien au-delà, comment l'amplitude de la
+    vitesse évolue-t-elle par rapport à celle de la consigne, et pourquoi le dépassement de la réponse indicielle laisse-t-il prévoir une légère
+    amplification autour de cette pulsation ?
+  </p>
+
+</article>
