@@ -1,0 +1,899 @@
+<article class="cours" data-slug="criteres-de-stabilite">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/diagrammes-de-bode">Diagrammes de Bode</a> s'est achevé sur une question : la boucle de position de l'actionneur de vanne a
+      pour équation caractéristique $\tau_1\tau_2 s^3 + (\tau_1 + \tau_2)s^2 + s + K_v = 0$ ; comment retrouver directement sur ces coefficients la valeur
+      critique $K_v = (\tau_1 + \tau_2)/(\tau_1\tau_2)$, et que faire quand la boucle ouverte est elle-même instable ? Réponse. Pour un polynôme du troisième
+      degré $a_3 s^3 + a_2 s^2 + a_1 s + a_0$ à coefficients positifs, toutes les racines sont à partie réelle négative si et seulement si
+      $a_2 a_1 &gt; a_3 a_0$. Ici $a_3 = \tau_1\tau_2$, $a_2 = \tau_1 + \tau_2$, $a_1 = 1$ et $a_0 = K_v$ : la condition s'écrit
+      $K_v &lt; (\tau_1 + \tau_2)/(\tau_1\tau_2) = 1201{,}8\ \mathrm{s^{-1}}$, exactement le gain critique obtenu par la marge de gain de $21{,}6\ \mathrm{dB}$ à
+      $K_v = 100\ \mathrm{s^{-1}}$. Ce test sur les coefficients est un cas particulier du <strong>critère de Routh-Hurwitz</strong>, qui ne demande ni Bode ni
+      calcul de racine. Quand la boucle ouverte est instable, le critère des marges ne s'applique plus tel quel : on revient aux pôles de la boucle fermée, par
+      Routh, ou l'on utilise le <strong>critère de Nyquist</strong> complet, qui compte les tours autour du point $-1$. C'est l'objet de cette séance.
+    </p>
+    <p>
+      La séance réutilise les modes exponentiels et les pôles du cours <a href="#/cours/regime-transitoire-rlc">Régime transitoire RLC</a>, les fonctions de
+      transfert du cours <a href="#/cours/modelisation-des-systemes-dynamiques">Modélisation des systèmes dynamiques</a>, la lecture des pôles et la condition
+      de stabilité du cours <a href="#/cours/reponse-temporelle-et-performances">Réponse temporelle et performances</a>, et les marges du cours
+      <a href="#/cours/diagrammes-de-bode">Diagrammes de Bode</a>.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Une boucle de régulation sert à rendre un système plus précis, plus rapide et moins sensible aux perturbations. Mais la contre-réaction qui procure ces
+    avantages peut aussi le rendre <strong>instable</strong> : au lieu de converger vers la consigne, la grandeur réglée oscille de plus en plus fort, jusqu'à ce
+    qu'une limite physique l'arrête. La stabilité est donc la première exigence d'un asservissement, avant toute performance : un réglage instable n'est pas
+    un réglage médiocre, c'est un réglage inutilisable et souvent dangereux.
+  </p>
+  <ul>
+    <li><strong>Conséquences physiques.</strong> Une vanne qui bat en limitation use son actionneur et son réducteur ; une pression qui pompe provoque des coups
+      de bélier dans les canalisations ; une boucle de courant instable dans un variateur déclenche en surintensité ; une boucle de tension de bus mal amortie
+      fait chauffer les condensateurs.</li>
+    <li><strong>Trois outils complémentaires.</strong> La position des pôles de la boucle fermée dit si le système est stable et comment il répond. Le critère de
+      Routh-Hurwitz décide de la stabilité sur les coefficients du polynôme caractéristique, et donne les gains critiques sans calcul de racine. Le critère de
+      Nyquist, et les marges qui en découlent, travaillent sur la boucle ouverte mesurée ou calculée, retards compris.</li>
+    <li><strong>Une question de robustesse.</strong> Un modèle est toujours approché : inertie, réseau hydraulique, capteur, retard d'automate sont estimés. Il ne
+      suffit pas d'être stable ; il faut le rester quand ces paramètres varient. C'est ce que chiffrent les marges de gain, de phase et de module.</li>
+    <li><strong>Une compétence de diagnostic.</strong> Devant une oscillation sur site, savoir si elle vient d'une instabilité de boucle, d'une résonance mécanique
+      ou d'un cycle limite de saturation oriente immédiatement l'action : réduire un gain, corriger un retard ou changer un réglage d'unité.</li>
+  </ul>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Jalon visé par le module</span>
+    <p>
+      Le jalon de fin de module demande de modéliser et de réguler un système simple. Après le modèle, les performances temporelles et l'analyse fréquentielle,
+      cette séance donne les critères qui autorisent un réglage : on ne met en service une boucle que si l'on sait qu'elle est stable, avec quelle marge, et
+      dans quel domaine de paramètres.
+    </p>
+  </div>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Expliquer le lien entre la position d'un pôle dans le plan complexe et le mode temporel correspondant, et classer un système en stable, marginalement stable ou instable.</li>
+    <li data-rang="02">Établir l'équation caractéristique $1 + L(s) = 0$ d'une boucle fermée et appliquer la condition nécessaire sur les signes des coefficients.</li>
+    <li data-rang="03">Construire un tableau de Routh, y compris dans les cas d'un zéro en première colonne et d'une ligne nulle, et en déduire le nombre de pôles instables.</li>
+    <li data-rang="04">Calculer un gain critique et la pulsation d'oscillation correspondante par Routh, puis les comparer aux marges de gain et de phase.</li>
+    <li data-rang="05">Interpréter un diagramme de Nyquist : point critique, marges de gain, de phase et de module, cas d'une boucle ouverte instable.</li>
+    <li data-rang="06">Évaluer la stabilité d'une boucle comportant un retard, par l'approximation de Padé et par le calcul exact, et chiffrer l'écart.</li>
+    <li data-rang="07">Diagnostiquer une instabilité sur site à partir de sa période et d'une modification récente du réglage ou du matériel.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>Quatre rappels suffisent.</p>
+  <ul>
+    <li><strong>Modes et pôles.</strong> La réponse libre d'un système linéaire est une somme de termes $e^{p_k t}$, où les $p_k$ sont les pôles, racines du
+      dénominateur de la fonction de transfert. Pour $p = \sigma + j\omega$, $e^{pt} = e^{\sigma t}(\cos\omega t + j\sin\omega t)$ : la partie réelle $\sigma$ fixe
+      l'enveloppe, la partie imaginaire $\omega$ la pulsation d'oscillation.</li>
+    <li><strong>Racines d'un trinôme.</strong> $a s^2 + b s + c = 0$ a pour racines $(-b \pm \sqrt{b^2 - 4ac})/(2a)$ ; si $b^2 &lt; 4ac$, elles sont complexes
+      conjuguées de partie réelle $-b/(2a)$. Leur somme vaut $-b/a$ et leur produit $c/a$.</li>
+    <li><strong>Boucle fermée.</strong> Avec une chaîne directe $C(s)G(s)$, un retour $H(s)$ soustrait et $L = CGH$ la boucle ouverte,
+      $T(s) = CG/(1 + L)$. Pour une boucle ouverte rationnelle $L = N_L/D_L$, les pôles de la boucle fermée sont les racines de $D_L + N_L$.</li>
+    <li><strong>Marges.</strong> À $\omega_c$, où $|L| = 1$, $M_\varphi = 180^\circ + \arg L$ ; à $\omega_{180}$, où $\arg L = -180^\circ$,
+      $M_G = -20\log_{10}|L|$ ; un retard $T$ ne change pas $|L|$ et retire $\omega T$ radians de phase.</li>
+  </ul>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Notation de la séance</span>
+    <p>
+      $s = \sigma + j\omega$ : variable de Laplace, $\sigma$ en $\mathrm{s^{-1}}$, $\omega$ en $\mathrm{rad/s}$. $L(s)$ : boucle ouverte, produit de tout ce que
+      le signal traverse en faisant le tour, le signe moins du sommateur mis à part. $D(s) = a_n s^n + \dots + a_1 s + a_0$ : polynôme caractéristique de la
+      boucle fermée, avec $a_n &gt; 0$. $P$ : nombre de pôles de $L$ à partie réelle positive ; $Z$ : nombre de pôles de la boucle fermée à partie réelle
+      positive. $M_m$ : marge de module, plus petite distance entre la courbe de Nyquist et le point $-1$. Actionneur de vanne du projet fil rouge :
+      $\tau_1 = 3{,}797\ \mathrm{ms}$, $\tau_2 = 1{,}066\ \mathrm{ms}$, donc $\tau_1\tau_2 = 4{,}046 \times 10^{-6}\ \mathrm{s^2}$ et
+      $\tau_1 + \tau_2 = 4{,}862\ \mathrm{ms}$.
+    </p>
+  </div>
+  <p>
+    Mini-test de trois questions. Les réponses restent masquées, séparées de l'énoncé, jusqu'à votre tentative ou à un clic explicite.
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+  <h3 id="d-modes">Un pôle est un mode : son enveloppe dit tout</h3>
+  <p>
+    Un système linéaire, écarté de son équilibre puis laissé à lui-même, revient vers l'équilibre par une combinaison de mouvements élémentaires, les
+    <strong>modes</strong>. Chaque mode est une exponentielle, éventuellement modulée par une sinusoïde, et chacun correspond à un pôle. Si toutes les
+    exponentielles décroissent, l'écart s'éteint : le système est <strong>stable</strong>. S'il en existe une seule qui croît, aussi petite que soit
+    l'impulsion de départ, l'écart finit par grandir jusqu'à une saturation : le système est <strong>instable</strong>. Entre les deux, un mode qui ne croît ni
+    ne décroît, pôle sur l'axe imaginaire, entretient une oscillation ou une dérive : le système est <strong>marginalement stable</strong>, ce qu'on ne
+    tolère pas en pratique, parce que la moindre variation de paramètre le fait basculer d'un côté ou de l'autre.
+  </p>
+  <p>
+    La stabilité se lit donc sur un seul nombre par pôle, sa partie réelle. Le critère tient en une phrase : un système linéaire est asymptotiquement stable si
+    et seulement si tous ses pôles sont dans le demi-plan gauche, $\sigma &lt; 0$. La partie imaginaire, elle, ne décide pas de la stabilité mais de l'allure :
+    plus le pôle est loin de l'axe réel par rapport à sa distance à l'axe imaginaire, plus le mode oscille avant de s'éteindre.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Analogie de la bille dans un relief, et ses limites</span>
+    <p>
+      Une bille au fond d'une cuvette, poussée, revient au fond : équilibre stable ; si la cuvette est visqueuse, elle revient sans osciller, sinon elle
+      oscille de moins en moins. Une bille au sommet d'une bosse s'éloigne au moindre souffle : équilibre instable. Une bille sur un plateau parfaitement plat
+      reste où on la pousse : stabilité marginale. Limites : l'analogie parle d'un équilibre statique et d'un seul degré de liberté ; une boucle de régulation
+      peut être instable alors que chacun de ses éléments, pris seul, est stable, parce que l'instabilité naît du bouclage et du retard, pas de la forme d'un
+      relief. Enfin le relief est non linéaire, alors que le critère des pôles ne vaut que pour de petits écarts autour d'un point de fonctionnement.
+    </p>
+  </div>
+  <p>
+    La simulation suivante place un couple de pôles complexes conjugués $p = \sigma \pm j\omega$ dans le plan complexe et trace le mode correspondant,
+    $x(t) = e^{\sigma t}\cos\omega t$, avec son enveloppe $\pm e^{\sigma t}$. Le pôle du demi-plan supérieur se déplace à la souris ou au clavier ; son conjugué
+    suit par symétrie. Le lecteur fait avancer un repère temporel le long de la courbe.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Partant de $p = -0{,}5 \pm 3j$, que devient le mode si l'on rapproche le pôle de l'axe imaginaire sans changer $\omega$ ? Si l'on double $\omega$ sans
+      changer $\sigma$, le mode s'éteint-il plus vite, plus lentement ou au même rythme ? Que se passe-t-il exactement sur l'axe imaginaire, puis juste à sa
+      droite ? Et pour un pôle réel, $\omega = 0$ ?
+    </p>
+  </div>
+  <figure id="d-plan-sim">
+    <div class="schema-vivant" id="d-plan-vivant"></div>
+    <div id="d-plan-lecteur"></div>
+    <div id="d-plan-valeurs"></div>
+    <div id="d-plan-trace"></div>
+    <figcaption>
+      Pôles et mode temporel. En haut, le plan complexe : partie réelle $\sigma$ en $\mathrm{s^{-1}}$ en abscisse, partie imaginaire $\omega$ en $\mathrm{rad/s}$ en
+      ordonnée, avec des échelles différentes sur les deux axes ; le demi-plan droit, instable, est hachuré ; l'axe imaginaire, en trait épais, est la frontière. La poignée ronde
+      est le pôle $p = \sigma + j\omega$ que l'on déplace ; la croix symétrique sous l'axe réel est son conjugué $\bar p$. Les deux droites en tirets issues de
+      l'origine marquent l'amortissement $\zeta = 0{,}7$ ; l'arc en pointillé passe par le pôle et a pour rayon la pulsation propre $\omega_0 = |p|$, aplati à l'écran par la
+      différence d'échelles. En bas, le mode $x(t) = e^{\sigma t}\cos\omega t$ sur dix secondes et ses deux enveloppes $\pm e^{\sigma t}$, chaque courbe étant
+      nommée dans la légende ; amplitude initiale unité, sans dimension. Le cercle mobile, piloté par le lecteur, suit le mode ; la verticale en pointillé marque l'instant courant.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Au départ, $p = -0{,}5 \pm 3j$ : $\omega_0 = 3{,}04\ \mathrm{rad/s}$, $\zeta = 0{,}164$, l'enveloppe est divisée par deux
+    toutes les $\ln 2/0{,}5 = 1{,}39\ \mathrm{s}$. En rapprochant le pôle de l'axe imaginaire, l'enveloppe décroît de plus en plus lentement : le mode oscille
+    plus longtemps, l'amortissement tend vers zéro. Doubler $\omega$ à $\sigma$ fixé double le nombre d'oscillations mais ne change pas l'enveloppe : la vitesse
+    d'extinction ne dépend que de $\sigma$. Sur l'axe, l'oscillation s'entretient avec une amplitude constante ; juste à droite, l'enveloppe croît, d'abord
+    imperceptiblement, puis sans limite : la frontière de stabilité est franchie sans aucune discontinuité de l'allure, ce qui explique qu'une boucle proche de
+    la limite paraisse simplement mal amortie avant de diverger. Pour $\omega = 0$, le mode est une exponentielle pure, décroissante à gauche, croissante à
+    droite.
+  </p>
+
+  <h3 id="d-boucle">Pourquoi la contre-réaction peut déstabiliser</h3>
+  <p>
+    Une boucle corrige l'écart entre la consigne et la mesure. Si la correction arrivait instantanément, une boucle bien orientée ne pourrait que réduire
+    l'écart. Mais chaque maillon retarde le signal : le procédé a des réservoirs d'énergie, le capteur filtre, l'automate calcule à intervalles réguliers. La
+    correction s'applique donc à un écart qui a déjà changé. Avec un gain modeste, elle est simplement un peu tardive. Avec un gain élevé, elle devient
+    excessive et à contretemps : l'écart change de signe, la correction aussi, mais en retard, et le système dépasse de plus en plus. Le gain et le retard sont
+    les deux ingrédients de toute instabilité de boucle ; le critère de stabilité dit quelle combinaison est tolérable.
+  </p>
+  <figure id="d-boucle-figure">
+    <svg viewBox="0 0 720 270" role="img" aria-label="Schéma bloc d'une boucle fermée : la consigne r entre dans le sommateur par l'entrée plus, l'écart e attaque le correcteur C de s, la commande u s'ajoute à la perturbation d dans un second sommateur puis traverse le procédé G de s qui fournit la sortie y ; la sortie est mesurée par le capteur H de s, et la mesure y m revient sur l'entrée moins du premier sommateur ; un double trait sur le retour marque le point de coupure pour mesurer la boucle ouverte L égale C G H."><defs><marker id="d-bo-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"><path d="M30 110H122" marker-end="url(#d-bo-fl)"/><circle cx="140" cy="110" r="18"/><path d="M127 97L153 123M127 123L153 97" stroke-width="1"/><path d="M158 110H226" marker-end="url(#d-bo-fl)"/><rect x="228" y="84" width="96" height="52" rx="6"/><path d="M324 110H392" marker-end="url(#d-bo-fl)"/><circle cx="410" cy="110" r="18"/><path d="M397 97L423 123M397 123L423 97" stroke-width="1"/><path d="M410 40V90" marker-end="url(#d-bo-fl)"/><path d="M428 110H476" marker-end="url(#d-bo-fl)"/><rect x="478" y="84" width="96" height="52" rx="6"/><path d="M574 110H692" marker-end="url(#d-bo-fl)"/><path d="M630 110V214H448" marker-end="url(#d-bo-fl)"/><rect x="350" y="188" width="96" height="52" rx="6"/><path d="M350 214H140V130" marker-end="url(#d-bo-fl)"/><path d="M246 204V224M252 204V224" stroke-width="2.4"/><path d="M200 156H600" stroke-width="1" stroke-dasharray="3 4"/><path d="M200 150V162M600 150V162" stroke-width="1"/></g><g fill="currentColor" stroke="currentColor"><circle cx="630" cy="110" r="3.5"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="30" y="100">r</text><text x="30" y="128" font-size="11">consigne</text><text x="112" y="100" font-size="15" font-weight="700">+</text><text x="150" y="152" font-size="18" font-weight="700">-</text><text x="170" y="100">e</text><text x="276" y="108" text-anchor="middle">C(s)</text><text x="276" y="124" text-anchor="middle" font-size="11">correcteur</text><text x="340" y="100">u</text><text x="418" y="36">d (perturbation)</text><text x="392" y="100" font-size="15" font-weight="700">+</text><text x="420" y="92" font-size="15" font-weight="700">+</text><text x="526" y="108" text-anchor="middle">G(s)</text><text x="526" y="124" text-anchor="middle" font-size="11">procédé</text><text x="660" y="100">y</text><text x="398" y="212" text-anchor="middle">H(s)</text><text x="398" y="228" text-anchor="middle" font-size="11">capteur</text><text x="250" y="244" text-anchor="middle" font-size="11">coupure</text><text x="160" y="232">ym (mesure)</text><text x="400" y="176" text-anchor="middle" font-size="11">boucle ouverte L(s) = C(s) G(s) H(s), le signe - à part</text><text x="700" y="262" text-anchor="end" font-size="11">pôles de la boucle fermée : 1 + L(s) = 0</text></g></svg>
+    <figcaption>
+      Boucle fermée à retour soustrait. Les signaux circulent dans le sens des flèches : consigne $r$ sur l'entrée $+$ du premier sommateur, écart
+      $e = r - y_m$, commande $u$ issue du correcteur $C(s)$, perturbation $d$ ajoutée à la commande par le second sommateur, sortie $y$ du procédé $G(s)$,
+      mesure $y_m$ fournie par le capteur $H(s)$ et ramenée sur l'entrée $-$ du premier sommateur. Le point noir est le point de prélèvement de la sortie. Le
+      double trait sur le retour marque l'endroit où l'on coupe la boucle pour mesurer ou calculer la boucle ouverte $L = CGH$, rappelée par la cote en
+      pointillé. Toutes les grandeurs sont des écarts autour du point de fonctionnement, ce qui autorise le modèle linéaire. Les fonctions de transfert vers la
+      sortie s'écrivent $y = \dfrac{CG}{1 + L}\,r + \dfrac{G}{1 + L}\,d$ : elles ont le même dénominateur, donc les mêmes pôles. La stabilité est une propriété
+      de la boucle, pas d'une entrée particulière.
+    </figcaption>
+  </figure>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Analogie de la douche à réglage lent, et ses limites</span>
+    <p>
+      Sous une douche dont l'eau met plusieurs secondes à arriver du mitigeur, on tourne la poignée parce que l'eau est froide ; rien ne change, on tourne
+      encore ; l'eau brûlante arrive enfin, on revient brusquement, trop loin, et l'on alterne entre trop chaud et trop froid. Qui tourne doucement, gain faible,
+      converge ; qui tourne fort, gain élevé, oscille. Le délai d'arrivée de l'eau est le retard de la boucle, et la période des oscillations est de l'ordre de
+      deux fois ce délai. Limites : l'utilisateur adapte son gain en apprenant, ce qu'un régulateur linéaire ne fait pas ; la douche contient surtout un retard
+      pur, alors qu'un procédé industriel cumule des retards et des constantes de temps ; et l'analogie ne montre pas qu'un système instable seul peut être
+      rendu stable par une boucle bien réglée.
+    </p>
+  </div>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-definitions">Deux définitions et une condition</h3>
+  <p>
+    <strong>Stabilité entrée bornée, sortie bornée.</strong> Un système est stable au sens entrée bornée, sortie bornée si toute entrée bornée produit une
+    sortie bornée. <strong>Stabilité asymptotique.</strong> Un système est asymptotiquement stable si, laissé sans entrée, il revient à son équilibre depuis
+    n'importe quel état initial. Pour un système linéaire invariant décrit par une fonction de transfert rationnelle sans simplification pôle-zéro cachée, les
+    deux notions coïncident et se lisent sur les pôles.
+  </p>
+  <p>
+    <strong>Dérivation.</strong> Soit $H(s) = N(s)/D(s)$, de degré $n$, de pôles $p_1, \dots, p_n$ supposés distincts. La réponse impulsionnelle s'obtient par
+    décomposition en éléments simples :
+  </p>
+  <div class="formule-cle">$$H(s) = \sum_{k=1}^{n} \frac{r_k}{s - p_k} \quad \Longrightarrow \quad h(t) = \sum_{k=1}^{n} r_k\, e^{p_k t}, \qquad t \ge 0$$</div>
+  <p class="formule-cle-legende">
+    $r_k$ : résidu du pôle $p_k$, sans dimension pour un $h$ normalisé ; $p_k$ en $\mathrm{s^{-1}}$ ; $h(t)$ : réponse impulsionnelle.
+  </p>
+  <p>
+    Chaque terme vérifie $|r_k e^{p_k t}| = |r_k|\,e^{\sigma_k t}$. Si tous les $\sigma_k$ sont négatifs, $h$ décroît exponentiellement, son intégrale
+    $\int_0^\infty |h|\,dt$ est finie, et la sortie $y = h * x$ reste bornée pour toute entrée bornée, puisque $|y(t)| \le \sup|x| \int_0^\infty |h|\,dt$. Si un
+    seul $\sigma_k$ est positif, $h$ croît sans limite. Si un pôle est simple sur l'axe imaginaire, $h$ contient un terme d'amplitude constante : la réponse
+    libre reste bornée mais une entrée bornée de la bonne pulsation fait croître la sortie, résonance pour $\pm j\omega$ ou rampe pour un intégrateur sous
+    échelon. Un pôle multiple sur l'axe donne un terme en $t\,e^{j\omega t}$, croissant. Les pôles multiples dans le demi-plan gauche donnent des termes en
+    $t^m e^{\sigma t}$, qui décroissent quand même : la conclusion ne change pas.
+  </p>
+  <div class="formule-cle">$$\text{stabilité asymptotique} \iff \operatorname{Re}(p_k) &lt; 0 \ \text{pour tout } k$$</div>
+  <p class="formule-cle-legende">
+    Vérification dimensionnelle : $p_k t$ est sans dimension, $p_k$ en $\mathrm{s^{-1}}$ et $t$ en $\mathrm{s}$. Cas limites : $\sigma_k \to 0^-$, temps de
+    décroissance $1/|\sigma_k|$ infini, on rejoint la stabilité marginale ; $\sigma_k \to -\infty$, mode instantané, le pôle peut être négligé.
+  </p>
+
+  <h3 id="e-caracteristique">L'équation caractéristique d'une boucle</h3>
+  <p>
+    Pour la boucle du schéma de la section D, avec $L(s) = C(s)G(s)H(s) = N_L(s)/D_L(s)$, la fonction de transfert de la consigne vers la sortie vaut
+  </p>
+  <div class="formule-cle">$$T(s) = \frac{C G}{1 + L} = \frac{C G\, D_L}{D_L + N_L}, \qquad \text{pôles de la boucle fermée : } D(s) = D_L(s) + N_L(s) = 0 \iff 1 + L(s) = 0$$</div>
+  <p class="formule-cle-legende">
+    $N_L$, $D_L$ : numérateur et dénominateur de la boucle ouverte ; $D$ : polynôme caractéristique. Hypothèses : modèle linéaire autour d'un point de
+    fonctionnement, retour soustrait, aucun retard pur, aucune simplification d'un pôle instable par un zéro.
+  </p>
+  <p>
+    Trois remarques gouvernent la suite. Premièrement, les pôles de la boucle fermée dépendent du gain : multiplier $L$ par $K$ donne $D_L + K N_L$, dont les
+    racines partent des pôles de $L$ pour $K = 0$ et se dirigent vers ses zéros, ou vers l'infini, quand $K$ croît. Deuxièmement, une simplification entre
+    un zéro du correcteur et un pôle du procédé fait disparaître ce pôle de $T$ mais pas du système : il reste visible depuis la perturbation $d$, et s'il est
+    instable, la boucle l'est aussi. On ne compense jamais un pôle instable par un zéro. Troisièmement, un retard pur $e^{-sT}$ rend l'équation
+    transcendante : elle a une infinité de racines et sort du cadre polynomial ; on l'approche par une fraction rationnelle ou l'on passe au critère de
+    Nyquist.
+  </p>
+
+  <h3 id="e-necessaire">Une condition nécessaire immédiate</h3>
+  <p>
+    Si toutes les racines de $D$ sont à partie réelle négative, $D$ se factorise en termes $(s + a)$ avec $a &gt; 0$ pour les racines réelles, et
+    $(s^2 + 2\zeta\omega_0 s + \omega_0^2)$ avec $\zeta\omega_0 &gt; 0$ pour les couples complexes. Chaque facteur n'a que des coefficients strictement positifs,
+    et le produit de polynômes à coefficients positifs a des coefficients positifs. D'où la <strong>condition nécessaire</strong> : un polynôme dont un
+    coefficient est nul ou de signe opposé aux autres a au moins une racine à partie réelle positive ou nulle. Elle est suffisante pour les degrés $1$ et $2$,
+    mais pas au-delà : $s^3 + s^2 + 2s + 8$ a tous ses coefficients positifs et pourtant deux racines instables. Pour conclure, il faut le critère de Routh.
+  </p>
+
+  <h3 id="e-routh">Le critère de Routh-Hurwitz</h3>
+  <p>
+    Le critère de Routh-Hurwitz répond à la question : combien de racines de $D(s)$ ont une partie réelle positive, sans calculer ces racines ? On range les
+    coefficients sur deux lignes, en alternant, puis on calcule chaque ligne suivante à partir des deux précédentes par un déterminant croisé. Le nombre de
+    <strong>changements de signe</strong> dans la première colonne est égal au nombre de racines à partie réelle positive. La stabilité exige donc une première
+    colonne entièrement de même signe.
+  </p>
+  <figure id="e-routh-figure">
+    <svg viewBox="0 0 720 300" role="img" aria-label="Construction du tableau de Routh pour un polynôme du quatrième degré : la ligne s puissance 4 contient a4, a2, a0 ; la ligne s cube contient a3, a1, 0 ; la ligne s carré contient b1 et b2 ; la ligne s puissance 1 contient c1 ; la ligne s puissance 0 contient d1 ; un cadre en tirets entoure le bloc de deux sur deux utilisé pour calculer b1, un cadre arrondi entoure la première colonne dont on compte les changements de signe."><defs><marker id="e-ro-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"><path d="M86 28V270"/><path d="M40 72H330"/><rect x="100" y="34" width="134" height="80" rx="6" stroke-dasharray="7 4"/><rect x="96" y="22" width="68" height="252" rx="16" stroke-width="2.2"/><path d="M232 162C300 162 320 132 360 112" marker-end="url(#e-ro-fl)" stroke-width="1"/><path d="M166 204C260 210 320 196 360 182" marker-end="url(#e-ro-fl)" stroke-width="1"/><path d="M130 286C200 296 320 290 360 252" marker-end="url(#e-ro-fl)" stroke-width="1"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="13"><text x="46" y="56">s⁴</text><text x="46" y="100">s³</text><text x="46" y="148">s²</text><text x="46" y="196">s¹</text><text x="46" y="244">s⁰</text><text x="130" y="56" text-anchor="middle">a4</text><text x="200" y="56" text-anchor="middle">a2</text><text x="270" y="56" text-anchor="middle">a0</text><text x="130" y="100" text-anchor="middle">a3</text><text x="200" y="100" text-anchor="middle">a1</text><text x="270" y="100" text-anchor="middle">0</text><text x="130" y="148" text-anchor="middle">b1</text><text x="200" y="148" text-anchor="middle">b2</text><text x="130" y="196" text-anchor="middle">c1</text><text x="130" y="244" text-anchor="middle">d1</text><text x="370" y="104">b1 = (a3 a2 - a4 a1) / a3</text><text x="370" y="124">b2 = (a3 a0 - a4 . 0) / a3 = a0</text><text x="370" y="178">c1 = (b1 a1 - a3 b2) / b1</text><text x="370" y="198">d1 = b2 = a0</text><text x="370" y="244">première colonne : a4, a3, b1, c1, d1</text><text x="370" y="264">changements de signe = pôles à Re &gt; 0</text><text x="214" y="30" font-size="11">bloc pour b1</text></g></svg>
+    <figcaption>
+      Construction du tableau de Routh pour $D(s) = a_4 s^4 + a_3 s^3 + a_2 s^2 + a_1 s + a_0$. Chaque ligne est repérée par la puissance de $s$ en marge. Les
+      deux premières lignes reçoivent les coefficients en alternance, complétés par des zéros. Chaque élément d'une ligne suivante est un déterminant croisé
+      des deux lignes au-dessus, divisé par le premier élément de la ligne juste au-dessus : le cadre en tirets montre le bloc de deux sur deux qui sert à
+      calculer $b_1$. Les flèches renvoient chaque case à sa formule. Le cadre arrondi en trait épais entoure la première colonne, la seule que l'on examine :
+      on y compte les changements de signe.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Cas du troisième degré.</strong> Pour $a_3 s^3 + a_2 s^2 + a_1 s + a_0$ avec $a_3 &gt; 0$, la première colonne vaut $a_3$, $a_2$,
+    $b_1 = (a_2 a_1 - a_3 a_0)/a_2$, $a_0$. La stabilité demande $a_2 &gt; 0$, $a_0 &gt; 0$ et $a_2 a_1 &gt; a_3 a_0$. C'est la condition utilisée dans
+    l'encadré d'ouverture. Vérification : pour $(s + 1)^3 = s^3 + 3s^2 + 3s + 1$, $3 \times 3 = 9 &gt; 1$, stable ; pour $s^3 + s^2 + 2s + 8$, $2 &lt; 8$,
+    $b_1 = -6$ : deux changements de signe, deux racines instables.
+  </p>
+  <p>
+    <strong>Ligne nulle et oscillation entretenue.</strong> Si une ligne entière s'annule, le polynôme possède des racines symétriques par rapport à l'origine,
+    typiquement un couple $\pm j\omega$. On forme le <strong>polynôme auxiliaire</strong> $A(s)$ avec la ligne au-dessus, on remplace la ligne nulle par les
+    coefficients de $A'(s)$ et l'on poursuit. Les racines de $A(s)$ sont des racines de $D(s)$. C'est exactement ce qui se produit au gain critique : la ligne
+    $s^1$ s'annule, et $A(s) = b_1 s^2 + a_0 = 0$ donne la pulsation de l'oscillation entretenue, $\omega = \sqrt{a_0/b_1}$.
+  </p>
+  <p>
+    <strong>Zéro isolé en première colonne.</strong> Si seul le premier élément d'une ligne est nul, on le remplace par un petit nombre $\varepsilon &gt; 0$, on
+    poursuit, puis l'on fait tendre $\varepsilon$ vers zéro pour compter les changements de signe. Ce cas signale presque toujours une racine instable ou sur
+    l'axe.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que Routh donne et ce qu'il ne donne pas</span>
+    <p>
+      Routh donne le nombre de pôles instables et, avec un paramètre littéral, l'intervalle de gain stable, le gain critique et la pulsation d'oscillation.
+      Il ne donne ni l'amortissement ni la marge face à un retard. En remplaçant $s$ par $s - \sigma_0$, on peut toutefois vérifier que tous les pôles ont une
+      partie réelle inférieure à $-\sigma_0$, ce qui impose une rapidité minimale : c'est le critère de Routh décalé.
+    </p>
+  </div>
+
+  <h3 id="e-lieu">Où vont les pôles quand le gain augmente</h3>
+  <p>
+    Pour la boucle de position de l'actionneur, $L(s) = K_v/\bigl(s(1 + \tau_1 s)(1 + \tau_2 s)\bigr)$ et
+    $D(s) = \tau_1\tau_2 s^3 + (\tau_1 + \tau_2)s^2 + s + K_v$. Pour $K_v \to 0$, les pôles de la boucle fermée sont ceux de la boucle ouverte : $0$,
+    $-263{,}4$ et $-938{,}4\ \mathrm{s^{-1}}$. Quand $K_v$ croît, le pôle de l'origine et le pôle en $-263{,}4$ se rapprochent, se rejoignent sur l'axe réel,
+    puis partent en couple complexe vers le haut et le bas, tandis que le troisième part vers la gauche. Loin de l'origine, le couple suit deux asymptotes à
+    $\pm 60^\circ$ issues du point $-(263{,}4 + 938{,}4)/3 = -400{,}6\ \mathrm{s^{-1}}$ : trois pôles et aucun zéro donnent trois asymptotes espacées de
+    $120^\circ$. Elles coupent fatalement l'axe imaginaire : au-delà d'un certain gain, la boucle est instable. Routh place ce croisement en
+    $K_v = 1201{,}8\ \mathrm{s^{-1}}$ et $\omega = 497{,}2\ \mathrm{rad/s}$.
+  </p>
+  <p>
+    La simulation suivante montre ce parcours. La poignée posée sur le rail sous le plan règle $K_v$ en échelle logarithmique ; le curseur ajoute, si on le
+    souhaite, un filtre du premier ordre de constante $\tau_f$ sur la mesure de position. Le tableau de Routh, les pôles et la réponse à un échelon de
+    consigne de $1\ \mathrm{rad}$ sont recalculés à chaque déplacement.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Sans filtre, à quel gain approximatif les deux pôles lents se rejoignent-ils sur l'axe réel, et à quoi ressemble alors la réponse indicielle ? Entre
+      $K_v = 600$ et $1200\ \mathrm{s^{-1}}$, la boucle est-elle stable, et comment se présente sa réponse ? Si l'on ajoute un filtre de $1\ \mathrm{ms}$ sur la
+      mesure, le gain critique augmente-t-il ou diminue-t-il, et dans quelle proportion environ ?
+    </p>
+  </div>
+  <figure id="e-lieu-sim">
+    <div class="schema-vivant" id="e-lieu-vivant"></div>
+    <div id="e-lieu-curseurs"></div>
+    <div id="e-lieu-valeurs"></div>
+    <div class="cadre-tableau" id="e-lieu-routh"></div>
+    <div id="e-lieu-trace"></div>
+    <figcaption>
+      Lieu des pôles de la boucle de position. En haut, le plan complexe en $\mathrm{s^{-1}}$, mêmes échelles sur les deux axes, demi-plan droit hachuré. Les
+      croix marquent les pôles de la boucle ouverte, d'où partent les branches ; les trajets en trait fin sont les branches parcourues quand $K_v$ va de
+      $1$ à $3000\ \mathrm{s^{-1}}$ ; les ronds pleins sont les pôles de la boucle fermée pour le gain courant ; les deux droites en tirets sont les asymptotes
+      à $\pm 60^\circ$. La poignée ronde sur le rail gradué, sous le plan, règle $K_v$. Au milieu, le tableau de Routh du polynôme courant, première colonne en
+      gras, avec le nombre de changements de signe. En bas, la position $\theta(t)$ après un échelon de consigne de $1\ \mathrm{rad}$ sur $60\ \mathrm{ms}$,
+      avec la consigne en tirets et la bande de $\pm 5\ \%$ en pointillé.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Sans filtre, les deux pôles lents se rejoignent en $-121\ \mathrm{s^{-1}}$ pour $K_v = 57{,}0\ \mathrm{s^{-1}}$ : la réponse est à la limite de
+    l'apériodique, sans dépassement. À $K_v = 100\ \mathrm{s^{-1}}$, les pôles valent $-113{,}8 \pm 111{,}4j$ et $-974{,}1\ \mathrm{s^{-1}}$, réponse à $4\ \%$ de
+    dépassement. À $600\ \mathrm{s^{-1}}$, ils valent $-51{,}1 \pm 363{,}7j$ et $-1099{,}7$ : la boucle est stable, mais $\zeta = 0{,}139$ et la réponse sonne
+    longtemps. La première colonne de Routh reste positive jusqu'à $1201{,}8\ \mathrm{s^{-1}}$, où l'élément de la ligne $s^1$ s'annule ; au-delà, deux
+    changements de signe annoncent deux pôles instables, $+13{,}9 \pm 530{,}3j$ à $1400\ \mathrm{s^{-1}}$. Avec un filtre de $1\ \mathrm{ms}$, un quatrième pôle
+    part de $-1000\ \mathrm{s^{-1}}$, les asymptotes passent à $\pm 45^\circ$ et le gain critique tombe à $607{,}1\ \mathrm{s^{-1}}$, la moitié : chaque
+    retard supplémentaire dans la boucle, même petit devant les constantes du procédé, rapproche les branches de l'axe imaginaire.
+  </p>
+
+  <h3 id="e-nyquist">Le critère de Nyquist : compter les tours autour de $-1$</h3>
+  <p>
+    Routh exige un polynôme. Le critère de Nyquist travaille directement sur la réponse harmonique $L(j\omega)$, calculée ou mesurée, retards compris. On trace
+    $L(j\omega)$ dans le plan complexe quand $\omega$ va de $-\infty$ à $+\infty$ ; la moitié $\omega &lt; 0$ est la symétrique de l'autre par rapport à
+    l'axe réel. Le point $-1$ est le <strong>point critique</strong>, parce que $1 + L = 0$ y est vérifiée.
+  </p>
+  <div class="formule-cle">$$Z = N + P$$</div>
+  <p class="formule-cle-legende">
+    $Z$ : nombre de pôles de la boucle fermée à partie réelle positive ; $P$ : nombre de pôles de $L$ à partie réelle positive ; $N$ : nombre de tours de la
+    courbe complète autour de $-1$, comptés positivement dans le sens horaire. La boucle fermée est stable si et seulement si $Z = 0$, soit $N = -P$.
+  </p>
+  <p>
+    <strong>Origine.</strong> Le principe de l'argument dit qu'en parcourant un contour fermé dans le plan $s$, l'image par une fonction rationnelle tourne
+    autour de l'origine autant de fois qu'il y a de zéros moins de pôles à l'intérieur du contour. On choisit le contour qui entoure tout le demi-plan droit :
+    l'axe imaginaire et un grand demi-cercle. La fonction étudiée est $1 + L$, dont les zéros sont les pôles de la boucle fermée et les pôles sont ceux de $L$.
+    Tourner autour de l'origine pour $1 + L$, c'est tourner autour de $-1$ pour $L$. Si $L$ a des pôles sur l'axe imaginaire, un intégrateur par exemple, le
+    contour les contourne par un petit demi-cercle à droite, ce qui ferme la courbe par un grand arc à l'infini.
+  </p>
+  <p>
+    <strong>Critère du revers.</strong> Dans le cas le plus courant, $L$ stable ($P = 0$), éventuellement avec des intégrateurs, et gain qui ne coupe le cercle
+    unité qu'une fois, la condition $N = 0$ se simplifie : en parcourant $L(j\omega)$ pour $\omega$ croissant, on doit laisser le point $-1$ à
+    <strong>gauche</strong>. C'est exactement le critère des marges du cours <a href="#/cours/diagrammes-de-bode">Diagrammes de Bode</a> : à la pulsation où
+    $|L| = 1$, la phase doit être au-dessus de $-180^\circ$.
+  </p>
+  <figure id="e-nyquist-figure">
+    <svg viewBox="0 0 720 470" role="img" aria-label="Diagramme de Nyquist de L égale 1 sur s fois 1 plus s fois 1 plus 0,25 s : courbe venant du bas le long de l'asymptote moins 1,25, coupant le cercle unité puis l'axe réel en moins 0,2 avant de rejoindre l'origine ; point critique moins 1, marge de phase 41,2 degrés, marge de gain 5, cercle de marge de module de rayon 0,54."><defs><marker id="e-ny-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"><path d="M40 150H700" stroke-width="1.2" marker-end="url(#e-ny-fl)"/><path d="M380 455V18" stroke-width="1.2" marker-end="url(#e-ny-fl)"/><circle cx="380" cy="150" r="150" stroke-width="1" stroke-dasharray="5 5"/><path d="M220.2 454.9L220.6 451.5L221.0 448.1L221.4 444.7L221.8 441.3L222.2 438.0L222.7 434.7L223.1 431.4L223.5 428.1L223.9 424.8L224.4 421.6L224.8 418.4L225.3 415.2L225.7 412.1L226.2 408.9L226.6 405.8L227.1 402.7L227.6 399.7L228.0 396.6L228.5 393.6L229.0 390.6L229.5 387.7L230.0 384.7L230.5 381.8L231.0 378.9L231.5 376.0L232.0 373.1L232.5 370.3L233.1 367.5L233.6 364.7L234.1 361.9L234.7 359.1L235.2 356.4L235.8 353.7L236.3 351.0L236.9 348.3L237.5 345.7L238.0 343.0L238.6 340.4L239.2 337.9L239.8 335.3L240.4 332.7L241.0 330.2L241.6 327.7L242.2 325.2L242.8 322.8L243.4 320.3L244.0 317.9L244.7 315.5L245.3 313.1L245.9 310.8L246.6 308.4L247.2 306.1L247.9 303.8L248.5 301.5L249.2 299.3L249.9 297.0L250.5 294.8L251.2 292.6L251.9 290.4L252.6 288.3L253.2 286.1L253.9 284.0L254.6 281.9L255.3 279.8L256.0 277.7L256.8 275.7L257.5 273.7L258.2 271.7L258.9 269.7L259.6 267.7L260.4 265.8L261.1 263.8L261.8 261.9L262.6 260.0L263.3 258.2L264.1 256.3L264.8 254.5L265.6 252.7L266.3 250.9L267.1 249.1L267.8 247.3L268.6 245.6L269.4 243.9L270.1 242.2L270.9 240.5L271.7 238.8L272.5 237.2L273.3 235.6L274.0 233.9L274.8 232.4L275.6 230.8L276.4 229.2L277.2 227.7L278.0 226.2L278.8 224.7L279.6 223.2L280.4 221.7L281.2 220.3L282.0 218.9L282.8 217.4L283.6 216.1L284.4 214.7L285.2 213.3L286.0 212.0L286.8 210.7L287.6 209.4L288.4 208.1L289.2 206.8L290.0 205.5L290.9 204.3L291.7 203.1L292.5 201.9L293.3 200.7L294.1 199.5L294.9 198.4L295.7 197.3L296.5 196.1L297.3 195.0L298.1 193.9L298.9 192.9L299.7 191.8L300.5 190.8L301.3 189.8L302.1 188.8L302.9 187.8L303.7 186.8L304.5 185.8L305.3 184.9L306.1 184.0L306.9 183.0L307.7 182.1L308.4 181.3L309.2 180.4L310.0 179.5L310.8 178.7L311.5 177.9L312.3 177.1L313.1 176.3L313.8 175.5L314.6 174.7L315.4 174.0L316.1 173.2L316.9 172.5L317.6 171.8L318.3 171.1L319.1 170.4L319.8 169.7L320.6 169.1L321.3 168.4L322.0 167.8L322.7 167.2L323.4 166.6L324.2 166.0L324.9 165.4L325.6 164.8L326.3 164.2L327.0 163.7L327.6 163.1L328.3 162.6L329.0 162.1L329.7 161.6L330.4 161.1L331.0 160.6L331.7 160.2L332.4 159.7L333.0 159.2L333.7 158.8L334.3 158.4L334.9 158.0L335.6 157.5L336.2 157.1L336.8 156.8L337.4 156.4L338.0 156.0L338.7 155.6L339.3 155.3L339.8 154.9L340.4 154.6L341.0 154.3L341.6 154.0L342.2 153.7L342.8 153.4L343.3 153.1L343.9 152.8L344.4 152.5L345.0 152.2L345.5 152.0L346.1 151.7L346.6 151.5L347.1 151.2L347.6 151.0L348.1 150.8L348.7 150.6L349.2 150.3L349.7 150.1L350.1 149.9L350.6 149.7L351.1 149.6L351.6 149.4L352.1 149.2L352.5 149.0L353.0 148.9L353.4 148.7L353.9 148.6L354.3 148.4L354.8 148.3L355.2 148.2L355.6 148.0L356.1 147.9L356.5 147.8L356.9 147.7L357.3 147.6L357.7 147.5L358.1 147.4L358.5 147.3L358.9 147.2L359.3 147.1L359.6 147.0L360.0 146.9L360.4 146.8L360.7 146.8L361.1 146.7L361.4 146.6L361.8 146.6L362.1 146.5L362.5 146.5L362.8 146.4L363.1 146.4L363.4 146.3L363.7 146.3L364.1 146.3L364.4 146.2L364.7 146.2L365.0 146.2L365.3 146.1L365.6 146.1L365.8 146.1L366.1 146.1L366.4 146.1L366.7 146.0L366.9 146.0L367.2 146.0L367.5 146.0L367.7 146.0L368.0 146.0L368.2 146.0L368.4 146.0L368.7 146.0L368.9 146.0L369.2 146.0L369.4 146.0L369.6 146.0L369.8 146.0L370.0 146.0L370.2 146.1L370.5 146.1L370.7 146.1L370.9 146.1L371.1 146.1L371.2 146.1L371.4 146.2L371.6 146.2L371.8 146.2L372.0 146.2L372.2 146.2L372.3 146.3L372.5 146.3L372.7 146.3L372.8 146.3L373.0 146.4L373.2 146.4L373.3 146.4L373.5 146.5L373.6 146.5L373.8 146.5L373.9 146.6L374.0 146.6L374.2 146.6L374.3 146.6L374.5 146.7L374.6 146.7L374.7 146.7L374.8 146.8L375.0 146.8L375.1 146.9L375.2 146.9L375.3 146.9L375.4 147.0L375.5 147.0L375.6 147.0L375.7 147.1L375.8 147.1L375.9 147.1L376.0 147.2L376.1 147.2L376.2 147.2L376.3 147.3L376.4 147.3L376.5 147.3L376.6 147.4L376.7 147.4L376.8 147.4L376.8 147.5L376.9 147.5L377.0 147.6L377.1 147.6L377.1 147.6L377.2 147.7L377.3 147.7L377.4 147.7L377.4 147.8L377.5 147.8L377.6 147.8L377.6 147.9L377.7 147.9L377.7 147.9L377.8 148.0L377.9 148.0L377.9 148.0L378.0 148.0L378.0 148.1L378.1 148.1L378.1 148.1L378.2 148.2L378.2 148.2L378.3 148.2L378.3 148.3L378.4 148.3L378.4 148.3L378.5 148.3L378.5 148.4L378.5 148.4L378.6 148.4L378.6 148.5L378.7 148.5L378.7 148.5L378.7 148.5L378.8 148.6L378.8 148.6L378.8 148.6L378.9 148.6L378.9 148.7L378.9 148.7L379.0 148.7L379.0 148.7L379.0 148.8L379.0 148.8L379.1 148.8L379.1 148.8L379.1 148.8L379.1 148.9L379.2 148.9L379.2 148.9L379.2 148.9L379.2 149.0L379.3 149.0L379.3 149.0L379.3 149.0L379.3 149.0L379.3 149.0L379.4 149.1L379.4 149.1L379.4 149.1L379.4 149.1L379.4 149.1L379.4 149.2L379.5 149.2L379.5 149.2L379.5 149.2L379.5 149.2L379.5 149.2L379.5 149.3L379.5 149.3L379.6 149.3L379.6 149.3L379.6 149.3L379.6 149.3L379.6 149.3L379.6 149.4L379.6 149.4L379.6 149.4L379.7 149.4L379.7 149.4L379.7 149.4L379.7 149.4L379.7 149.4L379.7 149.5L379.7 149.5L379.7 149.5L379.7 149.5L379.7 149.5L379.7 149.5L379.8 149.5L379.8 149.5L379.8 149.5L379.8 149.5L379.8 149.6L379.8 149.6L379.8 149.6L379.8 149.6L379.8 149.6L379.8 149.6L379.8 149.6L379.8 149.6L379.8 149.6L379.8 149.6L379.8 149.6L379.8 149.7L379.8 149.7L379.9 149.7L379.9 149.7L379.9 149.7L379.9 149.7L379.9 149.7L379.9 149.7L379.9 149.7L379.9 149.7L379.9 149.7L379.9 149.7L379.9 149.7L379.9 149.7L379.9 149.7L379.9 149.8L379.9 149.8L379.9 149.8L379.9 149.8L379.9 149.8L379.9 149.8L379.9 149.8L379.9 149.8L379.9 149.8L379.9 149.8L379.9 149.8L379.9 149.8L379.9 149.8L379.9 149.8L379.9 149.8L379.9 149.8L379.9 149.8L379.9 149.8L379.9 149.8L379.9 149.8L379.9 149.8L379.9 149.8L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 149.9L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0" stroke-width="2.8"/><path d="M254.6 18.1L255.3 20.2L256.0 22.3L256.8 24.3L257.5 26.3L258.2 28.3L258.9 30.3L259.6 32.3L260.4 34.2L261.1 36.2L261.8 38.1L262.6 40.0L263.3 41.8L264.1 43.7L264.8 45.5L265.6 47.3L266.3 49.1L267.1 50.9L267.8 52.7L268.6 54.4L269.4 56.1L270.1 57.8L270.9 59.5L271.7 61.2L272.5 62.8L273.3 64.4L274.0 66.1L274.8 67.6L275.6 69.2L276.4 70.8L277.2 72.3L278.0 73.8L278.8 75.3L279.6 76.8L280.4 78.3L281.2 79.7L282.0 81.1L282.8 82.6L283.6 83.9L284.4 85.3L285.2 86.7L286.0 88.0L286.8 89.3L287.6 90.6L288.4 91.9L289.2 93.2L290.0 94.5L290.9 95.7L291.7 96.9L292.5 98.1L293.3 99.3L294.1 100.5L294.9 101.6L295.7 102.7L296.5 103.9L297.3 105.0L298.1 106.1L298.9 107.1L299.7 108.2L300.5 109.2L301.3 110.2L302.1 111.2L302.9 112.2L303.7 113.2L304.5 114.2L305.3 115.1L306.1 116.0L306.9 117.0L307.7 117.9L308.4 118.7L309.2 119.6L310.0 120.5L310.8 121.3L311.5 122.1L312.3 122.9L313.1 123.7L313.8 124.5L314.6 125.3L315.4 126.0L316.1 126.8L316.9 127.5L317.6 128.2L318.3 128.9L319.1 129.6L319.8 130.3L320.6 130.9L321.3 131.6L322.0 132.2L322.7 132.8L323.4 133.4L324.2 134.0L324.9 134.6L325.6 135.2L326.3 135.8L327.0 136.3L327.6 136.9L328.3 137.4L329.0 137.9L329.7 138.4L330.4 138.9L331.0 139.4L331.7 139.8L332.4 140.3L333.0 140.8L333.7 141.2L334.3 141.6L334.9 142.0L335.6 142.5L336.2 142.9L336.8 143.2L337.4 143.6L338.0 144.0L338.7 144.4L339.3 144.7L339.8 145.1L340.4 145.4L341.0 145.7L341.6 146.0L342.2 146.3L342.8 146.6L343.3 146.9L343.9 147.2L344.4 147.5L345.0 147.8L345.5 148.0L346.1 148.3L346.6 148.5L347.1 148.8L347.6 149.0L348.1 149.2L348.7 149.4L349.2 149.7L349.7 149.9L350.1 150.1L350.6 150.3L351.1 150.4L351.6 150.6L352.1 150.8L352.5 151.0L353.0 151.1L353.4 151.3L353.9 151.4L354.3 151.6L354.8 151.7L355.2 151.8L355.6 152.0L356.1 152.1L356.5 152.2L356.9 152.3L357.3 152.4L357.7 152.5L358.1 152.6L358.5 152.7L358.9 152.8L359.3 152.9L359.6 153.0L360.0 153.1L360.4 153.2L360.7 153.2L361.1 153.3L361.4 153.4L361.8 153.4L362.1 153.5L362.5 153.5L362.8 153.6L363.1 153.6L363.4 153.7L363.7 153.7L364.1 153.7L364.4 153.8L364.7 153.8L365.0 153.8L365.3 153.9L365.6 153.9L365.8 153.9L366.1 153.9L366.4 153.9L366.7 154.0L366.9 154.0L367.2 154.0L367.5 154.0L367.7 154.0L368.0 154.0L368.2 154.0L368.4 154.0L368.7 154.0L368.9 154.0L369.2 154.0L369.4 154.0L369.6 154.0L369.8 154.0L370.0 154.0L370.2 153.9L370.5 153.9L370.7 153.9L370.9 153.9L371.1 153.9L371.2 153.9L371.4 153.8L371.6 153.8L371.8 153.8L372.0 153.8L372.2 153.8L372.3 153.7L372.5 153.7L372.7 153.7L372.8 153.7L373.0 153.6L373.2 153.6L373.3 153.6L373.5 153.5L373.6 153.5L373.8 153.5L373.9 153.4L374.0 153.4L374.2 153.4L374.3 153.4L374.5 153.3L374.6 153.3L374.7 153.3L374.8 153.2L375.0 153.2L375.1 153.1L375.2 153.1L375.3 153.1L375.4 153.0L375.5 153.0L375.6 153.0L375.7 152.9L375.8 152.9L375.9 152.9L376.0 152.8L376.1 152.8L376.2 152.8L376.3 152.7L376.4 152.7L376.5 152.7L376.6 152.6L376.7 152.6L376.8 152.6L376.8 152.5L376.9 152.5L377.0 152.4L377.1 152.4L377.1 152.4L377.2 152.3L377.3 152.3L377.4 152.3L377.4 152.2L377.5 152.2L377.6 152.2L377.6 152.1L377.7 152.1L377.7 152.1L377.8 152.0L377.9 152.0L377.9 152.0L378.0 152.0L378.0 151.9L378.1 151.9L378.1 151.9L378.2 151.8L378.2 151.8L378.3 151.8L378.3 151.7L378.4 151.7L378.4 151.7L378.5 151.7L378.5 151.6L378.5 151.6L378.6 151.6L378.6 151.5L378.7 151.5L378.7 151.5L378.7 151.5L378.8 151.4L378.8 151.4L378.8 151.4L378.9 151.4L378.9 151.3L378.9 151.3L379.0 151.3L379.0 151.3L379.0 151.2L379.0 151.2L379.1 151.2L379.1 151.2L379.1 151.2L379.1 151.1L379.2 151.1L379.2 151.1L379.2 151.1L379.2 151.0L379.3 151.0L379.3 151.0L379.3 151.0L379.3 151.0L379.3 151.0L379.4 150.9L379.4 150.9L379.4 150.9L379.4 150.9L379.4 150.9L379.4 150.8L379.5 150.8L379.5 150.8L379.5 150.8L379.5 150.8L379.5 150.8L379.5 150.7L379.5 150.7L379.6 150.7L379.6 150.7L379.6 150.7L379.6 150.7L379.6 150.7L379.6 150.6L379.6 150.6L379.6 150.6L379.7 150.6L379.7 150.6L379.7 150.6L379.7 150.6L379.7 150.6L379.7 150.5L379.7 150.5L379.7 150.5L379.7 150.5L379.7 150.5L379.7 150.5L379.8 150.5L379.8 150.5L379.8 150.5L379.8 150.5L379.8 150.4L379.8 150.4L379.8 150.4L379.8 150.4L379.8 150.4L379.8 150.4L379.8 150.4L379.8 150.4L379.8 150.4L379.8 150.4L379.8 150.4L379.8 150.3L379.8 150.3L379.9 150.3L379.9 150.3L379.9 150.3L379.9 150.3L379.9 150.3L379.9 150.3L379.9 150.3L379.9 150.3L379.9 150.3L379.9 150.3L379.9 150.3L379.9 150.3L379.9 150.3L379.9 150.2L379.9 150.2L379.9 150.2L379.9 150.2L379.9 150.2L379.9 150.2L379.9 150.2L379.9 150.2L379.9 150.2L379.9 150.2L379.9 150.2L379.9 150.2L379.9 150.2L379.9 150.2L379.9 150.2L379.9 150.2L379.9 150.2L379.9 150.2L379.9 150.2L379.9 150.2L379.9 150.2L379.9 150.2L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.1L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0L380.0 150.0" stroke-width="1" stroke-dasharray="2 4"/><path d="M323.4 166.6L331.7 160.2" stroke-width="2.8" marker-end="url(#e-ny-fl)"/><circle cx="230.0" cy="150.0" r="80.9" stroke-width="1.2" stroke-dasharray="10 4 2 4"/><path d="M230.0 150.0L295.7 197.3" stroke-width="1.2" marker-end="url(#e-ny-fl)"/><path d="M380.0 150.0L267.2 248.9" stroke-width="1" stroke-dasharray="3 3"/><path d="M317.0 150.0L317.0 151.2L317.0 152.3L317.1 153.5L317.2 154.6L317.3 155.8L317.4 157.0L317.5 158.1L317.7 159.3L317.9 160.4L318.1 161.6L318.3 162.7L318.5 163.8L318.8 165.0L319.1 166.1L319.4 167.2L319.7 168.3L320.1 169.4L320.4 170.5L320.8 171.6L321.2 172.7L321.7 173.8L322.1 174.9L322.6 175.9L323.1 177.0L323.6 178.0L324.1 179.1L324.7 180.1L325.2 181.1L325.8 182.1L326.4 183.1L327.0 184.1L327.7 185.1L328.3 186.0L329.0 187.0L329.7 187.9L330.4 188.8L331.1 189.7L331.9 190.6L332.6 191.5" stroke-width="2.2"/><path d="M192.5 150.0V455" stroke-width="1" stroke-dasharray="8 4"/><path d="M353.0 134.0H377.0" stroke-width="1.6" marker-start="url(#e-ny-fl)" marker-end="url(#e-ny-fl)"/></g><g fill="currentColor" stroke="none"><circle cx="350.0" cy="150.0" r="4.5"/><circle cx="267.2" cy="248.9" r="4.5"/></g><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"><path d="M223.0 143.0L237.0 157.0M223.0 157.0L237.0 143.0" stroke-width="2.6"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="226.0" y="136.0" text-anchor="end">-1 : point critique</text><text x="384.0" y="122.0">-1/MG = -0,2</text><text x="305.0" y="173.5" text-anchor="end">MP</text><text x="277.2" y="264.9">L(jωc), |L| = 1</text><text x="257.0" y="193.5" text-anchor="end">Mm</text><text x="696.0" y="142.0" text-anchor="end">Re L</text><text x="388.0" y="28.0">Im L</text><text x="388.0" y="316.0">cercle unité</text><text x="184.5" y="446.0" text-anchor="end">asymptote -1,25</text></g></svg>
+    <figcaption>
+      Diagramme de Nyquist de $L(s) = 1/\bigl(s(1 + s)(1 + 0{,}25s)\bigr)$, la boucle de lecture des marges du cours précédent. Axes : partie réelle et partie
+      imaginaire de $L$, sans dimension, même échelle. Le trait plein épais est $L(j\omega)$ pour $\omega &gt; 0$, la flèche indique le sens des $\omega$
+      croissants ; le pointillé fin est la branche symétrique $\omega &lt; 0$. La verticale en tirets longs est l'asymptote $\operatorname{Re} L = -1{,}25$
+      atteinte quand $\omega$ tend vers zéro, effet de l'intégrateur. La croix est le point critique $-1$, le cercle en tirets est le cercle unité. Le point
+      plein sur le cercle unité est $L(j\omega_c)$ ; l'arc épais entre l'axe réel négatif et le rayon pointillé qui le relie à l'origine est la marge de phase,
+      $41{,}2^\circ$. Le point plein sur l'axe réel est la traversée à $-0{,}2$, la flèche double au-dessus de l'axe cote $1/M_G$ : $M_G = 5$, soit
+      $13{,}98\ \mathrm{dB}$. Le cercle en tiret et point, centré sur $-1$, a pour rayon la marge de module $M_m = 0{,}540$, et la flèche fine relie $-1$ au
+      point de la courbe le plus proche. La courbe laisse $-1$ à sa gauche : boucle fermée stable.
+    </figcaption>
+  </figure>
+  <p>
+    La simulation suivante trace le diagramme de Nyquist de la boucle de position de l'actionneur, avec son gain $K_v$ et un retard pur $T$ réglables. Le lecteur
+    déplace un point le long de la courbe quand la pulsation balaie de $50$ à $10^4\ \mathrm{rad/s}$, ce qui relie chaque point du plan à une pulsation.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      À $K_v = 100\ \mathrm{s^{-1}}$ sans retard, où la courbe traverse-t-elle l'axe réel négatif ? Que devient cette traversée si l'on multiplie le gain par dix ?
+      Un retard de $5\ \mathrm{ms}$ déforme-t-il la courbe aux basses ou aux hautes pulsations, et dans quel sens tourne-t-il chaque point ?
+    </p>
+  </div>
+  <figure id="e-nyquist-sim">
+    <div class="schema-vivant" id="e-nyquist-vivant"></div>
+    <div id="e-nyquist-curseurs"></div>
+    <div id="e-nyquist-lecteur"></div>
+    <div id="e-nyquist-valeurs"></div>
+    <figcaption>
+      Nyquist de la boucle de position, $L(j\omega) = K_v e^{-j\omega T}/\bigl(j\omega(1 + j\omega\tau_1)(1 + j\omega\tau_2)\bigr)$. Axes : parties réelle et
+      imaginaire de $L$, même échelle, de $-3{,}5$ à $1{,}5$ en abscisse. Trait plein épais : $L(j\omega)$ pour $\omega$ de $10$ à $10^5\ \mathrm{rad/s}$ ;
+      pointillé fin : branche symétrique. Croix : point critique $-1$ ; cercle en tirets : cercle unité ; cercle en tiret et point : marge de module autour de
+      $-1$ ; point plein sur l'axe réel : première traversée, à $-1/M_G$ ; arc épais : marge de phase. Le cercle mobile, piloté par le lecteur, parcourt la
+      courbe ; la pulsation correspondante s'affiche sous la figure.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> À $K_v = 100\ \mathrm{s^{-1}}$, la courbe traverse l'axe réel en $-K_v/1201{,}8 = -0{,}083$ : $M_G = 12{,}0$, soit
+    $21{,}6\ \mathrm{dB}$, et la marge de phase vaut $64{,}7^\circ$. Multiplier le gain par dix dilate toute la courbe d'un facteur dix autour de l'origine :
+    la traversée passe à $-0{,}83$, toujours à droite de $-1$, mais la courbe frôle le point critique et la marge de module s'effondre. Un retard ne change pas
+    le module de chaque point, il le fait tourner dans le sens horaire d'un angle $\omega T$, d'autant plus que la pulsation est élevée : la queue de la courbe
+    s'enroule en spirale vers l'origine. Avec $2\ \mathrm{ms}$ à $K_v = 100$, la traversée passe à $-0{,}263$, la marge de gain tombe à $11{,}6\ \mathrm{dB}$ et
+    la marge de phase à $54{,}0^\circ$ ; au-delà d'environ $12\ \mathrm{ms}$, la courbe entoure $-1$ et la boucle est instable.
+  </p>
+
+  <h3 id="e-marges">Trois marges pour une seule distance</h3>
+  <p>
+    Les marges mesurent, chacune à sa manière, la distance entre la courbe de Nyquist et le point critique.
+  </p>
+  <ul>
+    <li><strong>Marge de gain</strong> $M_G = 1/|L(j\omega_{180})|$, souvent exprimée en décibels : facteur par lequel on peut multiplier le gain avant
+      l'instabilité. C'est une distance mesurée le long de l'axe réel.</li>
+    <li><strong>Marge de phase</strong> $M_\varphi = 180^\circ + \arg L(j\omega_c)$ : rotation supplémentaire tolérée sur le cercle unité ; divisée par $\omega_c$,
+      elle donne le retard supplémentaire admissible $T_{\max} = M_\varphi/\omega_c$, $M_\varphi$ en radians.</li>
+    <li><strong>Marge de module</strong> $M_m = \min_\omega |1 + L(j\omega)|$ : rayon du plus grand cercle centré en $-1$ que la courbe ne pénètre pas. Comme
+      la sensibilité vaut $S = 1/(1 + L)$, $M_m = 1/\max|S|$ : c'est aussi l'inverse de l'amplification maximale des perturbations par la boucle.</li>
+  </ul>
+  <div class="formule-cle">$$M_G \ge \frac{1}{1 - M_m}, \qquad M_\varphi \ge 2\arcsin\frac{M_m}{2}$$</div>
+  <p class="formule-cle-legende">
+    Dérivation : la courbe ne pénétrant pas le cercle de rayon $M_m$ centré en $-1$, sa traversée de l'axe réel est à droite de $-1 + M_m$, d'où
+    $M_G \ge 1/(1 - M_m)$ ; son passage sur le cercle unité est hors du cercle de rayon $M_m$, et la corde de longueur $M_m$ intercepte sur le cercle unité un
+    angle $2\arcsin(M_m/2)$. Application : $M_m = 0{,}5$ garantit $M_G \ge 2$, soit $6{,}02\ \mathrm{dB}$, et $M_\varphi \ge 28{,}96^\circ$. L'inverse est faux :
+    deux bonnes marges de gain et de phase n'excluent pas une courbe qui passe près de $-1$ entre les deux points de lecture.
+  </p>
+  <div class="encadre attention">
+    <span class="encadre-titre">Quand le critère des marges ne s'applique pas</span>
+    <p>
+      Si la boucle ouverte est instable, $P \ne 0$, la stabilité en boucle fermée exige que la courbe tourne autour de $-1$, dans le sens trigonométrique,
+      $P$ fois : il faut alors un gain <strong>suffisant</strong>, et non borné supérieurement. Exemple : $L(s) = K(s + 2)/\bigl((s - 1)(s + 5)\bigr)$ donne
+      $D(s) = s^2 + (4 + K)s + 2K - 5$, stable si et seulement si $K &gt; 2{,}5$. Un tel système, lévitation magnétique, pendule inversé ou boucle de courant
+      d'un convertisseur à zéro instable, se traite par Routh ou par Nyquist complet. Il en va de même quand le gain coupe plusieurs fois le cercle unité, ou
+      quand la phase franchit plusieurs fois $-180^\circ$ : on parle alors de stabilité conditionnelle, et seule la courbe complète tranche.
+    </p>
+  </div>
+
+  <h3 id="e-retard">Retard pur : Padé pour Routh, exact pour Nyquist</h3>
+  <p>
+    Le retard $e^{-sT}$ n'est pas rationnel. Pour garder Routh, on l'approche par la fraction de Padé du premier ordre, qui a le même module unité et la même
+    phase aux basses pulsations :
+  </p>
+  <div class="formule-cle">$$e^{-sT} \approx \frac{1 - sT/2}{1 + sT/2}, \qquad \arg \text{ exact} = -\omega T, \qquad \arg \text{ Padé} = -2\arctan\frac{\omega T}{2}$$</div>
+  <p class="formule-cle-legende">
+    $T$ : retard en $\mathrm{s}$. Écart de phase inférieur à $1^\circ$ tant que $\omega T &lt; 0{,}6\ \mathrm{rad}$ environ ; la phase de Padé plafonne à
+    $-180^\circ$ alors que la vraie phase décroît sans limite. Le zéro $s = 2/T$ dans le demi-plan droit traduit le caractère non minimal du retard ; il ajoute
+    un coefficient de signe variable, $1 - K T/2$ pour la boucle de position, qui suffit à faire apparaître le gain critique.
+  </p>
+  <p>
+    Pour la boucle de position avec $T = 2\ \mathrm{ms}$, Routh sur le polynôme de Padé donne $K_{v,\text{crit}} = 385{,}3\ \mathrm{s^{-1}}$ et
+    $\omega = 262{,}7\ \mathrm{rad/s}$ ; le calcul exact sur la phase donne $379{,}8\ \mathrm{s^{-1}}$ et $260{,}3\ \mathrm{rad/s}$. L'écart de $1{,}4\ \%$ est
+    acceptable parce que $\omega T = 0{,}52\ \mathrm{rad}$ ; il croît vite au-delà. Pour un retard dominant, la marge se calcule toujours sur la réponse
+    harmonique exacte.
+  </p>
+
+  <h3 id="e-methodes">Quatre façons d'évaluer la stabilité : laquelle choisir ?</h3>
+  <div class="cadre-tableau">
+    <table>
+      <thead><tr><th>Méthode</th><th>Données nécessaires</th><th>Ce qu'elle donne</th><th>Limites</th><th>Préférable quand</th></tr></thead>
+      <tbody>
+        <tr><td>Calcul des pôles</td><td>Polynôme numérique</td><td>Stabilité, amortissement, rapidité de chaque mode</td><td>Pas de paramètre littéral ; pas de retard ; ordinateur au-delà du degré 2</td><td>Modèle numérique fixé, vérification finale</td></tr>
+        <tr><td>Routh-Hurwitz</td><td>Polynôme, éventuellement littéral</td><td>Nombre de pôles instables, intervalle de gain stable, gain et pulsation critiques</td><td>Pas d'amortissement ; retard approché par Padé</td><td>Calcul à la main d'un gain critique ou d'un domaine de réglage</td></tr>
+        <tr><td>Nyquist et marges</td><td>Réponse harmonique $L(j\omega)$, calculée ou mesurée</td><td>Stabilité, marges de gain, de phase et de module, retard admissible</td><td>Lecture délicate si $L$ est instable ou coupe plusieurs fois</td><td>Retards, procédé mesuré par balayage, robustesse</td></tr>
+        <tr><td>Simulation temporelle</td><td>Modèle complet, non-linéarités comprises</td><td>Réponse réelle, saturations, cycles limites</td><td>Un cas à la fois ; ne prouve rien sur un autre point de fonctionnement</td><td>Validation finale avant mise en service</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="e-statut">Loi, convention, approximation, règle de conception et donnée du constructeur</h3>
+  <ul>
+    <li><strong>Lois mathématiques :</strong> la condition $\operatorname{Re}(p_k) &lt; 0$ pour un système linéaire, le critère de Routh-Hurwitz, le principe de
+      l'argument et la relation $Z = N + P$. Elles ne souffrent pas d'exception dans leur domaine.</li>
+    <li><strong>Conventions :</strong> retour soustrait et signe moins mis à part dans $L$ ; sens horaire compté positivement pour $N$ ; marges exprimées en
+      décibels et en degrés. Changer de convention change les signes, pas la physique.</li>
+    <li><strong>Approximations :</strong> linéarisation autour d'un point de fonctionnement ; Padé pour un retard ; omission d'un pôle rapide ; procédé supposé
+      invariant. Chacune doit être rappelée avec le résultat.</li>
+    <li><strong>Règles de conception :</strong> $M_G \ge 6\ \mathrm{dB}$, $M_\varphi \ge 45^\circ$, $M_m \ge 0{,}5$ sont des valeurs usuelles d'atelier, non des
+      lois ; un procédé mal connu justifie des marges plus larges.</li>
+    <li><strong>Données du constructeur et du site :</strong> constantes de temps, retard de cycle d'un automate, période d'échelonnement d'un variateur, unités
+      des paramètres d'un régulateur, secondes, minutes ou répétitions par minute, figurent dans la documentation de l'appareil et doivent y être lues.</li>
+  </ul>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Le schéma principal de la séance relie la boucle fermée à la localisation qualitative de ses pôles : chaque position typique d'un pôle dans le plan
+    complexe est associée au mode temporel qu'elle produit, et les zones de conception y sont tracées. Il se dessine à son arrivée dans l'écran.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 720 470" role="img" aria-label="Carte du plan complexe : axe imaginaire en trait épais séparant le demi-plan gauche stable du demi-plan droit hachuré instable ; huit pôles numérotés, réels rapides et lents, couple amorti, couple peu amorti, couple sur l'axe, intégrateur à l'origine, couple instable et pôle réel positif ; droites zeta égale 0,7 et verticale sigma égale moins sigma min ; huit vignettes montrant le mode de chaque pôle."><defs><marker id="f-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"><path d="M470 180L320.0 30.0M470 180L320.0 330.0" stroke-width="1" stroke-dasharray="6 5"/><path d="M420 34V330" stroke-width="1" stroke-dasharray="2 4"/><path d="M470 40L480 30M470 62L502 30M470 84L524 30M470 106L546 30M470 128L568 30M470 150L590 30M470 172L612 30M470 194L634 30M470 216L656 30M470 238L678 30M470 260L700 30M470 282L700 52M470 304L700 74M470 326L700 96M488 330L700 118M510 330L700 140M532 330L700 162M554 330L700 184M576 330L700 206M598 330L700 228M620 330L700 250M642 330L700 272M664 330L700 294M686 330L700 316" stroke-width="0.6" stroke-dasharray="1 5"/><path d="M40 180H700" stroke-width="1.4" marker-end="url(#f-fl)"/><path d="M470 330V22" stroke-width="2.4" marker-end="url(#f-fl)"/><path d="M84 174L96 186M84 186L96 174" stroke-width="2.4"/><rect x="12" y="360" width="80" height="50" rx="6" stroke-width="1"/><path d="M17 389.0H87" stroke-width="0.6" stroke-dasharray="2 3"/><path d="M17.0 374.0L17.6 374.6L18.2 375.1L18.8 375.6L19.3 376.1L19.9 376.6L20.5 377.0L21.1 377.5L21.7 377.9L22.2 378.3L22.8 378.7L23.4 379.1L24.0 379.4L24.6 379.8L25.2 380.1L25.8 380.5L26.3 380.8L26.9 381.1L27.5 381.4L28.1 381.6L28.7 381.9L29.2 382.2L29.8 382.4L30.4 382.7L31.0 382.9L31.6 383.1L32.2 383.3L32.8 383.6L33.3 383.8L33.9 383.9L34.5 384.1L35.1 384.3L35.7 384.5L36.2 384.6L36.8 384.8L37.4 385.0L38.0 385.1L38.6 385.3L39.2 385.4L39.8 385.5L40.3 385.7L40.9 385.8L41.5 385.9L42.1 386.0L42.7 386.1L43.2 386.2L43.8 386.3L44.4 386.4L45.0 386.5L45.6 386.6L46.2 386.7L46.8 386.8L47.3 386.9L47.9 386.9L48.5 387.0L49.1 387.1L49.7 387.2L50.2 387.2L50.8 387.3L51.4 387.4L52.0 387.4L52.6 387.5L53.2 387.5L53.8 387.6L54.3 387.6L54.9 387.7L55.5 387.7L56.1 387.8L56.7 387.8L57.2 387.9L57.8 387.9L58.4 388.0L59.0 388.0L59.6 388.0L60.2 388.1L60.8 388.1L61.3 388.1L61.9 388.2L62.5 388.2L63.1 388.2L63.7 388.3L64.2 388.3L64.8 388.3L65.4 388.3L66.0 388.4L66.6 388.4L67.2 388.4L67.8 388.4L68.3 388.4L68.9 388.5L69.5 388.5L70.1 388.5L70.7 388.5L71.2 388.5L71.8 388.6L72.4 388.6L73.0 388.6L73.6 388.6L74.2 388.6L74.8 388.6L75.3 388.6L75.9 388.7L76.5 388.7L77.1 388.7L77.7 388.7L78.2 388.7L78.8 388.7L79.4 388.7L80.0 388.7L80.6 388.7L81.2 388.8L81.8 388.8L82.3 388.8L82.9 388.8L83.5 388.8L84.1 388.8L84.7 388.8L85.2 388.8L85.8 388.8L86.4 388.8L87.0 388.8" stroke-width="1.6"/><path d="M314 174L326 186M314 186L326 174" stroke-width="2.4"/><rect x="100" y="360" width="80" height="50" rx="6" stroke-width="1"/><path d="M105 389.0H175" stroke-width="0.6" stroke-dasharray="2 3"/><path d="M105.0 374.0L105.6 374.2L106.2 374.3L106.8 374.5L107.3 374.6L107.9 374.8L108.5 374.9L109.1 375.1L109.7 375.2L110.2 375.4L110.8 375.5L111.4 375.6L112.0 375.8L112.6 375.9L113.2 376.1L113.8 376.2L114.3 376.3L114.9 376.5L115.5 376.6L116.1 376.7L116.7 376.8L117.2 377.0L117.8 377.1L118.4 377.2L119.0 377.3L119.6 377.5L120.2 377.6L120.8 377.7L121.3 377.8L121.9 377.9L122.5 378.1L123.1 378.2L123.7 378.3L124.2 378.4L124.8 378.5L125.4 378.6L126.0 378.7L126.6 378.8L127.2 378.9L127.8 379.0L128.3 379.1L128.9 379.2L129.5 379.3L130.1 379.4L130.7 379.5L131.2 379.6L131.8 379.7L132.4 379.8L133.0 379.9L133.6 380.0L134.2 380.1L134.8 380.2L135.3 380.3L135.9 380.4L136.5 380.5L137.1 380.6L137.7 380.7L138.2 380.8L138.8 380.8L139.4 380.9L140.0 381.0L140.6 381.1L141.2 381.2L141.8 381.3L142.3 381.3L142.9 381.4L143.5 381.5L144.1 381.6L144.7 381.7L145.2 381.7L145.8 381.8L146.4 381.9L147.0 382.0L147.6 382.0L148.2 382.1L148.8 382.2L149.3 382.2L149.9 382.3L150.5 382.4L151.1 382.5L151.7 382.5L152.2 382.6L152.8 382.7L153.4 382.7L154.0 382.8L154.6 382.9L155.2 382.9L155.8 383.0L156.3 383.0L156.9 383.1L157.5 383.2L158.1 383.2L158.7 383.3L159.2 383.4L159.8 383.4L160.4 383.5L161.0 383.5L161.6 383.6L162.2 383.6L162.8 383.7L163.3 383.8L163.9 383.8L164.5 383.9L165.1 383.9L165.7 384.0L166.2 384.0L166.8 384.1L167.4 384.1L168.0 384.2L168.6 384.2L169.2 384.3L169.8 384.3L170.3 384.4L170.9 384.4L171.5 384.5L172.1 384.5L172.7 384.6L173.2 384.6L173.8 384.7L174.4 384.7L175.0 384.7" stroke-width="1.6"/><path d="M294 64L306 76M294 76L306 64" stroke-width="2.4"/><path d="M294 284L306 296M294 296L306 284" stroke-width="2.4"/><rect x="188" y="360" width="80" height="50" rx="6" stroke-width="1"/><path d="M193 389.0H263" stroke-width="0.6" stroke-dasharray="2 3"/><path d="M193.0 374.0L193.6 375.0L194.2 376.7L194.8 379.2L195.3 382.1L195.9 385.2L196.5 388.4L197.1 391.4L197.7 394.0L198.2 396.2L198.8 397.8L199.4 398.7L200.0 399.0L200.6 398.6L201.2 397.6L201.8 396.1L202.3 394.3L202.9 392.3L203.5 390.2L204.1 388.2L204.7 386.3L205.2 384.8L205.8 383.6L206.4 382.8L207.0 382.5L207.6 382.6L208.2 383.1L208.8 383.9L209.3 385.0L209.9 386.3L210.5 387.6L211.1 389.0L211.7 390.3L212.2 391.4L212.8 392.3L213.4 392.9L214.0 393.2L214.6 393.3L215.2 393.1L215.8 392.6L216.3 391.9L216.9 391.1L217.5 390.3L218.1 389.3L218.7 388.5L219.2 387.7L219.8 387.0L220.4 386.6L221.0 386.3L221.6 386.2L222.2 386.2L222.8 386.5L223.3 386.9L223.9 387.4L224.5 387.9L225.1 388.5L225.7 389.1L226.2 389.7L226.8 390.1L227.4 390.5L228.0 390.7L228.6 390.9L229.2 390.9L229.8 390.7L230.3 390.5L230.9 390.2L231.5 389.8L232.1 389.5L232.7 389.1L233.2 388.7L233.8 388.4L234.4 388.1L235.0 387.9L235.6 387.8L236.2 387.8L236.8 387.8L237.3 387.9L237.9 388.1L238.5 388.3L239.1 388.6L239.7 388.9L240.2 389.1L240.8 389.3L241.4 389.5L242.0 389.7L242.6 389.8L243.2 389.8L243.8 389.8L244.3 389.7L244.9 389.6L245.5 389.5L246.1 389.3L246.7 389.2L247.2 389.0L247.8 388.8L248.4 388.7L249.0 388.6L249.6 388.5L250.2 388.5L250.8 388.5L251.3 388.5L251.9 388.6L252.5 388.6L253.1 388.7L253.7 388.8L254.2 389.0L254.8 389.1L255.4 389.2L256.0 389.2L256.6 389.3L257.2 389.3L257.8 389.4L258.3 389.3L258.9 389.3L259.5 389.3L260.1 389.2L260.7 389.1L261.2 389.1L261.8 389.0L262.4 388.9L263.0 388.9" stroke-width="1.6"/><path d="M436 54L448 66M436 66L448 54" stroke-width="2.4"/><path d="M436 294L448 306M436 306L448 294" stroke-width="2.4"/><rect x="276" y="360" width="80" height="50" rx="6" stroke-width="1"/><path d="M281 389.0H351" stroke-width="0.6" stroke-dasharray="2 3"/><path d="M281.0 374.0L281.6 374.7L282.2 376.7L282.8 379.8L283.3 383.7L283.9 387.9L284.5 392.3L285.1 396.3L285.7 399.6L286.2 401.9L286.8 403.1L287.4 403.0L288.0 401.7L288.6 399.2L289.2 395.9L289.8 392.0L290.3 387.9L290.9 383.9L291.5 380.4L292.1 377.7L292.7 376.1L293.2 375.6L293.8 376.3L294.4 378.1L295.0 380.8L295.6 384.3L296.2 388.1L296.8 392.0L297.3 395.6L297.9 398.5L298.5 400.6L299.1 401.6L299.7 401.5L300.2 400.3L300.8 398.1L301.4 395.1L302.0 391.6L302.6 387.9L303.2 384.4L303.8 381.3L304.3 378.9L304.9 377.4L305.5 377.0L306.1 377.6L306.7 379.3L307.2 381.7L307.8 384.8L308.4 388.3L309.0 391.8L309.6 394.9L310.2 397.6L310.8 399.4L311.3 400.3L311.9 400.2L312.5 399.1L313.1 397.1L313.7 394.4L314.2 391.3L314.8 388.0L315.4 384.8L316.0 382.0L316.6 379.9L317.2 378.6L317.8 378.2L318.3 378.8L318.9 380.3L319.5 382.6L320.1 385.3L320.7 388.4L321.2 391.5L321.8 394.4L322.4 396.7L323.0 398.4L323.6 399.1L324.2 399.0L324.8 398.0L325.3 396.2L325.9 393.8L326.5 391.0L327.1 388.0L327.7 385.2L328.2 382.7L328.8 380.8L329.4 379.7L330.0 379.4L330.6 379.9L331.2 381.3L331.8 383.3L332.3 385.8L332.9 388.5L333.5 391.3L334.1 393.9L334.7 396.0L335.2 397.4L335.8 398.1L336.4 398.0L337.0 397.0L337.6 395.4L338.2 393.3L338.8 390.7L339.3 388.1L339.9 385.5L340.5 383.3L341.1 381.6L341.7 380.6L342.2 380.4L342.8 380.9L343.4 382.1L344.0 383.9L344.6 386.2L345.2 388.6L345.8 391.1L346.3 393.4L346.9 395.3L347.5 396.5L348.1 397.1L348.7 397.0L349.2 396.2L349.8 394.7L350.4 392.8L351.0 390.5" stroke-width="1.6"/><path d="M464 104L476 116M464 116L476 104" stroke-width="2.4"/><path d="M464 244L476 256M464 256L476 244" stroke-width="2.4"/><rect x="364" y="360" width="80" height="50" rx="6" stroke-width="1"/><path d="M369 389.0H439" stroke-width="0.6" stroke-dasharray="2 3"/><path d="M369.0 374.0L369.6 374.3L370.2 375.0L370.8 376.2L371.3 377.9L371.9 379.9L372.5 382.3L373.1 384.8L373.7 387.6L374.2 390.3L374.8 393.0L375.4 395.6L376.0 398.0L376.6 400.0L377.2 401.7L377.8 402.9L378.3 403.7L378.9 404.0L379.5 403.8L380.1 403.0L380.7 401.8L381.2 400.2L381.8 398.2L382.4 395.8L383.0 393.3L383.6 390.6L384.2 387.8L384.8 385.1L385.3 382.5L385.9 380.1L386.5 378.1L387.1 376.4L387.7 375.1L388.2 374.3L388.8 374.0L389.4 374.2L390.0 374.9L390.6 376.1L391.2 377.7L391.8 379.7L392.3 382.1L392.9 384.6L393.5 387.3L394.1 390.1L394.7 392.8L395.2 395.4L395.8 397.8L396.4 399.8L397.0 401.6L397.6 402.9L398.2 403.7L398.8 404.0L399.3 403.8L399.9 403.1L400.5 402.0L401.1 400.4L401.7 398.4L402.2 396.1L402.8 393.5L403.4 390.8L404.0 388.1L404.6 385.3L405.2 382.7L405.8 380.3L406.3 378.2L406.9 376.5L407.5 375.2L408.1 374.4L408.7 374.0L409.2 374.2L409.8 374.8L410.4 376.0L411.0 377.6L411.6 379.5L412.2 381.8L412.8 384.4L413.3 387.1L413.9 389.8L414.5 392.5L415.1 395.2L415.7 397.6L416.2 399.7L416.8 401.4L417.4 402.8L418.0 403.6L418.6 404.0L419.2 403.8L419.8 403.2L420.3 402.1L420.9 400.5L421.5 398.6L422.1 396.3L422.7 393.8L423.2 391.1L423.8 388.3L424.4 385.6L425.0 383.0L425.6 380.5L426.2 378.4L426.8 376.6L427.3 375.3L427.9 374.4L428.5 374.0L429.1 374.1L429.7 374.8L430.2 375.9L430.8 377.4L431.4 379.3L432.0 381.6L432.6 384.1L433.2 386.8L433.8 389.6L434.3 392.3L434.9 394.9L435.5 397.4L436.1 399.5L436.7 401.3L437.2 402.7L437.8 403.6L438.4 404.0L439.0 403.9" stroke-width="1.6"/><circle cx="470" cy="180" r="7" stroke-width="2.2"/><rect x="452" y="360" width="80" height="50" rx="6" stroke-width="1"/><path d="M457 389.0H527" stroke-width="0.6" stroke-dasharray="2 3"/><path d="M457.0 374.0L457.6 374.0L458.2 374.0L458.8 374.0L459.3 374.0L459.9 374.0L460.5 374.0L461.1 374.0L461.7 374.0L462.2 374.0L462.8 374.0L463.4 374.0L464.0 374.0L464.6 374.0L465.2 374.0L465.8 374.0L466.3 374.0L466.9 374.0L467.5 374.0L468.1 374.0L468.7 374.0L469.2 374.0L469.8 374.0L470.4 374.0L471.0 374.0L471.6 374.0L472.2 374.0L472.8 374.0L473.3 374.0L473.9 374.0L474.5 374.0L475.1 374.0L475.7 374.0L476.2 374.0L476.8 374.0L477.4 374.0L478.0 374.0L478.6 374.0L479.2 374.0L479.8 374.0L480.3 374.0L480.9 374.0L481.5 374.0L482.1 374.0L482.7 374.0L483.2 374.0L483.8 374.0L484.4 374.0L485.0 374.0L485.6 374.0L486.2 374.0L486.8 374.0L487.3 374.0L487.9 374.0L488.5 374.0L489.1 374.0L489.7 374.0L490.2 374.0L490.8 374.0L491.4 374.0L492.0 374.0L492.6 374.0L493.2 374.0L493.8 374.0L494.3 374.0L494.9 374.0L495.5 374.0L496.1 374.0L496.7 374.0L497.2 374.0L497.8 374.0L498.4 374.0L499.0 374.0L499.6 374.0L500.2 374.0L500.8 374.0L501.3 374.0L501.9 374.0L502.5 374.0L503.1 374.0L503.7 374.0L504.2 374.0L504.8 374.0L505.4 374.0L506.0 374.0L506.6 374.0L507.2 374.0L507.8 374.0L508.3 374.0L508.9 374.0L509.5 374.0L510.1 374.0L510.7 374.0L511.2 374.0L511.8 374.0L512.4 374.0L513.0 374.0L513.6 374.0L514.2 374.0L514.8 374.0L515.3 374.0L515.9 374.0L516.5 374.0L517.1 374.0L517.7 374.0L518.2 374.0L518.8 374.0L519.4 374.0L520.0 374.0L520.6 374.0L521.2 374.0L521.8 374.0L522.3 374.0L522.9 374.0L523.5 374.0L524.1 374.0L524.7 374.0L525.2 374.0L525.8 374.0L526.4 374.0L527.0 374.0" stroke-width="1.6"/><path d="M534 74L546 86M534 86L546 74" stroke-width="2.4"/><path d="M534 274L546 286M534 286L546 274" stroke-width="2.4"/><rect x="540" y="360" width="80" height="50" rx="6" stroke-width="1"/><path d="M545 389.0H615" stroke-width="0.6" stroke-dasharray="2 3"/><path d="M545.0 374.0L545.6 374.3L546.2 375.6L546.8 377.7L547.3 380.7L547.9 384.2L548.5 388.2L549.1 392.3L549.7 396.3L550.2 399.9L550.8 402.9L551.4 405.1L552.0 406.2L552.6 406.3L553.2 405.3L553.8 403.2L554.3 400.1L554.9 396.2L555.5 391.8L556.1 387.1L556.7 382.4L557.2 378.0L557.8 374.2L558.4 371.2L559.0 369.4L559.6 368.8L560.2 369.5L560.8 371.4L561.3 374.6L561.9 378.7L562.5 383.7L563.1 389.0L563.7 394.6L564.2 399.9L564.8 404.6L565.4 408.4L566.0 411.1L566.6 411.5L567.2 411.5L567.8 410.5L568.3 407.4L568.9 403.0L569.5 397.6L570.1 391.5L570.7 385.1L571.2 378.8L571.8 373.0L572.4 368.1L573.0 366.5L573.6 366.5L574.2 366.5L574.8 366.5L575.3 366.5L575.9 370.6L576.5 376.5L577.1 383.3L577.7 390.6L578.2 398.0L578.8 405.0L579.4 411.2L580.0 411.5L580.6 411.5L581.2 411.5L581.8 411.5L582.3 411.5L582.9 411.5L583.5 406.4L584.1 398.9L584.7 390.6L585.2 381.9L585.8 373.6L586.4 366.5L587.0 366.5L587.6 366.5L588.2 366.5L588.8 366.5L589.3 366.5L589.9 366.5L590.5 366.5L591.1 373.9L591.7 383.3L592.2 393.2L592.8 403.1L593.4 411.5L594.0 411.5L594.6 411.5L595.2 411.5L595.8 411.5L596.3 411.5L596.9 411.5L597.5 411.5L598.1 410.5L598.7 400.1L599.2 388.7L599.8 377.1L600.4 366.5L601.0 366.5L601.6 366.5L602.2 366.5L602.8 366.5L603.3 366.5L603.9 366.5L604.5 366.5L605.1 366.5L605.7 371.2L606.2 384.0L606.8 397.5L607.4 410.7L608.0 411.5L608.6 411.5L609.2 411.5L609.8 411.5L610.3 411.5L610.9 411.5L611.5 411.5L612.1 411.5L612.7 411.5L613.2 400.8L613.8 385.4L614.4 369.8L615.0 366.5" stroke-width="1.6"/><path d="M614 174L626 186M614 186L626 174" stroke-width="2.4"/><rect x="628" y="360" width="80" height="50" rx="6" stroke-width="1"/><path d="M633 389.0H703" stroke-width="0.6" stroke-dasharray="2 3"/><path d="M633.0 374.0L633.6 373.9L634.2 373.8L634.8 373.6L635.3 373.5L635.9 373.4L636.5 373.2L637.1 373.1L637.7 373.0L638.2 372.8L638.8 372.7L639.4 372.6L640.0 372.4L640.6 372.3L641.2 372.2L641.8 372.0L642.3 371.9L642.9 371.7L643.5 371.6L644.1 371.5L644.7 371.3L645.2 371.2L645.8 371.0L646.4 370.9L647.0 370.7L647.6 370.6L648.2 370.4L648.8 370.3L649.3 370.1L649.9 369.9L650.5 369.8L651.1 369.6L651.7 369.5L652.2 369.3L652.8 369.1L653.4 369.0L654.0 368.8L654.6 368.6L655.2 368.5L655.8 368.3L656.3 368.1L656.9 368.0L657.5 367.8L658.1 367.6L658.7 367.4L659.2 367.3L659.8 367.1L660.4 366.9L661.0 366.7L661.6 366.5L662.2 366.5L662.8 366.5L663.3 366.5L663.9 366.5L664.5 366.5L665.1 366.5L665.7 366.5L666.2 366.5L666.8 366.5L667.4 366.5L668.0 366.5L668.6 366.5L669.2 366.5L669.8 366.5L670.3 366.5L670.9 366.5L671.5 366.5L672.1 366.5L672.7 366.5L673.2 366.5L673.8 366.5L674.4 366.5L675.0 366.5L675.6 366.5L676.2 366.5L676.8 366.5L677.3 366.5L677.9 366.5L678.5 366.5L679.1 366.5L679.7 366.5L680.2 366.5L680.8 366.5L681.4 366.5L682.0 366.5L682.6 366.5L683.2 366.5L683.8 366.5L684.3 366.5L684.9 366.5L685.5 366.5L686.1 366.5L686.7 366.5L687.2 366.5L687.8 366.5L688.4 366.5L689.0 366.5L689.6 366.5L690.2 366.5L690.8 366.5L691.3 366.5L691.9 366.5L692.5 366.5L693.1 366.5L693.7 366.5L694.2 366.5L694.8 366.5L695.4 366.5L696.0 366.5L696.6 366.5L697.2 366.5L697.8 366.5L698.3 366.5L698.9 366.5L699.5 366.5L700.1 366.5L700.7 366.5L701.2 366.5L701.8 366.5L702.4 366.5L703.0 366.5" stroke-width="1.6"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="44.0" y="30.0">demi-plan gauche : stable</text><text x="696.0" y="52.0" text-anchor="end">demi-plan droit : instable</text><text x="696.0" y="202.0" text-anchor="end">Re(s) = σ</text><text x="460.0" y="34.0" text-anchor="end">Im(s) = ω</text><text x="316.0" y="24.0" text-anchor="end">ζ = 0,7</text><text x="416.0" y="344.0" text-anchor="end">σ = -σmin</text><text x="74.0" y="168.0" font-weight="700" text-anchor="middle">1</text><text x="304.0" y="168.0" font-weight="700" text-anchor="middle">2</text><text x="284.0" y="58.0" font-weight="700" text-anchor="middle">3</text><text x="426.0" y="48.0" font-weight="700" text-anchor="middle">4</text><text x="454.0" y="98.0" font-weight="700" text-anchor="middle">5</text><text x="456.0" y="168.0" font-weight="700" text-anchor="middle">6</text><text x="524.0" y="68.0" font-weight="700" text-anchor="middle">7</text><text x="604.0" y="168.0" font-weight="700" text-anchor="middle">8</text><text x="16.0" y="356.0" font-weight="700">1</text><text x="52.0" y="426.0" text-anchor="middle" font-size="11">réel rapide</text><text x="104.0" y="356.0" font-weight="700">2</text><text x="140.0" y="426.0" text-anchor="middle" font-size="11">réel lent</text><text x="192.0" y="356.0" font-weight="700">3</text><text x="228.0" y="426.0" text-anchor="middle" font-size="11">amorti</text><text x="280.0" y="356.0" font-weight="700">4</text><text x="316.0" y="426.0" text-anchor="middle" font-size="11">peu amorti</text><text x="368.0" y="356.0" font-weight="700">5</text><text x="404.0" y="426.0" text-anchor="middle" font-size="11">entretenu</text><text x="456.0" y="356.0" font-weight="700">6</text><text x="492.0" y="426.0" text-anchor="middle" font-size="11">intégrateur</text><text x="544.0" y="356.0" font-weight="700">7</text><text x="580.0" y="426.0" text-anchor="middle" font-size="11">croissant</text><text x="632.0" y="356.0" font-weight="700">8</text><text x="668.0" y="426.0" text-anchor="middle" font-size="11">divergent</text></g></svg>
+    <figcaption>
+      Carte du plan complexe. En abscisse la partie réelle $\sigma$, en ordonnée la partie imaginaire $\omega$ ; l'axe imaginaire, en trait épais, sépare le
+      demi-plan gauche, stable, du demi-plan droit, hachuré, instable. Les croix sont des pôles, numérotés de 1 à 8 ; les pôles complexes vont par couples
+      symétriques par rapport à l'axe réel, le numéro est porté par celui du dessus ; le cercle à l'origine est un intégrateur. Chaque vignette numérotée,
+      sous le plan, montre le mode correspondant sur la même durée : 1 et 2, pôles réels négatifs, exponentielles décroissantes, d'autant plus rapides que le
+      pôle est loin de l'axe ; 3, couple bien amorti ; 4, couple proche de l'axe, oscillation peu amortie ; 5, couple sur l'axe, oscillation entretenue ; 6,
+      intégrateur, mode constant ; 7, couple à droite, oscillation croissante ; 8, pôle réel positif, divergence exponentielle. Les deux droites en tirets
+      issues de l'origine marquent $\zeta = 0{,}7$ : un couple placé dans le secteur qu'elles délimitent à gauche, côté axe réel, est au moins aussi amorti.
+      La verticale en pointillé $\sigma = -\sigma_{\min}$ borne la lenteur : à sa gauche, chaque mode décroît au moins comme $e^{-\sigma_{\min} t}$. La zone de
+      conception d'une boucle est l'intersection de ces deux contraintes.
+    </figcaption>
+  </figure>
+
+  <p>
+    L'organigramme suivant résume le choix d'une méthode et l'enchaînement des contrôles, du modèle jusqu'au verdict.
+  </p>
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Boucle : modèle ou mesure"] --> B{"Retard ou mesure seule ?"}
+  B -->|"Non"| C["D(s) = D_L + N_L"]
+  B -->|"Oui"| N["Nyquist exact de L(jω)"]
+  C --> D{"Coefficients de même signe ?"}
+  D -->|"Non"| X["Instable"]
+  D -->|"Oui"| E["Tableau de Routh"]
+  E --> F{"1re colonne de même signe ?"}
+  F -->|"Non"| X
+  F -->|"Oui"| G["Gain et pulsation critiques"]
+  N --> H{"L stable, une coupure ?"}
+  H -->|"Oui"| I["Lire MG, MP, Mm"]
+  H -->|"Non"| J["Z = N + P"]
+  G --> K{"MG ≥ 6 dB, MP ≥ 45°, Mm ≥ 0,5 ?"}
+  I --> K
+  J --> K
+  K -->|"Oui"| M["Acceptable, à valider sur site"]
+  K -->|"Non"| R["Réduire gain ou retard"]</pre>
+    <figcaption>
+      Organigramme d'évaluation de la stabilité. Les losanges sont des décisions, les rectangles des actions ; les libellés des flèches donnent la réponse qui
+      oriente le chemin. Deux voies coexistent : la voie polynomiale, condition nécessaire puis Routh, pour une boucle rationnelle ; la voie fréquentielle,
+      Nyquist ou Bode exact, pour une boucle avec retard ou mesurée. Toutes deux aboutissent au contrôle des marges, qui sont des règles de conception.
+    </figcaption>
+  </figure>
+
+  <p>
+    Le tableau suivant relie les trois lectures d'une même boucle : position des pôles, allure temporelle et marges. Il sert à passer de l'une à l'autre en
+    diagnostic.
+  </p>
+  <div class="cadre-tableau" id="f-comparatif">
+    <table>
+      <thead><tr><th>Pôles dominants</th><th>Réponse indicielle</th><th>Nyquist de $L$</th><th>Marges typiques</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr><td>Réels négatifs ou $\zeta \ge 0{,}7$</td><td>Sans dépassement ou dépassement inférieur à $5\ \%$</td><td>Loin de $-1$</td><td>$M_\varphi \ge 60^\circ$, $M_m \ge 0{,}6$</td><td>Robuste, parfois lent</td></tr>
+        <tr><td>Couple, $\zeta$ de $0{,}4$ à $0{,}7$</td><td>Dépassement de $5$ à $25\ \%$</td><td>Passe à distance modérée de $-1$</td><td>$M_\varphi$ de $40$ à $60^\circ$</td><td>Compromis usuel</td></tr>
+        <tr><td>Couple proche de l'axe, $\zeta &lt; 0{,}2$</td><td>Oscillations longues</td><td>Frôle $-1$</td><td>$M_\varphi &lt; 20^\circ$, $M_m &lt; 0{,}3$</td><td>Stable mais inacceptable</td></tr>
+        <tr><td>Couple sur l'axe imaginaire</td><td>Oscillation entretenue</td><td>Passe par $-1$</td><td>Marges nulles</td><td>Limite de stabilité</td></tr>
+        <tr><td>Au moins un pôle à droite</td><td>Divergence jusqu'à saturation</td><td>Entoure $-1$ (si $P = 0$)</td><td>Marge négative</td><td>Instable</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <ul>
+    <li><a href="#d-plan-sim" data-renvoi="d-plan-sim">Pôles et mode temporel</a>, section D : lien entre position d'un pôle et allure du mode.</li>
+    <li><a href="#d-boucle-figure" data-renvoi="d-boucle-figure">Boucle fermée à retour soustrait</a>, section D : signes, signaux et point de coupure.</li>
+    <li><a href="#e-routh-figure" data-renvoi="e-routh-figure">Construction du tableau de Routh</a>, section E.</li>
+    <li><a href="#e-lieu-sim" data-renvoi="e-lieu-sim">Lieu des pôles de la boucle de position</a>, section E : gain critique, effet d'un filtre de mesure.</li>
+    <li><a href="#e-nyquist-figure" data-renvoi="e-nyquist-figure">Diagramme de Nyquist et lecture des trois marges</a>, section E.</li>
+    <li><a href="#e-nyquist-sim" data-renvoi="e-nyquist-sim">Nyquist de la boucle de position avec gain et retard</a>, section E.</li>
+    <li><a href="#e-methodes" data-renvoi="e-methodes">Tableau comparatif des méthodes</a>, section E.</li>
+    <li><a href="#h-reponses-fig" data-renvoi="h-reponses-fig">Réponses de la boucle de position autour du gain critique</a>, section H.</li>
+    <li><a href="#i-domaine-sim" data-renvoi="i-domaine-sim">Domaine de stabilité de la régulation de pression</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <ol>
+    <li><strong>Délimiter la boucle</strong> : dessiner le schéma bloc, repérer le retour soustrait, écrire $L = CGH$ avec tout ce que le signal traverse,
+      capteur, filtre, retard et convertisseur compris. Vérifier le signe de chaque gain.</li>
+    <li><strong>Choisir la voie</strong> : polynomiale si $L$ est rationnelle, fréquentielle s'il y a un retard dominant ou si le procédé est connu par une
+      mesure.</li>
+    <li><strong>Voie polynomiale</strong> : écrire $D(s) = D_L(s) + N_L(s)$, réduire au même dénominateur, développer en puissances décroissantes de $s$ et
+      rendre $a_n$ positif.</li>
+    <li><strong>Condition nécessaire</strong> : un coefficient nul ou de signe opposé conclut à l'instabilité ; pour un paramètre littéral, elle donne déjà des
+      bornes.</li>
+    <li><strong>Tableau de Routh</strong> : le construire, traiter les cas particuliers, écrire les conditions de signe de la première colonne et les résoudre en
+      fonction du paramètre.</li>
+    <li><strong>Gain critique</strong> : annuler l'élément qui change de signe, former le polynôme auxiliaire et en tirer la pulsation d'oscillation.</li>
+    <li><strong>Voie fréquentielle</strong> : vérifier les hypothèses du critère du revers ; sinon, compter les tours autour de $-1$ et appliquer $Z = N + P$.
+      Calculer $\omega_c$, $M_\varphi$, $\omega_{180}$, $M_G$ et $M_m$.</li>
+    <li><strong>Recouper</strong> : le gain critique de Routh doit valoir $K\,M_G$ ; la pulsation de la ligne nulle doit valoir $\omega_{180}$ ; les pôles
+      calculés doivent être cohérents avec le dépassement observé.</li>
+    <li><strong>Conclure avec marge</strong> : comparer aux règles de conception, recenser les paramètres incertains et leur effet, et prévoir une vérification
+      sur site.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Boucle de position de l'actionneur de la vanne de refoulement, déjà étudiée en fréquentiel dans le cours <a href="#/cours/diagrammes-de-bode">Diagrammes de
+    Bode</a>. Correcteur proportionnel, $K_v = K_\theta G_0$ ; procédé $\theta/U = G_0/\bigl(s(1 + \tau_1 s)(1 + \tau_2 s)\bigr)$ avec
+    $\tau_1 = 3{,}797\ \mathrm{ms}$ et $\tau_2 = 1{,}066\ \mathrm{ms}$, paramètres de l'actionneur supposés dans le cours
+    <a href="#/cours/modelisation-des-systemes-dynamiques">Modélisation des systèmes dynamiques</a>. Réglage actuel : $K_v = 100\ \mathrm{s^{-1}}$. On envisage
+    de rendre le correcteur numérique, ce qui introduirait un retard équivalent $T = 2\ \mathrm{ms}$.
+  </p>
+  <p>
+    <strong>Inconnues :</strong> l'intervalle de $K_v$ stable sans retard, le gain critique et la pulsation d'oscillation ; la première colonne de Routh au réglage
+    actuel ; le gain critique avec $2\ \mathrm{ms}$ de retard, par Padé puis exactement ; la marge de gain dans chaque cas. <strong>Stratégie :</strong> Routh
+    littéral sur le polynôme du troisième degré, puis sur le polynôme du quatrième degré obtenu avec Padé ; contrôle par la phase exacte et par les pôles.
+  </p>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li><strong>Polynôme caractéristique sans retard.</strong> $1 + L = 0 \iff s(1 + \tau_1 s)(1 + \tau_2 s) + K_v = 0$, soit
+      $D(s) = \tau_1\tau_2 s^3 + (\tau_1 + \tau_2)s^2 + s + K_v$ avec $\tau_1\tau_2 = 4{,}046 \times 10^{-6}\ \mathrm{s^2}$ et
+      $\tau_1 + \tau_2 = 4{,}862 \times 10^{-3}\ \mathrm{s}$. Unités : $L$ est sans dimension, donc chaque terme de $D$ est homogène à $K_v$, en
+      $\mathrm{s^{-1}}$ ; par exemple $\tau_1\tau_2 s^3$ est en $\mathrm{s^2} \cdot \mathrm{s^{-3}}$.</li>
+    <li><strong>Condition nécessaire.</strong> Tous les coefficients sont positifs si $K_v &gt; 0$ : elle ne suffit pas à conclure au troisième degré.</li>
+    <li><strong>Tableau de Routh littéral.</strong> Lignes $s^3$ : $\tau_1\tau_2$, $1$ ; $s^2$ : $\tau_1 + \tau_2$, $K_v$ ; $s^1$ :
+      $b_1 = \dfrac{(\tau_1 + \tau_2) \cdot 1 - \tau_1\tau_2 K_v}{\tau_1 + \tau_2} = 1 - \dfrac{\tau_1\tau_2}{\tau_1 + \tau_2}K_v$ ; $s^0$ : $K_v$.</li>
+    <li><strong>Intervalle stable.</strong> $K_v &gt; 0$ et $b_1 &gt; 0$, soit $0 &lt; K_v &lt; \dfrac{\tau_1 + \tau_2}{\tau_1\tau_2} = \dfrac{4{,}862 \times 10^{-3}}{4{,}046 \times 10^{-6}} = 1201{,}8\ \mathrm{s^{-1}}$.</li>
+    <li><strong>Pulsation critique.</strong> À $K_v = 1201{,}8$, la ligne $s^1$ est nulle ; polynôme auxiliaire $A(s) = (\tau_1 + \tau_2)s^2 + K_v$, d'où
+      $\omega^2 = K_v/(\tau_1 + \tau_2) = 1/(\tau_1\tau_2)$ et $\omega = 1/\sqrt{4{,}046 \times 10^{-6}} = 497{,}2\ \mathrm{rad/s}$, soit $79{,}1\ \mathrm{Hz}$.</li>
+    <li><strong>Réglage actuel.</strong> À $K_v = 100$ : première colonne $4{,}046 \times 10^{-6}$ ; $4{,}862 \times 10^{-3}$ ;
+      $b_1 = 1 - 8{,}321 \times 10^{-4} \times 100 = 0{,}9168$ ; $100$. Aucun changement de signe : stable. Marge de gain $1201{,}8/100 = 12{,}0$, soit
+      $20\log_{10}12{,}02 = 21{,}6\ \mathrm{dB}$.</li>
+    <li><strong>Avec retard, polynôme de Padé.</strong> Avec $h = T/2 = 1\ \mathrm{ms}$, $s(1 + \tau_1 s)(1 + \tau_2 s)(1 + hs) + K_v(1 - hs) = 0$ donne
+      $a_4 = \tau_1\tau_2 h = 4{,}046 \times 10^{-9}$, $a_3 = \tau_1\tau_2 + (\tau_1 + \tau_2)h = 8{,}908 \times 10^{-6}$,
+      $a_2 = \tau_1 + \tau_2 + h = 5{,}862 \times 10^{-3}$, $a_1 = 1 - K_v h$, $a_0 = K_v$.</li>
+    <li><strong>Routh du quatrième degré.</strong> $b_1 = a_2 - a_4 a_1/a_3$, $b_2 = a_0$, $c_1 = a_1 - a_3 a_0/b_1$. Conditions : $a_1 &gt; 0$, soit
+      $K_v &lt; 1/h = 1000$ ; $b_1 &gt; 0$, toujours vrai ici ; $c_1 &gt; 0$, soit $b_1(1 - K_v h) &gt; a_3 K_v$. À $K_v = 100$ : $a_1 = 0{,}9$,
+      $b_1 = 5{,}862 \times 10^{-3} - 4{,}046 \times 10^{-9} \times 0{,}9/8{,}908 \times 10^{-6} = 5{,}454 \times 10^{-3}$,
+      $c_1 = 0{,}9 - 8{,}908 \times 10^{-6} \times 100/5{,}454 \times 10^{-3} = 0{,}737$ : stable. La résolution de $c_1 = 0$ donne
+      $K_{v,\text{crit}} = 385{,}3\ \mathrm{s^{-1}}$, et $A(s) = b_1 s^2 + K_v$ avec $b_1 = 5{,}583 \times 10^{-3}$ donne $\omega = 262{,}7\ \mathrm{rad/s}$.</li>
+    <li><strong>Contrôle exact.</strong> La phase exacte $-90^\circ - \arctan(\omega\tau_1) - \arctan(\omega\tau_2) - \omega T$ atteint $-180^\circ$ en
+      $\omega_{180} = 260{,}3\ \mathrm{rad/s}$, où $K_v$ critique $= \omega\sqrt{1 + (\omega\tau_1)^2}\sqrt{1 + (\omega\tau_2)^2} = 379{,}8\ \mathrm{s^{-1}}$.
+      Écart de Padé : $+1{,}4\ \%$. Marge de gain à $K_v = 100$ : $20\log_{10}3{,}798 = 11{,}6\ \mathrm{dB}$, contre $21{,}6\ \mathrm{dB}$ sans retard.</li>
+  </ol>
+  <div class="cadre-tableau" id="h-routh">
+    <table>
+      <thead><tr><th>Ligne</th><th>Sans retard, $K_v = 100$</th><th>Sans retard, $K_v = 1400$</th><th>Padé $2\ \mathrm{ms}$, $K_v = 100$</th></tr></thead>
+      <tbody>
+        <tr><td>$s^4$</td><td>sans objet</td><td>sans objet</td><td>$4{,}046 \times 10^{-9}$</td></tr>
+        <tr><td>$s^3$</td><td>$4{,}046 \times 10^{-6}$</td><td>$4{,}046 \times 10^{-6}$</td><td>$8{,}908 \times 10^{-6}$</td></tr>
+        <tr><td>$s^2$</td><td>$4{,}862 \times 10^{-3}$</td><td>$4{,}862 \times 10^{-3}$</td><td>$5{,}454 \times 10^{-3}$</td></tr>
+        <tr><td>$s^1$</td><td>$0{,}9168$</td><td>$-0{,}1649$</td><td>$0{,}7367$</td></tr>
+        <tr><td>$s^0$</td><td>$100$</td><td>$1400$</td><td>$100$</td></tr>
+        <tr><td>Changements de signe</td><td>$0$ : stable</td><td>$2$ : deux pôles instables</td><td>$0$ : stable</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Le tracé suivant compare les réponses à un échelon de consigne de $1\ \mathrm{rad}$ pour quatre gains, sans retard : il rend visible la progression du
+    tableau de Routh, d'une réponse bien amortie à la divergence.
+  </p>
+  <figure id="h-reponses-fig">
+    <div id="h-reponses"></div>
+    <figcaption>
+      Position $\theta(t)$ de la boucle de position, sans retard, après un échelon de $1\ \mathrm{rad}$, pour $K_v = 100$, $600$, $1201{,}8$ et
+      $1400\ \mathrm{s^{-1}}$, chaque courbe étant nommée dans la légende ; temps en millisecondes, position en radians. La droite en tirets est la consigne.
+      À $100$, réponse rapide et peu dépassante ; à $600$, oscillations longues ; à $1201{,}8$, oscillation entretenue à $79{,}1\ \mathrm{Hz}$, période
+      $12{,}6\ \mathrm{ms}$ ; à $1400$, enveloppe croissante, courbe interrompue en sortant du cadre.
+    </figcaption>
+  </figure>
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li><strong>Recoupement fréquentiel.</strong> Le gain critique de Routh, $1201{,}8\ \mathrm{s^{-1}}$, vaut $100 \times 10^{21{,}6/20}$ : il correspond à la
+      marge de gain lue sur le Bode du cours précédent, et la pulsation critique $497{,}2\ \mathrm{rad/s}$ est la pulsation $\omega_{180}$ de ce Bode.</li>
+    <li><strong>Pôles.</strong> À $K_v = 100$, la somme des pôles $-974{,}1 - 2 \times 113{,}8 = -1201{,}8$ vaut $-a_2/a_3 = -1201{,}8$ ; au gain critique, le pôle
+      réel vaut $-1201{,}8$ et le couple est $\pm 497{,}2j$ : même somme, comme il se doit puisque $a_2/a_3$ ne dépend pas de $K_v$.</li>
+    <li><strong>Ordre de grandeur.</strong> La pulsation critique est la moyenne géométrique des deux cassures, $\sqrt{263{,}4 \times 938{,}4} = 497{,}2$ : sans
+      retard, l'oscillation ne peut naître qu'au-delà des deux constantes de temps, là où leur phase cumulée atteint $90^\circ$.</li>
+    <li><strong>Effet du retard.</strong> Un retard de $2\ \mathrm{ms}$ divise le gain critique par $3{,}16$ ; il est pourtant deux fois plus petit que $\tau_1$.
+      La raison est que la marge se joue vers $260\ \mathrm{rad/s}$, où $\omega T$ retire déjà $29{,}8^\circ$.</li>
+  </ul>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <h3 id="i-contexte">Domaine de stabilité de la régulation de pression du site</h3>
+  <p>
+    La pompe du projet fil rouge est pilotée par un variateur dont la consigne de fréquence vient d'un régulateur PI de l'automate, qui maintient la pression
+    de refoulement. Avant d'écrire le moindre réglage, on veut savoir dans quel domaine de paramètres la boucle est stable, quelle marge présente le réglage de
+    départ, et quelles erreurs de paramétrage la rendraient instable. Le réseau hydraulique n'est pas encore modélisé finement ; on retient un modèle supposé, à
+    remplacer par une identification sur site.
+  </p>
+  <ul>
+    <li><strong>Procédé</strong> autour du point de service : pression $p$ en $\mathrm{bar}$ en réponse à la consigne de fréquence $f$ en $\mathrm{Hz}$,
+      $G(s) = K_g/(1 + \tau_h s)$, $K_g = 0{,}15\ \mathrm{bar/Hz}$ et $\tau_h = 1{,}2\ \mathrm{s}$ supposés, la dynamique du groupe de pompage, $6{,}6\ \mathrm{ms}$,
+      étant négligée.</li>
+    <li><strong>Capteur</strong> de pression : $H(s) = 1/(1 + \tau_c s)$ avec $\tau_c = 0{,}13\ \mathrm{s}$, limite fixée dans le cours
+      <a href="#/cours/reponse-temporelle-et-performances">Réponse temporelle et performances</a>.</li>
+    <li><strong>Retard</strong> de l'automate et de la transmission vers le variateur : $T = 50\ \mathrm{ms}$ supposé.</li>
+    <li><strong>Correcteur</strong> PI : $C(s) = K_c(1 + 1/(T_i s))$ ; on note $K = K_c K_g$, gain de boucle sans dimension. Réglage de départ : $T_i = \tau_h = 1{,}2\ \mathrm{s}$
+      et $K = 0{,}564$, soit $K_c = 3{,}76\ \mathrm{Hz/bar}$, qui place la coupure vers la pulsation $0{,}47\ \mathrm{rad/s}$ visée dans le cours
+      <a href="#/cours/diagrammes-de-bode">Diagrammes de Bode</a>.</li>
+  </ul>
+  <div class="formule-cle">$$L(s) = K\,\frac{1 + T_i s}{T_i s}\cdot\frac{e^{-sT}}{(1 + \tau_h s)(1 + \tau_c s)}$$</div>
+  <p class="formule-cle-legende">
+    $K$ sans dimension, $T_i$, $\tau_h$, $\tau_c$ et $T$ en secondes. L'intégrateur du PI garantit une erreur statique nulle ; c'est aussi lui qui retire
+    $90^\circ$ de phase aux basses pulsations.
+  </p>
+  <p>
+    <strong>Une première conclusion trompeuse.</strong> Sans le retard, $D(s) = T_i\tau_h\tau_c s^3 + T_i(\tau_h + \tau_c)s^2 + T_i(1 + K)s + K$ et Routh donne la
+    condition $T_i &gt; \tau_h\tau_c K/\bigl((\tau_h + \tau_c)(1 + K)\bigr)$ : la boucle serait stable pour tout gain dès que $T_i &gt; 0{,}117\ \mathrm{s}$. Ce
+    résultat est faux en pratique, parce que le modèle a oublié la seule cause d'instabilité à haut gain : le retard. Avec $T = 50\ \mathrm{ms}$, la phase
+    décroît sans limite et toute boucle devient instable au-delà d'un gain fini.
+  </p>
+  <p>
+    <strong>Réglage de départ.</strong> Calcul exact sur la réponse harmonique : $\omega_c = 0{,}469\ \mathrm{rad/s}$, $M_\varphi = 85{,}2^\circ$,
+    $\omega_{180} = 11{,}66\ \mathrm{rad/s}$, $M_G = 33{,}1\ \mathrm{dB}$, soit un gain critique $K = 25{,}4$ ($K_c = 169\ \mathrm{Hz/bar}$), et $M_m = 0{,}936$.
+    Routh sur le polynôme de Padé donne $K_{\text{crit}} = 26{,}1$ : écart de $2{,}7\ \%$, parce qu'à $\omega_{180}$, $\omega T = 0{,}58\ \mathrm{rad}$. Les pôles
+    de Padé à $K = 0{,}564$ sont tous réels : $-40{,}2$, $-6{,}95$, $-0{,}833$ et $-0{,}517\ \mathrm{s^{-1}}$ ; la réponse à un échelon est sans dépassement et
+    s'établit à $5\ \%$ en $5{,}9\ \mathrm{s}$. Le pôle en $-0{,}833 = -1/\tau_h$ est celui que le zéro du PI a compensé : invisible depuis la consigne, il reste
+    présent dans la réponse à une perturbation de débit.
+  </p>
+  <p>
+    <strong>Action intégrale trop forte.</strong> À gain fixé $K = 0{,}564$, réduire $T_i$ renforce l'intégrale, qui retarde la phase sur une plage plus large :
+    à $T_i = 0{,}15\ \mathrm{s}$, $M_\varphi = 23{,}4^\circ$, $M_G = 17{,}0\ \mathrm{dB}$ et le dépassement atteint $53\ \%$ ; la limite exacte est
+    $T_i = 0{,}061\ \mathrm{s}$, avec une oscillation à $2{,}65\ \mathrm{rad/s}$, période $2{,}37\ \mathrm{s}$.
+  </p>
+  <p>
+    La simulation suivante représente tout le domaine. Le point déplaçable fixe le couple $(K, T_i)$ ; la zone hachurée est le domaine instable calculé
+    exactement sur la réponse harmonique, la courbe en tirets est la frontière donnée par Routh sur le polynôme de Padé. La réponse de la pression vraie à un
+    échelon de consigne, retard exact compris, est recalculée à chaque déplacement.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      À $T_i = 1{,}2\ \mathrm{s}$, par quel facteur environ peut-on multiplier le gain de départ avant l'instabilité ? Où la frontière de Routh-Padé
+      s'écarte-t-elle le plus de la frontière exacte, côté gains faibles ou côté gains forts ? Pourquoi la frontière remonte-t-elle vers les grands $T_i$ quand
+      le gain augmente ?
+    </p>
+  </div>
+  <figure id="i-domaine-sim">
+    <div class="schema-vivant" id="i-domaine-vivant"></div>
+    <div id="i-domaine-valeurs"></div>
+    <div id="i-domaine-trace"></div>
+    <figcaption>
+      Domaine de stabilité de la régulation de pression. En abscisse le gain de boucle $K = K_c K_g$, en ordonnée le temps d'intégrale $T_i$ en secondes, tous
+      deux en échelle logarithmique. La zone hachurée, à droite de la frontière en trait plein, est le domaine instable exact ; la courbe en tirets est la
+      frontière de Routh sur le polynôme de Padé ; le petit cercle repère le réglage de départ, $K = 0{,}564$ et $T_i = 1{,}2\ \mathrm{s}$. La poignée ronde est
+      le réglage courant, déplaçable à la souris ou au clavier. En bas, la pression vraie rapportée à la consigne après un échelon, sur vingt secondes, avec la
+      consigne en tirets et la bande de $\pm 5\ \%$ en pointillé ; une réponse instable est interrompue en sortant du cadre.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> À $T_i = 1{,}2\ \mathrm{s}$, la frontière exacte est à $K = 25{,}4$ : le gain de départ peut être multiplié par $45$ avant
+    l'instabilité, ce qui confirme qu'il est prudent, et lent. La frontière de Routh-Padé est légèrement optimiste partout et s'écarte surtout côté gains forts,
+    là où $\omega_{180}$ est élevée et où Padé déphase moins que le vrai retard. Pour les petits $T_i$, l'intégrale domine, la phase est déjà proche de
+    $-180^\circ$ aux basses pulsations et le gain critique s'effondre : c'est la région où une erreur d'unité sur $T_i$ fait basculer la boucle.
+  </p>
+  <h3 id="i-compromis">Risques, choix d'ingénierie et compromis</h3>
+  <ul>
+    <li><strong>Modèle sans retard.</strong> Un Routh appliqué à un modèle qui omet le retard conclut à une stabilité illimitée. Règle : inclure le cycle de
+      l'automate, la transmission et le filtrage avant tout calcul de domaine.</li>
+    <li><strong>Unité du temps d'intégrale.</strong> Selon les régulateurs, $T_i$ s'exprime en secondes, en minutes, ou l'action intégrale en répétitions par
+      minute. Saisir $0{,}05$ en pensant à des minutes, soit $3\ \mathrm{s}$, dans un appareil qui attend des secondes, place la boucle sous la limite de
+      $0{,}061\ \mathrm{s}$ : instable. Règle : vérifier l'unité dans la documentation du constructeur et borner le paramètre dans l'automate.</li>
+    <li><strong>Compensation pôle-zéro.</strong> Choisir $T_i = \tau_h$ simplifie la boucle ouverte mais laisse le pôle $-1/\tau_h$ dans la réponse aux
+      perturbations. Si $\tau_h$ varie avec le point de fonctionnement, la compensation n'est plus exacte ; la marge de module, ici $0{,}936$, couvre largement
+      cette dérive.</li>
+    <li><strong>Essai au gain critique.</strong> Pousser le gain jusqu'à l'oscillation entretenue pour mesurer $K_{\text{crit}}$ et la période est une méthode
+      classique, mais elle fait pomper la pression et solliciter la conduite. Sur une installation réelle, on lui préfère un essai à relais, à amplitude
+      limitée, ou un relevé indiciel de faible amplitude, réalisé par une personne habilitée avec les sécurités actives.</li>
+    <li><strong>Non-linéarités.</strong> La rampe du variateur, $0{,}4\ \mathrm{s}$ pour $2\ \mathrm{Hz}$, et la butée de fréquence ne figurent pas dans le modèle :
+      la stabilité calculée vaut pour de petites variations. Une saturation combinée à l'intégrale peut créer un cycle limite, que l'on traitera avec
+      l'anti-emballement de l'intégrale dans le cours Correcteurs P, PI, PD et PID.</li>
+  </ul>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Ajout au projet fil rouge</span>
+    <p>
+      Fiche de stabilité des boucles du site : boucle de position de l'actionneur stable pour $K_v &lt; 1201{,}8\ \mathrm{s^{-1}}$ (oscillation à
+      $79{,}1\ \mathrm{Hz}$), gain critique ramené à $607{,}1\ \mathrm{s^{-1}}$ par un filtre de mesure de $1\ \mathrm{ms}$ et à $379{,}8\ \mathrm{s^{-1}}$ par un
+      retard de $2\ \mathrm{ms}$ ($385{,}3$ par Padé) ; régulation de pression au réglage de départ $K_c = 3{,}76\ \mathrm{Hz/bar}$, $T_i = 1{,}2\ \mathrm{s}$ :
+      marges $33{,}1\ \mathrm{dB}$, $85{,}2^\circ$ et $0{,}936$, limite $T_i = 0{,}061\ \mathrm{s}$ à ce gain ; règles retenues : $M_G \ge 6\ \mathrm{dB}$,
+      $M_\varphi \ge 45^\circ$, $M_m \ge 0{,}5$, unité de $T_i$ vérifiée et paramètre borné dans l'automate. Modèle hydraulique, capteur et retard supposés, à
+      remplacer par une identification sur site.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Conclure à la stabilité parce que tous les coefficients sont positifs.</strong> La condition n'est suffisante qu'aux degrés $1$ et $2$ ;
+      $s^3 + s^2 + 2s + 8$ est instable. Correction : construire le tableau de Routh dès le troisième degré.</li>
+    <li><strong>Étudier les pôles de la boucle ouverte au lieu de ceux de la boucle fermée.</strong> Une boucle ouverte stable peut donner une boucle fermée
+      instable, et inversement. Correction : écrire $1 + L = 0$, ou $D_L + N_L = 0$, avant de chercher des racines.</li>
+    <li><strong>Simplifier un pôle instable par un zéro.</strong> La fonction de transfert consigne vers sortie paraît stable, mais le mode instable reste excité
+      par les perturbations et par les conditions initiales. Correction : ne jamais compenser un pôle à partie réelle positive ou nulle.</li>
+    <li><strong>Appliquer Routh à une boucle avec retard sans approximation, ou l'oublier.</strong> $e^{-sT}$ n'est pas un polynôme ; l'ignorer surestime le
+      gain critique, parfois à l'infini. Correction : Padé pour un ordre de grandeur, réponse harmonique exacte pour la valeur.</li>
+    <li><strong>Lire les marges sur une boucle ouverte instable.</strong> Le critère du revers suppose $P = 0$ ; avec $P \ne 0$, il faut un gain suffisant et
+      des tours autour de $-1$. Correction : compter $P$ avant toute lecture et appliquer $Z = N + P$.</li>
+    <li><strong>Confondre stabilité marginale et stabilité.</strong> Un couple de pôles sur l'axe imaginaire donne une oscillation entretenue ; un intégrateur
+      seul en boucle ouverte, sans retour, dérive. Correction : exiger des pôles strictement dans le demi-plan gauche, avec une marge.</li>
+    <li><strong>Prendre une oscillation de saturation pour une instabilité linéaire.</strong> Un cycle limite dû à une butée, à un jeu mécanique ou à un
+      frottement sec a une amplitude fixée par la non-linéarité et persiste à gain faible. Correction : vérifier si la période varie avec le gain et si
+      l'amplitude dépend de la consigne.</li>
+    <li><strong>Oublier le signe d'un retour ou d'un gain.</strong> Un capteur câblé à l'envers transforme la contre-réaction en réaction positive : le système
+      diverge sans osciller. Correction : vérifier le sens d'action, direct ou inverse, avant de régler un gain.</li>
+  </ol>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic industriel et une question
+    conceptuelle sans calcul. Les solutions sont présentes dans la page mais restent masquées jusqu'à votre tentative ou à un clic explicite ; chaque
+    correction se révèle étape par étape, avec un tableau de Routh annoté, une carte des pôles ou une réponse temporelle tracée.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangées : choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Le score est calculé dans ce navigateur
+    et repris par la grille d'auto-évaluation.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+  <h3 id="m-formules">Cinq formules essentielles</h3>
+  <div class="formule-cle">$$h(t) = \sum_k r_k e^{p_k t} ; \qquad \text{stable} \iff \operatorname{Re}(p_k) &lt; 0 \ \ \forall k$$</div>
+  <div class="formule-cle">$$1 + L(s) = 0 \iff D_L(s) + N_L(s) = 0$$</div>
+  <div class="formule-cle">$$a_3 s^3 + a_2 s^2 + a_1 s + a_0 \ \text{stable} \iff a_i &gt; 0 \ \text{et} \ a_2 a_1 &gt; a_3 a_0 ; \qquad \omega_{\text{crit}} = \sqrt{a_0/a_2} = \sqrt{a_1/a_3}$$</div>
+  <div class="formule-cle">$$Z = N + P ; \qquad M_m = \min_\omega |1 + L(j\omega)| = \frac{1}{\max_\omega |S(j\omega)|}$$</div>
+  <div class="formule-cle">$$e^{-sT} \approx \frac{1 - sT/2}{1 + sT/2} ; \qquad M_G \ge \frac{1}{1 - M_m}, \ \ M_\varphi \ge 2\arcsin\frac{M_m}{2}$$</div>
+  <h3 id="m-vigilance">Cinq points de vigilance</h3>
+  <ul>
+    <li>Toujours travailler sur les pôles de la boucle fermée, racines de $1 + L = 0$, jamais sur ceux de la boucle ouverte.</li>
+    <li>Coefficients positifs : nécessaire, suffisant seulement jusqu'au degré $2$.</li>
+    <li>Un retard rend toute boucle instable à gain suffisant ; un modèle qui l'oublie est optimiste.</li>
+    <li>Le critère des marges suppose une boucle ouverte stable ; sinon, compter les tours autour de $-1$.</li>
+    <li>Vérifier l'unité et le signe des paramètres d'un régulateur avant de conclure sur un réglage.</li>
+  </ul>
+  <h3 id="m-resume">Résumé</h3>
+  <p>
+    Un système linéaire est stable si tous ses pôles ont une partie réelle négative : chaque pôle est un mode $e^{pt}$ dont la partie réelle fixe l'enveloppe.
+    Pour une boucle, ces pôles sont les racines de $1 + L(s) = 0$ et se déplacent avec le gain. Le critère de Routh-Hurwitz compte les pôles instables sur les
+    coefficients du polynôme caractéristique, et donne gain et pulsation critiques par la ligne nulle. Le critère de Nyquist travaille sur $L(j\omega)$, retards
+    compris : $Z = N + P$, et pour une boucle ouverte stable, il suffit de laisser $-1$ à gauche. Les marges de gain, de phase et de module chiffrent la
+    distance au point critique, donc la robustesse. Un retard, même court, abaisse fortement le gain critique.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance, deux sur le cours précédent, <a href="#/cours/diagrammes-de-bode">Diagrammes de Bode</a>, dont les marges se
+    retrouvent sur le Nyquist, une sur le cours <a href="#/cours/compatibilite-electromagnetique">Compatibilité électromagnétique</a>, vieux d'une semaine, et
+    une sur le cours <a href="#/cours/transformateur-ideal">Transformateur idéal</a>, vieux d'un mois.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : vérifier par le calcul et par la simulation le gain critique de la boucle de position, puis l'effet d'un retard. Prédictions à écrire avant de
+    commencer : période de l'oscillation au gain critique ; effet d'un gain légèrement supérieur ; écart attendu entre Padé et retard exact.
+  </p>
+  <ol>
+    <li><strong>Python, Routh à la main.</strong> Écrire une fonction <code>routh(coefs)</code> qui construit le tableau, remplace un zéro isolé par
+      <code>1e-9</code> et renvoie la première colonne et le nombre de changements de signe. La tester sur $s^3 + s^2 + 2s + 8$, $(s + 1)^3$,
+      $(s^2 + 2)(s^2 + s + 1)$, puis comparer avec <code>numpy.roots</code>.</li>
+    <li><strong>Python, balayage de gain.</strong> Pour $K_v$ de $10$ à $2000\ \mathrm{s^{-1}}$, calculer les pôles de $\tau_1\tau_2 s^3 + (\tau_1 + \tau_2)s^2 + s + K_v$
+      et tracer leur trajet dans le plan complexe ; repérer le passage sur l'axe imaginaire. Recommencer avec un filtre de $1\ \mathrm{ms}$.</li>
+    <li><strong>LTspice, oscillation au gain critique.</strong> Représenter la boucle par des sources comportementales : <code>B1 u 0 V=Kv/14.16*(1-V(th))</code>
+      avec <code>.param Kv=1201.8</code>, le moteur par l'analogie électrique du cours <a href="#/cours/modelisation-des-systemes-dynamiques">Modélisation
+      des systèmes dynamiques</a>, et la position par l'intégration de la vitesse, <code>G1 0 th w 0 1</code> et <code>C2 th 0 1</code>. Lancer
+      <code>.tran 0 100m 0 10u</code> avec <code>.step param Kv list 600 1201.8 1300</code>.</li>
+    <li><strong>LTspice, retard.</strong> Insérer une ligne à retard <code>T1</code> ou une source <code>B</code> avec <code>delay(V(th),2m)</code> sur la mesure et
+      rechercher le gain d'oscillation entretenue par pas successifs.</li>
+  </ol>
+  <p>
+    Résultats attendus : premières colonnes $[1, 1, -6, 8]$ pour $s^3 + s^2 + 2s + 8$, deux changements de signe ; ligne nulle et polynôme auxiliaire
+    $s^2 + 2$ pour le troisième polynôme. Sans retard, oscillation entretenue à $K_v = 1201{,}8\ \mathrm{s^{-1}}$, période $12{,}6\ \mathrm{ms}$ ; à $600$,
+    oscillations amorties, $\zeta \approx 0{,}14$ ; à $1300$, croissance lente. Avec un filtre de $1\ \mathrm{ms}$, gain critique $607\ \mathrm{s^{-1}}$ et
+    oscillation à $335\ \mathrm{rad/s}$, $18{,}8\ \mathrm{ms}$ de période. Avec $2\ \mathrm{ms}$ de retard exact, oscillation entretenue vers
+    $380\ \mathrm{s^{-1}}$ et $260\ \mathrm{rad/s}$, période $24{,}1\ \mathrm{ms}$.
+  </p>
+  <p>
+    Anomalies à observer et à expliquer : une oscillation qui croît légèrement au gain critique calculé, effet du pas de calcul du simulateur, qui ajoute un
+    petit retard numérique, à réduire en imposant un pas maximal ; une oscillation qui plafonne au lieu de croître, signe qu'une source comportementale sature
+    ou qu'une limitation a été ajoutée ; un tableau de Routh qui annonce un changement de signe là où <code>numpy.roots</code> trouve une racine de partie réelle
+    $10^{-12}$, simple arrondi au voisinage de la limite. Toute mesure du gain critique sur l'installation réelle se fait à amplitude limitée, sous la
+    responsabilité d'une personne habilitée et avec les sécurités actives.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours, notées de 0 à 4. Le bilan affiché sous la grille est calculé dans ce navigateur à
+    partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement. Aucune estimation n'est faite à votre place :
+    seul le score réellement obtenu sert de référence.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Lire votre bilan</span>
+    <p>
+      Les exercices fondamentaux testent la condition nécessaire et le tableau de Routh ; l'exercice intermédiaire 1 le cas de la ligne nulle ; l'exercice
+      intermédiaire 2 la boucle ouverte instable ; l'exercice avancé un Routh du quatrième degré appliqué au projet ; la question de diagnostic
+      l'interprétation d'une instabilité sur site. Un bloc réussi à moins de la moitié indique la notion à reprendre avant le cours Correcteurs P, PI, PD et PID.
+    </p>
+  </div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Un système linéaire est stable si et seulement si tous ses pôles ont une partie réelle négative ; pour une boucle, ce sont les racines de $1 + L(s) = 0$, qui se déplacent avec le gain.</li>
+    <li data-rang="02">Le critère de Routh-Hurwitz décide de la stabilité sur les coefficients et donne le gain et la pulsation critiques ; le critère de Nyquist fait de même sur la réponse harmonique, retards compris, et ses marges mesurent la distance au point $-1$.</li>
+    <li data-rang="03">Gain et retard sont les deux causes de l'instabilité d'une boucle : un modèle qui oublie un retard ou une erreur d'unité sur un paramètre peut transformer une boucle sûre en boucle instable.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> la construction du tableau de Routh avec un paramètre littéral, où l'on mélange les signes des déterminants
+    croisés, et le choix entre Routh et Nyquist quand un retard est présent. Le réflexe à installer : écrire d'abord $D(s)$ proprement, vérifier la condition
+    nécessaire, puis recouper le gain critique avec la marge de gain.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Correcteurs P, PI, PD et PID, choisira et réglera les correcteurs. Question à préparer : la
+    régulation de pression réglée à $K = 0{,}564$ et $T_i = 1{,}2\ \mathrm{s}$ est stable avec $33{,}1\ \mathrm{dB}$ de marge de gain, mais elle met
+    $5{,}9\ \mathrm{s}$ à s'établir, au-delà des $4\ \mathrm{s}$ du cahier des performances. Que faut-il modifier, $K_c$, $T_i$, ou ajouter une action dérivée,
+    pour gagner en rapidité sans dépasser $10\ \%$ de dépassement ni sortir du domaine de stabilité, et quel risque nouveau apparaît quand la commande du
+    variateur sature ?
+  </p>
+</article>
