@@ -1,0 +1,868 @@
+<article class="cours" data-slug="correcteurs-p-pi-pd-et-pid">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/criteres-de-stabilite">Critères de stabilité</a> s'est achevé sur une question : la régulation de pression réglée à
+      $K = K_cK_g = 0{,}564$ et $T_i = 1{,}2\ \mathrm{s}$ est stable avec $33{,}1\ \mathrm{dB}$ de marge de gain, mais elle met $5{,}9\ \mathrm{s}$ à s'établir,
+      au-delà des $4\ \mathrm{s}$ du cahier des performances ; que modifier, et quel risque apparaît quand la commande du variateur sature ? Réponse courte.
+      Comme $T_i = \tau_h$ compense le pôle hydraulique, la boucle se comporte presque comme un premier ordre de constante de temps $T_i/K$ : c'est le gain
+      $K_c$ qu'il faut augmenter, pas $T_i$ qu'il faut réduire. Avec $K_c = 6{,}0\ \mathrm{Hz/bar}$, soit $K = 0{,}9$, la pression s'établit en
+      $3{,}46\ \mathrm{s}$ sans dépassement, et les marges restent larges : $29{,}0\ \mathrm{dB}$, $82{,}3^\circ$, marge de module $0{,}904$. Une action dérivée
+      n'apporterait presque rien sur cette boucle dominée par un pôle compensé et un petit retard, mais elle amplifierait le bruit du capteur. Le risque nouveau
+      est l'<strong>emballement de l'intégrale</strong> : quand le variateur plafonne à $50\ \mathrm{Hz}$, l'intégrale continue de croître, et la pression dépasse
+      fortement sa consigne au retour. Cette séance établit pourquoi, et comment on choisit, règle et protège un correcteur.
+    </p>
+    <p>
+      La séance réutilise l'erreur statique, l'amortissement et le dépassement du cours <a href="#/cours/reponse-temporelle-et-performances">Réponse
+      temporelle et performances</a>, les termes élémentaires et les marges du cours <a href="#/cours/diagrammes-de-bode">Diagrammes de Bode</a>, le gain
+      critique et la marge de module du cours <a href="#/cours/criteres-de-stabilite">Critères de stabilité</a>, et les modèles du cours
+      <a href="#/cours/modelisation-des-systemes-dynamiques">Modélisation des systèmes dynamiques</a>.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Le correcteur est le seul maillon d'une boucle que l'ingénieur choisit librement. Le procédé, l'actionneur et le capteur sont imposés par l'installation ;
+    le correcteur, lui, est un calcul dans un automate, un variateur ou un régulateur de tableau, et c'est sur lui que reposent la précision, la rapidité et la
+    robustesse de la boucle. Les correcteurs proportionnel, intégral et dérivé, seuls ou combinés en PID, équipent l'immense majorité des boucles industrielles :
+    régulations de pression, de débit, de température, de niveau, boucles de courant et de vitesse des variateurs, positionneurs de vannes.
+  </p>
+  <ul>
+    <li><strong>Trois actions, trois rôles.</strong> L'action proportionnelle réagit à l'écart présent, l'action intégrale à l'écart accumulé, l'action dérivée à
+      la tendance de l'écart. Les combiner, c'est choisir ce que l'on veut corriger : une erreur statique, un dépassement, une perturbation.</li>
+    <li><strong>Un réglage chiffré.</strong> Régler un PID, ce n'est pas tourner des boutons jusqu'à ce que "cela marche" : c'est placer des pôles, des zéros
+      et une pulsation de coupure pour tenir un cahier des performances, avec des marges vérifiées.</li>
+    <li><strong>Les limites du monde réel.</strong> Un actionneur sature, un capteur est bruité, un automate échantillonne. Un correcteur juste sur le papier peut
+      emballer son intégrale, saturer en permanence ou transformer le bruit de mesure en usure mécanique. L'anti-emballement et la dérivée filtrée sont aussi
+      importants que les gains.</li>
+    <li><strong>Une compétence de mise en service et de diagnostic.</strong> Lire un réglage existant dans un automate, reconnaître sa forme et ses unités,
+      expliquer un dépassement après une saturation ou une commande qui vibre : c'est le quotidien de l'ingénieur d'exploitation.</li>
+  </ul>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Jalon visé par le module</span>
+    <p>
+      Le jalon de fin de module demande de modéliser et de réguler un système simple. Après le modèle, les performances, l'analyse fréquentielle et la
+      stabilité, cette séance fournit l'outil qui ferme la boucle : un correcteur choisi, réglé et protégé contre la saturation, prêt à être discrétisé dans le
+      cours Commande numérique.
+    </p>
+  </div>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Expliquer le rôle physique des actions proportionnelle, intégrale et dérivée, et prévoir leur effet sur l'erreur statique, le dépassement et la rapidité.</li>
+    <li data-rang="02">Calculer l'erreur statique d'une boucle à correcteur proportionnel et démontrer qu'une action intégrale l'annule pour un échelon de consigne ou de perturbation.</li>
+    <li data-rang="03">Convertir un réglage entre les formes standard, parallèle et série d'un PID, en vérifiant les unités de chaque paramètre.</li>
+    <li data-rang="04">Dimensionner un correcteur PI ou PID par compensation de pôle et choix de l'amortissement, puis vérifier marges et commande initiale.</li>
+    <li data-rang="05">Calculer le gain haute fréquence et l'avance de phase maximale d'une action dérivée filtrée, et justifier le choix du facteur $N$.</li>
+    <li data-rang="06">Expliquer l'emballement de l'intégrale et comparer l'intégration conditionnelle et le recalcul de l'intégrale, avec le choix de $T_t$.</li>
+    <li data-rang="07">Diagnostiquer un défaut de réglage sur site à partir d'une tendance : erreur résiduelle, oscillation, dépassement après saturation ou commande bruitée.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>Quatre rappels suffisent.</p>
+  <ul>
+    <li><strong>Boucle fermée.</strong> Avec une boucle ouverte $L = CGH$ et un retour soustrait, l'écart vaut $\varepsilon = r/(1 + L)$ pour un retour
+      unitaire. Le théorème de la valeur finale donne $\varepsilon_\infty = \lim_{s \to 0} s\,\varepsilon(s)$ ; pour un échelon d'amplitude $r_0$,
+      $\varepsilon_\infty = r_0/(1 + L(0))$.</li>
+    <li><strong>Second ordre.</strong> $s^2 + 2\zeta\omega_0 s + \omega_0^2$ ; dépassement $D = e^{-\pi\zeta/\sqrt{1 - \zeta^2}}$, soit $4{,}6\ \%$ pour
+      $\zeta = 0{,}7$ ; temps d'établissement à $5\ \%$ voisin de $3/(\zeta\omega_0)$.</li>
+    <li><strong>Termes de Bode.</strong> Un intégrateur $1/s$ apporte $-90^\circ$ et $-20\ \text{dB/décade}$ ; un zéro $1 + \tau s$ apporte jusqu'à $+90^\circ$ et
+      $+20\ \text{dB/décade}$ au-delà de $1/\tau$.</li>
+    <li><strong>Marges.</strong> $M_\varphi = 180^\circ + \arg L(j\omega_c)$ ; une marge de phase de $65^\circ$ correspond, pour une boucle intégrateur et premier
+      ordre, à $\zeta \approx 0{,}7$.</li>
+  </ul>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Notation de la séance</span>
+    <p>
+      $r$ : consigne ; $y$ : grandeur réglée ; $y_m$ : mesure ; $e = r - y_m$ : écart ; $u$ : commande. Forme standard du PID :
+      $C(s) = K_c\bigl(1 + \tfrac{1}{T_i s} + \tfrac{T_d s}{1 + T_f s}\bigr)$ avec $T_f = T_d/N$. $K_c$ : gain proportionnel, en unité de commande par unité de
+      mesure ; $T_i$ : temps d'intégrale, en secondes ; $T_d$ : temps de dérivée, en secondes ; $N$ : facteur de filtrage de la dérivée, sans dimension ;
+      $T_t$ : constante de temps du recalcul de l'intégrale, en secondes. $u_c$ : commande calculée ; $u_s$ : commande réellement appliquée après saturation.
+      Toutes les grandeurs sont des écarts autour d'un point de fonctionnement, sauf mention contraire.
+    </p>
+  </div>
+  <p>
+    Mini-test de trois questions. Les réponses restent masquées, séparées de l'énoncé, jusqu'à votre tentative ou à un clic explicite.
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+  <h3 id="d-trois-temps">Présent, passé, futur : trois façons de regarder l'écart</h3>
+  <p>
+    Un opérateur qui tient une pression à la main regarde le manomètre et agit sur la vitesse de la pompe. S'il agit en proportion de l'écart qu'il lit, plus
+    l'écart est grand, plus il corrige : c'est l'<strong>action proportionnelle</strong>, qui regarde le <em>présent</em>. Mais quand l'écart devient petit, sa
+    correction devient petite aussi, et si la pompe doit tourner plus vite qu'au départ pour compenser un soutirage, il reste un écart résiduel : il faut un
+    écart pour qu'il y ait une correction. Un opérateur patient remarque que l'écart persiste et augmente peu à peu sa correction tant qu'il reste un écart :
+    c'est l'<strong>action intégrale</strong>, qui regarde le <em>passé</em> et ne s'arrête que lorsque l'écart est exactement nul. Un opérateur expérimenté
+    voit enfin l'aiguille approcher vite de la consigne et relâche avant d'y être : c'est l'<strong>action dérivée</strong>, qui regarde la tendance, donc le
+    <em>futur</em> proche.
+  </p>
+  <p>
+    La figure suivante rend ces trois lectures concrètes sur un même écart $e(t)$, celui d'une boucle qui converge en oscillant. Le point déplaçable fixe
+    l'instant $t$ : la contribution proportionnelle est la hauteur de la courbe à cet instant, la contribution intégrale est l'aire comprise entre la courbe et
+    l'axe depuis l'origine, comptée positivement au-dessus et négativement au-dessous, la contribution dérivée est la pente de la tangente. La tangente
+    prolongée sur $T_d = 0{,}5\ \mathrm{s}$ donne la prévision $e(t) + T_d\,\dot e(t)$ de l'écart futur.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      À l'instant où l'écart passe par zéro pour la première fois, que valent les trois contributions : laquelle est nulle, laquelle est maximale en valeur
+      absolue, et de quel signe est l'aire accumulée ? À quel instant l'aire accumulée est-elle maximale ? La prévision par la tangente est-elle meilleure
+      quand la courbe est presque droite ou quand elle est très courbée ?
+    </p>
+  </div>
+  <figure id="d-actions-sim">
+    <div class="schema-vivant" id="d-actions-vivant"></div>
+    <div id="d-actions-valeurs"></div>
+    <figcaption>
+      Trois lectures d'un même écart. En abscisse le temps $t$ de $0$ à $8\ \mathrm{s}$, en ordonnée l'écart $e(t) = e^{-0{,}6t}\cos 1{,}5t$, sans dimension, avec
+      sa valeur initiale unité. La courbe en trait plein est l'écart ; la surface hachurée est l'aire $\int_0^t e\,d\tau$, hachures montantes pour la partie
+      positive et descendantes pour la partie négative ; le segment épais issu du point courant est la tangente, prolongée sur $T_d = 0{,}5\ \mathrm{s}$
+      jusqu'au petit carré qui marque la prévision ; le petit cercle à la même abscisse marque la vraie valeur $e(t + T_d)$. La poignée ronde, sur l'axe des
+      temps, fixe l'instant $t$ à la souris, au doigt ou au clavier. Les valeurs sous la figure sont les trois contributions d'un PID de gains unité.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Au premier passage par zéro, $t = \pi/3 = 1{,}05\ \mathrm{s}$, la contribution proportionnelle est nulle : un correcteur
+    proportionnel seul cesserait d'agir. La pente y est fortement négative, $\dot e = -0{,}80\ \mathrm{s^{-1}}$ : l'action dérivée freine déjà le mouvement qui
+    va emporter l'écart sous zéro. L'aire accumulée y est maximale, $0{,}54\ \mathrm{s}$ : l'action intégrale pousse encore dans le sens initial, alors que
+    l'écart est nul. C'est la source du dépassement qu'apporte une intégrale trop forte : elle se souvient d'un passé qui n'est plus d'actualité. La prévision
+    par la tangente est excellente là où la courbe est presque droite, médiocre au voisinage des sommets, où la courbure domine : l'action dérivée anticipe
+    correctement sur un horizon court devant les constantes de temps de la boucle, pas au-delà.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Analogie de la conduite automobile, et ses limites</span>
+    <p>
+      Pour garder une distance avec le véhicule qui précède, un conducteur freine d'autant plus que la distance est trop courte (proportionnel), corrige une
+      dérive lente qui persiste, comme une pente qui le fait toujours approcher (intégral), et freine dès qu'il voit l'écart se réduire vite, avant même que la
+      distance soit trop courte (dérivé). Limites : le conducteur anticipe avec des informations que le correcteur n'a pas, comme les feux de stop ; il adapte
+      ses gains selon la situation, alors qu'un PID garde des gains fixes ; enfin la voiture est un système non linéaire, et le frein comme l'accélérateur
+      saturent, ce qui est justement la source de l'emballement de l'intégrale étudié plus loin.
+    </p>
+  </div>
+
+  <h3 id="d-prix">Chaque action a un prix</h3>
+  <p>
+    Aucune action n'est gratuite. Augmenter le gain proportionnel réduit l'erreur et accélère, mais réduit la marge de phase et fait osciller. L'action
+    intégrale annule l'erreur statique, mais elle retarde la commande, d'un quart de période aux basses fréquences, $-90^\circ$, ce qui consomme de la marge de
+    phase et favorise le dépassement. L'action dérivée apporte de l'avance de phase, donc de l'amortissement, mais elle amplifie tout ce qui varie vite, à
+    commencer par le bruit de mesure, et elle produit un pic de commande à chaque échelon de consigne. Le réglage d'un PID est la recherche d'un équilibre
+    entre ces bénéfices et ces coûts, sous la contrainte de ce que l'actionneur peut fournir.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Analogie du robinet qu'on ouvre en continu, et ses limites</span>
+    <p>
+      L'intégrale ressemble à un robinet qu'on ouvre un peu plus chaque seconde tant que la baignoire n'est pas au bon niveau : à la fin, l'ouverture est
+      exactement celle qui compense la fuite, et le niveau est juste. Si l'arrivée d'eau est déjà au maximum, continuer à "tourner" ne sert à rien, mais un
+      correcteur sans protection continue de compter les tours ; quand le besoin baisse, il faut d'abord défaire tous ces tours inutiles, et la baignoire
+      déborde. Limites : un robinet réel a une butée mécanique qui arrête la rotation, alors que l'intégrale d'un calcul n'a aucune butée naturelle ; c'est
+      précisément ce que l'anti-emballement ajoute.
+    </p>
+  </div>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+
+  <h3 id="e-proportionnel">Action proportionnelle et erreur statique</h3>
+  <p>
+    <strong>Loi de commande.</strong> $u(t) = K_c\,e(t)$, soit $C(s) = K_c$. $K_c$ s'exprime en unité de commande par unité de mesure : en
+    $\mathrm{Hz/bar}$ pour un variateur piloté par une pression, en $\%/\mathrm{K}$ pour un gradateur piloté par une température. Beaucoup de régulateurs
+    affichent à la place la <strong>bande proportionnelle</strong> $BP = 100/K_c$ en pour cent, $K_c$ étant alors sans dimension après normalisation des
+    échelles de mesure et de commande ; c'est une convention d'affichage, pas une autre loi.
+  </p>
+  <p>
+    <strong>Dérivation de l'erreur statique.</strong> Hypothèses : procédé stable de gain statique $K_0 = G(0)H(0)$ fini, retour unitaire après normalisation,
+    échelon de consigne d'amplitude $r_0$. L'écart vaut $\varepsilon(s) = r(s)/(1 + K_c G(s)H(s))$ ; la valeur finale donne
+  </p>
+  <div class="formule-cle">$$\varepsilon_\infty = \lim_{s \to 0} s \cdot \frac{r_0}{s} \cdot \frac{1}{1 + K_c G(s)H(s)} = \frac{r_0}{1 + K_c K_0}$$</div>
+  <p class="formule-cle-legende">
+    $\varepsilon_\infty$ : erreur statique, dans l'unité de la mesure ; $K_cK_0$ : gain statique de boucle, sans dimension. Interprétation : il faut un écart
+    pour produire la commande qui maintient la grandeur réglée ; la commande d'équilibre vaut $u_\infty = K_c\,\varepsilon_\infty$. Cas limites : $K_c \to 0$
+    donne $\varepsilon_\infty = r_0$, la boucle n'agit pas ; $K_c \to \infty$ donne $\varepsilon_\infty \to 0$, mais la stabilité impose une borne, le gain
+    critique. Dimension : $K_cK_0$ est le produit de $[u]/[y]$ par $[y]/[u]$, sans dimension, et $\varepsilon_\infty$ a bien l'unité de $r_0$.
+  </p>
+  <p>
+    Pour une perturbation en échelon $d_0$ entrant à l'entrée du procédé, le même raisonnement donne un écart résiduel $K_0 d_0/(1 + K_cK_0)$ : la correction
+    proportionnelle réduit l'effet de la perturbation dans le rapport $1 + K_cK_0$, sans l'annuler. C'est le <strong>dilemme précision et
+    stabilité</strong> déjà rencontré dans le cours <a href="#/cours/reponse-temporelle-et-performances">Réponse temporelle et performances</a> : réduire
+    l'erreur demande du gain, le gain réduit les marges.
+  </p>
+
+  <h3 id="e-integral">Action intégrale : annuler l'erreur, au prix de la phase</h3>
+  <p>
+    <strong>Loi de commande.</strong> L'action intégrale seule s'écrit $u(t) = \frac{K_c}{T_i}\int_0^t e(\tau)\,d\tau$. Le correcteur PI de forme standard est
+  </p>
+  <div class="formule-cle">$$u(t) = K_c\Bigl(e(t) + \frac{1}{T_i}\int_0^t e(\tau)\,d\tau\Bigr) \quad \Longleftrightarrow \quad C(s) = K_c\,\frac{1 + T_i s}{T_i s}$$</div>
+  <p class="formule-cle-legende">
+    $T_i$ : temps d'intégrale, en secondes. Interprétation : pour un écart constant $e_0$, la contribution intégrale vaut $K_c e_0\,t/T_i$ ; elle égale la
+    contribution proportionnelle $K_c e_0$ au bout de $t = T_i$. D'où le nom anglo-saxon de temps de "reset" et l'unité de répétitions par minute,
+    $1/T_i$ avec $T_i$ en minutes. Dimension : $\int e\,d\tau$ s'exprime en unité de mesure fois seconde, divisée par $T_i$ en secondes, elle redonne l'unité de
+    mesure, et $u$ a bien l'unité de $K_c e$.
+  </p>
+  <p>
+    <strong>Pourquoi l'erreur statique s'annule.</strong> Argument physique : si la boucle atteint un équilibre, toutes les grandeurs sont constantes, donc
+    $u$ aussi ; or $u$ contient une intégrale de l'écart, qui ne peut rester constante que si l'écart est nul. Argument algébrique : $C(s)$ a un pôle en $0$,
+    donc $L(0)$ est infini et $\varepsilon_\infty = r_0/(1 + L(0)) = 0$ ; pour une perturbation d'entrée, l'écart résiduel vaut
+    $K_0 d_0/(1 + L(0)) = 0$ également. Hypothèse indispensable : la boucle fermée est stable, sinon il n'y a pas d'équilibre. Cette propriété est une loi
+    mathématique, indépendante du réglage : c'est le <strong>principe du modèle interne</strong>, un échelon est rejeté sans erreur si la boucle contient un
+    intégrateur.
+  </p>
+  <p>
+    <strong>Le prix fréquentiel.</strong> $C(j\omega) = K_c\bigl(1 - j/(\omega T_i)\bigr)$ : module $K_c\sqrt{1 + 1/(\omega T_i)^2}$ et phase
+    $-\arctan\bigl(1/(\omega T_i)\bigr)$. Aux basses pulsations, la phase tend vers $-90^\circ$ et le gain croît sans limite ; à $\omega = 1/T_i$, elle vaut
+    $-45^\circ$ ; à $\omega = 10/T_i$, elle ne vaut plus que $-5{,}7^\circ$. Règle de conception qui en découle : placer le zéro $1/T_i$ au moins trois à cinq fois
+    sous la pulsation de coupure visée, ou sur le pôle dominant du procédé pour le compenser. Une intégrale trop forte, $T_i$ trop petit, retire de la phase à
+    $\omega_c$ et fait osciller : c'est l'erreur de réglage qui a rendu la régulation de pression instable sous $T_i = 0{,}061\ \mathrm{s}$ dans le cours
+    <a href="#/cours/criteres-de-stabilite">Critères de stabilité</a>.
+  </p>
+
+  <h3 id="e-derive">Action dérivée : anticiper, filtrer, ne pas dériver la consigne</h3>
+  <p>
+    <strong>Loi idéale.</strong> $u_D(t) = K_c T_d\,\dot e(t)$. Interprétation : $K_c\bigl(e + T_d\dot e\bigr) \approx K_c\,e(t + T_d)$, développement de Taylor
+    au premier ordre ; l'action proportionnelle et dérivée agit sur l'écart prévu $T_d$ secondes plus tard, ce qui n'a de sens que si $T_d$ est court devant
+    les constantes de temps de la boucle. En fréquence, $K_cT_d s$ apporte $+90^\circ$ et un gain qui croît de $20\ \text{dB/décade}$ sans limite : la
+    fonction de transfert est impropre, physiquement irréalisable, et elle amplifierait infiniment le bruit.
+  </p>
+  <p>
+    <strong>Dérivée filtrée.</strong> On la remplace par $K_c T_d s/(1 + T_f s)$ avec $T_f = T_d/N$, et $N$ choisi entre $5$ et $20$, règle de conception usuelle.
+    Le correcteur PD filtré s'écrit alors
+  </p>
+  <div class="formule-cle">$$C_{PD}(s) = K_c\Bigl(1 + \frac{T_d s}{1 + T_f s}\Bigr) = K_c\,\frac{1 + (T_d + T_f)s}{1 + T_f s}, \qquad \lim_{\omega \to \infty}|C_{PD}| = K_c(1 + N)$$</div>
+  <p class="formule-cle-legende">
+    C'est un correcteur à avance de phase de rapport $a = (T_d + T_f)/T_f = 1 + N$. Dérivation de l'avance maximale : la phase vaut
+    $\arctan(a\omega T_f) - \arctan(\omega T_f)$ ; sa dérivée s'annule à $\omega_m = 1/(T_f\sqrt a)$, où $\sin\varphi_m = (a - 1)/(a + 1) = N/(N + 2)$. Pour
+    $N = 10$ : $\varphi_m = \arcsin(10/12) = 56{,}4^\circ$, et un gain haute fréquence multiplié par $11$, soit $+20{,}8\ \mathrm{dB}$. Cas limites : $N \to \infty$
+    redonne la dérivée idéale, $90^\circ$ et un gain infini ; $N \to 0$ supprime l'action dérivée. Dimension : $T_d s$ et $T_f s$ sont sans dimension.
+  </p>
+  <p>
+    <strong>Dériver la mesure, pas l'écart.</strong> Un échelon de consigne donne un écart en échelon, dont la dérivée est une impulsion : la commande subit un
+    pic de hauteur $K_c N r_0$, le "coup de dérivée", qui sature l'actionneur sans rien apporter. On applique donc l'action dérivée à $-y_m$ seule, et
+    souvent l'action proportionnelle à $b\,r - y_m$ avec une pondération $0 \le b \le 1$ : c'est le correcteur à deux degrés de liberté. Les pôles de la boucle,
+    donc la stabilité et la réponse aux perturbations, ne changent pas ; seule la réponse à la consigne est adoucie.
+  </p>
+
+  <h3 id="e-formes">Trois écritures du même PID</h3>
+  <p>
+    Les constructeurs n'écrivent pas tous le PID de la même façon, et confondre les écritures est l'une des erreurs de mise en service les plus courantes. La
+    figure suivante représente les deux structures les plus fréquentes ; la troisième, parallèle, est donnée sous la figure.
+  </p>
+  <figure id="e-formes-figure">
+    <svg viewBox="0 0 720 400" role="img" aria-label="Deux structures de PID. En haut, forme standard : l'écart e traverse le gain Kc, puis se partage en trois branches parallèles, 1, 1 sur Ti s et Td s sur 1 plus Tf s, dont les sorties s'additionnent pour former la commande u. En bas, forme série : l'écart traverse en cascade le gain Kc prime, le bloc 1 plus 1 sur Ti prime s et le bloc 1 plus Td prime s sur 1 plus Tf s, pour former la commande u."><defs><marker id="e-fo-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"><path d="M30 110H90" marker-end="url(#e-fo-fl)"/><rect x="92" y="88" width="70" height="44" rx="6"/><path d="M162 110H200"/><path d="M200 60V160"/><path d="M200 60H258" marker-end="url(#e-fo-fl)"/><path d="M200 110H258" marker-end="url(#e-fo-fl)"/><path d="M200 160H258" marker-end="url(#e-fo-fl)"/><rect x="260" y="42" width="230" height="36" rx="6"/><rect x="260" y="92" width="230" height="36" rx="6"/><rect x="260" y="142" width="230" height="36" rx="6"/><path d="M490 60H560V90" marker-end="url(#e-fo-fl)"/><path d="M490 110H540" marker-end="url(#e-fo-fl)"/><path d="M490 160H560V130" marker-end="url(#e-fo-fl)"/><circle cx="560" cy="110" r="18"/><path d="M578 110H670" marker-end="url(#e-fo-fl)"/><path d="M30 300H90" marker-end="url(#e-fo-fl)"/><rect x="92" y="278" width="70" height="44" rx="6"/><path d="M162 300H210" marker-end="url(#e-fo-fl)"/><rect x="212" y="278" width="160" height="44" rx="6"/><path d="M372 300H420" marker-end="url(#e-fo-fl)"/><rect x="422" y="278" width="190" height="44" rx="6"/><path d="M612 300H680" marker-end="url(#e-fo-fl)"/><path d="M20 210H700" stroke-width="0.8" stroke-dasharray="3 5"/></g><g fill="currentColor" stroke="currentColor"><circle cx="200" cy="110" r="3.5"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="20" y="24" font-weight="700">Forme standard (ISA, dite aussi mixte)</text><text x="30" y="100">e</text><text x="127" y="115" text-anchor="middle">Kc</text><text x="375" y="65" text-anchor="middle">1  (proportionnelle)</text><text x="375" y="115" text-anchor="middle">1 / (Ti s)  (intégrale)</text><text x="375" y="165" text-anchor="middle">Td s / (1 + Tf s)  (dérivée)</text><text x="542" y="82" font-size="14" font-weight="700">+</text><text x="522" y="104" font-size="14" font-weight="700">+</text><text x="542" y="146" font-size="14" font-weight="700">+</text><text x="680" y="114">u</text><text x="260" y="198" font-size="11">u = Kc (e + ∫e dt / Ti + Td ė filtrée)</text><text x="20" y="240" font-weight="700">Forme série (dite aussi interactive)</text><text x="30" y="290">e</text><text x="127" y="305" text-anchor="middle">Kc'</text><text x="292" y="305" text-anchor="middle">1 + 1 / (Ti' s)</text><text x="517" y="305" text-anchor="middle">(1 + Td' s) / (1 + Tf s)</text><text x="690" y="304">u</text><text x="20" y="360" font-size="11">Parallèle : C(s) = Kp + Ki / s + Kd s / (1 + Tf s), avec Kp = Kc, Ki = Kc / Ti (s⁻¹), Kd = Kc Td (s)</text><text x="20" y="384" font-size="11">Série vers standard : Kc = Kc' (1 + Td'/Ti'), Ti = Ti' + Td', Td = Ti' Td' / (Ti' + Td')</text></g></svg>
+    <figcaption>
+      Deux structures de PID. Les signaux circulent dans le sens des flèches, de l'écart $e = r - y_m$ vers la commande $u$. En haut, la forme standard : le gain
+      $K_c$ multiplie les trois actions, réunies par un sommateur dont les trois entrées portent le signe $+$ ; le point noir est le point de partage du signal.
+      En bas, la forme série : trois blocs en cascade, d'où des actions qui interagissent, puisque changer $T_d'$ modifie aussi le gain et l'intégrale
+      équivalents. Sous le trait pointillé, la forme parallèle et les formules de conversion. Le filtre $1/(1 + T_f s)$ n'est représenté que sur la dérivée ; il
+      est négligé dans les conversions, ce qui est une approximation valable tant que $T_f$ est petit devant $T_d$.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Dérivation de la conversion série vers standard.</strong> En négligeant le filtre,
+    $K_c'\bigl(1 + \tfrac{1}{T_i's}\bigr)(1 + T_d's) = K_c'\bigl(1 + \tfrac{T_d'}{T_i'} + \tfrac{1}{T_i's} + T_d's\bigr)$. En identifiant avec
+    $K_c\bigl(1 + \tfrac{1}{T_is} + T_ds\bigr)$ : $K_c = K_c'(T_i' + T_d')/T_i'$, puis $K_c/T_i = K_c'/T_i'$ donne $T_i = T_i' + T_d'$, et $K_cT_d = K_c'T_d'$
+    donne $T_d = T_i'T_d'/(T_i' + T_d')$. Cas limite : $T_d' = 0$ rend les deux formes identiques, ce qui explique qu'un PI s'écrive partout de la même
+    façon. La réciproque n'existe que si $T_i \ge 4T_d$, condition pour que les deux zéros du PID standard soient réels : un PID standard à zéros complexes
+    n'a pas d'équivalent série.
+  </p>
+  <div class="encadre attention">
+    <span class="encadre-titre">Unités à vérifier avant toute saisie</span>
+    <p>
+      Selon le constructeur, $T_i$ s'exprime en secondes ou en minutes, l'action intégrale en répétitions par minute ou en $\mathrm{s^{-1}}$ (forme parallèle,
+      $K_i = K_c/T_i$), et le gain en bande proportionnelle. Un $T_i$ de $1{,}2\ \mathrm{s}$ saisi comme $1{,}2$ dans un appareil qui attend des répétitions par
+      minute donne $T_i = 50\ \mathrm{s}$ : la boucle devient quarante fois plus lente à corriger. Saisi en minutes là où l'appareil attend des secondes, l'effet
+      est inverse. La documentation du constructeur fait foi.
+    </p>
+  </div>
+
+  <h3 id="e-compare">Effet comparé des trois actions sur la réponse</h3>
+  <p>
+    La simulation suivante applique un correcteur PID de forme standard à un four électrique piloté par un gradateur, celui de l'exemple de la section H :
+    $G(s) = 2/\bigl((1 + 400s)(1 + 40s)\bigr)$ en kelvins par pour cent de puissance, $400\ \mathrm{s}$ pour la masse thermique, $40\ \mathrm{s}$ pour la paroi
+    et la sonde. À $t = 0$, la consigne monte de $10\ \mathrm{K}$ ; à $t = 600\ \mathrm{s}$, l'ouverture de la porte retire l'équivalent de $10\ \%$ de
+    puissance. Les curseurs règlent $K_c$, $T_i$, dont la valeur maximale supprime l'action intégrale, $T_d$, avec $N = 10$, et l'application de la dérivée,
+    à l'écart ou à la mesure. La commande est affichée sans saturation, pour voir ce que le correcteur demande.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Au réglage de départ, PI avec $K_c = 2{,}55\ \%/\mathrm{K}$ et $T_i = 400\ \mathrm{s}$, que devient la réponse si l'on supprime l'action intégrale ? Si l'on
+      double $K_c$ sans intégrale, l'erreur résiduelle est-elle divisée par deux ? Si l'on ajoute $T_d = 40\ \mathrm{s}$, la réponse à la consigne
+      s'accélère-t-elle, et que voit-on sur la commande selon que la dérivée porte sur l'écart ou sur la mesure ? La perturbation de porte est-elle
+      rattrapée aussi vite que la consigne est atteinte ?
+    </p>
+  </div>
+  <figure id="e-compare-sim">
+    <div id="e-compare-curseurs"></div>
+    <div id="e-compare-valeurs"></div>
+    <div id="e-compare-trace"></div>
+    <div id="e-compare-commande"></div>
+    <figcaption>
+      Effet comparé des actions P, I et D sur le four. Premier tracé : écart de température $\theta$ en kelvins autour du point de fonctionnement, sur
+      $2000\ \mathrm{s}$, pour le réglage courant, avec en comparaison la réponse du correcteur proportionnel seul de même gain ; la consigne de $10\ \mathrm{K}$
+      est en tirets, la bande de $\pm 5\ \%$ en pointillé et l'instant de la perturbation par une verticale en pointillé. Second tracé : commande $u$ en pour
+      cent de puissance, écart à la puissance de fonctionnement ; la ligne en tirets marque la réserve de $+60\ \%$ dont dispose le gradateur, la courbe étant
+      tronquée en haut du cadre. Chaque courbe est nommée dans la légende de son tracé.
+    </figcaption>
+  </figure>
+  <p id="e-compare-interpretation">
+    <strong>Interprétation.</strong> Au réglage de départ, le PI atteint la consigne avec $4{,}6\ \%$ de dépassement et s'établit en
+    $163\ \mathrm{s}$ environ ; la commande démarre à $25{,}5\ \%$. Sans action intégrale, la température plafonne à $8{,}36\ \mathrm{K}$ : l'erreur de
+    $1{,}64\ \mathrm{K}$ vaut exactement $10/(1 + 5{,}1)$. Doubler $K_c$ la ramène à $0{,}89\ \mathrm{K}$, divisée par $1{,}84$ et non par deux, puisque l'erreur
+    suit $1/(1 + K_cK_0)$, tandis que la commande initiale double, $51\ \%$. Ajouter $T_d = 40\ \mathrm{s}$ à gain inchangé n'accélère pas la réponse : avec
+    la dérivée sur l'écart, la commande bondit jusqu'à $281\ \%$, ce qui saturerait le gradateur, pour un dépassement réduit à $0{,}7\ \%$ ; avec la dérivée
+    sur la mesure, la commande initiale reste à $25{,}5\ \%$ et le dépassement voisin de $5\ \%$. L'intérêt de la dérivée apparaît quand on monte le gain : à
+    $K_c = 6\ \%/\mathrm{K}$, le PI dépasse de $20\ \%$, le PID à dérivée sur la mesure de $6{,}5\ \%$ seulement, et le creux après la porte tombe à
+    $1{,}08\ \mathrm{K}$ contre $3{,}08\ \mathrm{K}$ avec le PI de départ. Enfin, la perturbation est rattrapée bien plus lentement que la consigne n'est
+    atteinte : $902\ \mathrm{s}$ pour revenir dans la bande avec le PI de départ, parce que le pôle de $400\ \mathrm{s}$ compensé par $T_i$ reste présent
+    dans la réponse aux perturbations. Réduire $T_i$ à $100\ \mathrm{s}$ accélère ce rejet, $285\ \mathrm{s}$, au prix d'un dépassement de $40\ \%$ sur la
+    consigne.
+  </p>
+
+  <h3 id="e-saturation">Saturation et emballement de l'intégrale</h3>
+  <p>
+    Un actionneur a des butées : un variateur ne dépasse pas sa fréquence maximale, un gradateur ne fournit pas plus de $100\ \%$, une vanne ne s'ouvre pas
+    au-delà de sa course. Quand la commande calculée $u_c$ sort de ces butées, la commande appliquée $u_s$ reste bloquée : la boucle est <strong>ouverte</strong>,
+    puisque modifier $u_c$ ne change plus rien au procédé. L'écart reste alors grand et de même signe, et l'intégrale continue de croître à la vitesse
+    $K_c e/T_i$ : c'est l'<strong>emballement de l'intégrale</strong>, en anglais "windup". Quand l'écart change enfin de signe, il faut d'abord que
+    l'intégrale décroisse jusqu'à ramener $u_c$ dans la plage utile ; pendant tout ce temps, l'actionneur reste en butée alors que la grandeur réglée a déjà
+    dépassé sa consigne. Le résultat est un dépassement important et un retour lent, parfois une oscillation de grande amplitude entre les deux butées.
+  </p>
+  <p>
+    Deux remèdes sont d'usage courant. <strong>L'intégration conditionnelle</strong>, ou blocage, arrête l'intégrale tant que la commande est saturée et que
+    l'écart pousse vers la butée. <strong>Le recalcul de l'intégrale</strong>, ou "back-calculation", réinjecte dans l'intégrateur l'écart entre commande
+    appliquée et commande calculée, comme le montre la figure suivante.
+  </p>
+  <figure id="e-antiwindup-figure">
+    <svg viewBox="0 0 720 330" role="img" aria-label="Correcteur PI avec recalcul de l'intégrale : l'écart e alimente le gain Kc et, par une seconde branche, le gain Kc sur Ti ; la sortie de Kc sur Ti s'ajoute au signal de recalcul dans un sommateur, puis traverse l'intégrateur 1 sur s pour donner l'état intégral xi ; xi s'ajoute à Kc e pour former la commande calculée uc, qui traverse la saturation pour donner la commande appliquée us ; un sommateur forme us moins uc, qui traverse le gain 1 sur Tt et revient au sommateur de l'intégrateur."><defs><marker id="e-aw-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"><path d="M20 90H70"/><path d="M70 90H120" marker-end="url(#e-aw-fl)"/><rect x="122" y="68" width="60" height="44" rx="6"/><path d="M182 90H380" marker-end="url(#e-aw-fl)"/><path d="M70 90V200H120" marker-end="url(#e-aw-fl)"/><rect x="122" y="178" width="70" height="44" rx="6"/><path d="M192 200H232" marker-end="url(#e-aw-fl)"/><circle cx="250" cy="200" r="16"/><path d="M266 200H298" marker-end="url(#e-aw-fl)"/><rect x="300" y="178" width="50" height="44" rx="6"/><path d="M350 200H398V110" marker-end="url(#e-aw-fl)"/><circle cx="398" cy="90" r="18"/><path d="M416 90H478" marker-end="url(#e-aw-fl)"/><rect x="480" y="62" width="70" height="56" rx="6"/><path d="M488 106H502L528 74H542" stroke-width="2.2"/><path d="M550 90H690" marker-end="url(#e-aw-fl)"/><path d="M455 90V300H620V278" marker-end="url(#e-aw-fl)"/><path d="M620 90V242" marker-end="url(#e-aw-fl)"/><circle cx="620" cy="260" r="16"/><path d="M604 260H463A8 8 0 0 0 447 260H402" marker-end="url(#e-aw-fl)"/><rect x="330" y="240" width="70" height="40" rx="6"/><path d="M330 260H250V218" marker-end="url(#e-aw-fl)"/></g><g fill="currentColor" stroke="currentColor"><circle cx="70" cy="90" r="3.5"/><circle cx="455" cy="90" r="3.5"/><circle cx="620" cy="90" r="3.5"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="20" y="80">e</text><text x="152" y="95" text-anchor="middle">Kc</text><text x="157" y="205" text-anchor="middle">Kc / Ti</text><text x="325" y="205" text-anchor="middle">1 / s</text><text x="360" y="192">xi</text><text x="226" y="192" font-size="14" font-weight="700">+</text><text x="256" y="236" font-size="14" font-weight="700">+</text><text x="370" y="82" font-size="14" font-weight="700">+</text><text x="404" y="128" font-size="14" font-weight="700">+</text><text x="430" y="80">uc</text><text x="515" y="56" text-anchor="middle" font-size="11">butées</text><text x="640" y="80">us</text><text x="630" y="236" font-size="14" font-weight="700">+</text><text x="632" y="296" font-size="16" font-weight="700">-</text><text x="365" y="265" text-anchor="middle">1 / Tt</text><text x="470" y="252" font-size="11">us - uc</text><text x="560" y="120" font-size="11">vers l'actionneur</text><text x="20" y="318" font-size="11">Hors saturation, us = uc et le recalcul est inactif : le PI est inchangé.</text></g></svg>
+    <figcaption>
+      Correcteur PI avec recalcul de l'intégrale. Les signaux circulent dans le sens des flèches ; les points noirs sont des points de prélèvement. La branche
+      du haut forme l'action proportionnelle $K_c e$ ; la branche du bas intègre $K_c e/T_i$ pour former l'état intégral $x_i$ ; leur somme est la commande
+      calculée $u_c$. Le bloc des butées représente la saturation de l'actionneur, caractéristique plate, pente unité, plate. Le sommateur de droite forme
+      $u_s - u_c$, nul hors saturation, négatif quand la commande dépasse la butée haute ; ce signal, divisé par $T_t$, est ajouté à l'entrée de l'intégrateur
+      et le fait décroître. Le petit demi-cercle marque un croisement de fils sans connexion. Quand l'actionneur sait renvoyer sa commande réelle, par exemple
+      la fréquence de sortie d'un variateur, on utilise cette mesure comme $u_s$ : le recalcul tient alors compte aussi de la rampe et des limitations internes.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Équations et dérivation.</strong> L'état intégral obéit à
+  </p>
+  <div class="formule-cle">$$\dot x_i = \frac{K_c}{T_i}\,e + \frac{u_s - u_c}{T_t}, \qquad u_c = K_c e + x_i, \qquad u_s = \operatorname{sat}(u_c)$$</div>
+  <p class="formule-cle-legende">
+    Pendant une saturation prolongée à écart à peu près constant, l'état intégral se stabilise quand $\dot x_i = 0$, soit
+    $u_c - u_s = T_t K_c e/T_i$ : la commande calculée ne reste au-dessus de la butée que de cette quantité, au lieu de croître sans limite. Cas limites :
+    $T_t \to \infty$ supprime la protection ; $T_t \to 0$ colle $u_c$ à la butée et se comporte presque comme l'intégration conditionnelle. Dimension :
+    $(u_s - u_c)/T_t$ et $K_c e/T_i$ s'expriment tous deux en unité de commande par seconde. Règle de conception : $T_t$ entre $T_d$ et $T_i$, souvent
+    $T_t = \sqrt{T_iT_d}$ pour un PID et $T_t$ de l'ordre de $T_i$ pour un PI ; ce n'est pas une loi, c'est une recommandation à valider sur le procédé.
+  </p>
+  <p>
+    Le même mécanisme règle le <strong>passage sans à-coup</strong> du mode manuel au mode automatique : en manuel, l'intégrale suit la commande manuelle
+    par recalcul, de sorte qu'au basculement $u_c = u_s$ et la commande ne saute pas.
+  </p>
+  <p>
+    La simulation suivante reprend le four, PI de départ, pour un échelon de consigne de $50\ \mathrm{K}$. La réserve de puissance au-dessus du point de
+    fonctionnement est réglable ; à $40\ \%$, la commande initiale demandée, $K_c \times 50 = 128\ \%$, sature largement. Le lecteur déplace un repère dans le
+    temps et affiche l'état intégral à cet instant.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Sans protection, le dépassement sera-t-il plus grand ou plus petit que les $4{,}6\ \%$ de la réponse linéaire ? L'intégration conditionnelle
+      supprime-t-elle le dépassement, et à quel prix ? Avec le recalcul, que se passe-t-il quand $T_t$ devient très petit, puis très grand ?
+    </p>
+  </div>
+  <figure id="e-windup-sim">
+    <div id="e-windup-curseurs"></div>
+    <div id="e-windup-lecteur"></div>
+    <div id="e-windup-valeurs"></div>
+    <div id="e-windup-trace"></div>
+    <div id="e-windup-commande"></div>
+    <figcaption>
+      Emballement de l'intégrale sur le four, échelon de consigne de $50\ \mathrm{K}$, PI $K_c = 2{,}55\ \%/\mathrm{K}$ et $T_i = 400\ \mathrm{s}$. Premier tracé :
+      écart de température avec la saturation et la protection choisies, et réponse linéaire sans saturation en comparaison ; consigne en tirets, bande de
+      $\pm 5\ \%$ en pointillé. Second tracé : commande calculée $u_c$, commande appliquée $u_s$ et état intégral $x_i$, en pour cent ; la butée haute est en
+      tirets. La verticale en pointillé et le cercle mobile marquent l'instant choisi par le lecteur. Chaque courbe est nommée dans la légende de son tracé.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Sans protection, la commande reste en butée jusqu'à $564\ \mathrm{s}$, alors que la température a
+    franchi la consigne bien avant ; l'état intégral monte à $64{,}8\ \%$, quand $50/2 = 25\ \%$ suffisent à l'équilibre, et la température culmine à
+    $61{,}2\ \mathrm{K}$ : $22{,}4\ \%$ de dépassement, près de cinq fois la valeur linéaire, et un retour dans la bande vers $1275\ \mathrm{s}$.
+    L'intégration conditionnelle supprime le dépassement, l'état intégral restant sous $24\ \%$, mais l'approche finale est lente, $791\ \mathrm{s}$ : à la
+    sortie de saturation, vers $266\ \mathrm{s}$, les états du four ne sont pas ceux d'une réponse linéaire, et le mode lent de $400\ \mathrm{s}$, que la
+    compensation masquait, réapparaît. Avec le recalcul, $T_t = 400\ \mathrm{s}$, égal à $T_i$, donne ici le meilleur compromis : $1{,}0\ \%$ de dépassement et
+    $407\ \mathrm{s}$. Un $T_t$ petit, $100\ \mathrm{s}$, se comporte comme le blocage, $980\ \mathrm{s}$ ; un $T_t$ grand, $1000\ \mathrm{s}$, laisse revenir
+    l'emballement, $11{,}5\ \%$ de dépassement. Avec une réserve de $100\ \%$, la saturation ne dure qu'une minute environ et les trois variantes se
+    rapprochent de la réponse linéaire : la gravité de l'emballement dépend de la durée de la saturation.
+  </p>
+
+  <h3 id="e-bruit">Dérivée filtrée et bruit de mesure</h3>
+  <p>
+    Un capteur réel délivre la grandeur mesurée plus un bruit, souvent à large bande : ondulation d'une pompe, parasites de commutation d'un variateur,
+    quantification d'un convertisseur. Aux hautes fréquences, la commande reproduit ce bruit multiplié par le gain haute fréquence du correcteur :
+    $K_c$ pour un PI, $K_c(1 + N)$ pour un PID filtré. Un bruit de $0{,}01\ \mathrm{bar}$ sur la mesure de pression, avec $K_c = 6\ \mathrm{Hz/bar}$, agite la
+    consigne de fréquence de $0{,}06\ \mathrm{Hz}$ avec un PI, mais de $0{,}66\ \mathrm{Hz}$ avec un PID de $N = 10$ : onze fois plus de sollicitations pour le
+    variateur et la pompe. La simulation suivante trace le diagramme de Bode d'un PID filtré de gain $K_c = 1$ et $T_i = 10\ \mathrm{s}$.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Où se situe le minimum du gain du PID, et que vaut-il ? Quand $N$ passe de $5$ à $20$, l'avance de phase maximale augmente-t-elle beaucoup ? Et le gain
+      haute fréquence ?
+    </p>
+  </div>
+  <figure id="e-bode-sim">
+    <div id="e-bode-curseurs"></div>
+    <div id="e-bode-valeurs"></div>
+    <div id="e-bode-trace"></div>
+    <figcaption>
+      Diagramme de Bode du PID filtré $C(j\omega) = K_c\bigl(1 + 1/(j\omega T_i) + j\omega T_d/(1 + j\omega T_d/N)\bigr)$ avec $K_c = 1$ et $T_i = 10\ \mathrm{s}$.
+      En abscisse la pulsation $\omega$ en $\mathrm{rad/s}$, de $0{,}01$ à $1000$, en échelle logarithmique ; panneau du haut, gain en décibels ; panneau du bas,
+      phase en degrés ; la légende nomme les deux courbes. La verticale en tirets marque la pulsation $1/T_f = N/T_d$ au-delà de laquelle la dérivée cesse de
+      croître. Les curseurs règlent $T_d$ et $N$.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Le gain passe par un minimum voisin de $K_c$, soit $0\ \mathrm{dB}$, entre $1/T_i$ et $1/T_d$ : l'intégrale domine à
+    gauche, la dérivée à droite. Passer de $N = 5$ à $N = 20$ fait monter l'avance maximale de la partie PD de $45{,}6^\circ$ à $65{,}4^\circ$ seulement,
+    $\arcsin(N/(N + 2))$, mais multiplie le gain haute fréquence par $21/6 = 3{,}5$, de $15{,}6$ à $26{,}4\ \mathrm{dB}$. Au-delà d'une dizaine, augmenter
+    $N$ coûte beaucoup en bruit et rapporte peu en phase : c'est la justification de la plage usuelle de $5$ à $20$. Avec $T_d = 0$, le diagramme est celui
+    d'un PI : gain plat à $K_c$ en haute fréquence, phase qui remonte de $-90^\circ$ à $0$.
+  </p>
+
+  <h3 id="e-reglage">Méthodes de réglage : laquelle choisir ?</h3>
+  <p>
+    <strong>Compensation et placement de pôles.</strong> On place le zéro du PI sur le pôle dominant, $T_i = \tau_1$, et ceux d'un PID série sur les deux pôles
+    dominants, $T_i' = \tau_1$, $T_d' = \tau_2$. La boucle ouverte devient $K/(T_i s(1 + \tau_r s))$, où $\tau_r$ regroupe ce qui reste : petite constante de
+    temps, filtre, retard. La boucle fermée est un second ordre $T_i\tau_r s^2 + T_i s + K$, d'où
+  </p>
+  <div class="formule-cle">$$\omega_0 = \frac{1}{2\zeta\tau_r}, \qquad K = K_cK_0 = \omega_0^2\,T_i\,\tau_r = \frac{T_i}{4\zeta^2\tau_r}$$</div>
+  <p class="formule-cle-legende">
+    $K$ : gain statique de boucle hors intégrateur, sans dimension ; $\tau_r$ : constante de temps résiduelle, en secondes. Dérivation : identification de
+    $s^2 + s/\tau_r + K/(T_i\tau_r)$ avec $s^2 + 2\zeta\omega_0 s + \omega_0^2$. Pour $\zeta = 0{,}7$ : $K = 0{,}51\,T_i/\tau_r$, dépassement $4{,}6\ \%$, marge de
+    phase $65{,}2^\circ$. Hypothèses : pôles compensés connus et stables ; la compensation est approchée dès que le procédé varie. Limite importante : le pôle
+    compensé disparaît de la réponse à la consigne mais reste dans la réponse à une perturbation d'entrée, qui garde la dynamique lente $\tau_1$.
+  </p>
+  <p>
+    <strong>Méthode lambda, ou du modèle interne.</strong> Pour un procédé approché par un premier ordre à retard $K_0e^{-\theta s}/(1 + \tau s)$, on choisit la
+    constante de temps $\lambda$ de la boucle fermée et l'on pose $T_i = \tau$ et $K_c = \tau/\bigl(K_0(\lambda + \theta)\bigr)$. C'est la même idée de
+    compensation, paramétrée par la rapidité voulue ; elle est robuste et lisible pour un exploitant. <strong>Ziegler et Nichols.</strong> Par l'essai en
+    boucle fermée, on mesure le gain critique $K_{cu}$ et la période d'oscillation $T_u$, puis on applique $K_c = 0{,}45K_{cu}$ et $T_i = T_u/1{,}2$ pour un
+    PI, $K_c = 0{,}6K_{cu}$, $T_i = T_u/2$ et $T_d = T_u/8$ pour un PID. Ces règles empiriques visent un amortissement d'un quart par période, donc un
+    réglage nerveux, à dépassement important ; elles ne demandent pas de modèle, mais l'essai pousse la boucle à la limite de stabilité.
+  </p>
+  <div class="cadre-tableau" id="e-methodes">
+    <table>
+      <thead><tr><th>Méthode</th><th>Données nécessaires</th><th>Résultat typique</th><th>Préférable quand</th><th>À éviter quand</th></tr></thead>
+      <tbody>
+        <tr><td>Compensation et placement de pôles</td><td>Modèle à constantes de temps</td><td>Dépassement et marge choisis, $\zeta = 0{,}7$ usuel</td><td>Procédé identifié, boucles de variateur, thermique</td><td>Pôle dominant mal connu ou variable</td></tr>
+        <tr><td>Lambda (modèle interne)</td><td>Gain, constante de temps, retard</td><td>Réponse sans dépassement, rapidité réglée par $\lambda$</td><td>Procédés lents à retard, exploitation</td><td>Procédé intégrateur pur, sans adaptation</td></tr>
+        <tr><td>Ziegler et Nichols, boucle fermée</td><td>$K_{cu}$ et $T_u$ mesurés</td><td>Amortissement d'un quart, $M_\varphi$ souvent sous $30^\circ$</td><td>Premier réglage sans modèle, procédé tolérant</td><td>Procédé où l'oscillation est dangereuse</td></tr>
+        <tr><td>Essai à relais puis règle</td><td>Amplitude et période du cycle limite</td><td>Équivalent de $K_{cu}$ et $T_u$ à amplitude limitée</td><td>Autoréglage des régulateurs industriels</td><td>Bruit fort, non-linéarité marquée</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Appliqué à la régulation de pression, dont le gain critique vaut $K_{cu} = 169{,}4\ \mathrm{Hz/bar}$ et la période critique
+    $T_u = 2\pi/11{,}66 = 0{,}539\ \mathrm{s}$, Ziegler et Nichols donnent $K_c = 76{,}2\ \mathrm{Hz/bar}$ et $T_i = 0{,}449\ \mathrm{s}$ : marge de phase
+    $15{,}6^\circ$, marge de gain $4{,}9\ \mathrm{dB}$, marge de module $0{,}23$, dépassement d'environ $110\ \%$ et une commande initiale de
+    $76\ \mathrm{Hz}$ par bar d'échelon, qui saturerait le variateur. La règle, conçue pour des procédés où le retard pèse lourd, est ici beaucoup trop
+    agressive : une boucle dominée par une constante de temps et un petit retard se règle mieux par compensation.
+  </p>
+
+  <h3 id="e-statut">Loi, convention, approximation, règle de conception et donnée du constructeur</h3>
+  <ul>
+    <li><strong>Lois.</strong> L'annulation de l'erreur statique par un intégrateur dans une boucle stable ; l'erreur $r_0/(1 + K_cK_0)$ d'un correcteur
+      proportionnel ; l'avance maximale $\arcsin\bigl((a - 1)/(a + 1)\bigr)$ d'un correcteur à avance de phase.</li>
+    <li><strong>Conventions.</strong> Le signe de l'écart $e = r - y_m$ ; le sens d'action direct ou inverse d'un régulateur ; l'affichage en bande
+      proportionnelle ou en gain ; l'expression de l'intégrale en secondes, minutes ou répétitions par minute.</li>
+    <li><strong>Approximations.</strong> La linéarité autour d'un point de fonctionnement ; la compensation exacte d'un pôle ; la conversion entre formes qui
+      néglige le filtre de dérivée ; le regroupement des petites constantes de temps en une seule $\tau_r$.</li>
+    <li><strong>Règles de conception.</strong> $\zeta = 0{,}7$ ou $M_\varphi$ de $45$ à $65^\circ$ ; $N$ de $5$ à $20$ ; $T_t$ entre $T_d$ et $T_i$ ; zéro du PI
+      au moins trois fois sous $\omega_c$ ; règles de Ziegler et Nichols.</li>
+    <li><strong>Données du constructeur.</strong> La forme exacte du PID implanté, les unités des paramètres, la présence d'un anti-emballement et son type,
+      la période d'échantillonnage du calcul, les limites et la rampe du variateur.</li>
+  </ul>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Le schéma principal place le correcteur dans la boucle de pression du projet fil rouge, avec tout ce qui en limite le fonctionnement réel : butées et rampe
+    du variateur, retard de l'automate et de la transmission, capteur filtré, perturbation de soutirage, et recopie de la fréquence réelle vers le correcteur
+    pour l'anti-emballement.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 760 340" role="img" aria-label="Boucle de régulation de pression : la consigne de pression pc entre par le signe plus dans un sommateur, la mesure pm par le signe moins ; l'écart attaque le correcteur PI avec anti-emballement, qui fournit la consigne de fréquence fc au variateur limité de 25 à 50 hertz avec une rampe de 5 hertz par seconde ; la fréquence réelle fr traverse le retard de 50 millisecondes puis entre dans un sommateur où le soutirage d est retranché, puis dans le bloc pompe et réseau Kg sur 1 plus tau h s, qui fournit la pression vraie p ; la pression traverse le capteur 1 sur 1 plus tau c s et revient comme mesure pm ; la fréquence réelle fr est aussi renvoyée au correcteur pour le suivi."><defs><marker id="f-sp-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"><path d="M20 110H60" marker-end="url(#f-sp-fl)"/><circle cx="80" cy="110" r="18"/><path d="M98 110H128" marker-end="url(#f-sp-fl)"/><rect x="130" y="82" width="120" height="56" rx="6"/><path d="M250 110H288" marker-end="url(#f-sp-fl)"/><rect x="290" y="82" width="120" height="56" rx="6"/><path d="M410 110H443" marker-end="url(#f-sp-fl)"/><rect x="445" y="90" width="72" height="40" rx="6"/><path d="M517 110H550" marker-end="url(#f-sp-fl)"/><circle cx="568" cy="110" r="18"/><path d="M568 40V90" marker-end="url(#f-sp-fl)"/><path d="M586 110H618" marker-end="url(#f-sp-fl)"/><rect x="620" y="82" width="125" height="56" rx="6"/><path d="M682 138V250H592" marker-end="url(#f-sp-fl)"/><rect x="470" y="228" width="120" height="44" rx="6"/><path d="M470 250H80V130" marker-end="url(#f-sp-fl)"/><path d="M428 110V185H190V140" marker-end="url(#f-sp-fl)" stroke-dasharray="6 4"/></g><g fill="currentColor" stroke="currentColor"><circle cx="428" cy="110" r="3.5"/><circle cx="682" cy="170" r="3.5"/></g><g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="14" y="100">pc</text><text x="50" y="102" font-size="14" font-weight="700">+</text><text x="88" y="150" font-size="16" font-weight="700">-</text><text x="104" y="102">e</text><text x="190" y="106" text-anchor="middle">PI</text><text x="190" y="124" text-anchor="middle" font-size="10">anti-emballement</text><text x="258" y="102">fc</text><text x="350" y="104" text-anchor="middle" font-size="11">variateur</text><text x="350" y="120" text-anchor="middle" font-size="10">25 à 50 Hz</text><text x="350" y="133" text-anchor="middle" font-size="10">rampe 5 Hz/s</text><text x="418" y="102">fr</text><text x="481" y="114" text-anchor="middle" font-size="11">retard</text><text x="481" y="127" text-anchor="middle" font-size="10">50 ms</text><text x="576" y="34">d (soutirage)</text><text x="576" y="84" font-size="16" font-weight="700">-</text><text x="540" y="102" font-size="14" font-weight="700">+</text><text x="682" y="106" text-anchor="middle" font-size="11">pompe et réseau</text><text x="682" y="124" text-anchor="middle" font-size="11">Kg / (1 + τh s)</text><text x="676" y="166" font-size="11" text-anchor="end">p (pression vraie)</text><text x="530" y="248" text-anchor="middle" font-size="11">capteur</text><text x="530" y="263" text-anchor="middle" font-size="11">1 / (1 + τc s)</text><text x="300" y="242">pm (mesure)</text><text x="200" y="200" font-size="11">fr renvoyée au correcteur (suivi)</text><text x="20" y="300" font-size="11">Écarts autour du point de service : 42,27 Hz, réserve de +7,73 Hz et de -17,27 Hz jusqu'aux butées.</text><text x="20" y="320" font-size="11">Kg = 0,15 bar/Hz, τh = 1,2 s, τc = 0,13 s : modèle supposé, à identifier sur site.</text></g></svg>
+    <figcaption>
+      Schéma principal : boucle de pression du site avec son correcteur. Les signaux circulent dans le sens des flèches, en écarts autour du point de service.
+      Le premier sommateur forme l'écart $e = p_c - p_m$, consigne sur l'entrée $+$, mesure sur l'entrée $-$. Le correcteur PI fournit la consigne de fréquence
+      $f_c$ ; le variateur la borne entre $25$ et $50\ \mathrm{Hz}$ et en limite la variation à $5\ \mathrm{Hz/s}$, d'où la fréquence réelle $f_r$. Après le
+      retard de l'automate et de la transmission, le second sommateur retranche le soutirage $d$, exprimé en bar de chute statique, entrée $-$. Le bloc pompe et
+      réseau fournit la pression vraie $p$, que le capteur filtre en $p_m$. La liaison en tirets renvoie $f_r$ au correcteur, qui s'en sert comme $u_s$ pour
+      le recalcul de l'intégrale. Les points noirs sont des points de prélèvement. Le correcteur est à action dite inverse, au sens des régulateurs
+      industriels : si la pression mesurée monte, la fréquence demandée baisse.
+    </figcaption>
+  </figure>
+
+  <p>
+    L'organigramme suivant résume le choix et le réglage d'un correcteur, du modèle jusqu'à la mise en service.
+  </p>
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Modèle et cahier des performances"] --> B{"Erreur nulle exigée ?"}
+  B -->|"Non"| P["P"]
+  B -->|"Oui"| C{"Second pôle lent,<br/>mesure peu bruitée ?"}
+  C -->|"Non"| PI["PI : Ti = τ1"]
+  C -->|"Oui"| PID["PID : Ti' = τ1, Td' = τ2"]
+  P --> G["Kc pour ζ ou λ"]
+  PI --> G
+  PID --> G
+  G --> H{"Marges<br/>45°, 6 dB, 0,5 ?"}
+  H -->|"Non"| R["Réduire Kc"]
+  R --> H
+  H -->|"Oui"| S{"Commande<br/>dans les butées ?"}
+  S -->|"Non"| W["Rampe, pondération b,<br/>dérivée sur la mesure"]
+  S -->|"Oui"| X["Anti-emballement,<br/>unités, sens d'action"]
+  W --> X
+  X --> Y["Essai sur site"]</pre>
+    <figcaption>
+      Organigramme de choix et de réglage d'un correcteur. Les losanges sont des décisions, les rectangles des actions ; les libellés des flèches donnent la
+      réponse qui oriente le chemin. La structure du correcteur se décide d'abord sur les besoins, erreur statique et dynamique du procédé, puis le gain sur le
+      cahier des performances ; les marges sont des règles de conception ; les deux dernières étapes traitent les limites physiques, butées et bruit, et les
+      conventions du matériel avant tout essai.
+    </figcaption>
+  </figure>
+
+  <p>
+    Le tableau suivant compare les quatre structures. Il se lit pour un procédé stable sans intégrateur et une boucle correctement réglée.
+  </p>
+  <div class="cadre-tableau" id="f-comparatif">
+    <table>
+      <thead><tr><th>Correcteur</th><th>Erreur statique (échelon)</th><th>Effet sur la phase en $\omega_c$</th><th>Bruit en haute fréquence</th><th>Usage typique</th></tr></thead>
+      <tbody>
+        <tr><td>P</td><td>$r_0/(1 + K_cK_0)$, non nulle</td><td>Nul ; seul le gain change</td><td>Gain $K_c$</td><td>Boucle interne d'une cascade, procédé intégrateur</td></tr>
+        <tr><td>PI</td><td>Nulle</td><td>Retard, faible si $1/T_i \ll \omega_c$</td><td>Gain $K_c$</td><td>Débit, pression, vitesse, courant : la majorité des boucles</td></tr>
+        <tr><td>PD filtré</td><td>$r_0/(1 + K_cK_0)$, non nulle</td><td>Avance, jusqu'à $\arcsin(N/(N + 2))$</td><td>Gain $K_c(1 + N)$</td><td>Position avec intégrateur dans le procédé</td></tr>
+        <tr><td>PID filtré</td><td>Nulle</td><td>Retard aux basses, avance aux moyennes pulsations</td><td>Gain $K_c(1 + N)$</td><td>Température, procédés lents d'ordre élevé, rejet de perturbation</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <ul>
+    <li><a href="#d-actions-sim" data-renvoi="d-actions-sim">Trois lectures d'un même écart</a>, section D : présent, passé et tendance.</li>
+    <li><a href="#e-formes-figure" data-renvoi="e-formes-figure">Deux structures de PID</a>, section E : formes standard, série et parallèle.</li>
+    <li><a href="#e-compare-sim" data-renvoi="e-compare-sim">Effet comparé des actions P, I et D sur le four</a>, section E.</li>
+    <li><a href="#e-antiwindup-figure" data-renvoi="e-antiwindup-figure">Correcteur PI avec recalcul de l'intégrale</a>, section E.</li>
+    <li><a href="#e-windup-sim" data-renvoi="e-windup-sim">Emballement de l'intégrale sur le four</a>, section E.</li>
+    <li><a href="#e-bode-sim" data-renvoi="e-bode-sim">Diagramme de Bode du PID filtré</a>, section E.</li>
+    <li><a href="#e-methodes" data-renvoi="e-methodes">Tableau comparatif des méthodes de réglage</a>, section E.</li>
+    <li><a href="#h-reponses-fig" data-renvoi="h-reponses-fig">Réponses du four avec les trois correcteurs</a>, section H.</li>
+    <li><a href="#i-pression-sim" data-renvoi="i-pression-sim">Réglage et anti-emballement de la régulation de pression</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <ol>
+    <li><strong>Écrire le modèle et le cahier des performances.</strong> Fonction de transfert du procédé, de l'actionneur et du capteur, avec unités ; retard
+      compris ; exigences : erreur statique, dépassement, temps d'établissement, rejet de perturbation, butées de l'actionneur.</li>
+    <li><strong>Choisir la structure.</strong> Intégrale si l'erreur statique doit être nulle ; dérivée seulement si une seconde constante de temps limite la
+      rapidité et si la mesure est peu bruitée ; sinon PI.</li>
+    <li><strong>Placer les zéros.</strong> $T_i$ sur la constante de temps dominante ; pour un PID série, $T_d'$ sur la seconde ; regrouper le reste dans
+      $\tau_r$, filtre $T_f$ et demi-retard compris.</li>
+    <li><strong>Calculer le gain.</strong> $K = T_i/(4\zeta^2\tau_r)$ pour l'amortissement visé, ou méthode lambda ; puis $K_c = K/K_0$, avec son unité.</li>
+    <li><strong>Vérifier les marges.</strong> Pulsation de coupure, marge de phase, marge de gain, marge de module, retard inclus ; règles usuelles
+      $M_\varphi \ge 45^\circ$, $M_G \ge 6\ \mathrm{dB}$, $M_m \ge 0{,}5$.</li>
+    <li><strong>Vérifier la commande.</strong> Commande initiale $K_c r_0$, ou $K_c(1 + N)r_0$ si la dérivée porte sur l'écart, comparée à la réserve de
+      l'actionneur ; commande d'équilibre $r_0/K_0$ ; bruit transmis $K_c$ ou $K_c(1 + N)$ fois le bruit de mesure.</li>
+    <li><strong>Protéger et convertir.</strong> Anti-emballement et son $T_t$, dérivée sur la mesure, passage sans à-coup ; conversion vers la forme et les unités
+      du matériel ; sens d'action.</li>
+    <li><strong>Contrôler.</strong> Simulation avec saturations, puis essai indiciel de faible amplitude sur site ; comparer dépassement et temps
+      d'établissement à la prévision.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    <strong>Données.</strong> Four de séchage électrique de $30\ \mathrm{kW}$ piloté par un gradateur ; modèle identifié autour du point de fonctionnement à
+    $40\ \%$ de puissance : $G(s) = K_0/\bigl((1 + \tau_1 s)(1 + \tau_2 s)\bigr)$ avec $K_0 = 2\ \mathrm{K/\%}$, $\tau_1 = 400\ \mathrm{s}$ pour la masse
+    thermique et $\tau_2 = 40\ \mathrm{s}$ pour la paroi et la sonde, mesure rapportée à la température. Réserve de puissance : $+60\ \%$ au-dessus du point
+    de fonctionnement. Cahier des performances : erreur statique nulle, dépassement au plus $10\ \%$, réponse aussi rapide que l'actionneur le permet, pour un
+    échelon de consigne de $10\ \mathrm{K}$.
+  </p>
+  <p>
+    <strong>Inconnues.</strong> Structure du correcteur, $K_c$ en $\%/\mathrm{K}$, $T_i$ et $T_d$ en secondes ; performances obtenues et commande demandée.
+  </p>
+  <p>
+    <strong>Stratégie.</strong> Évaluer successivement un P, un PI qui compense $\tau_1$ et un PID série qui compense $\tau_1$ et $\tau_2$, chacun réglé par le
+    calcul de la section E, puis retenir le plus performant dont la commande reste dans la réserve de l'actionneur.
+  </p>
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li><strong>Correcteur P pour $5\ \%$ d'erreur.</strong> $\varepsilon_\infty/r_0 = 1/(1 + K_cK_0) = 0{,}05$ impose $K_cK_0 = 19$, soit
+      $K_c = 19/2 = 9{,}5\ \%/\mathrm{K}$. Polynôme caractéristique : $\tau_1\tau_2 s^2 + (\tau_1 + \tau_2)s + 1 + K_cK_0 = 16\,000\,s^2 + 440\,s + 20$.
+      Donc $\omega_0 = \sqrt{20/16\,000} = 0{,}0354\ \mathrm{rad/s}$ et $\zeta = 440/\bigl(2\sqrt{16\,000 \times 20}\bigr) = 0{,}389$, d'où
+      $D = e^{-\pi \times 0{,}389/\sqrt{1 - 0{,}389^2}} = 26{,}5\ \%$ par rapport à la valeur finale de $9{,}5\ \mathrm{K}$. Commande initiale :
+      $u(0^+) = 9{,}5 \times 10 = 95\ \%$, au-delà de la réserve de $60\ \%$. Rejeté : erreur, dépassement et saturation.</li>
+    <li><strong>Correcteur PI.</strong> $T_i = \tau_1 = 400\ \mathrm{s}$, $\tau_r = \tau_2 = 40\ \mathrm{s}$, $\zeta = 0{,}7$ :
+      $K = T_i/(4\zeta^2\tau_r) = 400/(1{,}96 \times 40) = 5{,}102$, donc $K_c = 5{,}102/2 = 2{,}551\ \%/\mathrm{K}$. Pulsation propre
+      $\omega_0 = 1/(2 \times 0{,}7 \times 40) = 0{,}0179\ \mathrm{rad/s}$ ; dépassement $4{,}6\ \%$ ; temps d'établissement à $5\ \%$ obtenu par simulation,
+      $162\ \mathrm{s}$, et temps de montée de $10$ à $90\ \%$ de $119\ \mathrm{s}$. Marges : $|L(j\omega_c)| = 1$ pour $\omega_c = 0{,}0116\ \mathrm{rad/s}$,
+      $M_\varphi = 90^\circ - \arctan(40 \times 0{,}0116) = 65{,}2^\circ$, marge de gain infinie pour ce modèle sans retard. Commande initiale
+      $2{,}551 \times 10 = 25{,}5\ \%$, dans la réserve ; commande d'équilibre $10/2 = 5\ \%$.</li>
+    <li><strong>Correcteur PID série.</strong> $T_i' = 400\ \mathrm{s}$, $T_d' = 40\ \mathrm{s}$, $N = 10$ donc $T_f = 4\ \mathrm{s}$, filtre appliqué à
+      toute la sortie, $C(s) = K_c'(1 + T_i's)(1 + T_d's)/\bigl(T_i's(1 + T_fs)\bigr)$ ; il reste $\tau_r = T_f = 4\ \mathrm{s}$ :
+      $K = 400/(1{,}96 \times 4) = 51{,}02$, $K_c' = 25{,}51\ \%/\mathrm{K}$. Forme standard équivalente : $K_c = 25{,}51 \times 440/400 = 28{,}06\ \%/\mathrm{K}$,
+      $T_i = 440\ \mathrm{s}$, $T_d = 400 \times 40/440 = 36{,}4\ \mathrm{s}$. Performances linéaires : dépassement $4{,}6\ \%$, temps d'établissement
+      $16{,}2\ \mathrm{s}$, dix fois plus rapide. Commande initiale : $C(\infty) = K_c'T_d'/T_f = 255{,}1\ \%/\mathrm{K}$, soit $2551\ \%$ pour $10\ \mathrm{K}$ ;
+      même en dérivant la mesure, l'action proportionnelle seule demande $28{,}06 \times 10 = 281\ \%$.</li>
+    <li><strong>Choix.</strong> Le PID est irréalisable avec ce gradateur : sa rapidité supposerait une puissance quarante fois supérieure à la réserve. Le PI
+      respecte toutes les exigences ; il est retenu avec $K_c = 2{,}55\ \%/\mathrm{K}$ et $T_i = 400\ \mathrm{s}$, et protégé par un anti-emballement pour les
+      grands échelons, que la section E a étudiés.</li>
+  </ol>
+  <figure id="h-reponses-fig">
+    <div id="h-reponses"></div>
+    <div id="h-commandes"></div>
+    <figcaption>
+      Réponses du four à un échelon de consigne de $10\ \mathrm{K}$ avec les trois correcteurs, sans saturation. Premier tracé : écart de température en
+      kelvins sur $600\ \mathrm{s}$, consigne en tirets. Second tracé : commande en pour cent, avec la réserve de $+60\ \%$ en tirets ; la commande du PID,
+      qui sort du cadre par le haut puis par le bas pendant les quarante premières secondes, y est masquée. Chaque courbe est nommée dans la légende de son tracé.
+    </figcaption>
+  </figure>
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li><strong>Unités.</strong> $K_0$ en $\mathrm{K/\%}$ et $K_c$ en $\%/\mathrm{K}$ : leur produit est sans dimension, comme il se doit pour un gain de
+      boucle. $T_i$ et $T_d$ en secondes.</li>
+    <li><strong>Bilan de commande.</strong> Avec le PI, le rapport entre commande initiale et commande d'équilibre vaut $25{,}5/5 = 5{,}1 = K$ : le correcteur
+      "surchauffe" au départ d'un facteur égal au gain de boucle, et c'est ce forçage qui rend la boucle plus rapide que le four seul, dont le temps
+      d'établissement en boucle ouverte dépasse $1200\ \mathrm{s}$.</li>
+    <li><strong>Ordre de grandeur.</strong> $162\ \mathrm{s}$ correspond à $3/(\zeta\omega_0) = 3/(0{,}7 \times 0{,}0179) = 240\ \mathrm{s}$ à mieux qu'un
+      facteur deux près : la formule approchée est pessimiste quand le dépassement reste sous la bande de $5\ \%$.</li>
+    <li><strong>Limite du modèle.</strong> La compensation de $\tau_1$ supprime le mode lent de la réponse à la consigne, pas de la réponse à une perturbation :
+      la simulation de la section E montre qu'après l'ouverture de la porte, il faut environ $900\ \mathrm{s}$ pour revenir dans la bande.</li>
+  </ul>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <h3 id="i-contexte">Réglage et protection de la régulation de pression du site</h3>
+  <p>
+    La pompe du projet fil rouge maintient la pression du réseau d'eau du site en agissant sur la fréquence de son variateur. Le modèle supposé est celui du
+    cours <a href="#/cours/criteres-de-stabilite">Critères de stabilité</a> : $K_g = 0{,}15\ \mathrm{bar/Hz}$, $\tau_h = 1{,}2\ \mathrm{s}$, capteur
+    $\tau_c = 0{,}13\ \mathrm{s}$, retard de l'automate et de la transmission $T = 50\ \mathrm{ms}$. Le point de service est à $42{,}27\ \mathrm{Hz}$ ; le
+    variateur est borné à $50\ \mathrm{Hz}$ en haut et, par hypothèse, à $25\ \mathrm{Hz}$ en bas pour garantir le refroidissement et le débit minimal de la
+    pompe ; sa rampe vaut $5\ \mathrm{Hz/s}$, soit $10\ \mathrm{s}$ pour $50\ \mathrm{Hz}$.
+  </p>
+  <ol>
+    <li><strong>Structure.</strong> Erreur statique nulle exigée : action intégrale. Pas de seconde constante de temps lente à compenser, mesure perturbée par
+      les pulsations de la pompe : pas d'action dérivée. Correcteur PI.</li>
+    <li><strong>Réglage.</strong> $T_i = \tau_h = 1{,}2\ \mathrm{s}$. La boucle compensée a pour constante de temps voisine de $T_i/K$ ; le cahier demande
+      environ $4\ \mathrm{s}$ à $5\ \%$. La simulation, retard exact compris, donne $5{,}86\ \mathrm{s}$ pour $K = 0{,}564$ et $3{,}46\ \mathrm{s}$ pour
+      $K = 0{,}9$, sans dépassement : on retient $K_c = 0{,}9/0{,}15 = 6{,}0\ \mathrm{Hz/bar}$.</li>
+    <li><strong>Marges.</strong> $\omega_c = 0{,}746\ \mathrm{rad/s}$, $M_\varphi = 82{,}3^\circ$, $M_G = 29{,}0\ \mathrm{dB}$ (le gain critique reste
+      $K = 25{,}4$, soit $169\ \mathrm{Hz/bar}$), $M_m = 0{,}904$ : toutes les règles sont tenues avec une large réserve pour les erreurs de modèle.</li>
+    <li><strong>Commande.</strong> Un échelon de consigne de $0{,}5\ \mathrm{bar}$ demande d'emblée $6{,}0 \times 0{,}5 = 3\ \mathrm{Hz}$, que la rampe fournit en
+      $0{,}6\ \mathrm{s}$ : la réponse n'est presque pas modifiée, dépassement de l'ordre de $1\ \%$. Bruit : $0{,}01\ \mathrm{bar}$ de bruit de mesure donnent
+      $0{,}06\ \mathrm{Hz}$ d'agitation de la consigne de fréquence, acceptable.</li>
+    <li><strong>Saturation.</strong> Un soutirage exceptionnel, par exemple le remplissage d'une cuve de lavage, équivalent à une chute statique de
+      $1{,}5\ \mathrm{bar}$, demanderait $1{,}5/0{,}15 = 10\ \mathrm{Hz}$ de plus, alors que la réserve n'est que de $7{,}73\ \mathrm{Hz}$ : le variateur plafonne
+      à $50\ \mathrm{Hz}$ et la pression reste sous la consigne de $7{,}73 \times 0{,}15 - 1{,}5 = -0{,}34\ \mathrm{bar}$. C'est un fonctionnement dégradé
+      normal ; le danger vient du retour à la normale.</li>
+  </ol>
+  <p>
+    La simulation suivante reproduit un scénario de soixante secondes à consigne constante : de $t = 5$ à $t = 35\ \mathrm{s}$, un soutirage réglable ;
+    pression vraie et fréquences calculées avec le retard exact, les butées et la rampe du variateur. Les curseurs règlent $K_c$, $T_i$, le soutirage et la
+    protection de l'intégrale ; le recalcul utilise la fréquence réelle renvoyée par le variateur, avec $T_t = T_i/2$. Les marges et la réponse à un petit
+    échelon de consigne, sans saturation, sont recalculées pour chaque réglage.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Sans protection, de combien la pression dépassera-t-elle sa consigne à la fin du soutirage : quelques centièmes de bar, quelques dixièmes, ou plus d'un
+      bar ? La protection supprimera-t-elle entièrement ce dépassement ? Si l'on réduit $T_i$ à $0{,}3\ \mathrm{s}$ pour "corriger plus vite", que deviennent
+      la marge de phase et la réponse à la consigne ?
+    </p>
+  </div>
+  <figure id="i-pression-sim">
+    <div id="i-pression-curseurs"></div>
+    <div id="i-pression-valeurs"></div>
+    <div id="i-pression-trace"></div>
+    <div id="i-pression-frequence"></div>
+    <figcaption>
+      Réglage et anti-emballement de la régulation de pression. Premier tracé : écart de pression vraie à la pression de service, en bar, sur soixante secondes,
+      avec la consigne en tirets et la période de soutirage délimitée par deux verticales en pointillé. Second tracé : fréquence calculée par le correcteur et
+      fréquence réelle du variateur, en hertz, avec la butée de $50\ \mathrm{Hz}$ en tirets ; la fréquence calculée est tronquée en haut du cadre quand elle
+      s'emballe. Les marges affichées sont calculées sur la réponse harmonique exacte, retard compris. Chaque courbe est nommée dans la légende de son tracé.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Sans protection, la fréquence calculée monte jusqu'à $98{,}3\ \mathrm{Hz}$ pendant que le variateur
+    reste à $50\ \mathrm{Hz}$ et que la pression plafonne à $-0{,}34\ \mathrm{bar}$ ; à la fin du soutirage, le variateur reste en butée plusieurs secondes,
+    le temps que l'intégrale se vide, et la pression culmine à $+1{,}16\ \mathrm{bar}$, avec un retour dans $\pm 0{,}05\ \mathrm{bar}$ en $14{,}3\ \mathrm{s}$.
+    Le blocage ramène la surpression à $0{,}39\ \mathrm{bar}$ et le retour à $5{,}6\ \mathrm{s}$ ; le recalcul sur la fréquence réelle, à $0{,}44\ \mathrm{bar}$
+    et $5{,}9\ \mathrm{s}$. Le dépassement ne disparaît pas entièrement : la rampe de $5\ \mathrm{Hz/s}$ impose $7{,}73/5 = 1{,}55\ \mathrm{s}$ pour redescendre
+    au point de service, pendant lesquelles la pression monte sans que le correcteur y puisse rien. Réduire $T_i$ à $0{,}3\ \mathrm{s}$ ne raccourcit pas la
+    réponse à la consigne, $4{,}55\ \mathrm{s}$ au lieu de $3{,}46\ \mathrm{s}$ ; la marge de phase tombe de $82{,}3^\circ$ à $37{,}5^\circ$, la marge de
+    module à $0{,}57$, et sans protection la fréquence calculée atteint $218\ \mathrm{Hz}$ : corriger "plus vite" par l'intégrale est une fausse bonne idée.
+    Le soutirage à zéro montre qu'en l'absence de saturation, les trois variantes donnent exactement la même réponse : la protection n'agit qu'en butée.
+  </p>
+  <h3 id="i-compromis">Risques, choix d'ingénierie et compromis</h3>
+  <ul>
+    <li><strong>Surpression au retour.</strong> Le dépassement après une saturation sollicite la tuyauterie et peut faire déclencher une soupape ou un
+      pressostat de sécurité. Choix : anti-emballement par recalcul sur la fréquence réelle, plus robuste qu'un blocage car il tient compte aussi de la rampe ;
+      la sécurité de surpression reste assurée par un organe indépendant de la régulation.</li>
+    <li><strong>Rampe de décélération.</strong> Même protégée, la boucle ne peut pas réduire la fréquence plus vite que $5\ \mathrm{Hz/s}$ ; une partie du
+      dépassement est due à la rampe, et le régulateur de bus du variateur peut encore l'allonger en freinage, comme l'a montré le cours
+      <a href="#/cours/revision-8-et-etude-de-cas-variateur">Révision 8 et étude de cas variateur</a>. Compromis : une rampe plus courte réduit la surpression
+      mais augmente l'énergie renvoyée au bus.</li>
+    <li><strong>Gain plus élevé.</strong> Monter $K_c$ au-delà de $6\ \mathrm{Hz/bar}$ accélère encore, mais rapproche la commande des butées pour les échelons
+      de consigne et transmet davantage de bruit. Le cahier étant tenu, on garde la réserve.</li>
+    <li><strong>Unités et forme.</strong> Le bloc PID de l'automate est supposé de forme standard, $T_i$ en secondes ; s'il est de forme parallèle, il faut
+      saisir $K_i = K_c/T_i = 5{,}0\ \mathrm{Hz/(bar \cdot s)}$. Vérifier aussi le sens d'action : pression trop haute, fréquence plus basse.</li>
+    <li><strong>Passage manuel vers automatique.</strong> En manuel, l'intégrale suit la fréquence réelle ; au retour en automatique, pas d'à-coup de
+      fréquence ni de coup de bélier.</li>
+  </ul>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Ajout au projet fil rouge</span>
+    <p>
+      Réglage et protection de la régulation de pression : PI de forme standard, $K_c = 6{,}0\ \mathrm{Hz/bar}$, $T_i = 1{,}2\ \mathrm{s}$ (compensation de
+      $\tau_h$), pas d'action dérivée ; $t_5 = 3{,}46\ \mathrm{s}$ sans dépassement, marges $29{,}0\ \mathrm{dB}$, $82{,}3^\circ$ et $0{,}904$ ;
+      anti-emballement par recalcul sur la fréquence réelle renvoyée par le variateur, $T_t = 0{,}6\ \mathrm{s}$ ; sur un soutirage de $1{,}5\ \mathrm{bar}$
+      pendant $30\ \mathrm{s}$, surpression au retour ramenée de $1{,}16$ à $0{,}44\ \mathrm{bar}$ et retour dans $\pm 0{,}05\ \mathrm{bar}$ en
+      $5{,}9\ \mathrm{s}$ au lieu de $14{,}3\ \mathrm{s}$ ; passage manuel vers automatique sans à-coup ; forme, unités et sens d'action à vérifier dans
+      l'automate. Butée basse de $25\ \mathrm{Hz}$ et modèle hydraulique supposés.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Augmenter $K_c$ pour supprimer une erreur statique.</strong> L'erreur d'un P vaut $r_0/(1 + K_cK_0)$ : elle diminue sans jamais s'annuler, et la
+      marge fond. Correction : ajouter une action intégrale.</li>
+    <li><strong>Croire que l'intégrale accélère la boucle.</strong> Elle annule l'erreur mais retarde la commande ; un $T_i$ trop petit fait osciller, puis rend
+      instable. Correction : placer $1/T_i$ sous $\omega_c$, ou sur le pôle dominant.</li>
+    <li><strong>Dériver l'écart et ne pas filtrer.</strong> Chaque échelon de consigne produit un pic de commande $K_c N r_0$, et le bruit est amplifié sans
+      limite. Correction : dérivée sur la mesure, $N$ de $5$ à $20$, filtre de mesure adapté.</li>
+    <li><strong>Oublier l'anti-emballement.</strong> Après une saturation, dépassement important et retour lent, parfois une oscillation entre butées.
+      Correction : intégration conditionnelle ou recalcul, de préférence sur la commande réellement appliquée.</li>
+    <li><strong>Confondre les formes et les unités.</strong> Saisir un $T_i$ de forme standard dans un champ $K_i$ de forme parallèle, ou des secondes là où l'on
+      attend des minutes. Correction : identifier la forme et les unités dans la documentation, convertir, puis vérifier par un essai de faible amplitude.</li>
+    <li><strong>Ajouter de la dérivée sans retoucher le gain.</strong> À gain égal, la dérivée n'accélère presque pas la réponse à la consigne ; son intérêt est
+      de permettre un gain plus élevé, ou de mieux rejeter les perturbations, à amortissement égal. Correction : régler les trois paramètres ensemble.</li>
+    <li><strong>Compenser un pôle lent et oublier les perturbations.</strong> La réponse à la consigne est rapide, mais une perturbation d'entrée se rattrape
+      avec la constante de temps compensée. Correction : vérifier aussi la réponse aux perturbations, et choisir $T_i$ plus petit si le rejet compte davantage
+      que la consigne.</li>
+    <li><strong>Inverser le sens d'action.</strong> Un régulateur de pression à action directe accélère la pompe quand la pression monte : la grandeur diverge
+      jusqu'à une butée, sans osciller. Correction : vérifier le signe avant tout réglage de gain.</li>
+  </ol>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic industriel et une question
+    conceptuelle sans calcul. Les solutions sont présentes dans la page mais restent masquées jusqu'à votre tentative ou à un clic explicite ; chaque
+    correction se révèle étape par étape, avec une réponse temporelle tracée, un schéma annoté ou un calcul encadré.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangées : choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Le score est calculé dans ce navigateur
+    et repris par la grille d'auto-évaluation.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+  <h3 id="m-formules">Cinq formules essentielles</h3>
+  <div class="formule-cle">$$C(s) = K_c\Bigl(1 + \frac{1}{T_i s} + \frac{T_d s}{1 + T_d s/N}\Bigr) ; \qquad K_p = K_c,\ \ K_i = \frac{K_c}{T_i},\ \ K_d = K_cT_d$$</div>
+  <div class="formule-cle">$$\varepsilon_\infty = \frac{r_0}{1 + K_cK_0}\ \text{(P)} ; \qquad \varepsilon_\infty = 0\ \text{(intégrale, boucle stable)}$$</div>
+  <div class="formule-cle">$$T_i = \tau_1,\ \ K = K_cK_0 = \frac{T_i}{4\zeta^2\tau_r}\ \ (\zeta = 0{,}7 : K = 0{,}51\,T_i/\tau_r)$$</div>
+  <div class="formule-cle">$$|C(j\infty)| = K_c(1 + N) ; \qquad \sin\varphi_m = \frac{N}{N + 2}$$</div>
+  <div class="formule-cle">$$\dot x_i = \frac{K_c}{T_i}e + \frac{u_s - u_c}{T_t} ; \qquad \text{série vers standard : } K_c = K_c'\frac{T_i' + T_d'}{T_i'},\ T_i = T_i' + T_d',\ T_d = \frac{T_i'T_d'}{T_i' + T_d'}$$</div>
+  <h3 id="m-vigilance">Cinq points de vigilance</h3>
+  <ul>
+    <li>Identifier la forme du PID et les unités de chaque paramètre avant toute saisie.</li>
+    <li>Dériver la mesure et filtrer la dérivée ; ne jamais dériver un échelon de consigne.</li>
+    <li>Toute boucle dont l'actionneur peut saturer a besoin d'un anti-emballement.</li>
+    <li>Vérifier la commande initiale contre la réserve de l'actionneur : un réglage rapide sur le papier peut être irréalisable.</li>
+    <li>Un pôle compensé reste visible dans la réponse aux perturbations.</li>
+  </ul>
+  <h3 id="m-resume">Résumé</h3>
+  <p>
+    L'action proportionnelle réagit à l'écart présent et laisse une erreur $r_0/(1 + K_cK_0)$. L'action intégrale l'annule, puisqu'un équilibre exige un écart
+    nul, mais retarde la commande de jusqu'à $90^\circ$. L'action dérivée anticipe et apporte de l'avance de phase ; elle doit être filtrée, gain haute
+    fréquence $K_c(1 + N)$, et appliquée à la mesure. Le réglage par compensation place $T_i$ sur le pôle dominant et fixe $K_c$ par l'amortissement visé ;
+    on vérifie ensuite marges, commande initiale et bruit. Quand l'actionneur sature, l'intégrale s'emballe : intégration conditionnelle ou recalcul avec
+    $T_t$ entre $T_d$ et $T_i$. Formes standard, série et parallèle se convertissent, unités comprises.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance, deux sur le cours précédent, <a href="#/cours/criteres-de-stabilite">Critères de stabilité</a>, dont les marges
+    servent à valider un réglage, une sur le cours <a href="#/cours/thermique-des-composants-de-puissance">Thermique des composants de puissance</a>, vieux
+    d'une semaine, et une sur le cours <a href="#/cours/transformateur-reel">Transformateur réel</a>, vieux d'un mois.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : programmer un PID discret avec dérivée filtrée et anti-emballement, le régler sur le four de la section H, puis observer l'emballement de
+    l'intégrale dans LTspice. Prédictions à écrire avant de commencer : dépassement du PI de départ sans saturation ; effet d'une réserve de $40\ \%$ sur un
+    échelon de $50\ \mathrm{K}$ sans protection ; valeur de $T_t$ qui donne le meilleur compromis.
+  </p>
+  <ol>
+    <li><strong>Python, simulation du four.</strong> Écrire les équations d'état $\dot x_1 = (K_0 u - x_1)/\tau_1$, $\dot x_2 = (x_1 - x_2)/\tau_2$, $y = x_2$,
+      et les intégrer par la méthode d'Euler avec un pas $h = 0{,}1\ \mathrm{s}$, petit devant $\tau_2$.</li>
+    <li><strong>Python, PID discret.</strong> À chaque pas : $e = r - y$ ; dérivée filtrée de $-y$ par $x_f \leftarrow x_f + h(-y - x_f)/T_f$ et
+      $u_D = K_cT_d(-y - x_f)/T_f$ ; $u_c = K_ce + x_i + u_D$ ; $u_s = \min(\max(u_c, u_{\min}), u_{\max})$ ; puis
+      $x_i \leftarrow x_i + h\bigl(K_ce/T_i + (u_s - u_c)/T_t\bigr)$. Comparer avec $T_t$ infini, sans protection.</li>
+    <li><strong>Python, essais.</strong> Retrouver les valeurs de la section H : PI $K_c = 2{,}551$, $T_i = 400$, échelon de $10\ \mathrm{K}$ ; puis échelon de
+      $50\ \mathrm{K}$ avec $u_{\max} = 40$, sans protection, avec blocage, puis avec $T_t = 100$, $200$ et $400\ \mathrm{s}$.</li>
+    <li><strong>LTspice, emballement.</strong> Représenter le four par deux cellules RC de constantes de temps $400$ et $40\ \mathrm{s}$ séparées par un tampon,
+      le PI par une source comportementale <code>B1 uc 0 V=Kc*(V(r)-V(y))+V(xi)</code>, l'intégrateur par <code>G1 0 xi value={Kc/Ti*(V(r)-V(y))}</code> et
+      <code>C1 xi 0 1</code>, la saturation par <code>B2 us 0 V=limit(V(uc),-40,40)</code>. Lancer <code>.tran 0 3000 0 0.5</code>, puis ajouter le recalcul
+      en complétant <code>G1</code> par le terme <code>(V(us)-V(uc))/Tt</code>.</li>
+  </ol>
+  <p>
+    Résultats attendus : échelon de $10\ \mathrm{K}$, dépassement $4{,}6\ \%$, $t_5 \approx 162\ \mathrm{s}$, commande initiale $25{,}5\ \%$. Échelon de
+    $50\ \mathrm{K}$ avec réserve de $40\ \%$ : sans protection, dépassement d'environ $22\ \%$, soit un pic vers $61\ \mathrm{K}$, retour dans la bande au-delà
+    de $1200\ \mathrm{s}$ ; avec blocage, pas de dépassement mais une approche lente, vers $790\ \mathrm{s}$ ; avec $T_t = 400\ \mathrm{s}$, dépassement
+    d'environ $1\ \%$ et $t_5 \approx 410\ \mathrm{s}$ ; avec $T_t = 100\ \mathrm{s}$, comportement voisin du blocage.
+  </p>
+  <p>
+    Anomalies à observer et à expliquer : une simulation qui diverge avec un pas trop grand devant $T_f$, instabilité numérique de la méthode d'Euler et non
+    du correcteur, à corriger en réduisant le pas ou en discrétisant le filtre exactement, ce que traitera le cours Commande numérique ; un écart permanent
+    malgré l'intégrale, signe d'une saturation permanente, la consigne étant hors d'atteinte ; une commande qui bascule d'une butée à l'autre, signe d'un
+    gain excessif ou d'un sens d'action inversé. Tout essai sur un four réel se fait avec les sécurités de surchauffe actives et sous la responsabilité d'une
+    personne habilitée.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours, notées de 0 à 4. Le bilan affiché sous la grille est calculé dans ce navigateur à
+    partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement. Aucune estimation n'est faite à votre place :
+    seul le score réellement obtenu sert de référence.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Lire votre bilan</span>
+    <p>
+      Les exercices fondamentaux testent l'erreur d'un correcteur proportionnel et la conversion entre formes ; l'intermédiaire 1 le réglage par compensation ;
+      l'intermédiaire 2 le recalcul de l'intégrale ; l'avancé un PID série avec petites constantes de temps regroupées ; la question de diagnostic
+      l'emballement sur site ; la question conceptuelle le rôle de l'intégrale. Un bloc réussi à moins de la moitié indique la notion à reprendre avant le cours
+      Commande numérique.
+    </p>
+  </div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Proportionnel, intégral et dérivé regardent l'écart présent, accumulé et sa tendance : l'intégrale annule l'erreur statique au prix de la phase, la dérivée ajoute de l'avance au prix du bruit.</li>
+    <li data-rang="02">Un réglage se calcule : zéros sur les pôles dominants, gain par l'amortissement visé, puis vérification des marges, de la commande initiale et du bruit transmis.</li>
+    <li data-rang="03">Les limites réelles font partie du correcteur : anti-emballement, dérivée filtrée sur la mesure, forme et unités du matériel, sens d'action.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> relier le réglage aux limites de l'actionneur, en particulier reconnaître qu'un PID très rapide sur le
+    papier est irréalisable, et choisir $T_t$ pour l'anti-emballement. Le réflexe à installer : après chaque calcul de gain, calculer la commande initiale et
+    la comparer à la réserve.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Commande numérique, implantera ce correcteur dans l'automate, qui calcule à intervalles
+    réguliers. Question à préparer : si l'automate exécute le PI toutes les $100\ \mathrm{ms}$, quelle phase supplémentaire ce calcul échantillonné
+    retire-t-il à la pulsation de coupure de $0{,}746\ \mathrm{rad/s}$, en l'assimilant à un retard d'une demi-période, et comment écrire l'intégrale et
+    l'anti-emballement sous forme d'équations de récurrence ?
+  </p>
+</article>
