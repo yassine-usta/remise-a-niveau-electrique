@@ -1,0 +1,961 @@
+<article class="cours" data-slug="commande-numerique">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/correcteurs-p-pi-pd-et-pid">Correcteurs P, PI, PD et PID</a> s'est achevé sur une question : si l'automate exécute le PI de la
+      régulation de pression toutes les $100\ \mathrm{ms}$, quelle phase ce calcul échantillonné retire-t-il à la pulsation de coupure de
+      $0{,}746\ \mathrm{rad/s}$, et comment écrire l'intégrale et l'anti-emballement sous forme d'équations de récurrence ? Réponse courte. Une commande
+      recalculée puis maintenue constante pendant une période se comporte, en moyenne, comme la commande continue retardée d'une demi-période, soit
+      $50\ \mathrm{ms}$. À $\omega_c = 0{,}746\ \mathrm{rad/s}$, ce retard retire $\omega_c T_e/2 = 0{,}746 \times 0{,}05 = 0{,}0373\ \mathrm{rad}$, soit
+      $2{,}14^\circ$ : la marge de phase passe de $82{,}3^\circ$ à $80{,}2^\circ$. Si la sortie n'est écrite qu'au début de la période suivante, il faut ajouter
+      une période entière de retard de calcul, et la perte monte à $6{,}4^\circ$. L'intégrale devient une somme : à chaque période, on ajoute
+      $K_cT_e e_k/T_i$ à l'état intégral, puis on le corrige de $(T_e/T_t)(u_s - u_c)$ pour l'anti-emballement. Cette séance justifie ces deux résultats,
+      compare les manières de discrétiser, et donne les critères pour choisir la période.
+    </p>
+    <p>
+      La séance réutilise le retard et sa phase du cours <a href="#/cours/diagrammes-de-bode">Diagrammes de Bode</a>, les marges du cours
+      <a href="#/cours/criteres-de-stabilite">Critères de stabilité</a>, la forme standard du PI et l'anti-emballement du cours
+      <a href="#/cours/correcteurs-p-pi-pd-et-pid">Correcteurs P, PI, PD et PID</a>, la solution exacte d'un premier ordre du cours
+      <a href="#/cours/regime-transitoire-rc">Régime transitoire RC</a>, et le repliement de spectre esquissé dans le cours
+      <a href="#/cours/introduction-a-fourier">Introduction à Fourier</a>.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Presque aucun correcteur industriel n'est encore analogique. Le PI d'une régulation de pression tourne dans un automate, la boucle de courant d'un
+    variateur dans un microcontrôleur ou un circuit logique programmable, le régulateur de température dans un petit calculateur de tableau. Tous partagent le
+    même principe : la mesure est lue à des instants réguliers, le calcul produit un nombre, et ce nombre est maintenu à la sortie jusqu'au calcul suivant.
+    Entre deux instants, le correcteur est aveugle et sa commande est figée.
+  </p>
+  <ul>
+    <li><strong>Un retard caché.</strong> L'échantillonnage et le maintien de la sortie ajoutent un retard d'environ une demi-période, auquel s'ajoute la durée
+      du calcul. Ce retard consomme de la marge de phase, exactement comme le retard de transmission étudié dans le cours
+      <a href="#/cours/diagrammes-de-bode">Diagrammes de Bode</a>.</li>
+    <li><strong>Une information perdue.</strong> Un signal plus rapide que la moitié de la fréquence d'échantillonnage n'est pas seulement mal mesuré : il
+      apparaît sous une fausse fréquence, plus basse, que le correcteur prend pour une vraie variation du procédé.</li>
+    <li><strong>Une traduction à faire.</strong> Le correcteur réglé en continu doit être réécrit en équations de récurrence. La méthode choisie détermine si
+      le correcteur numérique reste fidèle, et même s'il reste stable.</li>
+    <li><strong>Une compétence de mise en service.</strong> Choisir la tâche périodique d'un automate, reconnaître un bloc PID exécuté dans le cycle libre,
+      expliquer une commande qui alterne d'un échantillon à l'autre ou une erreur résiduelle qu'aucune intégrale ne corrige : ces diagnostics relèvent de
+      cette séance.</li>
+  </ul>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Jalon visé par le module</span>
+    <p>
+      Le jalon de fin de module demande de modéliser et de réguler un système simple. Après le modèle, les performances, l'analyse fréquentielle, la stabilité
+      et le correcteur, cette séance réalise la dernière étape : l'implantation du correcteur dans un calculateur, avec une période justifiée et des équations
+      prêtes à programmer.
+    </p>
+  </div>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Expliquer pourquoi un échantillonneur suivi d'un bloqueur d'ordre zéro équivaut, aux basses fréquences, à un retard d'une demi-période, et calculer la phase perdue à la pulsation de coupure.</li>
+    <li data-rang="02">Calculer la fréquence apparente d'un signal échantillonné trop lentement et dimensionner un filtre anti-repliement du premier ordre.</li>
+    <li data-rang="03">Discrétiser une fonction de transfert du premier ordre par les méthodes d'Euler avant, d'Euler arrière, de Tustin et d'invariance indicielle, et comparer la stabilité des récurrences obtenues.</li>
+    <li data-rang="04">Écrire un PI numérique sous forme de position et sous forme incrémentale, calculer ses coefficients et y intégrer l'anti-emballement par recalcul.</li>
+    <li data-rang="05">Choisir une période d'échantillonnage à partir d'un budget de phase, de la dynamique visée et des limites matérielles, puis vérifier le résultat par simulation.</li>
+    <li data-rang="06">Diagnostiquer les défauts typiques d'une commande numérique : période irrégulière, coefficients non mis à l'échelle, repliement, instabilité numérique, résolution insuffisante.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>Quatre rappels suffisent.</p>
+  <ul>
+    <li><strong>Retard pur.</strong> Un retard $\theta$ a pour fonction de transfert $e^{-\theta s}$ : module $1$, phase $-\omega\theta$ en radians. Il ne modifie
+      pas le gain mais retire de la phase, d'autant plus que la pulsation est élevée.</li>
+    <li><strong>Marge de phase.</strong> $M_\varphi = 180^\circ + \arg L(j\omega_c)$, où $\omega_c$ est la pulsation où $|L| = 1$. Un retard ajouté retire
+      $\omega_c\theta$ à la marge, sans déplacer $\omega_c$.</li>
+    <li><strong>Premier ordre.</strong> Pour $\tau\dot y + y = Ku$ avec $u$ constant sur un intervalle de durée $h$, la solution exacte est
+      $y(t + h) = e^{-h/\tau}y(t) + \bigl(1 - e^{-h/\tau}\bigr)Ku$.</li>
+    <li><strong>Suite géométrique.</strong> La récurrence $y_{k+1} = a\,y_k$ converge vers zéro si et seulement si $|a| &lt; 1$ ; si $a$ est négatif, les termes
+      changent de signe à chaque pas.</li>
+  </ul>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Notation de la séance</span>
+    <p>
+      $T_e$ : période d'échantillonnage, en secondes ; $f_e = 1/T_e$ : fréquence d'échantillonnage, en hertz ; $\omega_e = 2\pi/T_e$, en rad/s. L'indice $k$
+      désigne l'instant $t_k = kT_e$ : $y_k = y(kT_e)$, $e_k = r_k - y_k$, $u_k$ commande calculée à l'instant $k$. $z$ : opérateur d'avance d'une période,
+      $z^{-1}$ : retard d'une période. $\tau_{\mathrm{calc}}$ : délai entre la lecture de la mesure et l'écriture de la commande. Correcteur PI de forme standard
+      $C(s) = K_c\bigl(1 + 1/(T_is)\bigr)$, coefficients numériques $q_0$ et $q_1$, état intégral $x_k$, constante de recalcul $T_t$ ; $u_c$ commande calculée,
+      $u_s$ commande réellement appliquée après saturation. Les grandeurs de la régulation de pression sont des écarts autour du point de service, sauf
+      mention contraire.
+    </p>
+  </div>
+  <p>
+    Mini-test de trois questions. Les réponses restent masquées, séparées de l'énoncé, jusqu'à votre tentative ou à un clic explicite.
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+  <h3 id="d-photographies">Piloter avec des photographies</h3>
+  <p>
+    Imaginez que vous conduisiez en ne voyant la route qu'à travers une série de photographies prises à intervalles réguliers, et que vous deviez garder le
+    volant immobile entre deux photographies. Si les photographies sont fréquentes devant la vitesse à laquelle la route tourne, la conduite reste presque
+    normale. Si elles s'espacent, vous réagissez toujours avec un temps de retard, et vous corrigez trop tard. Si elles deviennent rares devant les virages,
+    vous pouvez même vous tromper de sens : deux photographies successives d'un lacet serré peuvent laisser croire à une courbe douce, voire à une ligne droite.
+  </p>
+  <p>
+    Ces trois situations correspondent aux trois effets de l'échantillonnage : une <strong>commande en escalier</strong>, maintenue constante pendant chaque
+    période ; un <strong>retard moyen</strong> d'une demi-période, car l'escalier est en moyenne en retard sur la courbe qu'il suit ; et le
+    <strong>repliement</strong>, quand une variation rapide se fait passer pour une variation lente.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      La figure suivante échantillonne une sinusoïde. Avant de la manipuler, écrivez vos réponses : de combien l'escalier est-il en retard, en moyenne, sur la
+      sinusoïde qu'il suit ? Ce retard dépend-il de la fréquence du signal ou seulement de la période d'échantillonnage ? Avec une période de $0{,}1\ \mathrm{s}$,
+      soit $10$ échantillons par seconde, à quelle fréquence semble osciller une sinusoïde de $9\ \mathrm{Hz}$ ?
+    </p>
+  </div>
+  <figure id="d-echant-sim">
+    <div class="schema-vivant" id="d-echant-vivant"></div>
+    <div id="d-echant-curseurs"></div>
+    <div id="d-echant-lecteur"></div>
+    <div id="d-echant-valeurs"></div>
+    <figcaption>
+      Échantillonnage et maintien d'une sinusoïde d'amplitude unité. En abscisse le temps, de $0$ à $2\ \mathrm{s}$ ; en ordonnée le signal, sans dimension.
+      Trait plein fin : signal continu $y(t) = \sin 2\pi ft$. Points ronds : échantillons $y_k$ pris toutes les $T_e$ secondes. Trait plein épais en escalier :
+      sortie du bloqueur, qui maintient chaque échantillon jusqu'au suivant. Tirets : signal continu retardé de $T_e/2$, l'approximation du bloqueur par un
+      retard. Pointillés : sinusoïde apparente, la plus lente qui passe par les mêmes échantillons. La poignée ronde sur le rail gradué règle $T_e$ à la souris,
+      au doigt ou au clavier ; le curseur règle la fréquence $f$ du signal ; le lecteur fait avancer l'instant présent, au-delà duquel rien n'est encore
+      échantillonné.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Tant que la période est courte devant celle du signal, l'escalier colle au signal retardé de $T_e/2$ : le retard moyen ne
+    dépend que de $T_e$, pas de la fréquence du signal, puisque chaque palier commence à l'échantillon et dure une période entière, ce qui place son milieu
+    $T_e/2$ après l'instant mesuré. Quand la fréquence approche $f_e/2$, l'approximation se dégrade : l'escalier n'a plus que deux paliers par période du
+    signal. Au-delà de $f_e/2$, la sinusoïde apparente n'a plus la fréquence du signal : avec $T_e = 0{,}1\ \mathrm{s}$, une sinusoïde de $9\ \mathrm{Hz}$
+    fournit exactement les mêmes échantillons qu'une sinusoïde de $1\ \mathrm{Hz}$ de signe opposé. Aucun calcul fait après l'échantillonnage ne peut lever
+    cette ambiguïté : le filtrage doit être fait avant.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Analogie des photographies, et ses limites</span>
+    <p>
+      L'analogie rend bien compte du retard et du repliement, mais elle a trois limites. Un conducteur interprète les photographies avec sa connaissance de la
+      route, alors qu'un correcteur numérique ne fait aucune hypothèse sur ce qui se passe entre deux échantillons. Elle laisse croire que l'information entre
+      deux échantillons est simplement perdue, alors qu'elle se reporte sur une fausse fréquence. Enfin, elle ignore le temps de calcul : un conducteur qui met
+      longtemps à décider ajoute un retard supplémentaire, distinct de l'espacement des photographies, et c'est le cas de tout calculateur.
+    </p>
+  </div>
+
+  <h3 id="d-recette">Une intégrale devient une somme</h3>
+  <p>
+    Côté calcul, le passage au numérique est très concret. Une intégrale continue est l'aire sous la courbe de l'écart ; le calculateur ne connaît l'écart
+    qu'aux instants d'échantillonnage, et remplace donc l'aire par une somme de rectangles ou de trapèzes de largeur $T_e$. Une dérivée devient une différence
+    entre deux échantillons divisée par $T_e$. Toute la question de la discrétisation est de savoir quelle approximation garde les propriétés importantes du
+    correcteur continu, et surtout sa stabilité.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Analogie du compteur d'eau relevé périodiquement, et ses limites</span>
+    <p>
+      Un compteur relevé chaque mois donne une consommation cumulée exacte, quel que soit le rythme des relevés ; une intégrale numérique, elle, est une
+      approximation, parce qu'elle suppose une forme de l'écart entre deux échantillons : constante à la valeur de gauche, constante à la valeur de droite, ou
+      linéaire. L'analogie montre bien l'idée de cumul, mais pas l'erreur d'approximation, qui croît avec $T_e$ et peut, pour une dérivée ou un filtre rapide,
+      rendre la récurrence instable.
+    </p>
+  </div>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+  <h3 id="e-boucle">La boucle numérique et ses conversions</h3>
+  <p>
+    Une boucle numérique comporte quatre opérations que la boucle continue n'avait pas. Le <strong>filtre anti-repliement</strong>, analogique, limite la bande
+    du signal mesuré. L'<strong>échantillonneur</strong>, associé au convertisseur analogique-numérique, transforme le signal continu $y(t)$ en une suite de
+    nombres $y_k = y(kT_e)$. Le <strong>calcul</strong> produit $u_k$ à partir des valeurs présentes et passées de l'écart et de la commande. Le
+    <strong>bloqueur d'ordre zéro</strong>, associé au convertisseur numérique-analogique ou à l'écriture d'une consigne vers un variateur, maintient $u_k$
+    constant jusqu'à l'instant suivant. Une horloge de période $T_e$ cadence l'échantillonneur et la sortie. Le schéma principal de la section F place ces
+    éléments dans la boucle de pression du site.
+  </p>
+
+  <h3 id="e-bloqueur">Le bloqueur d'ordre zéro équivaut à un retard d'une demi-période</h3>
+  <p>
+    La réponse impulsionnelle du bloqueur est une porte de hauteur $1$ et de durée $T_e$ : un échelon unité à l'instant $0$, retranché d'un échelon unité
+    retardé de $T_e$. Sa transformée de Laplace en découle directement.
+  </p>
+  <div class="formule-cle">
+    $$B_0(s) = \frac{1 - e^{-T_es}}{s}, \qquad B_0(j\omega) = T_e\,\frac{\sin(\omega T_e/2)}{\omega T_e/2}\,e^{-j\omega T_e/2}$$
+    <p class="formule-cle-legende">
+      $T_e$ en secondes, $\omega$ en rad/s, $s$ en $\mathrm{s^{-1}}$. Dérivation : $h(t) = \mathbb{1}(t) - \mathbb{1}(t - T_e)$, d'où
+      $B_0(s) = 1/s - e^{-T_es}/s$ ; en factorisant $e^{-j\omega T_e/2}$, il reste $\bigl(e^{j\omega T_e/2} - e^{-j\omega T_e/2}\bigr)/(j\omega) =
+      2\sin(\omega T_e/2)/\omega$. Hypothèses : échantillonnage idéal et instantané, période constante. Associé au gain $1/T_e$ de l'échantillonnage, le bloqueur
+      se ramène à un gain $\mathrm{sinc}(\omega T_e/2)$, voisin de $1$ aux basses pulsations, et à un retard pur de $T_e/2$, dont la phase $-\omega T_e/2$ est
+      exacte tant que $\omega &lt; \omega_e$. Cas limites : quand $T_e \to 0$, $B_0(j\omega)/T_e \to 1$, on retrouve la commande continue ; à
+      $\omega = \omega_e/2$, la phase perdue atteint $90^\circ$ et le gain tombe à $2/\pi$, soit $-3{,}9\ \mathrm{dB}$. Dimensions : $B_0$ est en secondes,
+      $B_0/T_e$ est sans dimension, et $\omega T_e$ est un angle en radians.
+    </p>
+  </div>
+  <p>
+    Interprétation physique : chaque palier de l'escalier commence à l'instant de mesure et dure une période ; son centre de gravité se situe donc $T_e/2$ plus
+    tard. Vu des basses fréquences, l'escalier est le signal décalé d'une demi-période. La figure suivante le montre sur trois paliers.
+  </p>
+  <figure id="e-bloqueur-figure">
+    <svg viewBox="0 0 720 330" role="img" aria-label="Principe du bloqueur d'ordre zéro : signal continu croissant, échantillons aux instants k Te, paliers maintenus pendant une période, signal retardé d'une demi-période passant par le milieu de chaque palier">
+      <defs><marker id="e-bl-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M60 220H690" stroke-width="1.4" marker-end="url(#e-bl-fl)"/>
+        <path d="M60 230V24" stroke-width="1.4" marker-end="url(#e-bl-fl)"/>
+        <path d="M60 196C160 170 260 120 360 96S560 52 660 44" stroke-width="1.6"/>
+        <path d="M60 196H200V146H340V101H480V68H620V48" stroke-width="3.2"/>
+        <path d="M130 196C230 170 330 120 430 96S630 52 690 46" stroke-width="1.6" stroke-dasharray="8 5"/>
+        <path d="M200 220V146M340 220V101M480 220V68M620 220V48" stroke-width="1" stroke-dasharray="2 4"/>
+        <path d="M200 240H340" stroke-width="1.2" marker-start="url(#e-bl-fl)" marker-end="url(#e-bl-fl)"/>
+        <path d="M200 120H270" stroke-width="1.2" marker-end="url(#e-bl-fl)"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="60" cy="196" r="4.5"/><circle cx="200" cy="146" r="4.5"/><circle cx="340" cy="101" r="4.5"/><circle cx="480" cy="68" r="4.5"/><circle cx="620" cy="48" r="4.5"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="684" y="240" text-anchor="end">t</text>
+        <text x="68" y="30">signal</text>
+        <text x="52" y="236" text-anchor="end">0</text>
+        <text x="200" y="236" text-anchor="middle">Te</text>
+        <text x="340" y="236" text-anchor="middle">2Te</text>
+        <text x="480" y="236" text-anchor="middle">3Te</text>
+        <text x="620" y="236" text-anchor="middle">4Te</text>
+        <text x="270" y="258" text-anchor="middle">une période : palier constant</text>
+        <text x="210" y="112">retard moyen Te/2</text>
+        <text x="60" y="284">escalier : sortie du bloqueur (trait épais)</text>
+        <text x="60" y="302">signal retardé de Te/2 (tirets)</text>
+        <text x="60" y="320">signal continu (trait fin), échantillons (points ronds)</text>
+      </g>
+    </svg>
+    <figcaption>
+      Principe du bloqueur d'ordre zéro. Le temps croît vers la droite ; les traits verticaux pointillés repèrent les instants $kT_e$. Le signal continu, en
+      trait fin, est mesuré aux points ronds ; le bloqueur maintient chaque valeur pendant une période, d'où l'escalier en trait épais. La courbe en tirets est
+      le signal continu décalé de $T_e/2$ vers la droite : elle traverse chaque palier en son milieu, ce qui justifie l'équivalence avec un retard d'une
+      demi-période. La double flèche horizontale indique la durée d'un palier, la flèche simple le décalage moyen.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-calcul">Le retard de calcul s'ajoute</h3>
+  <p>
+    Le calcul n'est pas instantané. Un automate lit ses entrées, exécute son programme, puis écrit ses sorties : la commande calculée à partir de la mesure
+    $y_k$ n'est appliquée qu'après un délai $\tau_{\mathrm{calc}}$. Deux organisations sont courantes. Soit la sortie est écrite dès la fin du calcul, et
+    $\tau_{\mathrm{calc}}$ vaut la durée du calcul, souvent une petite fraction de $T_e$. Soit la sortie est écrite au début de la période suivante, ce qui rend
+    le délai constant et prévisible, mais égal à une période entière. Le retard équivalent total de la chaîne échantillonnée vaut donc :
+  </p>
+  <div class="formule-cle">
+    $$\theta_{\mathrm{num}} = \frac{T_e}{2} + \tau_{\mathrm{calc}}, \qquad \Delta\varphi = \omega_c\,\theta_{\mathrm{num}} = \omega_c\Bigl(\frac{T_e}{2} + \tau_{\mathrm{calc}}\Bigr)$$
+    <p class="formule-cle-legende">
+      $\theta_{\mathrm{num}}$ en secondes ; $\Delta\varphi$ en radians, à multiplier par $180/\pi$ pour des degrés ; $\omega_c$ en rad/s. Hypothèses : période
+      constante, $\omega_c T_e$ petit devant $1$, ce qui rend le gain du bloqueur voisin de $1$. Interprétation : la marge de phase de la boucle numérique est
+      celle de la boucle continue diminuée de $\Delta\varphi$. Cas limites : $\tau_{\mathrm{calc}} = 0$ donne $\omega_cT_e/2$ ; sortie au début de la période
+      suivante, $\tau_{\mathrm{calc}} = T_e$, donne $1{,}5\,\omega_cT_e$, trois fois plus. Dimensions : $[\omega_c][T_e] = \mathrm{s^{-1}} \cdot \mathrm{s}$,
+      sans dimension, donc un angle en radians.
+    </p>
+  </div>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Dans le chronogramme suivant, l'automate a une période de $100\ \mathrm{ms}$. Avant de lancer la lecture, estimez l'âge moyen de la mesure contenue dans
+      la commande appliquée, d'abord si la sortie est écrite $20\ \mathrm{ms}$ après la lecture, puis si elle n'est écrite qu'au début de la période suivante.
+      Quel est l'âge minimal et l'âge maximal dans chaque cas ?
+    </p>
+  </div>
+  <figure id="e-cycle-sim">
+    <div class="schema-vivant" id="e-cycle-vivant"></div>
+    <div id="e-cycle-curseurs"></div>
+    <div id="e-cycle-lecteur"></div>
+    <div id="e-cycle-valeurs"></div>
+    <figcaption>
+      Chronogramme d'une tâche périodique d'automate sur quatre périodes. Ligne du haut : tops d'horloge aux instants $kT_e$, marqués par des traits verticaux.
+      Deuxième ligne : mesure continue $y(t)$ en trait fin et échantillons lus aux tops, en points ronds. Troisième ligne : rectangles hachurés des calculs, de
+      durée réglable. Ligne du bas : commande appliquée, en escalier épais, qui change à la fin du calcul ou au top suivant selon le mode choisi. Le trait
+      vertical épais est l'instant présent, piloté par le lecteur ; la flèche horizontale qui en part remonte jusqu'à l'instant de la mesure contenue dans la
+      commande appliquée : sa longueur est l'âge de cette mesure.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> L'âge de la mesure évolue en dents de scie. Avec une sortie écrite $20\ \mathrm{ms}$ après la lecture, il varie de
+    $20$ à $120\ \mathrm{ms}$ et vaut en moyenne $70\ \mathrm{ms}$, soit $T_e/2 + \tau_{\mathrm{calc}}$. Avec une sortie au top suivant, il varie de $100$ à
+    $200\ \mathrm{ms}$ et vaut en moyenne $150\ \mathrm{ms}$, soit $1{,}5\,T_e$. Le second mode coûte plus de phase, mais son délai ne dépend plus de la durée
+    du programme, qui peut varier d'un cycle à l'autre : c'est un compromis entre performance et déterminisme.
+  </p>
+
+  <h3 id="e-repliement">Repliement de spectre et filtre anti-repliement</h3>
+  <p>
+    Échantillonner une sinusoïde de fréquence $f$ à la fréquence $f_e$ donne $y_k = \sin(2\pi f kT_e + \varphi)$. Comme $\sin(x - 2\pi mk) = \sin x$ pour tout
+    entier $m$, les mêmes échantillons sont produits par la fréquence $f - mf_e$. Parmi toutes ces fréquences, le calculateur voit la plus petite en valeur
+    absolue.
+  </p>
+  <div class="formule-cle">
+    $$f_{\mathrm{app}} = \bigl|f - m f_e\bigr|, \qquad m = \mathrm{arrondi}\Bigl(\frac{f}{f_e}\Bigr), \qquad 0 \le f_{\mathrm{app}} \le \frac{f_e}{2}$$
+    <p class="formule-cle-legende">
+      $f$, $f_e$ et $f_{\mathrm{app}}$ en hertz ; $m$ entier sans dimension. Hypothèse : échantillonnage idéal à période constante. C'est une loi mathématique,
+      conséquence de la périodicité de la sinusoïde. Théorème d'échantillonnage : un signal dont le spectre est nul au-delà de $f_{\max}$ est entièrement
+      décrit par ses échantillons si $f_e &gt; 2f_{\max}$. Cas limites : $f &lt; f_e/2$ donne $m = 0$ et $f_{\mathrm{app}} = f$ ; $f = f_e$ donne
+      $f_{\mathrm{app}} = 0$, une composante qui semble constante. Interprétation : tout ce qui dépasse $f_e/2$ se replie dans la bande utile, où rien ne
+      permet plus de le distinguer d'une vraie variation.
+    </p>
+  </div>
+  <p>
+    Le remède est un filtre passe-bas placé <strong>avant</strong> l'échantillonnage : filtre analogique de la carte d'entrée, amortissement réglable du
+    transmetteur, ou constante de temps propre du capteur. Pour un filtre du premier ordre de constante de temps $\tau_f$, l'amplitude repliée d'une
+    composante d'amplitude $A$ à la fréquence $f$ vaut $A/\sqrt{1 + (2\pi f\tau_f)^2}$. Ce filtre a lui aussi un prix : il retire $\arctan(\omega_c\tau_f)$ de
+    marge de phase. Une variante numérique très répandue consiste à échantillonner beaucoup plus vite que la tâche de régulation, puis à moyenner : une moyenne
+    glissante de $N$ échantillons espacés de $T_s$ annule exactement les fréquences multiples de $1/(NT_s)$ et ajoute un retard de $(N - 1)T_s/2$.
+  </p>
+
+  <h3 id="e-discretisation">Quatre manières de discrétiser</h3>
+  <p>
+    Pour transformer une équation différentielle en récurrence, on intègre sur une période. Considérons l'intégrateur $\dot x = e$ : entre $t_{k-1}$ et $t_k$,
+    $x_k = x_{k-1} + \int_{t_{k-1}}^{t_k} e\,dt$. Toute la différence entre les méthodes tient à la façon d'approcher cette aire, comme le montre la figure
+    suivante.
+  </p>
+  <figure id="e-integration-figure">
+    <svg viewBox="0 0 720 250" role="img" aria-label="Trois approximations de l'aire sous une même courbe d'écart entre deux échantillons : rectangle à gauche pour Euler avant, rectangle à droite pour Euler arrière, trapèze pour Tustin">
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M30 200H220M270 200H460M510 200H700" stroke-width="1.4"/>
+        <path d="M50 160C90 150 140 100 200 70" stroke-width="2.4"/>
+        <path d="M290 160C330 150 380 100 440 70" stroke-width="2.4"/>
+        <path d="M530 160C570 150 620 100 680 70" stroke-width="2.4"/>
+        <path d="M50 200V160H200V200" stroke-width="1.8" stroke-dasharray="6 4"/>
+        <path d="M290 200V70H440V200" stroke-width="1.8" stroke-dasharray="6 4"/>
+        <path d="M530 200V160L680 70V200" stroke-width="1.8" stroke-dasharray="6 4"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="50" cy="160" r="4.5"/><circle cx="200" cy="70" r="4.5"/>
+        <circle cx="290" cy="160" r="4.5"/><circle cx="440" cy="70" r="4.5"/>
+        <circle cx="530" cy="160" r="4.5"/><circle cx="680" cy="70" r="4.5"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="125" y="30" text-anchor="middle" font-weight="700">Euler avant</text>
+        <text x="365" y="30" text-anchor="middle" font-weight="700">Euler arrière</text>
+        <text x="605" y="30" text-anchor="middle" font-weight="700">Tustin (trapèzes)</text>
+        <text x="125" y="48" text-anchor="middle">aire ≈ Te e(k-1)</text>
+        <text x="365" y="48" text-anchor="middle">aire ≈ Te e(k)</text>
+        <text x="605" y="48" text-anchor="middle">aire ≈ Te (e(k) + e(k-1)) / 2</text>
+        <text x="50" y="218" text-anchor="middle">t(k-1)</text><text x="200" y="218" text-anchor="middle">t(k)</text>
+        <text x="290" y="218" text-anchor="middle">t(k-1)</text><text x="440" y="218" text-anchor="middle">t(k)</text>
+        <text x="530" y="218" text-anchor="middle">t(k-1)</text><text x="680" y="218" text-anchor="middle">t(k)</text>
+        <text x="125" y="240" text-anchor="middle">sous-estime ici</text>
+        <text x="365" y="240" text-anchor="middle">surestime ici</text>
+        <text x="605" y="240" text-anchor="middle">erreur d'ordre 2</text>
+      </g>
+    </svg>
+    <figcaption>
+      Trois approximations de l'aire d'un écart croissant entre deux échantillons. Dans chaque panneau, la courbe en trait plein est l'écart réel, les points
+      ronds sont les deux échantillons connus, la surface délimitée par les tirets est l'aire retenue par la méthode. À gauche, Euler avant garde la valeur du
+      début de période ; au centre, Euler arrière celle de la fin ; à droite, Tustin relie les deux échantillons par un segment. Pour un écart croissant, la
+      première sous-estime l'aire et la deuxième la surestime ; l'erreur du trapèze décroît comme $T_e^2$ au lieu de $T_e$.
+    </figcaption>
+  </figure>
+  <p>
+    En notant $z^{-1}$ le retard d'une période, chaque approximation revient à remplacer l'opérateur de dérivation $s$ par une fonction de $z$. On ajoute une
+    quatrième méthode, l'<strong>invariance indicielle</strong>, qui ne remplace pas $s$ : elle calcule la récurrence exacte d'un système dont l'entrée est
+    maintenue constante pendant chaque période, ce qui est précisément le cas d'un procédé commandé par un bloqueur.
+  </p>
+  <div class="formule-cle">
+    $$\text{Euler avant : } s \leftarrow \frac{z - 1}{T_e} ; \qquad \text{Euler arrière : } s \leftarrow \frac{z - 1}{zT_e} ; \qquad \text{Tustin : } s \leftarrow \frac{2}{T_e}\,\frac{z - 1}{z + 1}$$
+    <p class="formule-cle-legende">
+      $z$ sans dimension, $T_e$ en secondes : chaque expression est en $\mathrm{s^{-1}}$, comme $s$. Dérivation : $x_k - x_{k-1} = T_e e_{k-1}$ s'écrit
+      $(1 - z^{-1})X = T_e z^{-1}E$, soit $X/E = T_e/(z - 1)$, à comparer à $1/s$ ; de même $T_e e_k$ donne $T_ez/(z - 1)$ et le trapèze donne
+      $(T_e/2)(z + 1)/(z - 1)$. Hypothèse commune : $T_e$ petit devant les constantes de temps à reproduire. Cas limite : quand $T_e \to 0$, $z = e^{sT_e}
+      \approx 1 + sT_e$ et les trois substitutions se confondent. Ce sont des approximations, à la différence de la correspondance exacte $z = e^{sT_e}$ entre
+      les pôles d'un système continu et ceux de son équivalent bloqué.
+    </p>
+  </div>
+  <p>
+    Appliquées au filtre du premier ordre $H(s) = 1/(1 + \tau s)$, de pôle $s = -1/\tau$, ces règles donnent quatre récurrences de la forme
+    $y_k = p\,y_{k-1} + \dots$, dont le pôle discret $p$ décide de tout : la récurrence est stable si $|p| &lt; 1$, et elle alterne d'un échantillon à l'autre si
+    $p &lt; 0$.
+  </p>
+  <div class="formule-cle">
+    $$p_{\mathrm{exact}} = e^{-T_e/\tau}, \quad p_{\mathrm{avant}} = 1 - \frac{T_e}{\tau}, \quad p_{\text{arrière}} = \frac{1}{1 + T_e/\tau}, \quad p_{\mathrm{Tustin}} = \frac{1 - T_e/(2\tau)}{1 + T_e/(2\tau)}$$
+    <p class="formule-cle-legende">
+      Rapport $T_e/\tau$ sans dimension. Hypothèse : filtre stable, $\tau &gt; 0$. Conséquences : la récurrence d'Euler avant devient oscillante dès
+      $T_e &gt; \tau$ et instable dès $T_e &gt; 2\tau$, alors que le filtre continu est stable ; Euler arrière et Tustin restent stables pour toute période,
+      Tustin devenant oscillant au-delà de $T_e = 2\tau$ ; l'invariance indicielle reste exacte aux instants d'échantillonnage. Cas limite $T_e \ll \tau$ : les
+      quatre pôles valent environ $1 - T_e/\tau$. Récurrence exacte, dérivée du rappel de la section C : $y_k = e^{-T_e/\tau}y_{k-1} + \bigl(1 -
+      e^{-T_e/\tau}\bigr)u_{k-1}$.
+    </p>
+  </div>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      La simulation suivante discrétise un filtre de constante de temps $\tau$ par les quatre méthodes et trace leurs réponses à un échelon unité. Avant de
+      bouger le curseur, prévoyez : laquelle diverge la première quand $T_e/\tau$ augmente, et à partir de quelle valeur ? Laquelle se met à osciller tout en
+      restant stable ? Laquelle reste exacte aux instants d'échantillonnage pour toute période ?
+    </p>
+  </div>
+  <figure id="e-discret-sim">
+    <div id="e-discret-curseurs"></div>
+    <div id="e-discret-valeurs"></div>
+    <div id="e-discret-trace"></div>
+    <div class="schema-vivant" id="e-discret-plan"></div>
+    <figcaption>
+      Réponses indicielles discrètes d'un filtre du premier ordre. En abscisse le temps réduit $t/\tau$, de $0$ à $8$ ; en ordonnée la sortie, de valeur finale
+      $1$. La courbe continue sert de référence ; chaque méthode est tracée en escalier, sa sortie étant maintenue entre deux échantillons ; la légende associe
+      chaque courbe à sa méthode, et une courbe qui sort du cadre est interrompue. Sous le tracé, le plan complexe des pôles discrets : cercle unité en trait
+      plein, limite de stabilité ; chaque pôle est un repère de forme différente, nommé par sa méthode, et la zone hachurée à gauche de l'axe imaginaire marque
+      les pôles négatifs, qui font alterner la sortie.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Pour $T_e/\tau = 0{,}1$, les quatre méthodes sont indiscernables. Dès $T_e/\tau = 1$, le pôle d'Euler avant vaut $0$ : la
+    sortie atteint la valeur finale en un seul pas, ce qui est faux, le filtre continu n'atteignant que $63\ \%$ à $t = \tau$. Au-delà de $1$, il devient
+    négatif et la sortie alterne ; au-delà de $2$, il sort du cercle unité et la récurrence diverge. Le pôle de Tustin devient négatif au-delà de
+    $T_e/\tau = 2$ : la sortie dépasse puis alterne, mais reste bornée. Euler arrière est toujours stable, mais trop lent. Seule l'invariance indicielle passe
+    exactement par la courbe continue aux instants d'échantillonnage. Retenir : la stabilité d'un correcteur numérique n'est pas garantie par celle du
+    correcteur continu dont il est issu.
+  </p>
+  <div class="cadre-tableau" id="e-methodes">
+    <table>
+      <thead><tr><th>Méthode</th><th>Substitution</th><th>Stabilité conservée</th><th>Précision</th><th>Usage conseillé</th></tr></thead>
+      <tbody>
+        <tr><td>Euler avant</td><td>$s \leftarrow (z - 1)/T_e$</td><td>Non : exige $T_e &lt; 2\tau$ pour chaque constante de temps</td><td>Ordre 1</td><td>Intégrale d'un PI à $T_e \ll T_i$ ; à éviter pour filtres et dérivées</td></tr>
+        <tr><td>Euler arrière</td><td>$s \leftarrow (z - 1)/(zT_e)$</td><td>Oui, toujours</td><td>Ordre 1, réponse ralentie</td><td>Dérivée filtrée, filtres de mesure simples, PI</td></tr>
+        <tr><td>Tustin</td><td>$s \leftarrow \frac{2}{T_e}\frac{z - 1}{z + 1}$</td><td>Oui, toujours</td><td>Ordre 2 ; fréquences déformées près de $f_e/2$</td><td>Correcteurs et filtres réglés en fréquence, avec prédéformation si besoin</td></tr>
+        <tr><td>Invariance indicielle</td><td>Pôles $z = e^{sT_e}$, entrée bloquée</td><td>Oui, exacte</td><td>Exacte aux instants $kT_e$ pour une entrée en escalier</td><td>Modèle discret du procédé, filtre de mesure du premier ordre</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    La méthode de Tustin conserve la stabilité mais déforme l'échelle des fréquences : une pulsation analogique $\omega_a$ se retrouve à la pulsation numérique
+    $\omega_d$ telle que $\omega_a = (2/T_e)\tan(\omega_dT_e/2)$. La déformation est négligeable si $\omega_d T_e \ll 1$ ; pour un filtre réjecteur placé près de
+    $f_e/2$, on prédéforme la pulsation analogique avant de discrétiser.
+  </p>
+
+  <h3 id="e-pi">Le PI numérique : forme de position et forme incrémentale</h3>
+  <p>
+    Appliquons Euler arrière à l'intégrale du PI de forme standard. L'état intégral devient une somme mise à jour à chaque période, et la commande est la somme
+    du terme proportionnel et de cet état.
+  </p>
+  <div class="formule-cle">
+    $$x_k = x_{k-1} + \frac{K_cT_e}{T_i}\,e_k, \qquad u_k = K_c e_k + x_k \qquad \Longleftrightarrow \qquad u_k = u_{k-1} + q_0 e_k + q_1 e_{k-1}$$
+    $$q_0 = K_c\Bigl(1 + \frac{T_e}{T_i}\Bigr), \quad q_1 = -K_c \quad \text{(Euler arrière)} ; \qquad q_0 = K_c\Bigl(1 + \frac{T_e}{2T_i}\Bigr), \quad q_1 = -K_c\Bigl(1 - \frac{T_e}{2T_i}\Bigr) \quad \text{(Tustin)}$$
+    <p class="formule-cle-legende">
+      $e_k$ dans l'unité de la mesure, par exemple le bar ; $u_k$, $x_k$ dans l'unité de la commande, par exemple le hertz ; $K_c$, $q_0$ et $q_1$ dans l'unité de
+      commande par unité de mesure ; $T_e/T_i$ sans dimension. Dérivation : en retranchant $u_{k-1} = K_ce_{k-1} + x_{k-1}$ de $u_k$, il vient
+      $u_k - u_{k-1} = K_c(e_k - e_{k-1}) + (K_cT_e/T_i)e_k$. Fonction de transfert : $C(z) = (q_0 + q_1z^{-1})/(1 - z^{-1})$, avec un pôle en $z = 1$,
+      l'intégrateur numérique. Interprétation : $q_0 + q_1 = K_cT_e/T_i$ est la part intégrale ajoutée par période pour un écart constant. Cas limites :
+      $T_i \to \infty$ donne $q_0 + q_1 = 0$, correcteur proportionnel pur ; $T_e \to 0$ donne des incréments nuls, et l'on retrouve le PI continu. Dimensions :
+      $K_cT_e/T_i$ a l'unité de $K_c$.
+    </p>
+  </div>
+  <p>
+    La forme de gauche est dite <strong>de position</strong> : le calcul fournit la commande elle-même. La forme de droite est dite
+    <strong>incrémentale</strong> ou de vitesse : il fournit une variation $\Delta u_k = q_0e_k + q_1e_{k-1}$, ajoutée à la commande précédente. La forme
+    incrémentale facilite le passage du mode manuel au mode automatique sans à-coup et protège naturellement contre l'emballement si l'on borne $u_k$ avant
+    de le mémoriser ; elle ne permet pas de retrouver séparément les contributions proportionnelle et intégrale, ce qui complique le diagnostic.
+  </p>
+  <p>
+    L'anti-emballement par recalcul du cours précédent se traduit directement. L'ordre des opérations à chaque période compte autant que les formules : lire,
+    calculer, borner, écrire, puis seulement mettre à jour l'état. Le diagramme suivant fixe cet ordre.
+  </p>
+  <figure id="e-pi-algorithme">
+    <pre class="mermaid">flowchart TD
+  A["Top d'horloge k"] --> B["Lire la mesure y(k)"]
+  B --> C["Écart e(k) = r(k) - y(k)"]
+  C --> D["Intégrale : x(k) = x(k-1) + Kc Te e(k) / Ti"]
+  D --> E["Commande calculée uc = Kc e(k) + x(k)"]
+  E --> F["Borner : us = sat(uc)"]
+  F --> G["Écrire us vers l'actionneur"]
+  G --> H["Recalcul : x(k) ← x(k) + (Te / Tt)(us - uc)"]
+  H --> I["Mémoriser x(k), attendre le top suivant"]</pre>
+    <figcaption>
+      Algorithme d'une période du PI numérique avec anti-emballement par recalcul. Les rectangles sont les opérations, exécutées de haut en bas à chaque top
+      d'horloge ; la flèche simple indique l'ordre. La commande est écrite avant la mise à jour finale de l'état, ce qui réduit le retard de calcul ; le
+      recalcul ramène l'état intégral vers la valeur compatible avec la butée.
+    </figcaption>
+  </figure>
+  <div class="formule-cle">
+    $$x_k \leftarrow x_k + \frac{T_e}{T_t}\bigl(u_{s,k} - u_{c,k}\bigr), \qquad \text{stable si } 0 &lt; \frac{T_e}{T_t} &lt; 2, \ \text{sans alternance si } \frac{T_e}{T_t} \le 1$$
+    <p class="formule-cle-legende">
+      $T_t$ et $T_e$ en secondes. Dérivation : en butée, $u_s$ est constant et $u_c = K_ce + x$ ; la récurrence de l'état vaut alors
+      $x_k = (1 - T_e/T_t)x_{k-1} + \text{constante}$, une suite géométrique de raison $1 - T_e/T_t$. Hypothèse : écart lentement variable pendant la
+      saturation. Cas limite : $T_e = T_t$ ramène l'état d'un seul coup sur la valeur compatible avec la butée, c'est l'équivalent numérique du blocage.
+      Règle de conception : garder $T_e$ nettement inférieur à $T_t$.
+    </p>
+  </div>
+  <p>
+    La dérivée filtrée se discrétise de préférence par Euler arrière : avec $D(s) = -K_cT_ds\,y/(1 + T_fs)$ appliquée à la mesure,
+    $d_k = \frac{T_f}{T_f + T_e}d_{k-1} - \frac{K_cT_d}{T_f + T_e}(y_k - y_{k-1})$, stable pour toute période. Discrétisée par Euler avant, la même dérivée
+    devient instable dès que $T_e &gt; 2T_f$, ce qui arrive vite puisque $T_f = T_d/N$ est petit.
+  </p>
+
+  <h3 id="e-periode">Choisir la période d'échantillonnage</h3>
+  <p>
+    La période se choisit entre deux bornes. La borne supérieure vient de la boucle : le retard équivalent ne doit pas consommer trop de marge de phase, et la
+    réponse doit compter assez d'échantillons pour être bien décrite. La borne inférieure vient du matériel : charge du calculateur, résolution de la mesure et
+    précision des nombres.
+  </p>
+  <ol>
+    <li><strong>Budget de phase.</strong> Fixer la perte admissible $\Delta\varphi_{\max}$, souvent $5$ à $10^\circ$, puis
+      $T_e \le \Delta\varphi_{\max}/\bigl(\omega_c(0{,}5 + \tau_{\mathrm{calc}}/T_e)\bigr)$. Avec une sortie au top suivant, $T_e \le \Delta\varphi_{\max}/(1{,}5\,\omega_c)$.
+      C'est une règle de conception, à adapter à la marge disponible.</li>
+    <li><strong>Dynamique.</strong> Viser au moins une dizaine d'échantillons pendant le temps de montée de la boucle fermée, soit une pulsation d'échantillonnage
+      $\omega_e$ de quelques dizaines de fois $\omega_c$. Règle empirique, cohérente avec le budget de phase.</li>
+    <li><strong>Mesure.</strong> Vérifier que le filtre placé avant l'échantillonnage atténue suffisamment tout ce qui dépasse $f_e/2$ : bruit, pulsations,
+      ondulations du réseau ou du découpage. C'est une conséquence de la loi de repliement.</li>
+    <li><strong>Limites matérielles.</strong> Une période trop courte charge le calculateur, rend la dérivée très sensible au bruit de quantification, l'incrément
+      de mesure $q$ produisant une dérivée $q/T_e$, et peut faire perdre les petits incréments d'intégrale dans l'arrondi des nombres à virgule flottante. Les
+      périodes disponibles et la précision des calculs dépendent du constructeur.</li>
+  </ol>
+  <p>
+    Exemple de la dernière limite. En virgule flottante simple précision, un nombre voisin de $42{,}27$ est représenté avec un pas de $2^{-18} \approx
+    3{,}8 \times 10^{-6}$. Si l'état intégral d'une régulation contient la fréquence absolue du variateur, un incrément $K_cT_ee_k/T_i$ plus petit que la
+    moitié de ce pas est purement perdu. Avec $K_c = 6\ \mathrm{Hz/bar}$, $T_i = 1{,}2\ \mathrm{s}$ et $T_e = 1\ \mathrm{ms}$, l'incrément vaut $0{,}005\,e_k$ :
+    tout écart inférieur à $0{,}38\ \mathrm{mbar}$ n'est plus intégré, et l'erreur statique n'est plus nulle. Avec $T_e = 100\ \mathrm{ms}$, le seuil tombe à
+    $3{,}8 \times 10^{-6}\ \mathrm{bar}$, négligeable. Échantillonner plus vite n'est donc pas toujours mieux.
+  </p>
+
+  <h3 id="e-statut">Loi, convention, approximation, règle de conception et donnée du constructeur</h3>
+  <div class="cadre-tableau" id="e-statut-tableau">
+    <table>
+      <thead><tr><th>Énoncé</th><th>Statut</th><th>Conséquence pratique</th></tr></thead>
+      <tbody>
+        <tr><td>Une sinusoïde de fréquence $f$ et une de fréquence $|f - mf_e|$ ont les mêmes échantillons</td><td>Loi mathématique</td><td>Aucun traitement après l'échantillonnage ne supprime un repliement</td></tr>
+        <tr><td>Bloqueur équivalent à un retard $T_e/2$</td><td>Approximation, valable pour $\omega T_e \ll 1$</td><td>Perte de phase $\omega_cT_e/2$ ; au-delà, utiliser le modèle discret exact</td></tr>
+        <tr><td>Substitutions d'Euler et de Tustin</td><td>Approximations</td><td>Vérifier la stabilité de la récurrence obtenue</td></tr>
+        <tr><td>Indice $k$, opérateur $z^{-1}$, signe de l'écart $e = r - y$</td><td>Conventions</td><td>Les vérifier dans la documentation du bloc avant toute saisie</td></tr>
+        <tr><td>Perte de phase de $5$ à $10^\circ$, dix échantillons par temps de montée, $T_e &lt; T_t$</td><td>Règles de conception</td><td>Points de départ, à justifier par la marge disponible</td></tr>
+        <tr><td>Périodes des tâches, ordre lecture, calcul, écriture, forme du bloc PID, précision des nombres</td><td>Données du constructeur</td><td>À lire dans la documentation de l'automate ou du variateur</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Le schéma principal place la chaîne numérique dans la boucle de pression du projet fil rouge : filtre et échantillonneur à l'entrée de l'automate, calcul du
+    PI cadencé par une horloge, bloqueur à la sortie, puis variateur, pompe et réseau.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 780 380" role="img" aria-label="Boucle de pression numérique : dans l'automate, la consigne r k entre par le signe plus dans un sommateur et la mesure p m k par le signe moins ; l'écart e k attaque le PI numérique, qui fournit u k au bloqueur d'ordre zéro ; la commande continue u t attaque le variateur, la pompe et le réseau, qui fournissent la pression p t ; la pression traverse le capteur et le filtre anti-repliement, puis l'échantillonneur et le convertisseur analogique numérique, qui fournissent p m k ; une horloge de période Te cadence l'échantillonneur et le bloqueur.">
+      <defs><marker id="f-sp-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6">
+        <rect x="16" y="34" width="456" height="300" rx="10" stroke-dasharray="10 6" stroke-width="1.2"/>
+        <path d="M34 110H66" stroke-dasharray="3 4" marker-end="url(#f-sp-fl)"/>
+        <circle cx="86" cy="110" r="18"/>
+        <path d="M104 110H136" stroke-dasharray="3 4" marker-end="url(#f-sp-fl)"/>
+        <rect x="138" y="80" width="150" height="60" rx="6"/>
+        <path d="M288 110H326" stroke-dasharray="3 4" marker-end="url(#f-sp-fl)"/>
+        <rect x="328" y="84" width="116" height="52" rx="6"/>
+        <path d="M444 110H518" marker-end="url(#f-sp-fl)"/>
+        <rect x="520" y="80" width="150" height="60" rx="6"/>
+        <path d="M670 110H740V286H664" marker-end="url(#f-sp-fl)"/>
+        <rect x="514" y="262" width="148" height="48" rx="6"/>
+        <path d="M514 286H446"/>
+        <path d="M446 286L416 272" stroke-width="2.2"/>
+        <circle cx="446" cy="286" r="3"/>
+        <circle cx="410" cy="286" r="3"/>
+        <path d="M407 286H372" marker-end="url(#f-sp-fl)"/>
+        <rect x="300" y="264" width="70" height="44" rx="6"/>
+        <path d="M300 286H86V130" stroke-dasharray="3 4" marker-end="url(#f-sp-fl)"/>
+        <rect x="190" y="190" width="120" height="40" rx="6"/>
+        <path d="M310 210H386V136" stroke-dasharray="1 4" stroke-width="1.3" marker-end="url(#f-sp-fl)"/>
+        <path d="M310 210H428V262" stroke-dasharray="1 4" stroke-width="1.3" marker-end="url(#f-sp-fl)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="26" y="54" font-size="11">automate : tâche périodique de période Te</text>
+        <text x="30" y="100">r(k)</text>
+        <text x="58" y="102" font-size="14" font-weight="700">+</text>
+        <text x="94" y="152" font-size="16" font-weight="700">-</text>
+        <text x="108" y="100">e(k)</text>
+        <text x="213" y="102" text-anchor="middle">PI numérique</text>
+        <text x="213" y="120" text-anchor="middle" font-size="10">x(k) = x(k-1)</text>
+        <text x="213" y="133" text-anchor="middle" font-size="10">+ Kc Te e(k) / Ti</text>
+        <text x="300" y="100">u(k)</text>
+        <text x="386" y="106" text-anchor="middle" font-size="11">bloqueur B0</text>
+        <text x="386" y="122" text-anchor="middle" font-size="10">sortie maintenue</text>
+        <text x="452" y="100">u(t)</text>
+        <text x="595" y="104" text-anchor="middle" font-size="11">variateur, pompe</text>
+        <text x="595" y="122" text-anchor="middle" font-size="11">et réseau</text>
+        <text x="748" y="200">p(t)</text>
+        <text x="588" y="282" text-anchor="middle" font-size="11">capteur et filtre</text>
+        <text x="588" y="298" text-anchor="middle" font-size="11">anti-repliement</text>
+        <text x="430" y="320" text-anchor="middle" font-size="11">échantillonneur</text>
+        <text x="335" y="290" text-anchor="middle" font-size="11">CAN</text>
+        <text x="150" y="278">pm(k)</text>
+        <text x="250" y="214" text-anchor="middle" font-size="11">horloge Te</text>
+        <text x="20" y="356" font-size="11">Trait plein : signal à temps continu. Tirets courts : suite de nombres, définie aux seuls instants k Te.</text>
+        <text x="20" y="372" font-size="11">Pointillés fins : tops d'horloge. Grandeurs en écarts autour du point de service ; e(k) = r(k) - pm(k).</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal : boucle de pression commandée par l'automate. Les signaux circulent dans le sens des flèches. Le cadre en tirets longs délimite ce qui
+      est calculé ou converti dans l'automate. Le sommateur forme l'écart $e_k = r_k - p_{m,k}$, consigne sur l'entrée $+$, mesure sur l'entrée $-$. Le PI
+      numérique produit $u_k$, nombre que le bloqueur maintient jusqu'au top suivant : c'est la consigne de fréquence $u(t)$ envoyée au variateur. La pression
+      vraie $p(t)$ traverse le capteur, dont la constante de temps sert aussi de filtre anti-repliement ; l'interrupteur symbolise l'échantillonneur, fermé un
+      bref instant à chaque top, et le convertisseur analogique-numérique fournit la suite $p_{m,k}$. L'horloge de période $T_e$ cadence l'entrée et la sortie.
+      Les tirets courts marquent les liaisons qui ne transportent que des nombres aux instants $kT_e$.
+    </figcaption>
+  </figure>
+
+  <p>
+    L'organigramme suivant résume les décisions à prendre pour implanter un correcteur réglé en continu.
+  </p>
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Correcteur continu réglé, ωc et marge de phase connues"] --> B["Budget de phase : Δφ max de 5 à 10°"]
+  B --> C["Te max = Δφ max / (ωc (0,5 + τcalc / Te))"]
+  C --> D{"Repliement maîtrisé<br/>au-dessus de fe / 2 ?"}
+  D -->|"Non"| E["Filtre analogique ou suréchantillonnage et moyenne"]
+  E --> F["Ajouter sa phase au budget"]
+  F --> C
+  D -->|"Oui"| G{"Limites matérielles :<br/>charge, résolution, précision ?"}
+  G -->|"Non respectées"| H["Allonger Te ou changer la représentation des nombres"]
+  H --> D
+  G -->|"Respectées"| I["Discrétiser : Euler arrière ou Tustin, filtres par invariance indicielle"]
+  I --> J["Vérifier la stabilité de chaque récurrence"]
+  J --> K["Anti-emballement : Te nettement inférieur à Tt"]
+  K --> L["Tâche périodique à période fixe, unités et forme du bloc"]
+  L --> M["Simulation de la boucle numérique, puis essai sur site"]</pre>
+    <figcaption>
+      Organigramme d'implantation d'un correcteur numérique. Les losanges sont des décisions, les rectangles des actions ; les libellés des flèches donnent la
+      réponse qui oriente le chemin. On part de la marge disponible pour borner la période, on traite le repliement, qui peut ajouter son propre retard, puis
+      les limites matérielles, et l'on ne discrétise qu'ensuite. Les deux boucles de retour expriment que chaque filtre ajouté ou chaque changement de période
+      oblige à refaire le budget.
+    </figcaption>
+  </figure>
+
+  <p>
+    Le tableau suivant compare les effets d'une période trop longue et d'une période trop courte, pour un correcteur correctement discrétisé.
+  </p>
+  <div class="cadre-tableau" id="f-comparatif">
+    <table>
+      <thead><tr><th>Critère</th><th>Période trop longue</th><th>Période bien choisie</th><th>Période trop courte</th></tr></thead>
+      <tbody>
+        <tr><td>Marge de phase</td><td>Fortement réduite, dépassement, puis instabilité</td><td>Perte de $5$ à $10^\circ$ au plus</td><td>Perte négligeable</td></tr>
+        <tr><td>Repliement</td><td>Exige un filtre lent, qui coûte de la phase</td><td>Filtre modéré suffisant</td><td>Filtre peu exigeant</td></tr>
+        <tr><td>Bruit sur la dérivée</td><td>Faible</td><td>Acceptable avec $N$ de $5$ à $20$</td><td>Fort : quantification divisée par $T_e$</td></tr>
+        <tr><td>Précision de l'intégrale</td><td>Bonne</td><td>Bonne</td><td>Incréments perdus dans l'arrondi</td></tr>
+        <tr><td>Charge du calculateur</td><td>Faible</td><td>Modérée</td><td>Élevée, risque de dépassement du cycle</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <ul>
+    <li><a href="#d-echant-sim" data-renvoi="d-echant-sim">Échantillonnage et maintien d'une sinusoïde</a>, section D : escalier, retard moyen et repliement.</li>
+    <li><a href="#e-bloqueur-figure" data-renvoi="e-bloqueur-figure">Principe du bloqueur d'ordre zéro</a>, section E.</li>
+    <li><a href="#e-cycle-sim" data-renvoi="e-cycle-sim">Chronogramme d'une tâche périodique d'automate</a>, section E : retard de calcul.</li>
+    <li><a href="#e-integration-figure" data-renvoi="e-integration-figure">Trois approximations de l'aire</a>, section E.</li>
+    <li><a href="#e-discret-sim" data-renvoi="e-discret-sim">Discrétisation d'un premier ordre et plan des pôles</a>, section E.</li>
+    <li><a href="#e-methodes" data-renvoi="e-methodes">Tableau comparatif des méthodes de discrétisation</a>, section E.</li>
+    <li><a href="#e-pi-algorithme" data-renvoi="e-pi-algorithme">Algorithme d'une période du PI numérique</a>, section E.</li>
+    <li><a href="#h-reponses-fig" data-renvoi="h-reponses-fig">Réponses du four en continu et en numérique</a>, section H.</li>
+    <li><a href="#i-numerique-sim" data-renvoi="i-numerique-sim">Régulation de pression numérique</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <ol>
+    <li><strong>Partir du continu.</strong> Correcteur réglé et validé en continu ; pulsation de coupure $\omega_c$, marge de phase $M_\varphi$, constantes de
+      temps des filtres et de la dérivée, butées et constante de recalcul $T_t$.</li>
+    <li><strong>Fixer le budget de phase.</strong> Perte admissible $\Delta\varphi_{\max}$ selon la marge disponible ; préciser l'organisation du calcul,
+      donc $\tau_{\mathrm{calc}}$.</li>
+    <li><strong>Borner la période par le haut.</strong> $T_e \le \Delta\varphi_{\max}/\bigl(\omega_c(0{,}5 + \tau_{\mathrm{calc}}/T_e)\bigr)$, puis contrôler le
+      nombre d'échantillons par temps de montée.</li>
+    <li><strong>Traiter le repliement.</strong> Recenser les composantes au-delà de $f_e/2$, calculer leurs fréquences apparentes et l'atténuation nécessaire ;
+      dimensionner le filtre et ajouter sa phase au budget.</li>
+    <li><strong>Borner la période par le bas.</strong> Charge du calculateur, bruit de quantification sur la dérivée, perte d'incréments d'intégrale ; retenir une
+      période proposée par le matériel.</li>
+    <li><strong>Discrétiser.</strong> Choisir la méthode, calculer $q_0$, $q_1$ et les coefficients des filtres ; vérifier $|p| &lt; 1$ pour chaque récurrence et
+      $T_e &lt; T_t$ pour l'anti-emballement.</li>
+    <li><strong>Écrire l'algorithme.</strong> Ordre lire, calculer, borner, écrire, mettre à jour ; tâche périodique à période fixe ; unités et forme du bloc
+      du constructeur.</li>
+    <li><strong>Contrôler.</strong> Simuler la boucle numérique avec bloqueur, retard de calcul et saturations ; comparer à la réponse continue ; essai de
+      faible amplitude sur site.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    <strong>Données.</strong> Le four de séchage du cours <a href="#/cours/correcteurs-p-pi-pd-et-pid">Correcteurs P, PI, PD et PID</a> : modèle
+    $G(s) = K_0/\bigl((1 + \tau_1s)(1 + \tau_2s)\bigr)$ avec $K_0 = 2\ \mathrm{K/\%}$, $\tau_1 = 400\ \mathrm{s}$ et $\tau_2 = 40\ \mathrm{s}$ ; PI réglé par
+    compensation, $K_c = 2{,}551\ \%/\mathrm{K}$ et $T_i = 400\ \mathrm{s}$, qui donne en continu un dépassement de $4{,}6\ \%$ et une commande initiale de
+    $25{,}5\ \%$ pour un échelon de consigne de $10\ \mathrm{K}$. Le régulateur sera programmé dans un automate ; la sortie est écrite soit dès la fin du
+    calcul, de durée négligeable, soit au top suivant. Budget de phase : $5^\circ$.
+  </p>
+  <p>
+    <strong>Inconnues.</strong> Pulsation de coupure et marge de phase continues ; période maximale ; période retenue ; coefficients $q_0$ et $q_1$ ; trois
+    premières commandes après l'échelon ; performances obtenues en numérique.
+  </p>
+  <p>
+    <strong>Stratégie.</strong> Calculer $\omega_c$ sur la boucle ouverte compensée, appliquer le budget de phase avec le cas le plus défavorable,
+    $\tau_{\mathrm{calc}} = T_e$, choisir une période standard en dessous, calculer les coefficients par Euler arrière, dérouler la récurrence, puis comparer la
+    réponse simulée à la réponse continue.
+  </p>
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li><strong>Boucle ouverte.</strong> Avec $T_i = \tau_1$, le zéro du PI compense le pôle lent :
+      $L(s) = \dfrac{K_cK_0}{T_is(1 + \tau_2s)} = \dfrac{5{,}102}{400\,s(1 + 40s)} = \dfrac{0{,}012755}{s(1 + 40s)}$, en $\mathrm{s^{-1}}$ au numérateur.</li>
+    <li><strong>Pulsation de coupure.</strong> $|L(j\omega)| = 1$ s'écrit $\omega^2(1 + 1600\,\omega^2) = 0{,}012755^2 = 1{,}6269 \times 10^{-4}$. En posant
+      $X = \omega^2$ : $1600X^2 + X - 1{,}6269 \times 10^{-4} = 0$, d'où $X = \bigl(-1 + \sqrt{1 + 4 \times 1600 \times 1{,}6269 \times 10^{-4}}\bigr)/3200 =
+      1{,}3397 \times 10^{-4}$ et $\omega_c = 0{,}01157\ \mathrm{rad/s}$.</li>
+    <li><strong>Marge de phase continue.</strong> $M_\varphi = 180^\circ - 90^\circ - \arctan(40 \times 0{,}01157) = 90^\circ - 24{,}84^\circ = 65{,}2^\circ$.</li>
+    <li><strong>Période maximale.</strong> Cas défavorable, sortie au top suivant : $1{,}5\,\omega_cT_e \le 5^\circ = 0{,}08727\ \mathrm{rad}$, donc
+      $T_e \le 0{,}08727/(1{,}5 \times 0{,}01157) = 5{,}03\ \mathrm{s}$.</li>
+    <li><strong>Période retenue.</strong> $T_e = 2\ \mathrm{s}$, valeur ronde nettement sous la borne. Perte : $1{,}5 \times 0{,}01157 \times 2 =
+      0{,}0347\ \mathrm{rad} = 1{,}99^\circ$ au plus, marge de $63{,}2^\circ$. Contrôle de dynamique : $\omega_e = 2\pi/2 = 3{,}14\ \mathrm{rad/s}$, soit
+      environ $270$ fois $\omega_c$, et plus de $80$ échantillons pendant les $162\ \mathrm{s}$ du temps d'établissement.</li>
+    <li><strong>Coefficients.</strong> $K_cT_e/T_i = 2{,}551 \times 2/400 = 0{,}012755\ \%/\mathrm{K}$ ; $q_0 = K_c(1 + T_e/T_i) = 2{,}551 \times 1{,}005 =
+      2{,}563755\ \%/\mathrm{K}$ ; $q_1 = -2{,}551\ \%/\mathrm{K}$. Par Tustin : $q_0 = 2{,}557378$, $q_1 = -2{,}544623$.</li>
+    <li><strong>Récurrence, sortie écrite sans délai.</strong> À $k = 0$ : $y_0 = 0$, $e_0 = 10\ \mathrm{K}$, $x_0 = 0{,}012755 \times 10 = 0{,}12755\ \%$,
+      $u_0 = 2{,}551 \times 10 + 0{,}12755 = 25{,}638\ \%$. Le four a réagi pendant $2\ \mathrm{s}$ : $y_1 = 0{,}006325\ \mathrm{K}$, d'où
+      $e_1 = 9{,}993675\ \mathrm{K}$, $x_1 = 0{,}12755 + 0{,}012755 \times 9{,}993675 = 0{,}25502\ \%$ et $u_1 = 2{,}551 \times 9{,}993675 + 0{,}25502 =
+      25{,}749\ \%$. Puis $y_2 = 0{,}024809\ \mathrm{K}$, $x_2 = 0{,}38225\ \%$ et $u_2 = 25{,}829\ \%$.</li>
+    <li><strong>Contrôle par la forme incrémentale.</strong> $u_1 = u_0 + q_0e_1 + q_1e_0 = 25{,}638 + 2{,}563755 \times 9{,}993675 - 2{,}551 \times 10 =
+      25{,}749\ \%$ : les deux formes concordent.</li>
+    <li><strong>Performances simulées.</strong> Avec $T_e = 2\ \mathrm{s}$ et sortie sans délai : dépassement $4{,}96\ \%$, temps d'établissement à $5\ \%$ de
+      $160\ \mathrm{s}$, contre $4{,}60\ \%$ et $162\ \mathrm{s}$ en continu. Avec sortie au top suivant : dépassement $5{,}75\ \%$.</li>
+  </ol>
+  <figure id="h-reponses-fig">
+    <div id="h-reponses"></div>
+    <div id="h-commandes"></div>
+    <figcaption>
+      Réponses du four à un échelon de consigne de $10\ \mathrm{K}$. En haut, température en kelvins, écart au point de fonctionnement, de $0$ à
+      $600\ \mathrm{s}$ : PI continu, PI numérique à $T_e = 2\ \mathrm{s}$, et PI numérique à $T_e = 20\ \mathrm{s}$ avec sortie au top suivant, pour montrer
+      l'effet d'une période excessive ; la légende associe chaque courbe à son cas ; les tirets horizontaux marquent la consigne et la bande de $\pm 5\ \%$. En
+      bas, les commandes en pour cent de puissance : l'escalier de chaque PI numérique est visible, très fin à $2\ \mathrm{s}$, grossier à $20\ \mathrm{s}$.
+      Les courbes du PI continu et du PI à $2\ \mathrm{s}$ sont presque confondues : la seconde masque en partie la première, ce qui est le résultat attendu.
+    </figcaption>
+  </figure>
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li><strong>Commande initiale.</strong> $25{,}64\ \%$ en numérique contre $25{,}51\ \%$ en continu : l'écart est la première part intégrale,
+      $0{,}128\ \%$, que la méthode d'Euler arrière ajoute dès le premier pas. Elle reste sous la réserve de $60\ \%$.</li>
+    <li><strong>Ordre de grandeur de la perte.</strong> $2^\circ$ de marge perdue doit augmenter légèrement le dépassement : $+0{,}4$ point sans délai,
+      $+1{,}2$ point avec un délai d'une période, conformément au rapport trois entre les deux pertes.</li>
+    <li><strong>Sensibilité de l'indicateur.</strong> Avec sortie au top suivant, le dépassement de $5{,}75\ \%$ franchit la bande de $5\ \%$, et le temps
+      d'établissement mesuré bondit à $272\ \mathrm{s}$. Le comportement a peu changé ; c'est l'indicateur qui est sensible quand le dépassement est voisin de
+      la bande. Lire le dépassement et la forme de la réponse, pas un seul chiffre.</li>
+    <li><strong>Période excessive.</strong> À $T_e = 20\ \mathrm{s}$ avec sortie au top suivant, la perte atteint $19{,}9^\circ$, la marge tombe à
+      $45{,}3^\circ$ et le dépassement monte à $24{,}7\ \%$ : le cahier des performances, au plus $10\ \%$, n'est plus tenu.</li>
+    <li><strong>Dimensions.</strong> $q_0e_k$ est en $\%/\mathrm{K} \times \mathrm{K} = \%$, comme $u_k$ ; $\omega_cT_e$ est sans dimension.</li>
+  </ul>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <h3 id="i-contexte">Implantation de la régulation de pression dans l'automate du site</h3>
+  <p>
+    Le PI de la régulation de pression a été réglé et protégé dans le cours <a href="#/cours/correcteurs-p-pi-pd-et-pid">Correcteurs P, PI, PD et PID</a> :
+    forme standard, $K_c = 6{,}0\ \mathrm{Hz/bar}$, $T_i = 1{,}2\ \mathrm{s}$, recalcul de l'intégrale avec $T_t = 0{,}6\ \mathrm{s}$ sur la fréquence réelle
+    renvoyée par le variateur. Modèle supposé : $K_g = 0{,}15\ \mathrm{bar/Hz}$, $\tau_h = 1{,}2\ \mathrm{s}$, capteur $\tau_c = 0{,}13\ \mathrm{s}$, retard de
+    $50\ \mathrm{ms}$. Ce retard, introduit dans le cours <a href="#/cours/diagrammes-de-bode">Diagrammes de Bode</a> pour l'automate et la transmission, est
+    désormais réservé à la transmission vers le variateur et à son traitement interne ; l'effet de l'échantillonnage est ajouté explicitement. En continu :
+    $\omega_c = 0{,}746\ \mathrm{rad/s}$, marge de phase $82{,}3^\circ$, temps d'établissement $3{,}46\ \mathrm{s}$ sans dépassement.
+  </p>
+  <p>
+    <strong>Contraintes d'exploitation.</strong> L'automate propose des tâches périodiques de $10\ \mathrm{ms}$ à $1\ \mathrm{s}$ ; sa tâche principale, le cycle
+    libre, dure de $8$ à $60\ \mathrm{ms}$ selon la charge, valeurs supposées. La pompe crée une pulsation de refoulement à cinq fois sa fréquence de rotation,
+    soit $5 \times 42{,}27 = 211{,}35\ \mathrm{Hz}$ au point de service, d'amplitude supposée $0{,}05\ \mathrm{bar}$. L'état intégral contient la fréquence
+    absolue demandée, voisine de $42{,}27\ \mathrm{Hz}$, et le bloc est calculé en virgule flottante simple précision.
+  </p>
+  <ol>
+    <li><strong>Budget de phase.</strong> La marge continue de $82{,}3^\circ$ est confortable ; on admet $10^\circ$ de perte. Avec la sortie au top suivant,
+      cas défavorable : $T_e \le 0{,}1745/(1{,}5 \times 0{,}746) = 0{,}156\ \mathrm{s}$ ; avec une sortie écrite dès la fin du calcul,
+      $T_e \le 0{,}468\ \mathrm{s}$.</li>
+    <li><strong>Période retenue.</strong> $T_e = 100\ \mathrm{ms}$, période standard d'une tâche périodique. Perte : $2{,}14^\circ$ sans délai,
+      $6{,}42^\circ$ avec une période de délai ; marge de $80{,}2$ ou $75{,}9^\circ$.</li>
+    <li><strong>Repliement.</strong> Échantillonnée à $10\ \mathrm{Hz}$, la pulsation de $211{,}35\ \mathrm{Hz}$ apparaîtrait à
+      $|211{,}35 - 21 \times 10| = 1{,}35\ \mathrm{Hz}$, au-dessus de la bande de la boucle mais bien visible sur la commande. Le capteur la divise par
+      $\sqrt{1 + (2\pi \times 211{,}35 \times 0{,}13)^2} = 172{,}6$ : il reste $0{,}29\ \mathrm{mbar}$, négligeable. Le capteur sert donc de filtre
+      anti-repliement, à condition de ne pas régler son amortissement trop bas : avec $5\ \mathrm{ms}$, il resterait $7{,}4\ \mathrm{mbar}$ ; pour garder le
+      résidu sous $0{,}5\ \mathrm{mbar}$, la constante de temps doit rester d'au moins $75\ \mathrm{ms}$, comme le montre l'exercice avancé de la section K.</li>
+    <li><strong>Coefficients.</strong> Euler arrière : $K_cT_e/T_i = 6 \times 0{,}1/1{,}2 = 0{,}5\ \mathrm{Hz/bar}$, $q_0 = 6{,}5\ \mathrm{Hz/bar}$,
+      $q_1 = -6{,}0\ \mathrm{Hz/bar}$. Anti-emballement : $T_e/T_t = 0{,}1/0{,}6 = 0{,}167$, raison $0{,}833$ positive et inférieure à $1$, recalcul stable
+      et sans alternance.</li>
+    <li><strong>Précision.</strong> L'incrément d'intégrale vaut $0{,}5\,e_k$ ; un écart n'est perdu dans l'arrondi qu'en dessous de
+      $3{,}8 \times 10^{-6}\ \mathrm{bar}$. Une période de $1\ \mathrm{ms}$ porterait ce seuil à $0{,}38\ \mathrm{mbar}$ sans rien gagner sur la marge.</li>
+    <li><strong>Organisation.</strong> Bloc PI dans la tâche périodique de $100\ \mathrm{ms}$, jamais dans le cycle libre : une période réelle variant de
+      $8$ à $60\ \mathrm{ms}$ avec un paramètre $T_e$ fixé à $100\ \mathrm{ms}$ ajouterait un incrément calculé pour $100\ \mathrm{ms}$ à chaque appel,
+      soit une action intégrale multipliée par un facteur allant de $100/60 = 1{,}7$ à $100/8 = 12{,}5$, et un comportement dépendant de la charge de l'automate.</li>
+  </ol>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      La simulation suivante compare la réponse à un échelon de consigne de $0{,}1\ \mathrm{bar}$ du PI continu et du PI numérique. Avant de manipuler,
+      prévoyez : à partir de quelle période le dépassement devient-il visible, sans délai de calcul puis avec une période de délai ? Le temps d'établissement
+      va-t-il d'abord augmenter ou diminuer quand $T_e$ croît ? Laquelle des deux méthodes donne la plus forte commande initiale ?
+    </p>
+  </div>
+  <figure id="i-numerique-sim">
+    <div id="i-numerique-curseurs"></div>
+    <div id="i-numerique-valeurs"></div>
+    <div id="i-numerique-trace"></div>
+    <div id="i-numerique-commande"></div>
+    <figcaption>
+      Régulation de pression numérique, échelon de consigne de $0{,}1\ \mathrm{bar}$ à $t = 0$. En haut, pression en bar, écart au point de service, de $0$ à
+      $10\ \mathrm{s}$ : PI continu de référence et PI numérique avec les réglages choisis ; les tirets horizontaux marquent la consigne et la bande de
+      $\pm 5\ \%$. En bas, consigne de fréquence envoyée au variateur, en hertz, en escalier pour le PI numérique. Les curseurs règlent la période, le délai de
+      calcul, nul ou égal à une période, et la méthode de discrétisation. Le modèle est linéaire : la rampe du variateur, $5\ \mathrm{Hz/s}$, est ignorée, ce
+      qui est justifié tant que la commande initiale reste sous $1\ \mathrm{Hz}$.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Jusqu'à $T_e = 200\ \mathrm{ms}$, la réponse numérique est presque confondue avec la réponse continue : aucun dépassement,
+    et un temps d'établissement qui diminue légèrement, de $3{,}46$ à $3{,}09\ \mathrm{s}$ à $100\ \mathrm{ms}$ avec une période de délai, parce que la boucle
+    très amortie devient un peu moins amortie. Le dépassement apparaît vers $0{,}5\ \mathrm{s}$ avec une période de délai, $20{,}8\ \%$ pour une marge
+    réduite à $50^\circ$, et à $1\ \mathrm{s}$ la boucle est presque instable : $79\ \%$ de dépassement, marge de $18^\circ$. Sans délai de calcul et avec Euler arrière, la même
+    période de $1\ \mathrm{s}$ ne donne que $0{,}5\ \%$ : le délai de calcul compte autant que la période. La méthode d'Euler arrière donne la plus forte
+    commande initiale, $q_0 \times 0{,}1 = 0{,}65\ \mathrm{Hz}$ contre $0{,}625\ \mathrm{Hz}$ par Tustin à $100\ \mathrm{ms}$, car elle intègre l'écart dès le
+    premier pas.
+  </p>
+  <h3 id="i-compromis">Risques, choix d'ingénierie et compromis</h3>
+  <ul>
+    <li><strong>Déterminisme contre retard.</strong> Écrire la sortie au top suivant coûte $4{,}3^\circ$ de plus, mais rend le délai constant. Sur cette boucle
+      à grande marge, le déterminisme l'emporte ; sur une boucle de courant de variateur, on écrit au plus tôt.</li>
+    <li><strong>Filtrage contre phase.</strong> Allonger l'amortissement du capteur réduirait encore le résidu replié, mais chaque $0{,}1\ \mathrm{s}$ ajouté
+      retire environ $4^\circ$ à $\omega_c$. Le réglage actuel suffit.</li>
+    <li><strong>Période courte contre précision.</strong> Une période de $10\ \mathrm{ms}$ ne gagnerait que $1{,}9^\circ$ sans délai, $5{,}8^\circ$ avec une période de
+      délai, sur une marge de $82^\circ$, et multiplierait par dix la charge et le seuil d'arrondi. Elle n'apporte rien ici.</li>
+    <li><strong>Risque résiduel.</strong> Une pulsation à un multiple exact de $f_e$, ou un capteur remplacé par un modèle plus rapide, ferait réapparaître le
+      repliement : la constante de temps du capteur devient un paramètre de sécurité fonctionnelle de la boucle, à consigner dans le dossier.</li>
+  </ul>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Ajout au projet fil rouge</span>
+    <p>
+      Implantation numérique de la régulation de pression : PI dans une tâche périodique de $100\ \mathrm{ms}$, jamais dans le cycle libre ; Euler arrière,
+      $q_0 = 6{,}5$ et $q_1 = -6{,}0\ \mathrm{Hz/bar}$, incrément intégral $0{,}5\,e_k$ ; recalcul $x_k \leftarrow x_k + (T_e/T_t)(u_s - u_c)$ avec
+      $T_e/T_t = 0{,}167$ ; ordre lire, calculer, borner, écrire, mettre à jour ; perte de phase $2{,}14^\circ$ sans délai et $6{,}42^\circ$ avec une période
+      de délai, marge de $75{,}9^\circ$ au pire, réponse sans dépassement en $3{,}1$ à $3{,}4\ \mathrm{s}$ ; pulsation de la pompe à $211{,}35\ \mathrm{Hz}$
+      repliée à $1{,}35\ \mathrm{Hz}$ mais ramenée à $0{,}29\ \mathrm{mbar}$ par le capteur, dont l'amortissement minimal de $75\ \mathrm{ms}$ est consigné ;
+      seuil d'arrondi de l'intégrale en simple précision $3{,}8 \times 10^{-6}\ \mathrm{bar}$. Périodes de l'automate, amplitude de pulsation et organisation
+      des sorties supposées, à confirmer par la documentation et une mesure sur site.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Saisir des coefficients par échantillon comme s'ils étaient par seconde.</strong> Un gain intégral $K_i$ exprimé par échantillon doit être
+      multiplié par $T_e$ ; changer la période sans recalculer les coefficients multiplie l'action intégrale dans le même rapport. Correction : toujours
+      repartir de $K_c$, $T_i$ et $T_e$ en secondes.</li>
+    <li><strong>Exécuter le PID dans le cycle libre.</strong> La période réelle varie avec la charge, alors que le bloc suppose une période fixe : réglage
+      apparent changeant, parfois oscillant aux heures chargées. Correction : tâche périodique, ou mesure du temps réellement écoulé à chaque appel.</li>
+    <li><strong>Oublier le retard de l'échantillonnage dans les marges.</strong> Une boucle validée en continu avec $30^\circ$ de marge peut devenir oscillante
+      une fois implantée. Correction : retrancher $\omega_c(T_e/2 + \tau_{\mathrm{calc}})$, ou simuler la boucle numérique.</li>
+    <li><strong>Croire qu'échantillonner plus vite est toujours mieux.</strong> Dérivée noyée dans le bruit de quantification, incréments d'intégrale perdus
+      dans l'arrondi, cycle dépassé. Correction : choisir la période par le budget de phase, puis vérifier les limites matérielles.</li>
+    <li><strong>Échantillonner sans filtre anti-repliement.</strong> Une pulsation ou une ondulation rapide réapparaît sous forme d'oscillation lente, que le
+      correcteur poursuit. Aucun filtre numérique placé après ne la supprime. Correction : filtre analogique ou suréchantillonnage suivi d'une moyenne.</li>
+    <li><strong>Discrétiser un filtre rapide par Euler avant.</strong> La récurrence alterne puis diverge dès $T_e &gt; 2\tau$, alors que le filtre continu
+      est stable. Correction : Euler arrière, Tustin ou invariance indicielle.</li>
+    <li><strong>Écrire la sortie après la mise à jour complète de l'état, ou au top suivant sans le savoir.</strong> Une période de délai cachée triple la perte
+      de phase. Correction : lire la documentation de l'organisation des entrées et sorties, et en tenir compte dans le budget.</li>
+    <li><strong>Choisir $T_t$ plus petit que $T_e$.</strong> La récurrence de l'anti-emballement alterne, voire diverge, en butée. Correction : $T_e$
+      nettement inférieur à $T_t$.</li>
+  </ol>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic industriel et une question
+    conceptuelle sans calcul. Les solutions sont présentes dans la page mais restent masquées jusqu'à votre tentative ou à un clic explicite ; chaque
+    correction se révèle étape par étape, avec un calcul encadré, une courbe tracée ou un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangées : choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Le score est calculé dans ce navigateur
+    et repris par la grille d'auto-évaluation.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+  <h3 id="m-formules">Cinq formules essentielles</h3>
+  <div class="formule-cle">$$B_0(s) = \frac{1 - e^{-T_es}}{s} \ \Rightarrow\ \theta_{\mathrm{num}} = \frac{T_e}{2} + \tau_{\mathrm{calc}}, \qquad \Delta\varphi = \omega_c\,\theta_{\mathrm{num}}$$</div>
+  <div class="formule-cle">$$f_{\mathrm{app}} = |f - mf_e|,\ m = \mathrm{arrondi}(f/f_e) ; \qquad |H_f| = \frac{1}{\sqrt{1 + (2\pi f\tau_f)^2}}$$</div>
+  <div class="formule-cle">$$s \leftarrow \frac{z - 1}{T_e},\ \ \frac{z - 1}{zT_e},\ \ \frac{2}{T_e}\frac{z - 1}{z + 1} ; \qquad p_{\mathrm{exact}} = e^{-T_e/\tau}$$</div>
+  <div class="formule-cle">$$u_k = u_{k-1} + q_0e_k + q_1e_{k-1},\quad q_0 = K_c\Bigl(1 + \frac{T_e}{T_i}\Bigr),\ q_1 = -K_c$$</div>
+  <div class="formule-cle">$$x_k \leftarrow x_k + \frac{T_e}{T_t}(u_s - u_c),\ \ 0 &lt; \frac{T_e}{T_t} &lt; 2 ; \qquad T_e \le \frac{\Delta\varphi_{\max}}{1{,}5\,\omega_c}\ \text{(sortie au top suivant)}$$</div>
+  <h3 id="m-vigilance">Cinq points de vigilance</h3>
+  <ul>
+    <li>Compter le retard du bloqueur et le retard de calcul dans la marge de phase.</li>
+    <li>Filtrer avant d'échantillonner : un repliement ne se corrige pas après coup.</li>
+    <li>Vérifier la stabilité de chaque récurrence ; préférer Euler arrière ou Tustin pour filtres et dérivées.</li>
+    <li>Exécuter le correcteur dans une tâche à période fixe, avec des coefficients recalculés pour cette période.</li>
+    <li>Une période trop courte dégrade la dérivée et la précision de l'intégrale.</li>
+  </ul>
+  <h3 id="m-resume">Résumé</h3>
+  <p>
+    Un correcteur numérique lit la mesure toutes les $T_e$ secondes et maintient sa commande jusqu'au calcul suivant. Ce bloqueur équivaut à un retard de
+    $T_e/2$, auquel s'ajoute le délai de calcul : la marge de phase perd $\omega_c(T_e/2 + \tau_{\mathrm{calc}})$. Toute composante au-delà de $f_e/2$ se
+    replie à $|f - mf_e|$ : il faut filtrer avant l'échantillonnage. Discrétiser revient à approcher l'intégrale : Euler avant peut rendre instable un filtre
+    stable, Euler arrière et Tustin conservent la stabilité, l'invariance indicielle est exacte pour une entrée en escalier. Le PI devient
+    $u_k = u_{k-1} + q_0e_k + q_1e_{k-1}$, avec recalcul de l'état pour l'anti-emballement. La période se choisit par le budget de phase, la dynamique, le
+    repliement et les limites du matériel.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance, deux sur le cours précédent, <a href="#/cours/correcteurs-p-pi-pd-et-pid">Correcteurs P, PI, PD et PID</a>, dont
+    le correcteur est ici discrétisé, une sur le cours <a href="#/cours/protections-des-convertisseurs">Protections des convertisseurs</a>, vieux d'une
+    semaine, et une sur le cours <a href="#/cours/essais-a-vide-et-en-court-circuit">Essais à vide et en court-circuit</a>, vieux d'un mois.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : programmer le PI numérique de la régulation de pression, vérifier l'effet de la période et du délai de calcul, puis observer le repliement et
+    le bloqueur dans LTspice. Prédictions à écrire avant de commencer : dépassement attendu à $T_e = 0{,}5\ \mathrm{s}$ avec une période de délai ; fréquence
+    apparente d'une pulsation de $211{,}35\ \mathrm{Hz}$ échantillonnée à $10\ \mathrm{Hz}$ ; effet d'une récurrence d'Euler avant sur un filtre de
+    $20\ \mathrm{ms}$ échantillonné à $50\ \mathrm{ms}$.
+  </p>
+  <ol>
+    <li><strong>Python, procédé.</strong> Simuler la pompe et le capteur avec un pas fin $h = 0{,}5\ \mathrm{ms}$, par la récurrence exacte du premier ordre
+      $x \leftarrow e^{-h/\tau}x + (1 - e^{-h/\tau})Ku$, et le retard de $50\ \mathrm{ms}$ par une file de $100$ valeurs.</li>
+    <li><strong>Python, PI numérique.</strong> Tous les $T_e/h$ pas : lire la mesure du capteur, calculer $e_k$, mettre à jour $x_k$, calculer et borner
+      $u_c$, écrire $u_s$ immédiatement ou au top suivant, puis appliquer le recalcul. Entre deux tops, $u$ reste constant.</li>
+    <li><strong>Python, essais.</strong> Échelon de consigne de $0{,}1\ \mathrm{bar}$ pour $T_e = 0{,}01$, $0{,}1$, $0{,}5$ et $1\ \mathrm{s}$, avec et sans
+      délai ; comparer au PI continu. Puis remplacer l'état intégral par un nombre en simple précision, avec <code>struct.pack('f', x)</code>, et chercher le
+      plus petit écart encore intégré pour $T_e = 1\ \mathrm{ms}$.</li>
+    <li><strong>Python, repliement.</strong> Échantillonner $0{,}05\sin(2\pi \times 211{,}35\,t)$ à $10\ \mathrm{Hz}$ pendant $5\ \mathrm{s}$ et tracer les
+      échantillons ; recommencer après un filtre du premier ordre de $0{,}13\ \mathrm{s}$ simulé au pas fin.</li>
+    <li><strong>LTspice, bloqueur.</strong> Source sinusoïdale de $1\ \mathrm{Hz}$, composant <code>sample</code> de la bibliothèque numérique, commandé par
+      une source d'impulsions de période $0{,}1\ \mathrm{s}$ ; comparer sa sortie au signal retardé par une source comportementale
+      <code>B1 d 0 V=delay(V(in),0.05)</code>. Lancer <code>.tran 0 3 0 0.1m</code>, puis porter la fréquence à $9\ \mathrm{Hz}$.</li>
+  </ol>
+  <p>
+    Résultats attendus : continu, $t_5 = 3{,}46\ \mathrm{s}$ sans dépassement ; $T_e = 0{,}1\ \mathrm{s}$, $t_5$ de $3{,}37\ \mathrm{s}$ sans délai et
+    $3{,}09\ \mathrm{s}$ avec délai, sans dépassement ; $T_e = 0{,}5\ \mathrm{s}$ avec délai, dépassement voisin de $21\ \%$ ; $T_e = 1\ \mathrm{s}$ avec délai,
+    dépassement voisin de $79\ \%$. En simple précision à $T_e = 1\ \mathrm{ms}$, les écarts inférieurs à environ $0{,}38\ \mathrm{mbar}$ ne sont plus
+    intégrés. Les échantillons de la pulsation dessinent une sinusoïde de $1{,}35\ \mathrm{Hz}$ d'amplitude $50\ \mathrm{mbar}$, ramenée à environ
+    $0{,}29\ \mathrm{mbar}$ après le filtre. Dans LTspice, l'escalier suit la courbe retardée de $50\ \mathrm{ms}$ à $1\ \mathrm{Hz}$ ; à $9\ \mathrm{Hz}$, les
+    paliers dessinent une oscillation de $1\ \mathrm{Hz}$.
+  </p>
+  <p>
+    Anomalies à observer et à expliquer : une réponse qui dépend du pas fin $h$, signe d'un procédé mal simulé et non d'un défaut du correcteur ; une
+    commande qui alterne d'un top à l'autre, signe d'un pôle discret négatif, filtre discrétisé par Euler avant ou $T_t &lt; T_e$ ; une erreur résiduelle
+    constante malgré l'intégrale, signe d'une saturation permanente ou d'incréments perdus dans l'arrondi ; une oscillation lente de fréquence non
+    expliquée par le procédé, signe d'un repliement. Tout essai sur la pompe réelle se fait avec les sécurités de surpression actives, sous la responsabilité
+    d'une personne habilitée.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours, notées de 0 à 4. Le bilan affiché sous la grille est calculé dans ce navigateur à
+    partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement. Aucune estimation n'est faite à votre place :
+    seul le score réellement obtenu sert de référence.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Lire votre bilan</span>
+    <p>
+      Les exercices fondamentaux testent la phase perdue par le bloqueur et les coefficients du PI numérique ; l'intermédiaire 1 la stabilité d'une récurrence
+      d'Euler avant ; l'intermédiaire 2 le choix d'une période par le budget de phase ; l'avancé le repliement et le filtre anti-repliement ; la question de
+      diagnostic l'exécution dans le cycle libre ; la question conceptuelle l'origine du retard du bloqueur. Un bloc réussi à moins de la moitié indique la
+      notion à reprendre avant le cours Révision 9 et mini-projet régulation.
+    </p>
+  </div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Échantillonner et maintenir la commande revient à ajouter un retard $T_e/2 + \tau_{\mathrm{calc}}$ : la période se paie en marge de phase, et se choisit par un budget de phase.</li>
+    <li data-rang="02">Tout ce qui dépasse $f_e/2$ se replie dans la bande utile ; le filtrage doit précéder l'échantillonnage.</li>
+    <li data-rang="03">Discrétiser n'est pas neutre : la méthode décide de la fidélité et parfois de la stabilité ; le PI devient une récurrence à coefficients recalculés pour la période, avec un anti-emballement dont la période doit rester inférieure à $T_t$.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> relier les deux visions de la même chaîne, l'équivalent continu par un retard, utile pour les marges, et
+    la récurrence, utile pour la stabilité numérique et la programmation ; en particulier, ne pas oublier le délai de calcul, qui peut tripler la perte de phase.
+    Le réflexe à installer : pour toute boucle implantée, écrire $\omega_c(T_e/2 + \tau_{\mathrm{calc}})$ à côté de la marge de phase.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Révision 9 et mini-projet régulation, rassemble le modèle, les performances, la stabilité, le
+    correcteur et son implantation sur une boucle complète. Question à préparer : pour une régulation de vitesse d'un convoyeur dont le moteur et la charge ont
+    une constante de temps mécanique de $0{,}8\ \mathrm{s}$, avec un codeur et un variateur, quelle pulsation de coupure viser pour une réponse sans
+    dépassement en moins d'une seconde, et quelle période d'échantillonnage en déduire pour un budget de phase de $10^\circ$ avec une sortie au top suivant ?
+  </p>
+</article>
