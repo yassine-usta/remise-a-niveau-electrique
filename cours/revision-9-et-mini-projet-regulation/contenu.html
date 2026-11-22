@@ -1,0 +1,1024 @@
+<article class="cours" data-slug="revision-9-et-mini-projet-regulation">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/commande-numerique">Commande numérique</a> s'est achevé sur une question : pour une régulation de vitesse de convoyeur dont le
+      moteur et la charge ont une constante de temps mécanique de $0{,}8\ \mathrm{s}$, quelle pulsation de coupure viser pour une réponse sans dépassement en
+      moins d'une seconde, et quelle période d'échantillonnage en déduire pour un budget de phase de $10^\circ$ avec une sortie au top suivant ? Réponse courte.
+      Un PI dont l'action intégrale compense la constante de temps du procédé rend la boucle fermée équivalente à un premier ordre de constante de temps
+      $1/\omega_c$, qui s'établit à $5\ \%$ en $3/\omega_c$ sans aucun dépassement. Moins d'une seconde impose $\omega_c \ge 3\ \mathrm{rad/s}$ ; on vise
+      $\omega_c = 4\ \mathrm{rad/s}$, soit $0{,}75\ \mathrm{s}$, pour garder de la réserve face aux retards. Avec une sortie au top suivant, la phase perdue vaut
+      $1{,}5\,\omega_cT_e$ ; $1{,}5 \times 4 \times T_e \le 0{,}1745\ \mathrm{rad}$ donne $T_e \le 29\ \mathrm{ms}$, et l'on retient $20\ \mathrm{ms}$.
+    </p>
+    <p>
+      Cette séance reprend ce convoyeur comme mini-projet et montre que la réponse était incomplète : la consigne n'est pas la seule exigence. Quand un lot
+      de cartons arrive sur la bande, le couple résistant augmente brusquement, et c'est ce rejet de perturbation qui fixe la vitesse de la boucle, donc la
+      période, donc l'endroit où le calcul peut être programmé. La séance rassemble pour cela tout le module : le modèle du cours
+      <a href="#/cours/modelisation-des-systemes-dynamiques">Modélisation des systèmes dynamiques</a>, les indicateurs du cours
+      <a href="#/cours/reponse-temporelle-et-performances">Réponse temporelle et performances</a>, la phase et les marges des cours
+      <a href="#/cours/diagrammes-de-bode">Diagrammes de Bode</a> et <a href="#/cours/criteres-de-stabilite">Critères de stabilité</a>, le réglage et
+      l'anti-emballement du cours <a href="#/cours/correcteurs-p-pi-pd-et-pid">Correcteurs P, PI, PD et PID</a>, et l'implantation du cours
+      <a href="#/cours/commande-numerique">Commande numérique</a>. Le moteur asynchrone et son variateur viennent des cours
+      <a href="#/cours/moteur-asynchrone-triphase">Moteur asynchrone triphasé</a> et
+      <a href="#/cours/variation-de-vitesse-des-moteurs-asynchrones">Variation de vitesse des moteurs asynchrones</a>.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Une régulation ne se conçoit pas bloc par bloc. Le modèle conditionne le réglage, le réglage fixe la pulsation de coupure, la pulsation de coupure fixe la
+    période d'échantillonnage, la période et le codeur fixent la qualité de la mesure, et les limites de l'actionneur décident de ce qui se passe quand la
+    boucle ne peut plus suivre. Chaque cours du module a isolé l'un de ces maillons ; un ingénieur de mise en service les traite toujours ensemble, dans un
+    ordre précis, et revient en arrière quand une contrainte d'aval invalide un choix d'amont.
+  </p>
+  <ul>
+    <li><strong>Un cahier des charges à plusieurs entrées.</strong> Suivre une consigne et rejeter une perturbation sont deux exigences distinctes, qui ne
+      demandent pas la même boucle. Celle qui est la plus sévère fixe la pulsation de coupure.</li>
+    <li><strong>Une chaîne de retards.</strong> Bloqueur, calcul, mesure par comptage, transmission vers le variateur : chaque maillon prend sa part d'un même
+      budget de phase. Tenir ce budget décide de la période et de l'emplacement du calcul.</li>
+    <li><strong>Des limites physiques.</strong> Résolution du codeur, limite de couple du variateur, accélération acceptable par les produits : un réglage
+      correct sur le papier peut échouer sur l'une d'elles.</li>
+    <li><strong>Une compétence d'intégration.</strong> Savoir dire, chiffres à l'appui, pourquoi une boucle de vitesse se programme dans une tâche rapide de
+      $5\ \mathrm{ms}$ alors que la régulation de pression du même site se contente de $100\ \mathrm{ms}$ : c'est l'objet de ce mini-projet.</li>
+  </ul>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Jalon visé par le module</span>
+    <p>
+      Le jalon de fin de module demande de modéliser et de réguler un système simple. Cette séance en est l'épreuve complète : du modèle physique d'un
+      convoyeur jusqu'aux équations programmées dans l'automate, avec un cahier des charges chiffré, des marges vérifiées, une période justifiée, la protection
+      contre la saturation et la conduite en mode dégradé. Le module suivant, consacré à la mesure, reprendra la question laissée ouverte ici : que vaut
+      vraiment la vitesse mesurée ?
+    </p>
+  </div>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Établir le modèle d'un convoyeur entraîné en couple, calculer sa constante de temps $\tau_m = J/f$ et son gain statique, et préciser le domaine de validité de la linéarisation.</li>
+    <li data-rang="02">Traduire un cahier des charges de consigne et de perturbation en pulsation de coupure, en dérivant la chute de vitesse provoquée par un à-coup de charge dans une boucle compensée.</li>
+    <li data-rang="03">Calculer un budget de phase complet, bloqueur, calcul, mesure par comptage et variateur, puis la marge de phase, la marge de gain et la marge de module qui en résultent.</li>
+    <li data-rang="04">Dimensionner la période d'échantillonnage entre une borne haute issue du budget de phase et une borne basse issue de la résolution du codeur.</li>
+    <li data-rang="05">Comparer un réglage par compensation et un réglage à action intégrale plus rapide avec préfiltre de consigne, et choisir selon le cahier des charges.</li>
+    <li data-rang="06">Diagnostiquer les effets d'une saturation de couple, d'une période trop longue et d'une rampe de consigne, et justifier l'anti-emballement, l'anticipation et la conduite en mode dégradé.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>Quatre rappels suffisent, chacun établi dans un cours du module.</p>
+  <ul>
+    <li><strong>Premier ordre.</strong> $\tau\dot y + y = Ku$ a pour fonction de transfert $K/(1 + \tau s)$ ; sa réponse à un échelon atteint $95\ \%$ de la
+      valeur finale en $\ln 20\ \tau \approx 3\tau$, sans dépassement.</li>
+    <li><strong>PI de forme standard.</strong> $C(s) = K_c\bigl(1 + 1/(T_is)\bigr) = K_c(1 + T_is)/(T_is)$ : un intégrateur et un zéro en $-1/T_i$. Choisir
+      $T_i = \tau$ compense le pôle du procédé.</li>
+    <li><strong>Marge de phase et retard.</strong> $M_\varphi = 180^\circ + \arg L(j\omega_c)$ ; un retard $\theta$ retire $\omega_c\theta$ radians sans changer
+      $|L|$. Une boucle numérique ajoute $T_e/2$ pour le bloqueur et $\tau_{\mathrm{calc}}$ pour le calcul.</li>
+    <li><strong>Saturation.</strong> Quand la commande calculée dépasse la limite de l'actionneur, l'intégrale continue d'accumuler l'écart : c'est
+      l'emballement, que l'on corrige en recalculant l'état intégral à partir de la commande réellement appliquée.</li>
+  </ul>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Notation de la séance</span>
+    <p>
+      $v$ : vitesse de la bande, en m/s ; $\omega$ : vitesse angulaire de l'arbre moteur, en rad/s. $u$ : consigne de couple envoyée au variateur, en pour cent
+      du couple nominal $C_n$ ; $d$ : couple résistant ajouté par les produits, dans la même unité. $J$ : moment d'inertie ramené à l'arbre moteur, en
+      $\mathrm{kg \cdot m^2}$ ; $f$ : pente du couple de frottement en fonction de la vitesse, en $\mathrm{N \cdot m \cdot s/rad}$. $\tau_m = J/f$ :
+      constante de temps mécanique, en s ; $K$ : gain statique, en (m/s)/%. $r$ : consigne de vitesse ; $e = r - v_m$ : écart ; $v_m$ : vitesse mesurée.
+      $\omega_c$ : pulsation de coupure, en rad/s ; $T_e$ : période d'échantillonnage ; $\theta$ : retard total équivalent ; $\theta_v$ : retard du variateur et
+      de la liaison. $K_c$, $T_i$ : gain et temps d'action intégrale du PI ; $T_t$ : constante de recalcul de l'anti-emballement ; $t_5$ : temps
+      d'établissement à $5\ \%$. Le sens positif de $v$ est le sens de convoyage ; un couple positif est moteur dans ce sens.
+    </p>
+  </div>
+  <p>
+    Mini-test de trois questions. Les réponses restent masquées, séparées de l'énoncé, jusqu'à votre tentative ou à un clic explicite.
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+  <h3 id="d-quatre-maillons">Une boucle, quatre maillons et un temps de réaction</h3>
+  <p>
+    Pensez au régulateur de vitesse d'une voiture qui aborde une côte. La pente est une perturbation : elle ajoute un couple résistant, et la voiture
+    commence à ralentir avant que quoi que ce soit ne réagisse. Le compteur, qui est le capteur, constate la baisse avec un léger retard ; le régulateur
+    décide d'ouvrir davantage les gaz ; le moteur, qui est l'actionneur, fournit le couple supplémentaire ; la voiture, qui est le procédé, réaccélère avec
+    son inertie. La vitesse perdue dépend de deux choses seulement : la décélération que la pente impose au départ, et le temps que met la boucle à réagir.
+  </p>
+  <p>
+    Le convoyeur se comporte exactement ainsi. Un lot de cartons ajoute $10\ \%$ du couple nominal ; la bande décélère d'emblée, à un rythme fixé par son
+    inertie ; la boucle compense en un temps de l'ordre de $1/\omega_c$. Une boucle deux fois plus rapide laisse donc chuter la vitesse environ deux fois
+    moins. Ensuite, l'action intégrale ramène la vitesse exactement à la consigne, car tant qu'il reste un écart, elle continue d'augmenter le couple.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      La figure suivante montre, maillon par maillon, la réponse de la boucle à un à-coup de charge de $10\ \%$. Avant de lancer la lecture, écrivez vos
+      réponses : quel signal bouge en premier, la commande ou la vitesse ? De combien le couple de commande doit-il finalement augmenter ? Si l'on passe de
+      $\omega_c = 4$ à $\omega_c = 10\ \mathrm{rad/s}$, la chute de vitesse sera-t-elle divisée par deux, par plus ou par moins ?
+    </p>
+  </div>
+  <figure id="d-tour-sim">
+    <div class="schema-vivant" id="d-tour-vivant"></div>
+    <div id="d-tour-curseurs"></div>
+    <div id="d-tour-lecteur"></div>
+    <div id="d-tour-valeurs"></div>
+    <figcaption>
+      Tour de boucle après un à-coup de charge. Quatre bandes horizontales partagent le même axe des temps, de $0$ à $3\ \mathrm{s}$ : de haut en bas, le
+      couple résistant $d$ ajouté par les produits, en pour cent de $C_n$, qui passe de $10$ à $20\ \%$ à $t = 0{,}2\ \mathrm{s}$ ; la consigne de couple $u$
+      calculée par le PI ; la vitesse réelle $v$ de la bande ; la vitesse mesurée $v_m$, échantillonnée toutes les $5\ \mathrm{ms}$. Dans chaque bande, le trait
+      fin en tirets marque la valeur initiale, le trait plein épais la grandeur tracée jusqu'à l'instant présent, matérialisé par la ligne verticale en
+      pointillés. Le lecteur fait avancer l'instant présent ; le curseur règle la pulsation de coupure visée, dont le PI par compensation est déduit.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> La vitesse bouge en premier : la charge freine la bande avant que la mesure ne l'ait vue, et la commande ne réagit qu'à
+    l'écart mesuré, avec le retard du comptage, du calcul et du variateur. Le couple de commande finit exactement $10\ \%$ plus haut, car en régime établi le
+    moteur doit équilibrer le couple ajouté ; c'est l'action intégrale qui fournit ce supplément sans laisser d'écart. Avec $\omega_c = 4\ \mathrm{rad/s}$,
+    la chute atteint environ $71\ \mathrm{mm/s}$ ; avec $10\ \mathrm{rad/s}$, environ $36\ \mathrm{mm/s}$ : à peu près la moitié, et non $2{,}5$ fois
+    moins. Le rapport n'est pas $10/4$, car la décélération initiale n'est pas la seule cause : la vitesse continue de baisser pendant que le couple monte. On remarque aussi
+    la longue fin de retour, qui ne s'accélère guère avec $\omega_c$ : elle est gouvernée par $\tau_m$, comme le montrera la section E.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Analogie du régulateur de vitesse automobile, et ses limites</span>
+    <p>
+      L'analogie rend bien compte de la séquence perturbation, mesure, décision, couple, et du rôle de l'inertie. Elle trompe sur trois points. Un conducteur
+      voit la côte arriver et anticipe, alors que le PI ne connaît la perturbation qu'à travers l'écart mesuré ; l'anticipation est possible en automatique,
+      mais elle doit être programmée explicitement. Le moteur d'une voiture a une réserve de couple variable selon le rapport engagé, alors que le variateur
+      impose une limite fixe, réglée par paramètre. Enfin, la résistance à l'avancement d'une voiture croît fortement avec la vitesse, alors que le frottement
+      d'un convoyeur est en grande partie constant : la linéarisation ne vaut qu'autour du point de fonctionnement.
+    </p>
+  </div>
+
+  <h3 id="d-deux-exigences">Deux exigences, deux vitesses de boucle</h3>
+  <p>
+    Suivre une consigne et rejeter une perturbation ne se ressemblent pas. Pour la consigne, l'automate sait à quel instant elle change : il peut la lisser,
+    l'anticiper, et la boucle n'a qu'à corriger les erreurs de modèle. La perturbation, elle, arrive sans prévenir, directement sur le procédé, et seule la
+    rétroaction peut la combattre. C'est pourquoi la boucle se règle d'abord sur la perturbation, la plus exigeante ; la réponse à la consigne se façonne
+    ensuite, si besoin, par un préfiltre ou une rampe, sans toucher à la boucle.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Analogie du gardien de but, et ses limites</span>
+    <p>
+      Un gardien qui sait de quel côté partira le tir, parce qu'on le lui a annoncé, peut se placer calmement : c'est la consigne. Un tir surprise exige des
+      réflexes : c'est la perturbation. L'analogie s'arrête là : un gardien apprend et devine, alors qu'une boucle linéaire répond toujours de la même façon
+      au même écart, et sa vitesse de réaction est entièrement fixée par $\omega_c$ et par ses retards.
+    </p>
+  </div>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+  <h3 id="e-synthese">Le module en six étapes</h3>
+  <p>
+    Le tableau suivant résume la démarche que le module a construite cours après cours. Chaque ligne donne la question posée, l'outil qui y répond et le
+    résultat qui passe à l'étape suivante. Le mini-projet les enchaîne dans cet ordre.
+  </p>
+  <div class="cadre-tableau" id="e-synthese-tableau">
+    <table>
+      <thead><tr><th>Étape</th><th>Question</th><th>Outil</th><th>Résultat transmis</th><th>Cours de référence</th></tr></thead>
+      <tbody>
+        <tr><td>1. Modèle</td><td>Comment le procédé répond-il ?</td><td>Bilan d'énergie, linéarisation, fonction de transfert</td><td>$G(s)$, domaine de validité</td><td><a href="#/cours/modelisation-des-systemes-dynamiques">Modélisation des systèmes dynamiques</a></td></tr>
+        <tr><td>2. Performances</td><td>Que veut-on obtenir ?</td><td>$t_5$, dépassement, erreur statique</td><td>Cahier des charges chiffré</td><td><a href="#/cours/reponse-temporelle-et-performances">Réponse temporelle et performances</a></td></tr>
+        <tr><td>3. Fréquentiel</td><td>À quelle vitesse la boucle doit-elle réagir ?</td><td>Bode, retard, budget de phase</td><td>$\omega_c$ visée, phase disponible</td><td><a href="#/cours/diagrammes-de-bode">Diagrammes de Bode</a></td></tr>
+        <tr><td>4. Stabilité</td><td>Avec quelle réserve ?</td><td>Marges de gain, de phase et de module</td><td>Seuils de robustesse</td><td><a href="#/cours/criteres-de-stabilite">Critères de stabilité</a></td></tr>
+        <tr><td>5. Correcteur</td><td>Quelle loi de commande ?</td><td>PI, compensation, anti-emballement</td><td>$K_c$, $T_i$, $T_t$, butées</td><td><a href="#/cours/correcteurs-p-pi-pd-et-pid">Correcteurs P, PI, PD et PID</a></td></tr>
+        <tr><td>6. Implantation</td><td>Comment le programmer ?</td><td>Période, récurrence, tâche périodique</td><td>$T_e$, $q_0$, $q_1$, ordre des opérations</td><td><a href="#/cours/commande-numerique">Commande numérique</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="e-modele">Modèle du convoyeur entraîné en couple</h3>
+  <p>
+    Le convoyeur d'expédition est entraîné par un moteur asynchrone de $2{,}2\ \mathrm{kW}$, $1430\ \mathrm{tr/min}$, de couple nominal
+    $C_n = 2200/(1430 \times 2\pi/60) = 14{,}69\ \mathrm{N \cdot m}$, à travers un réducteur et un tambour : $1500\ \mathrm{tr/min}$ du moteur correspondent à
+    $1{,}5\ \mathrm{m/s}$ de bande, soit $0{,}06\ \mathrm{m}$ par tour moteur. Le variateur fonctionne en contrôle vectoriel de couple : sa boucle de courant
+    interne, de quelques millisecondes, impose le couple demandé, ce qui permet de considérer le couple moteur comme égal à la consigne, à un retard
+    $\theta_v$ près. C'est ce mode, et non la loi U/f du cours
+    <a href="#/cours/variation-de-vitesse-des-moteurs-asynchrones">Variation de vitesse des moteurs asynchrones</a>, qui donne une constante de temps de
+    l'ordre de la seconde : en U/f, la raideur de la caractéristique couple-vitesse ramènerait la dynamique mécanique à quelques dizaines de millisecondes.
+  </p>
+  <p>
+    Le principe fondamental de la dynamique en rotation, appliqué à l'arbre moteur avec toutes les inerties ramenées, s'écrit
+    $J\,\mathrm{d}\omega/\mathrm{d}t = C_m - C_f(\omega) - C_d$, où $C_m$ est le couple moteur, $C_f$ le couple de frottement des rouleaux, de la bande et du
+    réducteur, et $C_d$ le couple ajouté par les produits. Autour du point de fonctionnement, on linéarise le frottement par sa pente
+    $f = \mathrm{d}C_f/\mathrm{d}\omega$. Pour simplifier l'écriture, on suppose ici un frottement proportionnel à la vitesse, qui vaut $40\ \%$ de $C_n$ à
+    $1{,}5\ \mathrm{m/s}$ : $f = 0{,}4 \times 14{,}69/157{,}1 = 0{,}0374\ \mathrm{N \cdot m \cdot s/rad}$. L'inertie ramenée vaut
+    $J = 0{,}030\ \mathrm{kg \cdot m^2}$, ce qui représente une énergie cinétique de $369\ \mathrm{J}$ à $1{,}5\ \mathrm{m/s}$, celle d'une masse en translation
+    de $328\ \mathrm{kg}$ : bande, rouleaux et produits.
+  </p>
+  <div class="formule-cle">
+    $$\tau_m\frac{\mathrm{d}v}{\mathrm{d}t} + v = K\,(u - d), \qquad \tau_m = \frac{J}{f}, \qquad G(s) = \frac{V(s)}{U(s)} = \frac{K}{1 + \tau_m s}$$
+    <p class="formule-cle-legende">
+      $v$ en m/s, $u$ et $d$ en pour cent de $C_n$, $\tau_m$ en s, $K$ en (m/s)/%. Hypothèses : couple moteur égal à la consigne, frottement linéarisé,
+      inertie constante, bande inextensible. Dérivation : on multiplie l'équation mécanique par $r_{\mathrm{eq}}/f$, avec $v = r_{\mathrm{eq}}\,\omega$ et
+      $r_{\mathrm{eq}} = 0{,}06/(2\pi) = 9{,}55\ \mathrm{mm/rad}$. Valeurs : $\tau_m = 0{,}030/0{,}0374 = 0{,}80\ \mathrm{s}$ et $K = 1{,}5/40 =
+      0{,}0375\ \mathrm{(m/s)/\%}$, puisque $40\ \%$ de couple entretiennent $1{,}5\ \mathrm{m/s}$. Dimensions : $[J/f] = \mathrm{kg \cdot m^2}/(\mathrm{N
+      \cdot m \cdot s}) = \mathrm{kg \cdot m^2}/(\mathrm{kg \cdot m^2 \cdot s^{-1}}) = \mathrm{s}$.
+    </p>
+  </div>
+  <p>
+    Interprétation : $\tau_m$ est le temps que mettrait la bande à atteindre sa nouvelle vitesse si le frottement seul s'opposait à un changement de couple.
+    Cas limite : sans frottement, $f \to 0$, $\tau_m \to \infty$ et le procédé devient un intégrateur pur, $v = K'\int(u - d)\,\mathrm{d}t$ : un couple
+    résistant constant ferait alors décroître la vitesse sans fin en l'absence de régulation. Le frottement réel d'un convoyeur contient une large part de
+    frottement sec, indépendant de la vitesse : la pente $f$ réelle est plus faible que la valeur moyenne retenue, et $\tau_m$ plus grande. L'essai indiciel
+    de la mise en service tranchera ; le réglage sera vérifié pour une constante de temps de $0{,}6$ à $1{,}2\ \mathrm{s}$. Le schéma suivant montre le
+    passage du système physique au schéma bloc.
+  </p>
+  <figure id="e-modele-figure">
+    <svg viewBox="0 0 780 360" role="img" aria-label="En haut, le convoyeur : moteur M avec codeur, réducteur, tambour, bande portant des cartons, vitesse v positive dans le sens de convoyage, couple moteur Cm, couple résistant Cd des produits, frottement Cf. En bas, le schéma bloc : consigne de couple u, retard du variateur, sommateur recevant u en plus et d en moins, gain K sur un premier ordre de constante tau m, sortie v, puis comptage du codeur donnant la vitesse mesurée v m.">
+      <defs><marker id="e-mo-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6">
+        <circle cx="70" cy="90" r="30"/>
+        <rect x="100" y="80" width="18" height="20" rx="2"/>
+        <path d="M40 90H20"/>
+        <rect x="8" y="80" width="14" height="20" rx="2"/>
+        <path d="M118 90H136"/>
+        <rect x="136" y="70" width="76" height="40" rx="4"/>
+        <path d="M212 90H240"/>
+        <circle cx="260" cy="110" r="20"/>
+        <circle cx="620" cy="110" r="20"/>
+        <path d="M260 90H620M260 130H620"/>
+        <rect x="330" y="58" width="44" height="32" rx="2"/>
+        <rect x="420" y="58" width="44" height="32" rx="2"/>
+        <rect x="510" y="58" width="44" height="32" rx="2"/>
+        <path d="M420 34H500" marker-end="url(#e-mo-fl)"/>
+        <path d="M600 40H660" stroke-width="2" marker-end="url(#e-mo-fl)"/>
+        <path d="M70 140a26 26 0 0 0 26 -20" marker-end="url(#e-mo-fl)"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6">
+        <path d="M24 280H64" marker-end="url(#e-mo-fl)"/>
+        <rect x="66" y="258" width="92" height="44" rx="6"/>
+        <path d="M158 280H200" marker-end="url(#e-mo-fl)"/>
+        <circle cx="220" cy="280" r="18"/>
+        <path d="M220 222V260" marker-end="url(#e-mo-fl)"/>
+        <path d="M238 280H278" marker-end="url(#e-mo-fl)"/>
+        <rect x="280" y="252" width="170" height="56" rx="6"/>
+        <path d="M450 280H530" marker-end="url(#e-mo-fl)"/>
+        <rect x="532" y="256" width="150" height="48" rx="6"/>
+        <path d="M682 280H756" stroke-dasharray="3 4" marker-end="url(#e-mo-fl)"/>
+        <path d="M484 280V330"/>
+        <circle cx="484" cy="280" r="3"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="70" y="95" text-anchor="middle" font-size="14">M</text>
+        <text x="4" y="122" font-size="10">codeur</text>
+        <text x="174" y="94" text-anchor="middle" font-size="10">réducteur</text>
+        <text x="260" y="148" text-anchor="middle" font-size="10">tambour</text>
+        <text x="440" y="122" text-anchor="middle" font-size="11">bande, rouleaux : frottement Cf</text>
+        <text x="460" y="28" text-anchor="middle" font-size="11">cartons : couple résistant Cd</text>
+        <text x="630" y="30" text-anchor="middle" font-size="11">v &gt; 0</text>
+        <text x="100" y="152" font-size="11">Cm et ω positifs</text>
+        <text x="290" y="226" font-size="11">Schéma bloc linéarisé, grandeurs en écarts ou absolues selon le texte</text>
+        <text x="20" y="272">u (%)</text>
+        <text x="112" y="277" text-anchor="middle" font-size="11">variateur</text>
+        <text x="112" y="293" text-anchor="middle" font-size="11">retard θv</text>
+        <text x="194" y="272" font-size="14" font-weight="700">+</text>
+        <text x="228" y="252" font-size="16" font-weight="700">-</text>
+        <text x="224" y="216" text-anchor="middle">d (%)</text>
+        <text x="365" y="272" text-anchor="middle">K / (1 + τm s)</text>
+        <text x="365" y="288" text-anchor="middle" font-size="10">K = 0,0375 (m/s)/%</text>
+        <text x="365" y="301" text-anchor="middle" font-size="10">τm = 0,8 s</text>
+        <text x="490" y="272">v (m/s)</text>
+        <text x="607" y="276" text-anchor="middle" font-size="11">codeur et comptage</text>
+        <text x="607" y="294" text-anchor="middle" font-size="10">moyenne sur Te</text>
+        <text x="700" y="272">vm</text>
+        <text x="492" y="344" font-size="11">vers l'affichage et la supervision</text>
+      </g>
+    </svg>
+    <figcaption>
+      Du convoyeur au schéma bloc. En haut, la chaîne mécanique : le moteur M, son codeur monté en bout d'arbre, le réducteur, le tambour d'entraînement et la
+      bande ; la flèche courbe sous le moteur donne le sens positif de la rotation et du couple moteur $C_m$, la flèche épaisse le sens positif de la vitesse $v$ ; les
+      cartons ajoutent un couple résistant $C_d$, compté positivement quand il s'oppose au mouvement. En bas, le modèle : la consigne de couple $u$ traverse
+      le variateur, modélisé par un retard $\theta_v$ ; le sommateur retranche le couple des produits $d$ ; le premier ordre $K/(1 + \tau_m s)$ donne la
+      vitesse ; le codeur fournit la vitesse mesurée $v_m$, obtenue en comptant les fronts pendant une période. Trait plein : grandeur continue ; tirets :
+      suite de nombres définie aux instants $kT_e$.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-cahier">Du cahier des charges aux pulsations</h3>
+  <p>
+    Le cahier des charges du convoyeur comprend quatre exigences. Pour la consigne : un échelon de faible amplitude, $2\ \mathrm{cm/s}$, suivi sans dépassement,
+    au plus $1\ \%$, en moins d'une seconde. Pour la perturbation : un à-coup de charge de $10\ \%$ de $C_n$ ne doit pas faire chuter la vitesse de plus de
+    $4\ \mathrm{cm/s}$, et la vitesse doit être revenue à $\pm 5\ \mathrm{mm/s}$ de la consigne en moins de $2\ \mathrm{s}$, pour ne pas désynchroniser
+    l'étiqueteuse placée en aval. En statique : erreur nulle. En robustesse : marge de phase d'au moins $45^\circ$, marge de gain d'au moins $6\ \mathrm{dB}$,
+    les seuils retenus dans le cours <a href="#/cours/criteres-de-stabilite">Critères de stabilité</a>.
+  </p>
+  <p>
+    Avec le PI par compensation, $T_i = \tau_m$ et $K_c = \tau_m\omega_c/K$, le produit $C(s)G(s)$ se simplifie en $\omega_c/s$. La boucle fermée se calcule
+    alors en écrivant $V = G\,(U - D)$ et $U = C\,(R - V)$, sans retard dans un premier temps :
+  </p>
+  <div class="formule-cle">
+    $$V(s) = \frac{\omega_c}{s + \omega_c}\,R(s) \;-\; \frac{K\,s}{(1 + \tau_m s)(s + \omega_c)}\,D(s)$$
+    <p class="formule-cle-legende">
+      Dérivation : $V = \dfrac{K}{1 + \tau_m s}\Bigl[K_c\dfrac{1 + \tau_m s}{\tau_m s}(R - V) - D\Bigr] = \dfrac{\omega_c}{s}(R - V) - \dfrac{K}{1 + \tau_m s}D$,
+      puis on multiplie par $s/(s + \omega_c)$. Le premier terme est un premier ordre de constante de temps $1/\omega_c$ : $t_5 = \ln 20/\omega_c \approx
+      3/\omega_c$. Le second s'annule pour $s = 0$ : erreur statique nulle face à un couple résistant constant, grâce à l'intégrateur. Il garde en revanche le
+      pôle lent $-1/\tau_m$ du procédé, que la compensation a fait disparaître du seul transfert de consigne.
+    </p>
+  </div>
+  <p>
+    Pour un échelon de charge d'amplitude $d_0$, $D(s) = d_0/s$, la décomposition en éléments simples donne la chute de vitesse :
+  </p>
+  <div class="formule-cle">
+    $$\Delta v(t) = -\frac{K d_0}{\tau_m(\omega_c - 1/\tau_m)}\Bigl(e^{-t/\tau_m} - e^{-\omega_c t}\Bigr), \qquad t^\ast = \frac{\ln(\omega_c\tau_m)}{\omega_c - 1/\tau_m}, \qquad |\Delta v|_{\max} \lesssim \frac{K d_0}{\tau_m\,\omega_c}$$
+    <p class="formule-cle-legende">
+      $\Delta v$ en m/s, $d_0$ en %, $t^\ast$ instant du creux, obtenu en annulant la dérivée. Interprétation de la majoration : $Kd_0/\tau_m$ est la
+      décélération initiale imposée par la charge, en $\mathrm{m/s^2}$, et $1/\omega_c$ le temps de réaction de la boucle, en s ; leur produit est bien une
+      vitesse. Cas limites : si $\omega_c \to \infty$, la chute tend vers zéro ; si $\omega_c \to 1/\tau_m$, les deux exponentielles se confondent et
+      $t^\ast \to \tau_m$. Après le creux, le retour suit $e^{-t/\tau_m}$ : sa durée ne dépend presque pas de $\omega_c$, d'où la longue fin observée en
+      section D.
+    </p>
+  </div>
+  <p>
+    Application, sans retard. Avec $\omega_c = 4\ \mathrm{rad/s}$ : $t^\ast = \ln 3{,}2/2{,}75 = 0{,}423\ \mathrm{s}$ et
+    $|\Delta v|_{\max} = \dfrac{0{,}0375 \times 10}{0{,}8 \times 2{,}75}\bigl(e^{-0{,}529} - e^{-1{,}692}\bigr) = 0{,}1705 \times 0{,}405 =
+    69{,}1\ \mathrm{mm/s}$ : le critère de $40\ \mathrm{mm/s}$ n'est pas tenu. Avec $\omega_c = 10\ \mathrm{rad/s}$ : $t^\ast = \ln 8/8{,}75 = 0{,}238\ \mathrm{s}$
+    et $|\Delta v|_{\max} = 0{,}05357 \times (0{,}743 - 0{,}093) = 34{,}8\ \mathrm{mm/s}$ : critère tenu, la majoration donnant $46{,}9\ \mathrm{mm/s}$. La
+    perturbation impose donc $\omega_c \approx 10\ \mathrm{rad/s}$, deux fois et demie la valeur qui suffisait pour la consigne. Les retards, que l'on ajoute
+    maintenant, aggraveront légèrement ces chiffres.
+  </p>
+
+  <h3 id="e-budget">Budget de phase de la boucle numérique</h3>
+  <p>
+    La boucle réelle contient quatre retards. Le bloqueur de sortie équivaut à $T_e/2$. Si la commande est écrite au top suivant, le calcul ajoute une période
+    entière. La vitesse mesurée par comptage est la moyenne de la vitesse sur la dernière période : elle représente la vitesse du milieu de l'intervalle, donc
+    avec un retard de $T_e/2$. Enfin, la liaison vers le variateur et sa boucle de couple ajoutent $\theta_v$, supposé de $10\ \mathrm{ms}$. Comme la boucle
+    compensée vaut $\omega_c/s$, ces retards se lisent directement sur les marges :
+  </p>
+  <div class="formule-cle">
+    $$\theta = \frac{T_e}{2} + \tau_{\mathrm{calc}} + \frac{T_e}{2} + \theta_v, \qquad M_\varphi = 90^\circ - \omega_c\theta\cdot\frac{180^\circ}{\pi}, \qquad \omega_{180} = \frac{\pi}{2\theta}, \qquad M_G = 20\log_{10}\frac{\pi}{2\,\omega_c\theta}$$
+    <p class="formule-cle-legende">
+      $\theta$ en s, $\omega_c\theta$ en radians. Hypothèses : compensation exacte, retards petits devant $1/\omega_c$ pour l'équivalence du bloqueur. Dérivation :
+      $L(j\omega) = \dfrac{\omega_c}{j\omega}e^{-j\omega\theta}$ a pour module $\omega_c/\omega$, égal à $1$ en $\omega_c$, et pour phase
+      $-90^\circ - \omega\theta$ ; la phase atteint $-180^\circ$ quand $\omega\theta = \pi/2$, où le module vaut $\omega_c/\omega_{180}$. Cas limites :
+      $\theta = 0$ donne $90^\circ$ et une marge de gain infinie ; $\omega_c\theta = \pi/2$ annule les deux marges, limite de stabilité. Dimensions :
+      $\omega_c\theta$ en $\mathrm{s^{-1}} \cdot \mathrm{s}$, sans dimension.
+    </p>
+  </div>
+  <p>
+    Si l'on réserve aux seuls effets de l'échantillonnage, bloqueur, calcul et comptage, un budget $\Delta\varphi_{\max}$, la période est bornée par
+    $2\,\omega_cT_e \le \Delta\varphi_{\max}$ quand la sortie est écrite au top suivant. Pour $\omega_c = 10\ \mathrm{rad/s}$ et $10^\circ$, soit
+    $0{,}1745\ \mathrm{rad}$ : $T_e \le 8{,}73\ \mathrm{ms}$. La question du cours précédent, qui ne comptait ni le comptage ni la perturbation, autorisait
+    $29\ \mathrm{ms}$.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      La figure suivante répartit les $180^\circ$ disponibles entre l'intégrateur de la boucle compensée, les quatre retards et la marge restante. Avant de
+      manipuler, prévoyez : en doublant $\omega_c$, la marge perdue double-t-elle ? Quel retard pèse le plus avec $T_e = 5\ \mathrm{ms}$ et une sortie au top
+      suivant ? À partir de quelle pulsation la marge passe-t-elle sous $45^\circ$ avec $T_e = 20\ \mathrm{ms}$ ?
+    </p>
+  </div>
+  <figure id="e-budget-sim">
+    <div class="schema-vivant" id="e-budget-vivant"></div>
+    <div id="e-budget-curseurs"></div>
+    <div id="e-budget-valeurs"></div>
+    <figcaption>
+      Budget de phase à la pulsation de coupure. En haut, un rail gradué en échelle logarithmique de $1$ à $100\ \mathrm{rad/s}$ : la poignée ronde règle
+      $\omega_c$ à la souris, au doigt ou au clavier. En bas, une barre horizontale représente les $180^\circ$ qui séparent le point $-1$ de l'axe réel
+      positif ; elle est découpée de gauche à droite en segments repérés par leur motif et leur nom : intégrateur de la boucle compensée, en aplat, $90^\circ$ ;
+      bloqueur, hachures obliques ; calcul, quadrillage ; comptage, points ; variateur, hachures horizontales ; le segment vide restant est la marge de phase.
+      Le trait vertical en tirets marque le seuil de $45^\circ$ de marge. Les curseurs règlent la période, l'organisation du calcul et le retard du
+      variateur.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Chaque retard prend une phase proportionnelle à $\omega_c$ : doubler la pulsation double la phase perdue, et c'est
+    pourquoi une boucle rapide exige une période courte. Avec $T_e = 5\ \mathrm{ms}$ et une sortie au top suivant, le retard le plus lourd est celui du
+    variateur, $10\ \mathrm{ms}$, soit $5{,}73^\circ$ à $10\ \mathrm{rad/s}$ ; le calcul en prend $2{,}86^\circ$, le bloqueur et le comptage $1{,}43^\circ$
+    chacun : $11{,}46^\circ$ au total, marge de $78{,}5^\circ$. Avec $T_e = 20\ \mathrm{ms}$, le retard total vaut $50\ \mathrm{ms}$ et la marge passe sous
+    $45^\circ$ dès $\omega_c = 0{,}785/0{,}05 = 15{,}7\ \mathrm{rad/s}$. Le budget ne se discute donc pas seulement en période : le retard du variateur et de
+    sa liaison, souvent ignoré, en est ici le premier poste.
+  </p>
+
+  <h3 id="e-reglage">Compensation ou action intégrale rapide</h3>
+  <p>
+    La compensation donne une réponse de consigne parfaite, mais laisse le pôle lent $-1/\tau_m$ dans le transfert de perturbation : la fin du retour dure
+    environ $3\tau_m$. Une action intégrale plus rapide, $T_i &lt; \tau_m$, accélère ce retour, car l'intégrale grandit plus vite tant que l'écart persiste.
+    Le prix est double : le zéro du PI, désormais en $-1/T_i$, n'est plus compensé et provoque un dépassement de consigne, et la phase du PI à $\omega_c$
+    diminue. On garde un PI à un seul réglage pour la perturbation et l'on corrige la consigne par un préfiltre $F(s) = 1/(1 + T_is)$, qui annule l'effet du
+    zéro sur la seule consigne : c'est une commande à deux degrés de liberté, où la boucle se règle pour la perturbation et le préfiltre pour la consigne.
+  </p>
+  <div class="formule-cle">
+    $$C(s)G(s) = \frac{K_cK}{T_i}\cdot\frac{1 + T_is}{s\,(1 + \tau_m s)}, \qquad \frac{V}{R} = F(s)\,\frac{CG}{1 + CG}, \qquad F(s) = \frac{1}{1 + T_is}$$
+    <p class="formule-cle-legende">
+      Hypothèses : mêmes gains, variateur et retards inchangés ; $F$ est calculé dans l'automate sur la consigne seule. Avec $F$, le transfert de consigne
+      n'a plus de zéro : $V/R = K_cK/\bigl(T_i\tau_m s^2 + T_i(1 + K_cK)s + K_cK\bigr)$, un second ordre. Cas limite : $T_i = \tau_m$ sans préfiltre redonne
+      le premier ordre $\omega_c/(s + \omega_c)$, et ajouter alors $F$ ne ferait que ralentir inutilement la consigne. Le transfert de perturbation, lui, ne
+      dépend pas de $F$.
+    </p>
+  </div>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      La simulation suivante compare la réponse à un échelon de consigne de $2\ \mathrm{cm/s}$ et la réponse à un à-coup de charge de $10\ \%$, avec la boucle
+      numérique complète. Avant de manipuler, prévoyez : en passant de $T_i = 0{,}8$ à $0{,}3\ \mathrm{s}$ sans préfiltre, que deviennent le dépassement et le
+      temps de retour après la perturbation ? Le préfiltre change-t-il la chute de vitesse ? Que se passe-t-il si l'on active le préfiltre avec
+      $T_i = 0{,}8\ \mathrm{s}$ ?
+    </p>
+  </div>
+  <figure id="e-reglage-sim">
+    <div id="e-reglage-curseurs"></div>
+    <div id="e-reglage-valeurs"></div>
+    <div id="e-reglage-consigne"></div>
+    <div id="e-reglage-charge"></div>
+    <figcaption>
+      Choix du réglage, boucle numérique à $T_e = 5\ \mathrm{ms}$ avec sortie au top suivant. En haut, écart de vitesse en mm/s après un échelon de consigne de
+      $20\ \mathrm{mm/s}$ appliqué à $t = 0{,}2\ \mathrm{s}$ ; les tirets horizontaux marquent la consigne et la bande de $\pm 5\ \%$. En bas, écart de vitesse
+      après un à-coup de charge de $10\ \%$ à $t = 0{,}2\ \mathrm{s}$ ; les tirets marquent la limite de chute de $40\ \mathrm{mm/s}$ et la bande de
+      $\pm 5\ \mathrm{mm/s}$. Dans les deux tracés, la courbe de référence est le réglage par compensation à $\omega_c = 10\ \mathrm{rad/s}$, l'autre le réglage
+      choisi par les curseurs ; la légende associe chaque courbe à son réglage.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Avec $T_i = 0{,}3\ \mathrm{s}$, le retour après la perturbation tombe de $1{,}87$ à $0{,}68\ \mathrm{s}$ et la chute passe de
+    $36{,}4$ à $33{,}0\ \mathrm{mm/s}$, mais la consigne dépasse de $10{,}3\ \%$ et la marge de phase descend de $78{,}5$ à $67{,}2^\circ$. Le préfiltre supprime
+    ce dépassement, avec un temps d'établissement de $0{,}77\ \mathrm{s}$, sans rien changer à la perturbation, puisqu'il n'est pas dans la boucle. Activé avec
+    $T_i = 0{,}8\ \mathrm{s}$, il ne fait que ralentir la consigne, à $2{,}5\ \mathrm{s}$ environ : un préfiltre se justifie seulement quand le zéro du PI n'est
+    pas compensé. Les deux réglages satisfont le cahier des charges ; la compensation le fait avec une marge plus large et un réglage plus simple, l'action
+    intégrale rapide avec un retour trois fois plus court.
+  </p>
+
+  <h3 id="e-periode">Choisir la période : une fenêtre entre deux bornes</h3>
+  <p>
+    La borne haute vient du budget de phase : $T_e \le \Delta\varphi_{\max}/(2\,\omega_c) = 8{,}73\ \mathrm{ms}$. La borne basse vient du codeur. Mesurer une
+    vitesse en comptant des fronts pendant $T_e$ donne une résolution égale à un front par période : avec $4096$ fronts par tour, un compte correspond à
+    $\Delta x = 0{,}06/4096 = 14{,}65\ \mathrm{\mu m}$ de bande.
+  </p>
+  <div class="formule-cle">
+    $$q_v = \frac{\Delta x}{T_e}, \qquad T_e \ge \frac{\Delta x}{q_{v,\max}}, \qquad \delta u = K_c\,q_v$$
+    <p class="formule-cle-legende">
+      $q_v$ : résolution de la vitesse mesurée, en m/s ; $\delta u$ : saut de commande provoqué par un compte de plus ou de moins, en %. Hypothèse : mesure par
+      comptage simple, sans mesure de la durée entre fronts. Pour $q_{v,\max} = 3\ \mathrm{mm/s}$, soit $0{,}2\ \%$ de la vitesse : $T_e \ge 14{,}65 \times
+      10^{-6}/0{,}003 = 4{,}88\ \mathrm{ms}$. Cas limite : $T_e \to 0$ rend la mesure inutilisable, chaque période ne contenant plus que zéro ou un front.
+      Dimensions : $\mathrm{m}/\mathrm{s}$, puis $\%/(\mathrm{m/s}) \times \mathrm{m/s} = \%$.
+    </p>
+  </div>
+  <p>
+    La fenêtre va donc de $4{,}88$ à $8{,}73\ \mathrm{ms}$ : on retient $T_e = 5\ \mathrm{ms}$, période standard d'une tâche rapide. La résolution vaut alors
+    $2{,}93\ \mathrm{mm/s}$, environ $495$ fronts par période à $1{,}45\ \mathrm{m/s}$, et la commande tremble de $K_c q_v = 213{,}3 \times 0{,}00293 =
+    0{,}625\ \%$ de couple d'une période à l'autre. Ce tremblement n'atteint pas la vitesse réelle, que l'inertie filtre à quelques centièmes de mm/s, mais il
+    sollicite le variateur et rendrait inutilisable toute action dérivée. Le schéma suivant résume la fenêtre.
+  </p>
+  <figure id="e-fenetre-figure">
+    <svg viewBox="0 0 760 250" role="img" aria-label="Axe horizontal de la période d'échantillonnage en millisecondes, de 1 à 30, en échelle logarithmique. À gauche, zone interdite par la résolution du codeur, en dessous de 4,88 millisecondes. À droite, zone interdite par le budget de phase, au-dessus de 8,73 millisecondes. Entre les deux, la fenêtre admissible, où la période retenue de 5 millisecondes est marquée. Les valeurs de 20 et 29 millisecondes du réglage sur la seule consigne sont aussi indiquées.">
+      <defs>
+        <marker id="e-fe-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker>
+        <pattern id="e-fe-h" patternUnits="userSpaceOnUse" width="8" height="8"><path d="M0 8L8 0" stroke="currentColor" stroke-width="1"/></pattern>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+        <path d="M40 150H730" marker-end="url(#e-fe-fl)"/>
+        <path d="M40.0 144v12M174.5 144v12M309.0 144v12M486.8 144v12M621.3 144v12M700.0 144v12"/>
+        <rect x="40" y="90" width="307.6" height="50" fill="url(#e-fe-h)" stroke-width="1.2"/>
+        <rect x="460.5" y="90" width="239.5" height="50" fill="url(#e-fe-h)" stroke-width="1.2"/>
+        <rect x="347.6" y="90" width="112.9" height="50" stroke-width="2.4"/>
+        <path d="M352.3 70V90" marker-end="url(#e-fe-fl)" stroke-width="2"/>
+        <path d="M621.3 160V196M693.4 160V214" stroke-dasharray="3 4"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="40.0" y="172" text-anchor="middle">1</text>
+        <text x="174.5" y="172" text-anchor="middle">2</text>
+        <text x="309.0" y="172" text-anchor="middle">4</text>
+        <text x="486.8" y="172" text-anchor="middle">10</text>
+        <text x="621.3" y="172" text-anchor="middle">20</text>
+        <text x="700.0" y="172" text-anchor="middle">30</text>
+        <text x="740" y="190" text-anchor="end">Te (ms)</text>
+        <text x="193.8" y="82" text-anchor="middle" font-size="11">résolution du codeur</text>
+        <text x="193.8" y="120" text-anchor="middle" font-size="11">Te &lt; 4,88 ms</text>
+        <text x="580.2" y="82" text-anchor="middle" font-size="11">budget de phase à ωc = 10 rad/s</text>
+        <text x="580.2" y="120" text-anchor="middle" font-size="11">Te &gt; 8,73 ms</text>
+        <text x="404.1" y="120" text-anchor="middle" font-size="11" font-weight="700">fenêtre</text>
+        <text x="352.3" y="62" text-anchor="middle" font-size="11">5 ms retenu</text>
+        <text x="621.3" y="210" text-anchor="middle" font-size="11">20 ms</text>
+        <text x="705.4" y="228" text-anchor="end" font-size="11">29 ms : consigne seule, ωc = 4</text>
+        <text x="40" y="30" font-size="11">Échelle logarithmique. Zones hachurées : périodes refusées ; cadre épais : périodes admissibles.</text>
+      </g>
+    </svg>
+    <figcaption>
+      Fenêtre de choix de la période, en échelle logarithmique de $1$ à $30\ \mathrm{ms}$. La zone hachurée de gauche est refusée par la résolution du codeur :
+      un compte vaudrait plus de $3\ \mathrm{mm/s}$. La zone hachurée de droite est refusée par le budget de phase de $10^\circ$ à $\omega_c = 10\ \mathrm{rad/s}$.
+      Le cadre épais délimite la fenêtre admissible, où la flèche marque la période retenue. Les repères en tirets rappellent les valeurs obtenues en ne
+      considérant que la consigne : la perturbation a déplacé la fenêtre d'un facteur quatre vers les périodes courtes.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-saturation">Saturation, rampe et anticipation</h3>
+  <p>
+    Le variateur limite le couple à $100\ \%$ de $C_n$ pour protéger le réducteur et la bande. Au point de fonctionnement, $1{,}45\ \mathrm{m/s}$ avec
+    $10\ \%$ de charge, la commande vaut $u_0 = 1{,}45/0{,}0375 + 10 = 48{,}7\ \%$ : la réserve est de $51{,}3\ \%$, et tout couple de produits supérieur à
+    $100 - 38{,}7 = 61{,}3\ \%$ ne peut plus être compensé. La vitesse descend alors vers l'équilibre $K(100 - d)$, et sans protection l'intégrale continue de
+    croître : au retour à la charge normale, le moteur reste au couple maximal jusqu'à ce que l'intégrale se vide, et la bande s'emballe. Le recalcul vu dans
+    le cours <a href="#/cours/correcteurs-p-pi-pd-et-pid">Correcteurs P, PI, PD et PID</a> s'écrit, avec $T_t = T_i/2 = 0{,}4\ \mathrm{s}$ :
+    $x_k \leftarrow x_k + (T_e/T_t)(u_s - u_c)$, où $T_e/T_t = 0{,}0125$.
+  </p>
+  <p>
+    Les grands changements de vitesse, démarrage ou changement de format, ne passent pas par un échelon mais par une rampe de consigne d'accélération $a$.
+    Une boucle de classe un, comme $L = \omega_c/s$, suit une rampe avec un écart constant, le traînage. Pendant la rampe, le moteur doit aussi fournir le
+    couple d'accélération :
+  </p>
+  <div class="formule-cle">
+    $$e_{\mathrm{rampe}} = \frac{a}{\omega_c}, \qquad \Delta u_{\mathrm{acc}} = \frac{\tau_m\,a}{K}, \qquad u_{\mathrm{ant}} = \frac{r}{K} + \frac{\tau_m}{K}\frac{\mathrm{d}r}{\mathrm{d}t}$$
+    <p class="formule-cle-legende">
+      $a$ en $\mathrm{m/s^2}$, $e$ en m/s, $\Delta u$ en %. Dérivation du traînage : pour $R = a/s^2$, $E = R/(1 + L) = a/\bigl(s(s + \omega_c)\bigr)$, dont la
+      valeur finale vaut $a/\omega_c$ ; du couple d'accélération : en régime de rampe, $\tau_m\dot v = \tau_m a$ dans l'équation du modèle. Pour
+      $a = 0{,}3\ \mathrm{m/s^2}$ et $\omega_c = 10\ \mathrm{rad/s}$ : traînage de $30\ \mathrm{mm/s}$ et couple d'accélération de $6{,}4\ \%$. L'anticipation
+      $u_{\mathrm{ant}}$, ajoutée à la sortie du PI, fournit d'avance le couple que le modèle prévoit ; le PI ne corrige plus que les écarts de modèle et la
+      charge. Cas limite : avec la seule anticipation statique $r/K$, le traînage s'annule pendant la rampe, mais c'est l'intégrale qui fournit le couple
+      d'accélération, et elle doit se vider à la fin de la rampe : dépassement de $23{,}6\ \mathrm{mm/s}$ en simulation, contre $6{,}5\ \mathrm{mm/s}$ au plus
+      avec l'anticipation complète.
+    </p>
+  </div>
+
+  <h3 id="e-statut">Loi, convention, approximation, règle de conception et donnée du constructeur</h3>
+  <div class="cadre-tableau" id="e-statut-tableau">
+    <table>
+      <thead><tr><th>Énoncé</th><th>Statut</th><th>Ce qui peut le mettre en défaut</th></tr></thead>
+      <tbody>
+        <tr><td>$J\,\mathrm{d}\omega/\mathrm{d}t = C_m - C_f - C_d$</td><td>Loi physique</td><td>Rien, si toutes les inerties et tous les couples sont ramenés au même arbre</td></tr>
+        <tr><td>Frottement proportionnel à la vitesse, $\tau_m = J/f$</td><td>Approximation</td><td>Frottement sec dominant, inertie variable avec le chargement</td></tr>
+        <tr><td>Couple moteur égal à la consigne, à $\theta_v$ près</td><td>Approximation, et donnée du constructeur pour $\theta_v$</td><td>Mode U/f, limitation de courant active, défluxage</td></tr>
+        <tr><td>$v &gt; 0$ dans le sens de convoyage, $d &gt; 0$ quand la charge freine</td><td>Convention</td><td>Rien ; elle doit seulement rester la même dans tout le dossier</td></tr>
+        <tr><td>Bloqueur et comptage équivalents chacun à $T_e/2$</td><td>Approximation basse fréquence</td><td>$\omega_c$ proche de $\omega_e/10$ ou au-delà</td></tr>
+        <tr><td>$M_\varphi \ge 45^\circ$, $M_G \ge 6\ \mathrm{dB}$, budget de $10^\circ$</td><td>Règles de conception</td><td>Exigences propres au site ou à un secteur, à vérifier au cas par cas</td></tr>
+        <tr><td>Limite de couple de $100\ \%$, $4096$ fronts par tour, retard de $10\ \mathrm{ms}$</td><td>Données du constructeur ou paramètres, supposées ici</td><td>Documentation réelle du variateur, du codeur et de l'automate</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Le schéma principal réunit les quatre maillons de la boucle de vitesse du convoyeur dans leur réalité d'armoire : l'automate et sa tâche rapide, le
+    variateur alimenté par le réseau triphasé, le moteur et son codeur, la bande et ses produits. Il porte les conventions de signe, les références de
+    potentiel des signaux et la nature de chaque liaison.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 820 480" role="img" aria-label="Boucle de vitesse complète du convoyeur. Dans l'automate, tâche de 5 millisecondes : la consigne r en rampe entre par le signe plus d'un sommateur, la vitesse mesurée v m par le signe moins ; l'écart e attaque le PI avec anti-emballement, qui envoie la consigne de couple u au variateur par le bus de terrain. Le variateur, alimenté par le réseau triphasé L1 L2 L3 et le conducteur de protection PE, alimente le moteur M par les phases U V W avec une limite de couple de plus ou moins 100 pour cent. Le moteur entraîne la bande par un réducteur et un tambour ; les cartons ajoutent un couple résistant d. Le codeur, alimenté en 24 volts et référencé au 0 volt de l'automate, renvoie les voies A et B au bloc de comptage.">
+      <defs><marker id="f-sp-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6">
+        <rect x="14" y="40" width="372" height="236" rx="10" stroke-dasharray="10 6" stroke-width="1.2"/>
+        <rect x="28" y="92" width="86" height="44" rx="6"/>
+        <path d="M114 114H140" stroke-dasharray="3 4" marker-end="url(#f-sp-fl)"/>
+        <circle cx="160" cy="114" r="18"/>
+        <path d="M178 114H204" stroke-dasharray="3 4" marker-end="url(#f-sp-fl)"/>
+        <rect x="206" y="86" width="152" height="56" rx="6"/>
+        <path d="M358 114H446" stroke-dasharray="3 4" marker-end="url(#f-sp-fl)"/>
+        <rect x="206" y="196" width="152" height="52" rx="6"/>
+        <path d="M206 222H160V134" stroke-dasharray="3 4" marker-end="url(#f-sp-fl)"/>
+        <path d="M478 18V82M498 18V82M518 18V82" />
+        <path d="M546 18V40H560" stroke-dasharray="7 3 2 3"/>
+        <rect x="448" y="84" width="128" height="62" rx="6"/>
+        <path d="M576 104H624M576 114H624M576 124H624"/>
+        <circle cx="654" cy="114" r="30"/>
+        <rect x="684" y="104" width="22" height="20" rx="2"/>
+        <path d="M624 154V114" stroke-width="2.2"/>
+        <path d="M654 144V178"/>
+        <rect x="628" y="178" width="52" height="34" rx="4"/>
+        <path d="M654 212V250"/>
+        <circle cx="654" cy="270" r="20"/>
+        <circle cx="790" cy="270" r="14"/>
+        <path d="M654 250H790M654 290H790"/>
+        <rect x="690" y="222" width="36" height="28" rx="2"/>
+        <rect x="738" y="222" width="36" height="28" rx="2"/>
+        <path d="M700 330H770" stroke-width="2" marker-end="url(#f-sp-fl)"/>
+        <path d="M744 200V220" marker-end="url(#f-sp-fl)"/>
+        <path d="M706 114H806V372H340V250"/>
+        <path d="M340 252V250" marker-end="url(#f-sp-fl)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="24" y="60" font-size="11">automate : tâche périodique rapide, Te = 5 ms</text>
+        <text x="71" y="110" text-anchor="middle" font-size="11">consigne r</text>
+        <text x="71" y="126" text-anchor="middle" font-size="11">en rampe</text>
+        <text x="128" y="104" font-size="14" font-weight="700">+</text>
+        <text x="166" y="154" font-size="16" font-weight="700">-</text>
+        <text x="182" y="104">e</text>
+        <text x="282" y="110" text-anchor="middle">PI, Kc et Ti</text>
+        <text x="282" y="128" text-anchor="middle" font-size="10">anti-emballement, Tt</text>
+        <text x="282" y="218" text-anchor="middle" font-size="11">comptage des fronts</text>
+        <text x="282" y="236" text-anchor="middle" font-size="10">vm = N Δx / Te</text>
+        <text x="168" y="240" font-size="11">vm</text>
+        <text x="402" y="104" text-anchor="middle" font-size="11">u (%)</text>
+        <text x="402" y="134" text-anchor="middle" font-size="10">bus de terrain</text>
+        <text x="472" y="14" font-size="10">L1</text>
+        <text x="492" y="14" font-size="10">L2</text>
+        <text x="512" y="14" font-size="10">L3</text>
+        <text x="540" y="14" font-size="10">PE</text>
+        <text x="566" y="44" font-size="10">réseau 3 x 400 V</text>
+        <text x="512" y="108" text-anchor="middle" font-size="11">variateur</text>
+        <text x="512" y="124" text-anchor="middle" font-size="10">contrôle de couple</text>
+        <text x="512" y="138" text-anchor="middle" font-size="10">limite ± 100 % Cn</text>
+        <text x="584" y="98" font-size="10">U V W</text>
+        <text x="654" y="119" text-anchor="middle" font-size="14">M</text>
+        <text x="710" y="98" font-size="10">codeur</text>
+        <text x="654" y="199" text-anchor="middle" font-size="10">réducteur</text>
+        <text x="600" y="274" text-anchor="end" font-size="10">tambour</text>
+        <text x="744" y="196" text-anchor="middle" font-size="10">cartons : d (%)</text>
+        <text x="735" y="350" text-anchor="middle" font-size="11">v &gt; 0 sens de convoyage</text>
+        <text x="560" y="168" font-size="10">Cm &gt; 0 moteur</text>
+        <text x="800" y="160" text-anchor="end" font-size="10">A, B, +24 V, 0 V</text>
+        <text x="350" y="366" font-size="10">codeur : voies A et B en quadrature, 1024 points, 4096 fronts par tour</text>
+        <text x="20" y="400" font-size="11">Trait plein : grandeur physique, puissance ou signal continu. Tirets courts : nombre défini aux instants k Te.</text>
+        <text x="20" y="418" font-size="11">Tirets et points : conducteur de protection PE. Signaux du codeur référencés au 0 V commun de l'automate.</text>
+        <text x="20" y="436" font-size="11">Écart e = r - vm. Conventions : v positive dans le sens de convoyage, u et Cm positifs quand le couple est moteur,</text>
+        <text x="20" y="454" font-size="11">d positif quand les produits freinent la bande. Modèle : v = K (u - d) / (1 + τm s), K = 0,0375 (m/s)/%, τm = 0,8 s.</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal : boucle de vitesse du convoyeur d'expédition. Le cadre en tirets longs délimite ce qui est calculé dans l'automate, à chaque top de la
+      tâche de $5\ \mathrm{ms}$. Le sommateur forme $e = r - v_m$, consigne sur l'entrée $+$, mesure sur l'entrée $-$. Le PI envoie la consigne de couple $u$
+      au variateur par le bus de terrain. Le variateur, alimenté par les trois phases L1, L2, L3, avec son conducteur de protection PE, alimente le moteur par
+      les phases U, V, W et borne le couple à $\pm 100\ \%$ de $C_n$. Le moteur entraîne le tambour par le réducteur ; les cartons ajoutent le couple
+      résistant $d$. Le codeur, alimenté en $24\ \mathrm{V}$ et référencé au $0\ \mathrm{V}$ commun de l'automate, renvoie ses deux voies en quadrature au
+      bloc de comptage, qui fournit $v_m$. Les flèches donnent le sens de circulation de l'information ; la flèche épaisse sous la bande, le sens positif de
+      la vitesse.
+    </figcaption>
+  </figure>
+
+  <p>
+    L'organigramme suivant donne l'ordre des décisions du mini-projet, avec les retours en arrière qu'impose une contrainte d'aval.
+  </p>
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Cahier des charges : consigne, perturbation, marges, limites"] --> B["Modèle : τm, K, retards, limites physiques"]
+  B --> C["Pulsation de coupure : la plus grande des ωc exigées"]
+  C --> D{"Budget de phase tenu<br/>avec le retard du variateur ?"}
+  D -->|"Non"| E["Réduire les retards, ou revoir ωc et le cahier des charges"]
+  E --> C
+  D -->|"Oui"| F["Fenêtre de période : budget de phase et résolution du codeur"]
+  F --> G{"Fenêtre non vide ?"}
+  G -->|"Non"| H["Codeur plus fin, mesure de durée entre fronts, ou boucle dans le variateur"]
+  H --> F
+  G -->|"Oui"| I["Réglage du PI : compensation, ou Ti rapide avec préfiltre"]
+  I --> J["Marges de phase, de gain, de module ; sensibilité à τm"]
+  J --> K["Saturation : anti-emballement, rampe, anticipation"]
+  K --> L["Récurrence, tâche périodique, surveillance, mode dégradé"]
+  L --> M["Simulation complète, puis essais sur site"]</pre>
+    <figcaption>
+      Organigramme du mini-projet. Les rectangles sont des actions, les losanges des décisions, et le libellé de chaque flèche issue d'un losange donne la
+      réponse qui oriente le chemin. Les deux boucles de retour traduisent les situations les plus fréquentes : un retard d'actionneur qui consomme trop de
+      phase pour la pulsation voulue, et une fenêtre de période vide, parce que la borne imposée par le codeur dépasse celle du budget de phase.
+    </figcaption>
+  </figure>
+
+  <p>
+    Le tableau suivant compare les trois réglages étudiés, simulés avec la boucle numérique complète : retards, comptage et période.
+  </p>
+  <div class="cadre-tableau" id="f-comparatif">
+    <table>
+      <thead><tr><th>Critère</th><th>Exigence</th><th>$\omega_c = 4$, $T_e = 20\ \mathrm{ms}$, compensation</th><th>$\omega_c = 10$, $T_e = 5\ \mathrm{ms}$, compensation</th><th>$\omega_c = 10$, $T_i = 0{,}3\ \mathrm{s}$, préfiltre</th></tr></thead>
+      <tbody>
+        <tr><td>$t_5$ de consigne</td><td>$\le 1\ \mathrm{s}$</td><td>$0{,}61\ \mathrm{s}$</td><td>$0{,}24\ \mathrm{s}$</td><td>$0{,}77\ \mathrm{s}$</td></tr>
+        <tr><td>Dépassement</td><td>$\le 1\ \%$</td><td>aucun</td><td>aucun</td><td>aucun</td></tr>
+        <tr><td>Chute pour $10\ \%$ de charge</td><td>$\le 40\ \mathrm{mm/s}$</td><td>$74{,}0\ \mathrm{mm/s}$</td><td>$36{,}4\ \mathrm{mm/s}$</td><td>$33{,}0\ \mathrm{mm/s}$</td></tr>
+        <tr><td>Retour dans $\pm 5\ \mathrm{mm/s}$</td><td>$\le 2\ \mathrm{s}$</td><td>$2{,}77\ \mathrm{s}$</td><td>$1{,}87\ \mathrm{s}$</td><td>$0{,}68\ \mathrm{s}$</td></tr>
+        <tr><td>Marge de phase</td><td>$\ge 45^\circ$</td><td>$78{,}5^\circ$</td><td>$78{,}5^\circ$</td><td>$67{,}2^\circ$</td></tr>
+        <tr><td>Marge de gain</td><td>$\ge 6\ \mathrm{dB}$</td><td>$17{,}9\ \mathrm{dB}$</td><td>$17{,}9\ \mathrm{dB}$</td><td>$17{,}7\ \mathrm{dB}$</td></tr>
+        <tr><td>Verdict</td><td></td><td>Refusé : perturbation mal rejetée</td><td>Retenu : simple, marge large</td><td>Solution de réserve : retour rapide</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <ul>
+    <li><a href="#d-tour-sim" data-renvoi="d-tour-sim">Tour de boucle après un à-coup de charge</a>, section D : ordre des réactions et chute de vitesse.</li>
+    <li><a href="#e-synthese-tableau" data-renvoi="e-synthese-tableau">Le module en six étapes</a>, section E.</li>
+    <li><a href="#e-modele-figure" data-renvoi="e-modele-figure">Du convoyeur au schéma bloc</a>, section E.</li>
+    <li><a href="#e-budget-sim" data-renvoi="e-budget-sim">Budget de phase à la pulsation de coupure</a>, section E.</li>
+    <li><a href="#e-reglage-sim" data-renvoi="e-reglage-sim">Compensation ou action intégrale rapide</a>, section E.</li>
+    <li><a href="#e-fenetre-figure" data-renvoi="e-fenetre-figure">Fenêtre de choix de la période</a>, section E.</li>
+    <li><a href="#h-reponses-fig" data-renvoi="h-reponses-fig">Réponses des deux réglages successifs</a>, section H.</li>
+    <li><a href="#i-saturation-sim" data-renvoi="i-saturation-sim">Saturation de couple et anti-emballement</a>, section I.</li>
+    <li><a href="#i-boucles" data-renvoi="i-boucles">Les trois boucles du site</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <ol>
+    <li><strong>Écrire le cahier des charges complet.</strong> Consigne, perturbations attendues avec leur amplitude, erreur statique, marges, limites de
+      l'actionneur, résolution de mesure acceptable.</li>
+    <li><strong>Modéliser.</strong> Bilan physique, linéarisation autour du point de fonctionnement, constantes de temps et gain, retards de l'actionneur et
+      de la mesure, plage de variation des paramètres.</li>
+    <li><strong>Traduire chaque exigence en pulsation.</strong> Consigne : $\omega_c \ge 3/t_5$ pour une boucle compensée ; perturbation : chute calculée par
+      $\Delta v(t)$, ou majorée par $Kd_0/(\tau_m\omega_c)$. Retenir la plus grande, avec une réserve pour les retards.</li>
+    <li><strong>Tenir le budget de phase.</strong> $\theta = T_e/2 + \tau_{\mathrm{calc}} + T_e/2 + \theta_v$, $M_\varphi = 90^\circ - \omega_c\theta$ ; si le
+      retard de l'actionneur suffit à consommer la marge, revoir $\omega_c$ ou l'actionneur.</li>
+    <li><strong>Ouvrir la fenêtre de période.</strong> Borne haute $\Delta\varphi_{\max}/(2\omega_c)$, borne basse $\Delta x/q_{v,\max}$ ; choisir une période
+      standard dans la fenêtre, ou changer de mesure ou d'emplacement du calcul si elle est vide.</li>
+    <li><strong>Régler le PI.</strong> Compensation $T_i = \tau_m$, $K_c = \tau_m\omega_c/K$ ; ou $T_i$ plus court avec préfiltre si le retour après
+      perturbation l'exige.</li>
+    <li><strong>Vérifier la robustesse.</strong> Marges de phase, de gain et de module, aux valeurs extrêmes des paramètres du procédé.</li>
+    <li><strong>Traiter les grands signaux.</strong> Réserve de commande, anti-emballement $T_e &lt; T_t$, rampe de consigne, anticipation.</li>
+    <li><strong>Implanter et surveiller.</strong> Coefficients $q_0$, $q_1$, tâche périodique, ordre lire, calculer, borner, écrire, mettre à jour ; alarmes,
+      mode dégradé ; simulation complète, puis essais de faible amplitude sur site.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    <strong>Données.</strong> Convoyeur de la section E : $\tau_m = 0{,}8\ \mathrm{s}$, $K = 0{,}0375\ \mathrm{(m/s)/\%}$, point de fonctionnement
+    $1{,}45\ \mathrm{m/s}$ avec $10\ \%$ de charge ; retard du variateur et de sa liaison $\theta_v = 10\ \mathrm{ms}$ ; codeur de $4096$ fronts par tour,
+    $\Delta x = 14{,}65\ \mathrm{\mu m}$ ; limite de couple $\pm 100\ \%$ ; automate disposant de tâches de $5$, $10$, $20$, $50$ et $100\ \mathrm{ms}$, sortie
+    écrite au top suivant. Cahier des charges de la section E ; budget de phase de l'échantillonnage $10^\circ$ ; résolution de mesure au plus
+    $3\ \mathrm{mm/s}$.
+  </p>
+  <p>
+    <strong>Inconnues.</strong> Pulsation de coupure ; $K_c$ et $T_i$ ; période ; marges ; coefficients de la récurrence ; performances obtenues ; tenue du
+    réglage si $\tau_m$ varie de $0{,}6$ à $1{,}2\ \mathrm{s}$.
+  </p>
+  <p>
+    <strong>Stratégie.</strong> Partir de la réponse du cours précédent, qui ne regardait que la consigne, la confronter à la perturbation, relever la
+    pulsation, en déduire la fenêtre de période, puis vérifier par les marges et par la simulation de la boucle numérique complète.
+  </p>
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li><strong>Besoin de régulation.</strong> Sans boucle, $10\ \%$ de charge en plus ferait chuter la vitesse de $K \times 10 = 0{,}375\ \mathrm{m/s}$ en
+      régime établi, un quart de la vitesse : en contrôle de couple, la régulation de vitesse est indispensable, et l'intégrateur obligatoire pour une erreur
+      nulle.</li>
+    <li><strong>Exigence de consigne.</strong> $3/\omega_c \le 1\ \mathrm{s}$, donc $\omega_c \ge 3\ \mathrm{rad/s}$ ; le cours précédent retenait
+      $4\ \mathrm{rad/s}$ et $T_e = 20\ \mathrm{ms}$.</li>
+    <li><strong>Exigence de perturbation.</strong> Avec $\omega_c = 4$ : chute de $69{,}1\ \mathrm{mm/s}$ sans retard, refusée. La chute vaut
+      $40\ \mathrm{mm/s}$ pour $\omega_c = 8{,}40\ \mathrm{rad/s}$, trouvée par dichotomie sur la formule de $\Delta v$ ; les retards y ajoutent environ
+      $2\ \mathrm{mm/s}$. On retient $\omega_c = 10\ \mathrm{rad/s}$ : $34{,}8\ \mathrm{mm/s}$ sans retard.</li>
+    <li><strong>Réglage.</strong> $T_i = \tau_m = 0{,}8\ \mathrm{s}$ ; $K_c = \tau_m\omega_c/K = 0{,}8 \times 10/0{,}0375 = 213{,}3\ \%/(\mathrm{m/s})$, soit
+      $2{,}13\ \%$ de couple par $\mathrm{cm/s}$ d'écart.</li>
+    <li><strong>Fenêtre de période.</strong> Borne haute : $0{,}1745/(2 \times 10) = 8{,}73\ \mathrm{ms}$ ; borne basse : $14{,}65 \times 10^{-6}/0{,}003 =
+      4{,}88\ \mathrm{ms}$. Seule la tâche de $5\ \mathrm{ms}$ convient.</li>
+    <li><strong>Marges.</strong> $\theta = 2{,}5 + 5 + 2{,}5 + 10 = 20\ \mathrm{ms}$ ; $\omega_c\theta = 0{,}2\ \mathrm{rad} = 11{,}46^\circ$, d'où
+      $M_\varphi = 78{,}5^\circ$ ; $\omega_{180} = \pi/0{,}04 = 78{,}5\ \mathrm{rad/s}$ et $M_G = 20\log_{10}(78{,}5/10) = 17{,}9\ \mathrm{dB}$ ; marge de
+      module calculée numériquement, $\min|1 + L| = 0{,}837$.</li>
+    <li><strong>Coefficients.</strong> Euler arrière : $K_cT_e/T_i = 213{,}3 \times 0{,}005/0{,}8 = 1{,}333\ \%/(\mathrm{m/s})$ par période ;
+      $q_0 = 213{,}3 \times 1{,}00625 = 214{,}7$ et $q_1 = -213{,}3\ \%/(\mathrm{m/s})$. Anti-emballement : $T_t = 0{,}4\ \mathrm{s}$, $T_e/T_t = 0{,}0125$.</li>
+    <li><strong>Premier pas après un échelon de $2\ \mathrm{cm/s}$.</strong> $e_0 = 0{,}02\ \mathrm{m/s}$ ; $x$ augmente de $1{,}333 \times 0{,}02 =
+      0{,}027\ \%$ ; $u_c - u_0 = 213{,}3 \times 0{,}02 + 0{,}027 = 4{,}29\ \%$, appliqué au top suivant. La réserve de $51{,}3\ \%$ est loin d'être atteinte.</li>
+    <li><strong>Performances simulées.</strong> Consigne : aucun dépassement, $t_5 = 0{,}24\ \mathrm{s}$, contre $0{,}30\ \mathrm{s}$ pour le premier ordre
+      idéal, car la boucle un peu moins amortie atteint plus tôt la bande de $5\ \%$. Perturbation : creux de $36{,}4\ \mathrm{mm/s}$ à
+      $0{,}20\ \mathrm{s}$, retour dans $\pm 5\ \mathrm{mm/s}$ en $1{,}87\ \mathrm{s}$. Le cahier des charges est tenu.</li>
+    <li><strong>Sensibilité à $\tau_m$.</strong> Même correcteur, procédé à $\tau_m = 0{,}6\ \mathrm{s}$ : $M_\varphi = 76{,}5^\circ$, $M_G = 15{,}4\ \mathrm{dB}$,
+      chute de $37{,}8\ \mathrm{mm/s}$, retour en $1{,}88\ \mathrm{s}$. À $\tau_m = 1{,}2\ \mathrm{s}$ : $M_\varphi = 78{,}8^\circ$, $M_G = 21{,}4\ \mathrm{dB}$,
+      chute de $34{,}4\ \mathrm{mm/s}$, retour en $1{,}87\ \mathrm{s}$, mais dépassement de consigne de $3{,}2\ \%$, car le zéro du PI n'est plus compensé.</li>
+  </ol>
+  <figure id="h-reponses-fig">
+    <div id="h-consigne"></div>
+    <div id="h-charge"></div>
+    <figcaption>
+      Réponses des deux réglages successifs, simulées avec la boucle numérique complète. En haut, écart de vitesse en mm/s après un échelon de consigne de
+      $20\ \mathrm{mm/s}$ à $t = 0{,}2\ \mathrm{s}$, de $0$ à $2\ \mathrm{s}$ ; en bas, écart de vitesse après un à-coup de charge de $10\ \%$ à
+      $t = 0{,}2\ \mathrm{s}$, de $0$ à $4\ \mathrm{s}$. La légende associe chaque courbe à son réglage : $\omega_c = 4\ \mathrm{rad/s}$ avec
+      $T_e = 20\ \mathrm{ms}$, issu de la seule consigne, et $\omega_c = 10\ \mathrm{rad/s}$ avec $T_e = 5\ \mathrm{ms}$, retenu. Les tirets horizontaux
+      marquent la consigne et sa bande de $\pm 5\ \%$ en haut, la limite de chute de $40\ \mathrm{mm/s}$ et la bande de $\pm 5\ \mathrm{mm/s}$ en bas.
+    </figcaption>
+  </figure>
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li><strong>Dimensions.</strong> $K_c = \tau_m\omega_c/K$ est en $\mathrm{s} \cdot \mathrm{s^{-1}}/\bigl(\mathrm{(m/s)/\%}\bigr) = \%/(\mathrm{m/s})$, et
+      $K_c e$ en %, comme $u$.</li>
+    <li><strong>Ordre de grandeur de la chute.</strong> Décélération initiale $Kd_0/\tau_m = 0{,}469\ \mathrm{m/s^2}$ ; pendant le temps de réaction
+      $1/\omega_c = 0{,}1\ \mathrm{s}$, elle ferait perdre $46{,}9\ \mathrm{mm/s}$ : la valeur simulée, $36{,}4\ \mathrm{mm/s}$, est bien en dessous de cette
+      majoration et du même ordre.</li>
+    <li><strong>Bilan de couple.</strong> En régime établi après l'à-coup, la commande vaut $48{,}7 + 10 = 58{,}7\ \%$ : le moteur équilibre exactement le
+      couple ajouté, et la vitesse est revenue à $1{,}45\ \mathrm{m/s}$.</li>
+    <li><strong>Accord entre méthodes.</strong> Un PI continu suivi d'un retard pur de $20\ \mathrm{ms}$ donne $36{,}5\ \mathrm{mm/s}$ et
+      $1{,}87\ \mathrm{s}$ : l'équivalence entre la boucle numérique et un retard, admise dans le budget de phase, est vérifiée à $0{,}3\ \%$ près.</li>
+    <li><strong>Marge sur le temps de retour.</strong> $1{,}87\ \mathrm{s}$ pour $2\ \mathrm{s}$ exigées : la réserve est mince. Si l'essai sur site la
+      dépasse, le réglage $T_i = 0{,}3\ \mathrm{s}$ avec préfiltre est prêt.</li>
+  </ul>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <h3 id="i-contexte">Intégration de la boucle de vitesse dans l'automate du site</h3>
+  <p>
+    Le convoyeur d'expédition s'ajoute au projet fil rouge comme un nouveau départ moteur de l'armoire : disjoncteur moteur, variateur de $2{,}2\ \mathrm{kW}$
+    en contrôle de couple, codeur sur le moteur, liaison par bus de terrain avec l'automate qui pilote déjà la régulation de pression dans sa tâche de
+    $100\ \mathrm{ms}$. En aval, une étiqueteuse se synchronise sur la vitesse de la bande ; en amont, le poste de conditionnement peut se bloquer et laisser
+    s'accumuler des cartons.
+  </p>
+  <p>
+    <strong>Contraintes d'exploitation.</strong> La tâche rapide de $5\ \mathrm{ms}$ doit rester légère : le comptage, le PI et la surveillance représentent
+    quelques dizaines d'instructions, valeur à confirmer par la mesure du temps de cycle. Les produits supportent une accélération de $0{,}3\ \mathrm{m/s^2}$,
+    valeur supposée ; une accumulation de cartons peut porter le couple résistant à $70\ \%$ de $C_n$ pendant plusieurs secondes ; l'arrêt d'urgence passe par
+    la fonction de sécurité du variateur qui supprime le couple, indépendante de la régulation et de l'automate.
+  </p>
+  <ol>
+    <li><strong>Organisation.</strong> Tâche de $5\ \mathrm{ms}$ : lire le compteur, calculer $v_m$, calculer le PI, borner, écrire la consigne de couple,
+      mettre à jour l'état intégral par recalcul. L'écriture au top suivant est retenue pour un délai constant, déjà compté dans le budget.</li>
+    <li><strong>Rampe et anticipation.</strong> Démarrages et changements de vitesse en rampe de $0{,}3\ \mathrm{m/s^2}$, avec anticipation
+      $u_{\mathrm{ant}} = r/K + \tau_m\dot r/K$ : couple d'accélération de $6{,}4\ \%$ fourni d'avance, écart en rampe de $6{,}5\ \mathrm{mm/s}$ au plus au lieu
+      d'un traînage de $30\ \mathrm{mm/s}$.</li>
+    <li><strong>Anti-emballement.</strong> Recalcul sur la commande bornée à $\pm 100\ \%$, $T_t = 0{,}4\ \mathrm{s}$. La limite de couple est lue dans le
+      variateur, pour que la borne de l'automate et celle du variateur restent identiques.</li>
+    <li><strong>Surveillance.</strong> Écart de vitesse supérieur à $0{,}1\ \mathrm{m/s}$ pendant plus de $2\ \mathrm{s}$ : alarme de bourrage probable.
+      Couple supérieur à $30\ \%$ avec un compteur immobile pendant $0{,}5\ \mathrm{s}$ : défaut du codeur ou arbre cassé. Seuils supposés, à ajuster aux
+      essais.</li>
+    <li><strong>Mode dégradé.</strong> En cas de défaut du codeur, le variateur passe en loi U/f à fréquence fixe, la vitesse n'est plus régulée mais reste
+      proche de la consigne au glissement près, et l'étiqueteuse se synchronise sur une cellule de détection des produits au lieu de la vitesse calculée.</li>
+  </ol>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      La simulation suivante applique une accumulation de cartons : le couple résistant passe de $10\ \%$ à une valeur réglable entre $t = 1$ et
+      $t = 5\ \mathrm{s}$, puis revient à $10\ \%$. Avant de manipuler, prévoyez : à partir de quelle charge le couple sature-t-il ? Vers quelle vitesse la
+      bande descend-elle pendant la saturation, avec et sans anti-emballement ? Que se passe-t-il à $t = 5\ \mathrm{s}$ sans anti-emballement ?
+    </p>
+  </div>
+  <figure id="i-saturation-sim">
+    <div id="i-saturation-curseurs"></div>
+    <div id="i-saturation-valeurs"></div>
+    <div id="i-saturation-vitesse"></div>
+    <div id="i-saturation-couple"></div>
+    <figcaption>
+      Saturation de couple et anti-emballement, consigne fixe de $1{,}45\ \mathrm{m/s}$. En haut, vitesse de la bande en m/s, de $0$ à $12\ \mathrm{s}$, avec et
+      sans anti-emballement ; le tiret horizontal marque la consigne. En bas, couple en pour cent de $C_n$ : couple appliqué par le variateur et couple calculé
+      par le PI avant la borne, pour chacun des deux cas ; le tiret horizontal marque la limite de $100\ \%$, et les valeurs calculées au-delà de $300\ \%$ sont
+      coupées à l'affichage. La légende associe chaque courbe à son cas. Les curseurs règlent la charge de pointe, la période et l'organisation du calcul.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> La saturation commence quand la charge dépasse $61{,}3\ \%$. Pendant la saturation, la vitesse descend vers
+    l'équilibre $K(100 - d)$, avec ou sans anti-emballement, car le moteur donne déjà tout son couple : $1{,}125\ \mathrm{m/s}$ pour $70\ \%$. La différence
+    apparaît au retour de la charge normale. Sans anti-emballement, la commande calculée a grimpé jusqu'à $433\ \%$ ; le moteur reste au couple maximal
+    pendant $0{,}65\ \mathrm{s}$ après la fin de l'accumulation, la bande monte à $2{,}43\ \mathrm{m/s}$, près de $1\ \mathrm{m/s}$ au-dessus de la consigne,
+    et ne revient dans $\pm 5\ \mathrm{mm/s}$ qu'après $5{,}0\ \mathrm{s}$. Avec le recalcul, la commande calculée plafonne à $135\ \%$, le dépassement tombe à
+    $70\ \mathrm{mm/s}$ et le retour à $2{,}5\ \mathrm{s}$. Sur un convoyeur, l'emballement n'est pas une affaire de confort : des cartons projetés en bout de
+    bande, une étiqueteuse désynchronisée, voire un déclenchement en survitesse.
+  </p>
+
+  <h3 id="i-boucles-titre">Les trois boucles du site</h3>
+  <p>
+    Le projet fil rouge compte désormais trois boucles. Le tableau suivant les compare : la même règle, un budget de phase pour la période, conduit à des
+    emplacements de calcul différents parce que les pulsations de coupure diffèrent de deux ordres de grandeur.
+  </p>
+  <div class="cadre-tableau" id="i-boucles">
+    <table>
+      <thead><tr><th>Boucle</th><th>$\omega_c$</th><th>Marge de phase</th><th>Période et emplacement</th><th>Grandeur limitante</th></tr></thead>
+      <tbody>
+        <tr><td>Position de l'actionneur de vanne</td><td>$93{,}7\ \mathrm{rad/s}$</td><td>$64{,}7^\circ$</td><td>Dans le positionneur, période interne de l'appareil</td><td>Retard : $15\ \mathrm{ms}$ par le bus la rendraient instable</td></tr>
+        <tr><td>Vitesse du convoyeur</td><td>$10\ \mathrm{rad/s}$</td><td>$78{,}5^\circ$</td><td>Automate, tâche de $5\ \mathrm{ms}$</td><td>Rejet des à-coups de charge, résolution du codeur</td></tr>
+        <tr><td>Pression de distribution</td><td>$0{,}746\ \mathrm{rad/s}$</td><td>$75{,}9^\circ$ au pire</td><td>Automate, tâche de $100\ \mathrm{ms}$</td><td>Dynamique du réseau hydraulique, repliement de la pulsation de pompe</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Le produit $\omega_cT_e$ vaut $0{,}05$ pour le convoyeur et $0{,}075$ pour la pression : une période voisine du centième de la période $2\pi/\omega_c$
+    associée à la pulsation de coupure. Pour la boucle de position, aucune période d'automate ne conviendrait, d'où son calcul dans le positionneur, comme l'avait conclu le cours
+    <a href="#/cours/diagrammes-de-bode">Diagrammes de Bode</a>.
+  </p>
+  <h3 id="i-compromis">Risques, choix d'ingénierie et compromis</h3>
+  <ul>
+    <li><strong>Automate ou variateur.</strong> La boucle de vitesse interne du variateur, calculée à la milliseconde ou plus vite, permettrait une
+      pulsation bien plus haute. On la garde dans l'automate parce que $10\ \mathrm{rad/s}$ suffit et que l'automate dispose déjà de la consigne, de la
+      synchronisation de l'étiqueteuse et de la surveillance ; un cahier des charges plus sévère ferait basculer ce choix.</li>
+    <li><strong>Compensation ou retour rapide.</strong> La compensation est retenue pour sa simplicité et sa marge ; le réglage $T_i = 0{,}3\ \mathrm{s}$ avec
+      préfiltre reste prêt si le temps de retour mesuré dépasse $2\ \mathrm{s}$.</li>
+    <li><strong>Résolution contre rapidité.</strong> Un codeur de $4096$ points, soit $16\,384$ fronts par tour, ouvrirait la fenêtre de période vers
+      $1{,}2\ \mathrm{ms}$ et réduirait le tremblement de commande ; il n'est utile que si l'on augmente $\omega_c$.</li>
+    <li><strong>Risque résiduel.</strong> Une inertie très supérieure à la valeur supposée, bande longue chargée de produits lourds, ou un frottement sec
+      dominant, déplacerait $\tau_m$ au-delà de $1{,}2\ \mathrm{s}$ : dépassement de consigne de quelques pour cent, que la rampe de consigne masque en
+      exploitation. L'essai indiciel de mise en service fixera la valeur.</li>
+  </ul>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Ajout au projet fil rouge</span>
+    <p>
+      Régulation de vitesse du convoyeur d'expédition, nouveau départ moteur : moteur de $2{,}2\ \mathrm{kW}$ sur variateur en contrôle de couple, limite
+      $\pm 100\ \%$ de $C_n = 14{,}69\ \mathrm{N \cdot m}$, codeur de $4096$ fronts par tour ; modèle $\tau_m = J/f = 0{,}8\ \mathrm{s}$,
+      $K = 0{,}0375\ \mathrm{(m/s)/\%}$, retard du variateur $10\ \mathrm{ms}$, tous supposés. Cahier des charges : consigne sans dépassement en moins de
+      $1\ \mathrm{s}$, chute au plus $40\ \mathrm{mm/s}$ pour $10\ \%$ de charge et retour dans $\pm 5\ \mathrm{mm/s}$ en moins de $2\ \mathrm{s}$. PI par
+      compensation, $K_c = 213{,}3\ \%/(\mathrm{m/s})$, $T_i = 0{,}8\ \mathrm{s}$, $\omega_c = 10\ \mathrm{rad/s}$ imposée par la perturbation et non par la
+      consigne ; tâche de $5\ \mathrm{ms}$ dans une fenêtre de $4{,}88$ à $8{,}73\ \mathrm{ms}$ ; marges $78{,}5^\circ$, $17{,}9\ \mathrm{dB}$, $0{,}837$ ;
+      chute simulée $36{,}4\ \mathrm{mm/s}$, retour $1{,}87\ \mathrm{s}$ ; anti-emballement $T_t = 0{,}4\ \mathrm{s}$, rampe de $0{,}3\ \mathrm{m/s^2}$ avec
+      anticipation ; alarmes de bourrage et de codeur, mode dégradé en U/f à fréquence fixe. Tableau de synthèse des trois boucles du site.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Régler sur la seule consigne.</strong> Une boucle qui suit parfaitement les échelons peut laisser chuter la vitesse de façon inacceptable à
+      chaque à-coup de charge. Correction : écrire l'exigence de perturbation et calculer la chute avant de fixer $\omega_c$.</li>
+    <li><strong>Croire que la compensation accélère tout.</strong> Le pôle lent compensé disparaît du transfert de consigne, pas du transfert de perturbation :
+      la fin du retour dure environ $3\tau_m$. Correction : action intégrale plus rapide avec préfiltre, si le retour est exigé.</li>
+    <li><strong>Oublier le retard de la mesure par comptage.</strong> La vitesse comptée sur une période est celle du milieu de l'intervalle : $T_e/2$ de
+      plus dans le budget. Correction : compter bloqueur, calcul, comptage et actionneur.</li>
+    <li><strong>Réduire la période sans regarder le codeur.</strong> À $2\ \mathrm{ms}$, un compte vaut $7{,}3\ \mathrm{mm/s}$ et la commande tremble de
+      $1{,}6\ \%$ de couple à chaque période. Correction : borne basse $\Delta x/q_{v,\max}$, ou mesure de la durée entre fronts.</li>
+    <li><strong>Négliger le retard de l'actionneur.</strong> Ici, $10\ \mathrm{ms}$ de variateur et de bus coûtent plus de phase que toute la chaîne
+      d'échantillonnage. Correction : demander ou mesurer ce retard avant de choisir $\omega_c$.</li>
+    <li><strong>Confondre modèle en écarts et grandeurs absolues.</strong> Le PI en écarts n'a pas besoin du couple de frottement ; l'automate, lui, manipule
+      des valeurs absolues : l'état intégral doit être initialisé à la commande courante au passage en automatique, sinon à-coup. Correction : initialisation
+      sans à-coup de l'état intégral.</li>
+    <li><strong>Laisser l'intégrale libre en saturation.</strong> Une accumulation de cartons de quelques secondes suffit à porter la commande calculée à
+      plusieurs centaines de pour cent et à provoquer une survitesse au retour. Correction : recalcul avec $T_e &lt; T_t$, ou blocage de l'intégration.</li>
+    <li><strong>Appliquer un échelon de consigne de grande amplitude.</strong> Le modèle linéaire suppose une commande loin de la limite ; un échelon de
+      $0{,}5\ \mathrm{m/s}$ demanderait au premier pas un supplément de $107\ \%$ de couple, le double de la réserve de $51{,}3\ \%$. Correction : rampe de consigne et anticipation.</li>
+  </ol>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic industriel et une question
+    conceptuelle sans calcul. Les solutions sont présentes dans la page mais restent masquées jusqu'à votre tentative ou à un clic explicite ; chaque
+    correction se révèle étape par étape, avec un calcul encadré, une courbe tracée ou un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangées : choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Le score est calculé dans ce navigateur
+    et repris par la grille d'auto-évaluation.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+  <h3 id="m-formules">Cinq formules essentielles</h3>
+  <div class="formule-cle">$$\tau_m = \frac{J}{f}, \qquad G(s) = \frac{K}{1 + \tau_m s} ; \qquad T_i = \tau_m,\ K_c = \frac{\tau_m\,\omega_c}{K} \ \Rightarrow\ t_5 \approx \frac{3}{\omega_c}$$</div>
+  <div class="formule-cle">$$\Delta v(t) = -\frac{Kd_0}{\tau_m(\omega_c - 1/\tau_m)}\bigl(e^{-t/\tau_m} - e^{-\omega_ct}\bigr), \qquad |\Delta v|_{\max} \lesssim \frac{Kd_0}{\tau_m\,\omega_c}$$</div>
+  <div class="formule-cle">$$\theta = \frac{T_e}{2} + \tau_{\mathrm{calc}} + \frac{T_e}{2} + \theta_v, \qquad M_\varphi = 90^\circ - \omega_c\theta, \qquad M_G = 20\log_{10}\frac{\pi}{2\,\omega_c\theta}$$</div>
+  <div class="formule-cle">$$\frac{\Delta x}{q_{v,\max}} \le T_e \le \frac{\Delta\varphi_{\max}}{2\,\omega_c}, \qquad \delta u = K_c\,\frac{\Delta x}{T_e}$$</div>
+  <div class="formule-cle">$$e_{\mathrm{rampe}} = \frac{a}{\omega_c}, \qquad \Delta u_{\mathrm{acc}} = \frac{\tau_m a}{K}, \qquad x_k \leftarrow x_k + \frac{T_e}{T_t}(u_s - u_c)$$</div>
+  <h3 id="m-vigilance">Cinq points de vigilance</h3>
+  <ul>
+    <li>La pulsation de coupure se fixe sur l'exigence la plus sévère, souvent la perturbation.</li>
+    <li>Compter tous les retards : bloqueur, calcul, comptage, actionneur et liaison.</li>
+    <li>La période a deux bornes : le budget de phase en haut, la résolution de la mesure en bas.</li>
+    <li>La compensation laisse le pôle lent dans le rejet de perturbation.</li>
+    <li>Toute limite d'actionneur exige un anti-emballement et des grands changements en rampe.</li>
+  </ul>
+  <h3 id="m-resume">Résumé</h3>
+  <p>
+    Concevoir une régulation, c'est enchaîner modèle, cahier des charges, pulsation de coupure, budget de phase, période, réglage, robustesse, saturation et
+    implantation, en revenant en arrière quand une contrainte d'aval l'impose. Pour le convoyeur entraîné en couple, $\tau_m = J/f = 0{,}8\ \mathrm{s}$. La
+    consigne seule demandait $\omega_c = 4\ \mathrm{rad/s}$ ; l'à-coup de charge en exige $10$, car la chute vaut environ la décélération initiale multipliée
+    par $1/\omega_c$. Les retards du bloqueur, du calcul, du comptage et du variateur totalisent $20\ \mathrm{ms}$ et laissent $78{,}5^\circ$ de marge. La
+    période, $5\ \mathrm{ms}$, se loge entre la borne du budget de phase et celle du codeur. La compensation donne une consigne sans dépassement mais un retour
+    gouverné par $\tau_m$ ; l'anti-emballement évite une survitesse après saturation.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance, deux sur le cours précédent, <a href="#/cours/commande-numerique">Commande numérique</a>, une sur le cours
+    <a href="#/cours/revision-8-et-etude-de-cas-variateur">Révision 8 et étude de cas variateur</a>, vieux d'une semaine, et une sur le cours
+    <a href="#/cours/transformateurs-triphases">Transformateurs triphasés</a>, vieux d'un mois.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : simuler la boucle de vitesse complète du convoyeur en Python, retrouver les performances du tableau comparatif, puis la reproduire dans LTspice
+    avec des sources comportementales. Prédictions à écrire avant de commencer : chute de vitesse pour $10\ \%$ de charge avec $\omega_c = 4$ puis
+    $10\ \mathrm{rad/s}$ ; effet d'une période de $20\ \mathrm{ms}$ sur la boucle à $10\ \mathrm{rad/s}$ ; vitesse atteinte après une accumulation de $70\ \%$
+    sans anti-emballement.
+  </p>
+  <ol>
+    <li><strong>Python, procédé.</strong> Pas fin $h = 0{,}5\ \mathrm{ms}$, récurrence exacte $v \leftarrow e^{-h/\tau_m}v + (1 - e^{-h/\tau_m})K(u_r - d)$,
+      retard du variateur par une file de $20$ valeurs, position $x \leftarrow x + vh$.</li>
+    <li><strong>Python, mesure et PI.</strong> Tous les $T_e/h$ pas : $v_m = \bigl(\lfloor x/\Delta x\rfloor - \lfloor x_{\text{préc}}/\Delta x\rfloor\bigr)
+      \Delta x/T_e$ ; $e = r - v_m$ ; $x_i \leftarrow x_i + K_cT_ee/T_i$ ; $u_c = K_ce + x_i$ ; $u_s$ borné à $\pm 100\ \%$ ; recalcul ; écriture au top
+      suivant. Initialiser $x_i$ à $48{,}67\ \%$, la commande d'équilibre.</li>
+    <li><strong>Python, essais.</strong> Échelon de consigne de $2\ \mathrm{cm/s}$ et à-coup de charge de $10\ \%$, pour les trois réglages du tableau de la
+      section F ; accumulation de $70\ \%$ entre $1$ et $5\ \mathrm{s}$, avec et sans recalcul ; période de $2\ \mathrm{ms}$ pour observer le tremblement de
+      commande.</li>
+    <li><strong>LTspice, modèle continu.</strong> Nœud de vitesse : condensateur de $1\ \mathrm{F}$ chargé par
+      <code>B1 0 v I=(0.0375*(V(ur)-V(d))-V(v))/0.8</code>, avec <code>.ic V(v)=1.45</code>. Intégrale : condensateur de $1\ \mathrm{F}$ chargé par
+      <code>B2 0 xi I=266.67*(1.45-V(v))</code>, avec <code>.ic V(xi)=48.667</code>. Commande : <code>B3 u 0 V=limit(213.33*(1.45-V(v))+V(xi),-100,100)</code> ;
+      retard : <code>B4 ur 0 V=delay(V(u),0.02)</code> ; charge : source d'impulsion de $10$ à $20\ \mathrm{V}$ à $0{,}2\ \mathrm{s}$. Lancer
+      <code>.tran 0 4 0 0.1m</code>.</li>
+  </ol>
+  <p>
+    Résultats attendus : avec $\omega_c = 10\ \mathrm{rad/s}$ et $T_e = 5\ \mathrm{ms}$, chute de $36\ \mathrm{mm/s}$ vers $0{,}2\ \mathrm{s}$ et retour en
+    $1{,}9\ \mathrm{s}$ ; avec $\omega_c = 4\ \mathrm{rad/s}$ et $T_e = 20\ \mathrm{ms}$, $74\ \mathrm{mm/s}$ et $2{,}8\ \mathrm{s}$ ; avec $T_e = 20\ \mathrm{ms}$
+    à $\omega_c = 10\ \mathrm{rad/s}$, dépassement de consigne voisin de $4\ \%$ et chute de $42\ \mathrm{mm/s}$. Accumulation de $70\ \%$ : $1{,}125\ \mathrm{m/s}$
+    pendant la saturation, pointe vers $2{,}4\ \mathrm{m/s}$ sans recalcul, dépassement d'environ $70\ \mathrm{mm/s}$ avec. Dans LTspice, le modèle continu
+    avec retard de $20\ \mathrm{ms}$ donne la même chute, $36{,}5\ \mathrm{mm/s}$. À $T_e = 2\ \mathrm{ms}$, la vitesse mesurée saute de
+    $7{,}3\ \mathrm{mm/s}$ d'une période à l'autre.
+  </p>
+  <p>
+    Anomalies à observer et à expliquer : une vitesse mesurée nulle au premier pas, signe d'un compteur non initialisé, qui produit un énorme à-coup de
+    commande ; une chute plus forte que prévu, signe d'un retard oublié ou d'un $\tau_m$ mal identifié ; une commande qui oscille d'une période à l'autre
+    sans cause physique, signe d'une quantification trop grossière ; une vitesse qui s'emballe après une saturation, signe d'un recalcul absent ou d'une borne
+    différente de celle du variateur. Tout essai sur le convoyeur réel se fait bande vide d'abord, arrêt d'urgence vérifié, sous la responsabilité d'une
+    personne habilitée.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours, notées de 0 à 4. Le bilan affiché sous la grille est calculé dans ce navigateur à
+    partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement. Aucune estimation n'est faite à votre place :
+    seul le score réellement obtenu sert de référence.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Lire votre bilan</span>
+    <p>
+      Les exercices fondamentaux testent le réglage par compensation et la résolution d'un codeur ; l'intermédiaire 1 la borne haute de la période ;
+      l'intermédiaire 2 la chute de vitesse face à une perturbation ; l'avancé l'enchaînement complet sur une régulation de température à retard ; la
+      question de diagnostic la lecture d'une dégradation due à la période ; la question conceptuelle le rôle du pôle compensé. Un bloc réussi à moins de la
+      moitié indique la notion à reprendre dans le cours du module correspondant, à l'aide du tableau Le module en six étapes de la section E.
+    </p>
+  </div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">La pulsation de coupure se décide sur l'exigence la plus sévère : ici le rejet d'un à-coup de charge, dont la chute vaut environ la décélération initiale multipliée par $1/\omega_c$.</li>
+    <li data-rang="02">Tous les retards de la boucle, bloqueur, calcul, comptage et actionneur, se paient sur un même budget de phase ; la période se loge entre ce budget et la résolution de la mesure.</li>
+    <li data-rang="03">Un réglage n'est complet qu'avec ses grands signaux : anti-emballement, rampe, anticipation, surveillance et mode dégradé.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> distinguer le transfert de consigne et le transfert de perturbation d'une même boucle, et accepter que la
+    compensation, parfaite pour l'un, laisse le pôle lent dans l'autre ; puis tenir ensemble les deux bornes de la période. Le réflexe à installer : pour
+    toute boucle, écrire côte à côte la chute due à la perturbation la plus probable et la marge de phase après tous les retards.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Métrologie électrique, ouvre le module consacré à la mesure. Question à préparer : la vitesse
+    du convoyeur est mesurée par comptage avec une résolution de $2{,}93\ \mathrm{mm/s}$ ; si l'erreur de quantification est uniformément répartie sur un
+    compte, quelle incertitude-type lui associer, et comment la combiner avec une incertitude de $0{,}5\ \%$ sur le diamètre du tambour pour obtenir
+    l'incertitude sur une vitesse de $1{,}45\ \mathrm{m/s}$ ?
+  </p>
+</article>
