@@ -1,0 +1,1005 @@
+<article class="cours" data-slug="metrologie-electrique">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/revision-9-et-mini-projet-regulation">Révision 9 et mini-projet régulation</a> s'est achevé sur une question : la vitesse du
+      convoyeur est mesurée par comptage avec une résolution de $2{,}93\ \mathrm{mm/s}$ ; si l'erreur de quantification est uniformément répartie sur un
+      compte, quelle incertitude-type lui associer, et comment la combiner avec une incertitude de $0{,}5\ \%$ sur le diamètre du tambour pour une vitesse de
+      $1{,}45\ \mathrm{m/s}$ ? Réponse courte. Une erreur uniformément répartie sur un intervalle de largeur $q$ a pour écart-type $q/\sqrt{12}$, soit
+      $2{,}93/3{,}464 = 0{,}846\ \mathrm{mm/s}$. La vitesse est proportionnelle au diamètre : $0{,}5\ \%$ de $1{,}45\ \mathrm{m/s}$ donnent
+      $7{,}25\ \mathrm{mm/s}$, si ces $0{,}5\ \%$ sont déjà une incertitude-type. Les deux causes étant indépendantes, on additionne les carrés :
+      $u_c = \sqrt{0{,}846^2 + 7{,}25^2} = 7{,}30\ \mathrm{mm/s}$, et l'on annonce $v = (1{,}450 \pm 0{,}015)\ \mathrm{m/s}$ avec un facteur
+      d'élargissement $k = 2$. Si les $0{,}5\ \%$ étaient une tolérance, c'est-à-dire une demi-largeur maximale, il faudrait d'abord la diviser par
+      $\sqrt{3}$ : $4{,}19\ \mathrm{mm/s}$, puis $u_c = 4{,}27\ \mathrm{mm/s}$. Dans les deux cas, le diamètre domine et la résolution du codeur est
+      négligeable. Cette séance justifie chacune de ces étapes.
+    </p>
+    <p>
+      La séance réutilise la valeur efficace et la valeur moyenne du cours <a href="#/cours/signaux-periodiques-et-sinusoides">Signaux périodiques et
+      sinusoïdes</a>, la résistivité et son coefficient de température du cours <a href="#/cours/loi-d-ohm-et-resistivite">Loi d'Ohm et résistivité</a>,
+      le diviseur chargé du cours <a href="#/cours/associations-de-resistances-et-diviseurs">Associations de résistances et diviseurs</a>, les classes de
+      précision des transformateurs de mesure du cours <a href="#/cours/autotransformateurs-tc-et-tp">Autotransformateurs, TC et TP</a> et la quantification
+      introduite dans le cours <a href="#/cours/commande-numerique">Commande numérique</a>.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Toute décision technique repose sur une mesure : réceptionner un transformateur, régler une protection, facturer de l'énergie, déclarer une installation
+    conforme, régler une boucle de pression. Or aucune mesure ne donne la valeur vraie. Un nombre affiché sans indication de sa qualité ne permet ni de
+    comparer deux appareils, ni de décider si une grandeur respecte une limite. La métrologie est la science qui permet d'attacher à chaque résultat un
+    intervalle crédible, et de savoir d'où vient cet intervalle.
+  </p>
+  <ul>
+    <li><strong>Décider de la conformité.</strong> Une résistance de $47\ \Omega$ à $\pm 5\ \%$ mesurée à $49{,}2\ \Omega$ est-elle conforme ? La réponse
+      dépend de l'incertitude de la mesure, pas seulement du nombre lu.</li>
+    <li><strong>Régler juste.</strong> Une régulation annule l'écart entre la consigne et la <em>mesure</em>. Si la mesure est biaisée de $40\ \mathrm{mbar}$,
+      la pression réelle l'est aussi, avec une erreur statique pourtant nulle à l'écran.</li>
+    <li><strong>Choisir un instrument.</strong> Classe d'un appareil, spécification d'un multimètre, classe d'un transformateur de courant : ces données ne
+      prennent un sens chiffré qu'une fois traduites en incertitude au point de mesure.</li>
+    <li><strong>Diagnostiquer.</strong> Deux appareils qui ne donnent pas la même valeur ne sont pas forcément en défaut : leurs intervalles peuvent se
+      recouvrir. À l'inverse, deux appareils d'accord peuvent être faux de la même façon.</li>
+  </ul>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Jalon visé par le module</span>
+    <p>
+      Ce cours ouvre le module Mesure et instrumentation. Le jalon de fin de module demande d'utiliser correctement les instruments de mesure et de concevoir
+      une chaîne d'acquisition industrielle. Tout ce qui suit, instruments, capteurs, conditionnement, conversion et boucles de courant, sera jugé avec le même
+      outil : le bilan d'incertitude construit dans cette séance.
+    </p>
+  </div>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Expliquer la différence entre erreur et incertitude, entre justesse et fidélité, et entre résolution et exactitude, en s'appuyant sur des exemples chiffrés.</li>
+    <li data-rang="02">Calculer une incertitude-type de type A à partir de mesures répétées et une incertitude-type de type B à partir d'une spécification, d'une résolution ou d'un certificat.</li>
+    <li data-rang="03">Calculer une incertitude composée par la loi de propagation, y compris pour un produit, un quotient ou une puissance, puis une incertitude élargie, et exprimer correctement le résultat.</li>
+    <li data-rang="04">Interpréter la classe d'un appareil analogique, la spécification d'un multimètre numérique et la classe d'un transformateur de courant, et choisir le calibre qui minimise l'incertitude.</li>
+    <li data-rang="05">Dimensionner un bilan d'incertitude pour une chaîne de mesure industrielle et identifier la contribution dominante.</li>
+    <li data-rang="06">Diagnostiquer un désaccord entre deux mesures en distinguant erreur de méthode, erreur systématique corrigible et dispersion aléatoire.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>Quatre rappels suffisent.</p>
+  <ul>
+    <li><strong>Moyenne et écart-type.</strong> Pour $n$ valeurs $x_i$ : moyenne $\bar x = \frac{1}{n}\sum x_i$, écart-type expérimental
+      $s = \sqrt{\frac{1}{n - 1}\sum (x_i - \bar x)^2}$. Le diviseur $n - 1$ vient de ce que $\bar x$ est lui-même calculé à partir des données.</li>
+    <li><strong>Variance d'une somme.</strong> Si $X$ et $Y$ sont indépendantes, $\mathrm{Var}(aX + bY) = a^2\mathrm{Var}(X) + b^2\mathrm{Var}(Y)$ : les
+      écarts-types s'additionnent quadratiquement, pas arithmétiquement.</li>
+    <li><strong>Dérivée logarithmique.</strong> Pour $f = x^a y^b$, $\dfrac{df}{f} = a\dfrac{dx}{x} + b\dfrac{dy}{y}$ : une petite variation relative de $x$
+      se retrouve multipliée par l'exposant.</li>
+    <li><strong>Chiffres significatifs.</strong> Arrondir $0{,}004871$ à deux chiffres significatifs donne $0{,}0049$ ; les zéros de tête ne comptent pas.</li>
+  </ul>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Notation de la séance</span>
+    <p>
+      $Y$ : mesurande, la grandeur que l'on veut connaître ; $y$ : son estimation, le résultat de mesure. $X_i$ : grandeurs d'entrée du modèle de mesure
+      $Y = f(X_1, \dots, X_N)$, estimées par $x_i$. $u(x_i)$ : incertitude-type de $x_i$, homogène à $x_i$ ; $u_r(x_i) = u(x_i)/|x_i|$ : incertitude-type
+      relative. $c_i = \partial f/\partial x_i$ : coefficient de sensibilité. $u_c(y)$ : incertitude-type composée ; $U = k\,u_c(y)$ : incertitude élargie,
+      $k$ facteur d'élargissement. $a$ : demi-largeur d'un intervalle de variation, par exemple une erreur maximale tolérée. $q$ : quantum ou résolution.
+      $\mathrm{PE}$ : pleine échelle, l'étendue de mesure d'un capteur ou le calibre d'un appareil. Le mot <em>précision</em>, employé par les constructeurs,
+      sera toujours traduit en grandeur définie : erreur maximale, incertitude ou classe.
+    </p>
+  </div>
+  <p>
+    Mini-test de trois questions. Les réponses restent masquées, séparées de l'énoncé, jusqu'à votre tentative ou à un clic explicite.
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+  <h3 id="d-mesurer">Mesurer, c'est comparer à une référence imparfaite</h3>
+  <p>
+    Un voltmètre ne lit pas une tension : il compare un courant, une charge ou une tension interne à une référence, une diode Zener enterrée ou une référence
+    à bande interdite, puis convertit ce rapport en chiffres. Chaque maillon a ses défauts. La référence a dérivé depuis le dernier étalonnage : toutes les
+    lectures sont décalées dans le même sens. Le bruit thermique des résistances et les parasites captés par les cordons agitent la lecture d'un instant à
+    l'autre. Le convertisseur ne connaît qu'un nombre fini de valeurs : il arrondit. Enfin, l'instrument perturbe ce qu'il mesure, en prélevant un petit
+    courant ou en ajoutant une petite chute de tension.
+  </p>
+  <p>
+    Ces défauts se rangent en deux familles. Les <strong>erreurs systématiques</strong> sont les mêmes à chaque répétition, dans les mêmes conditions : elles
+    décalent toutes les lectures. Les <strong>erreurs aléatoires</strong> changent d'une répétition à l'autre : elles dispersent les lectures. Répéter la
+    mesure et faire la moyenne réduit la seconde famille, jamais la première. Seul un étalonnage, c'est-à-dire une comparaison à une référence meilleure,
+    permet d'estimer et de corriger un décalage.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      La figure suivante simule un voltmètre qui mesure une tension vraie de $10{,}000\ \mathrm{V}$. Avant de la manipuler, écrivez vos réponses : avec un
+      décalage de $+20\ \mathrm{mV}$ et une dispersion d'écart-type $10\ \mathrm{mV}$, de combien la moyenne de $100$ lectures s'écartera-t-elle de la valeur
+      vraie ? Que vaudra l'écart-type de cette moyenne ? Faut-il $10\ 000$ lectures pour rendre l'écart à la valeur vraie négligeable ?
+    </p>
+  </div>
+  <figure id="d-cible-sim">
+    <div class="schema-vivant" id="d-cible-vivant"></div>
+    <div id="d-cible-curseurs"></div>
+    <div id="d-cible-lecteur"></div>
+    <div id="d-cible-valeurs"></div>
+    <figcaption>
+      Lectures successives d'un voltmètre simulé. L'axe horizontal porte la tension lue, de $9{,}90$ à $10{,}10\ \mathrm{V}$. Ligne verticale en tirets :
+      valeur vraie, $10{,}000\ \mathrm{V}$, inconnue en pratique. Petits ronds dans la bande supérieure : chaque lecture, empilée dans l'ordre d'arrivée.
+      Barres : histogramme des lectures, par classes de $5\ \mathrm{mV}$. Ligne verticale en trait plein épais : moyenne des lectures. Crochet horizontal sous
+      l'axe : intervalle moyenne $\pm 2s/\sqrt{n}$, qui traduit la seule dispersion. La poignée ronde sur le rail gradué règle le décalage systématique de
+      l'appareil, de $-50$ à $+50\ \mathrm{mV}$, à la souris, au doigt ou au clavier ; le curseur règle l'écart-type de la dispersion ; le lecteur fait
+      arriver les lectures une à une, jusqu'à $200$.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Au fil des lectures, l'histogramme prend une forme en cloche dont la largeur est fixée par l'écart-type réglé : la
+    dispersion ne diminue pas avec le nombre de lectures. Ce qui diminue, c'est l'incertitude sur la <em>moyenne</em>, en $s/\sqrt{n}$ : $1\ \mathrm{mV}$ pour
+    $100$ lectures d'écart-type $10\ \mathrm{mV}$, et le crochet se resserre. Mais il se resserre autour de la moyenne, qui reste à $+20\ \mathrm{mV}$ de la
+    valeur vraie : avec $10\ 000$ lectures, l'intervalle de dispersion ne mesurerait plus que $\pm 0{,}2\ \mathrm{mV}$, et la valeur vraie serait toujours
+    hors de lui. Un intervalle étroit n'est pas un intervalle juste. Le décalage est invisible tant qu'on ne compare pas l'appareil à une référence ; c'est
+    pourquoi un bilan d'incertitude doit contenir, à côté de la dispersion observée, une estimation de ce qui ne se voit pas.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Analogie du tir sur cible, et ses limites</span>
+    <p>
+      Un tireur dont les impacts sont groupés mais décentrés est <em>fidèle</em> sans être <em>juste</em> ; un tireur dont les impacts sont dispersés autour
+      du centre est juste sans être fidèle ; l'exactitude demande les deux. L'analogie a trois limites. Le tireur voit le centre de la cible, alors que le
+      métrologue ne connaît jamais la valeur vraie : il ne voit que les impacts. Une mesure électrique est un nombre, non un point du plan. Enfin, la cible
+      laisse croire que le décentrage est une faute de réglage du tireur ; en mesure, une partie du décalage est inévitable et doit être estimée, même quand
+      elle ne peut pas être corrigée.
+    </p>
+  </div>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Analogie du ruban d'arpenteur, et ses limites</span>
+    <p>
+      Un ruban de $20\ \mathrm{m}$ qui s'est allongé de $0{,}1\ \%$ au soleil donne des longueurs trop courtes de $0{,}1\ \%$ : l'erreur est proportionnelle à
+      la grandeur, c'est une erreur de gain. Si son anneau d'extrémité est usé de $3\ \mathrm{mm}$, toutes les longueurs sont fausses de $3\ \mathrm{mm}$ :
+      c'est une erreur de décalage. Comparer le ruban à une longueur de référence, en deux points, permet de corriger les deux. La limite : le ruban change
+      avec la température au cours de la journée, et l'analogie ne dit rien des erreurs qui varient avec les conditions d'emploi, comme la température de
+      l'armoire ou la fréquence du signal, que l'on appelle les grandeurs d'influence.
+    </p>
+  </div>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+  <h3 id="e-vocabulaire">Le vocabulaire qui évite les malentendus</h3>
+  <p>
+    Le Vocabulaire international de métrologie, publié par le Comité commun pour les guides en métrologie, fixe le sens des mots. Les plus utiles ici :
+  </p>
+  <ul>
+    <li><strong>Erreur de mesure</strong> : différence entre la valeur mesurée et la valeur vraie. Elle est inconnaissable, puisque la valeur vraie l'est.</li>
+    <li><strong>Incertitude de mesure</strong> : paramètre qui caractérise la dispersion des valeurs raisonnablement attribuables au mesurande. Elle se
+      calcule, et elle s'exprime par un écart-type.</li>
+    <li><strong>Justesse</strong> : étroitesse de l'accord entre la moyenne d'un nombre infini de mesures et la valeur vraie ; elle se dégrade par les erreurs
+      systématiques. <strong>Fidélité</strong> : étroitesse de l'accord entre mesures répétées ; elle se dégrade par les erreurs aléatoires. On distingue la
+      répétabilité, mêmes conditions et même opérateur, et la reproductibilité, conditions différentes. <strong>Exactitude</strong> : justesse et fidélité à
+      la fois ; c'est une notion qualitative.</li>
+    <li><strong>Résolution</strong> : plus petite variation de la grandeur qui produit une variation perceptible de l'indication. Un multimètre à $6000$
+      points sur le calibre $6\ \mathrm{V}$ a une résolution de $1\ \mathrm{mV}$, mais il peut se tromper de $30\ \mathrm{mV}$ : résolution n'est pas
+      exactitude.</li>
+    <li><strong>Étalonnage</strong> : comparaison à un étalon qui établit la relation entre l'indication et la valeur, avec son incertitude. Il ne modifie pas
+      l'appareil. L'<strong>ajustage</strong> modifie l'appareil pour réduire son erreur ; la <strong>vérification</strong> compare l'erreur à une erreur
+      maximale tolérée et conclut à la conformité.</li>
+  </ul>
+
+  <h3 id="e-modele">Le modèle de mesure</h3>
+  <p>
+    Le résultat est presque toujours calculé à partir de plusieurs grandeurs : une résistance à partir d'une tension et d'un courant, une pression à partir
+    d'une tension, d'un gain et d'un décalage. On écrit ce calcul sous la forme d'un modèle $Y = f(X_1, \dots, X_N)$, dans lequel on fait apparaître
+    explicitement chaque correction, même nulle, dont on sait qu'elle est incertaine : correction d'étalonnage, effet de température, erreur de méthode. Chaque
+    entrée reçoit une estimation $x_i$ et une incertitude-type $u(x_i)$. La démarche du Guide pour l'expression de l'incertitude de mesure, dit GUM, consiste
+    à évaluer chaque $u(x_i)$, puis à les propager jusqu'à $y$.
+  </p>
+
+  <h3 id="e-typea">Évaluation de type A : la dispersion observée</h3>
+  <p>
+    Quand on dispose de $n$ mesures répétées indépendantes $x_1, \dots, x_n$ d'une même grandeur, on estime la grandeur par la moyenne, et l'incertitude-type
+    de cette moyenne par l'écart-type expérimental divisé par $\sqrt{n}$.
+  </p>
+  <div class="formule-cle">
+    $$u_A(\bar x) = \frac{s}{\sqrt{n}}, \qquad s = \sqrt{\frac{1}{n - 1}\sum_{i=1}^{n}(x_i - \bar x)^2}$$
+    <p class="formule-cle-legende">
+      $s$ et $u_A$ ont l'unité de $x$ ; $n$ est sans dimension. Hypothèses : mesures indépendantes, mêmes conditions, aucune dérive pendant la série.
+      Dérivation : si chaque $x_i$ a la variance $\sigma^2$, la variance de $\bar x = \frac{1}{n}\sum x_i$ vaut $\frac{1}{n^2} \times n\sigma^2 =
+      \sigma^2/n$, et $s$ estime $\sigma$. Interprétation : moyenner $n$ lectures divise la part aléatoire par $\sqrt{n}$ ; quatre fois plus de lectures
+      divisent l'incertitude par deux seulement. Cas limites : $n = 1$ ne permet aucune évaluation de type A, il faut une donnée extérieure ; quand
+      $n \to \infty$, $u_A \to 0$ mais l'erreur systématique reste entière. Pour $n &lt; 10$, $s$ est lui-même mal connu : le facteur d'élargissement doit
+      alors tenir compte du nombre de degrés de liberté, $n - 1$. Vérification dimensionnelle : racine d'un carré de tension, divisée par un nombre : une
+      tension.
+    </p>
+  </div>
+
+  <h3 id="e-typeb">Évaluation de type B : tout ce qui ne se voit pas en répétant</h3>
+  <p>
+    Le type B couvre les informations qui ne viennent pas d'une série de mesures : spécification du constructeur, certificat d'étalonnage, résolution,
+    classe, connaissance physique d'un effet de température. Le principe est de choisir une loi de probabilité cohérente avec l'information, puis d'en prendre
+    l'écart-type. Le cas le plus fréquent est une erreur maximale $\pm a$ sans autre indication : toutes les valeurs de l'intervalle sont jugées également
+    possibles, c'est la loi rectangulaire.
+  </p>
+  <div class="formule-cle">
+    $$u_B = \frac{a}{\sqrt{3}}\ \text{(rectangulaire)}, \qquad u_B = \frac{a}{\sqrt{6}}\ \text{(triangulaire)}, \qquad u_B = \frac{U}{k}\ \text{(certificat)}, \qquad u_q = \frac{q}{\sqrt{12}}$$
+    <p class="formule-cle-legende">
+      $a$ : demi-largeur de l'intervalle, dans l'unité de la grandeur ; $U$ et $k$ : incertitude élargie et facteur annoncés par un certificat ; $q$ : quantum
+      ou résolution. Dérivation de la loi rectangulaire : densité $1/(2a)$ sur $[-a, a]$, variance $\int_{-a}^{a} x^2\,\frac{dx}{2a} = \frac{a^2}{3}$. La
+      quantification est un cas particulier : l'arrondi au quantum le plus proche produit une erreur uniforme sur $[-q/2, q/2]$, d'où $a = q/2$ et
+      $u_q = q/(2\sqrt{3}) = q/\sqrt{12}$. La loi triangulaire convient quand les valeurs centrales sont plus probables, par exemple pour la somme de deux
+      tolérances égales. Interprétation : diviser une erreur maximale par $\sqrt{3}$ revient à passer d'une borne à un écart-type, seule grandeur que l'on
+      sait additionner. Cas limite : un intervalle de demi-largeur nulle donne une incertitude nulle. Dimension : celle de $a$.
+    </p>
+  </div>
+  <p>
+    La quantification se visualise directement : la sortie d'un convertisseur idéal est un escalier qui suit la droite idéale, et l'erreur, différence entre
+    les deux, est une dent de scie comprise entre $-q/2$ et $+q/2$. Si le signal parcourt plusieurs marches de façon non corrélée au pas, toutes les valeurs
+    de l'erreur sont également probables.
+  </p>
+  <figure id="e-quantif-figure">
+    <svg viewBox="0 0 720 360" role="img" aria-label="En haut, sortie d'un convertisseur idéal en escalier, de 0 à 8 quanta, et droite idéale en tirets ; en bas, erreur de quantification en dent de scie entre moins q sur 2 et plus q sur 2, avec la densité uniforme et l'écart-type q sur racine de 12">
+      <defs><marker id="e-qu-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4">
+        <path d="M70 210H560" marker-end="url(#e-qu-fl)"/>
+        <path d="M70 210V24" marker-end="url(#e-qu-fl)"/>
+        <path d="M70 210L550 34" stroke-dasharray="7 5"/>
+        <path d="M70 210H100V188H160V166H220V144H280V122H340V100H400V78H460V56H520V34H550" stroke-width="2.6"/>
+        <path d="M70 300H560" marker-end="url(#e-qu-fl)"/>
+        <path d="M70 344V256" marker-end="url(#e-qu-fl)"/>
+        <path d="M70 300L100 289L100 311L160 289L160 311L220 289L220 311L280 289L280 311L340 289L340 311L400 289L400 311L460 289L460 311L520 289L520 311L550 300" stroke-width="2"/>
+        <path d="M66 289H556M66 311H556" stroke-dasharray="2 4" stroke-width="1"/>
+        <path d="M600 289H680V311H600Z"/>
+        <path d="M594 300H690" stroke-width="1"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="560" y="228" text-anchor="end">tension d'entrée (en quanta q)</text>
+        <text x="78" y="30">code de sortie</text>
+        <text x="100" y="228" text-anchor="middle">0,5</text>
+        <text x="160" y="228" text-anchor="middle">1,5</text>
+        <text x="220" y="228" text-anchor="middle">2,5</text>
+        <text x="410" y="172">escalier : sortie réelle</text>
+        <text x="410" y="190">droite idéale (tirets)</text>
+        <text x="78" y="266">erreur = sortie - entrée</text>
+        <text x="60" y="293" text-anchor="end">+q/2</text>
+        <text x="60" y="315" text-anchor="end">-q/2</text>
+        <text x="640" y="280" text-anchor="middle">densité 1/q</text>
+        <text x="640" y="334" text-anchor="middle">u = q/√12</text>
+      </g>
+    </svg>
+    <figcaption>
+      Quantification par un convertisseur idéal qui arrondit au code le plus proche. En haut : abscisse, tension d'entrée exprimée en quanta ; ordonnée, code
+      de sortie, en quanta. La droite en tirets est la conversion idéale sans arrondi ; l'escalier en trait épais est la sortie réelle, qui change de code à
+      chaque demi-quantum impair. En bas : erreur de quantification, sortie moins entrée, en dent de scie entre $-q/2$ et $+q/2$, bornes en pointillés. Le
+      rectangle à droite représente la densité de probabilité de cette erreur, uniforme et de hauteur $1/q$ ; son écart-type est $q/\sqrt{12}$, soit
+      $0{,}29\,q$.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-propagation">Loi de propagation des incertitudes</h3>
+  <p>
+    Il reste à combiner les incertitudes des entrées. Pour de petites variations, le modèle se linéarise autour des estimations : $\delta y \approx \sum c_i
+    \,\delta x_i$, avec $c_i = \partial f/\partial x_i$. La variance d'une somme de grandeurs indépendantes étant la somme des variances pondérées par les
+    carrés des coefficients, on obtient la loi de propagation.
+  </p>
+  <div class="formule-cle">
+    $$u_c^2(y) = \sum_{i=1}^{N} c_i^2\,u^2(x_i), \qquad c_i = \frac{\partial f}{\partial x_i} ; \qquad \text{si } y = A\,x_1^{p_1}x_2^{p_2}\cdots :\ \ u_{r}^2(y) = \sum_{i} p_i^2\,u_{r}^2(x_i)$$
+    <p class="formule-cle-legende">
+      $c_i$ a l'unité de $y$ divisée par celle de $x_i$ ; chaque produit $c_iu(x_i)$ a l'unité de $y$. Hypothèses : entrées indépendantes, modèle à peu près
+      linéaire sur l'étendue des incertitudes. Dérivation : développement de Taylor au premier ordre, puis $\mathrm{Var}\bigl(\sum c_iX_i\bigr) = \sum
+      c_i^2\mathrm{Var}(X_i)$ pour des $X_i$ indépendants. Pour un produit de puissances, la dérivée logarithmique donne $\delta y/y = \sum p_i\,\delta
+      x_i/x_i$ et la même règle s'applique aux incertitudes relatives. Interprétation : les causes indépendantes se compensent en partie, on additionne les
+      carrés ; une contribution deux fois plus petite que la plus grande ne pèse que pour un quart dans la somme. Cas limites : si une seule contribution
+      domine, $u_c$ est pratiquement égal à cette contribution ; si deux entrées sont totalement corrélées, par exemple deux lectures faites avec la même
+      référence décalée, leurs contributions s'ajoutent arithmétiquement, et leur différence peut même être exempte de ce décalage. Vérification
+      dimensionnelle : $[c_i][u(x_i)] = [y]$ pour chaque terme.
+    </p>
+  </div>
+  <p>
+    Deux exemples fixent les idées. Pour $R = U/I$ : $u_r^2(R) = u_r^2(U) + u_r^2(I)$. Pour $P = RI^2$ : $u_r^2(P) = u_r^2(R) + 4u_r^2(I)$ ; le courant, élevé
+    au carré, pèse quatre fois plus, et c'est sur lui qu'il faut faire porter l'effort de mesure.
+  </p>
+
+  <h3 id="e-elargie">Incertitude élargie et niveau de confiance</h3>
+  <p>
+    L'incertitude-type est un écart-type, qui ne couvre qu'environ deux tiers des valeurs possibles. Pour annoncer un intervalle utilisable dans une décision,
+    on multiplie par un facteur d'élargissement $k$ : $U = k\,u_c$. Si la grandeur composée suit à peu près une loi normale, $k = 2$ correspond à un niveau de
+    confiance voisin de $95\ \%$. Cette hypothèse est raisonnable quand plusieurs contributions de tailles comparables se combinent, quelle que soit leur loi
+    propre, c'est le théorème central limite ; elle l'est moins quand une seule contribution rectangulaire domine.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      La figure suivante combine plusieurs contributions rectangulaires indépendantes. Avant de la manipuler, écrivez vos réponses : pour une seule contribution
+      rectangulaire, quelle proportion des valeurs l'intervalle $\pm 2u_c$ contient-il ? Combien de contributions égales faut-il pour que la loi composée
+      ressemble à une cloche ? Que se passe-t-il si l'une des contributions est trois fois plus large que les autres ?
+    </p>
+  </div>
+  <figure id="e-somme-sim">
+    <div id="e-somme-curseurs"></div>
+    <div id="e-somme-trace"></div>
+    <div id="e-somme-valeurs"></div>
+    <figcaption>
+      Loi de probabilité de la somme de $N$ erreurs rectangulaires indépendantes, calculée par convolution. Abscisse : écart à la valeur centrale, rapporté à
+      l'incertitude-type composée $u_c$, de $-4$ à $+4$ ; ordonnée : densité de probabilité, sans dimension après ce changement d'échelle. Une courbe donne la
+      loi composée exacte, l'autre la loi normale de même écart-type ; la légende du tracé les associe. Les lignes verticales en tirets marquent $\pm u_c$, les
+      lignes en pointillés $\pm 2u_c$. Le premier curseur règle le nombre de contributions, le second la largeur de la première contribution rapportée à celle
+      des autres. Les valeurs affichées donnent les proportions réellement couvertes et le facteur $k$ qui couvrirait exactement $95\ \%$.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Une seule contribution rectangulaire est contenue tout entière dans $\pm 2u_c$, puisque $2a/\sqrt{3} = 1{,}15\,a$
+    dépasse la demi-largeur $a$ : le facteur $k = 2$ est alors pessimiste, et $k = 1{,}65$ suffit pour $95\ \%$. Dès deux contributions égales, la loi devient
+    triangulaire et l'intervalle $\pm 2u_c$ en contient $96{,}6\ \%$ ; dès trois, la loi est visuellement une cloche et la proportion vaut $95{,}8\ \%$. Une
+    contribution dominante aplatit le sommet : avec une contribution trois fois plus large que deux autres, $\pm 2u_c$ couvre $97{,}8\ \%$. Dans tous ces cas
+    usuels, $k = 2$ donne un intervalle qui couvre au moins $95\ \%$ : c'est pourquoi ce choix est la convention industrielle. Elle peut devenir optimiste
+    seulement quand la contribution dominante est une évaluation de type A faite sur très peu de mesures.
+  </p>
+
+  <h3 id="e-classes">Classes et spécifications des appareils</h3>
+  <p>
+    Les constructeurs résument l'erreur maximale de leurs appareils sous des formes différentes, qu'il faut savoir traduire en incertitude au point de
+    mesure. Toutes sont des erreurs maximales tolérées, valables dans des conditions de référence précisées par la fiche : plage de température, fréquence,
+    durée depuis l'étalonnage.
+  </p>
+  <div class="formule-cle">
+    $$\text{analogique, classe } c :\ a = \frac{c}{100}\,C ; \qquad \text{numérique} :\ a = \frac{p}{100}\,L + n\,d ; \qquad u_B = \frac{a}{\sqrt{3}}$$
+    <p class="formule-cle-legende">
+      $C$ : calibre, valeur de pleine échelle ; $L$ : lecture ; $c$ et $p$ : pourcentages sans dimension ; $d$ : valeur d'un digit, c'est-à-dire la résolution
+      du calibre employé ; $n$ : nombre de digits, entier. Pour un appareil analogique, l'erreur maximale est une fraction du calibre, la même partout sur
+      l'échelle : l'erreur relative $a/L = c\,C/(100\,L)$ croît quand la lecture diminue. Pour un multimètre numérique, le terme en pourcentage de la lecture
+      reflète l'erreur de gain, le terme en digits l'erreur de décalage et la quantification ; l'erreur relative vaut $p/100 + n\,d/L$. Cas limites : une
+      lecture à pleine échelle donne la meilleure erreur relative, $c\ \%$ ou presque $p\ \%$ ; une lecture voisine de zéro donne une erreur relative qui tend
+      vers l'infini, d'où la règle de lire dans le dernier tiers de l'échelle. Dimension : $a$ a l'unité de la grandeur mesurée. Les transformateurs de courant
+      suivent une troisième logique : leur classe fixe une erreur de rapport maximale qui dépend du courant, par exemple $0{,}5\ \%$ à $100\ \%$ du courant
+      assigné et $0{,}75\ \%$ à $20\ \%$ pour une classe $0{,}5$, et une erreur de phase.
+    </p>
+  </div>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      La figure suivante compare un multimètre numérique de $6000$ points, spécifié à $\pm(0{,}5\ \% + 2\ \mathrm{digits})$, et un appareil analogique de
+      classe $1{,}5$. Avant de la manipuler, écrivez vos réponses : pour une lecture à $10\ \%$ du calibre, quelle est l'erreur relative maximale de chacun ?
+      À partir de quelle fraction du calibre vaut-il mieux passer au calibre inférieur ?
+    </p>
+  </div>
+  <figure id="e-classes-sim">
+    <div id="e-classes-curseurs"></div>
+    <div id="e-classes-trace"></div>
+    <div id="e-classes-valeurs"></div>
+    <figcaption>
+      Erreur relative maximale en fonction de la lecture. Abscisse : lecture en pourcentage du calibre, de $0$ à $100\ \%$ ; ordonnée : erreur relative
+      maximale, en pour cent, de $0$ à $10\ \%$. Une courbe pour le multimètre numérique, une pour l'appareil analogique, une pour l'incertitude-type relative
+      du multimètre, qui vaut la première divisée par $\sqrt{3}$ ; la légende du tracé les associe. La ligne verticale en tirets marque la lecture choisie
+      par le dernier curseur, la ligne en pointillés la limite de $10\ \%$ du calibre, sous laquelle un multimètre à calibres décimaux permet de passer au
+      calibre inférieur. Les curseurs règlent la spécification du multimètre, la classe de l'appareil analogique et la lecture.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> À $10\ \%$ du calibre, le multimètre garde une erreur relative de $0{,}83\ \%$, contre $0{,}53\ \%$ à pleine échelle : le
+    terme en digits, constant en valeur absolue, pèse de plus en plus quand la lecture diminue. L'appareil analogique de classe $1{,}5$ passe de $1{,}5\ \%$ à
+    pleine échelle à $15\ \%$ à $10\ \%$ du calibre : sa classe ne garantit quelque chose qu'en haut de l'échelle. Les deux courbes sont des hyperboles, mais
+    celle du numérique part d'un plancher $p$ et monte lentement, alors que celle de l'analogique est entièrement gouvernée par le calibre. Règle pratique :
+    choisir le plus petit calibre qui contient la valeur ; pour un multimètre à calibres décimaux, cela garantit une lecture d'au moins $10\ \%$ du calibre.
+    Ne jamais confondre la classe, donnée en pourcentage du calibre, avec une erreur relative sur la lecture.
+  </p>
+
+  <h3 id="e-methode">Erreurs de méthode : l'instrument perturbe le circuit</h3>
+  <p>
+    Une erreur de méthode n'est pas un défaut de l'instrument : elle vient de ce que son branchement modifie la grandeur mesurée. Un voltmètre de résistance
+    d'entrée $R_V$ placé en parallèle sur une branche y prélève un courant ; un ampèremètre placé en série ajoute sa chute de tension. Le circuit suivant
+    reprend le diviseur chargé du cours <a href="#/cours/associations-de-resistances-et-diviseurs">Associations de résistances et diviseurs</a>.
+  </p>
+  <figure id="e-charge-figure">
+    <pre class="ascii">          I1 →        A
+   +  o-----[ R1 = 100 kΩ ]------+-----------+
+   |                             |           |
+  E = 10 V                    [ R2 ]       [ RV ]
+   |                          100 kΩ        10 MΩ
+   |                             | I2 ↓      | IV ↓
+   -  o--------------------------+-----------+
+                                 M  (référence 0 V)
+
+   RV : voltmètre, borne V sur A, borne COM sur M
+
+   sans voltmètre : VA = E R2 / (R1 + R2) = 5,000 V
+   avec voltmètre : R2 // RV = 99,01 kΩ, VA = 4,975 V  (erreur -0,50 %)</pre>
+    <figcaption>
+      Mesure du point milieu d'un diviseur par un voltmètre. La source $E$ a sa borne $+$ en haut ; le potentiel de référence est le nœud $M$, borne $-$ de la
+      source, sur lequel est branchée la borne COM du voltmètre ; la borne V est reliée au nœud $A$. Les flèches donnent le sens conventionnel des courants :
+      $I_1$ circule de la source vers $A$ à travers $R_1$, puis se partage entre $I_2$ dans $R_2$ et $I_V$ dans le voltmètre, tous deux de $A$ vers $M$. La
+      tension mesurée $V_A$ est orientée de $M$ vers $A$, en convention récepteur pour $R_2$. La résistance d'entrée $R_V = 10\ \mathrm{M\Omega}$ se met en
+      parallèle sur $R_2$ et abaisse la tension de $0{,}50\ \%$.
+    </figcaption>
+  </figure>
+  <p>
+    L'erreur relative vaut, pour $R_V \gg R_1, R_2$ : $\varepsilon \approx -\dfrac{R_1 /\!/ R_2}{R_V} = -\dfrac{50\ \mathrm{k\Omega}}{10\ \mathrm{M\Omega}} =
+    -0{,}50\ \%$, du même ordre que l'erreur maximale de l'appareil. Cette erreur est systématique et calculable : on la corrige si l'on connaît $R_V$ et la
+    résistance vue par l'appareil, sinon on l'inclut dans le bilan comme une contribution de type B. Elle se divise par dix avec une sonde de
+    $100\ \mathrm{M\Omega}$, et se multiplie par dix avec une entrée d'oscilloscope de $1\ \mathrm{M\Omega}$, point qui sera repris dans le cours
+    Multimètre, oscilloscope et sondes. De même, en mesure de valeur efficace, un appareil qui mesure la valeur moyenne redressée et l'étalonne en valeur
+    efficace d'une sinusoïde se trompe sur tout courant déformé : c'est une erreur de méthode, que sa classe ne couvre pas.
+  </p>
+
+  <h3 id="e-etalonnage">Étalonnage, correction et traçabilité</h3>
+  <p>
+    Un étalonnage en deux points suffit pour un appareil linéaire. On applique deux valeurs de référence $x_{r1}$ et $x_{r2}$, connues avec une incertitude
+    nettement plus faible que celle visée, on relève les indications $y_1$ et $y_2$, et l'on en déduit le gain réel $g = (y_2 - y_1)/(x_{r2} - x_{r1})$ et le
+    décalage $b = y_1 - g\,x_{r1}$. La correction s'écrit alors $x = (y - b)/g$. Les erreurs de gain et de décalage disparaissent ; il reste l'incertitude des
+    références, l'écart de linéarité entre les deux points, et tout ce qui varie après l'étalonnage : température, dérive, vieillissement.
+  </p>
+  <figure id="e-etalonnage-figure">
+    <svg viewBox="0 0 720 360" role="img" aria-label="Étalonnage en deux points : droite idéale en tirets, droite réelle en trait plein avec un décalage à l'origine et une pente un peu plus forte, deux points d'étalonnage à 2 et 8 bar avec leurs barres d'incertitude, flèches de correction du décalage et du gain">
+      <defs><marker id="e-et-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4">
+        <path d="M80 300H640" marker-end="url(#e-et-fl)"/>
+        <path d="M80 300V30" marker-end="url(#e-et-fl)"/>
+        <path d="M80 300L580 50" stroke-dasharray="8 5"/>
+        <path d="M80 276L580 16" stroke-width="2.6"/>
+        <path d="M180 224V240M174 224H186M174 240H186" stroke-width="1.6"/>
+        <path d="M480 68V84M474 68H486M474 84H486" stroke-width="1.6"/>
+        <path d="M80 300V276" stroke-width="2.4" marker-end="url(#e-et-fl)"/>
+        <path d="M480 100V80" stroke-width="1.6" stroke-dasharray="3 3" marker-end="url(#e-et-fl)"/>
+        <path d="M180 300V232M480 300V76" stroke-dasharray="1 4" stroke-width="1"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="180" cy="232" r="5"/>
+        <circle cx="480" cy="76" r="5"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="640" y="336" text-anchor="end">pression de référence (bar)</text>
+        <text x="88" y="28">indication (bar)</text>
+        <text x="180" y="318" text-anchor="middle">2</text>
+        <text x="480" y="318" text-anchor="middle">8</text>
+        <text x="80" y="318" text-anchor="middle">0</text>
+        <text x="90" y="292">décalage b</text>
+        <text x="196" y="236">point 1 : (2 ; y1)</text>
+        <text x="496" y="80">point 2 : (8 ; y2)</text>
+        <text x="100" y="150">droite réelle : y = g x + b</text>
+        <text x="250" y="262">droite idéale : y = x (tirets)</text>
+        <text x="494" y="102">écart de gain</text>
+        <text x="90" y="354">écarts exagérés pour la lisibilité ; barres verticales : incertitude de la référence</text>
+      </g>
+    </svg>
+    <figcaption>
+      Étalonnage en deux points d'un transmetteur de pression. Abscisse : pression appliquée par la référence, en bar ; ordonnée : indication de l'appareil, en
+      bar. Tirets : réponse idéale $y = x$. Trait plein épais : réponse réelle, avec un décalage $b$ à l'origine, flèche pleine, et une pente $g$ légèrement
+      supérieure à $1$, d'où un écart qui croît avec la pression, flèche en tirets courts. Les deux points ronds sont les relevés à $2$ et $8\ \mathrm{bar}$ ;
+      leurs barres verticales représentent l'incertitude de la référence, qui se reporte sur $g$ et $b$. Les écarts sont exagérés pour être visibles : en
+      pratique, ils valent quelques dixièmes de pour cent.
+    </figcaption>
+  </figure>
+  <p>
+    La référence doit elle-même être étalonnée, par une référence meilleure, et ainsi de suite jusqu'à la réalisation de l'unité. Cette chaîne ininterrompue
+    de comparaisons, chacune avec son incertitude, s'appelle la traçabilité. Une règle de conception courante demande que l'incertitude de la référence soit au
+    moins trois à quatre fois plus faible que celle visée pour l'appareil étalonné ; elle n'est pas une loi, mais elle garantit que la référence ne pèse que
+    pour environ $10\ \%$ dans la variance.
+  </p>
+  <figure id="e-tracabilite-figure">
+    <pre class="mermaid">flowchart TD
+  A["Définition de l'unité SI<br/>(volt, ampère, ohm)"] --> B["Étalon national<br/>incertitude la plus faible"]
+  B --> C["Laboratoire accrédité<br/>certificat avec U et k"]
+  C --> D["Étalon de l'entreprise<br/>calibrateur, manomètre de référence"]
+  D --> E["Instrument de terrain<br/>multimètre, transmetteur"]
+  E --> F["Résultat de mesure<br/>y ± U"]</pre>
+    <figcaption>
+      Chaîne de traçabilité. Chaque flèche est un étalonnage : le niveau de gauche sert de référence au niveau de droite et lui transmet son incertitude, qui
+      s'ajoute quadratiquement à celle de la comparaison. L'incertitude ne peut donc que croître de gauche à droite. Un résultat de terrain n'est traçable que
+      si chaque maillon est documenté par un certificat en cours de validité.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-expression">Exprimer le résultat</h3>
+  <p>
+    Un résultat complet comprend l'estimation, l'incertitude élargie, l'unité et le facteur d'élargissement : $R = (47{,}01 \pm 0{,}71)\ \Omega$, $k = 2$.
+    L'incertitude, elle-même estimée, ne mérite que un ou deux chiffres significatifs ; l'estimation est arrondie au même rang. Écrire
+    $47{,}0149\ \Omega \pm 0{,}7075\ \Omega$ affiche une connaissance que l'on n'a pas. On arrondit l'incertitude vers le haut en cas de doute, jamais vers
+    le bas.
+  </p>
+
+  <h3 id="e-statut">Loi, convention, approximation, règle de conception et donnée du constructeur</h3>
+  <div class="cadre-tableau" id="e-statut-tableau">
+    <table>
+      <thead><tr><th>Énoncé</th><th>Statut</th><th>Conséquence pratique</th></tr></thead>
+      <tbody>
+        <tr><td>Variance d'une somme de grandeurs indépendantes égale à la somme des variances</td><td>Loi mathématique</td><td>Addition quadratique des contributions indépendantes</td></tr>
+        <tr><td>Moyenne de $n$ mesures : écart-type divisé par $\sqrt{n}$</td><td>Loi mathématique, sous hypothèse d'indépendance</td><td>Répéter réduit l'aléatoire, jamais le systématique</td></tr>
+        <tr><td>Loi rectangulaire pour une erreur maximale sans autre information</td><td>Convention du GUM</td><td>Diviser la borne par $\sqrt{3}$ avant de combiner</td></tr>
+        <tr><td>Linéarisation du modèle de mesure</td><td>Approximation, valable pour de petites incertitudes relatives</td><td>Au-delà, ou pour un modèle très non linéaire, simuler par Monte-Carlo</td></tr>
+        <tr><td>$k = 2$ pour environ $95\ \%$</td><td>Convention, justifiée par le théorème central limite</td><td>À revoir si une évaluation de type A sur peu de mesures domine</td></tr>
+        <tr><td>Référence trois à quatre fois meilleure ; lecture dans le dernier tiers de l'échelle</td><td>Règles de conception</td><td>Points de départ, à justifier par le bilan</td></tr>
+        <tr><td>Classe, spécification $\pm(p\ \% + n\ \mathrm{d})$, conditions de référence, période de validité</td><td>Données du constructeur, ou de la norme de produit</td><td>À lire sur la fiche technique de l'appareil réellement employé</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Le schéma principal représente la chaîne d'incertitude de la mesure de pression de refoulement du projet fil rouge : chaque maillon, du fluide jusqu'à la
+    valeur affichée, apporte ses contributions, qui convergent vers le bilan.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 780 420" role="img" aria-label="Chaîne d'incertitude : pression vraie, transmetteur, câble et filtre, entrée analogique, traitement dans l'automate, résultat ; sous chaque maillon, ses sources d'incertitude ; toutes convergent vers le calcul de l'incertitude composée puis élargie ; un étalon de référence alimente un étalonnage qui agit sur le transmetteur et l'entrée">
+      <defs><marker id="f-sp-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6">
+        <rect x="14" y="40" width="96" height="56" rx="8" stroke-dasharray="6 4"/>
+        <path d="M110 68H136" marker-end="url(#f-sp-fl)"/>
+        <rect x="138" y="40" width="112" height="56" rx="8"/>
+        <path d="M250 68H276" marker-end="url(#f-sp-fl)"/>
+        <rect x="278" y="40" width="112" height="56" rx="8"/>
+        <path d="M390 68H416" marker-end="url(#f-sp-fl)"/>
+        <rect x="418" y="40" width="112" height="56" rx="8"/>
+        <path d="M530 68H556" marker-end="url(#f-sp-fl)"/>
+        <rect x="558" y="40" width="96" height="56" rx="8"/>
+        <path d="M654 68H680" marker-end="url(#f-sp-fl)"/>
+        <rect x="682" y="40" width="88" height="56" rx="8" stroke-width="2.4"/>
+        <rect x="138" y="120" width="112" height="96" rx="6" stroke-dasharray="3 3" stroke-width="1.1"/>
+        <rect x="278" y="120" width="112" height="96" rx="6" stroke-dasharray="3 3" stroke-width="1.1"/>
+        <rect x="418" y="120" width="112" height="96" rx="6" stroke-dasharray="3 3" stroke-width="1.1"/>
+        <rect x="558" y="120" width="96" height="96" rx="6" stroke-dasharray="3 3" stroke-width="1.1"/>
+        <path d="M194 96V118M334 96V118M474 96V118M606 96V118" stroke-width="1"/>
+        <path d="M194 216V262M334 216V262M474 216V262M606 216V262" marker-end="url(#f-sp-fl)"/>
+        <path d="M150 264H660"/>
+        <rect x="250" y="276" width="300" height="56" rx="8" stroke-width="2"/>
+        <path d="M400 264V274" marker-end="url(#f-sp-fl)"/>
+        <path d="M550 304H726V98" marker-end="url(#f-sp-fl)"/>
+        <rect x="14" y="350" width="150" height="50" rx="8"/>
+        <path d="M164 375H170V218" stroke-dasharray="8 4" marker-end="url(#f-sp-fl)"/>
+        <path d="M170 375H450V218" stroke-dasharray="8 4" marker-end="url(#f-sp-fl)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11">
+        <text x="62" y="64" text-anchor="middle">pression</text>
+        <text x="62" y="80" text-anchor="middle">vraie p</text>
+        <text x="194" y="64" text-anchor="middle">transmetteur</text>
+        <text x="194" y="80" text-anchor="middle">0-10 bar, 0-10 V</text>
+        <text x="334" y="64" text-anchor="middle">câble et</text>
+        <text x="334" y="80" text-anchor="middle">filtre RC</text>
+        <text x="474" y="64" text-anchor="middle">entrée</text>
+        <text x="474" y="80" text-anchor="middle">CAN 12 bits</text>
+        <text x="606" y="64" text-anchor="middle">automate</text>
+        <text x="606" y="80" text-anchor="middle">calcul de pm</text>
+        <text x="726" y="64" text-anchor="middle">résultat</text>
+        <text x="726" y="80" text-anchor="middle">pm ± U</text>
+        <text x="146" y="138">erreur max.</text>
+        <text x="146" y="154">± 0,25 % PE</text>
+        <text x="146" y="172">température</text>
+        <text x="146" y="188">dérive</text>
+        <text x="146" y="206">(type B)</text>
+        <text x="286" y="138">gain du filtre</text>
+        <text x="286" y="154">tolérances R</text>
+        <text x="286" y="172">parasites</text>
+        <text x="286" y="188">résiduels</text>
+        <text x="286" y="206">(type B)</text>
+        <text x="426" y="138">erreur max.</text>
+        <text x="426" y="154">± 0,2 % PE</text>
+        <text x="426" y="172">quantification</text>
+        <text x="426" y="188">q/√12</text>
+        <text x="426" y="206">(type B)</text>
+        <text x="566" y="138">bruit vu</text>
+        <text x="566" y="154">moyenne de</text>
+        <text x="566" y="172">10 lectures</text>
+        <text x="566" y="188">s/√n</text>
+        <text x="566" y="206">(type A)</text>
+        <text x="400" y="298" text-anchor="middle" font-size="12">uc = √( Σ ci² u(xi)² )</text>
+        <text x="400" y="318" text-anchor="middle" font-size="12">U = k uc, k = 2</text>
+        <text x="89" y="372" text-anchor="middle">étalon de référence</text>
+        <text x="89" y="388" text-anchor="middle">manomètre ± 0,05 % PE</text>
+        <text x="330" y="392" text-anchor="middle">étalonnage : corrige gain et décalage</text>
+        <text x="14" y="24" font-size="11">Trait plein : signal mesuré. Cadres en pointillés : sources d'incertitude. Tirets longs : action de l'étalonnage.</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal : chaîne d'incertitude d'une mesure. La ligne du haut suit le signal, de la pression vraie, cadre en tirets car inconnue, jusqu'au
+      résultat affiché, cadre épais. Sous chaque maillon, un cadre en pointillés liste ses sources d'incertitude, avec leur type d'évaluation ; les flèches
+      descendantes les conduisent vers le bloc de combinaison, qui applique la loi de propagation puis le facteur d'élargissement, et dont la flèche remonte
+      vers le résultat : sans elle, le résultat n'est qu'un nombre. En bas à gauche, l'étalon de référence permet un étalonnage, en tirets longs, qui remplace
+      les erreurs de gain et de décalage du transmetteur et de l'entrée par l'incertitude, plus faible, de la référence. Les valeurs sont celles du bilan de
+      la section I, hypothèses d'étude du projet.
+    </figcaption>
+  </figure>
+
+  <p>
+    L'organigramme suivant est la procédure de construction d'un bilan d'incertitude, réutilisable sur tout problème de mesure.
+  </p>
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Définir le mesurande<br/>et ses conditions"] --> B["Écrire le modèle Y = f(X1, ..., XN)<br/>avec toutes les corrections"]
+  B --> C{"Mesures répétées<br/>disponibles ?"}
+  C -->|"Oui"| D["Type A :<br/>u = s / √n"]
+  C -->|"Non"| E["Type B : spécification,<br/>résolution, certificat"]
+  D --> F["Loi : rectangulaire a / √3,<br/>normale U / k"]
+  E --> F
+  F --> G["Sensibilités<br/>ci = ∂f / ∂xi"]
+  G --> H{"Entrées<br/>corrélées ?"}
+  H -->|"Oui"| I["Termes de covariance<br/>ou regroupement"]
+  H -->|"Non"| J["uc² = Σ ci² u(xi)²"]
+  I --> J
+  J --> K["Identifier la<br/>contribution dominante"]
+  K --> L{"U = k uc compatible<br/>avec l'usage ?"}
+  L -->|"Non"| M["Agir sur la dominante :<br/>calibre, étalonnage, instrument"]
+  M --> B
+  L -->|"Oui"| N["Exprimer y ± U, unité, k,<br/>deux chiffres significatifs"]</pre>
+    <figcaption>
+      Organigramme de résolution d'un bilan d'incertitude. Les rectangles sont des actions, les losanges des décisions, et les libellés des flèches donnent la
+      réponse qui oriente le chemin. Les deux évaluations, A et B, convergent vers le même objet : un écart-type par entrée. La boucle de retour exprime le
+      travail d'ingénierie : quand l'incertitude est trop grande, on n'agit pas au hasard, mais sur la contribution dominante, puis l'on refait le bilan.
+    </figcaption>
+  </figure>
+
+  <p>
+    Le tableau suivant compare les trois façons dont les appareils annoncent leur erreur maximale.
+  </p>
+  <div class="cadre-tableau" id="f-comparatif">
+    <table>
+      <thead><tr><th>Critère</th><th>Appareil analogique, classe $c$</th><th>Multimètre numérique, $\pm(p\ \% + n\ \mathrm{d})$</th><th>Transformateur de courant, classe $0{,}5$</th></tr></thead>
+      <tbody>
+        <tr><td>Référence de l'erreur</td><td>Calibre</td><td>Lecture et digit</td><td>Courant assigné, selon le pourcentage de charge</td></tr>
+        <tr><td>Erreur relative à pleine échelle</td><td>$c\ \%$</td><td>$p\ \%$ plus un peu</td><td>$0{,}5\ \%$ à $100\ \%$ de $I_n$</td></tr>
+        <tr><td>Erreur relative à $10\ \%$ de l'échelle</td><td>$10\,c\ \%$</td><td>$p\ \%$ plus $10$ fois le poids des digits</td><td>Entre $0{,}75\ \%$ à $20\ \%$ et $1{,}5\ \%$ à $5\ \%$ de $I_n$</td></tr>
+        <tr><td>Autres limites</td><td>Lecture, parallaxe, position de l'appareil</td><td>Conditions de référence, fréquence, valeur efficace vraie ou non</td><td>Erreur de phase, charge du secondaire en VA</td></tr>
+        <tr><td>Traduction en incertitude-type</td><td colspan="3">$u_B = a/\sqrt{3}$, avec $a$ l'erreur maximale au point de mesure</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <ul>
+    <li><a href="#d-cible-sim" data-renvoi="d-cible-sim">Lectures d'un voltmètre simulé</a>, section D : justesse, fidélité et effet de la moyenne.</li>
+    <li><a href="#e-quantif-figure" data-renvoi="e-quantif-figure">Erreur de quantification</a>, section E : escalier, dent de scie et loi uniforme.</li>
+    <li><a href="#e-somme-sim" data-renvoi="e-somme-sim">Somme de contributions rectangulaires</a>, section E : justification de $k = 2$.</li>
+    <li><a href="#e-classes-sim" data-renvoi="e-classes-sim">Erreur relative selon la classe et la lecture</a>, section E.</li>
+    <li><a href="#e-charge-figure" data-renvoi="e-charge-figure">Voltmètre sur un diviseur</a>, section E : erreur de méthode.</li>
+    <li><a href="#e-etalonnage-figure" data-renvoi="e-etalonnage-figure">Étalonnage en deux points</a>, section E.</li>
+    <li><a href="#e-tracabilite-figure" data-renvoi="e-tracabilite-figure">Chaîne de traçabilité</a>, section E.</li>
+    <li><a href="#h-montage-figure" data-renvoi="h-montage-figure">Montage volt-ampèremétrique aval</a>, section H.</li>
+    <li><a href="#i-bilan-sim" data-renvoi="i-bilan-sim">Bilan d'incertitude de la mesure de pression</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <ol>
+    <li><strong>Définir le mesurande.</strong> Grandeur, conditions, point de mesure, valeur efficace ou moyenne, instant ou moyenne temporelle. Un mesurande
+      mal défini produit une incertitude que nul instrument ne réduit.</li>
+    <li><strong>Écrire le modèle.</strong> $Y = f(X_1, \dots, X_N)$, avec les corrections connues, même nulles : étalonnage, méthode, température.</li>
+    <li><strong>Évaluer chaque entrée.</strong> Type A par $s/\sqrt{n}$ si des répétitions existent ; type B à partir de chaque donnée extérieure : borne
+      divisée par $\sqrt{3}$, certificat divisé par son $k$, résolution divisée par $\sqrt{12}$. Ne pas compter deux fois la résolution si la spécification
+      l'inclut déjà dans ses digits.</li>
+    <li><strong>Calculer les sensibilités.</strong> Dérivées partielles, ou exposants pour un produit de puissances ; vérifier l'unité de chaque produit
+      $c_iu(x_i)$.</li>
+    <li><strong>Combiner.</strong> Somme quadratique des contributions indépendantes ; traiter à part les entrées corrélées.</li>
+    <li><strong>Hiérarchiser.</strong> Classer les contributions par part de variance ; repérer la dominante.</li>
+    <li><strong>Élargir et exprimer.</strong> $U = k\,u_c$, $k = 2$ par défaut ; arrondir $U$ à deux chiffres significatifs, puis $y$ au même rang.</li>
+    <li><strong>Contrôler et décider.</strong> Ordre de grandeur, cohérence avec la classe des appareils, comparaison à la tolérance ou à la limite ; en cas
+      d'incertitude trop grande, agir sur la dominante et refaire le bilan.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    <strong>Données.</strong> À la réception, on contrôle la résistance de précharge du bus continu du variateur de la pompe, de valeur nominale
+    $47\ \Omega \pm 5\ \%$, par la méthode volt-ampèremétrique en montage aval, sous $12\ \mathrm{V}$ continus. Deux multimètres de $6000$ points sont
+    employés. Voltmètre sur le calibre $60\ \mathrm{V}$, résolution $0{,}01\ \mathrm{V}$, spécification $\pm(0{,}5\ \% + 2\ \mathrm{d})$, résistance d'entrée
+    $10\ \mathrm{M\Omega}$. Ampèremètre sur le calibre $600\ \mathrm{mA}$, résolution $0{,}1\ \mathrm{mA}$, spécification $\pm(1{,}0\ \% + 3\ \mathrm{d})$.
+    Dix relevés : moyenne $\bar U = 11{,}97\ \mathrm{V}$ avec $s_U = 0{,}012\ \mathrm{V}$ ; moyenne $\bar I = 254{,}6\ \mathrm{mA}$ avec
+    $s_I = 0{,}15\ \mathrm{mA}$.
+  </p>
+  <figure id="h-montage-figure">
+    <svg viewBox="0 0 720 330" role="img" aria-label="Montage aval : source de 12 volts, borne plus en haut ; ampèremètre en série dans le fil du haut, courant I entrant par la borne mA ; nœud A ; résistance R vers le nœud M ; voltmètre en parallèle sur R, borne V sur A et COM sur M ; nœud M relié à la borne moins et à la référence 0 V ; tension U fléchée sur R">
+      <defs><marker id="h-mo-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">
+        <circle cx="100" cy="170" r="34"/>
+        <path d="M100 136V70H210"/>
+        <circle cx="240" cy="70" r="28"/>
+        <path d="M268 70H420"/>
+        <path d="M420 70V120"/>
+        <rect x="404" y="120" width="32" height="100" rx="3"/>
+        <path d="M420 220V270"/>
+        <path d="M420 70H580V138"/>
+        <circle cx="580" cy="170" r="32"/>
+        <path d="M580 202V270"/>
+        <path d="M100 204V270H580"/>
+        <path d="M250 270V288M234 288H266M240 296H260M246 304H254"/>
+        <path d="M150 58H190" stroke-width="1.6" marker-end="url(#h-mo-fl)"/>
+        <path d="M446 92V112" stroke-width="1.6" marker-end="url(#h-mo-fl)"/>
+        <path d="M600 92V112" stroke-width="1.6" marker-end="url(#h-mo-fl)"/>
+        <path d="M480 226V118" stroke-width="1.6" marker-end="url(#h-mo-fl)"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="420" cy="70" r="4"/>
+        <circle cx="420" cy="270" r="4"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="100" y="166" text-anchor="middle">E</text>
+        <text x="100" y="182" text-anchor="middle">12 V</text>
+        <text x="84" y="128" font-size="15" font-weight="700">+</text>
+        <text x="86" y="224" font-size="17" font-weight="700">-</text>
+        <text x="240" y="75" text-anchor="middle" font-weight="700">A</text>
+        <text x="196" y="94" font-size="10">mA</text>
+        <text x="270" y="94" font-size="10">COM</text>
+        <text x="170" y="50" text-anchor="middle">I</text>
+        <text x="426" y="60">A</text>
+        <text x="426" y="290">M</text>
+        <text x="388" y="174" text-anchor="end">R</text>
+        <text x="388" y="190" text-anchor="end">47 Ω</text>
+        <text x="452" y="106">IR</text>
+        <text x="606" y="106">IV</text>
+        <text x="580" y="175" text-anchor="middle" font-weight="700">V</text>
+        <text x="590" y="132" font-size="10">V</text>
+        <text x="590" y="216" font-size="10">COM</text>
+        <text x="488" y="176">U</text>
+        <text x="620" y="174">RV = 10 MΩ</text>
+        <text x="270" y="312">référence 0 V</text>
+      </g>
+    </svg>
+    <figcaption>
+      Montage aval. La source $E$ a sa borne $+$ en haut. Le courant $I$, sens conventionnel indiqué par la flèche, sort par la borne $+$, entre dans
+      l'ampèremètre par la borne mA et en ressort par la borne COM, puis se partage au nœud $A$ entre $I_R$ dans la résistance et $I_V$ dans le voltmètre, tous
+      deux de $A$ vers $M$. Le voltmètre a sa borne V sur $A$ et sa borne COM sur $M$, qui est relié à la borne $-$ de la source et sert de référence de
+      potentiel. La tension $U = V_A - V_M$ est fléchée de $M$ vers $A$, en convention récepteur pour $R$. En montage aval, le voltmètre lit exactement la
+      tension de $R$, mais l'ampèremètre compte aussi $I_V$ : c'est l'erreur de méthode de ce montage, à estimer.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Inconnues.</strong> Valeur estimée de $R$, incertitude-type composée, incertitude élargie, contributions de chaque entrée, décision de conformité.
+  </p>
+  <p>
+    <strong>Stratégie.</strong> Modèle $R = U/(I - I_V)$ ; estimer l'erreur de méthode ; évaluer $u(U)$ et $u(I)$ en combinant type A et type B ; propager par
+    les incertitudes relatives d'un quotient, puis contrôler par les coefficients de sensibilité ; élargir, exprimer, comparer à la tolérance.
+  </p>
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li><strong>Erreur de méthode.</strong> $I_V = U/R_V = 11{,}97/10^7 = 1{,}197\ \mu\mathrm{A}$, soit $I_V/I = 4{,}7 \times 10^{-6}$ : négligeable devant le
+      pour cent. Modèle retenu : $R = U/I$.</li>
+    <li><strong>Estimation.</strong> $R = 11{,}97/0{,}2546 = 47{,}015\ \Omega$.</li>
+    <li><strong>Tension, type B.</strong> $a_U = 0{,}005 \times 11{,}97 + 2 \times 0{,}01 = 0{,}0599 + 0{,}02 = 0{,}0799\ \mathrm{V}$ ; loi rectangulaire :
+      $u_B(U) = 0{,}0799/\sqrt{3} = 0{,}0461\ \mathrm{V}$.</li>
+    <li><strong>Tension, type A.</strong> $u_A(U) = 0{,}012/\sqrt{10} = 0{,}0038\ \mathrm{V}$.</li>
+    <li><strong>Tension, composée.</strong> $u(U) = \sqrt{0{,}0461^2 + 0{,}0038^2} = 0{,}0463\ \mathrm{V}$, soit $u_r(U) = 0{,}386\ \%$.</li>
+    <li><strong>Courant.</strong> $a_I = 0{,}01 \times 254{,}6 + 3 \times 0{,}1 = 2{,}846\ \mathrm{mA}$ ; $u_B(I) = 1{,}643\ \mathrm{mA}$ ;
+      $u_A(I) = 0{,}15/\sqrt{10} = 0{,}047\ \mathrm{mA}$ ; $u(I) = 1{,}644\ \mathrm{mA}$, soit $u_r(I) = 0{,}646\ \%$.</li>
+    <li><strong>Propagation.</strong> Quotient : $u_r(R) = \sqrt{0{,}386^2 + 0{,}646^2} = 0{,}752\ \%$, d'où $u_c(R) = 0{,}00752 \times 47{,}015 =
+      0{,}354\ \Omega$.</li>
+    <li><strong>Contrôle par les sensibilités.</strong> $c_U = 1/I = 3{,}928\ \Omega/\mathrm{V}$ et $c_I = -U/I^2 = -184{,}7\ \Omega/\mathrm{A}$ ; contributions
+      $c_Uu(U) = 0{,}182\ \Omega$ et $|c_I|u(I) = 184{,}7 \times 1{,}644 \times 10^{-3} = 0{,}304\ \Omega$ ; $\sqrt{0{,}182^2 + 0{,}304^2} = 0{,}354\ \Omega$.
+      Le courant pèse pour $74\ \%$ de la variance.</li>
+    <li><strong>Élargissement et expression.</strong> $U_R = 2 \times 0{,}354 = 0{,}708\ \Omega$, arrondi vers le haut à $0{,}71\ \Omega$ :
+      $R = (47{,}01 \pm 0{,}71)\ \Omega$, $k = 2$, ou de façon plus sobre $(47{,}0 \pm 0{,}7)\ \Omega$.</li>
+    <li><strong>Décision.</strong> Tolérance : $[44{,}65 ; 49{,}35]\ \Omega$. L'intervalle $[46{,}30 ; 47{,}72]\ \Omega$ y est entièrement contenu : la
+      résistance est déclarée conforme sans ambiguïté.</li>
+  </ol>
+  <div class="cadre-tableau" id="h-budget">
+    <table>
+      <thead><tr><th>Entrée</th><th>Estimation</th><th>Évaluation</th><th>$u(x_i)$</th><th>$|c_i|$</th><th>Contribution à $u_c(R)$</th><th>Part de variance</th></tr></thead>
+      <tbody>
+        <tr><td>Tension $U$</td><td>$11{,}97\ \mathrm{V}$</td><td>B rectangulaire et A</td><td>$0{,}0463\ \mathrm{V}$</td><td>$3{,}928\ \Omega/\mathrm{V}$</td><td>$0{,}182\ \Omega$</td><td>$26\ \%$</td></tr>
+        <tr><td>Courant $I$</td><td>$254{,}6\ \mathrm{mA}$</td><td>B rectangulaire et A</td><td>$1{,}644\ \mathrm{mA}$</td><td>$184{,}7\ \Omega/\mathrm{A}$</td><td>$0{,}304\ \Omega$</td><td>$74\ \%$</td></tr>
+        <tr><td>Méthode $I_V$</td><td>$1{,}2\ \mu\mathrm{A}$</td><td>Calcul</td><td colspan="2">négligeable</td><td>$0{,}0002\ \Omega$</td><td>$0\ \%$</td></tr>
+        <tr><td colspan="5"><strong>Incertitude-type composée, puis élargie</strong></td><td>$0{,}354\ \Omega$</td><td>$U = 0{,}71\ \Omega$</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li><strong>Dimensions.</strong> $\Omega/\mathrm{V} \times \mathrm{V} = \Omega$ et $\Omega/\mathrm{A} \times \mathrm{A} = \Omega$ : chaque contribution est
+      bien une résistance.</li>
+    <li><strong>Ordre de grandeur.</strong> Les erreurs maximales relatives des deux appareils, $0{,}67\ \%$ et $1{,}12\ \%$, sont du même ordre que
+      l'incertitude élargie relative obtenue, $1{,}5\ \%$ : cohérent. La somme arithmétique des bornes, $1{,}78\ \%$, soit $0{,}84\ \Omega$, serait une
+      majoration pessimiste ; elle mènerait ici à la même décision.</li>
+    <li><strong>Type A.</strong> Les dispersions observées sont dix fois plus petites que les bornes du type B : répéter davantage n'améliorerait rien. Pour
+      réduire l'incertitude, il faut un meilleur ampèremètre, ou la mesure du courant par la tension aux bornes d'un shunt étalonné.</li>
+    <li><strong>Bilan énergétique.</strong> $P = UI = 3{,}05\ \mathrm{W}$ dans la résistance pendant l'essai. Avec un coefficient de température supposé de
+      $250\ \mathrm{ppm/K}$, un échauffement de $20\ \mathrm{K}$ ferait varier $R$ de $0{,}235\ \Omega$, les deux tiers de $u_c$ : l'essai doit être bref, ou
+      fait sous une tension plus faible. C'est la grandeur d'influence oubliée la plus fréquente.</li>
+  </ul>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <h3 id="i-contexte">Bilan d'incertitude de la mesure de pression du site</h3>
+  <p>
+    La régulation de pression de refoulement de la pompe, réglée dans les cours <a href="#/cours/correcteurs-p-pi-pd-et-pid">Correcteurs P, PI, PD et
+    PID</a> et <a href="#/cours/commande-numerique">Commande numérique</a>, annule l'écart entre la consigne et la <em>mesure</em>. Sa précision réelle est
+    donc celle de la chaîne de mesure, quelle que soit la qualité du réglage. La chaîne est celle du schéma principal : transmetteur supposé $0$ à
+    $10\ \mathrm{bar}$ pour $0$ à $10\ \mathrm{V}$, filtre à deux cellules RC du cours <a href="#/cours/filtres-passifs">Filtres passifs</a>, entrée
+    analogique de $12$ bits sur $0$ à $10\ \mathrm{V}$, consigne de $4{,}00\ \mathrm{bar}$. Les valeurs suivantes sont des hypothèses d'étude, typiques de
+    matériels industriels courants, à remplacer par les fiches techniques retenues.
+  </p>
+  <div class="cadre-tableau" id="i-budget">
+    <table>
+      <thead><tr><th>Source</th><th>Donnée</th><th>Loi</th><th>$u$ (mbar)</th><th>Part de variance</th></tr></thead>
+      <tbody>
+        <tr><td>Transmetteur, erreur maximale à $20\ ^\circ\mathrm{C}$</td><td>$\pm 0{,}25\ \%\ \mathrm{PE} = \pm 25\ \mathrm{mbar}$</td><td>Rectangulaire</td><td>$14{,}43$</td><td>$45{,}9\ \%$</td></tr>
+        <tr><td>Transmetteur, effet de température</td><td>$\pm 0{,}15\ \%\ \mathrm{PE}$ pour $\pm 10\ \mathrm{K}$</td><td>Rectangulaire</td><td>$8{,}66$</td><td>$16{,}5\ \%$</td></tr>
+        <tr><td>Transmetteur, dérive sur un an</td><td>$\pm 0{,}1\ \%\ \mathrm{PE}$</td><td>Rectangulaire</td><td>$5{,}77$</td><td>$7{,}3\ \%$</td></tr>
+        <tr><td>Entrée analogique, erreur maximale</td><td>$\pm 0{,}2\ \%\ \mathrm{PE} = \pm 20\ \mathrm{mbar}$</td><td>Rectangulaire</td><td>$11{,}55$</td><td>$29{,}3\ \%$</td></tr>
+        <tr><td>Quantification $12$ bits</td><td>$q = 10/4096\ \mathrm{V} \equiv 2{,}44\ \mathrm{mbar}$</td><td>$q/\sqrt{12}$</td><td>$0{,}70$</td><td>$0{,}1\ \%$</td></tr>
+        <tr><td>Gain du filtre, résistance d'entrée à $\pm 1\ \%$</td><td>$\pm 0{,}021\ \%$ de $4\ \mathrm{bar}$</td><td>Rectangulaire</td><td>$0{,}48$</td><td>$0{,}05\ \%$</td></tr>
+        <tr><td>Bruit, moyenne de $10$ lectures</td><td>$s = 6\ \mathrm{mbar}$</td><td>Type A, $s/\sqrt{10}$</td><td>$1{,}90$</td><td>$0{,}8\ \%$</td></tr>
+        <tr><td colspan="3"><strong>Composée, puis élargie à $k = 2$</strong></td><td>$21{,}3$</td><td>$U = 43\ \mathrm{mbar}$, soit $1{,}07\ \%$ de $4\ \mathrm{bar}$</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Deux contributions font les trois quarts de la variance : l'erreur maximale du transmetteur et celle de l'entrée analogique. Ce sont des erreurs de gain et
+    de décalage, donc corrigibles par un étalonnage sur site, en deux points, avec un manomètre de référence à $\pm 0{,}05\ \%\ \mathrm{PE}$. Après correction,
+    il reste l'incertitude de la référence, un écart de linéarité supposé de $\pm 0{,}05\ \%\ \mathrm{PE}$, et tout ce qui varie après l'étalonnage.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Avant d'utiliser la figure suivante, écrivez vos réponses : passer de $12$ à $16$ bits améliore-t-il sensiblement le bilan ? Diviser par deux l'erreur
+      du transmetteur suffit-il à diviser par deux l'incertitude ? Après étalonnage, quelle contribution deviendra dominante ?
+    </p>
+  </div>
+  <figure id="i-bilan-sim">
+    <div class="schema-vivant" id="i-bilan-vivant"></div>
+    <div id="i-bilan-curseurs"></div>
+    <div id="i-bilan-valeurs"></div>
+    <figcaption>
+      Bilan interactif de la mesure de pression à $4{,}00\ \mathrm{bar}$. Chaque ligne est une contribution ; la longueur de sa barre est proportionnelle à son
+      incertitude-type en mbar, et le pourcentage écrit à droite donne sa part de la variance totale, ce qui compte réellement dans la somme quadratique. La
+      barre en trait épais du bas donne l'incertitude composée ; la ligne verticale en tirets marque l'objectif de $10\ \mathrm{mbar}$, soit
+      $U = 20\ \mathrm{mbar}$ ou $0{,}5\ \%$ de la consigne. Les curseurs règlent l'erreur maximale du transmetteur et de l'entrée, l'écart de température de
+      l'armoire autour de la température d'étalonnage, le nombre de bits, le bruit, et la présence d'un étalonnage sur site.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Passer de $12$ à $16$ bits ne change pratiquement rien : la quantification ne pesait que $0{,}1\ \%$ de la variance.
+    Diviser par deux l'erreur du transmetteur ne réduit l'incertitude composée que de $21{,}3$ à $17{,}3\ \mathrm{mbar}$, car l'entrée analogique prend alors
+    la tête. L'étalonnage sur site agit sur les deux dominantes à la fois : $u_c$ tombe à $11{,}4\ \mathrm{mbar}$, $U = 23\ \mathrm{mbar}$, soit $0{,}57\ \%$ de
+    la consigne. L'effet de température devient dominant, avec $58\ \%$ de la variance : pour atteindre l'objectif de $10\ \mathrm{mbar}$, il faut limiter
+    l'écart de température de l'armoire, ou choisir un transmetteur compensé. C'est la leçon générale du bilan : on améliore une mesure en traitant la
+    contribution dominante, et le gain s'arrête dès qu'une autre prend sa place.
+  </p>
+  <h3 id="i-compromis">Contraintes, risques, choix d'ingénierie et compromis</h3>
+  <ul>
+    <li><strong>Erreur statique nulle, erreur réelle non nulle.</strong> Avec $U = 43\ \mathrm{mbar}$, la pression réelle peut s'écarter de la consigne
+      d'autant, en permanence, alors que l'automate affiche un écart nul. Le réglage du correcteur n'y peut rien.</li>
+    <li><strong>Seuils d'alarme.</strong> Un seuil de surpression réglé à $5{,}50\ \mathrm{bar}$ sur la mesure doit être abaissé de $U$ si la limite porte sur
+      la pression vraie : c'est une bande de garde. Avec l'étalonnage, la bande passe de $43$ à $23\ \mathrm{mbar}$, et le procédé gagne autant de marge
+      d'exploitation.</li>
+    <li><strong>Périodicité d'étalonnage.</strong> La dérive croît avec le temps écoulé depuis l'étalonnage : étalonner chaque année plafonne sa contribution à
+      $5{,}8\ \mathrm{mbar}$. Un intervalle plus long économise des interventions mais élargit la bande de garde ; un historique des corrections constatées
+      permet d'ajuster cet intervalle.</li>
+    <li><strong>Transmission en tension.</strong> Le signal $0$ à $10\ \mathrm{V}$ est sensible aux chutes de tension et aux parasites sur les $40\ \mathrm{m}$
+      de câble ; une boucle de courant, objet du cours Boucles 4-20 mA et signaux industriels, supprime la contribution des chutes de tension et permet de
+      détecter une rupture.</li>
+    <li><strong>Comptage de l'énergie.</strong> La même démarche s'applique au comptage de l'arrivée du tableau général, équipé de TC $150/5\ \mathrm{A}$ de
+      classe $0{,}5$ du cours <a href="#/cours/autotransformateurs-tc-et-tp">Autotransformateurs, TC et TP</a>. À $72\ \%$ du courant assigné, la limite du TC
+      vaut $0{,}587\ \%$, soit $0{,}339\ \%$ en incertitude-type ; avec une centrale supposée de classe $0{,}5$ en énergie active, $0{,}289\ \%$, l'incertitude
+      composée vaut $0{,}445\ \%$ et l'incertitude élargie $0{,}89\ \%$, hors erreur de phase. Sur une facture annuelle, c'est l'ordre de grandeur de l'écart
+      qu'un désaccord entre deux compteurs peut atteindre sans qu'aucun ne soit défaillant.</li>
+  </ul>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : ajout de cette séance</span>
+    <p>
+      Bilan d'incertitude de la mesure de pression de refoulement, consigne $4{,}00\ \mathrm{bar}$ : $u_c = 21{,}3\ \mathrm{mbar}$ et
+      $U = 43\ \mathrm{mbar}$ ($1{,}07\ \%$) sans étalonnage, dominé par le transmetteur ($45{,}9\ \%$ de la variance) et l'entrée analogique ($29{,}3\ \%$) ;
+      étalonnage annuel sur site en deux points, à $2$ et $8\ \mathrm{bar}$, avec un manomètre de référence à $\pm 0{,}05\ \%\ \mathrm{PE}$ :
+      $u_c = 11{,}4\ \mathrm{mbar}$, $U = 23\ \mathrm{mbar}$ ($0{,}57\ \%$), l'effet de température devenant dominant ($58\ \%$). Seuils d'alarme abaissés de
+      la bande de garde $U$. Comptage de l'arrivée : $U = 0{,}89\ \%$ en énergie active, hors erreur de phase. Toutes les données d'appareils sont des
+      hypothèses d'étude, à confirmer par les fiches techniques et un premier étalonnage.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Confondre résolution et exactitude.</strong> Six chiffres affichés ne garantissent pas six chiffres justes. Un multimètre de $0{,}001\ \mathrm{V}$
+      de résolution peut se tromper de $30\ \mathrm{mV}$. Correction : toujours lire la spécification, pas l'afficheur.</li>
+    <li><strong>Additionner des bornes comme des écarts-types.</strong> Combiner directement des erreurs maximales par somme quadratique, sans les diviser par
+      $\sqrt{3}$, mélange deux grandeurs différentes et sous-estime ou surestime selon les cas. Correction : convertir chaque borne en incertitude-type, puis
+      combiner.</li>
+    <li><strong>Croire que la moyenne supprime toute erreur.</strong> La moyenne réduit la dispersion en $1/\sqrt{n}$, jamais le décalage. Correction : estimer
+      les erreurs systématiques par type B ou les corriger par étalonnage.</li>
+    <li><strong>Lire une classe comme une erreur relative.</strong> Un ampèremètre de classe $1$ sur le calibre $5\ \mathrm{A}$ peut se tromper de
+      $50\ \mathrm{mA}$ partout : $10\ \%$ d'erreur sur une lecture de $0{,}5\ \mathrm{A}$. Correction : changer de calibre, lire dans le dernier tiers.</li>
+    <li><strong>Oublier les digits.</strong> Le terme $n\,d$ domine pour les petites lectures. Correction : calculer $p\ \%\ L + n\,d$ au point de mesure.</li>
+    <li><strong>Ignorer l'erreur de méthode.</strong> Voltmètre sur un point à haute impédance, mesure de valeur efficace par un appareil à valeur moyenne
+      sur un courant de variateur. Correction : estimer la perturbation, choisir un appareil à valeur efficace vraie, l'inclure dans le modèle.</li>
+    <li><strong>Afficher trop de chiffres.</strong> $47{,}0149 \pm 0{,}7075\ \Omega$ prétend une connaissance inexistante. Correction : deux chiffres
+      significatifs sur $U$, estimation arrondie au même rang.</li>
+    <li><strong>Oublier les conditions de référence.</strong> Une spécification valable à $23 \pm 5\ ^\circ\mathrm{C}$ ne l'est plus dans une armoire à
+      $45\ ^\circ\mathrm{C}$ ; un coefficient de température s'ajoute. Correction : lire la fiche en entier et ajouter les grandeurs d'influence au bilan.</li>
+  </ol>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic industriel et une question
+    conceptuelle sans calcul. Les solutions sont présentes dans la page mais restent masquées jusqu'à votre tentative ou à un clic explicite ; chaque
+    correction se révèle étape par étape, avec un calcul encadré, une courbe tracée ou un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangées : choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Le score est calculé dans ce navigateur
+    et repris par la grille d'auto-évaluation.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+  <h3 id="m-formules">Cinq formules essentielles</h3>
+  <div class="formule-cle">$$u_A(\bar x) = \frac{s}{\sqrt{n}}, \qquad s = \sqrt{\frac{1}{n - 1}\sum(x_i - \bar x)^2}$$</div>
+  <div class="formule-cle">$$u_B = \frac{a}{\sqrt{3}}\ \text{(borne)}, \qquad u_B = \frac{U}{k}\ \text{(certificat)}, \qquad u_q = \frac{q}{\sqrt{12}}\ \text{(résolution)}$$</div>
+  <div class="formule-cle">$$u_c^2(y) = \sum c_i^2\,u^2(x_i), \qquad c_i = \frac{\partial f}{\partial x_i}$$</div>
+  <div class="formule-cle">$$y = A\prod x_i^{p_i}\ \Rightarrow\ u_r^2(y) = \sum p_i^2\,u_r^2(x_i), \qquad U = k\,u_c,\ k = 2$$</div>
+  <div class="formule-cle">$$a_{\text{analogique}} = \frac{c}{100}\,C, \qquad a_{\text{numérique}} = \frac{p}{100}\,L + n\,d$$</div>
+  <h3 id="m-vigilance">Cinq points de vigilance</h3>
+  <ul>
+    <li>Une mesure sans incertitude ne permet aucune décision de conformité.</li>
+    <li>Convertir chaque borne en écart-type avant de combiner.</li>
+    <li>La moyenne réduit l'aléatoire, jamais le systématique : seul l'étalonnage révèle un décalage.</li>
+    <li>Choisir le plus petit calibre qui contient la valeur ; une classe est un pourcentage du calibre.</li>
+    <li>Une régulation annule l'écart à la mesure, pas à la valeur vraie : la bande de garde vaut $U$.</li>
+  </ul>
+  <h3 id="m-resume">Résumé</h3>
+  <p>
+    Aucune mesure ne donne la valeur vraie : on lui associe une incertitude, écart-type des valeurs raisonnablement attribuables au mesurande. Les erreurs
+    systématiques décalent toutes les lectures, les erreurs aléatoires les dispersent ; la moyenne de $n$ lectures réduit les secondes en $s/\sqrt{n}$, pas les
+    premières. Le type A évalue la dispersion observée, le type B tout le reste : une borne $a$ devient $a/\sqrt{3}$, une résolution $q/\sqrt{12}$, un
+    certificat $U/k$. Les contributions indépendantes se combinent quadratiquement, pondérées par les sensibilités ; pour un produit, les incertitudes
+    relatives sont pondérées par les exposants. L'incertitude élargie $U = 2u_c$ couvre environ $95\ \%$. Classes et spécifications se traduisent au point
+    de mesure. L'étalonnage corrige gain et décalage, et la traçabilité relie chaque résultat aux unités SI.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance, deux sur le cours précédent, <a href="#/cours/revision-9-et-mini-projet-regulation">Révision 9 et mini-projet
+    régulation</a>, une sur le cours <a href="#/cours/modelisation-des-systemes-dynamiques">Modélisation des systèmes dynamiques</a>, vieux d'une semaine, et
+    une sur le cours <a href="#/cours/autotransformateurs-tc-et-tp">Autotransformateurs, TC et TP</a>, vieux d'un mois.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : construire le bilan d'incertitude d'une mesure réelle, le confronter à une simulation de Monte-Carlo en Python, puis observer une erreur de
+    méthode dans LTspice. Prédictions à écrire avant de commencer : l'écart-type de dix lectures d'une résistance au multimètre sera-t-il plus grand ou plus
+    petit que l'incertitude-type tirée de la spécification ? La simulation de Monte-Carlo donnera-t-elle une incertitude plus grande ou plus petite que la loi
+    de propagation pour $R = U/I$ ? Quelle tension un voltmètre de $1\ \mathrm{M\Omega}$ lira-t-il au point milieu d'un diviseur de deux résistances de
+    $100\ \mathrm{k\Omega}$ sous $10\ \mathrm{V}$ ?
+  </p>
+  <ol>
+    <li><strong>Mesure.</strong> Avec un multimètre, mesurer dix fois une résistance de $10\ \mathrm{k\Omega}$ en débranchant et rebranchant les cordons à
+      chaque fois. Noter la spécification du calibre employé dans la notice ; calculer $\bar R$, $s$, $u_A$, $u_B$ et $u_c$, puis $U$.</li>
+    <li><strong>Python, propagation.</strong> Reprendre les données de la section H et calculer $u_c(R)$ par la formule du quotient et par les coefficients de
+      sensibilité.</li>
+    <li><strong>Python, Monte-Carlo.</strong> Tirer $10^6$ valeurs de $U$ et de $I$ selon leurs lois, rectangulaire pour le type B et normale pour le type A,
+      par exemple <code>U = 11.97 + rng.uniform(-0.0799, 0.0799, N) + rng.normal(0, 0.0038, N)</code> ; calculer <code>R = U / I</code>, son écart-type et
+      l'intervalle entre les quantiles $2{,}5\ \%$ et $97{,}5\ \%$.</li>
+    <li><strong>LTspice, erreur de méthode.</strong> Source de $10\ \mathrm{V}$, deux résistances de $100\ \mathrm{k\Omega}$, puis une troisième résistance
+      représentant l'appareil, successivement $10\ \mathrm{M\Omega}$, $1\ \mathrm{M\Omega}$ et $100\ \mathrm{M\Omega}$, entre le point milieu et la masse ;
+      analyse <code>.op</code>, relever la tension du point milieu.</li>
+  </ol>
+  <p>
+    Résultats attendus : pour la résistance de $10\ \mathrm{k\Omega}$, une dispersion de quelques ohms au plus, très inférieure à l'incertitude de type B
+    tirée de la spécification. Pour la section H, $u_c = 0{,}354\ \Omega$ par les deux calculs ; Monte-Carlo donne un écart-type quasi identique, à
+    $\pm 0{,}002\ \Omega$ près, et un intervalle à $95\ \%$ d'environ $\pm 0{,}66\ \Omega$, un peu plus étroit que $\pm 2u_c$, parce que la contribution
+    dominante, rectangulaire, a des bornes. Dans LTspice : $4{,}975\ \mathrm{V}$ avec $10\ \mathrm{M\Omega}$, $4{,}762\ \mathrm{V}$ avec $1\ \mathrm{M\Omega}$
+    et $4{,}998\ \mathrm{V}$ avec $100\ \mathrm{M\Omega}$, au lieu de $5{,}000\ \mathrm{V}$.
+  </p>
+  <p>
+    Anomalies à observer et à expliquer : une dispersion qui décroît au fil des lectures, signe d'un échauffement ou d'une stabilisation thermique, donc d'une
+    dérive et non d'un bruit ; une lecture qui change quand on touche les cordons, signe d'une résistance de contact ou d'un parasite capté ; un écart entre
+    Monte-Carlo et la loi de propagation qui grandit quand on augmente les incertitudes, signe de la non-linéarité du quotient. La mesure se fait hors tension
+    sur un composant isolé ; aucune mesure de résistance n'est faite sur un circuit alimenté.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours, notées de 0 à 4. Le bilan affiché sous la grille est calculé dans ce navigateur à
+    partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement. Aucune estimation n'est faite à votre place :
+    seul le score réellement obtenu sert de référence.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Lire votre bilan</span>
+    <p>
+      Les exercices fondamentaux testent la conversion d'une spécification en incertitude-type et l'évaluation de type A ; l'intermédiaire 1 la classe d'un
+      appareil analogique et le choix du calibre ; l'intermédiaire 2 la propagation pour une puissance ; l'avancé le dimensionnement d'un bilan sous
+      contrainte ; la question de diagnostic l'erreur de méthode d'un appareil à valeur moyenne ; la question conceptuelle la différence entre erreur et
+      incertitude. Un bloc réussi à moins de la moitié indique la notion à reprendre avant le cours Multimètre, oscilloscope et sondes.
+    </p>
+  </div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Une mesure n'a de sens qu'avec son incertitude : un écart-type par source, combiné quadratiquement, élargi par $k = 2$, exprimé avec deux chiffres significatifs.</li>
+    <li data-rang="02">Répéter réduit l'aléatoire en $1/\sqrt{n}$, mais seul l'étalonnage révèle et corrige le systématique ; une classe ou une spécification se traduit toujours au point de mesure.</li>
+    <li data-rang="03">On améliore une mesure en agissant sur la contribution dominante du bilan, jamais au hasard ; une régulation n'est jamais plus juste que sa mesure.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> savoir quelle loi attribuer à une donnée de type B et ne pas mélanger bornes et écarts-types ; puis
+    traduire correctement une spécification du type $\pm(p\ \% + n\ \mathrm{d})$ ou une classe au point de mesure. Le réflexe à installer : pour chaque ligne du
+    bilan, écrire la donnée brute, sa loi, puis l'écart-type, avant tout calcul de combinaison.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Multimètre, oscilloscope et sondes, passe de l'incertitude des instruments à leur bon emploi.
+    Question à préparer : on mesure le point milieu d'un diviseur de deux résistances de $100\ \mathrm{k\Omega}$ alimenté sous $10\ \mathrm{V}$ avec un
+    oscilloscope d'entrée $1\ \mathrm{M\Omega}$, d'abord avec une sonde $\times 1$, puis avec une sonde $\times 10$ de $10\ \mathrm{M\Omega}$ ; quelle tension
+    lit-on dans chaque cas, et pourquoi ne faut-il jamais relier la masse de la sonde à un point du circuit qui n'est pas au potentiel de la terre ?
+  </p>
+</article>
