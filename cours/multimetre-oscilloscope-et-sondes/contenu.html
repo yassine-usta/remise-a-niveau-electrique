@@ -1,0 +1,1224 @@
+<article class="cours" data-slug="multimetre-oscilloscope-et-sondes">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/metrologie-electrique">Métrologie électrique</a> s'est achevé sur une question : on mesure le point milieu d'un diviseur de
+      deux résistances de $100\ \mathrm{k\Omega}$ alimenté sous $10\ \mathrm{V}$ avec un oscilloscope d'entrée $1\ \mathrm{M\Omega}$, d'abord avec une sonde
+      $\times 1$, puis avec une sonde $\times 10$ de $10\ \mathrm{M\Omega}$ ; quelle tension lit-on, et pourquoi ne faut-il jamais relier la masse de la sonde à
+      un point qui n'est pas au potentiel de la terre ? Réponse courte. Avec la sonde $\times 1$, l'entrée de $1\ \mathrm{M\Omega}$ se met en parallèle sur la
+      résistance basse : $100\ /\!/\ 1000 = 90{,}91\ \mathrm{k\Omega}$, et $V = 10 \times 90{,}91/190{,}91 = 4{,}762\ \mathrm{V}$, soit $-4{,}8\ \%$. Avec la
+      sonde $\times 10$, la charge devient $10\ \mathrm{M\Omega}$ : $99{,}01\ \mathrm{k\Omega}$ en parallèle, $V = 4{,}975\ \mathrm{V}$, soit $-0{,}50\ \%$, au
+      prix d'une sensibilité divisée par dix. Quant à la masse : la pince de masse de la sonde est reliée, par le blindage du câble, la prise BNC et le châssis,
+      au conducteur de protection du cordon secteur. La poser sur un point sous tension, c'est raccorder ce point à la terre par un fil de quelques dixièmes de
+      millimètre carré : un court-circuit franc. Cette séance construit tout ce qu'il faut pour ne jamais commettre cette erreur, et pour lire juste.
+    </p>
+    <p>
+      La séance réutilise la valeur efficace et le facteur de crête du cours <a href="#/cours/signaux-periodiques-et-sinusoides">Signaux périodiques et
+      sinusoïdes</a>, le diviseur chargé du cours <a href="#/cours/associations-de-resistances-et-diviseurs">Associations de résistances et diviseurs</a>, le
+      premier ordre des cours <a href="#/cours/regime-transitoire-rc">Régime transitoire RC</a> et <a href="#/cours/filtres-passifs">Filtres passifs</a>, le
+      mode commun du cours <a href="#/cours/compatibilite-electromagnetique">Compatibilité électromagnétique</a>, la modulation de largeur d'impulsion du cours
+      <a href="#/cours/onduleurs-triphases">Onduleurs triphasés</a>, le temps de montée du cours <a href="#/cours/reponse-temporelle-et-performances">Réponse
+      temporelle et performances</a> et, bien sûr, la spécification des appareils du cours <a href="#/cours/metrologie-electrique">Métrologie électrique</a>.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Le multimètre et l'oscilloscope sont les deux instruments que l'ingénieur électricien manipule le plus souvent, et ceux qui le blessent le plus souvent.
+    Une mesure fausse coûte une journée de diagnostic ; une mesure mal branchée coûte un appareil, une installation à l'arrêt, parfois une brûlure ou une
+    électrisation. Les deux risques ont la même racine : ignorer ce que l'instrument mesure réellement, entre quels points, avec quelle bande passante et par
+    rapport à quelle référence de potentiel.
+  </p>
+  <ul>
+    <li><strong>Choisir le bon mode.</strong> Sur le courant absorbé par un variateur, un multimètre qui n'est pas à valeur efficace vraie peut se tromper de
+      $30$ à $50\ \%$ ; sur la tension de sortie du même variateur, un multimètre à valeur efficace vraie de large bande lit $380\ \mathrm{V}$ quand le
+      fondamental, qui fixe le flux du moteur, vaut $298\ \mathrm{V}$.</li>
+    <li><strong>Voir ce qui se passe vraiment.</strong> Un front de commutation de $15\ \mathrm{ns}$, une oscillation parasite, une ondulation de
+      $90\ \mathrm{mV}$ sur $27\ \mathrm{V}$ : l'oscilloscope les montre, à condition que sa bande passante, sa sonde, son couplage et son fil de masse ne les
+      déforment pas.</li>
+    <li><strong>Mesurer sans danger.</strong> Bus continu de $540\ \mathrm{V}$ référencé à la terre, sorties d'onduleur à fronts raides, tableau général à
+      fort courant de court-circuit : la catégorie de mesure, la référence de potentiel et la sonde différentielle ne sont pas des précautions de confort.</li>
+    <li><strong>Diagnostiquer.</strong> La moitié des pannes "introuvables" sont des artefacts de mesure : tension fantôme sur un câble déconnecté, boucle de
+      masse qui injecte du $50\ \mathrm{Hz}$, sonde mal compensée qui arrondit les créneaux.</li>
+  </ul>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Jalon visé par le module</span>
+    <p>
+      Le jalon de fin du module Mesure et instrumentation demande d'utiliser correctement les instruments de mesure et de concevoir une chaîne d'acquisition
+      industrielle. Cette séance traite la première moitié : le bon instrument, le bon mode, la bonne sonde, la bonne référence, dans une procédure sûre. Le
+      travail central est la procédure de mesure du variateur de la pompe du projet fil rouge.
+    </p>
+  </div>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Choisir le mode de mesure d'un multimètre, valeur moyenne, valeur efficace vraie, filtre passe-bas, basse impédance ou pince, selon la forme du signal, et calculer l'erreur commise par un appareil à valeur moyenne redressée.</li>
+    <li data-rang="02">Calculer l'erreur d'insertion d'un voltmètre, d'un ampèremètre et d'une sonde d'oscilloscope, y compris la charge capacitive d'une sonde aux fréquences élevées.</li>
+    <li data-rang="03">Dimensionner la bande passante d'une chaîne oscilloscope et sonde à partir du temps de montée à mesurer et de l'erreur admise, et interpréter un front déformé.</li>
+    <li data-rang="04">Expliquer et régler la compensation d'une sonde passive $\times 10$, et calculer la capacité de compensation nécessaire.</li>
+    <li data-rang="05">Diagnostiquer une connexion d'oscilloscope dangereuse ou fausse à partir de la référence de potentiel de chaque point, et choisir entre sonde passive, voie isolée et sonde différentielle.</li>
+    <li data-rang="06">Préparer une procédure de mesure sûre sur un équipement de puissance : catégorie de mesure, chaîne d'instruments, ordre des opérations, réglages et critères d'arrêt.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>Quatre rappels suffisent.</p>
+  <ul>
+    <li><strong>Valeur efficace et valeur moyenne.</strong> $X_{\mathrm{eff}} = \sqrt{\frac{1}{T}\int_0^T x^2\,\mathrm{d}t}$, valeur moyenne redressée
+      $\overline{|x|} = \frac{1}{T}\int_0^T |x|\,\mathrm{d}t$. Pour une sinusoïde, $X_{\mathrm{eff}} = \hat X/\sqrt{2}$ et
+      $\overline{|x|} = 2\hat X/\pi$, d'où le facteur de forme $X_{\mathrm{eff}}/\overline{|x|} = \pi/(2\sqrt{2}) = 1{,}1107$. Le facteur de crête vaut
+      $\hat X/X_{\mathrm{eff}}$, soit $\sqrt{2}$ pour une sinusoïde.</li>
+    <li><strong>Premier ordre.</strong> Un passe-bas $RC$ a pour fréquence de coupure $f_c = 1/(2\pi RC)$ ; son gain y vaut $1/\sqrt{2}$, soit
+      $-3\ \mathrm{dB}$. Sa réponse indicielle met $t_m = \tau\ln 9 = 2{,}197\,\tau$ pour passer de $10$ à $90\ \%$ de sa valeur finale.</li>
+    <li><strong>Diviseur chargé.</strong> Une charge $R_V$ branchée sur une source de résistance de Thévenin $R_{\mathrm{th}}$ prélève une fraction
+      $R_{\mathrm{th}}/(R_{\mathrm{th}} + R_V)$ de la tension à vide.</li>
+    <li><strong>Mode commun et mode différentiel.</strong> Deux points $A$ et $B$ de potentiels $v_A$ et $v_B$ par rapport à la terre ont une tension
+      différentielle $v_A - v_B$ et une tension de mode commun $(v_A + v_B)/2$.</li>
+  </ul>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Notation de la séance</span>
+    <p>
+      $v_X(t)$ : potentiel du point $X$ par rapport à la terre, c'est-à-dire au conducteur de protection PE. $R_V$ : résistance d'entrée d'un voltmètre ;
+      $R_A$ : résistance totale d'un ampèremètre, shunt, fusible et cordons. $R_e$, $C_e$ : résistance et capacité d'entrée d'un oscilloscope. $R_t$, $C_t$ :
+      résistance et capacité de la pointe d'une sonde ; $C_s$ : capacité totale du côté de l'oscilloscope, câble, entrée et condensateur de compensation $C_k$.
+      $B$ : bande passante à $-3\ \mathrm{dB}$ ; $t_m$ : temps de montée de $10$ à $90\ \%$. $\mathrm{TRMS}$ : valeur efficace vraie, de l'anglais true root
+      mean square. $\mathrm{CAT}$ : catégorie de mesure. Le mot "masse" désigne ici la borne de référence de l'instrument ; il ne garantit jamais que cette
+      borne soit à la terre.
+    </p>
+  </div>
+  <p>
+    Mini-test de trois questions. Les réponses restent masquées, séparées de l'énoncé, jusqu'à votre tentative ou à un clic explicite.
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+  <h3 id="d-perturber">Mesurer, c'est se brancher : l'instrument fait partie du circuit</h3>
+  <p>
+    Un instrument n'observe pas un circuit de l'extérieur ; il s'y raccorde et en devient un élément. Un voltmètre se place en parallèle : il ne doit presque
+    rien prélever, d'où sa résistance d'entrée élevée, typiquement $10\ \mathrm{M\Omega}$. Un ampèremètre se place en série : il ne doit presque rien ajouter,
+    d'où sa résistance faible, un shunt de quelques milliohms à quelques ohms. Un oscilloscope est un voltmètre rapide : $1\ \mathrm{M\Omega}$ en parallèle
+    avec une quinzaine de picofarads, auxquels la sonde et son câble ajoutent leur propre capacité. Aux fréquences élevées, c'est cette capacité qui commande :
+    une sonde "de dix mégohms" ne présente plus que quelques centaines d'ohms à quelques dizaines de mégahertz.
+  </p>
+  <figure id="d-charge-figure">
+    <pre class="ascii">   Voltmètre : en parallèle, RV grande          Ampèremètre : en série, RA petite
+
+        Rth          A                                 RA
+   +---[####]----+---o V                     +---[####]----o A ----o COM---+
+   |             |   |                       |   source       ampèremètre  |
+   E0          charge [RV]                   E                           [ R ]
+   |             |   |  IV ↓                 |                             |
+   +-------------+---o COM                   +-----------------------------+
+              M (0 V)                                  I →
+
+   V lue = E0 RV / (Rth + RV)                I lu = E / (R + RA)
+   erreur relative ≈ -Rth / RV               erreur relative ≈ -RA / R</pre>
+    <figcaption>
+      Erreurs d'insertion. À gauche, un voltmètre de résistance $R_V$ mesure la tension du point $A$ par rapport au nœud $M$, qui sert de référence ; vu de ses
+      bornes, le circuit est un générateur de Thévenin $E_0$, $R_{\mathrm{th}}$, la borne $+$ en haut. Le courant $I_V$ prélevé par l'appareil circule de $A$
+      vers $M$ à travers lui, en convention récepteur, et fait chuter la tension dans $R_{\mathrm{th}}$. À droite, un ampèremètre de résistance $R_A$ est inséré
+      dans la boucle ; le courant $I$ circule dans le sens de la flèche, de la borne A vers la borne COM de l'appareil, et sa chute $R_A I$ s'ajoute à la
+      maille. Les deux erreurs sont systématiques, de signe négatif, et calculables.
+    </figcaption>
+  </figure>
+  <h3 id="d-reference">Un oscilloscope mesure par rapport à la terre, sauf mention contraire</h3>
+  <p>
+    Le multimètre portatif est flottant : ses deux bornes ne sont reliées à rien d'autre qu'au circuit, et il mesure la différence de potentiel entre elles,
+    où qu'elles soient. L'oscilloscope de table ne l'est pas. Ses voies partagent une même masse, reliée au châssis métallique, lui-même relié au conducteur
+    de protection du cordon secteur : c'est une exigence de sécurité, qui garantit qu'aucune partie touchable ne peut prendre un potentiel dangereux. La
+    conséquence est radicale : la pince de masse d'une sonde passive est déjà à la terre avant même d'être branchée. L'oscilloscope affiche
+    $v_{\mathrm{pointe}} - v_{\mathrm{terre}}$, et poser la pince ailleurs qu'en un point au potentiel de la terre ne change pas la référence : cela crée un
+    court-circuit entre ce point et la terre.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Analogie de l'altimètre, et ses limites</span>
+    <p>
+      Un altimètre barométrique donne l'altitude par rapport au niveau de la mer, quel que soit l'endroit où l'on se tient : pour connaître la hauteur d'un mur,
+      il faut deux lectures et une soustraction. L'oscilloscope relié à la terre est cet altimètre : il donne des potentiels par rapport à la terre, et une
+      tension entre deux points quelconques demande deux voies et une différence. L'analogie a deux limites sérieuses. D'abord, poser l'altimètre sur le haut
+      du mur ne l'endommage pas, alors que poser la pince de masse sur un point sous tension provoque un court-circuit : la pince n'est pas un capteur passif,
+      c'est un conducteur relié à la terre. Ensuite, la soustraction de deux voies n'est pas aussi bonne que l'analogie le laisse croire : chaque voie a sa
+      propre erreur de gain, et une petite différence entre deux grandes tensions de mode commun est mal mesurée.
+    </p>
+  </div>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Analogie du tuyau d'arrosage pour l'ampèremètre, et ses limites</span>
+    <p>
+      Mesurer un débit demande de couper le tuyau et d'y insérer un compteur, qui doit freiner le moins possible l'écoulement. L'ampèremètre est ce compteur :
+      il faut ouvrir le circuit, et sa résistance doit être faible. La limite de l'analogie est dangereuse : un compteur d'eau branché par erreur entre l'arrivée
+      et l'égout ne fait que laisser passer de l'eau, alors qu'un ampèremètre branché en parallèle sur une source se comporte comme un court-circuit de
+      quelques dizaines de milliohms. Seul le fusible à haut pouvoir de coupure de son entrée courant protège alors l'utilisateur et l'appareil.
+    </p>
+  </div>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      La figure suivante représente le variateur de la pompe du projet fil rouge, alimenté par le réseau $230/400\ \mathrm{V}$ en schéma TN-S, avec ses points
+      de mesure ramenés sur une réglette. Avant de la manipuler, écrivez vos réponses : avec une sonde passive et un oscilloscope relié à la terre, sur quelle
+      borne la pince de masse peut-elle être posée sans danger ? Que se passe-t-il si on la pose sur le $-\mathrm{DC}$ du bus ? Si l'on coupe la terre de
+      l'oscilloscope pour "faire flotter" la mesure, quel potentiel prend son châssis ? Quelle forme d'onde attend-on entre les bornes $+\mathrm{DC}$ et la terre ?
+    </p>
+  </div>
+  <figure id="d-masse-sim">
+    <div class="schema-vivant" id="d-masse-vivant"></div>
+    <div id="d-masse-curseurs"></div>
+    <div id="d-masse-trace"></div>
+    <div id="d-masse-valeurs"></div>
+    <figcaption>
+      Où poser la pointe et la pince de masse ? En haut, le transformateur du poste, couplé en étoile, dont le point neutre est relié à la terre et d'où partent
+      séparément le neutre N et le conducteur de protection PE, trait épais horizontal ; les trois phases L1, L2 et L3 alimentent le pont à diodes du variateur,
+      puis le bus continu, borne $+\mathrm{DC}$ en haut et $-\mathrm{DC}$ en bas, le condensateur, l'onduleur et le moteur. Les traits fins verticaux ramènent
+      neuf points sur la réglette de mesure. La poignée ronde du rail supérieur porte la pointe de la sonde, celle du rail inférieur sa pince de masse ; elles se
+      déplacent à la souris, au doigt ou au clavier, de borne en borne. Le curseur choisit le montage : sonde passive sur oscilloscope relié à la terre, même
+      montage avec la terre de l'oscilloscope coupée, ou sonde différentielle. Quand un courant de défaut circule, son trajet est repassé en tirets mobiles, du
+      point touché jusqu'au point neutre du transformateur par le fil de masse, l'oscilloscope, son cordon et le conducteur de protection. Le tracé sous le
+      schéma donne la tension affichée sur deux périodes du réseau, et le panneau les grandeurs utiles. Modèle simplifié : bus de $540\ \mathrm{V}$, mode commun
+      du pont à diodes, modulation sinus-triangle à $4\ \mathrm{kHz}$ et $m = 0{,}9$, impédance de la boucle de défaut supposée de $0{,}30\ \Omega$.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Pince sur la borne PE, la pointe sur $+\mathrm{DC}$ montre une tension voisine de $+270\ \mathrm{V}$ et non
+    $540\ \mathrm{V}$ : le bus est référencé à la terre par le pont à diodes, son milieu oscille à $150\ \mathrm{Hz}$ entre environ $-81$ et $+81\ \mathrm{V}$,
+    soit le quart de la crête de la tension simple. La pointe sur la sortie U montre des créneaux de $540\ \mathrm{V}$ superposés à ce mode commun. Dès que la
+    pince quitte la borne PE, le panneau change de nature : sur L1, le courant de défaut dépasse $1\ \mathrm{kA}$ crête, limité seulement par la boucle de
+    défaut ; sur $-\mathrm{DC}$, il passe par les diodes du pont, avec la même violence ; même sur N, pourtant à quelques volts de la terre, un courant d'une
+    dizaine d'ampères quitte le neutre par la terre et fait déclencher le dispositif différentiel. Couper la terre de l'oscilloscope supprime le court-circuit,
+    mais porte le châssis, les boutons et toutes les prises BNC au potentiel de la pince : plusieurs centaines de volts sur des parties que l'on touche. Seule
+    la sonde différentielle mesure correctement $v_{\mathrm{pointe}} - v_{\mathrm{pince}}$ entre deux points quelconques, sans courant de défaut ni châssis
+    sous tension. Le diagnostic d'un montage tient donc en une question préalable : quel est le potentiel de chaque point par rapport à la terre ?
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+  <h3 id="e-multimetre">Le multimètre : modes de mesure et erreurs d'insertion</h3>
+  <p>
+    <strong>Voltmètre continu et alternatif.</strong> Un multimètre numérique mesure une tension par un convertisseur analogique-numérique précédé d'un
+    diviseur d'entrée, de résistance totale $R_V$, typiquement $10\ \mathrm{M\Omega}$. L'erreur d'insertion relative vaut
+    $\varepsilon_V = -R_{\mathrm{th}}/(R_{\mathrm{th}} + R_V) \approx -R_{\mathrm{th}}/R_V$. Hypothèses : circuit linéaire, régime continu ou fréquence assez
+    basse pour négliger la capacité d'entrée. Cas limite : $R_V \to \infty$ donne $\varepsilon_V \to 0$, la mesure idéale. Vérification dimensionnelle : un
+    rapport de résistances est sans dimension.
+  </p>
+  <p>
+    <strong>Ampèremètre.</strong> Le courant traverse un shunt dont la tension est mesurée ; la chute totale aux bornes de l'appareil, appelée tension de
+    charge, vaut $R_A I$. Dans une maille de résistance $R$ alimentée sous $E$ :
+  </p>
+  <div class="formule-cle">
+    $$I_{\mathrm{lu}} = \frac{E}{R + R_A}, \qquad \varepsilon_A = \frac{I_{\mathrm{lu}} - I}{I} = -\frac{R_A}{R + R_A} \approx -\frac{R_A}{R}$$
+    <p class="formule-cle-legende">
+      $E$ en volts, $R$ et $R_A$ en ohms, $I$ en ampères. Dérivation : loi des mailles $E = (R + R_A)I_{\mathrm{lu}}$, comparée à $E = RI$. Interprétation :
+      l'ampèremètre ajoute sa résistance à la maille. Cas limite : $R_A \to 0$, mesure parfaite ; $R_A$ comparable à $R$, par exemple sur une boucle de
+      faible résistance, l'erreur devient majeure. Dimension : sans unité.
+    </p>
+  </div>
+  <p>
+    <strong>Valeur moyenne redressée ou valeur efficace vraie.</strong> Un appareil d'entrée de gamme redresse le signal, en mesure la valeur moyenne
+    $\overline{|x|}$, puis multiplie par $1{,}1107$ pour afficher la valeur efficace d'une sinusoïde. C'est un étalonnage, donc une convention valable pour
+    une seule forme d'onde. Sur un autre signal, l'erreur relative vaut
+  </p>
+  <div class="formule-cle">
+    $$\varepsilon_{\mathrm{moy}} = \frac{1{,}1107\ \overline{|x|}}{X_{\mathrm{eff}}} - 1 = \frac{1{,}1107}{F}  - 1, \qquad F = \frac{X_{\mathrm{eff}}}{\overline{|x|}}$$
+    <p class="formule-cle-legende">
+      $F$ : facteur de forme, sans unité. Sinusoïde : $F = 1{,}1107$, erreur nulle par construction. Signal carré : $F = 1$, l'appareil lit $11{,}1\ \%$ de
+      trop. Signal impulsionnel, comme le courant d'un pont à diodes suivi d'un condensateur : $F$ grand, l'appareil lit beaucoup trop peu. Hypothèse : signal
+      sans composante continue, ou mesure en couplage alternatif.
+    </p>
+  </div>
+  <p>
+    Un appareil à valeur efficace vraie calcule $\sqrt{\overline{x^2}}$, par conversion analogique ou par calcul sur échantillons. Il a deux limites à lire
+    dans la notice : un facteur de crête maximal, souvent compris entre $3$ et $5$ à mi-échelle, au-delà duquel les crêtes saturent l'entrée, et une bande
+    passante en alternatif, souvent de quelques kilohertz à quelques dizaines de kilohertz. Sur la sortie d'un variateur, deux réponses différentes sont donc
+    possibles, toutes deux justes : la valeur efficace vraie de la tension découpée, qui fixe l'échauffement d'une résistance, et la valeur efficace du
+    fondamental, qui fixe le flux et le couple du moteur. Certains multimètres offrent pour cela un mode filtre passe-bas, dont la coupure, de l'ordre du
+    kilohertz, élimine la porteuse de découpage. La simulation suivante compare les trois lectures.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Pour chacune des cinq formes d'onde proposées, écrivez avant de manipuler si l'appareil à valeur moyenne lira trop, trop peu ou juste. Pour le courant
+      d'un pont à diodes, que devient son erreur quand l'angle de conduction diminue ? Pour la tension entre deux phases à la sortie d'un onduleur, laquelle des
+      trois lectures est la plus grande, et laquelle intéresse le moteur ?
+    </p>
+  </div>
+  <figure id="e-trms-sim">
+    <div id="e-trms-curseurs"></div>
+    <div id="e-trms-trace"></div>
+    <div id="e-trms-lecteur"></div>
+    <div id="e-trms-valeurs"></div>
+    <figcaption>
+      Ce que lit chaque multimètre. Le tracé montre une période du signal choisi. Les trois droites horizontales donnent les lectures : tirets longs pour la
+      valeur efficace vraie, pointillés pour l'appareil à valeur moyenne redressée étalonné en sinusoïde, tirets mixtes pour le mode filtre passe-bas, qui ne
+      retient que le fondamental. Le lecteur balaie la période : la zone grisée montre la portion déjà intégrée, et le panneau donne les valeurs efficace et
+      moyenne redressée calculées sur cette seule portion, qui convergent vers les lectures finales au bout d'une période. Les curseurs choisissent la forme,
+      l'angle de conduction du courant de redresseur et le taux de modulation de la tension découpée.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Sur la sinusoïde, les trois lectures coïncident, ce qui explique que l'erreur des appareils à valeur moyenne passe
+    inaperçue en atelier. Sur le carré, l'appareil à valeur moyenne lit $255{,}5\ \mathrm{V}$ pour $230\ \mathrm{V}$ efficaces. Sur le courant d'un pont à
+    diodes modélisé par deux impulsions en cosinus carré par période, il lit $9\ \%$ de trop peu pour $180$ degrés de conduction, $48\ \%$ de trop peu pour
+    $60$ degrés, alors que le facteur de crête atteint $2{,}83$ : un câble ou un fusible choisi sur cette lecture serait sous-dimensionné de moitié. Sur la
+    tension découpée entre deux phases, avec $m = 0{,}9$ et un bus de $540\ \mathrm{V}$, la valeur efficace vraie vaut $380\ \mathrm{V}$, le fondamental
+    $298\ \mathrm{V}$, conforme à $0{,}612\,m\,V_d$, et l'appareil à valeur moyenne lit aussi $298\ \mathrm{V}$ : coïncidence propre à la modulation
+    sinus-triangle, dont la valeur moyenne redressée suit le fondamental, et non preuve de justesse. Pour le moteur, la bonne lecture est celle du fondamental ;
+    pour l'échauffement d'un filtre ou d'une résistance de freinage, c'est la valeur efficace vraie, mesurée avec une bande passante suffisante.
+  </p>
+  <p>
+    <strong>Basse impédance et tensions fantômes.</strong> Un conducteur déconnecté qui chemine sur des dizaines de mètres à côté d'un conducteur sous tension
+    lui est couplé par une capacité $C_c$. Un voltmètre de $10\ \mathrm{M\Omega}$ branché entre ce conducteur et la terre forme avec $C_c$ un diviseur :
+  </p>
+  <figure id="e-fantome-figure">
+    <pre class="ascii">   L1 (230 V, 50 Hz)  ==================================  conducteur sous tension
+                                 ‖  Cc = 2 nF (couplage réparti, 40 m)
+   conducteur déconnecté  -------+-------------o V
+                                               |
+                                             [ RV ]   10 MΩ, ou 3 kΩ en mode basse impédance
+                                               |
+   PE (0 V)  ----------------------------------o COM
+
+   V lue = 230 RV / |RV + 1/(j ω Cc)|
+   RV = 10 MΩ : 227 V      RV = 3 kΩ : 0,43 V</pre>
+    <figcaption>
+      Tension fantôme. Le conducteur déconnecté n'est relié à la phase L1 que par la capacité de couplage $C_c$, répartie sur la longueur commune ; le voltmètre,
+      borne V sur le conducteur, borne COM sur le PE pris comme référence, ferme le circuit. Le courant capacitif traverse $C_c$ puis l'appareil, de la phase
+      vers la terre. Avec $10\ \mathrm{M\Omega}$, l'impédance de l'appareil domine celle de $C_c$, $1{,}59\ \mathrm{M\Omega}$ à $50\ \mathrm{Hz}$, et la
+      lecture approche $230\ \mathrm{V}$ ; en mode basse impédance, la même source capacitive s'effondre à moins d'un volt.
+    </figcaption>
+  </figure>
+  <p>
+    Le calcul complet : $X_c = 1/(2\pi \times 50 \times 2 \times 10^{-9}) = 1{,}592\ \mathrm{M\Omega}$, puis $V = 230 \times 10/\sqrt{10^2 + 1{,}592^2} =
+    227{,}1\ \mathrm{V}$ avec $10\ \mathrm{M\Omega}$, et $V = 230 \times 3 \times 10^3/1{,}592 \times 10^6 = 0{,}43\ \mathrm{V}$ avec $3\ \mathrm{k\Omega}$. Une
+    tension réelle, alimentée par une source de faible impédance, ne baisse presque pas en basse impédance. Le mode basse impédance sert donc à trancher entre
+    tension réelle et tension induite ; il ne doit jamais être employé sur un circuit sensible, car il y fait circuler quelques dizaines de milliampères.
+  </p>
+  <p>
+    <strong>Pince ampèremétrique.</strong> En alternatif, la pince est un transformateur de courant, comme ceux du cours
+    <a href="#/cours/autotransformateurs-tc-et-tp">Autotransformateurs, TC et TP</a>, dont le primaire est le conducteur enserré. Pour le continu et les formes
+    déformées, elle utilise une sonde à effet Hall placée dans un entrefer du circuit magnétique, d'où un zéro à régler avant chaque mesure et une sensibilité
+    aux champs voisins. Elle mesure la somme algébrique des courants qui traversent sa mâchoire : autour d'un câble entier, phase et neutre, elle lit le courant
+    différentiel, c'est-à-dire la fuite à la terre, utile au diagnostic d'un déclenchement intempestif ; autour d'un seul conducteur, elle lit le courant de
+    ce conducteur. Elle n'introduit aucune résistance série et n'impose pas d'ouvrir le circuit, ce qui en fait l'instrument de choix sur les circuits de
+    puissance.
+  </p>
+
+  <h3 id="e-oscilloscope">L'oscilloscope : entrée, référence et résolution</h3>
+  <p>
+    L'entrée d'un oscilloscope est un amplificateur à gain réglable suivi d'un convertisseur, le plus souvent de $8$ bits sur les appareils courants, et de
+    $10$ à $12$ bits sur les appareils récents. Elle présente $R_e = 1\ \mathrm{M\Omega}$ en parallèle avec $C_e$ de l'ordre de $15\ \mathrm{pF}$, ou
+    $50\ \Omega$ sur les entrées rapides. La masse de chaque voie est la coquille de sa prise BNC ; toutes les coquilles sont reliées entre elles et au châssis,
+    lui-même relié au conducteur de protection.
+  </p>
+  <figure id="e-entree-figure">
+    <svg viewBox="0 0 760 300" role="img" aria-label="Entrée d'un oscilloscope relié à la terre : pointe de sonde, câble blindé, entrée un mégohm en parallèle avec la capacité d'entrée, puis amplificateur et convertisseur ; coquille BNC reliée au châssis, châssis relié au conducteur de protection du cordon secteur ; deux voies partagent la même masse">
+      <defs><marker id="e-en-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">
+        <rect x="300" y="30" width="300" height="200" rx="10" stroke-width="2.4"/>
+        <path d="M40 80H460"/>
+        <path d="M120 74H260M120 86H260" stroke-width="1.2"/>
+        <path d="M360 80V100M350 100h20v40h-20zM360 140V170"/>
+        <path d="M420 80V112M406 112h28M406 120h28M420 120V170"/>
+        <rect x="460" y="70" width="56" height="20" rx="3"/>
+        <path d="M516 80H560"/>
+        <path d="M310 170H580"/>
+        <path d="M120 92L70 140" stroke-dasharray="6 4"/>
+        <path d="M70 140l-9 12h18z"/>
+        <path d="M120 92V170H310"/>
+        <path d="M580 170H640V250H700"/>
+        <path d="M700 240V262M692 266h16M696 272h8"/>
+        <path d="M40 200H300"/>
+        <path d="M120 194H260M120 206H260" stroke-width="1.2"/>
+        <path d="M120 212V230H330V170"/>
+        <circle cx="40" cy="80" r="4" fill="currentColor"/>
+        <circle cx="40" cy="200" r="4" fill="currentColor"/>
+        <circle cx="360" cy="80" r="3" fill="currentColor"/>
+        <circle cx="420" cy="80" r="3" fill="currentColor"/>
+        <circle cx="360" cy="170" r="3" fill="currentColor"/>
+        <circle cx="420" cy="170" r="3" fill="currentColor"/>
+        <circle cx="310" cy="170" r="3" fill="currentColor"/>
+        <circle cx="330" cy="170" r="3" fill="currentColor"/>
+        <path d="M604 200H636" marker-end="url(#e-en-fl)" stroke-width="1.2"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11.5">
+        <text x="20" y="66">pointe voie 1</text>
+        <text x="20" y="190">pointe voie 2</text>
+        <text x="132" y="66">câble blindé de sonde</text>
+        <text x="132" y="186">câble blindé de sonde</text>
+        <text x="96" y="126">pince de masse, fil court</text>
+        <text x="310" y="50">oscilloscope</text>
+        <text x="374" y="118">Re</text>
+        <text x="374" y="132">1 MΩ</text>
+        <text x="442" y="108">Ce</text>
+        <text x="442" y="134">15 pF</text>
+        <text x="464" y="62">gain</text>
+        <text x="526" y="70">CAN</text>
+        <text x="340" y="190">coquilles BNC et châssis</text>
+        <text x="340" y="204">masse commune</text>
+        <text x="342" y="252">voie 2 : même masse</text>
+        <text x="604" y="190">cordon</text>
+        <text x="604" y="222">secteur, PE</text>
+        <text x="676" y="290">terre</text>
+      </g>
+    </svg>
+    <figcaption>
+      Entrée et masse d'un oscilloscope relié à la terre. La pointe attaque l'âme du câble blindé ; l'entrée présente
+      $R_e = 1\ \mathrm{M\Omega}$ en parallèle avec $C_e$, puis viennent l'amplificateur de gain réglable et le convertisseur, noté CAN. Le blindage du câble, la pince de masse et la coquille de chaque prise BNC sont reliés au châssis ;
+      la flèche montre la liaison du châssis au conducteur de protection du cordon secteur, donc à la terre, symbole en bas à droite. La voie 2 partage la même
+      masse : deux pinces posées sur deux points différents les relient entre elles par l'appareil. La tension affichée est toujours
+      $v_{\mathrm{pointe}} - v_{\text{châssis}}$, soit $v_{\mathrm{pointe}}$ par rapport à la terre.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Résolution verticale.</strong> Avec $N$ bits et $8$ divisions de hauteur, le quantum vaut $q = 8\,S/2^N$, où $S$ est la sensibilité en volts par
+    division. Sur $8$ bits, $q$ vaut $1/32$ de division, quel que soit le calibre : mesurer une ondulation de $90\ \mathrm{mV}$ sur $27\ \mathrm{V}$ en couplage
+    continu à $5\ \mathrm{V/div}$ donne $q = 40/256 = 156\ \mathrm{mV}$, plus que l'ondulation elle-même. Le couplage alternatif, qui retire la composante
+    continue par un condensateur en série et une coupure de l'ordre de $10\ \mathrm{Hz}$, permet de passer à $20\ \mathrm{mV/div}$ et $q = 0{,}625\ \mathrm{mV}$.
+    Règle de conception : occuper l'écran, car la résolution relative se perd en même proportion que la hauteur inutilisée.
+  </p>
+
+  <h3 id="e-bande">Bande passante et temps de montée</h3>
+  <p>
+    La bande passante $B$ d'un oscilloscope est la fréquence à laquelle une sinusoïde est affichée avec une amplitude réduite de $3\ \mathrm{dB}$, soit à
+    $70{,}7\ \%$. Ce n'est donc pas la fréquence maximale mesurable avec exactitude, mais celle où l'erreur atteint déjà $-29{,}3\ \%$. En modélisant la chaîne
+    par un premier ordre, $|H(f)| = 1/\sqrt{1 + (f/B)^2}$ : l'erreur d'amplitude est de $-10{,}6\ \%$ à $f = B/2$, $-3\ \%$ à $f = B/4$ et $-1\ \%$ à
+    $f = B/7$. D'où la règle de conception courante : choisir $B$ de trois à cinq fois la plus haute fréquence significative.
+  </p>
+  <p>
+    En temporel, la même chaîne arrondit les fronts. Pour un premier ordre de constante $\tau$, $t_m = 2{,}197\,\tau$ et $B = 1/(2\pi\tau)$, d'où :
+  </p>
+  <div class="formule-cle">
+    $$t_m \cdot B = \frac{\ln 9}{2\pi} \approx 0{,}35, \qquad t_{m,\text{affiché}} \approx \sqrt{t_{m,\mathrm{signal}}^2 + t_{m,\mathrm{oscilloscope}}^2 + t_{m,\mathrm{sonde}}^2}$$
+    <p class="formule-cle-legende">
+      $t_m$ en secondes, $B$ en hertz : le produit est sans dimension. La première relation est exacte pour un premier ordre ($0{,}350$) et voisine pour une
+      réponse gaussienne ($0{,}339$) ; les oscilloscopes dont la réponse est plus raide ont un produit compris entre $0{,}4$ et $0{,}5$, valeur donnée par le
+      constructeur. La composition quadratique est exacte pour des maillons gaussiens, dont les variances s'additionnent, et approchée sinon. Cas limites : un
+      signal beaucoup plus lent que la chaîne est affiché tel quel ; un signal beaucoup plus rapide est affiché avec le temps de montée de la chaîne, qui ne
+      mesure alors plus que lui-même.
+    </p>
+  </div>
+  <p>
+    Exemple de grandeur : un oscilloscope de $100\ \mathrm{MHz}$ a un temps de montée propre de $3{,}5\ \mathrm{ns}$. Un front de $15\ \mathrm{ns}$ y est affiché
+    à $15{,}4\ \mathrm{ns}$ si la sonde ne dégrade rien, soit $+2{,}7\ \%$. Pour mesurer un temps de montée à $5\ \%$ près, la chaîne doit être environ trois fois
+    plus rapide que le signal. La fréquence d'échantillonnage, enfin, doit dépasser largement la bande passante, au moins deux fois et demie à cinq fois, faute
+    de quoi le repliement fabrique des formes d'onde fausses ; ce point sera traité dans le cours Conversion analogique-numérique.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      La simulation suivante affiche un front de tension vrai et le même front vu par la chaîne sonde et oscilloscope. Avant de manipuler, écrivez vos
+      réponses : un front de $10\ \mathrm{ns}$ observé avec un oscilloscope de $50\ \mathrm{MHz}$ sera-t-il affiché à environ $10$, $12$ ou $13\ \mathrm{ns}$ ?
+      Quelle bande passante faut-il pour que l'écart tombe sous $3\ \%$ ? Une sonde $\times 1$ de $10\ \mathrm{MHz}$ peut-elle être compensée par un
+      oscilloscope de $500\ \mathrm{MHz}$ ?
+    </p>
+  </div>
+  <figure id="e-bande-sim">
+    <div id="e-bande-curseurs"></div>
+    <div id="e-bande-trace"></div>
+    <div id="e-bande-lecteur"></div>
+    <div id="e-bande-valeurs"></div>
+    <figcaption>
+      Front vrai et front affiché. Axe horizontal : temps en nanosecondes ; axe vertical : tension normalisée de $0$ à $1$. Les deux courbes sont des fronts à
+      réponse gaussienne, le front vrai et le front affiché après la sonde et l'oscilloscope, dont les temps de montée se composent quadratiquement ; les droites
+      horizontales en pointillés marquent $10$ et $90\ \%$. Les curseurs règlent le temps de montée du signal, la bande passante de l'oscilloscope et celle de la
+      sonde ; le lecteur fait croître la bande passante de l'oscilloscope de $20$ à $500\ \mathrm{MHz}$, avec lecture, pause, vitesse et remise à zéro, pour voir
+      le front affiché rejoindre le front vrai, puis buter sur la limite imposée par la sonde.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Le front de $10\ \mathrm{ns}$ vu à $50\ \mathrm{MHz}$ s'affiche à $12{,}2\ \mathrm{ns}$, soit $+22\ \%$ : l'appareil n'est
+    pas en panne, il mesure en partie son propre temps de montée. L'écart tombe sous $3\ \%$ vers $142\ \mathrm{MHz}$ avec une sonde parfaite. Avec une sonde
+    $\times 1$ de $10\ \mathrm{MHz}$, son temps de montée de $35\ \mathrm{ns}$ écrase tout : même à $500\ \mathrm{MHz}$, le front affiché dépasse
+    $36\ \mathrm{ns}$. La bande passante d'une mesure est celle du maillon le plus lent ; aucun réglage de l'oscilloscope ne rattrape une sonde lente, et la
+    composition quadratique dit précisément de combien chaque maillon pèse. On peut d'ailleurs retrancher quadratiquement le temps de montée connu de la chaîne
+    pour estimer celui du signal, tant qu'il n'est pas petit devant elle.
+  </p>
+
+  <h3 id="e-sondes">Sondes passives : division, compensation et fil de masse</h3>
+  <p>
+    Une sonde $\times 10$ place une résistance $R_t = 9\ \mathrm{M\Omega}$ dans sa pointe, en série avec l'entrée de $1\ \mathrm{M\Omega}$ : diviseur par
+    dix, résistance d'entrée $10\ \mathrm{M\Omega}$. Mais le câble et l'entrée ajoutent une capacité $C_e + C_{\text{câble}}$ en parallèle sur
+    $1\ \mathrm{M\Omega}$, qui formerait avec $9\ \mathrm{M\Omega}$ un passe-bas de quelques kilohertz. La solution est un diviseur compensé : une capacité
+    $C_t$ en parallèle sur $R_t$, et un condensateur réglable $C_k$ côté oscilloscope.
+  </p>
+  <figure id="e-sonde-figure">
+    <svg viewBox="0 0 760 270" role="img" aria-label="Sonde passive dix fois compensée : dans la pointe, résistance de neuf mégohms en parallèle avec la capacité de pointe ; câble ; à l'entrée de l'oscilloscope, un mégohm en parallèle avec la capacité du câble, la capacité d'entrée et le condensateur de compensation réglable ; référence à la masse commune">
+      <defs><marker id="e-so-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">
+        <path d="M40 90H110"/>
+        <path d="M110 90V60H150M210 60H250V90M110 90V120H166M194 120H250V90"/>
+        <rect x="150" y="50" width="60" height="20" rx="3"/>
+        <path d="M166 108V132M174 108V132" stroke-width="2.4"/>
+        <path d="M176 120H194"/>
+        <path d="M250 90H460"/>
+        <path d="M290 84H420M290 96H420" stroke-width="1"/>
+        <path d="M460 90H700"/>
+        <path d="M520 90V120M510 120h20v40h-20zM520 160V200"/>
+        <path d="M580 90V136M566 136h28M566 146h28M580 146V200"/>
+        <path d="M640 90V136M626 136h28M626 146h28M640 146V200"/>
+        <path d="M700 90V136M686 136h28M686 146h28M700 146V200"/>
+        <path d="M676 158L724 124" marker-end="url(#e-so-fl)" stroke-width="1.2"/>
+        <path d="M40 200H700" stroke-width="2.4"/>
+        <path d="M40 200V214M32 218h16M36 224h8"/>
+        <circle cx="40" cy="90" r="4" fill="currentColor"/>
+        <circle cx="460" cy="90" r="3" fill="currentColor"/>
+        <path d="M60 70H96" marker-end="url(#e-so-fl)" stroke-width="1.2"/>
+        <path d="M740 92V198" marker-end="url(#e-so-fl)" stroke-width="1.2"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11.5">
+        <text x="16" y="80">vin</text>
+        <text x="58" y="62">pointe</text>
+        <text x="150" y="42">Rt = 9 MΩ</text>
+        <text x="150" y="150">Ct</text>
+        <text x="300" y="76">câble, environ 60 pF</text>
+        <text x="496" y="186">Re</text>
+        <text x="490" y="78">1 MΩ</text>
+        <text x="560" y="78">Ccâble</text>
+        <text x="626" y="78">Ce</text>
+        <text x="688" y="78">Ck</text>
+        <text x="726" y="112">vs</text>
+        <text x="200" y="230">masse commune, reliée au châssis et à la terre</text>
+        <text x="40" y="252">côté sonde : Rt // Ct</text>
+        <text x="300" y="252">côté oscilloscope : Re // Cs, avec Cs = Ccâble + Ce + Ck</text>
+      </g>
+    </svg>
+    <figcaption>
+      Diviseur compensé d'une sonde $\times 10$. La tension $v_{\mathrm{in}}$ est appliquée à la pointe, par rapport à la masse commune, trait épais du bas, reliée
+      au châssis et à la terre. Dans la pointe, $R_t$ en parallèle avec $C_t$ ; côté oscilloscope, $R_e$ en parallèle avec la capacité du câble, la capacité
+      d'entrée et le condensateur réglable $C_k$, barré d'une flèche oblique qui indique son réglage. La tension $v_s$ aux bornes de l'entrée est fléchée vers la
+      masse, à droite. La flèche de gauche donne le sens de la pointe vers l'oscilloscope.
+    </figcaption>
+  </figure>
+  <p>
+    Avec $Z = R/(1 + j\omega RC)$ pour chaque branche, le rapport de division vaut $\underline{H} = \underline{Z}_s/(\underline{Z}_t + \underline{Z}_s)$. Il
+    tend vers $R_e/(R_t + R_e) = 1/10$ en basse fréquence et vers $C_t/(C_t + C_s)$ en haute fréquence. Les deux limites coïncident, et le rapport devient
+    indépendant de la fréquence, si et seulement si :
+  </p>
+  <div class="formule-cle">
+    $$R_t C_t = R_e C_s \quad\Longleftrightarrow\quad C_k = \frac{R_t}{R_e}\,C_t - C_{\text{câble}} - C_e, \qquad \tau = \frac{R_t R_e}{R_t + R_e}\,(C_t + C_s)$$
+    <p class="formule-cle-legende">
+      Dérivation : $\underline{H} = \dfrac{R_e(1 + j\omega R_t C_t)}{R_e(1 + j\omega R_t C_t) + R_t(1 + j\omega R_e C_s)}$ ; si $R_tC_t = R_eC_s$, le facteur
+      $1 + j\omega R_tC_t$ se simplifie et $\underline{H} = R_e/(R_t + R_e)$ à toute fréquence. Sinon, la réponse à un échelon $E$ part de
+      $E\,C_t/(C_t + C_s)$ et tend vers $E/10$ avec la constante de temps $\tau$. Dimensions : $RC$ en secondes des deux côtés, $C_k$ en farads. Cas limite :
+      $C_t = 0$, pas de compensation possible, la sonde est un passe-bas.
+    </p>
+  </div>
+  <p>
+    Avec $C_t = 10\ \mathrm{pF}$, $C_{\text{câble}} = 60\ \mathrm{pF}$ et $C_e = 15\ \mathrm{pF}$ : $C_s$ doit valoir $9 \times 10 = 90\ \mathrm{pF}$, donc
+    $C_k = 15\ \mathrm{pF}$, et $\tau = 0{,}9\ \mathrm{M\Omega} \times 100\ \mathrm{pF} = 90\ \mathrm{\mu s}$. Le réglage se fait sur le signal carré de
+    calibrage de l'oscilloscope, souvent $1\ \mathrm{kHz}$ : une demi-période de $500\ \mathrm{\mu s}$ laisse voir l'exponentielle en entier. Chaque sonde se
+    compense sur la voie où elle sera utilisée, car $C_e$ varie d'une voie à l'autre.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Avant de tourner la vis de réglage simulée, écrivez vos réponses : si $C_k$ est trop grand, les fronts du carré affiché présentent-ils une pointe ou un
+      arrondi ? De combien, en pour cent, l'amplitude juste après un front s'écarte-t-elle de la valeur finale pour $C_k = 5\ \mathrm{pF}$ ? Une sonde mal
+      compensée fausse-t-elle une mesure de tension continue ?
+    </p>
+  </div>
+  <figure id="e-comp-sim">
+    <div id="e-comp-curseurs"></div>
+    <div id="e-comp-trace"></div>
+    <div id="e-comp-lecteur"></div>
+    <div id="e-comp-valeurs"></div>
+    <figcaption>
+      Compensation d'une sonde $\times 10$ sur le signal de calibrage, carré de $1\ \mathrm{kHz}$ entre $0$ et $5\ \mathrm{V}$. Axe horizontal : temps sur deux
+      périodes ; axe vertical : tension ramenée à l'entrée de la sonde, c'est-à-dire multipliée par dix. Deux courbes : le carré appliqué à la pointe et le carré
+      affiché. Le premier curseur règle $C_k$, comme la vis de la sonde ; le second règle la capacité du câble. Le lecteur tourne la vis de $0$ à
+      $30\ \mathrm{pF}$, avec lecture, pause, vitesse et remise à zéro ; le panneau donne la valeur de compensation exacte, l'écart juste après le front et la
+      constante de temps.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Avec $C_k$ trop petit, $C_s < 90\ \mathrm{pF}$, le diviseur capacitif transmet trop en haute fréquence : chaque front
+    présente une pointe, $+11{,}1\ \%$ pour $C_k = 5\ \mathrm{pF}$, qui s'éteint en $\tau$. La sonde est surcompensée. Avec $C_k$ trop grand, l'affichage part trop
+    bas et remonte en exponentielle : fronts arrondis, sonde sous-compensée, $-9{,}1\ \%$ pour $C_k = 25\ \mathrm{pF}$. Le plateau final est toujours juste : une
+    mesure continue n'est pas affectée, mais toute mesure d'amplitude, de temps de montée ou de forme dans la bande de quelques kilohertz à quelques mégahertz
+    l'est. Changer la capacité du câble déplace le réglage : c'est pourquoi une sonde ne se compense pas une fois pour toutes.
+  </p>
+  <p>
+    <strong>Charge capacitive de la sonde.</strong> Vue de la pointe, la sonde compensée présente $10\ \mathrm{M\Omega}$ en parallèle avec $C_tC_s/(C_t + C_s)
+    = 9\ \mathrm{pF}$. À $10\ \mathrm{MHz}$, $1/(2\pi \times 10^7 \times 9 \times 10^{-12}) = 1768\ \Omega$ : sur un nœud à haute impédance, la sonde
+    "de dix mégohms" charge comme une résistance de moins de deux kilohms. Une sonde $\times 1$, sans résistance de pointe, présente toute la capacité du câble
+    et de l'entrée, ici $75\ \mathrm{pF}$, et sa bande passante tombe à une dizaine de mégahertz ; elle ne sert qu'aux petits signaux lents.
+  </p>
+  <p>
+    <strong>Fil de masse.</strong> Le fil de masse d'une sonde, avec sa pince crocodile, forme une boucle d'inductance de l'ordre de $1\ \mathrm{nH}$ par
+    millimètre, soit environ $150\ \mathrm{nH}$ pour $15\ \mathrm{cm}$. Avec la capacité de pointe d'une dizaine de picofarads, il constitue un circuit résonant
+    série excité par chaque front :
+  </p>
+  <figure id="e-fil-masse-figure">
+    <pre class="ascii">   nœud mesuré o----+---------------------------------+
+                    |  pointe                          |
+                   [Ct ≈ 10 pF]  capacité vue de la pointe
+                    |                                  |
+   référence   o----+-- fil de masse 15 cm : L ≈ 150 nH +   boucle de surface S
+
+   f0 = 1 / (2 π √(L C))
+   L = 150 nH : f0 = 130 MHz   (oscillation de période 7,7 ns sur chaque front)
+   L = 10 nH, embout à ressort : f0 = 503 MHz</pre>
+    <figcaption>
+      Le fil de masse comme inductance. Le nœud mesuré et la référence sont reliés à la sonde par la pointe et par le fil de masse, qui ferment une boucle de
+      surface $S$ ; l'inductance de cette boucle forme avec la capacité vue de la pointe un circuit résonant série. Chaque front excite une oscillation
+      amortie à $f_0$, qui n'existe pas dans le circuit. La même boucle capte, par couplage inductif, les champs des conducteurs de puissance voisins, comme vu
+      dans le cours <a href="#/cours/compatibilite-electromagnetique">Compatibilité électromagnétique</a>.
+    </figcaption>
+  </figure>
+  <p>
+    L'embout à ressort, qui ramène la masse à quelques millimètres de la pointe, réduit l'inductance d'un facteur dix à quinze et repousse la résonance au-delà
+    de la bande passante. Règle de conception : pour tout front plus rapide qu'une centaine de nanosecondes, mesurer avec l'embout de masse court, et vérifier
+    l'absence d'artefact en posant la pointe sur la référence elle-même : ce qui s'affiche alors est entièrement capté par la boucle.
+  </p>
+
+  <h3 id="e-differentielle">Mesurer entre deux points quelconques</h3>
+  <p>
+    Quatre solutions existent pour mesurer $v_A - v_B$ quand aucun des deux points n'est à la terre. Elles ne se valent pas.
+  </p>
+  <ul>
+    <li><strong>Deux voies et une soustraction.</strong> Voie 1 sur $A$, voie 2 sur $B$, pinces à la terre, fonction mathématique $V_1 - V_2$. Sans danger,
+      mais médiocre : l'écart de gain de quelques pour cent entre les voies et la dynamique imposée par le mode commun ruinent la mesure d'une petite tension
+      différentielle portée par une grande tension de mode commun. Une dissymétrie de gain de $2\ \%$ sur $270\ \mathrm{V}$ de mode commun produit $5{,}4\ \mathrm{V}$
+      d'erreur.</li>
+    <li><strong>Sonde différentielle active.</strong> Un amplificateur différentiel à entrées de haute impédance, alimenté, attaque l'oscilloscope par une
+      sortie référencée à la terre. Elle rejette le mode commun avec un taux de réjection exprimé en décibels, élevé à $50\ \mathrm{Hz}$, souvent supérieur à
+      $80\ \mathrm{dB}$, et qui décroît avec la fréquence, souvent vers $50$ à $60\ \mathrm{dB}$ au mégahertz : donnée du constructeur. C'est l'outil normal de
+      l'électronique de puissance.</li>
+    <li><strong>Oscilloscope à voies isolées.</strong> Chaque voie a sa propre référence, isolée des autres et de la terre, pour une tension et une catégorie de
+      mesure indiquées sur l'appareil ; c'est le cas de nombreux oscilloscopes portatifs sur batterie conçus pour l'industrie.</li>
+    <li><strong>Couper la terre de l'oscilloscope.</strong> Interdit. Le châssis, les boutons, les prises de toutes les voies prennent le potentiel de la pince,
+      plus le découpage capté par la capacité du transformateur d'alimentation. Le risque porte sur l'opérateur et sur toute personne qui touche l'appareil ; le
+      dispositif différentiel n'agit pas tant que personne n'offre de chemin vers la terre.</li>
+  </ul>
+  <figure id="e-diff-figure">
+    <svg viewBox="0 0 760 240" role="img" aria-label="Sonde différentielle : deux entrées A et B de haute impédance vers la terre, amplificateur différentiel atténuateur, sortie référencée à la terre vers l'oscilloscope ; tension différentielle vA moins vB et tension de mode commun">
+      <defs><marker id="e-di-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">
+        <path d="M60 60H250M60 160H250"/>
+        <circle cx="60" cy="60" r="4" fill="currentColor"/>
+        <circle cx="60" cy="160" r="4" fill="currentColor"/>
+        <path d="M150 60V80M140 80h20v30h-20zM150 110V210"/>
+        <path d="M200 160V170M190 170h20v30h-20zM200 200V210"/>
+        <path d="M250 40L250 180L370 110Z" stroke-width="2.2"/>
+        <path d="M370 110H560"/>
+        <rect x="560" y="70" width="150" height="90" rx="8" stroke-width="2"/>
+        <path d="M600 160V210"/>
+        <path d="M40 210H720" stroke-width="2.4"/>
+        <path d="M380 210V222M372 226h16M376 232h8"/>
+        <path d="M34 70V150" marker-end="url(#e-di-fl)" stroke-width="1.2"/>
+        <path d="M90 66V204" stroke-dasharray="5 4" marker-end="url(#e-di-fl)" stroke-width="1.2"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11.5">
+        <text x="52" y="46">A</text>
+        <text x="52" y="184">B</text>
+        <text x="10" y="114">vA - vB</text>
+        <text x="96" y="136">vA</text>
+        <text x="166" y="100">quelques MΩ</text>
+        <text x="216" y="190">quelques MΩ</text>
+        <text x="262" y="78">+</text>
+        <text x="262" y="150">-</text>
+        <text x="270" y="114">÷ 50 à 500</text>
+        <text x="384" y="100">sortie référencée</text>
+        <text x="384" y="132">à la terre</text>
+        <text x="580" y="104">oscilloscope</text>
+        <text x="580" y="124">relié à la terre</text>
+        <text x="420" y="228">terre</text>
+        <text x="330" y="200">mode commun (vA + vB)/2 : rejeté</text>
+      </g>
+    </svg>
+    <figcaption>
+      Sonde différentielle active. Les entrées $A$ et $B$ présentent chacune quelques mégohms vers la terre, trait épais du bas : aucun courant de défaut n'est
+      possible. L'amplificateur, entrée $+$ sur $A$ et $-$ sur $B$, atténue la tension différentielle $v_A - v_B$, flèche de gauche, dans un rapport de $50$ à
+      $500$, et rejette le mode commun ; sa sortie est référencée à la terre et attaque un oscilloscope relié normalement au conducteur de protection. La flèche
+      en tirets rappelle que chaque entrée est soumise à son potentiel par rapport à la terre, qui doit rester dans la tension de mode commun admise par la sonde.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Mesure de courant à l'oscilloscope.</strong> Un shunt n'est utilisable avec une sonde passive que s'il est placé dans le retour relié à la terre ;
+    partout ailleurs, il demande une sonde différentielle, et son inductance parasite fausse les fronts rapides. Les sondes de courant à effet Hall mesurent du
+    continu à quelques dizaines de mégahertz ; les bobines de Rogowski, souples et sans circuit magnétique, mesurent les courants alternatifs et impulsionnels
+    élevés sans saturer, mais pas le continu. Toutes deux sont isolées du conducteur mesuré.
+  </p>
+
+  <h3 id="e-securite">Sécurité : catégories de mesure et chaîne d'instruments</h3>
+  <p>
+    Le danger d'une mesure ne tient pas seulement à la tension : il tient à l'énergie que l'installation peut libérer en cas de défaut, et aux surtensions
+    transitoires qu'elle transmet. Plus on est près de la source, plus le courant de court-circuit et les surtensions de manœuvre ou de foudre sont élevés. La
+    série de normes CEI 61010 relative à la sécurité des appareils de mesure range les points de mesure en catégories, à combiner avec une tension assignée.
+  </p>
+  <figure id="e-cat-figure">
+    <pre class="mermaid">flowchart LR
+  A["Réseau amont<br/>branchement, comptage"] -->|"CAT IV"| B["Tableau général<br/>jeu de barres, départs"]
+  B -->|"CAT III"| C["Installation fixe<br/>armoires, variateurs,<br/>moteurs câblés"]
+  C -->|"CAT II"| D["Appareils branchés<br/>sur prise"]
+  D -.->|"sans catégorie"| E["Circuits non reliés<br/>au réseau, TBTS"]</pre>
+    <figcaption>
+      Catégories de mesure, de la source vers l'utilisation. Chaque flèche porte la catégorie des points situés à son extrémité : CAT IV à l'origine de
+      l'installation, CAT III dans l'installation fixe, dont le tableau général et le variateur du site, CAT II pour les appareils branchés sur prise ; la flèche
+      en tirets mène aux circuits sans liaison directe avec le réseau, comme le bus $24\ \mathrm{V}$ issu d'un transformateur. Plus on remonte vers la source,
+      plus l'énergie de court-circuit et les surtensions transitoires à tenir sont grandes.
+    </figcaption>
+  </figure>
+  <p>
+    Les tableaux de la norme associent à chaque couple catégorie et tension une surtension transitoire de tenue ; les valeurs couramment citées sont de
+    l'ordre de $6\ \mathrm{kV}$ en CAT III $600\ \mathrm{V}$ et de $8\ \mathrm{kV}$ en CAT III $1000\ \mathrm{V}$ ou en CAT IV $600\ \mathrm{V}$, à vérifier dans
+    le texte en vigueur et sur le marquage de l'appareil. Trois règles de conception en découlent. La chaîne de mesure vaut son maillon le plus faible : un
+    multimètre CAT III $1000\ \mathrm{V}$ utilisé avec des cordons CAT II $600\ \mathrm{V}$ n'est qu'un ensemble CAT II $600\ \mathrm{V}$. La tension à
+    considérer est la tension par rapport à la terre et la tension entre points, y compris en régime transitoire : un bus de $540\ \mathrm{V}$ peut monter à
+    $800\ \mathrm{V}$ en freinage, et une sortie d'onduleur sur câble long peut approcher $1{,}1\ \mathrm{kV}$ crête aux bornes du moteur par réflexion. Une
+    sonde passive d'oscilloscope voit sa tension admissible diminuer quand la fréquence augmente, selon une courbe de déclassement du constructeur. Enfin,
+    l'entrée courant d'un multimètre doit être protégée par un fusible à haut pouvoir de coupure, et les cordons doivent être inspectés avant chaque emploi.
+  </p>
+  <p>
+    Ces dispositions techniques ne remplacent pas l'organisation : le travail au voisinage de pièces nues sous tension relève des règles de prévention du
+    risque électrique applicables dans le pays et dans l'entreprise, avec habilitation, consignation, vérification d'absence de tension et équipements de
+    protection individuelle. Le cours Sécurité électrique et schémas de liaison à la terre y reviendra.
+  </p>
+
+  <h3 id="e-statut">Loi, convention, approximation, règle de conception et donnée du constructeur</h3>
+  <div class="cadre-tableau" id="e-statut-tableau">
+    <table>
+      <thead><tr><th>Énoncé</th><th>Statut</th><th>Conséquence pratique</th></tr></thead>
+      <tbody>
+        <tr><td>Un voltmètre en parallèle prélève $V/R_V$, un ampèremètre en série ajoute $R_A I$</td><td>Loi physique, Kirchhoff et Ohm</td><td>Erreurs d'insertion calculables et corrigeables</td></tr>
+        <tr><td>La pince de masse d'une sonde passive est au potentiel de la terre</td><td>Conséquence physique d'une exigence de sécurité de construction</td><td>Pince uniquement sur un point au potentiel de la terre</td></tr>
+        <tr><td>L'affichage "AC" d'un appareil à valeur moyenne vaut $1{,}1107\,\overline{|x|}$</td><td>Convention d'étalonnage, valable pour une sinusoïde</td><td>Erreur dès que la forme d'onde change</td></tr>
+        <tr><td>La bande passante est définie à $-3\ \mathrm{dB}$</td><td>Convention</td><td>À $f = B$, l'amplitude est déjà fausse de $29\ \%$</td></tr>
+        <tr><td>$t_m B \approx 0{,}35$ et composition quadratique des temps de montée</td><td>Approximation, exacte pour un premier ordre ou des maillons gaussiens</td><td>Ordre de grandeur fiable ; produit exact donné par le constructeur</td></tr>
+        <tr><td>$R_tC_t = R_eC_s$</td><td>Loi, condition exacte du diviseur compensé</td><td>Réglage sur le carré de calibrage, voie par voie</td></tr>
+        <tr><td>Bande passante de trois à cinq fois la fréquence utile, embout de masse court au-dessous de $100\ \mathrm{ns}$</td><td>Règles de conception</td><td>Choix de l'oscilloscope, de la sonde et de l'accessoire</td></tr>
+        <tr><td>Catégorie de mesure, tension assignée, facteur de crête, réjection de mode commun, déclassement en fréquence</td><td>Norme et données du constructeur</td><td>Lire le marquage et la notice avant toute mesure</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Le schéma principal compare, sur la mesure de la tension entre la sortie U du variateur et le $-\mathrm{DC}$ de son bus, trois montages : le montage
+    incorrect, qui court-circuite le bus à la terre, le montage interdit, qui met le châssis sous tension, et le montage correct, avec une sonde différentielle.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 780 470" role="img" aria-label="Connexion incorrecte et correcte d'un oscilloscope : à gauche, sonde passive avec pince de masse sur le moins du bus et oscilloscope relié à la terre, boucle de court-circuit par le fil de masse et le conducteur de protection ; au milieu, terre de l'oscilloscope coupée, châssis au potentiel du bus ; à droite, sonde différentielle entre U et moins DC, oscilloscope relié à la terre, aucun courant de défaut">
+      <defs><marker id="f-sp-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7">
+        <rect x="10" y="40" width="246" height="400" rx="10" stroke-dasharray="2 4" stroke-width="1"/>
+        <rect x="267" y="40" width="246" height="400" rx="10" stroke-dasharray="2 4" stroke-width="1"/>
+        <rect x="524" y="40" width="246" height="400" rx="10" stroke-dasharray="2 4" stroke-width="1"/>
+        <rect x="40" y="70" width="90" height="80" rx="6"/>
+        <rect x="297" y="70" width="90" height="80" rx="6"/>
+        <rect x="554" y="70" width="90" height="80" rx="6"/>
+        <path d="M130 90H170M130 130H200"/>
+        <path d="M387 90H427M387 130H457"/>
+        <path d="M644 90H684M644 130H714"/>
+        <circle cx="170" cy="90" r="3.5" fill="currentColor"/>
+        <circle cx="200" cy="130" r="3.5" fill="currentColor"/>
+        <circle cx="427" cy="90" r="3.5" fill="currentColor"/>
+        <circle cx="457" cy="130" r="3.5" fill="currentColor"/>
+        <circle cx="684" cy="90" r="3.5" fill="currentColor"/>
+        <circle cx="714" cy="130" r="3.5" fill="currentColor"/>
+        <path d="M170 90V230"/>
+        <path d="M200 130V250H160"/>
+        <rect x="60" y="260" width="140" height="70" rx="6" stroke-width="2.2"/>
+        <path d="M170 230V260"/>
+        <path d="M160 250V260"/>
+        <path d="M60 330V380H40V400"/>
+        <path d="M32 404h16M36 410h8"/>
+        <path d="M85 120V400H40"/>
+        <path d="M200 250H230V380H62" stroke-width="2.6" stroke-dasharray="8 5"/>
+        <path d="M220 300V340" marker-end="url(#f-sp-fl)" stroke-width="1.3"/>
+        <path d="M427 90V230"/>
+        <path d="M457 130V250H417"/>
+        <rect x="317" y="260" width="140" height="70" rx="6" stroke-width="2.2" stroke-dasharray="5 3"/>
+        <path d="M427 230V260"/>
+        <path d="M417 250V260"/>
+        <path d="M317 330V360"/>
+        <path d="M310 360h14M313 368l8 -14" stroke-width="1.4"/>
+        <path d="M317 380V400"/>
+        <path d="M309 404h16M313 410h8"/>
+        <path d="M342 120V400H317"/>
+        <path d="M684 90V180"/>
+        <path d="M714 130V180"/>
+        <rect x="654" y="180" width="80" height="44" rx="6"/>
+        <path d="M694 224V260"/>
+        <rect x="574" y="260" width="140" height="70" rx="6" stroke-width="2.2"/>
+        <path d="M574 330V380H554V400"/>
+        <path d="M546 404h16M550 410h8"/>
+        <path d="M599 120V400H554"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11">
+        <text x="20" y="22" font-size="12">1. Incorrect</text>
+        <text x="20" y="35" font-size="10.5">court-circuit</text>
+        <text x="277" y="22" font-size="12">2. Interdit</text>
+        <text x="277" y="35" font-size="10.5">châssis sous tension</text>
+        <text x="534" y="22" font-size="12">3. Correct</text>
+        <text x="534" y="35" font-size="10.5">sonde différentielle</text>
+        <text x="52" y="96">variateur</text>
+        <text x="309" y="96">variateur</text>
+        <text x="566" y="96">variateur</text>
+        <text x="138" y="84">U</text>
+        <text x="138" y="124">-DC</text>
+        <text x="395" y="84">U</text>
+        <text x="395" y="124">-DC</text>
+        <text x="652" y="84">U</text>
+        <text x="652" y="124">-DC</text>
+        <text x="176" y="200">pointe</text>
+        <text x="96" y="244">pince</text>
+        <text x="433" y="200">pointe</text>
+        <text x="353" y="244">pince</text>
+        <text x="72" y="290">oscilloscope</text>
+        <text x="72" y="306">relié au PE</text>
+        <text x="329" y="290">oscilloscope</text>
+        <text x="329" y="306">terre coupée</text>
+        <text x="329" y="322">châssis ≈ -270 V</text>
+        <text x="586" y="290">oscilloscope</text>
+        <text x="586" y="306">relié au PE</text>
+        <text x="662" y="200">sonde</text>
+        <text x="662" y="214">différentielle</text>
+        <text x="90" y="160">pont référencé</text>
+        <text x="90" y="174">à la terre</text>
+        <text x="347" y="160">pont référencé</text>
+        <text x="347" y="174">à la terre</text>
+        <text x="604" y="160">pont référencé</text>
+        <text x="604" y="174">à la terre</text>
+        <text x="236" y="322">I</text>
+        <text x="60" y="372">PE</text>
+        <text x="20" y="430">défaut : fil de masse fondu</text>
+        <text x="277" y="430">danger : contact indirect</text>
+        <text x="534" y="430">vU - v-DC affichée, sans défaut</text>
+        <text x="20" y="460" font-size="11">Tirets épais : boucle du courant de défaut. Trait barré : liaison à la terre interrompue.</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal : connexion incorrecte, interdite et correcte d'un oscilloscope pour mesurer $v_U - v_{-\mathrm{DC}}$ sur le variateur. Dans les trois cas,
+      le bus du variateur est référencé à la terre par son pont à diodes, liaison verticale du variateur vers la terre, et l'oscilloscope est raccordé au PE par
+      son cordon. En 1, la pince de masse posée sur le $-\mathrm{DC}$, à environ $-270\ \mathrm{V}$ de la terre, relie ce point au PE par le fil de masse et le
+      châssis : la boucle en tirets épais, fléchée par $I$, est un court-circuit de quelques dixièmes d'ohm, qui fait fondre le fil et détruit au besoin les
+      diodes du pont. En 2, la liaison du châssis au PE est coupée, trait barré : plus de courant, mais le châssis et toutes les prises BNC sont portés au
+      potentiel du $-\mathrm{DC}$ ; la première personne qui touche l'appareil et une masse métallique ferme le circuit par son corps. En 3, une sonde
+      différentielle reçoit $U$ sur son entrée $+$ et $-\mathrm{DC}$ sur son entrée $-$ ; sa sortie, référencée à la terre, attaque un oscilloscope normalement
+      relié au PE. Les polarités sont celles de la mesure : $v_U - v_{-\mathrm{DC}}$, positive quand l'interrupteur haut de la phase U conduit.
+    </figcaption>
+  </figure>
+
+  <p>
+    L'organigramme suivant est la procédure de choix de l'instrument, de la sonde et de la référence, réutilisable pour toute mesure.
+  </p>
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Définir la grandeur :<br/>valeur efficace, fondamental,<br/>forme, front, courant"] --> B{"Forme d'onde<br/>à observer ?"}
+  B -->|"Non, une valeur"| C["Multimètre ou pince :<br/>TRMS, filtre passe-bas,<br/>basse impédance"]
+  B -->|"Oui"| D["Oscilloscope :<br/>bande passante ≥ 3 à 5 f<br/>ou 0,35 / tm"]
+  C --> E{"Tension par rapport<br/>à la terre et catégorie ?"}
+  D --> F{"Les deux points<br/>sont-ils à la terre ?"}
+  F -->|"La référence l'est"| G["Sonde passive × 10,<br/>pince sur le point à la terre,<br/>compensée, masse courte"]
+  F -->|"Non"| H["Sonde différentielle<br/>ou voie isolée"]
+  G --> E
+  H --> E
+  E --> I["Chaîne complète au bon CAT<br/>et à la bonne tension :<br/>appareil, cordons, sondes, pinces"]
+  I --> J["Brancher hors tension si possible,<br/>vérifier, mettre sous tension,<br/>observer à distance"]
+  J --> K{"Résultat plausible ?<br/>ordre de grandeur, artefacts"}
+  K -->|"Non"| L["Pointe sur la référence,<br/>autre sonde, autre mode"]
+  L --> B
+  K -->|"Oui"| M["Consigner valeur, mode,<br/>bande passante, référence,<br/>incertitude"]</pre>
+    <figcaption>
+      Organigramme de résolution d'un problème de mesure. Les rectangles sont des actions, les losanges des décisions, et les libellés des flèches donnent la
+      réponse qui oriente le chemin. Deux décisions portent la sécurité : la référence de potentiel des points, qui fixe le type de sonde, et la catégorie de
+      mesure, qui fixe la chaîne d'instruments. La boucle de retour traite le doute sur le résultat : on teste d'abord la mesure elle-même, pointe sur la
+      référence, avant de soupçonner le circuit.
+    </figcaption>
+  </figure>
+
+  <p>
+    Le tableau suivant compare les moyens de mesure à l'oscilloscope.
+  </p>
+  <div class="cadre-tableau" id="f-comparatif">
+    <table>
+      <thead><tr><th>Critère</th><th>Sonde passive $\times 1$</th><th>Sonde passive $\times 10$</th><th>Sonde différentielle active</th><th>Sonde de courant Hall ou Rogowski</th></tr></thead>
+      <tbody>
+        <tr><td>Impédance vue du circuit</td><td>$1\ \mathrm{M\Omega}$ et environ $75$ à $100\ \mathrm{pF}$</td><td>$10\ \mathrm{M\Omega}$ et environ $10\ \mathrm{pF}$</td><td>Quelques $\mathrm{M\Omega}$ et quelques $\mathrm{pF}$ par entrée</td><td>Aucune liaison galvanique</td></tr>
+        <tr><td>Bande passante typique</td><td>Environ $10\ \mathrm{MHz}$</td><td>$100$ à $500\ \mathrm{MHz}$</td><td>$25$ à $200\ \mathrm{MHz}$</td><td>Hall : continu à quelques dizaines de $\mathrm{MHz}$ ; Rogowski : alternatif seulement</td></tr>
+        <tr><td>Référence</td><td>Terre</td><td>Terre</td><td>Libre, dans la tension de mode commun admise</td><td>Libre, isolée</td></tr>
+        <tr><td>Usage type</td><td>Petits signaux lents</td><td>Électronique référencée à la terre</td><td>Électronique de puissance, mesures flottantes</td><td>Courants de puissance, fronts</td></tr>
+        <tr><td>Piège principal</td><td>Charge capacitive, bande étroite</td><td>Compensation, fil de masse, déclassement en fréquence</td><td>Réjection qui baisse avec la fréquence, dynamique limitée</td><td>Zéro à régler, saturation, position du conducteur</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <ul>
+    <li><a href="#d-charge-figure" data-renvoi="d-charge-figure">Erreurs d'insertion du voltmètre et de l'ampèremètre</a>, section D.</li>
+    <li><a href="#d-masse-sim" data-renvoi="d-masse-sim">Où poser la pointe et la pince de masse</a>, section D : schéma manipulable du variateur.</li>
+    <li><a href="#e-trms-sim" data-renvoi="e-trms-sim">Ce que lit chaque multimètre</a>, section E : valeur efficace vraie, valeur moyenne et fondamental.</li>
+    <li><a href="#e-fantome-figure" data-renvoi="e-fantome-figure">Tension fantôme</a>, section E : couplage capacitif et mode basse impédance.</li>
+    <li><a href="#e-entree-figure" data-renvoi="e-entree-figure">Entrée et masse d'un oscilloscope</a>, section E.</li>
+    <li><a href="#e-bande-sim" data-renvoi="e-bande-sim">Front vrai et front affiché</a>, section E : bande passante et temps de montée.</li>
+    <li><a href="#e-sonde-figure" data-renvoi="e-sonde-figure">Diviseur compensé d'une sonde $\times 10$</a>, section E.</li>
+    <li><a href="#e-comp-sim" data-renvoi="e-comp-sim">Compensation d'une sonde</a>, section E.</li>
+    <li><a href="#e-fil-masse-figure" data-renvoi="e-fil-masse-figure">Fil de masse et résonance</a>, section E.</li>
+    <li><a href="#e-diff-figure" data-renvoi="e-diff-figure">Sonde différentielle</a>, section E.</li>
+    <li><a href="#e-cat-figure" data-renvoi="e-cat-figure">Catégories de mesure</a>, section E.</li>
+    <li><a href="#h-montage-figure" data-renvoi="h-montage-figure">Mesure du nœud de commutation du chargeur</a>, section H.</li>
+    <li><a href="#i-procedure-figure" data-renvoi="i-procedure-figure">Procédure de mesure sûre sur le variateur</a>, section I.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <ol>
+    <li><strong>Définir la grandeur.</strong> Valeur continue, valeur efficace vraie, fondamental, crête, forme, temps de montée, courant ; et la bande de
+      fréquence qui la porte. Une grandeur mal définie produit une mesure juste d'autre chose.</li>
+    <li><strong>Établir le potentiel de chaque point par rapport à la terre.</strong> Schéma de liaison à la terre, isolement galvanique ou non, mode commun,
+      surtensions de fonctionnement. C'est cette étape qui décide du type de sonde.</li>
+    <li><strong>Fixer la catégorie et la tension de la chaîne.</strong> Emplacement dans l'installation, tension maximale par rapport à la terre et entre points,
+      y compris en transitoire ; vérifier chaque maillon : appareil, cordons, sondes, pinces, accessoires.</li>
+    <li><strong>Choisir l'instrument et son mode.</strong> Multimètre TRMS de bande suffisante, filtre passe-bas pour le fondamental, basse impédance pour
+      lever un doute de tension induite, pince pour les courants ; oscilloscope de bande passante $B \geq 0{,}35/t_m$ multipliée par trois environ, ou de trois à
+      cinq fois la fréquence utile.</li>
+    <li><strong>Chiffrer les erreurs de méthode.</strong> Insertion d'un voltmètre ou d'un ampèremètre, charge capacitive d'une sonde, composition des temps de
+      montée, quantification de l'écran, réjection de mode commun.</li>
+    <li><strong>Préparer la sonde.</strong> Compensation sur la voie utilisée, embout de masse court pour les fronts, zéro de la pince de courant, rapport
+      d'atténuation déclaré à l'oscilloscope.</li>
+    <li><strong>Brancher dans un ordre sûr.</strong> Hors tension dès que possible, après vérification d'absence de tension ; mise sous tension, observation
+      à distance ; débranchement après remise hors tension et vérification.</li>
+    <li><strong>Contrôler et consigner.</strong> Ordre de grandeur, pointe sur la référence pour détecter les artefacts, comparaison avec un second instrument ;
+      noter la valeur, le mode, la bande passante, la référence et l'incertitude.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    On veut caractériser le hacheur abaisseur du chargeur du bus $24\ \mathrm{V}$ secouru du projet fil rouge, étudié dans le cours
+    <a href="#/cours/hacheurs-dc-dc">Hacheurs DC-DC</a> : entrée de $31{,}5$ à $49{,}8\ \mathrm{V}$, sortie $27\ \mathrm{V}$, $8\ \mathrm{A}$, découpage à
+    $100\ \mathrm{kHz}$, ondulation de sortie calculée de $92\ \mathrm{mV}$ crête à crête au plus. Deux mesures sont demandées : le temps de montée de la
+    tension du nœud de commutation, supposé de $15\ \mathrm{ns}$, et l'ondulation de sortie.
+  </p>
+  <ul>
+    <li><strong>Instruments.</strong> Oscilloscope de $100\ \mathrm{MHz}$, convertisseur de $8$ bits, $8$ divisions verticales ; sonde $\times 10$ de
+      $200\ \mathrm{MHz}$, $10\ \mathrm{M\Omega}$ et $9\ \mathrm{pF}$ vus de la pointe ; capacité de pointe pour la résonance du fil de masse $10\ \mathrm{pF}$ ;
+      fil de masse de $15\ \mathrm{cm}$, environ $150\ \mathrm{nH}$, ou embout à ressort, environ $10\ \mathrm{nH}$ ; sonde $\times 1$ de $10\ \mathrm{MHz}$ en
+      comparaison.</li>
+    <li><strong>Référence.</strong> Le hacheur est alimenté par un transformateur $230/32\ \mathrm{V}$ et un pont, donc isolé du réseau ; le $0\ \mathrm{V}$
+      du bus $24\ \mathrm{V}$ est supposé relié au PE en un point, hypothèse à confirmer sur le schéma de l'armoire. Le $0\ \mathrm{V}$ est commun à l'entrée et
+      à la sortie du hacheur abaisseur.</li>
+    <li><strong>Inconnues.</strong> Temps de montée affiché et erreur ; même grandeur avec la sonde $\times 1$ ; fréquence de l'oscillation due au fil de masse ;
+      quantum de l'écran en couplage continu et alternatif pour l'ondulation ; charge de la sonde sur le nœud.</li>
+    <li><strong>Stratégie.</strong> Vérifier la référence et la catégorie ; composer les temps de montée ; calculer les résonances ; dimensionner la
+      sensibilité verticale ; contrôler la charge.</li>
+  </ul>
+  <figure id="h-montage-figure">
+    <svg viewBox="0 0 760 290" role="img" aria-label="Mesure du nœud de commutation d'un hacheur abaisseur : transistor haut, diode, inductance, condensateur de sortie, sonde dix fois avec embout de masse court entre le nœud et le zéro volt relié au PE en un point">
+      <defs><marker id="h-mo-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">
+        <path d="M60 60H160"/>
+        <rect x="160" y="44" width="70" height="32" rx="4"/>
+        <path d="M230 60H300V200"/>
+        <path d="M286 150h28l-14 -22z" fill="currentColor"/>
+        <path d="M286 128h28"/>
+        <path d="M300 60H360"/>
+        <path d="M360 60c8 -14 16 -14 24 0s16 14 24 0s16 -14 24 0s16 14 24 0"/>
+        <path d="M456 60H600V110"/>
+        <path d="M586 110h28M586 120h28"/>
+        <path d="M600 120V200"/>
+        <path d="M600 60H680V110M672 110h16v50h-16zM680 160V200"/>
+        <path d="M60 60V200"/>
+        <path d="M60 200H680" stroke-width="2.4"/>
+        <path d="M120 200V222M112 226h16M116 232h8"/>
+        <path d="M300 60V30H330"/>
+        <rect x="330" y="20" width="80" height="20" rx="4"/>
+        <path d="M410 30H470"/>
+        <path d="M320 200V180H330" stroke-width="2.6"/>
+        <circle cx="300" cy="60" r="3.5" fill="currentColor"/>
+        <circle cx="600" cy="60" r="3.5" fill="currentColor"/>
+        <path d="M40 72V188" marker-end="url(#h-mo-fl)" stroke-width="1.2"/>
+        <path d="M720 72V188" marker-end="url(#h-mo-fl)" stroke-width="1.2"/>
+        <path d="M250 100V180" marker-end="url(#h-mo-fl)" stroke-width="1.2"/>
+        <path d="M380 76H440" marker-end="url(#h-mo-fl)" stroke-width="1.2"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11.5">
+        <text x="8" y="134">Ve</text>
+        <text x="166" y="98">transistor</text>
+        <text x="320" y="146">diode</text>
+        <text x="370" y="96">L = 56 µH</text>
+        <text x="446" y="80">iL</text>
+        <text x="512" y="132">C = 47 µF</text>
+        <text x="626" y="188">charge</text>
+        <text x="728" y="134">Vs</text>
+        <text x="200" y="146">vSW</text>
+        <text x="306" y="52">SW</text>
+        <text x="338" y="34">sonde × 10</text>
+        <text x="476" y="34">vers l'oscilloscope</text>
+        <text x="336" y="186">embout de masse court</text>
+        <text x="140" y="250">0 V commun, relié au PE en un point (hypothèse)</text>
+        <text x="140" y="270">référence de toutes les tensions fléchées</text>
+      </g>
+    </svg>
+    <figcaption>
+      Montage de mesure. Le transistor du haut relie l'entrée $V_e$ au nœud de commutation SW, dont la tension $v_{SW}$, fléchée vers le $0\ \mathrm{V}$, passe de
+      presque $0$ à $V_e$ à chaque fermeture ; la diode de roue libre, cathode vers SW, conduit pendant l'ouverture ; le courant $i_L$ circule de SW vers la
+      sortie à travers l'inductance. Le $0\ \mathrm{V}$ commun, trait épais, est la référence de $V_e$, $v_{SW}$ et $V_s$, et il est supposé relié au PE en un
+      point, symbole de terre. La sonde $\times 10$ prend SW sur sa pointe ; son embout de masse court, trait épais vertical, rejoint le $0\ \mathrm{V}$ juste à
+      côté de la diode, au plus près du point mesuré.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li><strong>Référence et sécurité.</strong> Le $0\ \mathrm{V}$ est au potentiel de la terre : une sonde passive est admissible, pince sur le
+      $0\ \mathrm{V}$. La tension la plus élevée, $49{,}8\ \mathrm{V}$ plus le dépassement des fronts, reste très inférieure à la tension admissible de la sonde
+      même déclassée en fréquence. Si le $0\ \mathrm{V}$ n'était pas relié au PE, la pince le relierait à la terre ; c'est acceptable sur un circuit isolé à
+      très basse tension, mais cela modifie ses chemins de mode commun, et il vaut mieux le savoir.</li>
+    <li><strong>Temps de montée des maillons.</strong> Oscilloscope : $t_{m,o} = 0{,}35/(100 \times 10^6) = 3{,}5\ \mathrm{ns}$. Sonde $\times 10$ :
+      $t_{m,s} = 0{,}35/(200 \times 10^6) = 1{,}75\ \mathrm{ns}$.</li>
+    <li><strong>Front affiché.</strong> $t_{m,a} = \sqrt{15^2 + 3{,}5^2 + 1{,}75^2} = \sqrt{225 + 12{,}25 + 3{,}06} = \sqrt{240{,}31} = 15{,}50\ \mathrm{ns}$,
+      soit une erreur de $+3{,}3\ \%$. Correction possible : $\sqrt{15{,}50^2 - 3{,}5^2 - 1{,}75^2} = 15{,}0\ \mathrm{ns}$.</li>
+    <li><strong>Avec la sonde $\times 1$.</strong> $t_{m,s} = 0{,}35/(10 \times 10^6) = 35\ \mathrm{ns}$ et $t_{m,a} = \sqrt{225 + 12{,}25 + 1225} =
+      38{,}2\ \mathrm{ns}$ : $+155\ \%$, la mesure ne vaut rien.</li>
+    <li><strong>Fil de masse.</strong> $f_0 = 1/(2\pi\sqrt{150 \times 10^{-9} \times 10 \times 10^{-12}}) = 130\ \mathrm{MHz}$, période $7{,}7\ \mathrm{ns}$,
+      du même ordre que le front : l'oscillation se superpose au front et le déforme. Avec l'embout à ressort, $f_0 = 503\ \mathrm{MHz}$, bien au-delà des
+      $100\ \mathrm{MHz}$ de l'appareil.</li>
+    <li><strong>Charge de la sonde.</strong> Fréquence équivalente du front : $0{,}35/15\ \mathrm{ns} = 23{,}3\ \mathrm{MHz}$ ; réactance de $9\ \mathrm{pF}$ :
+      $1/(2\pi \times 23{,}3 \times 10^6 \times 9 \times 10^{-12}) = 758\ \Omega$, à comparer à l'impédance du nœud, celle d'un transistor fermé, quelques
+      dizaines de milliohms : charge négligeable.</li>
+    <li><strong>Ondulation en couplage continu.</strong> Pour afficher $27\ \mathrm{V}$, il faut au moins $5\ \mathrm{V/div}$, soit $40\ \mathrm{V}$ sur
+      l'écran et $q = 40/256 = 156\ \mathrm{mV}$, plus que l'ondulation de $92\ \mathrm{mV}$ : invisible.</li>
+    <li><strong>Ondulation en couplage alternatif.</strong> À $20\ \mathrm{mV/div}$, l'écran couvre $160\ \mathrm{mV}$ et $q = 0{,}160/256 = 0{,}625\ \mathrm{mV}$ ;
+      l'ondulation occupe $92/20 = 4{,}6$ divisions et $92/0{,}625 = 147$ niveaux. La coupure basse du couplage alternatif, une dizaine de hertz, laisse passer
+      les $100\ \mathrm{kHz}$ sans atténuation. La limitation de bande à $20\ \mathrm{MHz}$ et l'embout court retirent les pointes de commutation captées par la
+      boucle de masse, qui ne font pas partie de l'ondulation.</li>
+  </ol>
+  <div class="cadre-tableau" id="h-tableau">
+    <table>
+      <thead><tr><th>Configuration</th><th class="nombre">Temps de montée affiché</th><th class="nombre">Erreur</th><th>Artefact</th></tr></thead>
+      <tbody>
+        <tr><td>$100\ \mathrm{MHz}$, sonde $\times 10$, embout court</td><td class="nombre">$15{,}5\ \mathrm{ns}$</td><td class="nombre">$+3{,}3\ \%$</td><td>Aucun dans la bande</td></tr>
+        <tr><td>$100\ \mathrm{MHz}$, sonde $\times 10$, fil de $15\ \mathrm{cm}$</td><td class="nombre">$15{,}5\ \mathrm{ns}$ et oscillation</td><td class="nombre">Front déformé</td><td>Résonance à $130\ \mathrm{MHz}$</td></tr>
+        <tr><td>$100\ \mathrm{MHz}$, sonde $\times 1$</td><td class="nombre">$38{,}2\ \mathrm{ns}$</td><td class="nombre">$+155\ \%$</td><td>Front arrondi par la sonde</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li><strong>Dimensions.</strong> $0{,}35/B$ en secondes ; $1/\sqrt{LC}$ en $\mathrm{s^{-1}}$, car $\mathrm{H \cdot F} = \mathrm{s^2}$ ; $q$ en volts.</li>
+    <li><strong>Ordre de grandeur.</strong> La chaîne de $3{,}9\ \mathrm{ns}$ est environ quatre fois plus rapide que le front : l'erreur doit être de quelques
+      pour cent, ce que donne le calcul.</li>
+    <li><strong>Test de l'artefact.</strong> Pointe et embout posés tous deux sur le $0\ \mathrm{V}$, près de la diode : la trace doit rester plate. Toute
+      oscillation visible alors est captée, non mesurée.</li>
+    <li><strong>Cohérence physique.</strong> L'ondulation mesurée doit être triangulaire, à $100\ \mathrm{kHz}$, et maximale à la tension d'entrée la plus haute,
+      comme le prévoit la théorie du hacheur ; une ondulation à $100\ \mathrm{Hz}$ trahirait l'étage d'entrée, une ondulation à $50\ \mathrm{Hz}$ une boucle de
+      masse.</li>
+  </ul>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <h3 id="i-contexte">Procédure de mesure sûre sur le variateur de la pompe</h3>
+  <p>
+    La mise en service du variateur de la pompe demande quatre mesures : la tension du bus continu et son ondulation, la tension et le courant du moteur, la
+    tension du bus $24\ \mathrm{V}$ secouru dans l'armoire, et le bruit sur le signal $0$ à $10\ \mathrm{V}$ de la mesure de pression, perturbé par le
+    découpage à $4\ \mathrm{kHz}$ comme établi dans le cours <a href="#/cours/filtres-passifs">Filtres passifs</a>. Le variateur est alimenté par le réseau
+    $230/400\ \mathrm{V}$ du site ; son bus de $540\ \mathrm{V}$, $622\ \mathrm{V}$ à vide au réseau haut, $800\ \mathrm{V}$ au seuil de déclenchement en
+    freinage, est référencé à la terre par le pont à diodes ; ses condensateurs se déchargent sous $50\ \mathrm{V}$ en environ huit minutes après la coupure,
+    selon les résistances d'équilibrage du cours <a href="#/cours/condensateurs-et-champ-electrique">Condensateurs et champ électrique</a>.
+  </p>
+  <div class="cadre-tableau" id="i-procedure">
+    <table>
+      <thead><tr><th>Mesure</th><th>Points et référence</th><th>Instrument et réglages</th><th>Catégorie et tension de la chaîne</th></tr></thead>
+      <tbody>
+        <tr><td>Bus continu, valeur et ondulation à $300\ \mathrm{Hz}$</td><td>$+\mathrm{DC}$ et $-\mathrm{DC}$, aucun à la terre</td><td>Multimètre TRMS en continu ; sonde différentielle $\div 100$, couplage alternatif pour l'ondulation</td><td>CAT III $1000\ \mathrm{V}$ ; sonde de tension différentielle au moins $1000\ \mathrm{V}$</td></tr>
+        <tr><td>Tension du moteur entre phases</td><td>U et V, flottants, mode commun découpé</td><td>Multimètre TRMS en mode filtre passe-bas pour le fondamental ; sonde différentielle d'au moins $25\ \mathrm{MHz}$ pour les fronts</td><td>Sonde admettant environ $1{,}4\ \mathrm{kV}$ entre entrées, à cause des réflexions sur $85\ \mathrm{m}$</td></tr>
+        <tr><td>Courant du moteur</td><td>Conducteur U</td><td>Pince à effet Hall continu et alternatif $100\ \mathrm{A}$, zéro réglé, au moins $20\ \mathrm{kHz}$</td><td>Pince CAT III, isolement adapté au conducteur nu ou isolé</td></tr>
+        <tr><td>Bus $24\ \mathrm{V}$ secouru</td><td>$+24\ \mathrm{V}$ et $0\ \mathrm{V}$ relié au PE (hypothèse)</td><td>Sonde passive $\times 10$, pince sur le $0\ \mathrm{V}$, couplage alternatif, $20\ \mathrm{mV/div}$</td><td>Circuit isolé du réseau, très basse tension</td></tr>
+        <tr><td>Signal $0$ à $10\ \mathrm{V}$ de pression</td><td>Entrée de l'automate et son commun</td><td>Sonde passive si le commun est au PE, sinon sonde différentielle ; recherche du résidu à $4\ \mathrm{kHz}$</td><td>Très basse tension, mais armoire voisine de la puissance</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    L'ordre des opérations suit l'organigramme ci-dessous, qui est la procédure demandée par le travail central de la séance.
+  </p>
+  <figure id="i-procedure-figure">
+    <pre class="mermaid">flowchart TD
+  A["Préparer : schémas, tensions par rapport<br/>à la terre, catégorie, autorisation<br/>et habilitation requises"] --> B["Contrôler la chaîne :<br/>marquage CAT, cordons, sonde<br/>différentielle, fusible, pince"]
+  B --> C["Mettre hors tension et consigner<br/>le départ du variateur"]
+  C --> D["Attendre la décharge du bus,<br/>au moins le délai du constructeur"]
+  D --> E["Vérifier l'absence de tension<br/>sur le bus : appareil testé<br/>avant et après"]
+  E --> F["Raccorder sondes et pinces<br/>hors tension, fixées,<br/>sans les tenir"]
+  F --> G["Écarter les personnes,<br/>déconsigner, mettre sous tension"]
+  G --> H["Observer à distance,<br/>régler sans toucher le circuit"]
+  H --> I{"Anomalie, échauffement,<br/>valeur hors plage ?"}
+  I -->|"Oui"| J["Couper, consigner,<br/>analyser avant de reprendre"]
+  I -->|"Non"| K["Enregistrer les mesures,<br/>mode, bande, référence"]
+  K --> L["Couper, attendre la décharge,<br/>vérifier, débrancher"]
+  J --> C</pre>
+    <figcaption>
+      Procédure de mesure sûre sur le variateur. Les rectangles sont des actions dans l'ordre d'exécution, le losange est le critère d'arrêt. Trois points la
+      distinguent d'une mesure de bureau : la décharge du bus après coupure, vérifiée et non supposée ; le raccordement des sondes hors tension, pour que
+      personne n'ait à approcher les mains d'un bus de $540\ \mathrm{V}$ sous tension ; l'observation à distance, qui suppose des sondes fixées et un
+      oscilloscope réglé à l'avance. La flèche de retour depuis l'anomalie ramène à la consignation, jamais directement à une nouvelle mise sous tension.
+    </figcaption>
+  </figure>
+  <p>
+    La figure manipulable de la section D, <a href="#d-masse-sim" data-renvoi="d-masse-sim">Où poser la pointe et la pince de masse</a>, permet de rejouer
+    chaque mesure et de vérifier qu'aucune ne demande de poser une pince de masse ailleurs que sur le PE.
+  </p>
+  <h3 id="i-compromis">Contraintes, risques, choix d'ingénierie et compromis</h3>
+  <ul>
+    <li><strong>Résolution et mode commun du bus.</strong> Pour voir une ondulation de quelques volts sur $540\ \mathrm{V}$, la sonde différentielle doit
+      passer en couplage alternatif, ou utiliser son décalage : en couplage continu, un écran de $1000\ \mathrm{V}$ sur $8$ bits a un quantum de
+      $3{,}9\ \mathrm{V}$. Le prix du couplage alternatif est la perte de la valeur moyenne, mesurée par ailleurs au multimètre.</li>
+    <li><strong>Réjection et fronts.</strong> À la sortie de l'onduleur, chaque front de $540\ \mathrm{V}$ est aussi un front de mode commun. Une réjection de
+      $60\ \mathrm{dB}$ aux fréquences des fronts laisse passer $540/1000 = 0{,}54\ \mathrm{V}$ d'erreur : acceptable pour la forme, insuffisant pour mesurer
+      une chute de tension de quelques volts dans un interrupteur, qui demande une sonde dédiée.</li>
+    <li><strong>Tension du moteur.</strong> Le multimètre TRMS de large bande lira $380\ \mathrm{V}$ entre phases à $m = 0{,}9$ ; le mode filtre passe-bas lira
+      $298\ \mathrm{V}$, la valeur à comparer à la loi de commande. Ne consigner que la seconde comme tension du moteur, la première comme contrainte
+      d'échauffement.</li>
+    <li><strong>Bande passante de la pince.</strong> Une pince de quelques kilohertz suffit au fondamental du courant moteur ; la mesure de l'ondulation de
+      courant à $4\ \mathrm{kHz}$ et de ses fronts demande au moins $20\ \mathrm{kHz}$, ou une sonde de courant d'oscilloscope.</li>
+    <li><strong>Risque résiduel.</strong> Les sondes raccordées sous tension restent le risque majeur ; l'organisation retenue l'élimine pour le bus et le moteur.
+      Le prix est une coupure et une attente de huit minutes à chaque modification du montage, ce qui pousse à préparer toutes les mesures d'une même mise
+      sous tension.</li>
+  </ul>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Projet fil rouge : ajout de cette séance</span>
+    <p>
+      Procédure de mesure sûre du variateur de la pompe : bus de $540\ \mathrm{V}$ référencé à la terre ($\pm 270\ \mathrm{V}$ et mode commun de
+      $\pm 81\ \mathrm{V}$ à $150\ \mathrm{Hz}$), donc aucune pince de masse sauf sur le PE ; sondes différentielles d'au moins $1000\ \mathrm{V}$ pour le bus et
+      de $1{,}4\ \mathrm{kV}$ pour la sortie moteur, multimètre CAT III $1000\ \mathrm{V}$ TRMS avec filtre passe-bas ($298\ \mathrm{V}$ de fondamental contre
+      $380\ \mathrm{V}$ efficaces vrais entre phases à $m = 0{,}9$), pince à effet Hall $100\ \mathrm{A}$ ; raccordement hors tension après décharge vérifiée,
+      observation à distance ; ondulation du bus $24\ \mathrm{V}$ en couplage alternatif à $20\ \mathrm{mV/div}$ et embout court. Liaison du $0\ \mathrm{V}$ au PE,
+      marquages et réjection des sondes à confirmer sur les documents de l'armoire et les notices.
+    </p>
+  </div>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Poser la pince de masse sur un point qui n'est pas à la terre.</strong> Elle est déjà à la terre par l'appareil : court-circuit, fil fondu,
+      diodes ou fusibles détruits. Correction : établir le potentiel de chaque point, puis sonde différentielle ou voie isolée.</li>
+    <li><strong>Couper la terre de l'oscilloscope.</strong> Supprime le court-circuit, crée un châssis sous tension. Correction : ne jamais intervenir sur le
+      conducteur de protection ; utiliser l'outil prévu pour la mesure flottante.</li>
+    <li><strong>Brancher l'ampèremètre en parallèle.</strong> Les cordons restés dans la borne courant transforment l'appareil en court-circuit sur la première
+      tension mesurée. Correction : vérifier les bornes avant chaque mesure, préférer la pince, exiger un fusible à haut pouvoir de coupure.</li>
+    <li><strong>Lire un courant déformé avec un appareil à valeur moyenne.</strong> Erreur de $-30$ à $-50\ \%$ sur un pont à diodes. Correction : appareil TRMS,
+      dont on vérifie le facteur de crête admissible.</li>
+    <li><strong>Prendre la valeur efficace vraie pour la tension du moteur.</strong> Sur une sortie découpée, elle surestime le fondamental de $28\ \%$ à
+      $m = 0{,}9$. Correction : mode filtre passe-bas ou analyseur.</li>
+    <li><strong>Croire la bande passante "suffisante" parce qu'égale à la fréquence du signal.</strong> À $f = B$, l'amplitude est fausse de $29\ \%$. Correction :
+      $B$ de trois à cinq fois la fréquence utile, ou $0{,}35/t_m$ multiplié par trois.</li>
+    <li><strong>Ne pas compenser la sonde.</strong> Fronts pointus ou arrondis, amplitudes fausses de dix pour cent. Correction : compensation sur la voie
+      utilisée, au carré de calibrage.</li>
+    <li><strong>Mesurer un front avec le long fil de masse.</strong> Oscillation à une centaine de mégahertz qui n'existe pas. Correction : embout court, test
+      de la pointe sur la référence.</li>
+    <li><strong>Conclure à une tension présente sur la foi d'un voltmètre de $10\ \mathrm{M\Omega}$.</strong> Tension fantôme de couplage. Correction : mode
+      basse impédance ou détecteur adapté, sans jamais conclure à l'absence de tension sans vérificateur prévu à cet effet.</li>
+  </ol>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic industriel et une question
+    conceptuelle sans calcul. Les solutions sont présentes dans la page mais restent masquées jusqu'à votre tentative ou à un clic explicite ; chaque
+    correction se révèle étape par étape, avec un calcul encadré, une courbe tracée ou un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangées : choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Le score est calculé dans ce navigateur
+    et repris par la grille d'auto-évaluation.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+  <h3 id="m-formules">Cinq formules essentielles</h3>
+  <div class="formule-cle">$$\varepsilon_V \approx -\frac{R_{\mathrm{th}}}{R_V}, \qquad \varepsilon_A \approx -\frac{R_A}{R}$$</div>
+  <div class="formule-cle">$$\varepsilon_{\mathrm{moy}} = \frac{1{,}1107\,\overline{|x|}}{X_{\mathrm{eff}}} - 1$$</div>
+  <div class="formule-cle">$$t_m B \approx 0{,}35, \qquad t_{m,a} = \sqrt{t_{m,\mathrm{signal}}^2 + t_{m,o}^2 + t_{m,s}^2}$$</div>
+  <div class="formule-cle">$$R_tC_t = R_eC_s, \qquad C_k = \frac{R_t}{R_e}\,C_t - C_{\text{câble}} - C_e$$</div>
+  <div class="formule-cle">$$q = \frac{8\,S}{2^N}, \qquad f_0 = \frac{1}{2\pi\sqrt{L\,C}}$$</div>
+  <h3 id="m-vigilance">Cinq points de vigilance</h3>
+  <ul>
+    <li>La pince de masse d'une sonde passive est à la terre : jamais ailleurs que sur un point au potentiel de la terre.</li>
+    <li>On ne coupe jamais le conducteur de protection d'un appareil de mesure.</li>
+    <li>La chaîne de mesure vaut son maillon le plus faible en catégorie et en tension, transitoires compris.</li>
+    <li>Valeur efficace vraie, fondamental et valeur moyenne redressée sont trois grandeurs différentes dès que le signal n'est pas sinusoïdal.</li>
+    <li>La bande passante est le point à $-3\ \mathrm{dB}$ ; la sonde, sa compensation et son fil de masse en font partie.</li>
+  </ul>
+  <h3 id="m-resume">Résumé</h3>
+  <p>
+    Un instrument fait partie du circuit : le voltmètre prélève, l'ampèremètre ajoute, la sonde charge par sa capacité. Un appareil à valeur moyenne n'est juste
+    que sur une sinusoïde ; la valeur efficace vraie et le fondamental diffèrent sur un signal découpé. L'oscilloscope relié à la terre mesure par rapport à la
+    terre : sa pince de masse n'a sa place que sur un point au potentiel de la terre, et la mesure flottante demande une sonde différentielle ou une voie
+    isolée, jamais une terre coupée. La bande passante, définie à $-3\ \mathrm{dB}$, donne $t_m \approx 0{,}35/B$, et les temps de montée se composent
+    quadratiquement. Une sonde $\times 10$ se compense selon $R_tC_t = R_eC_s$ et se branche avec une masse courte. La sécurité tient à la catégorie de toute
+    la chaîne et à l'ordre des opérations.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance, deux sur le cours précédent, <a href="#/cours/metrologie-electrique">Métrologie électrique</a>, une sur le cours
+    <a href="#/cours/reponse-temporelle-et-performances">Réponse temporelle et performances</a>, vieux d'une semaine, et une sur le cours
+    <a href="#/cours/revision-5-et-etude-de-cas-transformateur">Révision 5 et étude de cas transformateur</a>, vieux d'un mois.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : vérifier par la simulation et le calcul les trois phénomènes centraux de la séance, compensation d'une sonde, composition des temps de montée et
+    lecture des multimètres, puis, si un oscilloscope est disponible, compenser une vraie sonde. Prédictions à écrire avant de commencer : dans LTspice, quelle
+    valeur de $C_k$ rend le carré affiché parfaitement plat ? De combien un front linéaire de $10\ \mathrm{ns}$, de $10$ à $90\ \%$, s'allonge-t-il à travers deux
+    filtres du premier ordre de $100$ et $200\ \mathrm{MHz}$ ? Quelle lecture un appareil à valeur moyenne donnera-t-il d'un carré de $\pm 5\ \mathrm{V}$ ?
+  </p>
+  <ol>
+    <li><strong>LTspice, diviseur compensé.</strong> Source <code>PULSE(0 5 0 1n 1n 0.5m 1m)</code> ; $R_t = 9\ \mathrm{M\Omega}$ en parallèle avec
+      $C_t = 10\ \mathrm{pF}$ ; côté oscilloscope $1\ \mathrm{M\Omega}$ en parallèle avec une capacité <code>{Cs}</code> ; directive
+      <code>.step param Cs list 80p 90p 100p</code> et analyse <code>.tran 3m</code>. Relever l'amplitude juste après le front et la constante de temps.</li>
+    <li><strong>LTspice, fil de masse.</strong> Échelon de $10\ \mathrm{ns}$ de front, source de $1\ \Omega$, inductance de $150\ \mathrm{nH}$ en série avec
+      $10\ \mathrm{pF}$ ; relever la fréquence et l'amortissement de l'oscillation ; recommencer avec $10\ \mathrm{nH}$.</li>
+    <li><strong>Python, temps de montée.</strong> Simuler un échelon idéal, puis un front linéaire de $10\ \mathrm{ns}$ de $10$ à $90\ \%$, à travers deux
+      passe-bas du premier ordre de $100$ et $200\ \mathrm{MHz}$ en cascade, par exemple avec <code>scipy.signal.lsim</code> ou une intégration d'Euler au pas
+      de $1\ \mathrm{ps}$, puis mesurer le temps de $10$ à $90\ \%$ et le comparer à la composition quadratique.</li>
+    <li><strong>Python, multimètres.</strong> Échantillonner une période de chaque signal du simulateur de la section E, calculer
+      $\sqrt{\overline{x^2}}$, $1{,}1107\,\overline{|x|}$ et l'amplitude du fondamental par transformée de Fourier discrète.</li>
+    <li><strong>Mesure réelle, facultative.</strong> Sonde $\times 10$ sur la borne de calibrage de l'oscilloscope, pince sur la borne de masse prévue à côté ;
+      tourner la vis de compensation et observer les trois allures. Aucune mesure sur un circuit relié au réseau n'est demandée dans ce travail pratique.</li>
+  </ol>
+  <p>
+    Résultats attendus : pour le diviseur, plateau immédiat avec $C_s = 90\ \mathrm{pF}$, pointe de $+11\ \%$ avec $80\ \mathrm{pF}$, arrondi de $-9\ \%$ avec
+    $100\ \mathrm{pF}$, constantes de temps de $81$, $90$ et $99\ \mathrm{\mu s}$. Pour le fil de masse, une oscillation vers $130\ \mathrm{MHz}$, peu amortie
+    avec $1\ \Omega$ de source, puis vers $500\ \mathrm{MHz}$. Pour les temps de montée, la cascade de deux premiers ordres répond à l'échelon idéal en
+    $4{,}1\ \mathrm{ns}$, un peu plus que les $3{,}9\ \mathrm{ns}$ de la composition quadratique, car un premier ordre n'est pas gaussien ; le front linéaire
+    de $10\ \mathrm{ns}$ ressort à $10{,}6\ \mathrm{ns}$, contre $\sqrt{10^2 + 3{,}5^2 + 1{,}75^2} = 10{,}7\ \mathrm{ns}$ par la composition quadratique :
+    l'approximation tient à $2\ \%$ près. Pour les multimètres, les valeurs du simulateur, dont $5{,}55\ \mathrm{V}$ affichés pour un carré de $\pm 5\ \mathrm{V}$.
+  </p>
+  <p>
+    Anomalies à observer et à expliquer : une constante de temps qui ne change pas quand $C_s$ change, signe que la capacité n'a pas été prise en compte par
+    la directive ; une oscillation qui persiste avec $10\ \mathrm{nH}$, signe d'une résistance de source trop faible ou d'un pas de calcul trop grand ; sur
+    l'appareil réel, une compensation impossible à atteindre, signe d'une sonde incompatible avec la capacité d'entrée de la voie, ou d'un commutateur
+    $\times 1$ et $\times 10$ resté sur $\times 1$.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours, notées de 0 à 4. Le bilan affiché sous la grille est calculé dans ce navigateur à
+    partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement. Aucune estimation n'est faite à votre place :
+    seul le score réellement obtenu sert de référence.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Lire votre bilan</span>
+    <p>
+      Les exercices fondamentaux testent l'erreur d'insertion d'un ampèremètre et la lecture d'un appareil à valeur moyenne ; l'intermédiaire 1 le choix d'une
+      bande passante par les temps de montée ; l'intermédiaire 2 la compensation d'une sonde ; l'avancé la tension fantôme et le mode basse impédance ; la
+      question de diagnostic la référence de potentiel d'une sonde passive ; la question conceptuelle l'interdiction de couper la terre. Un bloc réussi à moins
+      de la moitié indique la notion à reprendre avant le cours Capteurs industriels.
+    </p>
+  </div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Un oscilloscope relié à la terre mesure par rapport à la terre : sa pince de masse ne se pose que sur un point au potentiel de la terre, et toute mesure flottante passe par une sonde différentielle ou une voie isolée.</li>
+    <li data-rang="02">Un instrument fait partie du circuit et filtre ce qu'il voit : erreurs d'insertion, valeur moyenne, valeur efficace vraie ou fondamental, bande passante à $-3\ \mathrm{dB}$, sonde compensée et masse courte.</li>
+    <li data-rang="03">Une mesure sûre se prépare : catégorie de toute la chaîne, tensions transitoires comprises, raccordement hors tension après vérification, observation à distance.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> raisonner en potentiels par rapport à la terre plutôt qu'en tensions entre deux points, surtout sur un
+    équipement où le bus continu paraît "isolé" alors qu'il est référencé à la terre par le redresseur. Le réflexe à installer : avant de brancher, écrire le
+    potentiel de chaque point par rapport au PE, et en déduire la sonde.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Capteurs industriels, remonte la chaîne de mesure jusqu'au capteur. Question à préparer : une
+    sonde Pt100, dont la résistance vaut $100\ \Omega$ à $0\ ^\circ\mathrm{C}$ et augmente d'environ $0{,}385\ \Omega$ par degré, est raccordée par deux fils de
+    $0{,}5\ \Omega$ chacun ; quelle erreur de température commet-on si l'on mesure la résistance aux bornes du transmetteur, et quel montage la supprime ?
+  </p>
+</article>
