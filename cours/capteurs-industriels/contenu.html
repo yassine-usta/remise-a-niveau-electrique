@@ -1,0 +1,1360 @@
+<article class="cours" data-slug="capteurs-industriels">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/multimetre-oscilloscope-et-sondes">Multimètre, oscilloscope et sondes</a> s'est achevé sur une question : une sonde Pt100,
+      dont la résistance vaut $100\ \Omega$ à $0\ ^\circ\mathrm{C}$ et augmente d'environ $0{,}385\ \Omega$ par degré, est raccordée par deux fils de
+      $0{,}5\ \Omega$ chacun ; quelle erreur commet-on en mesurant la résistance aux bornes du transmetteur, et quel montage la supprime ? Réponse courte. Le
+      courant de mesure traverse la sonde et les deux fils : le transmetteur voit $R_T + 2R_f = R_T + 1\ \Omega$. Avec $0{,}385\ \Omega/\mathrm{K}$, ce
+      ohm supplémentaire se lit comme $1/0{,}385 = 2{,}6\ \mathrm{K}$ de trop, toujours dans le même sens : c'est une erreur systématique, exactement comme
+      l'erreur d'insertion d'un voltmètre. Le montage trois fils la compense, à condition que les fils soient identiques ; le montage quatre fils la supprime,
+      parce que les fils de mesure de tension ne portent aucun courant. Cette séance part de là et parcourt les capteurs que l'on rencontre dans une
+      installation : température, pression et niveau, présence et position, vitesse et angle, courant et tension.
+    </p>
+    <p>
+      La séance réutilise la résistivité et son coefficient de température du cours <a href="#/cours/loi-d-ohm-et-resistivite">Loi d'Ohm et résistivité</a>,
+      la thermistance du cours <a href="#/cours/revision-2-et-mini-projet-capteur">Révision 2 et mini-projet capteur</a>, le premier ordre du cours
+      <a href="#/cours/regime-transitoire-rc">Régime transitoire RC</a>, les transformateurs de courant du cours
+      <a href="#/cours/autotransformateurs-tc-et-tp">Autotransformateurs, TC et TP</a>, la force électromotrice du cours
+      <a href="#/cours/machine-a-courant-continu">Machine à courant continu</a>, l'échantillonnage du cours <a href="#/cours/commande-numerique">Commande
+      numérique</a>, la régulation de vitesse du convoyeur du cours <a href="#/cours/revision-9-et-mini-projet-regulation">Révision 9 et mini-projet
+      régulation</a> et le vocabulaire de l'incertitude du cours <a href="#/cours/metrologie-electrique">Métrologie électrique</a>.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Une régulation ne règle jamais la grandeur physique : elle règle la mesure de cette grandeur. Un automate ne voit jamais une palette, une pression ou une
+    température : il voit une tension, un courant, un front. Tout ce que le cours <a href="#/cours/correcteurs-p-pi-pd-et-pid">Correcteurs P, PI, PD et
+    PID</a> a construit, marges, rapidité, précision, repose donc sur un capteur ; et tout ce que l'automatisme prévoit, sécurité, verrouillage, mode dégradé,
+    repose sur un détecteur qui doit changer d'état au bon moment. Un capteur mal choisi fait plus de dégâts qu'un correcteur mal réglé, parce que ses erreurs
+    sont invisibles : la boucle suit fidèlement une mesure fausse.
+  </p>
+  <ul>
+    <li><strong>Choisir le principe physique.</strong> Une Pt100 ne mesure pas $900\ ^\circ\mathrm{C}$ ; un thermocouple mesure mal $37\ ^\circ\mathrm{C}$ au
+      dixième près ; un détecteur inductif ne voit ni le carton ni le plastique, et voit l'aluminium trois fois moins loin que l'acier.</li>
+    <li><strong>Raccorder sans fausser.</strong> Résistance des fils d'une sonde à résistance, câble de compensation d'un thermocouple, soudure froide,
+      polarité d'un détecteur PNP ou NPN, blindage d'un codeur : la moitié des erreurs de mesure se commettent entre le capteur et l'automate.</li>
+    <li><strong>Connaître la dynamique.</strong> Une sonde dans un doigt de gant répond en quelques dizaines de secondes ; un codeur doit être lu assez vite
+      pour ne perdre aucun front et assez longtemps pour que la vitesse calculée ait une résolution utile.</li>
+    <li><strong>Diagnostiquer.</strong> Une température qui dérive avec celle de l'armoire, une palette en aluminium jamais détectée, un comptage qui dérive
+      d'un tour par heure : chaque symptôme pointe vers un mécanisme précis, à condition de connaître le principe du capteur.</li>
+  </ul>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Jalon visé par le module</span>
+    <p>
+      Le jalon de fin du module Mesure et instrumentation demande d'utiliser correctement les instruments de mesure et de concevoir une chaîne d'acquisition
+      industrielle. Après les instruments, cette séance traite le premier maillon de la chaîne : le capteur, son principe, son raccordement et son choix. Le
+      travail central est le choix des capteurs du site du projet fil rouge, et l'exemple résolu chiffre la mesure de température des paliers de la pompe.
+    </p>
+  </div>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Expliquer le principe physique d'une sonde à résistance, d'un thermocouple, d'une jauge de contrainte, d'un détecteur inductif, d'un codeur et d'un capteur à effet Hall, et en déduire leur domaine d'emploi.</li>
+    <li data-rang="02">Calculer la résistance d'une Pt100 par la relation de Callendar et Van Dusen, sa sensibilité, et l'erreur due aux fils en montage deux, trois et quatre fils.</li>
+    <li data-rang="03">Calculer la température d'un thermocouple à partir de sa force électromotrice et de la température de soudure froide, et diagnostiquer une compensation absente ou un câble inadapté.</li>
+    <li data-rang="04">Dimensionner la lecture d'un codeur incrémental : fréquence des voies, résolution après décodage, durée de comptage nécessaire pour une résolution de vitesse donnée.</li>
+    <li data-rang="05">Comparer shunt, transformateur de courant, capteur à effet Hall en boucle ouverte et en boucle fermée, et dimensionner la résistance de mesure d'un capteur en boucle fermée.</li>
+    <li data-rang="06">Choisir un capteur pour une application industrielle à partir de la grandeur, de l'étendue, de l'exactitude, de la dynamique, de l'environnement et de l'interface, et justifier les compromis.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>Cinq rappels suffisent.</p>
+  <ul>
+    <li><strong>Résistance et température.</strong> $R = \rho L/S$ ; pour un métal, $\rho$ croît presque linéairement avec la température :
+      $R(T) \approx R_0(1 + \alpha T)$, avec $\alpha$ de l'ordre de $4 \times 10^{-3}\ \mathrm{K^{-1}}$ pour le cuivre et le platine. Pour une thermistance
+      à coefficient négatif, au contraire, $R$ décroît fortement et de façon exponentielle.</li>
+    <li><strong>Premier ordre.</strong> Un capteur thermique plongé dans un fluide répond à un échelon comme un circuit $RC$ :
+      $T_m(t) = T_0 + \Delta T\,(1 - e^{-t/\tau})$ ; il atteint $63\ \%$ de l'échelon à $t = \tau$ et $95\ \%$ à $t = \tau\ln 20 \approx 3\tau$.</li>
+    <li><strong>Force de Lorentz.</strong> Une charge $q$ animée d'une vitesse $\vec v$ dans une induction $\vec B$ subit $\vec F = q\,\vec v \wedge \vec B$,
+      perpendiculaire à la fois à sa vitesse et au champ.</li>
+    <li><strong>Pression hydrostatique.</strong> Au fond d'une colonne de liquide de masse volumique $\rho$ et de hauteur $h$, la pression relative vaut
+      $p = \rho g h$ ; un mètre d'eau correspond à $9{,}81\ \mathrm{kPa}$, soit environ $98\ \mathrm{mbar}$.</li>
+    <li><strong>Incertitude.</strong> Une erreur maximale $\pm a$ donnée par un constructeur se convertit, en loi rectangulaire, en incertitude-type
+      $u = a/\sqrt 3$ ; les incertitudes-types indépendantes se composent quadratiquement.</li>
+  </ul>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Notation de la séance</span>
+    <p>
+      $T$ : température en degrés Celsius ; $R_T$ : résistance de la sonde à la température $T$ ; $R_0$ : sa valeur à $0\ ^\circ\mathrm{C}$ ;
+      $S = \mathrm{d}R_T/\mathrm{d}T$ : sensibilité en $\Omega/\mathrm{K}$ ; $R_f$ : résistance d'un fil de liaison. $E(T)$ : force électromotrice tabulée
+      d'un thermocouple dont la soudure de référence est à $0\ ^\circ\mathrm{C}$ ; $T_c$ : température de la soudure chaude, celle que l'on veut mesurer ;
+      $T_f$ : température de la soudure froide, au bornier où les fils du thermocouple rejoignent le cuivre. $N$ : nombre de points par tour d'un codeur ;
+      $k$ : facteur de décodage, $1$, $2$ ou $4$ ; $n$ : vitesse en tours par minute. $I_p$, $I_s$ : courants primaire et secondaire d'un capteur de courant ;
+      $N_2$ : nombre de spires de son enroulement secondaire. Une flèche de tension pointe vers la borne $+$ ; un courant est compté positif dans le sens de sa
+      flèche.
+    </p>
+  </div>
+  <p>
+    Mini-test de trois questions. Les réponses restent masquées, séparées de l'énoncé, jusqu'à votre tentative ou à un clic explicite.
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+  <h3 id="d-transduction">Un capteur est un effet physique que l'on a domestiqué</h3>
+  <p>
+    Un capteur n'invente rien : il exploite un effet physique par lequel la grandeur à mesurer modifie une grandeur électrique. La température change la
+    résistivité d'un métal, ou fait apparaître une force électromotrice à la jonction de deux métaux différents. Une pression déforme une membrane, et la
+    déformation change la résistance d'une jauge collée dessus. Un objet métallique approché d'une bobine y absorbe de l'énergie par courants de Foucault. Un
+    champ magnétique dévie les porteurs de charge d'une plaquette et fait apparaître une tension sur ses bords. L'ingénieur choisit l'effet qui répond le plus
+    à la grandeur voulue et le moins à toutes les autres, appelées grandeurs d'influence.
+  </p>
+  <p>
+    Deux familles se distinguent. Un capteur <strong>passif</strong> change d'impédance, résistance, capacité ou inductance : il faut l'alimenter, et son
+    signal est proportionnel à l'excitation qu'on lui fournit. Un capteur <strong>actif</strong> produit lui-même un signal électrique, comme un
+    thermocouple ou une génératrice tachymétrique : il prélève son énergie sur le phénomène mesuré. Dans les deux cas, mesurer coûte un peu d'énergie au
+    procédé, ou lui en apporte : le courant de mesure chauffe la Pt100, la masse du capteur refroidit le fluide, la bobine d'un détecteur freine la cible.
+    L'art est de rendre ces perturbations négligeables devant l'exactitude voulue.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Analogie du thermomètre médical, et ses limites</span>
+    <p>
+      Un thermomètre médical ne mesure pas la température du patient : il mesure la sienne, après avoir attendu qu'elle rejoigne celle du patient. Tout capteur
+      fait de même : il mesure son propre état, et l'on suppose qu'il est à l'équilibre avec le procédé. D'où le temps de réponse, et d'où l'erreur si le
+      contact thermique est mauvais. L'analogie a deux limites. D'abord, le thermomètre médical est lu par quelqu'un qui sait qu'il faut attendre ; un automate
+      lit la mesure à chaque cycle, y compris pendant le transitoire. Ensuite, le thermomètre est une chaîne complète, capteur et afficheur ; un capteur
+      industriel n'est que le premier maillon, et ses fils, son conditionnement et sa conversion ajoutent leurs propres erreurs.
+    </p>
+  </div>
+
+  <h3 id="d-hall">Voir l'effet Hall : des porteurs déviés qui s'accumulent sur les bords</h3>
+  <p>
+    L'effet Hall illustre bien l'idée d'un effet domestiqué. Une plaquette conductrice est parcourue par un courant $I$ ; une induction $B$ lui est
+    perpendiculaire. Les porteurs de charge, des électrons dans la figure, sont déviés par la force de Lorentz vers l'un des bords. Ils s'y accumulent et créent
+    un champ électrique transversal, qui finit par équilibrer exactement la force magnétique : le régime établi est atteint en une fraction de nanoseconde. La
+    tension qui apparaît alors entre les deux bords, la tension de Hall $V_H$, est proportionnelle au produit $IB$ et inversement proportionnelle à la densité
+    de porteurs.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Avant d'utiliser la simulation suivante, écrivez vos réponses. Si l'on inverse le sens de $B$, que devient le signe de $V_H$ ? Si l'on double le
+      courant, que devient $V_H$ ? À courant et champ égaux, la tension de Hall d'une plaquette de cuivre est-elle plus grande ou plus petite que celle d'une
+      plaquette de semi-conducteur, et de combien d'ordres de grandeur ? Pourquoi, selon vous, tous les capteurs à effet Hall utilisent-ils un semi-conducteur ?
+    </p>
+  </div>
+  <figure id="d-hall-sim">
+    <div class="schema-vivant" id="d-hall-vivant"></div>
+    <div id="d-hall-curseurs"></div>
+    <div id="d-hall-lecteur"></div>
+    <div id="d-hall-valeurs"></div>
+    <figcaption>
+      Plaquette de Hall vue de dessus, épaisseur $t = 10\ \mathrm{\mu m}$, largeur $w = 1\ \mathrm{mm}$. Le courant conventionnel $I$ entre par la borne de
+      gauche et sort par la borne de droite, flèche du haut ; les électrons, petits disques, avancent donc de droite à gauche. L'induction $B$ est
+      perpendiculaire au plan de la figure : le cercle marqué d'un point indique un champ dirigé vers le lecteur, le cercle marqué d'une croix un champ qui
+      s'éloigne. Les signes $+$ et $-$ portés le long des bords représentent les charges accumulées, en nombre proportionnel à $V_H$. La flèche verticale de
+      droite est la tension $V_H = v_{\mathrm{haut}} - v_{\mathrm{bas}}$, mesurée entre les bornes de Hall, le bord bas servant de référence ; elle pointe vers le
+      bord positif. Sur la plaquette, l'électron agrandi porte deux flèches : la force magnétique, trait plein, et la force électrique due aux charges
+      accumulées, en tirets ; leur longueur croît avec leur intensité, et elles sont égales en régime établi. Les curseurs règlent $I$, $B$ et le matériau ; le lecteur fait
+      avancer ou arrête le mouvement des électrons, à la vitesse choisie. Après un changement de réglage pendant la lecture, les électrons sont d'abord
+      déviés vers un bord, puis, à mesure que les charges s'accumulent et que la force électrique rattrape la force magnétique, avancent de nouveau en ligne
+      droite : c'est le régime établi, atteint en réalité en une fraction de nanoseconde. À l'arrêt, la figure montre directement ce régime établi. Le
+      mouvement est très ralenti et la déviation exagérée ; dans le cuivre, la vitesse de dérive réelle est si faible que les électrons paraissent immobiles
+      et qu'aucune charge accumulée n'est perceptible.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Le signe de $V_H$ suit celui du produit $IB$ : inverser le champ ou le courant inverse la tension, ce qui fait du capteur
+    de Hall un capteur de champ signé, donc de courant continu comme alternatif. $V_H$ double quand $I$ double : le capteur est passif, sa sensibilité est
+    proportionnelle au courant d'alimentation. Surtout, à $5\ \mathrm{mA}$ et $0{,}1\ \mathrm{T}$, le cuivre ne donne que $3{,}7\ \mathrm{nV}$, quand le
+    semi-conducteur de densité $10^{22}\ \mathrm{m^{-3}}$ donne $31\ \mathrm{mV}$ : sept ordres de grandeur, exactement le rapport des densités de porteurs.
+    Dans le cuivre, les électrons sont si nombreux qu'ils avancent à quelques dizaines de micromètres par seconde ; la force magnétique, proportionnelle à leur
+    vitesse, est infime. Dans le semi-conducteur, dix millions de fois moins de porteurs doivent transporter le même courant : ils vont dix millions de fois
+    plus vite, et la tension de Hall est dix millions de fois plus grande.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+  <h3 id="e-caracteristiques">Caractéristiques d'un capteur : ce que dit la fiche technique</h3>
+  <p>
+    Un capteur se décrit par une fonction de transfert statique $s = f(m)$ entre la grandeur mesurée $m$ et le signal $s$, complétée par sa dynamique et ses
+    défauts. Le vocabulaire est celui du cours <a href="#/cours/metrologie-electrique">Métrologie électrique</a>, appliqué au premier maillon.
+  </p>
+  <ul>
+    <li><strong>Étendue de mesure</strong> : intervalle de $m$ pour lequel les performances sont garanties, par exemple $-50$ à $+250\ ^\circ\mathrm{C}$.</li>
+    <li><strong>Sensibilité</strong> : $S = \mathrm{d}s/\mathrm{d}m$ au point de fonctionnement, en unité de sortie par unité d'entrée, par exemple
+      $0{,}385\ \Omega/\mathrm{K}$ pour une Pt100 vers $0\ ^\circ\mathrm{C}$ ou $41\ \mathrm{\mu V/K}$ pour un thermocouple de type K.</li>
+    <li><strong>Linéarité</strong> : écart maximal entre la caractéristique réelle et une droite de référence, souvent exprimé en pour cent de l'étendue.</li>
+    <li><strong>Hystérésis et répétabilité</strong> : écart entre montée et descente, dispersion de mesures répétées dans les mêmes conditions.</li>
+    <li><strong>Résolution</strong> : plus petite variation de $m$ qui produit une variation observable de $s$. Elle ne dit rien de l'exactitude : un
+      codeur de $4096$ fronts par tour résout $0{,}088^\circ$, mais son excentricité de montage peut fausser l'angle de bien plus.</li>
+    <li><strong>Grandeurs d'influence</strong> : température ambiante, tension d'alimentation, champ magnétique, vibrations, humidité ; la fiche les donne
+      sous forme de coefficients, par exemple $\pm 0{,}02\ \%$ de l'étendue par kelvin.</li>
+    <li><strong>Temps de réponse</strong> : pour un capteur du premier ordre, la constante de temps $\tau$ ; pour un détecteur, le temps de commutation et
+      la fréquence maximale de commutation.</li>
+  </ul>
+  <p>
+    <strong>Dynamique d'un capteur thermique.</strong> Une sonde de capacité thermique $C_{th}$, en $\mathrm{J/K}$, échange de la chaleur avec un fluide à
+    travers une résistance thermique $R_{th}$, en $\mathrm{K/W}$. Le bilan d'énergie s'écrit $C_{th}\,\mathrm{d}T_m/\mathrm{d}t = (T_p - T_m)/R_{th}$, soit
+    $\tau\,\mathrm{d}T_m/\mathrm{d}t + T_m = T_p$ avec $\tau = R_{th}C_{th}$. Hypothèses : sonde à température uniforme, coefficient d'échange constant.
+    Vérification dimensionnelle : $\mathrm{K/W} \times \mathrm{J/K} = \mathrm{J/W} = \mathrm{s}$. Cas limite : un contact parfait, $R_{th} \to 0$, donne
+    $\tau \to 0$ et une mesure instantanée. Un doigt de gant, tube de protection qui permet de démonter la sonde sans vidanger le circuit, ajoute de la masse
+    et une lame d'air : $\tau$ passe de quelques secondes pour une sonde nue dans un liquide agité à plusieurs dizaines de secondes, voire quelques minutes
+    dans un gaz.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      La température d'une huile passe brusquement de $40$ à $90\ ^\circ\mathrm{C}$. Une sonde de constante de temps $30\ \mathrm{s}$ est lue par
+      l'automate, dont l'alarme est réglée à $85\ ^\circ\mathrm{C}$. Au bout de combien de temps environ l'alarme est-elle émise ? Et si la sonde était nue,
+      avec $\tau = 3\ \mathrm{s}$ ? Écrivez vos estimations, puis vérifiez-les.
+    </p>
+  </div>
+  <figure id="e-reponse-sim">
+    <div id="e-reponse-curseurs"></div>
+    <div id="e-reponse-trace"></div>
+    <div id="e-reponse-valeurs"></div>
+    <figcaption>
+      Réponse d'un capteur thermique du premier ordre à un échelon de température du procédé. L'axe horizontal est le temps en secondes depuis l'échelon,
+      l'axe vertical la température en degrés Celsius. La série "température du procédé" est l'échelon lui-même ; la série "température mesurée" est celle de
+      la sonde. Le trait horizontal en tirets marque le seuil d'alarme, le trait vertical en pointillés l'instant où la mesure le franchit. Les curseurs
+      règlent la constante de temps, la température finale et le seuil ; le panneau donne les instants à $63\ \%$ et $95\ \%$ et le retard d'alarme.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Avec $\tau = 30\ \mathrm{s}$, l'alarme n'est émise qu'au bout de $\tau\ln(50/5) = 69\ \mathrm{s}$ : le capteur
+    franchit $85\ ^\circ\mathrm{C}$ quand il ne reste que $5\ \mathrm{K}$ des $50\ \mathrm{K}$ de l'échelon, soit un dixième. Avec $\tau = 3\ \mathrm{s}$,
+    le même seuil est franchi en $6{,}9\ \mathrm{s}$. Le retard d'alarme est proportionnel à $\tau$ et croît comme le logarithme de la proximité du seuil à la
+    valeur finale : un seuil placé à $1\ \mathrm{K}$ sous la valeur finale ne serait franchi qu'au bout de $3{,}9\,\tau$. Pour une protection, c'est la
+    constante de temps de la sonde montée, doigt de gant compris, qui compte, pas celle de la fiche du capteur nu.
+  </p>
+
+  <h3 id="e-rtd">Sondes à résistance de platine</h3>
+  <p>
+    <strong>Principe.</strong> Dans un métal, l'agitation thermique du réseau gêne le mouvement des électrons : la résistivité croît avec la température.
+    Le platine est choisi pour sa stabilité chimique, sa pureté reproductible et la quasi-linéarité de sa caractéristique. Une Pt100 vaut
+    $R_0 = 100\ \Omega$ à $0\ ^\circ\mathrm{C}$ ; une Pt1000, $1000\ \Omega$. Leur caractéristique est décrite par la relation de Callendar et Van Dusen :
+  </p>
+  <div class="formule-cle">$$R_T = R_0\left(1 + A\,T + B\,T^2\right) \quad \text{pour } 0 \leq T \leq 850\ ^\circ\mathrm{C}$$</div>
+  <p class="formule-cle-legende">
+    $R_T$ et $R_0$ en ohms, $T$ en degrés Celsius, $A = 3{,}9083 \times 10^{-3}\ \mathrm{K^{-1}}$ et $B = -5{,}775 \times 10^{-7}\ \mathrm{K^{-2}}$. Sous
+    $0\ ^\circ\mathrm{C}$, on ajoute le terme $C\,(T - 100)\,T^3$, avec $C = -4{,}183 \times 10^{-12}\ \mathrm{K^{-4}}$.
+  </p>
+  <p>
+    Ces coefficients sont ceux du platine industriel normalisé ; ce sont des valeurs conventionnelles ajustées sur la courbe réelle, pas des constantes
+    fondamentales. On en tire $R_{100} = 100(1 + 0{,}39083 - 0{,}005775) = 138{,}51\ \Omega$ et le coefficient moyen
+    $\alpha = (R_{100} - R_0)/(100\,R_0) = 0{,}003851\ \mathrm{K^{-1}}$, d'où les $0{,}385\ \Omega/\mathrm{K}$ de la question d'ouverture. La sensibilité
+    locale se dérive : $S(T) = \mathrm{d}R_T/\mathrm{d}T = R_0(A + 2BT)$, soit $0{,}3908\ \Omega/\mathrm{K}$ à $0\ ^\circ\mathrm{C}$ et
+    $0{,}3816\ \Omega/\mathrm{K}$ à $80\ ^\circ\mathrm{C}$ : elle baisse lentement, de $2{,}4\ \%$ sur $80\ \mathrm{K}$. Cas limite : $B = 0$ donne la droite
+    $R_0(1 + AT)$, qui surestime $R_T$ de $0{,}58\ \Omega$ à $100\ ^\circ\mathrm{C}$, soit $1{,}5\ \mathrm{K}$. Vérification dimensionnelle : $AT$ et $BT^2$
+    sont sans dimension, $S$ est en ohms par kelvin. Les classes de tolérance usuelles des sondes industrielles sont la classe A,
+    $\pm(0{,}15 + 0{,}002\,|T|)\ \mathrm{K}$, et la classe B, $\pm(0{,}30 + 0{,}005\,|T|)\ \mathrm{K}$ ; elles sont fixées par la norme internationale des
+    sondes à résistance de platine et doivent être vérifiées sur la fiche de la sonde retenue.
+  </p>
+  <p>
+    <strong>Auto-échauffement.</strong> La sonde est passive : on lui impose un courant de mesure $I$, typiquement $0{,}5$ à $1\ \mathrm{mA}$, qui y dissipe
+    $P = R_T I^2$. Elle s'échauffe de $\Delta T = E\,P$, où $E$, en $\mathrm{K/mW}$, est le coefficient d'auto-échauffement donné par le constructeur pour un
+    milieu donné, de quelques centièmes dans un liquide agité à plusieurs dixièmes dans l'air calme. À $1\ \mathrm{mA}$ sous $130\ \Omega$,
+    $P = 0{,}13\ \mathrm{mW}$ : l'erreur reste de quelques centièmes de kelvin. À $10\ \mathrm{mA}$, elle serait cent fois plus grande. C'est une erreur
+    systématique, toujours positive.
+  </p>
+  <p>
+    <strong>Résistance des fils : deux, trois ou quatre fils.</strong> La sonde est souvent à plusieurs dizaines de mètres de son transmetteur. Chaque fil de
+    cuivre a une résistance $R_f = \rho L/S$, soit $2{,}06\ \Omega$ pour $60\ \mathrm{m}$ de $0{,}5\ \mathrm{mm^2}$. Le montage décide de ce que devient
+    cette résistance.
+  </p>
+  <ul>
+    <li><strong>Deux fils.</strong> Le courant parcourt les deux fils et la sonde : $R_{\mathrm{mes}} = R_T + 2R_f$. L'erreur de température vaut
+      $\Delta T \approx 2R_f/S$, soit $10{,}8\ \mathrm{K}$ pour les $60\ \mathrm{m}$ précédents. Ce montage n'est acceptable que pour des liaisons très
+      courtes, ou avec une Pt1000, dix fois plus sensible.</li>
+    <li><strong>Trois fils.</strong> Un fil arrive d'un côté de la sonde, deux de l'autre. Le transmetteur mesure la tension $V_{12}$ sur la boucle parcourue
+      par le courant, fil 1, sonde, fil 2, et la tension $V_{32}$ aux bornes du seul fil 2, le fil 3 ne portant aucun courant. Il calcule
+      $R_{\mathrm{mes}} = V_{12}/I - 2V_{32}/I = R_T + R_{f1} - R_{f2}$. Si les fils sont identiques, l'erreur s'annule ; sinon, il reste
+      $\Delta T \approx (R_{f1} - R_{f2})/S$. Le montage compense, il ne supprime pas : sections différentes, bornier oxydé ou connexion desserrée sur un
+      seul fil se lisent directement comme une erreur de température.</li>
+    <li><strong>Quatre fils.</strong> Deux fils amènent le courant, deux autres mesurent la tension aux bornes mêmes de la sonde. Les fils de mesure ne
+      portent qu'un courant négligeable, l'entrée du voltmètre étant de très haute impédance : $R_{\mathrm{mes}} = R_T$, quelles que soient les résistances
+      des fils. C'est la mesure de Kelvin, réservée aux mesures de précision et aux étalonnages.</li>
+  </ul>
+  <figure id="e-pt100-figure">
+    <svg viewBox="0 0 840 360" role="img" aria-label="Montages deux, trois et quatre fils d'une sonde Pt100 : pour chacun, la sonde RT à gauche, les fils de liaison avec leurs résistances Rf, les bornes numérotées du transmetteur à droite, le sens du courant de mesure I et la tension mesurée">
+      <defs><marker id="e-pt-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7">
+        <rect x="10" y="18" width="268" height="334" rx="10" stroke-dasharray="2 4" stroke-width="1"/>
+        <rect x="288" y="18" width="268" height="334" rx="10" stroke-dasharray="2 4" stroke-width="1"/>
+        <rect x="566" y="18" width="268" height="334" rx="10" stroke-dasharray="2 4" stroke-width="1"/>
+        <rect x="28" y="124" width="44" height="102" rx="6" stroke-dasharray="4 3" stroke-width="1"/>
+        <rect x="306" y="124" width="44" height="102" rx="6" stroke-dasharray="4 3" stroke-width="1"/>
+        <rect x="584" y="124" width="44" height="102" rx="6" stroke-dasharray="4 3" stroke-width="1"/>
+        <rect x="40" y="140" width="20" height="70" rx="2"/>
+        <path d="M50 140V100H110l4 -6l8 12l8 -12l8 12l8 -12l4 6H215"/>
+        <path d="M50 210V250H110l4 -6l8 12l8 -12l8 12l8 -12l4 6H215"/>
+        <circle cx="219" cy="100" r="4"/>
+        <circle cx="219" cy="250" r="4"/>
+        <path d="M200 100H172" marker-end="url(#e-pt-fl)" stroke-width="1.3"/>
+        <path d="M172 250H200" marker-end="url(#e-pt-fl)" stroke-width="1.3"/>
+        <path d="M22 156V194" marker-end="url(#e-pt-fl)" stroke-width="1.3"/>
+        <path d="M248 240V112" marker-end="url(#e-pt-fl)" stroke-width="1.3"/>
+        <rect x="318" y="140" width="20" height="70" rx="2"/>
+        <path d="M328 140V100H388l4 -6l8 12l8 -12l8 12l8 -12l4 6H493"/>
+        <path d="M328 210V240H388l4 -6l8 12l8 -12l8 12l8 -12l4 6H493"/>
+        <path d="M328 240V275H388l4 -6l8 12l8 -12l8 12l8 -12l4 6H493"/>
+        <circle cx="497" cy="100" r="4"/>
+        <circle cx="497" cy="240" r="4"/>
+        <circle cx="497" cy="275" r="4"/>
+        <path d="M478 100H450" marker-end="url(#e-pt-fl)" stroke-width="1.3"/>
+        <path d="M450 240H478" marker-end="url(#e-pt-fl)" stroke-width="1.3"/>
+        <path d="M300 156V194" marker-end="url(#e-pt-fl)" stroke-width="1.3"/>
+        <path d="M524 232V112" marker-end="url(#e-pt-fl)" stroke-width="1.3"/>
+        <path d="M512 270V248" marker-end="url(#e-pt-fl)" stroke-width="1.3"/>
+        <rect x="596" y="140" width="20" height="70" rx="2"/>
+        <path d="M606 140V80H666l4 -6l8 12l8 -12l8 12l8 -12l4 6H771"/>
+        <path d="M606 110H666l4 -6l8 12l8 -12l8 12l8 -12l4 6H771"/>
+        <path d="M606 240H666l4 -6l8 12l8 -12l8 12l8 -12l4 6H771"/>
+        <path d="M606 210V270H666l4 -6l8 12l8 -12l8 12l8 -12l4 6H771"/>
+        <circle cx="775" cy="80" r="4"/>
+        <circle cx="775" cy="110" r="4"/>
+        <circle cx="775" cy="240" r="4"/>
+        <circle cx="775" cy="270" r="4"/>
+        <path d="M756 80H728" marker-end="url(#e-pt-fl)" stroke-width="1.3"/>
+        <path d="M728 270H756" marker-end="url(#e-pt-fl)" stroke-width="1.3"/>
+        <path d="M578 156V194" marker-end="url(#e-pt-fl)" stroke-width="1.3"/>
+        <path d="M802 232V118" marker-end="url(#e-pt-fl)" stroke-width="1.3"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="328" cy="240" r="3"/>
+        <circle cx="606" cy="110" r="3"/>
+        <circle cx="606" cy="240" r="3"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11">
+        <text x="22" y="40" font-size="12.5">2 fils</text>
+        <text x="300" y="40" font-size="12.5">3 fils</text>
+        <text x="578" y="40" font-size="12.5">4 fils</text>
+        <text x="34" y="236">sonde</text>
+        <text x="312" y="236">sonde</text>
+        <text x="590" y="236">sonde</text>
+        <text x="64" y="178">RT</text>
+        <text x="342" y="178">RT</text>
+        <text x="620" y="178">RT</text>
+        <text x="14" y="150">I</text>
+        <text x="292" y="150">I</text>
+        <text x="570" y="150">I</text>
+        <text x="118" y="86">Rf1</text>
+        <text x="118" y="236">Rf2</text>
+        <text x="182" y="92">I</text>
+        <text x="182" y="268">I</text>
+        <text x="228" y="104">1</text>
+        <text x="228" y="254">2</text>
+        <text x="252" y="180">V12</text>
+        <text x="396" y="86">Rf1</text>
+        <text x="396" y="226">Rf2</text>
+        <text x="396" y="294">Rf3</text>
+        <text x="460" y="92">I</text>
+        <text x="460" y="232">I</text>
+        <text x="440" y="294">I = 0</text>
+        <text x="506" y="104">1</text>
+        <text x="506" y="236">2</text>
+        <text x="506" y="288">3</text>
+        <text x="528" y="180">V12</text>
+        <text x="476" y="262">V32</text>
+        <text x="674" y="66">Rf1</text>
+        <text x="716" y="126">Rf2, I = 0</text>
+        <text x="716" y="256">Rf3, I = 0</text>
+        <text x="674" y="296">Rf4</text>
+        <text x="738" y="72">I</text>
+        <text x="738" y="288">I</text>
+        <text x="784" y="76">1</text>
+        <text x="784" y="106">2</text>
+        <text x="784" y="236">3</text>
+        <text x="784" y="274">4</text>
+        <text x="806" y="180">V23</text>
+        <text x="22" y="318">V12 / I = RT + 2 Rf</text>
+        <text x="22" y="338">erreur : + 2 Rf / S</text>
+        <text x="300" y="318">(V12 - 2 V32) / I</text>
+        <text x="300" y="338">= RT + Rf1 - Rf2</text>
+        <text x="578" y="318">V23 / I = RT</text>
+        <text x="578" y="338">fils sans effet</text>
+      </g>
+    </svg>
+    <figcaption>
+      Trois raccordements d'une même sonde $R_T$, à gauche de chaque cadre dans son enveloppe en tirets, vers les bornes numérotées du transmetteur, à droite.
+      Les résistances en zigzag sont celles des fils de liaison. Le transmetteur contient une source de courant $I$, non dessinée, qui fait sortir le courant
+      par la borne 1 et le fait rentrer par la borne 2, ou 4 en quatre fils : les flèches fines sur les fils et à gauche de la sonde donnent ce sens, la sonde
+      étant parcourue de haut en bas, en convention récepteur. Les flèches verticales de droite sont les tensions mesurées, chacune pointant vers la borne
+      positive ; la borne d'arrivée du courant, 2 ou 4, sert de référence. Les fils marqués $I = 0$ ne relient qu'une entrée de mesure de très haute impédance.
+      La dernière ligne de chaque cadre donne la résistance calculée par le transmetteur.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Thermistances.</strong> Une thermistance à coefficient négatif, déjà rencontrée dans le cours <a href="#/cours/revision-2-et-mini-projet-capteur">Révision
+    2 et mini-projet capteur</a>, suit $R = R_{25}\,e^{\beta(1/T_K - 1/298{,}15)}$, avec $T_K$ en kelvins et $\beta$ de l'ordre de $3500$ à $4000\ \mathrm{K}$.
+    Sa sensibilité relative, $-\beta/T_K^2$, vaut environ $-4{,}4\ \%/\mathrm{K}$ à $25\ ^\circ\mathrm{C}$, dix fois celle du platine : la résistance des
+    fils est négligeable, mais la caractéristique est très non linéaire et l'interchangeabilité médiocre. Les thermistances à coefficient positif, noyées
+    dans les enroulements des moteurs, s'emploient en tout ou rien : leur résistance passe de quelques centaines d'ohms à plusieurs kilohms au voisinage
+    de leur température nominale de fonctionnement, et le relais de protection ou le variateur détecte ce basculement.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Une Pt100 à $80\ ^\circ\mathrm{C}$ est raccordée par $60\ \mathrm{m}$ de câble de $0{,}5\ \mathrm{mm^2}$. Estimez l'erreur en deux fils. En trois fils,
+      si l'un des deux fils de la même extrémité passe par un bornier dont la connexion oxydée ajoute $0{,}2\ \Omega$, l'erreur est-elle positive ou négative,
+      et de quel ordre ? L'erreur en deux fils dépend-elle de la température mesurée ?
+    </p>
+  </div>
+  <figure id="e-pt100-sim">
+    <div id="e-pt100-curseurs"></div>
+    <div id="e-pt100-trace"></div>
+    <div id="e-pt100-valeurs"></div>
+    <figcaption>
+      Erreur de température d'une Pt100 due aux fils. L'axe horizontal est la longueur du câble en mètres, l'axe vertical l'erreur de température lue en
+      kelvins ; les trois séries correspondent aux montages deux, trois et quatre fils, à la température, à la section et au déséquilibre choisis. Le trait
+      vertical en pointillés marque la longueur réglée. Le déséquilibre du montage trois fils est l'écart relatif $(R_{f1} - R_{f2})/R_f$ entre les deux fils
+      de la boucle de courant ; une connexion défectueuse peut aussi être simulée par une résistance additionnelle sur le fil 1. Résistivité du cuivre à
+      $20\ ^\circ\mathrm{C}$, $1{,}72 \times 10^{-8}\ \Omega \cdot \mathrm{m}$ ; la température du câble est supposée constante.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> En deux fils, l'erreur croît linéairement avec la longueur et ne dépend presque pas de la température mesurée : la
+    sensibilité de la sonde ne varie que de quelques pour cent. À $60\ \mathrm{m}$ de $0{,}5\ \mathrm{mm^2}$, elle dépasse $10\ \mathrm{K}$, ce qui rend la
+    mesure inutilisable. En trois fils, elle est divisée par cent avec un déséquilibre de $2\ \%$, mais une connexion oxydée de $0{,}2\ \Omega$ sur le
+    fil 1 ajoute à elle seule $0{,}5\ \mathrm{K}$, positivement, parce qu'elle augmente $R_{f1}$ ; sur le fil 2, elle donnerait une erreur négative. En quatre
+    fils, l'erreur est nulle quel que soit le câble. Le choix se fait donc entre coût du câble et exactitude : trois fils pour la plupart des mesures
+    industrielles, quatre fils pour les étalonnages et les mesures de précision, deux fils seulement avec un transmetteur monté dans la tête de la sonde.
+  </p>
+
+  <h3 id="e-thermocouple">Thermocouples</h3>
+  <p>
+    <strong>Principe.</strong> Dans un conducteur dont les extrémités sont à des températures différentes, les électrons du côté chaud diffusent vers le côté
+    froid : il apparaît une force électromotrice répartie le long du gradient de température, c'est l'effet Seebeck. Son intensité dépend du matériau. Avec un
+    seul métal, la boucle de mesure n'en voit rien, car l'aller et le retour se compensent. Avec deux métaux différents soudés à une extrémité, la soudure
+    chaude, les deux forces électromotrices ne se compensent plus : la tension disponible à l'autre extrémité, la soudure froide, dépend de la différence
+    $T_c - T_f$ et de la paire de métaux. Pour le type K, nickel-chrome contre nickel-aluminium, la sensibilité vaut environ $41\ \mathrm{\mu V/K}$.
+  </p>
+  <div class="formule-cle">$$e = E(T_c) - E(T_f), \qquad E(T_c) = e + E(T_f)$$</div>
+  <p class="formule-cle-legende">
+    $e$ : tension mesurée aux bornes froides, en volts ; $E(T)$ : force électromotrice tabulée de la paire, soudure de référence à $0\ ^\circ\mathrm{C}$ ;
+    $T_c$ et $T_f$ : températures des soudures chaude et froide.
+  </p>
+  <p>
+    Cette relation, la loi des températures intermédiaires, découle de l'additivité des forces électromotrices réparties le long des fils : on peut toujours
+    découper le trajet en passant par $0\ ^\circ\mathrm{C}$. Hypothèses : fils homogènes, seules les extrémités comptent. Cas limite : $T_c = T_f$ donne
+    $e = 0$, quelle que soit la température absolue ; un thermocouple ne mesure qu'une différence. D'où la <strong>compensation de soudure froide</strong> :
+    le transmetteur mesure $T_f$ au bornier avec un capteur auxiliaire, souvent une thermistance ou une sonde à résistance, et ajoute $E(T_f)$ à la tension
+    lue. Sans compensation, il lit $E^{-1}(e)$ et sous-estime la température d'environ $T_f$, soit de $20$ à $40\ \mathrm{K}$ dans une armoire.
+  </p>
+  <p>
+    <strong>Câble de compensation.</strong> Entre la tête de sonde et le bornier, il faut prolonger les fils par un câble aux propriétés thermoélectriques
+    équivalentes à celles du thermocouple dans la plage de température du câble, appelé câble d'extension ou de compensation. Un câble en cuivre crée deux
+    nouvelles soudures dans la tête, qui deviennent la vraie soudure froide : le transmetteur compense alors la température du bornier au lieu de celle de la
+    tête, et la mesure dérive avec la température de la tête. Inverser la polarité du câble de compensation produit une erreur d'environ deux fois l'écart
+    entre la tête et le bornier. La sortie est de quelques millivolts : un thermocouple se raccorde en câble torsadé et blindé, loin des câbles de
+    puissance.
+  </p>
+  <figure id="e-tc-figure">
+    <svg viewBox="0 0 780 270" role="img" aria-label="Thermocouple de type K : soudure chaude dans le procédé, fils positif et négatif jusqu'à la tête de sonde, câble de compensation jusqu'au bornier de l'armoire où se trouvent les soudures froides et le capteur de température de soudure froide, puis fils de cuivre jusqu'au transmetteur ; tension e mesurée au bornier">
+      <defs><marker id="e-tc-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6">
+        <rect x="16" y="60" width="124" height="140" rx="10" stroke-dasharray="4 4" stroke-width="1"/>
+        <rect x="236" y="70" width="60" height="120" rx="8"/>
+        <rect x="498" y="60" width="86" height="140" rx="8"/>
+        <rect x="652" y="60" width="116" height="140" rx="8" stroke-width="2"/>
+        <path d="M66 130L120 100H520" stroke-width="3"/>
+        <path d="M66 130L120 160H520" stroke-width="1.2"/>
+        <path d="M520 100H652" stroke-dasharray="2 4"/>
+        <path d="M520 160H652" stroke-dasharray="2 4"/>
+        <rect x="532" y="120" width="34" height="20" rx="3"/>
+        <path d="M566 130H652" stroke-dasharray="2 4" stroke-width="1.1"/>
+        <path d="M630 152V108" marker-end="url(#e-tc-fl)" stroke-width="1.3"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="66" cy="130" r="4.5"/>
+        <circle cx="520" cy="100" r="3.5"/>
+        <circle cx="520" cy="160" r="3.5"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11">
+        <text x="24" y="80">procédé</text>
+        <text x="24" y="190">soudure chaude Tc</text>
+        <text x="136" y="92">fil + nickel-chrome</text>
+        <text x="136" y="178">fil - nickel-aluminium</text>
+        <text x="240" y="64">tête Ttête</text>
+        <text x="314" y="92">câble de compensation</text>
+        <text x="314" y="178">mêmes alliages</text>
+        <text x="502" y="54">bornier Tf</text>
+        <text x="500" y="214">soudures froides</text>
+        <text x="534" y="152" font-size="9.5">capteur Tf</text>
+        <text x="590" y="92">cuivre</text>
+        <text x="616" y="126">e</text>
+        <text x="634" y="98">+</text>
+        <text x="634" y="170">-</text>
+        <text x="660" y="84">transmetteur</text>
+        <text x="660" y="106" font-size="10">mesure e</text>
+        <text x="660" y="122" font-size="10">mesure Tf</text>
+        <text x="660" y="138" font-size="10">E(Tc) = e + E(Tf)</text>
+        <text x="660" y="154" font-size="10">Tc = E⁻¹(...)</text>
+        <text x="20" y="244">Trait épais : conducteur positif. Trait fin : conducteur négatif. Pointillés : cuivre.</text>
+        <text x="20" y="262">e ne dépend que de Tc et de Tf ; soudure froide au bornier, jonction avec le cuivre.</text>
+      </g>
+    </svg>
+    <figcaption>
+      Chaîne d'un thermocouple de type K. La soudure chaude, disque plein à gauche, est dans le procédé à la température $T_c$. Les deux alliages, trait épais
+      pour le conducteur positif et trait fin pour le négatif, sont prolongés de la tête de sonde jusqu'au bornier de l'armoire par un câble de compensation
+      de mêmes propriétés thermoélectriques. Au bornier, les alliages rejoignent le cuivre, en pointillés : ces deux jonctions forment la soudure froide, à
+      la température $T_f$, mesurée par le petit capteur posé sur le bornier. La flèche $e$ pointe vers le conducteur positif ; le transmetteur ajoute
+      $E(T_f)$ à $e$ puis inverse la table. Si le câble de compensation était remplacé par du cuivre, la soudure froide serait dans la tête, à $T_{\text{tête}}$,
+      et la compensation au bornier serait fausse de $E(T_{\text{tête}}) - E(T_f)$.
+    </figcaption>
+  </figure>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Un four est à $600\ ^\circ\mathrm{C}$ ; le bornier de l'armoire est à $35\ ^\circ\mathrm{C}$ et la tête de sonde, près du four, à
+      $90\ ^\circ\mathrm{C}$. Prévoyez la température lue dans trois cas : compensation correcte ; compensation désactivée ; câble en cuivre de la tête au
+      bornier avec compensation au bornier. Le défaut de compensation donne-t-il une erreur parfaitement constante quand la température du four varie ?
+    </p>
+  </div>
+  <figure id="e-tc-sim">
+    <div id="e-tc-curseurs"></div>
+    <div id="e-tc-lecteur"></div>
+    <div id="e-tc-trace"></div>
+    <div id="e-tc-valeurs"></div>
+    <figcaption>
+      Force électromotrice d'un thermocouple de type K en fonction de la température, soudure de référence à $0\ ^\circ\mathrm{C}$, calculée par le
+      polynôme de référence de ce type entre $0$ et $1300\ ^\circ\mathrm{C}$. La série "E(T), type K" est la caractéristique, la série "droite à
+      41 µV/K" l'approximation linéaire. Les traits horizontaux donnent, de haut en bas selon le cas, la force électromotrice vraie $E(T_c)$, en trait
+      plein, et celle que le transmetteur reconstitue, en tirets ; les traits verticaux donnent la température vraie et la température lue. Les curseurs règlent
+      $T_c$, la température de la tête, celle du bornier et le câblage ; le lecteur balaie la température du four de $50$ à $1200\ ^\circ\mathrm{C}$.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Compensation correcte, la lecture est juste quelles que soient les températures de la tête et du bornier : c'est la loi
+    des températures intermédiaires. Compensation désactivée, la lecture est trop basse de $33\ \mathrm{K}$ environ pour un bornier à
+    $35\ ^\circ\mathrm{C}$ et un four à $600\ ^\circ\mathrm{C}$ : un peu moins que $35\ \mathrm{K}$, et pas constante quand on balaie le four, de
+    $-33{,}9\ \mathrm{K}$ à $100\ ^\circ\mathrm{C}$ à $-38{,}3\ \mathrm{K}$ à $1200\ ^\circ\mathrm{C}$,
+    parce que la pente de $E(T)$ n'est pas la même à $35\ ^\circ\mathrm{C}$ et au point de mesure. Avec un câble en cuivre, l'erreur vaut $-53\ \mathrm{K}$ ici,
+    voisine de $T_f - T_{\text{tête}} = -55\ \mathrm{K}$, et elle suit la température de la tête : la mesure dérive quand le four chauffe son environnement.
+    Le symptôme, une température qui varie avec celle d'un local sans que le procédé change, est caractéristique.
+  </p>
+
+  <h3 id="e-pression">Pression, force et niveau</h3>
+  <p>
+    <strong>Jauges de contrainte.</strong> Un fil ou un film résistif étiré s'allonge et s'amincit : sa résistance augmente. Pour une déformation relative
+    $\varepsilon = \Delta L/L$, la variation relative vaut $\Delta R/R = K\,\varepsilon$, où le facteur de jauge $K$ vaut environ $2$ pour une jauge
+    métallique, et de $50$ à $150$ pour une jauge semi-conductrice, dite piézorésistive, plus sensible mais plus dépendante de la température. Une déformation
+    de $500\ \mathrm{\mu m/m}$ ne change une jauge de $350\ \Omega$ que de $0{,}35\ \Omega$ : on monte donc quatre jauges en pont de Wheatstone, deux en
+    traction et deux en compression, ce qui multiplie le signal par quatre et compense l'effet de la température, commun aux quatre bras. La sortie d'un pont
+    complet alimenté sous $V_a$ vaut $V_a K \varepsilon$, soit $10\ \mathrm{mV}$ sous $10\ \mathrm{V}$ : un signal différentiel faible, qui sera traité dans
+    le cours Conditionnement analogique.
+  </p>
+  <figure id="e-pression-figure">
+    <pre class="ascii">   Capteur de pression à membrane                 Pont complet de quatre jauges
+
+     pression p                                          +Va
+        ↓ ↓ ↓                                             |
+   ===========  membrane                           +------+------+
+    J1 J2 J3 J4  jauges collées                    |             |
+   ===========                                  [J1 +ΔR]     [J2 -ΔR]
+   |  cavité  |  pression de référence             |             |
+   |  p ref   |  (atmosphère ou vide)        Vs+ o-+             +-o Vs-
+   +----------+                                    |             |
+                                                [J3 -ΔR]     [J4 +ΔR]
+   centre en traction : J1, J4                     |             |
+   bord en compression : J2, J3                    +------+------+
+                                                          |
+   Vs = (Vs+) - (Vs-) = Va ΔR / R = Va K ε               0 V</pre>
+    <figcaption>
+      À gauche, une membrane fléchit sous la différence entre la pression mesurée $p$, flèches du haut, et la pression de référence de la cavité : atmosphère
+      pour un capteur de pression relative, vide pour un capteur de pression absolue, seconde prise de pression pour un capteur différentiel. Les jauges du
+      centre travaillent en traction, celles du bord en compression. À droite, les quatre jauges forment un pont alimenté entre $+V_a$ et le $0\ \mathrm{V}$ ;
+      $+\Delta R$ et $-\Delta R$ indiquent le sens de variation de chaque bras. La tension de sortie $V_s$ est prise entre les deux points milieux, la borne
+      $V_{s+}$ étant positive quand la pression augmente.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Pression relative, absolue, différentielle.</strong> Le choix de la référence est une décision de conception, pas un détail : un capteur relatif
+    lit $0$ à l'air libre, un capteur absolu lit environ $1{,}013\ \mathrm{bar}$, et un capteur relatif mal ventilé, dont l'évent est bouché, se comporte
+    comme un capteur absolu dérivant avec la météo. <strong>Niveau hydrostatique.</strong> Un capteur de pression relative immergé au fond d'une bâche mesure
+    $p = \rho g h$, d'où $h = p/(\rho g)$. Pour l'eau, $400\ \mathrm{mbar}$ correspondent à $4{,}08\ \mathrm{m}$. Hypothèses : masse volumique connue et
+    constante, liquide au repos. Une eau chargée de $5\ \%$ plus dense donne $5\ \%$ de hauteur en trop : l'erreur dépend du liquide, pas du capteur.
+  </p>
+
+  <h3 id="e-tor">Détecteurs de présence et sorties tout ou rien</h3>
+  <p>
+    <strong>Détecteur inductif.</strong> Un oscillateur alimente une bobine sur ferrite dont le champ sort par la face active. Un objet métallique entrant dans
+    ce champ est le siège de courants de Foucault qui prélèvent de l'énergie : l'amplitude d'oscillation baisse, un comparateur fait basculer la sortie. La
+    portée nominale $S_n$, de quelques millimètres à quelques dizaines de millimètres, est définie pour une cible normalisée en acier doux ; pour les autres
+    métaux, elle est multipliée par un facteur de réduction donné par le constructeur, typiquement de l'ordre de $0{,}7$ pour l'inox, $0{,}4$ pour le laiton,
+    $0{,}3$ à $0{,}45$ pour l'aluminium et le cuivre. Règle de conception : monter la cible à moins de $0{,}8$ fois la portée réelle, pour tenir compte des
+    tolérances et de la température. Un plastique, un carton ou du bois ne sont pas vus. <strong>Détecteur capacitif</strong> : la cible modifie la capacité
+    entre une électrode et la masse ; il voit les liquides, les poudres, les plastiques, et se règle par un potentiomètre de sensibilité.
+    <strong>Détecteur photoélectrique</strong> : un émetteur et un récepteur de lumière, en barrage, en reflex sur réflecteur ou en détection directe sur
+    l'objet ; grande portée, sensible à l'encrassement.
+  </p>
+  <p>
+    <strong>Sorties PNP et NPN.</strong> Un détecteur trois fils reçoit $+24\ \mathrm{V}$ et $0\ \mathrm{V}$, et commute sa sortie par un transistor.
+    Une sortie PNP relie la sortie au $+24\ \mathrm{V}$ quand l'objet est détecté : le courant sort du détecteur vers l'entrée de l'automate, qui doit donc
+    avoir son commun au $0\ \mathrm{V}$. Une sortie NPN relie la sortie au $0\ \mathrm{V}$ : le courant vient de l'entrée, dont le commun doit être au
+    $+24\ \mathrm{V}$. La différence est une convention de câblage, pas de physique, mais une erreur d'association ne pardonne pas : un détecteur PNP sur
+    une entrée à commun $+24\ \mathrm{V}$ ne fait jamais circuler de courant, et l'entrée ne change jamais d'état alors que la diode du détecteur s'allume.
+    L'usage européen privilégie le PNP, sortie active à $+24\ \mathrm{V}$, ce qui permet de détecter un fil de sortie coupé ou à la masse comme une absence
+    de signal.
+  </p>
+  <figure id="e-tor-figure">
+    <svg viewBox="0 0 780 300" role="img" aria-label="Câblage d'un détecteur trois fils : à gauche détecteur PNP dont la sortie se relie au plus 24 volts et débite dans une entrée d'automate à commun au zéro volt ; à droite détecteur NPN dont la sortie se relie au zéro volt et absorbe le courant d'une entrée à commun au plus 24 volts">
+      <defs><marker id="e-tor-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7">
+        <rect x="10" y="10" width="372" height="282" rx="10" stroke-dasharray="2 4" stroke-width="1"/>
+        <rect x="398" y="10" width="372" height="282" rx="10" stroke-dasharray="2 4" stroke-width="1"/>
+        <path d="M28 58H366" stroke-width="2.4"/>
+        <path d="M28 255H366" stroke-width="2.4"/>
+        <rect x="48" y="86" width="120" height="140" rx="6"/>
+        <path d="M80 58V86M80 226V255"/>
+        <path d="M80 86V104H140V122"/>
+        <path d="M140 122L157 147"/>
+        <path d="M140 152V175H250"/>
+        <rect x="238" y="118" width="122" height="112" rx="6"/>
+        <path d="M254 175H300V187l6 4l-12 8l12 8l-12 8l6 4V255"/>
+        <path d="M188 168H226" marker-end="url(#e-tor-fl)" stroke-width="1.3"/>
+        <path d="M318 190V214" marker-end="url(#e-tor-fl)" stroke-width="1.3"/>
+        <path d="M416 58H754" stroke-width="2.4"/>
+        <path d="M416 255H754" stroke-width="2.4"/>
+        <rect x="436" y="86" width="120" height="140" rx="6"/>
+        <path d="M468 58V86M468 226V255"/>
+        <path d="M468 226V206H530V190"/>
+        <path d="M530 190L547 165"/>
+        <path d="M530 160V175H640"/>
+        <rect x="626" y="118" width="122" height="112" rx="6"/>
+        <path d="M690 58V134l6 4l-12 8l12 8l-12 8l6 4V175H644"/>
+        <path d="M614 168H580" marker-end="url(#e-tor-fl)" stroke-width="1.3"/>
+        <path d="M708 136V160" marker-end="url(#e-tor-fl)" stroke-width="1.3"/>
+        <circle cx="250" cy="175" r="4"/>
+        <circle cx="640" cy="175" r="4"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="80" cy="58" r="3"/>
+        <circle cx="80" cy="255" r="3"/>
+        <circle cx="300" cy="255" r="3"/>
+        <circle cx="468" cy="58" r="3"/>
+        <circle cx="468" cy="255" r="3"/>
+        <circle cx="690" cy="58" r="3"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11">
+        <text x="22" y="32" font-size="12">Détecteur PNP : sortie source</text>
+        <text x="410" y="32" font-size="12">Détecteur NPN : sortie puits</text>
+        <text x="300" y="50">+24 V</text>
+        <text x="320" y="272">0 V</text>
+        <text x="688" y="50">+24 V</text>
+        <text x="708" y="272">0 V</text>
+        <text x="56" y="214">détecteur PNP</text>
+        <text x="444" y="104">détecteur NPN</text>
+        <text x="88" y="140" font-size="10">transistor</text>
+        <text x="476" y="140" font-size="10">transistor</text>
+        <text x="244" y="136">entrée automate</text>
+        <text x="244" y="150" font-size="10">commun au 0 V</text>
+        <text x="632" y="204">entrée automate</text>
+        <text x="632" y="218" font-size="10">commun au +24 V</text>
+        <text x="200" y="162">I</text>
+        <text x="324" y="206">I</text>
+        <text x="592" y="162">I</text>
+        <text x="714" y="152">I</text>
+        <text x="178" y="190" font-size="10">sortie</text>
+        <text x="572" y="190" font-size="10">sortie</text>
+        <text x="20" y="284" font-size="10.5">objet présent : la sortie passe à +24 V</text>
+        <text x="408" y="284" font-size="10.5">objet présent : la sortie passe à 0 V</text>
+      </g>
+    </svg>
+    <figcaption>
+      Câblage d'un détecteur trois fils vers une entrée d'automate, contact électronique représenté fermé quand l'objet est présent. Les traits épais
+      horizontaux sont les polarités de l'alimentation $24\ \mathrm{V}$ continue, $+24\ \mathrm{V}$ en haut et $0\ \mathrm{V}$ en bas, référence commune à
+      tous les potentiels. À gauche, le transistor PNP relie la sortie au $+24\ \mathrm{V}$ : le courant $I$ sort du détecteur, traverse la charge de
+      l'entrée, zigzag vertical, et rejoint le $0\ \mathrm{V}$ ; l'entrée a son commun au $0\ \mathrm{V}$. À droite, le transistor NPN relie la sortie au
+      $0\ \mathrm{V}$ : le courant vient du $+24\ \mathrm{V}$ par la charge de l'entrée et entre dans le détecteur ; l'entrée a son commun au
+      $+24\ \mathrm{V}$. Les flèches fines donnent le sens du courant quand le contact est fermé.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-codeur">Codeurs incrémentaux et absolus</h3>
+  <p>
+    <strong>Codeur incrémental.</strong> Un disque solidaire de l'arbre porte $N$ fenêtres régulièrement espacées, lues par deux capteurs optiques ou
+    magnétiques décalés d'un quart de pas. Ils délivrent deux signaux carrés $A$ et $B$ en quadrature : pour un sens de rotation, $A$ est en avance de
+    $90^\circ$ électriques sur $B$, pour l'autre sens, en retard. Une troisième voie $Z$ donne une impulsion par tour, qui sert de référence. Le module de
+    comptage peut compter les seuls fronts montants de $A$, décodage $\times 1$, les deux fronts de $A$, décodage $\times 2$, ou les quatre fronts de $A$ et de
+    $B$, décodage $\times 4$. Le sens se lit sur l'état de $B$ au moment d'un front de $A$ : c'est la quadrature qui rend le comptage réversible.
+  </p>
+  <div class="formule-cle">$$\delta\theta = \frac{360^\circ}{k\,N}, \qquad f_A = \frac{N\,n}{60}, \qquad f_{\text{fronts}} = \frac{k\,N\,n}{60}$$</div>
+  <p class="formule-cle-legende">
+    $\delta\theta$ : résolution angulaire en degrés ; $N$ : points par tour ; $k$ : facteur de décodage ; $n$ : vitesse en tours par minute ; $f_A$ :
+    fréquence d'une voie en hertz ; $f_{\text{fronts}}$ : fréquence des fronts comptés.
+  </p>
+  <p>
+    Dérivation : un tour, soit $360^\circ$, produit $N$ périodes de $A$ et $kN$ fronts comptés ; à $n/60$ tours par seconde, on obtient $f_A$. Vérification
+    dimensionnelle : $N$ est sans dimension, $n/60$ est en $\mathrm{s^{-1}}$. Cas limites : à l'arrêt, $f_A = 0$, mais le comptage conserve la position ; à la
+    vitesse maximale, $f_A$ doit rester sous la fréquence admise par le codeur et par l'entrée, sinon des fronts sont perdus définitivement. Un codeur de
+    $1024$ points à $1500\ \mathrm{tr/min}$ donne $f_A = 25{,}6\ \mathrm{kHz}$, que des entrées tout ou rien ordinaires, filtrées à quelques millisecondes,
+    ne peuvent pas suivre : il faut une entrée de comptage rapide.
+  </p>
+  <p>
+    <strong>Mesure de vitesse.</strong> Deux méthodes. Par <em>comptage</em> de $\Delta c$ fronts pendant une durée $T_e$ :
+    $n = 60\,\Delta c/(kN\,T_e)$, avec une résolution $\delta n = 60/(kN\,T_e)$ indépendante de la vitesse ; elle est bonne à grande vitesse, médiocre à
+    basse vitesse. Par <em>mesure de période</em> entre deux fronts, avec une horloge de fréquence $f_h$ : la résolution relative vaut
+    $f_{\text{fronts}}/f_h$, excellente à basse vitesse, mauvaise à grande vitesse. Avec $kN = 4096$ et $T_e = 5\ \mathrm{ms}$, la tâche du cours
+    <a href="#/cours/revision-9-et-mini-projet-regulation">Révision 9 et mini-projet régulation</a>, le comptage résout
+    $60/(4096 \times 0{,}005) = 2{,}93\ \mathrm{tr/min}$ : parfait à $1500\ \mathrm{tr/min}$, inutilisable à $10\ \mathrm{tr/min}$. Allonger $T_e$ améliore
+    la résolution mais ajoute un retard de l'ordre de $T_e/2$, comme tout filtre de moyenne : c'est le compromis du cours
+    <a href="#/cours/commande-numerique">Commande numérique</a>.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Le disque de la figure suivante porte peu de fenêtres pour rester lisible. Avant de le faire tourner, prévoyez : dans le sens trigonométrique, quelle voie
+      change d'état la première après un front montant de $A$ ? Combien de fronts compte-t-on en $\times 4$ quand on avance d'une seule fenêtre ? Si l'on
+      inverse le sens, que voit-on sur $B$ au moment d'un front montant de $A$ ? Que se passe-t-il si un parasite crée un front supplémentaire sur $A$
+      seule ?
+    </p>
+  </div>
+  <figure id="e-codeur-sim">
+    <div class="schema-vivant" id="e-codeur-vivant"></div>
+    <div id="e-codeur-curseurs"></div>
+    <div id="e-codeur-lecteur"></div>
+    <div id="e-codeur-trace"></div>
+    <div id="e-codeur-valeurs"></div>
+    <figcaption>
+      Codeur incrémental. À gauche, le disque vu de face, avec ses fenêtres, un repère radial et une poignée ronde sur sa périphérie : on fait tourner le
+      disque en la faisant glisser, à la souris, au doigt ou au clavier ; le lecteur le fait tourner en continu à la vitesse choisie, dans le sens réglé par le
+      curseur. Les deux petits rectangles en haut sont les capteurs des voies $A$ et $B$, décalés d'un quart de pas ; ils sont pleins quand ils voient une
+      fenêtre, vides sinon. À droite, l'état logique des deux voies. Sous le schéma, le chronogramme trace $A$ et $B$ en fonction de l'angle mécanique autour
+      de la position courante, $B$ décalée vers le bas pour la lisibilité ; le trait vertical en tirets marque la position courante. Le sens trigonométrique,
+      inverse des aiguilles d'une montre, fait croître le compteur. Le panneau donne l'angle cumulé, le compteur selon le décodage, l'erreur de position et la
+      résolution.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Dans le sens trigonométrique, $A$ monte avant $B$ : un quart de période plus tard, $B$ monte à son tour. Le décodeur lit
+    donc $B = 0$ au front montant de $A$, et compte en avant ; dans l'autre sens, il lit $B = 1$ et décompte. Une fenêtre donne quatre fronts en
+    $\times 4$, deux en $\times 2$, un seul en $\times 1$ : la résolution est multipliée par quatre sans changer de codeur. Le compteur reste exact dans
+    les deux sens et à n'importe quelle vitesse, tant qu'aucun front n'est perdu : c'est pourquoi un parasite sur une seule voie est grave, il crée une erreur
+    de position qui ne disparaît qu'au prochain passage par le top zéro, d'où les liaisons différentielles, $A$ et $\bar A$, et les câbles blindés.
+  </p>
+  <p>
+    <strong>Codeur absolu.</strong> Chaque position est codée par un mot binaire lu sur plusieurs pistes ; la position est connue dès la mise sous tension,
+    sans prise d'origine. Le code est un code de Gray, dans lequel deux positions voisines ne diffèrent que d'un bit : en code binaire naturel, le passage de
+    $011$ à $100$ change trois bits à la fois, et une lecture pendant la transition peut donner n'importe quel mot, par exemple $111$. Un codeur multitour
+    ajoute un comptage des tours, par engrenages ou par un compteur sauvegardé. La transmission est série, par une liaison synchrone ou un réseau de terrain.
+  </p>
+  <div class="cadre-tableau" id="e-gray-tableau">
+    <table>
+      <thead><tr><th>Position</th><th>Binaire naturel</th><th>Gray</th><th>Bits changés depuis la position précédente, en Gray</th></tr></thead>
+      <tbody>
+        <tr><td>0</td><td>000</td><td>000</td><td>sans objet</td></tr>
+        <tr><td>1</td><td>001</td><td>001</td><td>1</td></tr>
+        <tr><td>2</td><td>010</td><td>011</td><td>1</td></tr>
+        <tr><td>3</td><td>011</td><td>010</td><td>1</td></tr>
+        <tr><td>4</td><td>100</td><td>110</td><td>1, contre 3 en binaire naturel</td></tr>
+        <tr><td>5</td><td>101</td><td>111</td><td>1</td></tr>
+        <tr><td>6</td><td>110</td><td>101</td><td>1</td></tr>
+        <tr><td>7</td><td>111</td><td>100</td><td>1, et 1 vers la position 0</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Le tableau donne les huit positions d'un codeur absolu de trois bits. Le mot de Gray s'obtient par $g = b \oplus (b \gg 1)$ : chaque bit est le ou
+    exclusif du bit binaire de même rang et du bit de rang supérieur. La dernière colonne montre qu'un seul bit change à chaque pas, y compris en refermant
+    le tour de $7$ à $0$.
+  </p>
+
+  <h3 id="e-courant">Capteurs de courant et de tension</h3>
+  <p>
+    <strong>Shunt.</strong> Une résistance de précision de quelques milliohms : $V = R_s I$. Simple, linéaire, du continu à plusieurs centaines de
+    kilohertz, mais non isolée, puisque la tension mesurée est au potentiel du circuit, et dissipative : un shunt de $1\ \mathrm{m\Omega}$ dissipe
+    $2{,}5\ \mathrm{W}$ sous $50\ \mathrm{A}$. <strong>Transformateur de courant</strong>, vu dans le cours <a href="#/cours/autotransformateurs-tc-et-tp">Autotransformateurs,
+    TC et TP</a> : isolé, robuste, sans alimentation, mais aveugle au continu, qui le sature, et jamais en circuit ouvert. <strong>Bobine de
+    Rogowski</strong> : enroulement sans noyau magnétique, qui délivre $\mathrm{d}i/\mathrm{d}t$ à intégrer ; ni saturation ni continu, idéale pour les
+    forts courants alternatifs et les fronts.
+  </p>
+  <p>
+    <strong>Effet Hall, dérivation.</strong> Dans une plaquette d'épaisseur $t$ et de largeur $w$, parcourue par $I$ et soumise à $B$, les porteurs de charge
+    $q$ et de densité $n$ avancent à la vitesse $v = I/(n\,q\,w\,t)$. En régime établi, la force électrique due au champ de Hall $E_H$ équilibre la force
+    magnétique : $q E_H = q v B$, donc $E_H = vB$, et la tension sur la largeur vaut $V_H = E_H w = I B/(n\,q\,t)$.
+  </p>
+  <div class="formule-cle">$$V_H = \frac{I\,B}{n\,q\,t} = R_H\,\frac{I\,B}{t}, \qquad R_H = \frac{1}{n\,q}$$</div>
+  <p class="formule-cle-legende">
+    $V_H$ en volts, $I$ en ampères, $B$ en teslas, $n$ en $\mathrm{m^{-3}}$, $q = 1{,}602 \times 10^{-19}\ \mathrm{C}$ en valeur absolue, $t$ en mètres ;
+    $R_H$, coefficient de Hall, en $\mathrm{m^3/C}$.
+  </p>
+  <p>
+    Vérification dimensionnelle : $\mathrm{A} \cdot \mathrm{T}/(\mathrm{m^{-3}} \cdot \mathrm{C} \cdot \mathrm{m}) = \mathrm{A} \cdot \mathrm{T} \cdot
+    \mathrm{m^2}/\mathrm{C} = \mathrm{T} \cdot \mathrm{m^2}/\mathrm{s} = \mathrm{Wb/s} = \mathrm{V}$. Hypothèses : porteurs d'un seul type, plaquette longue
+    devant sa largeur, champ uniforme. Cas limite : $n \to \infty$, un conducteur parfait, donne $V_H \to 0$ ; d'où le semi-conducteur. Interprétation : $V_H$
+    est proportionnelle à $B$ à courant d'alimentation constant ; une cellule de Hall est un capteur d'induction.
+  </p>
+  <p>
+    <strong>Capteur de courant à effet Hall.</strong> Le conducteur à mesurer traverse un noyau magnétique muni d'un entrefer, où est placée la cellule.
+    En <em>boucle ouverte</em>, $B$ est proportionnelle à $I_p$ et la cellule donne directement la mesure : simple, peu coûteux, mais sensible à la dérive du
+    zéro, à la non-linéarité et à la rémanence du noyau, avec une erreur typique de $1$ à $2\ \%$. En <em>boucle fermée</em>, dite à compensation, un
+    amplificateur injecte dans un enroulement secondaire de $N_2$ spires le courant $I_s$ qui annule le flux dans le noyau : la cellule ne sert plus que de
+    détecteur de zéro. À l'équilibre, $N_p I_p = N_2 I_s$ ; avec $N_p = 1$, $I_s = I_p/N_2$. Le capteur devient un transformateur de courant qui fonctionne
+    aussi en continu : erreur de quelques dixièmes de pour cent, bande passante de plusieurs centaines de kilohertz, au prix d'une alimentation symétrique et
+    d'une consommation égale au courant secondaire.
+  </p>
+  <figure id="e-hall-bf-figure">
+    <svg viewBox="0 0 760 300" role="img" aria-label="Capteur de courant à effet Hall en boucle fermée : noyau magnétique à entrefer traversé par le conducteur primaire, cellule de Hall dans l'entrefer, amplificateur qui alimente l'enroulement secondaire de N2 spires, courant secondaire Is qui traverse la résistance de mesure RM vers le zéro volt">
+      <defs><marker id="e-hb-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M240 140V70H80V230H240V160" stroke-width="12"/>
+        <rect x="232" y="142" width="16" height="16" rx="2" stroke-width="1.6"/>
+        <circle cx="160" cy="150" r="15" stroke-width="1.8"/>
+        <g stroke-width="1.6">
+          <ellipse cx="80" cy="112" rx="18" ry="5"/>
+          <ellipse cx="80" cy="126" rx="18" ry="5"/>
+          <ellipse cx="80" cy="140" rx="18" ry="5"/>
+          <ellipse cx="80" cy="154" rx="18" ry="5"/>
+          <ellipse cx="80" cy="168" rx="18" ry="5"/>
+          <ellipse cx="80" cy="182" rx="18" ry="5"/>
+        </g>
+        <path d="M248 150H300" stroke-width="1.6"/>
+        <path d="M300 128V172L344 150Z" stroke-width="1.8"/>
+        <path d="M344 150H420V30H40V112H62" stroke-width="1.6"/>
+        <path d="M62 182H40V270H500l5 -6l10 12l10 -12l10 12l10 -12l5 6H600V284M588 284h24M594 290h12M598 296h4" stroke-width="1.6"/>
+        <path d="M428 112V82" marker-end="url(#e-hb-fl)" stroke-width="1.3"/>
+        <path d="M545 250H505" marker-end="url(#e-hb-fl)" stroke-width="1.3"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="160" cy="150" r="3.5"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11">
+        <text x="72" y="56">noyau magnétique</text>
+        <text x="252" y="128" font-size="10">cellule</text>
+        <text x="252" y="140" font-size="10">de Hall</text>
+        <text x="122" y="186">Ip</text>
+        <text x="104" y="210" font-size="10">vers le lecteur</text>
+        <text x="4" y="148">N2</text>
+        <text x="296" y="196">amplificateur</text>
+        <text x="296" y="210">alimenté en ±15 V</text>
+        <text x="436" y="100">Is</text>
+        <text x="510" y="300">RM</text>
+        <text x="500" y="240">VM = RM Is</text>
+        <text x="436" y="58">l'amplificateur annule le flux</text>
+        <text x="460" y="150">Np Ip = N2 Is à l'équilibre</text>
+        <text x="460" y="168">Is = Ip / N2 pour Np = 1</text>
+        <text x="460" y="186">la cellule ne voit que l'écart</text>
+        <text x="620" y="290">0 V</text>
+      </g>
+    </svg>
+    <figcaption>
+      Capteur de courant à effet Hall en boucle fermée. Le trait très épais est le noyau magnétique ; son entrefer, à droite, loge la cellule de Hall. Le
+      conducteur primaire traverse la fenêtre du noyau ; le cercle marqué d'un point indique que le courant $I_p$ se dirige vers le lecteur. Les ellipses de
+      gauche figurent l'enroulement secondaire de $N_2$ spires. La cellule mesure le flux résiduel ; l'amplificateur, alimenté en $\pm 15\ \mathrm{V}$,
+      injecte dans le secondaire le courant $I_s$, flèche verticale, dont le flux s'oppose à celui du primaire. Ce courant traverse la résistance de mesure
+      $R_M$ jusqu'au $0\ \mathrm{V}$, symbole de référence en bas à droite ; la flèche $V_M$ pointe vers la borne positive de $R_M$, côté enroulement, pour un
+      courant $I_p$ positif.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Résistance de mesure maximale.</strong> L'amplificateur doit fournir $I_s(R_s + R_M)$, où $R_s$ est la résistance de l'enroulement secondaire.
+    Avec une alimentation de $15\ \mathrm{V}$ et une chute de $2{,}5\ \mathrm{V}$ dans ses transistors, la tension disponible est de $12{,}5\ \mathrm{V}$ ;
+    pour $I_{s,\max}$ donné, $R_M \leq 12{,}5/I_{s,\max} - R_s$. Au-delà, l'amplificateur sature, la compensation cesse et la mesure s'écrête sans prévenir.
+    <strong>Tension.</strong> Les capteurs de tension isolés reposent sur le même principe : une résistance série de forte valeur fait circuler dans un
+    enroulement primaire un courant proportionnel à la tension, mesuré par un capteur de Hall à compensation. Pour le réseau, on utilise le transformateur de
+    tension ; pour un bus continu, le capteur isolé ou l'amplificateur d'isolement.
+  </p>
+
+  <h3 id="e-statut">Loi, convention, approximation, règle de conception et donnée du constructeur</h3>
+  <div class="cadre-tableau" id="e-statut-tableau">
+    <table>
+      <thead><tr><th>Énoncé</th><th>Statut</th><th>Commentaire</th></tr></thead>
+      <tbody>
+        <tr><td>La résistivité d'un métal croît avec la température ; effet Seebeck ; force de Lorentz</td><td>Lois physiques</td><td>Valables sans condition dans leur domaine.</td></tr>
+        <tr><td>$R_T = R_0(1 + AT + BT^2)$ avec les coefficients du platine industriel</td><td>Convention normalisée et approximation</td><td>Courbe d'interpolation conventionnelle ; la sonde réelle s'en écarte dans les limites de sa classe.</td></tr>
+        <tr><td>Tables $E(T)$ des thermocouples, soudure de référence à $0\ ^\circ\mathrm{C}$</td><td>Convention normalisée</td><td>Le choix de $0\ ^\circ\mathrm{C}$ est une convention ; la loi des températures intermédiaires est une loi.</td></tr>
+        <tr><td>Sensibilité de $41\ \mathrm{\mu V/K}$ du type K, $0{,}385\ \Omega/\mathrm{K}$ de la Pt100</td><td>Approximation</td><td>Valeurs moyennes ; la pente réelle varie avec la température.</td></tr>
+        <tr><td>Sortie PNP ou NPN, commun au $0\ \mathrm{V}$ ou au $+24\ \mathrm{V}$</td><td>Convention de câblage</td><td>Les deux fonctionnent ; l'usage européen privilégie le PNP.</td></tr>
+        <tr><td>Cible à moins de $0{,}8$ fois la portée réelle ; trois fils au-delà de quelques mètres</td><td>Règles de conception</td><td>Marges contre les tolérances et la température.</td></tr>
+        <tr><td>Classes A et B des sondes à résistance</td><td>Norme</td><td>Tolérances fixées par la norme des sondes à résistance de platine, à vérifier sur la fiche.</td></tr>
+        <tr><td>Facteurs de réduction d'un détecteur inductif, coefficient d'auto-échauffement, fréquence maximale d'un codeur</td><td>Données du constructeur</td><td>Varient d'un produit à l'autre : jamais de valeur générique dans un dossier.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Le schéma principal représente la chaîne complète d'acquisition, du capteur à l'automate, pour les trois familles de signaux du site : une mesure
+    analogique, une détection tout ou rien et un comptage.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 800 430" role="img" aria-label="Chaîne capteur, conditionnement, conversion et automate : en haut une sonde Pt100 trois fils, un transmetteur en tête, une boucle quatre-vingt milliampères et une entrée analogique ; au milieu un détecteur inductif PNP, son câble trois fils et une entrée tout ou rien ; en bas un codeur incrémental, ses voies A, B, Z et un module de comptage rapide ; à droite l'automate ; en bas la barre du conducteur de protection">
+      <defs><marker id="f-sp-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7">
+        <rect x="660" y="40" width="128" height="300" rx="10" stroke-width="2.4"/>
+        <rect x="14" y="70" width="128" height="62" rx="6"/>
+        <rect x="160" y="70" width="152" height="62" rx="6"/>
+        <rect x="340" y="70" width="142" height="62" rx="6"/>
+        <rect x="508" y="70" width="128" height="62" rx="6"/>
+        <path d="M142 101H158" marker-end="url(#f-sp-fl)"/>
+        <path d="M312 101H338" marker-end="url(#f-sp-fl)"/>
+        <path d="M482 101H506" marker-end="url(#f-sp-fl)"/>
+        <path d="M636 101H658" marker-end="url(#f-sp-fl)"/>
+        <rect x="14" y="170" width="128" height="62" rx="6"/>
+        <rect x="160" y="170" width="152" height="62" rx="6"/>
+        <rect x="340" y="170" width="142" height="62" rx="6"/>
+        <path d="M142 201H158" marker-end="url(#f-sp-fl)"/>
+        <path d="M312 201H338" marker-end="url(#f-sp-fl)"/>
+        <path d="M482 201H658" marker-end="url(#f-sp-fl)"/>
+        <rect x="14" y="270" width="128" height="62" rx="6"/>
+        <rect x="160" y="270" width="152" height="62" rx="6"/>
+        <rect x="340" y="270" width="142" height="62" rx="6"/>
+        <path d="M142 301H158" marker-end="url(#f-sp-fl)"/>
+        <path d="M312 301H338" marker-end="url(#f-sp-fl)"/>
+        <path d="M482 301H658" marker-end="url(#f-sp-fl)"/>
+        <path d="M14 372H788" stroke-width="3"/>
+        <path d="M40 372V384M32 388h16M36 394h8"/>
+        <path d="M724 340V372" stroke-dasharray="4 4"/>
+        <path d="M411 132V150H560V372" stroke-dasharray="4 4" stroke-width="1.1"/>
+        <path d="M236 132V156" stroke-dasharray="1 4" stroke-width="1.1"/>
+        <path d="M348 146H384" marker-end="url(#f-sp-fl)" stroke-width="1.2"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11">
+        <text x="14" y="30" font-size="12">Capteur</text>
+        <text x="160" y="30" font-size="12">Conditionnement</text>
+        <text x="340" y="30" font-size="12">Transmission</text>
+        <text x="508" y="30" font-size="12">Conversion</text>
+        <text x="668" y="30" font-size="12">Traitement</text>
+        <text x="22" y="92">Pt100, 3 fils</text>
+        <text x="22" y="108">palier, 80 °C</text>
+        <text x="22" y="124">signal : Ω</text>
+        <text x="168" y="92">transmetteur en tête</text>
+        <text x="168" y="108">excitation 1 mA</text>
+        <text x="168" y="124">linéarisation</text>
+        <text x="348" y="92">boucle 4-20 mA</text>
+        <text x="348" y="108">alimentée en 24 V</text>
+        <text x="348" y="124">12,53 mA à 80 °C</text>
+        <text x="390" y="150" font-size="10">I</text>
+        <text x="516" y="92">entrée analogique</text>
+        <text x="516" y="108">filtre et CAN</text>
+        <text x="516" y="124">valeur numérique</text>
+        <text x="22" y="192">inductif PNP</text>
+        <text x="22" y="208">Sn = 8 mm</text>
+        <text x="22" y="224">signal : présence</text>
+        <text x="168" y="192">câble 3 fils</text>
+        <text x="168" y="208">+24 V, 0 V, sortie</text>
+        <text x="168" y="224">sortie 0 ou +24 V</text>
+        <text x="348" y="192">entrée TOR</text>
+        <text x="348" y="208">commun au 0 V</text>
+        <text x="348" y="224">filtre de 3 ms</text>
+        <text x="22" y="292">codeur</text>
+        <text x="22" y="308">1024 points</text>
+        <text x="22" y="324">signal : angle</text>
+        <text x="168" y="292">voies A, B, Z</text>
+        <text x="168" y="308">HTL 24 V, blindé</text>
+        <text x="168" y="324">quadrature</text>
+        <text x="348" y="292">module de comptage</text>
+        <text x="348" y="308">décodage x 4</text>
+        <text x="348" y="324">jusqu'à 200 kHz</text>
+        <text x="668" y="62">automate</text>
+        <text x="668" y="90">mise à l'échelle</text>
+        <text x="668" y="106">alarmes 90 °C</text>
+        <text x="668" y="122">et 100 °C</text>
+        <text x="668" y="196">présence palette</text>
+        <text x="668" y="212">verrouillages</text>
+        <text x="668" y="296">position, vitesse</text>
+        <text x="668" y="312">régulation</text>
+        <text x="732" y="362" font-size="10">0 V</text>
+        <text x="566" y="362" font-size="10">0 V de l'entrée</text>
+        <text x="242" y="152" font-size="10">isolement</text>
+        <text x="60" y="392">PE : 0 V de l'alimentation 24 V relié au PE en un seul point de l'armoire</text>
+        <text x="60" y="410">blindages des câbles analogiques et du codeur raccordés au PE à l'entrée de l'armoire</text>
+      </g>
+    </svg>
+    <figcaption>
+      Schéma principal : la chaîne capteur, conditionnement, conversion et automate. Les colonnes se lisent de gauche à droite, les flèches pleines donnent le
+      sens du signal. Ligne du haut, mesure analogique : la Pt100 transforme la température en résistance, le transmetteur monté dans la tête l'excite, la
+      linéarise et l'isole, puis règle le courant d'une boucle $4$-$20\ \mathrm{mA}$ ; la petite flèche $I$, sous ce bloc, donne le sens conventionnel du courant
+      dans la boucle, et l'entrée analogique le convertit en nombre. Ligne du milieu, détection : le détecteur PNP commute sa sortie au $+24\ \mathrm{V}$ et l'entrée,
+      à commun au $0\ \mathrm{V}$, la filtre. Ligne du bas, comptage : les voies en quadrature du codeur entrent dans un module de comptage rapide, qui décode
+      les fronts sans passer par le cycle de l'automate. La barre épaisse du bas est le conducteur de protection ; les liaisons en tirets rappellent que le
+      $0\ \mathrm{V}$ des entrées et de l'automate est relié au PE en un seul point, et la liaison en pointillés que le transmetteur isole la sonde de la
+      boucle. Valeurs de l'exemple résolu et du projet fil rouge.
+    </figcaption>
+  </figure>
+
+  <p>
+    L'organigramme suivant est la démarche de choix d'un capteur, réutilisable pour toute application.
+  </p>
+  <figure id="f-organigramme">
+    <pre class="mermaid">flowchart TD
+  A["Spécifier : grandeur, étendue,<br/>exactitude, temps de réponse"] --> B{"Mesure continue<br/>ou détection ?"}
+  B -->|"Détection"| C{"Cible<br/>métallique ?"}
+  C -->|"Oui"| D["Inductif :<br/>Sn × facteur<br/>de réduction"]
+  C -->|"Non"| E["Capacitif ou<br/>photoélectrique"]
+  D --> F["Sortie PNP ou NPN<br/>selon le commun<br/>des entrées"]
+  E --> F
+  B -->|"Mesure continue"| G["Selon la grandeur :<br/>température : Pt100,<br/>thermocouple au-delà<br/>de 600 °C ; pression,<br/>niveau : membrane ;<br/>angle, vitesse : codeur ;<br/>courant : shunt, TC, Hall"]
+  F --> N["Environnement : température,<br/>IP, CEM, vibrations"]
+  G --> N
+  N --> O["Interface : 4-20 mA, TOR,<br/>comptage, réseau ; câble, blindage"]
+  O --> P["Budget d'incertitude<br/>et dynamique de la chaîne"]
+  P --> Q{"Exigences<br/>tenues ?"}
+  Q -->|"Non"| A
+  Q -->|"Oui"| R["Fiche capteur : principe, référence,<br/>raccordement, étalonnage"]</pre>
+    <figcaption>
+      Organigramme de choix d'un capteur. Les rectangles sont des actions ou des familles de capteurs, les losanges des décisions, et les libellés des
+      flèches la réponse qui oriente le chemin. La première décision sépare la détection tout ou rien de la mesure continue ; pour une détection, le matériau de
+      la cible fixe le principe, et pour une mesure continue, c'est la grandeur, avec la limite d'environ $600\ ^\circ\mathrm{C}$ entre sonde à
+      résistance et thermocouple. Toutes les branches convergent vers les mêmes vérifications : environnement, interface, puis budget d'incertitude
+      et dynamique de toute la chaîne. La boucle de retour rappelle qu'un capteur se choisit contre des exigences chiffrées, pas sur catalogue.
+    </figcaption>
+  </figure>
+
+  <p>
+    Le tableau suivant compare les trois capteurs de température industriels.
+  </p>
+  <div class="cadre-tableau" id="f-comparatif">
+    <table>
+      <thead><tr><th>Critère</th><th>Pt100 classe A</th><th>Thermocouple de type K</th><th>Thermistance à coefficient négatif</th></tr></thead>
+      <tbody>
+        <tr><td>Principe</td><td>Résistivité du platine</td><td>Effet Seebeck, différence de températures</td><td>Semi-conducteur, résistance exponentielle</td></tr>
+        <tr><td>Étendue typique</td><td>$-200$ à $+600\ ^\circ\mathrm{C}$</td><td>$-200$ à $+1250\ ^\circ\mathrm{C}$</td><td>$-50$ à $+150\ ^\circ\mathrm{C}$</td></tr>
+        <tr><td>Sensibilité</td><td>$0{,}39\ \Omega/\mathrm{K}$, soit $0{,}39\ \%/\mathrm{K}$</td><td>$41\ \mathrm{\mu V/K}$</td><td>Environ $-4\ \%/\mathrm{K}$</td></tr>
+        <tr><td>Exactitude courante</td><td>$\pm 0{,}31\ \mathrm{K}$ à $80\ ^\circ\mathrm{C}$</td><td>$\pm 1{,}5$ à $\pm 2{,}5\ \mathrm{K}$ ou $0{,}4$ à $0{,}75\ \%$</td><td>$\pm 0{,}2$ à $\pm 1\ \mathrm{K}$ près de $25\ ^\circ\mathrm{C}$</td></tr>
+        <tr><td>Alimentation</td><td>Courant de mesure, auto-échauffement</td><td>Aucune, capteur actif</td><td>Courant de mesure, auto-échauffement fort</td></tr>
+        <tr><td>Raccordement</td><td>Trois ou quatre fils en cuivre</td><td>Câble de compensation, soudure froide</td><td>Deux fils</td></tr>
+        <tr><td>Temps de réponse</td><td>Moyen, élément de quelques millimètres</td><td>Rapide, soudure de petite masse</td><td>Rapide à moyen</td></tr>
+        <tr><td>Usage type</td><td>Paliers, fluides, procédés exigeants</td><td>Fours, gaz chauds, hautes températures</td><td>Armoires, électronique, protection</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <ul>
+    <li><a href="#d-hall-sim" data-renvoi="d-hall-sim">Plaquette de Hall manipulable</a>, section D : porteurs déviés et tension de Hall.</li>
+    <li><a href="#e-reponse-sim" data-renvoi="e-reponse-sim">Réponse d'un capteur thermique à un échelon</a>, section E : constante de temps et retard d'alarme.</li>
+    <li><a href="#e-pt100-figure" data-renvoi="e-pt100-figure">Montages deux, trois et quatre fils</a>, section E.</li>
+    <li><a href="#e-pt100-sim" data-renvoi="e-pt100-sim">Erreur due aux fils d'une Pt100</a>, section E : simulation.</li>
+    <li><a href="#e-tc-figure" data-renvoi="e-tc-figure">Chaîne d'un thermocouple</a>, section E : câble de compensation et soudure froide.</li>
+    <li><a href="#e-tc-sim" data-renvoi="e-tc-sim">Compensation de soudure froide</a>, section E : simulation.</li>
+    <li><a href="#e-pression-figure" data-renvoi="e-pression-figure">Membrane et pont de jauges</a>, section E.</li>
+    <li><a href="#e-tor-figure" data-renvoi="e-tor-figure">Câblage PNP et NPN</a>, section E.</li>
+    <li><a href="#e-codeur-sim" data-renvoi="e-codeur-sim">Codeur incrémental manipulable</a>, section E : quadrature et décodage.</li>
+    <li><a href="#e-gray-tableau" data-renvoi="e-gray-tableau">Code de Gray</a>, section E.</li>
+    <li><a href="#e-hall-bf-figure" data-renvoi="e-hall-bf-figure">Capteur de courant à effet Hall en boucle fermée</a>, section E.</li>
+    <li><a href="#h-montage-figure" data-renvoi="h-montage-figure">Mesure de température des paliers de la pompe</a>, section H.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <ol>
+    <li><strong>Spécifier la mesure.</strong> Grandeur, étendue, exactitude voulue, résolution, temps de réponse, et usage : régulation, protection,
+      comptage, simple indication. Une protection exige un temps de réponse ; une régulation, une faible dérive ; un comptage, aucun front perdu.</li>
+    <li><strong>Choisir le principe physique.</strong> Celui qui répond le plus à la grandeur et le moins aux grandeurs d'influence, dans l'étendue voulue :
+      sonde à résistance ou thermocouple, référence de pression, matériau de la cible, codeur incrémental ou absolu, capteur de courant isolé ou non.</li>
+    <li><strong>Écrire la fonction de transfert et la sensibilité.</strong> Relation de Callendar et Van Dusen, table $E(T)$, $\rho g h$, $V_aK\varepsilon$,
+      $kN/360$, $I_p/N_2$ ; calculer la sensibilité au point de fonctionnement.</li>
+    <li><strong>Chiffrer les erreurs de raccordement et de méthode.</strong> Résistance des fils selon le montage, soudure froide, auto-échauffement,
+      facteur de réduction, résistance de mesure maximale, fréquence maximale des entrées.</li>
+    <li><strong>Vérifier la dynamique.</strong> Constante de temps du capteur monté, fréquence de commutation, fréquence des voies, durée de comptage ; la
+      comparer à celle du phénomène et à la période de la tâche qui lit la mesure.</li>
+    <li><strong>Vérifier l'environnement et l'interface.</strong> Température, indice de protection, vibrations, CEM ; signal transmis, câble, blindage,
+      polarité, commun des entrées, alimentation disponible.</li>
+    <li><strong>Établir le budget d'incertitude.</strong> Tolérance du capteur, transmetteur, entrée, raccordement, en incertitudes-types composées ; comparer à
+      l'exigence et décider d'un étalonnage si nécessaire.</li>
+    <li><strong>Contrôler et documenter.</strong> Ordre de grandeur, contrôle à deux points connus, test de rupture et de court-circuit ; fiche du capteur
+      avec principe, référence, raccordement, réglages et hypothèses à confirmer.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    On surveille la température du palier côté accouplement du moteur de la pompe du site. Le palier fonctionne normalement vers $80\ ^\circ\mathrm{C}$ ;
+    l'exploitant veut une alarme à $90\ ^\circ\mathrm{C}$ et un arrêt à $100\ ^\circ\mathrm{C}$, valeurs supposées en attente des données du constructeur du
+    moteur, avec une incertitude élargie inférieure à $1\ \mathrm{K}$.
+  </p>
+  <ul>
+    <li><strong>Sonde</strong> : Pt100 classe A, montée dans un doigt de gant, coefficient d'auto-échauffement supposé $E = 0{,}2\ \mathrm{K/mW}$.</li>
+    <li><strong>Câble</strong> : $60\ \mathrm{m}$ de trois conducteurs de $0{,}5\ \mathrm{mm^2}$ en cuivre, $\rho = 1{,}72 \times 10^{-8}\ \Omega \cdot \mathrm{m}$ ;
+      écart de résistance entre conducteurs de $2\ \%$ au plus.</li>
+    <li><strong>Transmetteur</strong> en armoire : courant de mesure $1\ \mathrm{mA}$, échelle $0$ à $150\ ^\circ\mathrm{C}$ pour $4$ à $20\ \mathrm{mA}$,
+      erreur maximale $\pm 0{,}1\ \%$ de l'étendue ; entrée analogique de l'automate, erreur maximale $\pm 0{,}1\ \%$ de l'étendue.</li>
+  </ul>
+  <p>
+    <strong>Inconnues.</strong> Résistance et sensibilité de la sonde à $80\ ^\circ\mathrm{C}$ ; erreur en deux fils et en trois fils ; auto-échauffement ;
+    courant de boucle ; incertitude élargie ; décision de montage. <strong>Stratégie.</strong> Callendar et Van Dusen pour $R_T$ et $S$ ; $\rho L/S$ pour les
+    fils ; erreur de chaque montage en résistance puis en température ; budget d'incertitude en loi rectangulaire ; contrôle par ordre de grandeur.
+  </p>
+  <figure id="h-montage-figure">
+    <svg viewBox="0 0 780 250" role="img" aria-label="Mesure de température du palier : sonde Pt100 dans un doigt de gant, câble de soixante mètres à trois conducteurs, transmetteur trois fils en armoire, boucle quatre-vingt milliampères alimentée en vingt-quatre volts vers l'entrée analogique de l'automate">
+      <defs><marker id="h-mo-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7">
+        <rect x="16" y="40" width="130" height="150" rx="10" stroke-dasharray="4 4" stroke-width="1"/>
+        <path d="M60 60V170H90V60" stroke-width="2.2"/>
+        <rect x="68" y="120" width="14" height="40" rx="2"/>
+        <path d="M75 120V60M75 160V166H100V60"/>
+        <path d="M75 60V50H170M100 60V56H170M100 66H170" stroke-width="1.2"/>
+        <path d="M170 50H390M170 56H390M170 66H390" stroke-width="1.2"/>
+        <rect x="390" y="30" width="120" height="120" rx="8"/>
+        <path d="M510 70H560V120H600"/>
+        <path d="M510 110H540V200H600"/>
+        <rect x="600" y="100" width="40" height="120" rx="4"/>
+        <path d="M640 120H690V200H640"/>
+        <rect x="660" y="140" width="16" height="40" rx="2"/>
+        <path d="M548 120V140" marker-end="url(#h-mo-fl)" stroke-width="1.2"/>
+        <path d="M720 140V190" stroke-width="1.2"/>
+        <path d="M720 190V140" marker-end="url(#h-mo-fl)" stroke-width="1.2"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="11">
+        <text x="24" y="34">palier du moteur</text>
+        <text x="24" y="206">doigt de gant</text>
+        <text x="96" y="146" font-size="10">Pt100</text>
+        <text x="200" y="40">60 m, 3 × 0,5 mm²</text>
+        <text x="180" y="88">fils 1, 2, 3 ; Rf = 2,064 Ω</text>
+        <text x="398" y="52">transmetteur</text>
+        <text x="398" y="68">3 fils, 1 mA</text>
+        <text x="398" y="84">0-150 °C</text>
+        <text x="398" y="100">4-20 mA</text>
+        <text x="398" y="132">isolé</text>
+        <text x="520" y="64">+</text>
+        <text x="520" y="104">-</text>
+        <text x="556" y="136">I</text>
+        <text x="604" y="92">24 V</text>
+        <text x="604" y="236">alimentation</text>
+        <text x="650" y="96">entrée</text>
+        <text x="682" y="164" font-size="10">R</text>
+        <text x="726" y="168">V</text>
+        <text x="726" y="128">+</text>
+        <text x="560" y="228" font-size="10">0 V</text>
+      </g>
+    </svg>
+    <figcaption>
+      Montage étudié. À gauche, la sonde dans son doigt de gant, plongé dans le palier ; un conducteur part d'une extrémité de l'élément, deux de l'autre. Le
+      câble de $60\ \mathrm{m}$ rejoint le transmetteur trois fils de l'armoire, qui excite la sonde par $1\ \mathrm{mA}$ et règle le courant de la boucle de
+      sortie. La boucle, alimentée par la source de $24\ \mathrm{V}$, est parcourue par $I$ dans le sens de la petite flèche : du $+$ du transmetteur vers
+      l'alimentation, puis à travers la résistance de lecture $R$ de l'entrée de l'automate, avant de revenir au $-$ du transmetteur ; le $0\ \mathrm{V}$
+      de la boucle est la référence de la tension $V$ lue aux bornes de $R$, dont la flèche pointe vers la borne positive. Le fonctionnement détaillé de la
+      boucle sera l'objet du cours Boucles 4-20 mA et signaux industriels.
+    </figcaption>
+  </figure>
+
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li><strong>Résistance de la sonde.</strong> $R_{80} = 100\,(1 + 3{,}9083 \times 10^{-3} \times 80 - 5{,}775 \times 10^{-7} \times 80^2)
+      = 100\,(1 + 0{,}312664 - 0{,}003696) = 130{,}897\ \Omega$.</li>
+    <li><strong>Sensibilité.</strong> $S_{80} = 100\,(3{,}9083 \times 10^{-3} - 2 \times 5{,}775 \times 10^{-7} \times 80) = 0{,}38159\ \Omega/\mathrm{K}$.</li>
+    <li><strong>Résistance d'un fil.</strong> $R_f = \rho L/S = 1{,}72 \times 10^{-8} \times 60/(0{,}5 \times 10^{-6}) = 2{,}064\ \Omega$.</li>
+    <li><strong>Deux fils.</strong> Le transmetteur verrait $130{,}897 + 2 \times 2{,}064 = 135{,}025\ \Omega$. Par inversion de la relation de Callendar et
+      Van Dusen, cette résistance correspond à $90{,}84\ ^\circ\mathrm{C}$ : erreur de $+10{,}84\ \mathrm{K}$, voisine de
+      $2R_f/S_{80} = 4{,}128/0{,}38159 = 10{,}82\ \mathrm{K}$. L'alarme à $90\ ^\circ\mathrm{C}$ serait émise en marche normale.</li>
+    <li><strong>Trois fils.</strong> Erreur résiduelle $\Delta R = 0{,}02 \times 2{,}064 = 0{,}041\ \Omega$, soit
+      $0{,}041/0{,}38159 = 0{,}108\ \mathrm{K}$ au plus, d'un signe ou de l'autre.</li>
+    <li><strong>Auto-échauffement.</strong> $P = R_{80} I^2 = 130{,}9 \times (10^{-3})^2 = 0{,}131\ \mathrm{mW}$ ;
+      $\Delta T = 0{,}2 \times 0{,}131 = 0{,}026\ \mathrm{K}$, systématique et négligeable.</li>
+    <li><strong>Courant de boucle.</strong> $I = 4 + 16 \times 80/150 = 12{,}533\ \mathrm{mA}$.</li>
+    <li><strong>Budget d'incertitude.</strong> Erreurs maximales : classe A, $0{,}15 + 0{,}002 \times 80 = 0{,}31\ \mathrm{K}$ ; trois fils,
+      $0{,}108\ \mathrm{K}$ ; transmetteur, $0{,}001 \times 150 = 0{,}15\ \mathrm{K}$ ; entrée, $0{,}15\ \mathrm{K}$. En loi rectangulaire :
+      $u_c = \sqrt{(0{,}31^2 + 0{,}108^2 + 0{,}15^2 + 0{,}15^2)/3} = 0{,}226\ \mathrm{K}$, et $U = 2u_c = 0{,}45\ \mathrm{K}$ pour $k = 2$.</li>
+  </ol>
+  <div class="cadre-tableau" id="h-tableau">
+    <table>
+      <thead><tr><th>Composante</th><th>Erreur maximale</th><th>Incertitude-type $a/\sqrt 3$</th><th>Part de la variance</th></tr></thead>
+      <tbody>
+        <tr><td>Tolérance de la sonde, classe A</td><td>$0{,}31\ \mathrm{K}$</td><td>$0{,}179\ \mathrm{K}$</td><td>$62{,}9\ \%$</td></tr>
+        <tr><td>Déséquilibre des fils, trois fils</td><td>$0{,}108\ \mathrm{K}$</td><td>$0{,}062\ \mathrm{K}$</td><td>$7{,}7\ \%$</td></tr>
+        <tr><td>Transmetteur</td><td>$0{,}15\ \mathrm{K}$</td><td>$0{,}087\ \mathrm{K}$</td><td>$14{,}7\ \%$</td></tr>
+        <tr><td>Entrée de l'automate</td><td>$0{,}15\ \mathrm{K}$</td><td>$0{,}087\ \mathrm{K}$</td><td>$14{,}7\ \%$</td></tr>
+        <tr><td>Composée, puis élargie</td><td></td><td>$u_c = 0{,}226\ \mathrm{K}$</td><td>$U = 0{,}45\ \mathrm{K}$</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li><strong>Ordre de grandeur.</strong> $100 + 0{,}385 \times 80 = 130{,}8\ \Omega$, à $0{,}1\ \Omega$ du calcul exact : la courbure ne vaut que
+      $0{,}37\ \Omega$ à $80\ ^\circ\mathrm{C}$.</li>
+    <li><strong>Unités.</strong> $\rho L/S$ en $\Omega \cdot \mathrm{m} \cdot \mathrm{m}/\mathrm{m^2} = \Omega$ ; $R I^2$ en watts ; $E\,P$ en
+      $\mathrm{K/mW} \times \mathrm{mW} = \mathrm{K}$.</li>
+    <li><strong>Bilan énergétique.</strong> La sonde reçoit $0{,}13\ \mathrm{mW}$ quand le palier dissipe plusieurs dizaines de watts : la mesure ne
+      perturbe pas le phénomène ; l'erreur d'auto-échauffement, liée au contact thermique de la sonde, reste de quelques centièmes de kelvin.</li>
+    <li><strong>Décision.</strong> Le montage trois fils tient l'exigence avec $U = 0{,}45\ \mathrm{K}$, dominé par la classe de la sonde ; le deux fils est
+      exclu ; le quatre fils n'apporterait que $0{,}02\ \mathrm{K}$ sur $U$. L'alarme à $90\ ^\circ\mathrm{C}$ est à $10\ \mathrm{K}$ de la marche normale,
+      vingt fois $U$ : pas de déclenchement intempestif dû à la mesure.</li>
+  </ul>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <h3 id="i-contexte">Choix des capteurs du site</h3>
+  <p>
+    Le site du projet fil rouge comporte la pompe sur variateur avec sa régulation de pression, le compresseur, l'actionneur de la vanne de refoulement sur le
+    bus $24\ \mathrm{V}$ secouru, le convoyeur d'expédition régulé en vitesse et l'armoire déportée. Le tableau suivant fixe le capteur de chaque mesure et
+    justifie le choix. Les références de produits restent à arrêter ; les valeurs indiquées sont des hypothèses d'étude.
+  </p>
+  <div class="cadre-tableau" id="i-tableau">
+    <table>
+      <thead><tr><th>Mesure</th><th>Capteur retenu</th><th>Interface</th><th>Justification</th><th>Limite ou risque</th></tr></thead>
+      <tbody>
+        <tr><td>Pression de refoulement</td><td>Transmetteur piézorésistif relatif $0$-$10\ \mathrm{bar}$, existant</td><td>$0$-$10\ \mathrm{V}$</td><td>Membrane inox, réponse rapide devant la boucle de pression</td><td>Évent à protéger ; passage en $4$-$20\ \mathrm{mA}$ à étudier</td></tr>
+        <tr><td>Niveau de la bâche d'aspiration</td><td>Capteur hydrostatique immergé $0$-$400\ \mathrm{mbar}$, soit $0$-$4{,}08\ \mathrm{m}$ d'eau</td><td>$4$-$20\ \mathrm{mA}$</td><td>Mesure continue pour anticiper la marche à sec</td><td>Masse volumique supposée ; câble à évent</td></tr>
+        <tr><td>Niveau très bas</td><td>Interrupteur à flotteur, contact ouvert sur niveau bas</td><td>TOR à sécurité positive</td><td>Principe différent du capteur continu : pas de mode commun de défaillance</td><td>Blocage mécanique, essai périodique</td></tr>
+        <tr><td>Température des paliers</td><td>Pt100 classe A, trois fils, doigt de gant</td><td>Transmetteur $4$-$20\ \mathrm{mA}$</td><td>$U = 0{,}45\ \mathrm{K}$, exemple résolu</td><td>Constante de temps de quelques dizaines de secondes</td></tr>
+        <tr><td>Température des enroulements</td><td>Thermistances à coefficient positif, une par phase, en série</td><td>Entrée thermistance du variateur</td><td>Image directe du point chaud, basculement franc</td><td>Pas de valeur continue ; liaison à séparer de la puissance</td></tr>
+        <tr><td>Vitesse du convoyeur</td><td>Codeur incrémental $1024$ points, HTL $24\ \mathrm{V}$, existant</td><td>Comptage rapide $\times 4$</td><td>$4096$ fronts par tour pour la boucle de vitesse</td><td>Câble blindé, résolution faible à basse vitesse</td></tr>
+        <tr><td>Présence des palettes</td><td>Détecteur photoélectrique reflex polarisé, PNP</td><td>TOR</td><td>Palettes en bois et films : un inductif ne les verrait pas</td><td>Encrassement, alignement du réflecteur</td></tr>
+        <tr><td>Fins de course de la vanne</td><td>Deux détecteurs inductifs PNP, $S_n = 8\ \mathrm{mm}$, cames en acier</td><td>TOR</td><td>Sans contact, insensibles à l'usure</td><td>Came à monter à moins de $6{,}4\ \mathrm{mm}$</td></tr>
+        <tr><td>Courant de l'actionneur</td><td>Capteur de Hall en boucle ouverte $\pm 10\ \mathrm{A}$</td><td>$0$-$10\ \mathrm{V}$</td><td>Courant continu, isolement, détection d'un blocage</td><td>Zéro à contrôler, erreur de $1$ à $2\ \%$</td></tr>
+        <tr><td>Énergie à l'arrivée</td><td>TC $150/5\ \mathrm{A}$ classe $0{,}5$, existant</td><td>Centrale de mesure</td><td>Courant alternatif, isolement, normalisation du comptage</td><td>Secondaire jamais ouvert</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h3 id="i-compromis">Contraintes, risques, choix d'ingénierie et compromis</h3>
+  <ul>
+    <li><strong>Mesure et sécurité séparées.</strong> Le niveau très bas qui interdit la marche de la pompe ne repose pas sur le capteur continu, mais sur un
+      flotteur indépendant, câblé en sécurité positive : un fil coupé produit l'état de repli. Un même capteur pour la régulation et la protection créerait
+      un mode commun de défaillance. Le niveau de sécurité exigé, s'il y en a un, relève d'une analyse de risque et de la norme applicable, hors du
+      périmètre de cette séance.</li>
+    <li><strong>Exactitude contre coût.</strong> Pour les paliers, la classe A en trois fils suffit ; une classe B donnerait $U \approx 0{,}85\ \mathrm{K}$,
+      encore acceptable pour une alarme à $10\ \mathrm{K}$ de la marche normale. Le gain d'exactitude d'un quatre fils ne justifie pas le câble
+      supplémentaire.</li>
+    <li><strong>Rapidité contre robustesse.</strong> Le doigt de gant permet de changer la sonde sans vidanger, mais porte la constante de temps à quelques
+      dizaines de secondes : acceptable pour un palier, dont l'échauffement prend des minutes, inacceptable pour une protection rapide.</li>
+    <li><strong>Choix du principe par la cible.</strong> Les palettes en bois imposent le photoélectrique ; les cames de vanne en acier permettent l'inductif,
+      plus robuste. Un détecteur inductif réglé sur une came en aluminium perdrait plus de la moitié de sa portée.</li>
+    <li><strong>Câblage et CEM.</strong> Les signaux analogiques et les voies du codeur cheminent en câbles blindés, séparés des câbles moteur du variateur ;
+      le blindage est raccordé au PE à l'entrée de l'armoire. Le cours <a href="#/cours/compatibilite-electromagnetique">Compatibilité électromagnétique</a>
+      a montré que les fronts de l'onduleur couplent des courants de mode commun dans tout conducteur voisin.</li>
+    <li><strong>Diagnostic intégré.</strong> Chaque mesure continue doit permettre de détecter sa propre défaillance : courant hors de la plage utile pour une
+      boucle $4$-$20\ \mathrm{mA}$, résistance hors limites pour une sonde, voies complémentaires incohérentes pour un codeur. Une mesure qui ne sait pas dire
+      qu'elle est fausse ne doit pas commander une action.</li>
+  </ul>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <ol>
+    <li><strong>Raccorder une Pt100 en deux fils sur une longue liaison.</strong> $2R_f/S$ s'ajoute : $10{,}8\ \mathrm{K}$ pour $60\ \mathrm{m}$ de
+      $0{,}5\ \mathrm{mm^2}$. Correction : trois fils, quatre fils, ou transmetteur dans la tête de sonde.</li>
+    <li><strong>Croire que le trois fils annule toujours la résistance des fils.</strong> Il ne compense que des fils identiques ; un bornier oxydé de
+      $0{,}2\ \Omega$ donne $0{,}5\ \mathrm{K}$. Correction : contrôler la résistance de chaque fil à la mise en service, serrer et protéger les bornes.</li>
+    <li><strong>Prolonger un thermocouple avec du cuivre, ou inverser le câble de compensation.</strong> La soudure froide se déplace dans la tête ; la
+      mesure dérive avec la température de la tête, d'environ une ou deux fois l'écart entre tête et bornier. Correction : câble de compensation du bon type,
+      polarité vérifiée, compensation au bornier.</li>
+    <li><strong>Oublier la compensation de soudure froide.</strong> Lecture trop basse d'environ la température du bornier. Correction : activer la
+      compensation, contrôler la mesure de $T_f$ du transmetteur.</li>
+    <li><strong>Prendre la portée nominale d'un détecteur inductif pour sa portée réelle.</strong> $S_n$ est définie sur l'acier doux ; sur l'aluminium, elle
+      est réduite de plus de moitié. Correction : appliquer le facteur de réduction du constructeur, puis la marge de $0{,}8$.</li>
+    <li><strong>Associer un détecteur PNP à une entrée à commun $+24\ \mathrm{V}$.</strong> Aucun courant ne circule, l'entrée ne change jamais d'état alors
+      que le voyant du détecteur s'allume. Correction : vérifier la convention des entrées avant le choix du détecteur.</li>
+    <li><strong>Lire un codeur sur une entrée tout ou rien ordinaire.</strong> Filtrée à quelques millisecondes et lue au cycle de l'automate, elle perd des
+      fronts dès quelques dizaines de hertz : la position dérive. Correction : module de comptage rapide, $f_{\text{fronts}}$ calculée à la vitesse maximale
+      avec une marge.</li>
+    <li><strong>Confondre résolution et exactitude.</strong> Un codeur de $4096$ fronts ou une entrée de $16$ bits ne disent rien de l'erreur de montage, de la
+      tolérance du capteur ou de sa dérive. Correction : budget d'incertitude complet.</li>
+    <li><strong>Utiliser un capteur de pression relative à évent obstrué.</strong> Il se comporte comme un capteur absolu et dérive avec la pression
+      atmosphérique, de plusieurs dizaines de millibars. Correction : câble à évent protégé, capteur adapté à la référence voulue.</li>
+  </ol>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic industriel et une question
+    conceptuelle sans calcul. Les solutions sont présentes dans la page mais restent masquées jusqu'à votre tentative ou à un clic explicite ; chaque
+    correction se révèle étape par étape, avec un calcul encadré, une courbe tracée ou un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangées : choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Le score est calculé dans ce navigateur
+    et repris par la grille d'auto-évaluation.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+  <h3 id="m-formules">Cinq formules essentielles</h3>
+  <div class="formule-cle">$$R_T = R_0(1 + AT + BT^2), \qquad S = R_0(A + 2BT)$$</div>
+  <div class="formule-cle">$$\Delta T_{2\,\text{fils}} \approx \frac{2R_f}{S}, \qquad \Delta T_{3\,\text{fils}} \approx \frac{R_{f1} - R_{f2}}{S}$$</div>
+  <div class="formule-cle">$$E(T_c) = e + E(T_f)$$</div>
+  <div class="formule-cle">$$\delta\theta = \frac{360^\circ}{kN}, \qquad f_{\text{fronts}} = \frac{kNn}{60}, \qquad \delta n = \frac{60}{kN\,T_e}$$</div>
+  <div class="formule-cle">$$V_H = \frac{IB}{nqt}, \qquad I_s = \frac{N_p I_p}{N_2}, \qquad p = \rho g h$$</div>
+  <h3 id="m-vigilance">Cinq points de vigilance</h3>
+  <ul>
+    <li>Une Pt100 au-delà de quelques mètres se raccorde en trois fils identiques, ou en quatre fils.</li>
+    <li>Un thermocouple mesure une différence : câble de compensation jusqu'au bornier et compensation de soudure froide.</li>
+    <li>La portée d'un détecteur inductif dépend du métal de la cible ; la sortie PNP ou NPN dépend du commun des entrées.</li>
+    <li>Un codeur se lit sur une entrée de comptage rapide, en câble blindé, sans perdre un seul front.</li>
+    <li>Une mesure qui sert à protéger ne sert pas à réguler : principe indépendant et sécurité positive.</li>
+  </ul>
+  <h3 id="m-resume">Résumé</h3>
+  <p>
+    Un capteur exploite un effet physique et ne mesure que son propre état. La Pt100 suit la relation de Callendar et Van Dusen, environ
+    $0{,}385\ \Omega/\mathrm{K}$ ; ses fils ajoutent $2R_f$ en deux fils, une différence de fils en trois fils, rien en quatre fils. Le thermocouple donne
+    $E(T_c) - E(T_f)$ : il exige câble de compensation et compensation de soudure froide. Les jauges en pont mesurent pression, force et niveau
+    hydrostatique. Le détecteur inductif voit les métaux, avec une portée réduite hors de l'acier ; PNP ou NPN se choisit selon le commun des entrées. Le
+    codeur incrémental en quadrature compte $kN$ fronts par tour ; la vitesse se mesure par comptage ou par période. Le capteur de Hall en boucle fermée
+    mesure continu et alternatif avec isolement. Choisir, c'est confronter principe, raccordement, dynamique et incertitude à l'exigence.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance, deux sur le cours précédent, <a href="#/cours/multimetre-oscilloscope-et-sondes">Multimètre, oscilloscope et
+    sondes</a>, une sur le cours <a href="#/cours/diagrammes-de-bode">Diagrammes de Bode</a>, vieux d'une semaine, et une sur le cours
+    <a href="#/cours/machine-a-courant-continu">Machine à courant continu</a>, vieux d'un mois.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : programmer les fonctions de conversion des capteurs de la séance, vérifier par la simulation les montages de la Pt100, puis, si le matériel
+    est disponible, contrôler une vraie sonde. Prédictions à écrire avant de commencer : quelle température correspond à $150{,}00\ \Omega$ ? De combien
+    l'absence de compensation de soudure froide fausse-t-elle une mesure à $300\ ^\circ\mathrm{C}$ avec un bornier à $25\ ^\circ\mathrm{C}$ ? Un décodeur
+    $\times 4$ programmé à partir d'échantillons de $A$ et $B$ pris toutes les $10\ \mathrm{\mu s}$ suit-il un codeur de $1024$ points à
+    $3000\ \mathrm{tr/min}$ ?
+  </p>
+  <ol>
+    <li><strong>Python, Pt100.</strong> Écrire <code>r_pt100(t)</code> selon Callendar et Van Dusen, avec le terme en $C$ sous $0\ ^\circ\mathrm{C}$, et
+      son inverse <code>t_pt100(r)</code> par la formule du second degré au-dessus de $0\ ^\circ\mathrm{C}$ et par la méthode de Newton en dessous. Vérifier
+      $R_{100} = 138{,}506\ \Omega$ et $R_{-20} = 92{,}160\ \Omega$, puis tracer l'erreur de la droite $R_0(1 + 0{,}00385\,T)$ entre $-50$ et
+      $250\ ^\circ\mathrm{C}$.</li>
+    <li><strong>Python, thermocouple.</strong> Coder le polynôme de référence du type K entre $0$ et $1372\ ^\circ\mathrm{C}$, publié par les organismes de
+      métrologie, et son inverse par dichotomie ; vérifier $E(100) = 4{,}096\ \mathrm{mV}$ et $E(400) = 16{,}397\ \mathrm{mV}$, puis simuler une
+      compensation absente et un câble en cuivre.</li>
+    <li><strong>Python, codeur.</strong> Générer $A$ et $B$ échantillonnés pour une vitesse donnée, écrire le décodeur $\times 4$ par table de transition de
+      l'état $(A, B)$ précédent vers l'état courant, ajouter des parasites sur $A$ seule et observer l'erreur de position.</li>
+    <li><strong>LTspice, montages de la Pt100.</strong> Modéliser la sonde par une résistance paramétrée <code>{R0*(1+3.9083m*T-0.5775u*T*T)}</code>, les
+      fils par $2{,}064\ \Omega$ chacun et une source de courant de $1\ \mathrm{mA}$ ; comparer les tensions en deux, trois et quatre fils par
+      <code>.step param T 0 150 50</code> et une analyse <code>.op</code>, puis désymétriser un fil de $0{,}2\ \Omega$.</li>
+    <li><strong>Mesure réelle, facultative.</strong> Une Pt100 et un multimètre en mode quatre fils, s'il en dispose, ou deux fils en soustrayant la
+      résistance des cordons court-circuités : mesurer dans de la glace fondante puis dans de l'eau à température ambiante relevée par un thermomètre de
+      référence. Aucune mesure sur une installation sous tension n'est demandée.</li>
+  </ol>
+  <p>
+    Résultats attendus : $150{,}00\ \Omega$ correspondent à $130{,}45\ ^\circ\mathrm{C}$ ; la température déduite de la droite à $0{,}00385$, nulle par construction en erreur à $0$ et
+    $100\ ^\circ\mathrm{C}$, est trop basse de $5{,}6\ \mathrm{K}$ à $250\ ^\circ\mathrm{C}$ et de $1{,}2\ \mathrm{K}$ à $-50\ ^\circ\mathrm{C}$. Sans compensation, la mesure à
+    $300\ ^\circ\mathrm{C}$ avec un bornier à $25\ ^\circ\mathrm{C}$ donne $275{,}8\ ^\circ\mathrm{C}$ environ. Le codeur de $1024$ points à
+    $3000\ \mathrm{tr/min}$ produit $204{,}8\ \mathrm{kHz}$ de fronts, un front toutes les $4{,}9\ \mathrm{\mu s}$ : un échantillonnage à
+    $10\ \mathrm{\mu s}$ saute des états, et le décodeur se trompe ; il faut au moins un échantillon par état, soit un pas inférieur à $4{,}9\ \mathrm{\mu s}$, et en pratique
+    une marge d'un facteur deux, soit $2{,}4\ \mathrm{\mu s}$ au plus, ou un décodage par circuit. Dans LTspice, $100{,}00$, $119{,}40$, $138{,}51$ et $157{,}33\ \mathrm{mV}$ en quatre fils, et
+    $4{,}128\ \mathrm{mV}$ de plus en deux fils à toutes les températures. Pour la sonde réelle, $100{,}0 \pm 0{,}06\ \Omega$ dans la glace fondante en
+    classe A.
+  </p>
+  <p>
+    Anomalies à observer et à expliquer : une erreur en trois fils qui change de signe quand on échange les fils 2 et 3, signe d'un déséquilibre ; une
+    lecture dans la glace fondante trop haute de quelques dixièmes d'ohm, signe des cordons non soustraits ou d'une glace non fondante ; dans la simulation du
+    codeur, une erreur qui croît d'un nombre entier de fronts à chaque parasite, et un décodeur qui compte à l'envers quand il saute deux états.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours, notées de 0 à 4. Le bilan affiché sous la grille est calculé dans ce navigateur à
+    partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement. Aucune estimation n'est faite à votre place :
+    seul le score réellement obtenu sert de référence.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Lire votre bilan</span>
+    <p>
+      Les exercices fondamentaux testent la relation de Callendar et Van Dusen et la fréquence d'un codeur ; l'intermédiaire 1 la compensation de soudure
+      froide ; l'intermédiaire 2 le dimensionnement d'un capteur de courant en boucle fermée ; l'avancé le compromis entre résolution et durée de comptage ; la
+      question de diagnostic la portée d'un détecteur inductif et la convention PNP ; la question conceptuelle le principe différentiel du thermocouple. Un
+      bloc réussi à moins de la moitié indique la notion à reprendre avant le cours Conditionnement analogique.
+    </p>
+  </div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Un capteur exploite un effet physique et ne mesure que son propre état : principe, grandeurs d'influence, temps de réponse et perturbation du procédé décident de son domaine d'emploi.</li>
+    <li data-rang="02">Le raccordement fait partie de la mesure : fils d'une sonde à résistance, câble de compensation et soudure froide d'un thermocouple, polarité PNP ou NPN, entrée de comptage d'un codeur.</li>
+    <li data-rang="03">Choisir un capteur, c'est confronter une exigence chiffrée à un budget d'incertitude et à une dynamique, et séparer la mesure qui régule de celle qui protège.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> raisonner sur toute la chaîne plutôt que sur le capteur seul. Une Pt100 de classe A raccordée en deux
+    fils est moins exacte qu'une classe B en trois fils ; un thermocouple parfait prolongé en cuivre mesure la température d'une tête de sonde. Le réflexe à
+    installer : écrire, pour chaque maillon, ce qu'il ajoute à la mesure, puis vérifier lequel domine.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Conditionnement analogique, traite le maillon suivant. Question à préparer : quatre jauges de
+    $350\ \Omega$, de facteur de jauge $2$, forment un pont complet alimenté sous $10\ \mathrm{V}$ ; pour une déformation de $500\ \mathrm{\mu m/m}$, quelle
+    tension différentielle sort du pont, quel gain faut-il pour obtenir $10\ \mathrm{V}$, et pourquoi un simple amplificateur non inverseur relié à l'un des
+    points milieux ne convient-il pas ?
+  </p>
+</article>
