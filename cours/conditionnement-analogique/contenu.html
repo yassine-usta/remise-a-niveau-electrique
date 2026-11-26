@@ -1,0 +1,896 @@
+<article class="cours" data-slug="conditionnement-analogique">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/capteurs-industriels">Capteurs industriels</a> s'est achevé sur une question : quatre jauges de $350\ \Omega$, de facteur de
+      jauge $2$, forment un pont complet alimenté sous $10\ \mathrm{V}$ ; pour une déformation de $500\ \mathrm{\mu m/m}$, quelle tension sort du pont, quel
+      gain faut-il pour obtenir $10\ \mathrm{V}$, et pourquoi un simple amplificateur non inverseur relié à l'un des points milieux ne convient-il pas ?
+      Réponse courte. La variation relative de chaque jauge vaut $x = K\varepsilon = 2 \times 500 \times 10^{-6} = 10^{-3}$ ; un pont complet donne
+      $V_s = V_a\,x = 10\ \mathrm{V} \times 10^{-3} = 10\ \mathrm{mV}$, et il faut un gain de $10\ \mathrm{V}/10\ \mathrm{mV} = 1000$. Mais chacun des deux
+      points milieux se trouve à environ $5\ \mathrm{V}$ de la masse : le signal utile n'est que la différence, $10\ \mathrm{mV}$, posée sur un mode commun
+      de $5\ \mathrm{V}$. Un amplificateur non inverseur de gain $1000$ branché sur un seul point milieu amplifierait ces $5\ \mathrm{V}$ et partirait en
+      saturation. Il faut un amplificateur qui amplifie la différence et ignore la moyenne : c'est tout le sujet de cette séance.
+    </p>
+    <p>
+      La séance réutilise le diviseur de tension et sa résistance de sortie du cours <a href="#/cours/associations-de-resistances-et-diviseurs">Associations
+      de résistances et diviseurs</a>, le théorème de superposition du cours <a href="#/cours/theoremes-de-thevenin-norton-et-superposition">Théorèmes de
+      Thévenin, Norton et superposition</a>, le premier pont de Wheatstone du cours <a href="#/cours/revision-2-et-mini-projet-capteur">Révision 2 et
+      mini-projet capteur</a>, les filtres du cours <a href="#/cours/filtres-passifs">Filtres passifs</a> et leur lecture dans le cours
+      <a href="#/cours/diagrammes-de-bode">Diagrammes de Bode</a>, le second ordre du cours <a href="#/cours/reponse-temporelle-et-performances">Réponse
+      temporelle et performances</a>, le repliement du cours <a href="#/cours/commande-numerique">Commande numérique</a>, les modes commun et différentiel du
+      cours <a href="#/cours/compatibilite-electromagnetique">Compatibilité électromagnétique</a> et le budget d'incertitude du cours
+      <a href="#/cours/metrologie-electrique">Métrologie électrique</a>.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Un capteur délivre rarement un signal directement utilisable. Une jauge de contrainte varie d'un millième de sa résistance ; un pont de jauges donne
+    quelques millivolts posés sur plusieurs volts de mode commun ; un shunt donne $60\ \mathrm{mV}$ au potentiel d'un bus de puissance ; un thermocouple
+    donne $41\ \mathrm{\mu V}$ par kelvin. L'entrée d'un automate attend, elle, $0$ à $10\ \mathrm{V}$ ou $4$ à $20\ \mathrm{mA}$ référencés à son
+    $0\ \mathrm{V}$, et un convertisseur analogique-numérique attend une tension comprise entre $0$ et sa référence. Le <strong>conditionnement
+    analogique</strong> est l'ensemble des circuits qui font ce passage : exciter le capteur, extraire la différence utile, l'amplifier, retirer ce qui
+    n'est pas le signal, la décaler et la mettre à l'échelle, protéger et parfois isoler.
+  </p>
+  <ul>
+    <li><strong>Extraire.</strong> Un pont transforme une variation de résistance en tension ; un amplificateur d'instrumentation garde la différence et
+      rejette le mode commun. C'est là que se joue l'exactitude d'une pesée ou d'une mesure de pression.</li>
+    <li><strong>Amplifier sans dégrader.</strong> Un gain de $1000$ amplifie aussi la tension de décalage de l'amplificateur, sa dérive et son bruit, et
+      réduit sa bande passante : chaque microvolt ramené à l'entrée compte.</li>
+    <li><strong>Filtrer.</strong> Le $50\ \mathrm{Hz}$ induit par les câbles de puissance, les vibrations d'une machine, les fronts d'un variateur
+      doivent être atténués avant la conversion, sinon le repliement les ramène dans la bande utile.</li>
+    <li><strong>Adapter.</strong> Faire coïncider l'étendue du signal avec celle de l'entrée, ni trop petite, car la résolution est perdue, ni trop grande,
+      car le signal est écrêté sans alarme.</li>
+  </ul>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Jalon visé par le module</span>
+    <p>
+      Le jalon de fin du module Mesure et instrumentation demande de concevoir une chaîne d'acquisition industrielle. Après le capteur, cette séance traite
+      le deuxième maillon : le conditionnement. Le travail central consiste à dimensionner le conditionneur d'une station de pesée des palettes, nouvel
+      élément du projet fil rouge, depuis l'excitation du pont jusqu'à l'entrée de l'automate.
+    </p>
+  </div>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Calculer la tension de sortie, le mode commun et la non-linéarité d'un quart de pont, d'un demi-pont et d'un pont complet, et expliquer la compensation de température par les bras adjacents.</li>
+    <li data-rang="02">Établir, à partir des hypothèses de l'amplificateur opérationnel idéal, les relations des montages inverseur, non inverseur, soustracteur et de l'amplificateur d'instrumentation à trois amplificateurs.</li>
+    <li data-rang="03">Calculer le taux de réjection du mode commun d'un soustracteur à partir de la tolérance de ses résistances et de la résistance de la source, et le comparer à celui d'un amplificateur d'instrumentation.</li>
+    <li data-rang="04">Évaluer l'effet des défauts réels d'un amplificateur : tension de décalage et dérive, produit gain-bande, vitesse de balayage, excursion des entrées et de la sortie.</li>
+    <li data-rang="05">Dimensionner un filtre passe-bas actif du second ordre et interpréter le compromis entre atténuation d'une perturbation et temps d'établissement.</li>
+    <li data-rang="06">Dimensionner un conditionneur complet de pont de jauges, excitation, gain, filtre, mise à l'échelle, et établir son budget d'erreur.</li>
+    <li data-rang="07">Diagnostiquer une mesure saturée, bruitée ou dérivante à partir de ses symptômes : mode commun, câble, dérive thermique, gain.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>Cinq rappels suffisent.</p>
+  <ul>
+    <li><strong>Diviseur de tension.</strong> Deux résistances en série sous $V_a$ : $v = V_a\,R_{\text{bas}}/(R_{\text{haut}} + R_{\text{bas}})$, tant que
+      rien ne charge le point milieu. Sa résistance de sortie, vue du point milieu, vaut $R_{\text{haut}} \parallel R_{\text{bas}}$ ; une charge $R_c$ fait
+      chuter la tension dans le rapport $R_c/(R_c + R_{\text{sortie}})$.</li>
+    <li><strong>Superposition.</strong> Dans un circuit linéaire, la réponse à plusieurs sources est la somme des réponses à chaque source seule, les autres
+      étant éteintes : une source de tension éteinte devient un court-circuit.</li>
+    <li><strong>Jauge de contrainte.</strong> $\Delta R/R = K\varepsilon$, avec $K \approx 2$ pour une jauge métallique et $\varepsilon$ la déformation
+      relative, en $\mathrm{m/m}$ ; $1000\ \mathrm{\mu m/m}$ ne changent une jauge de $350\ \Omega$ que de $0{,}7\ \Omega$.</li>
+    <li><strong>Décibels.</strong> Un rapport d'amplitudes $a$ vaut $20\log_{10} a$ décibels : $10$ donne $20\ \mathrm{dB}$, $1000$ donne
+      $60\ \mathrm{dB}$, $10^5$ donne $100\ \mathrm{dB}$.</li>
+    <li><strong>Premier et second ordre.</strong> Un passe-bas du premier ordre atténue de $20\ \mathrm{dB}$ par décade au-delà de sa coupure ; un second
+      ordre, de $40\ \mathrm{dB}$ par décade. Un second ordre de facteur de qualité $Q = 1/\sqrt 2$ est un filtre de Butterworth : gain le plus plat possible
+      dans la bande passante, $-3\ \mathrm{dB}$ à la coupure.</li>
+  </ul>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Notation de la séance</span>
+    <p>
+      $V_a$ : tension d'excitation du pont ; $R$ : résistance nominale d'une jauge ; $x = \Delta R/R = K\varepsilon$ : variation relative d'une jauge active ;
+      $v_A$, $v_B$ : potentiels des points milieux par rapport au $0\ \mathrm{V}$ d'excitation ; $V_s = v_A - v_B$ : tension différentielle de sortie du pont ;
+      $V_{mc} = (v_A + v_B)/2$ : tension de mode commun. Pour un amplificateur : $v_+$ et $v_-$ potentiels des entrées non inverseuse et inverseuse,
+      $V_d = v_+ - v_-$ tension différentielle, $A_d$ gain différentiel, $A_{mc}$ gain de mode commun, $\mathrm{TRMC} = |A_d/A_{mc}|$ taux de réjection du
+      mode commun, souvent noté CMRR dans les fiches, exprimé en décibels. $G$ : gain total d'une chaîne ; $G_1$ : gain de l'étage d'entrée d'un
+      amplificateur d'instrumentation, fixé par $R_G$. Tous les potentiels sont repérés par rapport à un $0\ \mathrm{V}$ explicitement désigné sur chaque
+      schéma ; une flèche de tension pointe vers la borne $+$, un courant est compté positif dans le sens de sa flèche.
+    </p>
+  </div>
+  <p>
+    Mini-test de trois questions. Les réponses restent masquées, séparées de l'énoncé, jusqu'à votre tentative ou à un clic explicite.
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+  <h3 id="d-pont">Un pont compare deux diviseurs : seule leur différence porte l'information</h3>
+  <p>
+    Mesurer directement $0{,}7\ \Omega$ de variation sur $350\ \Omega$ revient à lire $0{,}2\ \%$ d'un grand nombre : la moindre dérive de l'excitation ou
+    de l'appareil noie le signal. Le pont de Wheatstone contourne la difficulté par une comparaison. Il place côte à côte deux diviseurs de tension
+    alimentés par la même source. Au repos, ils sont identiques : leurs points milieux sont au même potentiel, $V_a/2$, et la différence est nulle, quelle
+    que soit $V_a$. Quand une jauge varie, un seul diviseur se déséquilibre, et la différence entre les deux points milieux devient proportionnelle à la
+    variation. On ne mesure plus une grande tension avec précision, on mesure un petit écart à zéro.
+  </p>
+  <p>
+    Ce montage a une conséquence que l'on oublie souvent : chacun des deux points milieux reste à environ $V_a/2$ de la masse. Le signal utile, quelques
+    millivolts, est posé sur un socle de plusieurs volts commun aux deux bornes. Tout le conditionnement qui suit doit donc lire une différence et ignorer
+    ce socle : c'est la distinction entre <strong>mode différentiel</strong> et <strong>mode commun</strong>, déjà rencontrée pour les perturbations dans
+    le cours <a href="#/cours/compatibilite-electromagnetique">Compatibilité électromagnétique</a>.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Analogie de la balance à fléau, et ses limites</span>
+    <p>
+      Le pont ressemble à une balance à fléau : deux plateaux, un équilibre, et l'on lit l'écart à l'équilibre plutôt que le poids absolu. Comme la
+      balance, il est insensible à ce qui agit également des deux côtés : si la gravité changeait, la balance resterait équilibrée ; si $V_a$ change, un
+      pont équilibré reste à zéro, et si toutes les jauges chauffent ensemble, il ne bouge pas. L'analogie a deux limites. D'abord, hors équilibre, la
+      sortie du pont est proportionnelle à $V_a$ : une dérive de l'excitation devient une erreur de gain, ce qu'une balance ne connaît pas. Ensuite, la
+      balance compare des forces à travers un mécanisme sans perte, alors que le pont est un circuit avec une résistance de sortie : le brancher sur un
+      amplificateur qui consomme du courant le déséquilibre, ce qui impose une entrée à très haute impédance.
+    </p>
+  </div>
+  <p>
+    Une poutre encastrée, comme le corps d'épreuve d'un capteur de force, montre pourquoi on utilise plusieurs jauges. Quand l'extrémité libre descend,
+    la face supérieure s'allonge, en traction, et la face inférieure se raccourcit, en compression, de la même quantité. Une jauge collée dessus et une
+    jauge collée dessous varient donc de $+x$ et de $-x$. Placées dans deux bras adjacents du pont, elles ajoutent leurs effets sur le signal, mais
+    retranchent leurs effets communs, notamment celui de la température.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Avant d'utiliser la simulation suivante, écrivez vos réponses. À déformation égale, combien de fois plus de signal donne un pont complet qu'un quart
+      de pont ? Si l'on double $V_a$, que deviennent $V_s$ et le mode commun ? Si la poutre chauffe de $20\ \mathrm{K}$ sans être chargée, laquelle des trois
+      configurations affiche une fausse déformation ? Le quart de pont est-il parfaitement linéaire ?
+    </p>
+  </div>
+  <figure id="d-poutre-sim">
+    <div class="schema-vivant" id="d-poutre-vivant"></div>
+    <div id="d-poutre-curseurs"></div>
+    <div id="d-poutre-valeurs"></div>
+    <div id="d-poutre-trace"></div>
+    <figcaption>
+      À gauche, une poutre encastrée dans un mur, hachures à gauche, vue de profil ; le point déplaçable placé à son extrémité libre permet de la fléchir
+      vers le haut ou vers le bas, la déformation $\varepsilon$ de la face supérieure étant comptée positive en traction. Les rectangles collés sur les faces
+      sont les jauges : plein pour une jauge câblée dans le pont, en tirets pour un emplacement inutilisé ; J1 et J3 sont sur la face supérieure, J2 et J4
+      sur la face inférieure. À droite, le pont alimenté par $V_a$ entre son sommet, $+V_a$, et le $0\ \mathrm{V}$ en bas ; chaque bras porte le nom de la
+      jauge qui l'occupe, ou R pour une résistance fixe de complément placée dans le conditionneur, à température constante. Les potentiels $v_A$ et $v_B$
+      des points milieux et $V_s = v_A - v_B$ sont affichés en direct. Les curseurs règlent la configuration, $V_a$ et l'échauffement de la poutre. Le tracé
+      donne $V_s$ en fonction de $\varepsilon$ pour les trois configurations, sous la même excitation et le même échauffement ; le trait vertical en tirets
+      repère la déformation courante.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> À $V_a = 5\ \mathrm{V}$ et $\varepsilon = 1000\ \mathrm{\mu m/m}$, soit $x = 0{,}002$, le quart de pont donne
+    $2{,}50\ \mathrm{mV}$, le demi-pont $5{,}00\ \mathrm{mV}$ et le pont complet $10{,}00\ \mathrm{mV}$ : la sensibilité est proportionnelle au nombre de
+    jauges actives. Doubler $V_a$ double $V_s$ et le mode commun, qui reste égal à $V_a/2$ à quelques millivolts près. Avec $20\ \mathrm{K}$
+    d'échauffement et une jauge dont la résistance varie, à vide, de $10^{-5}$ par kelvin, valeur supposée d'une jauge mal adaptée au métal de la poutre,
+    le quart de pont affiche $0{,}25\ \mathrm{mV}$ sans aucune charge, soit une fausse déformation de $100\ \mathrm{\mu m/m}$, dix pour cent de la pleine
+    échelle ; le demi-pont et le pont complet restent à zéro, parce que les jauges de deux bras adjacents varient ensemble et que leur rapport ne change pas.
+    Enfin, le quart de pont n'est pas linéaire : sa sortie exacte vaut $V_a x/(4 + 2x)$, inférieure de $0{,}1\ \%$ à la droite $V_a x/4$ pour $x = 0{,}002$,
+    alors que le demi-pont et le pont complet, dont les jauges varient de $+x$ et $-x$, sont rigoureusement linéaires.
+  </p>
+
+  <h3 id="d-aop">Un amplificateur opérationnel est un asservissement</h3>
+  <p>
+    L'amplificateur opérationnel, ou AOP, amplifie la différence de ses deux entrées avec un gain énorme, de l'ordre de $10^5$ à $10^6$. Seul, il est
+    inutilisable : $10\ \mathrm{\mu V}$ d'écart suffisent à le saturer. Mais si l'on ramène une fraction de sa sortie sur son entrée inverseuse, il devient
+    un asservissement : il ajuste sa sortie jusqu'à ce que l'écart entre ses entrées soit pratiquement nul. Le gain du montage ne dépend plus alors de
+    l'AOP, mal connu et variable, mais du rapport de deux résistances, stable et précis. C'est exactement la logique de la boucle fermée du cours
+    <a href="#/cours/correcteurs-p-pi-pd-et-pid">Correcteurs P, PI, PD et PID</a> : un gain de boucle très grand rend la grandeur réglée fidèle à la
+    consigne, indépendamment des imperfections de la chaîne directe.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Analogie du régulateur, et ses limites</span>
+    <p>
+      L'AOP en contre-réaction se comporte comme un régulateur très rapide dont la consigne est l'entrée non inverseuse et la mesure l'entrée inverseuse.
+      L'analogie tient tant que la boucle est stable et que la sortie dispose de la marge nécessaire. Elle cesse de tenir quand la sortie atteint les
+      rails d'alimentation : le régulateur est saturé, l'écart entre les entrées n'est plus nul et toutes les relations du montage tombent. Elle cesse aussi
+      de tenir en fréquence : le gain de l'AOP décroît, le gain de boucle avec lui, et au-delà d'une certaine fréquence l'asservissement ne suit plus.
+    </p>
+  </div>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+  <h3 id="e-wheatstone">Le pont de Wheatstone</h3>
+  <p>
+    Le pont comporte deux branches en parallèle sur la source d'excitation $V_a$ : $R_1$ en haut et $R_2$ en bas à gauche, de point milieu $A$ ; $R_3$ en
+    haut et $R_4$ en bas à droite, de point milieu $B$. Le bas du pont est le $0\ \mathrm{V}$, référence des potentiels. Hypothèse : aucun courant n'est
+    prélevé aux points milieux. Chaque branche est un diviseur de tension :
+  </p>
+  <div class="formule-cle">$$V_s = v_A - v_B = V_a\left(\frac{R_2}{R_1 + R_2} - \frac{R_4}{R_3 + R_4}\right)$$</div>
+  <p class="formule-cle-legende">
+    $V_a$ en volts, résistances en ohms. Le pont est équilibré, $V_s = 0$, quand $R_2/R_1 = R_4/R_3$, quelle que soit $V_a$. Vérification dimensionnelle :
+    rapports de résistances sans dimension, $V_s$ en volts.
+  </p>
+  <p>
+    Le schéma suivant fixe les notations : la source $V_a$, sa borne $+$ reliée au sommet $T$, débite le courant $I$ qui se partage en $i_1$ dans la
+    branche gauche et $i_2$ dans la branche droite ; la flèche en tirets entre les points milieux est la tension $V_s$, comptée de $B$ vers $A$.
+  </p>
+  <figure id="e-pont-figure">
+    <svg viewBox="0 0 720 400" role="img" aria-label="Pont de Wheatstone : source d'excitation Va entre le sommet T et la référence 0 V, branche gauche R1 et R2 avec le point milieu A, branche droite R3 et R4 avec le point milieu B, tension de sortie Vs mesurée de B vers A">
+      <defs><marker id="e-po-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"><path d="M380 60L325.6 114.4"/><path d="M294.4 145.6L240 200"/><rect x="-22" y="-7" width="44" height="14" transform="translate(310 130) rotate(135)"/><path d="M380 60L434.4 114.4"/><path d="M465.6 145.6L520 200"/><rect x="-22" y="-7" width="44" height="14" transform="translate(450 130) rotate(45)"/><path d="M240 200L294.4 254.4"/><path d="M325.6 285.6L380 340"/><rect x="-22" y="-7" width="44" height="14" transform="translate(310 270) rotate(45)"/><path d="M520 200L465.6 254.4"/><path d="M434.4 285.6L380 340"/><rect x="-22" y="-7" width="44" height="14" transform="translate(450 270) rotate(135)"/><path d="M90 60L380 60"/><path d="M90 340L380 340"/><path d="M90 60L90 186"/><path d="M90 214L90 340"/><path d="M68 186L112 186" stroke-width="2.6"/><path d="M78 214L102 214" stroke-width="2.6"/><path d="M380 340L380 350"/><path d="M368 350L392 350"/><path d="M373 355L387 355"/><path d="M377 360L383 360"/><path d="M500 200L262 200" marker-end="url(#e-po-fl)" stroke-width="1.4" stroke-dasharray="6 4"/><path d="M306 96L276 126" marker-end="url(#e-po-fl)" stroke-width="1.3"/><path d="M454 96L484 126" marker-end="url(#e-po-fl)" stroke-width="1.3"/><path d="M150 60L200 60" marker-end="url(#e-po-fl)" stroke-width="1.3"/><path d="M240 200L240 250"/><path d="M520 200L520 250"/><circle cx="240" cy="254" r="4"/><circle cx="520" cy="254" r="4"/><circle cx="380" cy="60" r="3.4" fill="currentColor" stroke="none"/><circle cx="240" cy="200" r="3.4" fill="currentColor" stroke="none"/><circle cx="520" cy="200" r="3.4" fill="currentColor" stroke="none"/><circle cx="380" cy="340" r="3.4" fill="currentColor" stroke="none"/><circle cx="90" cy="60" r="3.4" fill="currentColor" stroke="none"/><circle cx="90" cy="340" r="3.4" fill="currentColor" stroke="none"/></g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="116" y="182">+</text><text x="104" y="206">Va</text><text x="104" y="222">excitation</text><text x="140" y="50">I = Va / R</text><text x="258" y="100">i1</text><text x="492" y="100">i2</text><text x="392" y="52">T, + Va</text><text x="392" y="372">0 V, référence des potentiels</text><text x="272" y="152">R1</text><text x="478" y="152">R3</text><text x="272" y="262">R2</text><text x="478" y="262">R4</text><text x="196" y="196">A</text><text x="532" y="196">B</text><text x="176" y="282">borne A, vA</text><text x="500" y="282">borne B, vB</text><text x="300" y="226">Vs = vA - vB</text><text x="560" y="330">Vmc = (vA + vB) / 2</text><text x="560" y="346">voisine de Va / 2</text></g>
+    </svg>
+    <figcaption>
+      Pont de Wheatstone. Le $0\ \mathrm{V}$, en bas, est la référence de tous les potentiels. Les flèches $I$, $i_1$ et $i_2$ indiquent le sens conventionnel
+      des courants, du $+V_a$ vers le $0\ \mathrm{V}$. Les bornes A et B sont les sorties ; la flèche en tirets pointe vers A, borne positive de
+      $V_s = v_A - v_B$. Le mode commun $V_{mc}$ est la moyenne des deux potentiels de sortie.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Trois configurations.</strong> Les jauges actives remplacent une, deux ou quatre résistances de valeur nominale $R$. Une jauge en traction
+    vaut $R(1 + x)$, une jauge en compression $R(1 - x)$, avec $x = K\varepsilon$.
+  </p>
+  <ul>
+    <li><strong>Quart de pont</strong>, une jauge active en $R_2$ : $v_A = V_a(1 + x)/(2 + x)$ et $v_B = V_a/2$, d'où
+      $V_s = V_a\dfrac{x}{2(2 + x)} \approx \dfrac{V_a x}{4}$. La relation n'est pas linéaire : l'écart relatif à la droite vaut $-x/(2 + x) \approx -x/2$.</li>
+    <li><strong>Demi-pont</strong>, $R_2 = R(1 + x)$ et $R_1 = R(1 - x)$ dans les deux bras de la même branche : $R_1 + R_2 = 2R$ reste constant, donc
+      $v_A = V_a(1 + x)/2$ et $V_s = V_a x/2$, exactement.</li>
+    <li><strong>Pont complet</strong>, en plus $R_3 = R(1 + x)$ et $R_4 = R(1 - x)$ : $v_B = V_a(1 - x)/2$, donc $V_s = V_a x$, exactement.</li>
+  </ul>
+  <div class="formule-cle">$$V_s \approx \frac{n}{4}\,V_a\,K\varepsilon, \qquad n = 1,\ 2 \text{ ou } 4 \text{ jauges actives}$$</div>
+  <p class="formule-cle-legende">
+    Approximation exacte pour $n = 2$ et $n = 4$ avec des jauges en $\pm x$. Interprétation : chaque jauge active apporte un quart de $V_a x$. Cas limite :
+    $\varepsilon = 0$ donne $V_s = 0$ pour toute excitation. Les capteurs de force et de pression du commerce sont des ponts complets, caractérisés par
+    leur sensibilité en $\mathrm{mV/V}$ : $2\ \mathrm{mV/V}$ signifie $V_s = 2\ \mathrm{mV}$ par volt d'excitation à la charge nominale.
+  </p>
+  <p>
+    <strong>Compensation de température.</strong> Si toutes les jauges subissent la même variation thermique $\beta\,\Delta T$, une jauge de quart de pont
+    vaut $R(1 + x + \beta\Delta T)$ et le pont lit une fausse déformation $\beta\Delta T/K$. Dans un demi-pont, les deux bras de la branche gauche deviennent
+    $R(1 \pm x + \beta\Delta T)$ : leur somme vaut $2R(1 + \beta\Delta T)$ et $V_s = V_a x/\left(2(1 + \beta\Delta T)\right)$. La température ne crée plus de
+    signal ; elle ne modifie que la sensibilité, d'un facteur $1 + \beta\Delta T$ voisin de $1$. C'est une loi du circuit, pas un réglage : deux bras
+    adjacents qui varient dans le même rapport ne changent pas le potentiel de leur point milieu.
+  </p>
+  <p>
+    <strong>Résistance de sortie et mode commun.</strong> Vu de ses bornes de sortie, un pont complet de jauges identiques présente $R/2$ entre chaque point
+    milieu et la masse, soit $R$ entre $A$ et $B$ : $350\ \Omega$ pour des jauges de $350\ \Omega$. Le mode commun vaut
+    $V_{mc} = (v_A + v_B)/2 = V_a/2$ pour un pont complet ; il est de $2{,}5\ \mathrm{V}$ sous $5\ \mathrm{V}$ d'excitation, mille fois plus que le signal.
+  </p>
+
+  <h3 id="e-aop-ideal">L'amplificateur opérationnel idéal et ses trois montages de base</h3>
+  <p>
+    <strong>Modèle.</strong> L'AOP idéal a un gain différentiel infini, des courants d'entrée nuls, une impédance de sortie nulle et une bande passante
+    infinie. En contre-réaction négative et hors saturation, deux règles suffisent : les entrées ne prélèvent aucun courant, et $v_+ = v_-$. La seconde
+    n'est pas une loi physique mais une conséquence du gain infini : sortie finie divisée par un gain infini donne un écart nul. Elle ne vaut que si la
+    sortie reste entre les rails d'alimentation. Le schéma suivant regroupe les trois montages dérivés ci-dessous.
+  </p>
+  <figure id="e-aop-figure">
+    <svg viewBox="0 0 790 306" role="img" aria-label="Trois montages à amplificateur opérationnel : inverseur, non inverseur et soustracteur, avec leurs résistances, la masse de référence et leurs relations">
+      <defs><marker id="e-ao-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"><path d="M100 98 L170 140 L100 182 L100 98" stroke-width="2"/><circle cx="14" cy="119" r="4"/><path d="M18 119L27 119"/><path d="M71 119L80 119"/><rect x="-22" y="-7" width="44" height="14" transform="translate(49 119) rotate(0)"/><path d="M80 119L100 119"/><circle cx="80" cy="119" r="3.4" fill="currentColor" stroke="none"/><path d="M80 119L80 66"/><path d="M80 66L123 66"/><path d="M167 66L210 66"/><rect x="-22" y="-7" width="44" height="14" transform="translate(145 66) rotate(0)"/><path d="M210 66L210 140"/><circle cx="210" cy="140" r="3.4" fill="currentColor" stroke="none"/><path d="M170 140L236 140"/><circle cx="240" cy="140" r="4"/><path d="M100 161L86 161"/><path d="M86 161L86 190"/><path d="M86 190L86 200"/><path d="M74 200L98 200"/><path d="M79 205L93 205"/><path d="M83 210L89 210"/><path d="M30 100L60 100" marker-end="url(#e-ao-fl)" stroke-width="1.2"/><path d="M120 50L160 50" marker-end="url(#e-ao-fl)" stroke-width="1.2"/><path d="M360 98 L430 140 L360 182 L360 98" stroke-width="2"/><circle cx="274" cy="232" r="4"/><path d="M278 232L352 232"/><path d="M352 232L352 161"/><path d="M352 161L360 161"/><path d="M360 119L330 119"/><circle cx="330" cy="119" r="3.4" fill="currentColor" stroke="none"/><path d="M330 119L330 135.5"/><path d="M330 179.5L330 196"/><rect x="-22" y="-7" width="44" height="14" transform="translate(330 157.5) rotate(90)"/><path d="M330 196L330 206"/><path d="M318 206L342 206"/><path d="M323 211L337 211"/><path d="M327 216L333 216"/><path d="M330 119L330 66"/><path d="M330 66L340 66"/><path d="M340 66L383 66"/><path d="M427 66L470 66"/><rect x="-22" y="-7" width="44" height="14" transform="translate(405 66) rotate(0)"/><path d="M470 66L470 140"/><circle cx="470" cy="140" r="3.4" fill="currentColor" stroke="none"/><path d="M430 140L496 140"/><circle cx="500" cy="140" r="4"/><path d="M630 98 L700 140 L630 182 L630 98" stroke-width="2"/><circle cx="534" cy="119" r="4"/><path d="M538 119L550 119"/><path d="M594 119L606 119"/><rect x="-22" y="-7" width="44" height="14" transform="translate(572 119) rotate(0)"/><path d="M606 119L630 119"/><circle cx="606" cy="119" r="3.4" fill="currentColor" stroke="none"/><circle cx="534" cy="161" r="4"/><path d="M538 161L544 161"/><path d="M580 161L586 161"/><rect x="-18" y="-7" width="36" height="14" transform="translate(562 161) rotate(0)"/><path d="M586 161L630 161"/><circle cx="586" cy="161" r="3.4" fill="currentColor" stroke="none"/><path d="M586 161L586 169.5"/><path d="M586 213.5L586 222"/><rect x="-22" y="-7" width="44" height="14" transform="translate(586 191.5) rotate(90)"/><path d="M586 222L586 232"/><path d="M574 232L598 232"/><path d="M579 237L593 237"/><path d="M583 242L589 242"/><path d="M606 119L606 66"/><path d="M606 66L651 66"/><path d="M695 66L740 66"/><rect x="-22" y="-7" width="44" height="14" transform="translate(673 66) rotate(0)"/><path d="M740 66L740 140"/><circle cx="740" cy="140" r="3.4" fill="currentColor" stroke="none"/><path d="M700 140L760 140"/><circle cx="764" cy="140" r="4"/></g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="106" y="123" font-size="14">−</text><text x="106" y="166" font-size="14">+</text><text x="40" y="140">R1</text><text x="135" y="88">R2</text><text x="2" y="140">ve</text><text x="226" y="128">vs</text><text x="30" y="104"></text><text x="104" y="42">i = ve / R1</text><text x="6" y="248">inverseur</text><text x="6" y="266">vs = - (R2 / R1) ve</text><text x="366" y="123" font-size="14">−</text><text x="366" y="166" font-size="14">+</text><text x="290" y="160">R1</text><text x="395" y="88">R2</text><text x="262" y="224">ve</text><text x="486" y="128">vs</text><text x="266" y="248">non inverseur</text><text x="266" y="266">vs = (1 + R2 / R1) ve</text><text x="636" y="123" font-size="14">−</text><text x="636" y="166" font-size="14">+</text><text x="556" y="108">R1</text><text x="550" y="180">R3</text><text x="596" y="200">R4</text><text x="665" y="88">R2</text><text x="522" y="110">v1</text><text x="522" y="182">v2</text><text x="750" y="128">vs</text><text x="526" y="248">soustracteur</text><text x="526" y="266">vs = (R2 / R1)(v2 - v1)</text><text x="526" y="284">si R4 / R3 = R2 / R1</text><text x="14" y="296" font-size="11">Tensions ve, v1, v2 et vs repérées par rapport à la masse ; flèches : sens du courant compté positif.</text></g>
+    </svg>
+    <figcaption>
+      Inverseur, non inverseur et soustracteur. Dans chaque triangle, l'entrée marquée $-$ est l'entrée inverseuse, l'entrée marquée $+$ l'entrée non
+      inverseuse ; la sortie est la pointe. Le symbole de masse est le $0\ \mathrm{V}$ commun, référence de toutes les tensions. Les flèches sur l'inverseur
+      donnent le sens du courant $i$ compté positif, qui traverse $R_1$ puis $R_2$ sans entrer dans l'AOP. Les alimentations, symétriques, ne sont pas
+      dessinées.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Inverseur.</strong> L'entrée $+$ est à la masse, donc $v_- = 0$ : l'entrée inverseuse est une masse virtuelle. Le courant
+    $i = v_e/R_1$ ne peut entrer dans l'AOP ; il traverse $R_2$, d'où $0 - v_s = R_2\,i$ et $v_s = -(R_2/R_1)\,v_e$. L'impédance d'entrée vaut $R_1$ :
+    le montage charge la source.
+  </p>
+  <p>
+    <strong>Non inverseur.</strong> $v_- = v_s\,R_1/(R_1 + R_2)$ par le diviseur de contre-réaction, et $v_- = v_+ = v_e$, donc
+  </p>
+  <div class="formule-cle">$$v_s = \left(1 + \frac{R_2}{R_1}\right) v_e$$</div>
+  <p class="formule-cle-legende">
+    Hypothèses : AOP idéal, sortie non saturée. Cas limite : $R_2 = 0$ ou $R_1$ infinie donne le suiveur, $v_s = v_e$, de gain $1$ mais d'impédance
+    d'entrée quasi infinie : c'est l'adaptateur d'impédance par excellence. Dimensions : rapport de résistances, gain sans unité. Le gain est toujours
+    supérieur ou égal à $1$.
+  </p>
+  <p>
+    <strong>Soustracteur.</strong> Par superposition : $v_1$ seule, $v_2$ éteinte, donne l'inverseur, $-(R_2/R_1)v_1$ ; $v_2$ seule donne un diviseur
+    $R_4/(R_3 + R_4)$ suivi du non inverseur, $v_2\,\dfrac{R_4}{R_3 + R_4}\left(1 + \dfrac{R_2}{R_1}\right)$. Si $R_4/R_3 = R_2/R_1$, la somme vaut
+  </p>
+  <div class="formule-cle">$$v_s = \frac{R_2}{R_1}\,(v_2 - v_1)$$</div>
+  <p class="formule-cle-legende">
+    Le soustracteur amplifie la différence et annule, en théorie, toute tension commune aux deux entrées. Cas limite : $v_1 = v_2$ donne $v_s = 0$ quel
+    que soit le mode commun. L'annulation repose entièrement sur l'égalité de deux rapports de résistances ; c'est sa faiblesse.
+  </p>
+
+  <h3 id="e-trmc">Réjection du mode commun : ce que coûte un soustracteur réel</h3>
+  <p>
+    Toute paire d'entrées se décompose en $V_d = v_2 - v_1$ et $V_{mc} = (v_1 + v_2)/2$, et la sortie s'écrit $v_s = A_d V_d + A_{mc} V_{mc}$. Pour le
+    soustracteur à résistances quelconques, le calcul par superposition donne
+  </p>
+  <div class="formule-cle">$$A_{mc} = \frac{R_4 R_1 - R_2 R_3}{R_1\,(R_3 + R_4)}, \qquad \mathrm{TRMC} = \left|\frac{A_d}{A_{mc}}\right| \approx \frac{1 + G}{4t}$$</div>
+  <p class="formule-cle-legende">
+    $t$ : tolérance relative des quatre résistances, $G = R_2/R_1$ le gain nominal. L'approximation correspond au cas le plus défavorable : $R_1$ et $R_4$
+    à $+t$, $R_2$ et $R_3$ à $-t$, d'où un numérateur $4tGR^2$. Dérivation : $A_{mc} = \dfrac{R_4}{R_3 + R_4}\left(1 + \dfrac{R_2}{R_1}\right) - \dfrac{R_2}{R_1}$,
+    puis mise au même dénominateur. Cas limite : $t = 0$ donne $A_{mc} = 0$ et un TRMC infini.
+  </p>
+  <p>
+    Ordres de grandeur. Un soustracteur de gain $1$ à résistances de $1\ \%$ a un TRMC de $2/0{,}04 = 50$, soit $34\ \mathrm{dB}$ : sur le mode commun de
+    $2{,}5\ \mathrm{V}$ d'un pont, il produit jusqu'à $50\ \mathrm{mV}$ d'erreur, cinq fois la pleine échelle du pont. Avec $0{,}1\ \%$, on gagne
+    $20\ \mathrm{dB}$ : $54\ \mathrm{dB}$. À gain $100$, le TRMC monte à $88\ \mathrm{dB}$ avec $0{,}1\ \%$, car l'erreur de mode commun ne croît pas avec le
+    gain différentiel. Mais deux autres défauts demeurent. D'abord, la source s'ajoute aux résistances d'entrée : un déséquilibre de $50\ \Omega$ entre les
+    résistances de source des deux voies se comporte comme une tolérance supplémentaire de $50\ \Omega$ sur $R_1$. Ensuite, l'impédance d'entrée vaut
+    $R_1$ ou $R_3 + R_4$ : quelques kilohms qui chargent un pont de $350\ \Omega$ et changent son gain.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Un pont sous $5\ \mathrm{V}$ présente $2{,}5\ \mathrm{V}$ de mode commun continu, auxquels le câble ajoute $0{,}5\ \mathrm{V}$ crête à $50\ \mathrm{Hz}$.
+      Un soustracteur de gain $100$ en résistances de $0{,}1\ \%$ et un amplificateur d'instrumentation de même gain le lisent. Lequel produit la plus grande
+      erreur ramenée à l'entrée, et de quel ordre ? Que se passe-t-il si l'on ajoute $100\ \Omega$ de déséquilibre de source, par exemple une résistance de
+      protection sur une seule voie ? Et si l'on passe le soustracteur en gain $10$ ?
+    </p>
+  </div>
+  <figure id="e-trmc-sim">
+    <div id="e-trmc-curseurs"></div>
+    <div id="e-trmc-lecteur"></div>
+    <div id="e-trmc-trace"></div>
+    <div id="e-trmc-valeurs"></div>
+    <figcaption>
+      Erreur due au mode commun, ramenée à l'entrée, en microvolts, en fonction du temps, pour les deux montages de même gain $G$ : la série
+      "soustracteur discret" utilise $R_1 = R_3 = 10\ \mathrm{k\Omega}$ et $R_2 = R_4 = G R_1$ à la tolérance choisie, dans le cas le plus défavorable ; la série
+      "amplificateur d'instrumentation" met tout le gain dans l'étage d'entrée et utilise un étage soustracteur intégré de gain $1$, à résistances ajustées
+      à $0{,}01\ \%$, valeur supposée typique d'un circuit intégré. Le déséquilibre de source s'ajoute à la résistance d'entrée inverseuse du soustracteur.
+      L'erreur ramenée à l'entrée est $A_{mc}V_{mc}(t)/A_d$, à comparer aux $6{,}25\ \mathrm{mV}$ de pleine échelle de l'exemple résolu. Le lecteur fait
+      défiler le temps, avec pause, vitesse et remise à zéro ; le panneau donne les TRMC et les erreurs crête.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Avec les réglages de départ, gain $100$, $t = 0{,}1\ \%$, $2{,}5\ \mathrm{V}$ continus et $0{,}5\ \mathrm{V}$ crête,
+    le soustracteur atteint $88\ \mathrm{dB}$ et produit environ $119\ \mathrm{\mu V}$ d'erreur ramenée à l'entrée, dont une composante continue que la tare
+    absorbe et une ondulation à $50\ \mathrm{Hz}$ d'environ $20\ \mathrm{\mu V}$ crête, huit kilogrammes dans l'exemple résolu. L'amplificateur
+    d'instrumentation, à $114\ \mathrm{dB}$, ne produit qu'environ $6\ \mathrm{\mu V}$. Ajouter $100\ \Omega$ de déséquilibre sur une voie fait tomber le soustracteur
+    vers $77\ \mathrm{dB}$, avec une ondulation d'environ $69\ \mathrm{\mu V}$ crête, et ne change rien à l'amplificateur d'instrumentation, dont les entrées ne consomment pas de courant. Passer le soustracteur en
+    gain $10$ le fait chuter vers $69\ \mathrm{dB}$ : il rejette d'autant moins qu'il amplifie peu. La leçon pratique : le TRMC d'un soustracteur dépend de
+    composants extérieurs et de la source, celui d'un amplificateur d'instrumentation est garanti par la fiche du constructeur.
+  </p>
+
+  <h3 id="e-ina">L'amplificateur d'instrumentation à trois amplificateurs</h3>
+  <p>
+    L'amplificateur d'instrumentation résout les trois défauts du soustracteur : il place deux suiveurs améliorés devant un soustracteur intégré. Les
+    entrées $V_+$ et $V_-$ attaquent directement les entrées non inverseuses de A1 et A2 : elles ne consomment que des courants de polarisation de quelques
+    nanoampères, et la source n'est plus chargée. Les entrées inverseuses de A1 et A2, nœuds J1 et J2, sont reliées par $R_G$, et chacune à la sortie de
+    son AOP par une résistance $R$. A3, avec quatre résistances $R_d$ égales, est un soustracteur de gain $1$ dont la borne Réf fixe le zéro de sortie.
+  </p>
+  <p>
+    <strong>Dérivation.</strong> En contre-réaction, A1 impose $v_{J1} = V_+$ et A2 impose $v_{J2} = V_-$. La tension $V_d = V_+ - V_-$ se retrouve donc
+    intégralement aux bornes de $R_G$, qui est parcourue par $i_G = V_d/R_G$. Ce courant ne peut entrer dans les AOP : il traverse aussi les deux
+    résistances $R$. Entre O1 et O2, la chaîne $R$, $R_G$, $R$ voit donc $i_G(2R + R_G)$ :
+  </p>
+  <div class="formule-cle">$$v_{O1} - v_{O2} = \left(1 + \frac{2R}{R_G}\right) V_d, \qquad v_{O1,O2} = V_{mc} \pm \frac{G_1 V_d}{2}, \qquad v_s = G_1 V_d + V_{\text{réf}}$$</div>
+  <p class="formule-cle-legende">
+    $G_1 = 1 + 2R/R_G$ est le gain de l'étage d'entrée ; A3 soustrait avec un gain $1$ et ajoute $V_{\text{réf}}$. Pour de nombreux circuits du commerce,
+    $2R = 49{,}4\ \mathrm{k\Omega}$, d'où $G = 1 + 49{,}4\ \mathrm{k\Omega}/R_G$ : c'est une donnée du constructeur, à lire sur la fiche du composant choisi.
+    Cas limites : $R_G$ infinie donne $G_1 = 1$ ; $V_+ = V_-$ donne $i_G = 0$, donc $v_{O1} = v_{O2} = V_{mc}$ : le mode commun traverse l'étage d'entrée avec
+    un gain $1$ pendant que la différence est amplifiée de $G_1$. Dimensions : rapport de résistances, gain sans unité.
+  </p>
+  <p>
+    Trois conséquences pratiques. Le TRMC global vaut à peu près $G_1$ fois celui de l'étage A3 : l'étage d'entrée a déjà multiplié le rapport signal sur
+    mode commun par $G_1$ avant la soustraction. Le gain se règle avec une seule résistance, sans toucher à l'appariement des $R_d$, ajustées au laser dans le
+    circuit intégré. Enfin, une limite est souvent ignorée : $v_{O1}$ et $v_{O2}$ valent $V_{mc} \pm G_1V_d/2$ et doivent rester dans l'excursion des
+    AOP internes. Un grand mode commun et un grand signal différentiel peuvent saturer A1 ou A2 alors que la sortie $v_s$ paraît dans les limites ; les fiches
+    le montrent par un diagramme du mode commun admissible en fonction de la sortie.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Sur le schéma vivant suivant, alimenté en $\pm 15\ \mathrm{V}$ et dont les nœuds internes saturent vers $\pm 13{,}5\ \mathrm{V}$ : avec $R_G = 499\ \Omega$,
+      $V_d = 10\ \mathrm{mV}$ et un mode commun nul, que valent $i_G$, $v_{O1}$, $v_{O2}$ et $v_s$ ? Si l'on porte le mode commun à $10\ \mathrm{V}$, que
+      deviennent ces grandeurs ? Avec $R_G = 49{,}9\ \Omega$, $V_d = 10\ \mathrm{mV}$ et $V_{mc} = 10\ \mathrm{V}$, la sortie est-elle juste ?
+    </p>
+  </div>
+  <figure id="e-ina-sim">
+    <div class="schema-vivant" id="e-ina-vivant">
+    <svg viewBox="0 0 780 400" role="img" aria-label="Amplificateur d'instrumentation à trois amplificateurs opérationnels : A1 et A2 en entrée, reliés par RG entre les nœuds J1 et J2 et par deux résistances R vers leurs sorties O1 et O2, puis A3 monté en soustracteur à quatre résistances Rd, référencé par la borne Réf">
+      <defs><marker id="e-in-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"><path d="M160 48 L230 90 L160 132 L160 48" stroke-width="2"/><path d="M160 268 L230 310 L160 352 L160 268" stroke-width="2"/><path d="M540 158 L610 200 L540 242 L540 158" stroke-width="2"/><circle cx="34" cy="69" r="4"/><path d="M38 69L160 69"/><circle cx="34" cy="331" r="4"/><path d="M38 331L160 331"/><path d="M160 111L124 111"/><path d="M124 111L124 150"/><circle cx="124" cy="150" r="3.4" fill="currentColor" stroke="none"/><path d="M160 289L124 289"/><path d="M124 289L124 250"/><circle cx="124" cy="250" r="3.4" fill="currentColor" stroke="none"/><path d="M124 150L124 178"/><path d="M124 222L124 250"/><rect x="-22" y="-7" width="44" height="14" transform="translate(124 200) rotate(90)"/><path d="M104 174L104 226" marker-end="url(#e-in-fl)" stroke-width="1.3"/><path d="M124 150L175 150"/><path d="M219 150L270 150"/><rect x="-22" y="-7" width="44" height="14" transform="translate(197 150) rotate(0)"/><path d="M270 150L270 90"/><circle cx="270" cy="90" r="3.4" fill="currentColor" stroke="none"/><path d="M230 90L270 90"/><path d="M124 250L175 250"/><path d="M219 250L270 250"/><rect x="-22" y="-7" width="44" height="14" transform="translate(197 250) rotate(0)"/><path d="M270 250L270 310"/><circle cx="270" cy="310" r="3.4" fill="currentColor" stroke="none"/><path d="M230 310L270 310"/><path d="M270 90L340 90"/><path d="M340 90L340 179"/><path d="M340 179L393 179"/><path d="M437 179L490 179"/><rect x="-22" y="-7" width="44" height="14" transform="translate(415 179) rotate(0)"/><circle cx="490" cy="179" r="3.4" fill="currentColor" stroke="none"/><path d="M490 179L540 179"/><path d="M270 310L340 310"/><path d="M340 310L340 221"/><path d="M340 221L393 221"/><path d="M437 221L490 221"/><rect x="-22" y="-7" width="44" height="14" transform="translate(415 221) rotate(0)"/><circle cx="490" cy="221" r="3.4" fill="currentColor" stroke="none"/><path d="M490 221L540 221"/><path d="M490 179L490 141.5"/><path d="M490 97.5L490 60"/><rect x="-22" y="-7" width="44" height="14" transform="translate(490 119.5) rotate(-90)"/><circle cx="490" cy="56" r="4"/><path d="M490 221L490 238.5"/><path d="M490 282.5L490 300"/><rect x="-22" y="-7" width="44" height="14" transform="translate(490 260.5) rotate(90)"/><path d="M490 300L660 300"/><path d="M660 300L660 200"/><circle cx="660" cy="200" r="3.4" fill="currentColor" stroke="none"/><path d="M610 200L740 200"/><circle cx="744" cy="200" r="4"/></g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="166" y="73" font-size="14">+</text><text x="166" y="116" font-size="14">−</text><text x="166" y="293" font-size="14">−</text><text x="166" y="336" font-size="14">+</text><text x="546" y="183" font-size="14">+</text><text x="546" y="226" font-size="14">−</text><text x="14" y="62">V+</text><text x="14" y="352">V-</text><text x="206" y="66">A1</text><text x="206" y="286">A2</text><text x="586" y="176">A3</text><text x="132" y="204">RG</text><text x="186" y="140">R</text><text x="186" y="270">R</text><text x="398" y="170">Rd</text><text x="398" y="246">Rd</text><text x="500" y="108">Rd</text><text x="500" y="286">Rd</text><text x="502" y="46">Réf</text><text x="84" y="204">iG</text><text x="132" y="140">J1</text><text x="132" y="270">J2</text><text x="276" y="80">O1</text><text x="276" y="330">O2</text><text x="724" y="188">vs</text><text x="14" y="80" data-v="vp" font-size="11"></text><text x="14" y="370" data-v="vm" font-size="11"></text><text x="58" y="140" data-v="j1" font-size="11"></text><text x="58" y="272" data-v="j2" font-size="11"></text><text x="14" y="230" data-v="ig" font-size="11"></text><text x="282" y="108" data-v="o1" font-size="11"></text><text x="282" y="296" data-v="o2" font-size="11"></text><text x="626" y="228" data-v="vs" font-size="11"></text><text x="534" y="46" data-v="ref" font-size="11"></text><text x="470" y="360" data-v="etat" font-size="12" font-weight="700"></text><text x="330" y="388" font-size="11">Potentiels repérés par rapport au 0 V commun des alimentations ±15 V.</text></g>
+    </svg>
+    </div>
+    <div id="e-ina-curseurs"></div>
+    <div id="e-ina-valeurs"></div>
+    <figcaption>
+      Amplificateur d'instrumentation à trois AOP, $R = 24{,}7\ \mathrm{k\Omega}$, $R_d$ égales, alimentations $\pm 15\ \mathrm{V}$ non dessinées, tous les potentiels
+      repérés par rapport à leur $0\ \mathrm{V}$ commun. Les entrées sont $V_+ = V_{mc} + V_d/2$ et $V_- = V_{mc} - V_d/2$. La flèche $i_G$ donne le sens du
+      courant dans $R_G$ compté positif, de J1 vers J2 ; il est négatif si $V_d$ l'est. Les valeurs affichées à côté des nœuds sont recalculées en direct à
+      partir des curseurs ; quand un nœud dépasse l'excursion de $\pm 13{,}5\ \mathrm{V}$, il est borné à cette valeur et la mention en gras sous l'étage de
+      sortie signale que la sortie n'est plus valable.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Avec $R_G = 499\ \Omega$, $G_1 = 100{,}0$ : $i_G = 10\ \mathrm{mV}/499\ \Omega = 20{,}0\ \mathrm{\mu A}$,
+    $v_{O1} = +0{,}5\ \mathrm{V}$, $v_{O2} = -0{,}5\ \mathrm{V}$ et $v_s = 1{,}00\ \mathrm{V}$. À $V_{mc} = 10\ \mathrm{V}$, J1, J2, O1 et O2 montent tous de
+    $10\ \mathrm{V}$, $i_G$ ne change pas et $v_s$ reste $1{,}00\ \mathrm{V}$ : le mode commun est transporté, puis retiré par A3. Avec
+    $R_G = 49{,}9\ \Omega$, $G_1 = 991$ : il faudrait $v_{O1} = 10 + 4{,}95 = 14{,}95\ \mathrm{V}$, au-delà de l'excursion ; A1 sature à $13{,}5\ \mathrm{V}$ et
+    la sortie affiche $8{,}46\ \mathrm{V}$ au lieu de $9{,}91\ \mathrm{V}$, sans aucun signe extérieur d'anomalie. Ce cas n'est pas théorique : un pont
+    alimenté sous $10\ \mathrm{V}$ et lu par un amplificateur alimenté en $0$ et $+5\ \mathrm{V}$ est déjà hors du mode commun admissible au repos.
+  </p>
+
+  <h3 id="e-aop-reel">L'amplificateur réel : ce qui change quand le gain est grand</h3>
+  <ul>
+    <li><strong>Tension de décalage $V_{os}$.</strong> Une petite tension continue, de quelques microvolts à quelques millivolts, équivalente à une source en
+      série avec l'entrée. Elle est amplifiée par le gain de bruit $1 + R_2/R_1$ : $1\ \mathrm{mV}$ sous un gain de $100$ donne $0{,}1\ \mathrm{V}$ en sortie.
+      Pour un amplificateur d'instrumentation, la fiche donne souvent $V_{os} = V_{os,e} + V_{os,s}/G$, une partie d'entrée et une partie de sortie ramenée
+      à l'entrée. Un réglage de zéro ou une tare l'annule ; sa <strong>dérive thermique</strong>, en $\mathrm{\mu V/K}$, ne s'annule pas une fois pour
+      toutes.</li>
+    <li><strong>Courants de polarisation $I_b$.</strong> Les entrées absorbent quelques nanoampères, voire picoampères. Ils créent des chutes dans les
+      résistances de source et, surtout, exigent un chemin continu vers la masse : une entrée laissée flottante, derrière un condensateur de liaison ou un
+      capteur isolé, dérive jusqu'à la saturation.</li>
+    <li><strong>Produit gain-bande $GBW$.</strong> Le gain en boucle ouverte décroît de $20\ \mathrm{dB}$ par décade ; en boucle fermée, la bande passante
+      vaut environ $GBW$ divisé par le gain de bruit. Un AOP de $1\ \mathrm{MHz}$ en non inverseur de gain $100$ ne passe que $10\ \mathrm{kHz}$, et en gain
+      $1000$, $1\ \mathrm{kHz}$. D'où l'intérêt de répartir un grand gain sur deux étages.</li>
+    <li><strong>Vitesse de balayage $SR$.</strong> La sortie ne peut varier plus vite que $SR$, en $\mathrm{V/\mu s}$. Une sinusoïde d'amplitude $V_p$ et de
+      fréquence $f$ exige $2\pi f V_p \leq SR$ : à $0{,}5\ \mathrm{V/\mu s}$ et $10\ \mathrm{V}$ crête, $f \leq 7{,}96\ \mathrm{kHz}$.</li>
+    <li><strong>Excursions.</strong> La sortie et les entrées restent à une certaine distance des rails, sauf circuits dits rail à rail, et encore à quelques
+      dizaines de millivolts près. Une sortie alimentée en $0$ et $+5\ \mathrm{V}$ ne descend pas à $0\ \mathrm{V}$ : un zéro mesuré à $0$ est en réalité
+      écrêté, d'où l'usage de la borne Réf pour décaler le zéro.</li>
+    <li><strong>Bruit.</strong> Densité de bruit en $\mathrm{nV/\sqrt{Hz}}$ et bruit en $1/f$ aux basses fréquences ; à $8\ \mathrm{nV/\sqrt{Hz}}$ et
+      $5\ \mathrm{Hz}$ de bande, environ $19\ \mathrm{nV}$ efficaces, mais le bruit en $1/f$ entre $0{,}1$ et $10\ \mathrm{Hz}$, quelques dixièmes de
+      microvolt crête à crête, domine pour une pesée.</li>
+  </ul>
+  <p>
+    Vérification dimensionnelle de la condition de balayage : $2\pi f V_p$ a pour unité $\mathrm{s^{-1}} \times \mathrm{V} = \mathrm{V/s}$, comme $SR$. Cas
+    limite : à fréquence nulle, aucune contrainte. Ces défauts se ramènent tous à l'entrée pour être comparés au signal : c'est la règle qui permet d'écrire
+    un budget d'erreur cohérent.
+  </p>
+
+  <h3 id="e-filtrage">Filtrage : atténuer ce qui n'est pas le signal</h3>
+  <p>
+    Trois perturbations typiques visent un conditionneur : les parasites radiofréquences et les fronts des variateurs, au-delà de la dizaine de kilohertz,
+    le $50\ \mathrm{Hz}$ du réseau et ses harmoniques, et les vibrations mécaniques, de quelques hertz à quelques dizaines de hertz. Le signal d'une pesée ou
+    d'une pression varie, lui, en une fraction de seconde. Le filtrage se fait en deux endroits. À l'entrée de l'amplificateur d'instrumentation, un
+    <strong>filtre RFI</strong> passif, deux résistances de $1\ \mathrm{k\Omega}$, un condensateur différentiel $C_{\text{diff}} = 10\ \mathrm{nF}$ et deux
+    condensateurs de mode commun $C_{mc} = 1\ \mathrm{nF}$, coupe vers $7{,}6\ \mathrm{kHz}$ en différentiel et vers $159\ \mathrm{kHz}$ en mode commun ;
+    $C_{\text{diff}}$ au moins dix fois plus grand que $C_{mc}$ rend négligeable la conversion de mode commun en différentiel par la dispersion des deux
+    $C_{mc}$. Après l'amplification, un <strong>passe-bas actif</strong> fixe la bande utile et sert de filtre anti-repliement avant la conversion.
+  </p>
+  <p>
+    Le passe-bas de Sallen et Key à gain unitaire est le plus employé : un AOP en suiveur, deux résistances, deux condensateurs. Le schéma suivant donne les
+    valeurs retenues dans l'exemple résolu.
+  </p>
+  <figure id="e-filtre-figure">
+    <svg viewBox="0 0 640 290" role="img" aria-label="Filtre passe-bas actif de Sallen et Key à gain unitaire : deux résistances de 100 kilohms en série vers l'entrée non inverseuse, condensateur C1 de 470 nanofarads ramené de la sortie au nœud X, condensateur C2 de 220 nanofarads du nœud Y à la masse, AOP en suiveur">
+      
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"><path d="M320 108 L390 150 L320 192 L320 108" stroke-width="2"/><circle cx="24" cy="129" r="4"/><path d="M28 129L72 129"/><path d="M116 129L160 129"/><rect x="-22" y="-7" width="44" height="14" transform="translate(94 129) rotate(0)"/><circle cx="160" cy="129" r="3.4" fill="currentColor" stroke="none"/><path d="M160 129L198 129"/><path d="M242 129L280 129"/><rect x="-22" y="-7" width="44" height="14" transform="translate(220 129) rotate(0)"/><circle cx="280" cy="129" r="3.4" fill="currentColor" stroke="none"/><path d="M280 129L320 129"/><path d="M160 129L160 50"/><path d="M160 50L296 50"/><path d="M304 50L440 50"/><path d="M296 37L296 63" stroke-width="2.4"/><path d="M304 37L304 63" stroke-width="2.4"/><path d="M440 50L440 150"/><path d="M390 150L600 150"/><circle cx="604" cy="150" r="4"/><circle cx="440" cy="150" r="3.4" fill="currentColor" stroke="none"/><path d="M320 171L306 171"/><path d="M306 171L306 222"/><path d="M306 222L440 222"/><path d="M440 222L440 150"/><path d="M280 129L280 160.5"/><path d="M280 168.5L280 200"/><path d="M293 160.5L267 160.5" stroke-width="2.4"/><path d="M293 168.5L267 168.5" stroke-width="2.4"/><path d="M280 200L280 210"/><path d="M268 210L292 210"/><path d="M273 215L287 215"/><path d="M277 220L283 220"/></g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="326" y="133" font-size="14">+</text><text x="326" y="176" font-size="14">−</text><text x="70" y="112">R1 = 100 kΩ</text><text x="186" y="112">R2 = 100 kΩ</text><text x="256" y="38">C1 = 470 nF</text><text x="150" y="196">C2 = 220 nF</text><text x="14" y="158">ve, par rapport à la masse</text><text x="588" y="138">vs</text><text x="140" y="142">X</text><text x="260" y="142">Y</text><text x="330" y="252">suiveur : vs = v+ = vY</text><text x="470" y="200">C1 ramène vs en X</text><text x="30" y="270" font-size="11">fc = 1 / (2π R √(C1 C2)) = 4,95 Hz ; Q = √(C1 / C2) / 2 = 0,73</text></g>
+    </svg>
+    <figcaption>
+      Passe-bas de Sallen et Key à gain unitaire. Toutes les tensions sont repérées par rapport à la masse. L'AOP est câblé en suiveur, sortie reliée à
+      l'entrée $-$ : $v_s = v_Y$. Le condensateur $C_1$, relié à la sortie, renvoie une partie du signal au nœud X : c'est cette contre-réaction positive locale
+      qui permet d'obtenir un second ordre bien amorti, de facteur de qualité réglable, avec un seul AOP.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Fonction de transfert.</strong> Loi des nœuds en X et en Y, avec $v_Y = v_s$ et $R_1 = R_2 = R$ :
+  </p>
+  <div class="formule-cle">$$H(j\omega) = \frac{1}{1 - \left(\dfrac{\omega}{\omega_0}\right)^2 + \dfrac{j}{Q}\dfrac{\omega}{\omega_0}}, \qquad \omega_0 = \frac{1}{R\sqrt{C_1C_2}}, \qquad Q = \frac{1}{2}\sqrt{\frac{C_1}{C_2}}$$</div>
+  <p class="formule-cle-legende">
+    $\omega_0$ en $\mathrm{rad/s}$ : $1/(\Omega \cdot \mathrm{F}) = 1/\mathrm{s}$. $Q$ sans dimension. Butterworth : $Q = 1/\sqrt 2$, soit $C_1 = 2C_2$.
+    Cas limites : à fréquence nulle, $H = 1$ ; très au-delà de $f_0$, $|H| \approx (f_0/f)^2$, soit $-40\ \mathrm{dB}$ par décade. Avec
+    $R = 100\ \mathrm{k\Omega}$, $C_1 = 470\ \mathrm{nF}$ et $C_2 = 220\ \mathrm{nF}$ : $f_0 = 4{,}95\ \mathrm{Hz}$, $Q = 0{,}731$, voisin de Butterworth.
+  </p>
+  <p>
+    Le prix d'un filtre est son temps de réponse. Un premier ordre de coupure $f_c$ s'établit à $0{,}1\ \%$ en $\ln(1000)/(2\pi f_c) = 1{,}1/f_c$ ; un second ordre
+    gagne beaucoup en atténuation pour un temps comparable, et la valeur de $Q$ arbitre entre raideur et dépassement, comme pour la réponse indicielle du
+    cours <a href="#/cours/reponse-temporelle-et-performances">Réponse temporelle et performances</a>.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Une palette arrive sur la station : la mesure monte en échelon, avec une oscillation mécanique de $8\ \mathrm{Hz}$ qui s'amortit et une ondulation à
+      $50\ \mathrm{Hz}$ induite par les câbles moteurs. Avec un second ordre de Butterworth à $5\ \mathrm{Hz}$, combien de décibels d'atténuation à
+      $50\ \mathrm{Hz}$ ? Si l'on divise la coupure par deux, que deviennent l'atténuation et le temps d'établissement ? Un premier ordre à la même coupure
+      ferait-il aussi bien ?
+    </p>
+  </div>
+  <figure id="e-filtre-sim">
+    <div id="e-filtre-curseurs"></div>
+    <div id="e-filtre-bode"></div>
+    <div id="e-filtre-trace"></div>
+    <div id="e-filtre-valeurs"></div>
+    <figcaption>
+      En haut, diagramme de Bode du filtre choisi : gain en décibels et phase en degrés en fonction de la fréquence, en échelle logarithmique ; le repère
+      vertical marque la coupure. En bas, réponse temporelle à l'arrivée d'une palette : la série "entrée du filtre" est l'échelon unité accompagné d'une
+      oscillation mécanique à $8\ \mathrm{Hz}$ amortie et d'une ondulation à $50\ \mathrm{Hz}$ de $0{,}2$ crête ; la série "sortie du filtre" est calculée par
+      intégration numérique de l'équation du filtre. Le trait horizontal en pointillés est la tolérance de $\pm 0{,}1\ \%$ autour de la valeur finale, le trait
+      vertical en tirets l'instant où la réponse à l'échelon seul, sans perturbation, entre définitivement dans cette tolérance. Les curseurs règlent l'ordre et l'amortissement du filtre, la fréquence de coupure et la fréquence de la
+      vibration.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Le Butterworth à $5\ \mathrm{Hz}$ atténue le $50\ \mathrm{Hz}$ de $40\ \mathrm{dB}$, un facteur $100$, et la vibration à
+    $8\ \mathrm{Hz}$ de $8{,}8\ \mathrm{dB}$ seulement : la vibration proche de la bande utile se traite par le temps, en attendant qu'elle s'amortisse et
+    en moyennant dans l'automate, pas par le filtre. La réponse à l'échelon dépasse de $4{,}3\ \%$ et entre dans la tolérance de $0{,}1\ \%$ en $0{,}33\ \mathrm{s}$
+    environ ; sur la sortie, la vibration résiduelle et quelques millièmes d'ondulation à $50\ \mathrm{Hz}$ restent visibles, d'où la moyenne glissante de l'automate. Diviser la coupure par deux gagne $12\ \mathrm{dB}$ à $50\ \mathrm{Hz}$ et double le temps
+    d'établissement. Un premier ordre à $5\ \mathrm{Hz}$ ne donne que $20\ \mathrm{dB}$ ; pour atteindre $40\ \mathrm{dB}$, il faudrait le couper à
+    $0{,}5\ \mathrm{Hz}$ et attendre $2{,}2\ \mathrm{s}$. Le réglage $Q = 0{,}5$ supprime le dépassement et s'établit même un peu plus vite à $0{,}1\ \%$,
+    pour la même atténuation lointaine, au prix d'une bande passante plus molle près de $f_0$.
+  </p>
+
+  <h3 id="e-adaptation">Adaptation : excitation, échelle, décalage, protection et isolement</h3>
+  <ul>
+    <li><strong>Mise à l'échelle.</strong> Le gain total se choisit pour que l'étendue utile du capteur, majorée d'une marge de surcharge, occupe l'étendue de
+      l'entrée : $G = U_{\text{entrée}}/V_{s,\max}$. Trop peu de gain gaspille la résolution du convertisseur ; trop de gain écrête les surcharges, qui
+      deviennent invisibles.</li>
+    <li><strong>Décalage.</strong> Un signal bipolaire lu par une entrée unipolaire, ou une sortie qui ne peut atteindre $0\ \mathrm{V}$, se décale par la
+      borne Réf d'un amplificateur d'instrumentation, alimentée par un suiveur à basse impédance : une résistance en série avec Réf déséquilibre les $R_d$ et
+      détruit le TRMC.</li>
+    <li><strong>Excitation et mesure ratiométrique.</strong> La sortie d'un pont est proportionnelle à $V_a$. Soit l'excitation est une référence stable, de
+      quelques $\mathrm{ppm/K}$ ; soit le convertisseur prend $V_a$ comme référence, et le rapport $V_s/V_a$ devient indépendant de $V_a$. Le câble ajoute sa
+      résistance en série avec le pont : un montage à <strong>six fils</strong> ramène, par deux fils de détection sans courant, la tension réellement
+      présente aux bornes du pont, et la source d'excitation se règle sur elle, comme le montage quatre fils d'une Pt100.</li>
+    <li><strong>Impédance.</strong> Un suiveur sépare un étage à haute impédance d'une charge ; une sortie analogique attaquant un câble long ou une capacité se
+      protège par une petite résistance série pour garder la stabilité de l'AOP.</li>
+    <li><strong>Protection et isolement.</strong> Résistances série et diodes vers les rails limitent le courant d'entrée en cas de surtension ; un
+      amplificateur d'isolement, à transmission capacitive, magnétique ou optique, est obligatoire quand le capteur est à un potentiel dangereux ou très
+      différent de celui de l'automate, par exemple un shunt sur un bus continu de $540\ \mathrm{V}$. Le transport sur de longues distances se fait en courant,
+      objet du cours Boucles 4-20 mA et signaux industriels.</li>
+  </ul>
+
+  <h3 id="e-statut">Loi, convention, approximation, règle de conception et donnée du constructeur</h3>
+  <div class="cadre-tableau" id="e-statut-tableau">
+    <table>
+      <thead><tr><th>Énoncé</th><th>Statut</th><th>Commentaire</th></tr></thead>
+      <tbody>
+        <tr><td>$V_s = V_a\left(R_2/(R_1 + R_2) - R_4/(R_3 + R_4)\right)$</td><td>Loi</td><td>Diviseurs de tension, lois de Kirchhoff, sans courant prélevé.</td></tr>
+        <tr><td>$V_s = v_A - v_B$, flèche vers la borne $+$</td><td>Convention</td><td>Le signe de la mesure dépend du câblage de Sig+ et Sig-.</td></tr>
+        <tr><td>$v_+ = v_-$ et courants d'entrée nuls</td><td>Approximation</td><td>Gain infini, contre-réaction négative, sortie non saturée.</td></tr>
+        <tr><td>$V_s \approx V_a x/4$ en quart de pont</td><td>Approximation</td><td>Erreur relative $-x/2$, soit $-0{,}1\ \%$ à $x = 0{,}002$.</td></tr>
+        <tr><td>$G = 1 + 49{,}4\ \mathrm{k\Omega}/R_G$</td><td>Donnée du constructeur</td><td>Valeur de $2R$ propre au circuit choisi.</td></tr>
+        <tr><td>TRMC, $V_{os}$, dérive, $GBW$, excursions</td><td>Données du constructeur</td><td>À lire en valeurs garanties, minimales ou maximales, pas typiques.</td></tr>
+        <tr><td>$C_{\text{diff}} \geq 10\,C_{mc}$ dans un filtre RFI</td><td>Règle de conception</td><td>Limite la conversion de mode commun en différentiel.</td></tr>
+        <tr><td>Répartir un gain de $1000$ sur deux étages</td><td>Règle de conception</td><td>Bande passante, saturation par le décalage, place du filtre.</td></tr>
+        <tr><td>Blindage relié au PE d'un seul côté pour les basses fréquences</td><td>Règle de conception</td><td>Évite une boucle de masse ; à revoir selon les exigences CEM du site.</td></tr>
+        <tr><td>Classes de précision et essais des instruments de pesage</td><td>Norme</td><td>Pour une pesée réglementée, se référer aux textes applicables ; la station étudiée sert au contrôle interne.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Le schéma principal représente la chaîne complète de la station de pesée : un pont de Wheatstone, en fait quatre capteurs en parallèle, relié par un câble
+    à six conducteurs à un conditionneur dont le cœur est un amplificateur d'instrumentation. Il se lit de gauche à droite, du capteur à l'automate.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 970 410" role="img" aria-label="Chaîne de conditionnement de la station de pesée : boîte de jonction et pont équivalent, câble blindé à six conducteurs, source d'excitation de 5 volts régulée par les lignes de détection, filtre RFI, amplificateur d'instrumentation de gain 100, passe-bas de Sallen et Key, amplificateur de gain 16 et entrée 0-10 V de l'automate, avec le 0 V commun et le conducteur de protection">
+      <defs><marker id="f-sp-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"><rect x="14" y="40" width="200" height="270" rx="10" stroke-width="2.2"/><path d="M110 90L93.7 112.8"/><path d="M76.3 137.2L60 160"/><rect x="-15" y="-5.5" width="30" height="11" transform="translate(85 125) rotate(125.5)"/><path d="M110 90L126.3 112.8"/><path d="M143.7 137.2L160 160"/><rect x="-15" y="-5.5" width="30" height="11" transform="translate(135 125) rotate(54.5)"/><path d="M60 160L76.3 182.8"/><path d="M93.7 207.2L110 230"/><rect x="-15" y="-5.5" width="30" height="11" transform="translate(85 195) rotate(54.5)"/><path d="M160 160L143.7 182.8"/><path d="M126.3 207.2L110 230"/><rect x="-15" y="-5.5" width="30" height="11" transform="translate(135 195) rotate(125.5)"/><circle cx="110" cy="90" r="3" fill="currentColor" stroke="none"/><circle cx="60" cy="160" r="3" fill="currentColor" stroke="none"/><circle cx="160" cy="160" r="3" fill="currentColor" stroke="none"/><circle cx="110" cy="230" r="3" fill="currentColor" stroke="none"/><path d="M110 90L110 70"/><path d="M110 70L214 70"/><path d="M110 70L190 70"/><path d="M190 70L190 100"/><path d="M190 100L214 100"/><circle cx="190" cy="70" r="2.6" fill="currentColor" stroke="none"/><path d="M60 160L36 160"/><path d="M36 160L36 200"/><path d="M36 200L196 200"/><path d="M196 200L196 180"/><path d="M196 180L214 180"/><path d="M160 160L180 160"/><path d="M180 160L180 150"/><path d="M180 150L214 150"/><path d="M110 230L110 290"/><path d="M110 290L214 290"/><path d="M110 290L170 290"/><path d="M170 290L170 260"/><path d="M170 260L214 260"/><circle cx="170" cy="290" r="2.6" fill="currentColor" stroke="none"/><path d="M214 70L330 70"/><path d="M214 100L330 100"/><path d="M214 150L330 150"/><path d="M214 180L330 180"/><path d="M214 260L330 260"/><path d="M214 290L330 290"/><rect x="254" y="52" width="40" height="254" rx="12" stroke-dasharray="5 4" stroke-width="1.2"/><rect x="330" y="40" width="476" height="290" rx="10" stroke-width="2.2"/><rect x="346" y="58" width="118" height="56" rx="6"/><path d="M330 70L346 70"/><path d="M330 100L346 100"/><path d="M330 290L430 290"/><path d="M430 290L430 250"/><circle cx="430" cy="250" r="2.8" fill="currentColor" stroke="none"/><path d="M330 260L338 260"/><path d="M338 260L338 106"/><path d="M338 106L346 106"/><rect x="350" y="138" width="70" height="56" rx="6"/><path d="M330 150L350 150"/><path d="M330 180L350 180"/><rect x="440" y="138" width="96" height="56" rx="6"/><path d="M420 150L438 150" marker-end="url(#f-sp-fl)"/><path d="M420 180L438 180" marker-end="url(#f-sp-fl)"/><rect x="556" y="138" width="100" height="56" rx="6"/><path d="M536 166L554 166" marker-end="url(#f-sp-fl)"/><rect x="676" y="138" width="80" height="56" rx="6"/><path d="M656 166L674 166" marker-end="url(#f-sp-fl)"/><path d="M756 166L840 166" marker-end="url(#f-sp-fl)"/><rect x="846" y="110" width="110" height="110" rx="8" stroke-width="2.2"/><path d="M488 194L488 250"/><path d="M430 250L900 250" stroke-width="1.3"/><path d="M900 220L900 250"/><path d="M14 372L956 372" stroke-width="3"/><path d="M274 306L274 372" stroke-width="1.2" stroke-dasharray="5 4"/><path d="M560 250L560 372" stroke-width="1.3"/><circle cx="560" cy="250" r="2.8" fill="currentColor" stroke="none"/><path d="M300 62L326 62" marker-end="url(#f-sp-fl)" stroke-width="1.2"/><path d="M206 176L206 154" marker-end="url(#f-sp-fl)" stroke-width="1.2"/></g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12"><text x="22" y="30">boîte de jonction</text><text x="22" y="58" font-size="10.5">4 capteurs en //</text><text x="46" y="132">87,5 Ω</text><text x="58" y="256">2 mV/V</text><text x="120" y="84">T</text><text x="44" y="154">A</text><text x="168" y="154">B</text><text x="218" y="66">Exc+</text><text x="218" y="96">Sen+</text><text x="218" y="146">Sig+</text><text x="218" y="196">Sig-</text><text x="218" y="256">Sen-</text><text x="218" y="286">Exc-</text><text x="256" y="46">57 mA</text><text x="176" y="142">Vs</text><text x="20" y="346">câble blindé 6 fils, 20 m</text><text x="338" y="30">conditionneur, alimenté en ±15 V</text><text x="352" y="78">excitation 5 V</text><text x="352" y="94">régulée sur</text><text x="352" y="108">Sen+ et Sen-</text><text x="356" y="160">filtre</text><text x="356" y="176">RFI</text><text x="446" y="158">INA</text><text x="446" y="174">G1 = 100</text><text x="446" y="188">RG = 499 Ω</text><text x="562" y="158">Sallen-Key</text><text x="562" y="174">4,95 Hz</text><text x="562" y="188">Q = 0,73</text><text x="682" y="158">non inv.</text><text x="682" y="174">G = 16</text><text x="852" y="130">automate</text><text x="852" y="148">entrée</text><text x="852" y="164">0-10 V</text><text x="852" y="180">12 bits</text><text x="852" y="196">100 kΩ</text><text x="762" y="156">0 à 10 V</text><text x="494" y="214">Réf</text><text x="612" y="244">0 V commun</text><text x="440" y="276">Exc- = 0 V</text><text x="572" y="364">liaison unique 0 V - PE</text><text x="282" y="364">blindage au PE, côté armoire seulement</text><text x="22" y="396">PE, conducteur de protection</text><text x="440" y="300" font-size="11">à 1900 kg bruts : 4,75 mV ; 0,475 V ; 0,475 V ; 7,60 V</text><text x="440" y="318" font-size="11">mode commun d'entrée : 2,5 V</text></g>
+    </svg>
+    <figcaption>
+      Amplificateur d'instrumentation relié à un pont de Wheatstone. Polarités : Exc+ est à $+5\ \mathrm{V}$ et Exc- au $0\ \mathrm{V}$ du conditionneur, qui est
+      la référence de tous les potentiels ; Sig+ est le point milieu B et Sig- le point milieu A dans ce câblage, et la flèche Vs, entre les deux fils de signal,
+      pointe vers Sig+, borne positive quand la charge augmente. Le courant d'excitation de $57\ \mathrm{mA}$ sort par Exc+ et revient par Exc- ; Sen+ et Sen- ne
+      portent aucun courant et renvoient à la source la tension réellement présente sur le pont. La borne Réf de l'amplificateur est reliée au $0\ \mathrm{V}$
+      commun ; ce $0\ \mathrm{V}$ est relié au PE en un seul point. Le blindage du câble, contour en tirets, n'est relié au PE que du côté de l'armoire. Les
+      niveaux indiqués sont ceux du signal à $1900\ \mathrm{kg}$ bruts, sortie du pont, de l'amplificateur d'instrumentation, du filtre et de l'étage de gain.
+    </figcaption>
+  </figure>
+  <p>
+    L'organigramme suivant résume la démarche de dimensionnement d'un conditionneur, reprise en détail dans la section G. Les losanges sont des tests ; une
+    réponse négative renvoie à l'étape qui doit être reprise.
+  </p>
+  <pre class="mermaid">
+flowchart TD
+  A["Exigence et entrée cible"] --> B["Données du capteur"]
+  B --> C["Choix de l'excitation"]
+  C --> D["Pleine échelle et gain total"]
+  D --> E{"Excursions tenues ?"}
+  E -- non --> C
+  E -- oui --> F["Répartition du gain et filtre"]
+  F --> G{"Filtre acceptable ?"}
+  G -- non --> F
+  G -- oui --> H["Budget d'erreur"]
+  H --> I{"Exigence tenue ?"}
+  I -- non --> J["Six fils, zéro automatique, faible dérive"]
+  J --> H
+  I -- oui --> K["Étalonnage et documentation"]
+  </pre>
+  <p>
+    Lecture : on part de l'exigence et du capteur, on choisit l'excitation, puis le gain ; le premier test vérifie que le mode commun et les nœuds internes
+    restent dans les excursions des amplificateurs, le deuxième que le filtre concilie atténuation et temps d'établissement ; le dernier boucle sur les améliorations tant que le budget d'erreur n'est pas tenu. L'étalonnage final
+    absorbe les erreurs de gain et de zéro, pas les dérives.
+  </p>
+  <div class="cadre-tableau" id="f-comparatif">
+    <table>
+      <thead><tr><th>Critère</th><th>Non inverseur</th><th>Soustracteur discret</th><th>Amplificateur d'instrumentation</th></tr></thead>
+      <tbody>
+        <tr><td>Signal lu</td><td>Une tension par rapport à la masse</td><td>Une différence</td><td>Une différence</td></tr>
+        <tr><td>Impédance d'entrée</td><td>Très élevée</td><td>$R_1$ et $R_3 + R_4$, quelques kilohms</td><td>Très élevée sur les deux entrées</td></tr>
+        <tr><td>TRMC</td><td>Aucun, le mode commun est amplifié</td><td>$(1 + G)/(4t)$, sensible à la source</td><td>Garanti, $100$ à $130\ \mathrm{dB}$ selon le gain</td></tr>
+        <tr><td>Réglage du gain</td><td>Une résistance</td><td>Deux paires appariées</td><td>Une résistance $R_G$</td></tr>
+        <tr><td>Usage type</td><td>Capteur référencé à la masse, suiveur</td><td>Shunt, mode commun modéré, source à basse impédance</td><td>Pont de jauges, thermocouple, mesure flottante</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <ul>
+    <li><a href="#d-poutre-sim" data-renvoi="d-poutre-sim">Poutre et pont manipulables</a>, section D : quart de pont, demi-pont et pont complet.</li>
+    <li><a href="#e-pont-figure" data-renvoi="e-pont-figure">Pont de Wheatstone</a>, section E : notations, courants et référence.</li>
+    <li><a href="#e-aop-figure" data-renvoi="e-aop-figure">Inverseur, non inverseur et soustracteur</a>, section E.</li>
+    <li><a href="#e-trmc-sim" data-renvoi="e-trmc-sim">Erreur due au mode commun</a>, section E : simulation du soustracteur et de l'amplificateur d'instrumentation.</li>
+    <li><a href="#e-ina-sim" data-renvoi="e-ina-sim">Amplificateur d'instrumentation vivant</a>, section E : potentiels internes et saturation.</li>
+    <li><a href="#e-filtre-figure" data-renvoi="e-filtre-figure">Passe-bas de Sallen et Key</a>, section E.</li>
+    <li><a href="#e-filtre-sim" data-renvoi="e-filtre-sim">Filtre et arrivée d'une palette</a>, section E : Bode et réponse temporelle.</li>
+    <li><a href="#h-budget" data-renvoi="h-budget">Budget d'erreur de la station de pesée</a>, section H.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <ol>
+    <li><strong>Écrire l'exigence.</strong> Grandeur et étendue, exactitude voulue en unité physique, temps de réponse, surcharge à voir, entrée cible :
+      $0$-$10\ \mathrm{V}$, $4$-$20\ \mathrm{mA}$ ou convertisseur, avec sa résolution et son impédance.</li>
+    <li><strong>Caractériser le capteur.</strong> Sensibilité en $\mathrm{mV/V}$ ou en unité par unité, résistance du pont, excitation maximale, nombre de
+      jauges actives, résistance de sortie, mode commun.</li>
+    <li><strong>Choisir l'excitation.</strong> Respecter l'échauffement des jauges, le courant que peut fournir la source, et préférer une référence stable ou
+      une mesure ratiométrique ; décider du nombre de fils selon la longueur du câble.</li>
+    <li><strong>Calculer la pleine échelle et le gain.</strong> $V_{s,\max} = S\,V_a \times$ charge maximale, puis $G = U_{\text{entrée}}/V_{s,\max}$ avec une
+      marge de surcharge ; répartir le gain : $10$ à $100$ dans l'amplificateur d'instrumentation, le reste après le filtre.</li>
+    <li><strong>Vérifier les excursions.</strong> Mode commun d'entrée, nœuds internes $V_{mc} \pm G_1V_d/2$, sortie de chaque étage, décalage amplifié ;
+      vérifier la bande passante $GBW/G$ et la vitesse de balayage.</li>
+    <li><strong>Dimensionner le filtrage.</strong> Filtre RFI d'entrée, puis passe-bas fixé par l'atténuation voulue aux perturbations et par le temps
+      d'établissement admissible ; vérifier qu'il joue le rôle d'anti-repliement pour la période d'échantillonnage.</li>
+    <li><strong>Établir le budget d'erreur.</strong> Ramener chaque contribution à l'entrée puis en unité physique ; séparer ce que l'étalonnage absorbe, gain
+      et zéro, de ce qu'il n'absorbe pas, dérives, non-linéarité, bruit, quantification ; composer et comparer à l'exigence.</li>
+    <li><strong>Contrôler et documenter.</strong> Ordres de grandeur, niveaux attendus à chaque étage pour deux charges connues, essai de surcharge et de
+      rupture de fil, procédure d'étalonnage, hypothèses à confirmer par les fiches techniques.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    Le site du projet fil rouge ajoute une station de pesée de contrôle en sortie du convoyeur d'expédition, avant l'étiqueteuse : chaque palette est pesée à
+    l'arrêt, et l'automate refuse celles dont la masse s'écarte de la masse attendue. Valeurs supposées, à confirmer par les fiches techniques :
+  </p>
+  <ul>
+    <li><strong>Capteurs</strong> : quatre capteurs de force à jauges de $1000\ \mathrm{kg}$ chacun, ponts complets de $350\ \Omega$, sensibilité
+      $2{,}000\ \mathrm{mV/V}$ à la charge nominale, excitation maximale $15\ \mathrm{V}$, câblés en parallèle dans une boîte de jonction.</li>
+    <li><strong>Charges</strong> : tablier à rouleaux de $400\ \mathrm{kg}$, palettes jusqu'à $1500\ \mathrm{kg}$, soit $1900\ \mathrm{kg}$ bruts au plus ;
+      l'étendue lue doit aller jusqu'à $2500\ \mathrm{kg}$ bruts pour voir les surcharges.</li>
+    <li><strong>Exigence</strong> : masse nette à $\pm 10\ \mathrm{kg}$ près, entre $15$ et $40\ ^\circ\mathrm{C}$ d'ambiance d'armoire ; mesure stable en moins de
+      $2\ \mathrm{s}$ après l'arrêt de la palette, une palette toutes les $30\ \mathrm{s}$ environ.</li>
+    <li><strong>Entrée de l'automate</strong> : $0$-$10\ \mathrm{V}$, $12$ bits, $100\ \mathrm{k\Omega}$. Conditionneur alimenté en $\pm 15\ \mathrm{V}$, source
+      d'excitation capable de $60\ \mathrm{mA}$.</li>
+    <li><strong>Amplificateur d'instrumentation</strong> : $G = 1 + 49{,}4\ \mathrm{k\Omega}/R_G$, décalage maximal $50\ \mathrm{\mu V} + 2\ \mathrm{mV}/G$,
+      dérive $0{,}5\ \mathrm{\mu V/K} + 20\ \mathrm{\mu V/K}/G$, dérive de gain $50\ \mathrm{ppm/K}$, TRMC minimal $100\ \mathrm{dB}$ à $G = 100$.</li>
+    <li><strong>Câble</strong> : $20\ \mathrm{m}$, conducteurs de $0{,}25\ \mathrm{mm^2}$ en cuivre, $\rho = 1{,}72 \times 10^{-8}\ \Omega \cdot \mathrm{m}$,
+      coefficient de température $3{,}93 \times 10^{-3}\ \mathrm{K^{-1}}$, posé dans le hall.</li>
+  </ul>
+  <p>
+    <strong>Inconnues</strong> : excitation, gain et sa répartition, valeur de $R_G$, filtre, niveaux à chaque étage, résolution, budget d'erreur.
+    <strong>Stratégie</strong> : appliquer la méthode G, du pont vers l'automate, puis ramener toutes les erreurs en kilogrammes.
+  </p>
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li><strong>Pont équivalent.</strong> Quatre ponts identiques en parallèle se comportent comme un pont de $350/4 = 87{,}5\ \Omega$, de sensibilité
+      inchangée, $2\ \mathrm{mV/V}$, mais pour la charge totale de $4000\ \mathrm{kg}$ : chaque capteur voit le quart de la charge et les sorties sont
+      moyennées.</li>
+    <li><strong>Excitation.</strong> Sous $10\ \mathrm{V}$, il faudrait $10/87{,}5 = 114\ \mathrm{mA}$, au-delà des $60\ \mathrm{mA}$ disponibles. Sous
+      $5\ \mathrm{V}$ : $I = 5/87{,}5 = 57{,}1\ \mathrm{mA}$ et $P = 5 \times 0{,}0571 = 0{,}286\ \mathrm{W}$, soit $71{,}4\ \mathrm{mW}$ par capteur et
+      $(2{,}5)^2/350 = 17{,}9\ \mathrm{mW}$ par jauge. On retient $V_a = 5{,}000\ \mathrm{V}$.</li>
+    <li><strong>Sensibilité et niveaux du pont.</strong> $S = 2\ \mathrm{mV/V} \times 5\ \mathrm{V}/4000\ \mathrm{kg} = 2{,}5\ \mathrm{\mu V/kg}$. Tablier seul :
+      $1{,}000\ \mathrm{mV}$ ; $1900\ \mathrm{kg}$ : $4{,}750\ \mathrm{mV}$ ; $2500\ \mathrm{kg}$ : $6{,}250\ \mathrm{mV}$. Mode commun : $2{,}5\ \mathrm{V}$.</li>
+    <li><strong>Gain total.</strong> $G = 10\ \mathrm{V}/6{,}25\ \mathrm{mV} = 1600$. Répartition : $G_1 = 100$ dans l'amplificateur d'instrumentation, puis
+      un non inverseur de gain $16$ après le filtre. $R_G = 49\,400/99 = 499{,}0\ \Omega$, valeur normalisée $499\ \Omega$ de la série E96, d'où
+      $G_1 = 1 + 49\,400/499 = 99{,}998$ ; non inverseur $R_2/R_1 = 15$, soit $15\ \mathrm{k\Omega}$ et $1\ \mathrm{k\Omega}$ à $0{,}1\ \%$. $G = 1599{,}97$.</li>
+    <li><strong>Excursions.</strong> Nœuds internes : $2{,}5 \pm 100 \times 0{,}00625/2 = 2{,}5 \pm 0{,}31\ \mathrm{V}$, loin des $\pm 13{,}5\ \mathrm{V}$.
+      Sortie de l'amplificateur d'instrumentation : $0{,}475\ \mathrm{V}$ à $1900\ \mathrm{kg}$ ; sortie finale $7{,}60\ \mathrm{V}$, et $10{,}0\ \mathrm{V}$ à
+      $2500\ \mathrm{kg}$, avec $3{,}5\ \mathrm{V}$ de réserve avant saturation pour signaler une surcharge. Le décalage maximal amplifié,
+      $70\ \mathrm{\mu V} \times 1600 = 0{,}11\ \mathrm{V}$, reste compatible.</li>
+    <li><strong>Filtre.</strong> Sallen et Key, $R = 100\ \mathrm{k\Omega}$, $C_1 = 470\ \mathrm{nF}$, $C_2 = 220\ \mathrm{nF}$ :
+      $f_0 = 1/\left(2\pi \times 10^5 \sqrt{470 \times 220} \times 10^{-9}\right) = 4{,}95\ \mathrm{Hz}$, $Q = 0{,}5\sqrt{470/220} = 0{,}731$. Atténuation à
+      $50\ \mathrm{Hz}$ : $|H| = 0{,}0098$, soit $-40{,}2\ \mathrm{dB}$ ; établissement à $0{,}1\ \%$ en $0{,}33\ \mathrm{s}$, dépassement $5{,}2\ \%$. Une
+      ondulation différentielle de $20\ \mathrm{\mu V}$ crête à $50\ \mathrm{Hz}$, soit $8\ \mathrm{kg}$ crête, est ramenée à $0{,}20\ \mathrm{\mu V}$, soit
+      $0{,}08\ \mathrm{kg}$.</li>
+    <li><strong>Résolution.</strong> Pas de l'entrée : $10\ \mathrm{V}/4096 = 2{,}44\ \mathrm{mV}$, soit $2500/4096 = 0{,}61\ \mathrm{kg}$ ; incertitude-type de
+      quantification $0{,}61/\sqrt{12} = 0{,}18\ \mathrm{kg}$.</li>
+    <li><strong>Erreurs de zéro.</strong> Décalage ramené à l'entrée : $50 + 2000/100 = 70\ \mathrm{\mu V}$, soit $28\ \mathrm{kg}$ ; mode commun :
+      $2{,}5\ \mathrm{V} \times 10^{-5} = 25\ \mathrm{\mu V}$, soit $10\ \mathrm{kg}$. Constants, ils sont absorbés par la tare. La dérive, elle, ne l'est pas :
+      $(0{,}5 + 20/100 + 0{,}05)\ \mathrm{\mu V/K} \times 25\ \mathrm{K} = 18{,}75\ \mathrm{\mu V}$, en comptant $5\ \mathrm{\mu V/K}$ pour l'AOP de gain $16$
+      ramenés par $G_1$, soit $7{,}5\ \mathrm{kg}$. Remède retenu : remise à zéro automatique par l'automate chaque fois que la station est vide et stable,
+      entre deux palettes ; en $30\ \mathrm{s}$, la dérive est négligeable.</li>
+    <li><strong>Erreurs de gain après étalonnage.</strong> Dérive de gain : $50 \times 10^{-6} \times 25 = 0{,}125\ \%$, soit $1{,}88\ \mathrm{kg}$ sur
+      $1500\ \mathrm{kg}$ nets ; référence d'excitation à $10\ \mathrm{ppm/K}$ : $0{,}375\ \mathrm{kg}$. Câble : chaque fil fait
+      $1{,}72 \times 10^{-8} \times 20/0{,}25 \times 10^{-6} = 1{,}376\ \Omega$, la boucle d'excitation $2{,}75\ \Omega$ ; le pont ne reçoit que
+      $5 \times 87{,}5/90{,}25 = 4{,}848\ \mathrm{V}$, perte de $3{,}05\ \%$ que l'étalonnage absorbe ; mais $25\ \mathrm{K}$ de variation dans le hall changent
+      la boucle de $0{,}270\ \Omega$, soit $0{,}30\ \%$ du gain et $4{,}5\ \mathrm{kg}$ sur $1500\ \mathrm{kg}$ nets. Capteurs : erreur combinée supposée
+      $0{,}02\ \%$ de $4000\ \mathrm{kg}$, $0{,}8\ \mathrm{kg}$.</li>
+  </ol>
+  <div class="cadre-tableau" id="h-tableau">
+    <table>
+      <thead><tr><th>Point de la chaîne</th><th>Tablier seul, $400\ \mathrm{kg}$</th><th>$1900\ \mathrm{kg}$ bruts</th><th>$2500\ \mathrm{kg}$ bruts</th></tr></thead>
+      <tbody>
+        <tr><td>Sortie du pont $V_s$</td><td>$1{,}000\ \mathrm{mV}$</td><td>$4{,}750\ \mathrm{mV}$</td><td>$6{,}250\ \mathrm{mV}$</td></tr>
+        <tr><td>Sortie de l'amplificateur d'instrumentation</td><td>$0{,}100\ \mathrm{V}$</td><td>$0{,}475\ \mathrm{V}$</td><td>$0{,}625\ \mathrm{V}$</td></tr>
+        <tr><td>Sortie du filtre, régime établi</td><td>$0{,}100\ \mathrm{V}$</td><td>$0{,}475\ \mathrm{V}$</td><td>$0{,}625\ \mathrm{V}$</td></tr>
+        <tr><td>Entrée de l'automate</td><td>$1{,}600\ \mathrm{V}$</td><td>$7{,}600\ \mathrm{V}$</td><td>$10{,}00\ \mathrm{V}$</td></tr>
+        <tr><td>Valeur brute de l'entrée, $12$ bits</td><td>$655$</td><td>$3113$</td><td>$4095$, pleine échelle</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Le diagramme suivant classe les contributions d'erreur, en kilogrammes, après étalonnage et pour une palette de $1500\ \mathrm{kg}$ nets ; la première barre
+    est la dérive du zéro telle qu'elle serait sans remise à zéro automatique, et la deuxième l'erreur due au câble sans lignes de détection.
+  </p>
+  <figure id="h-budget">
+    <div id="h-budget-barres"></div>
+    <figcaption>
+      Budget d'erreur de la station de pesée : chaque barre est l'erreur maximale de la contribution, en kilogrammes, de la plus grande à la plus petite. Les
+      deux premières disparaissent avec la remise à zéro automatique et le montage six fils ; les autres subsistent.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Composition.</strong> Chaque erreur maximale $a$ est traitée comme une loi rectangulaire, $u = a/\sqrt 3$, et les contributions indépendantes se
+    composent quadratiquement. En quatre fils, avec la remise à zéro automatique : $u_c = 2{,}87\ \mathrm{kg}$, $U = 5{,}7\ \mathrm{kg}$ pour $k = 2$, et une
+    somme arithmétique pessimiste de $7{,}9\ \mathrm{kg}$. En six fils : $u_c = 1{,}21\ \mathrm{kg}$, $U = 2{,}4\ \mathrm{kg}$. Les deux tiennent les
+    $\pm 10\ \mathrm{kg}$ ; le six fils, pour quelques conducteurs de plus, laisse une marge d'un facteur quatre et rend la mesure indifférente à la longueur
+    et à la température du câble. Sans remise à zéro automatique, en revanche, la dérive de $7{,}5\ \mathrm{kg}$ s'ajouterait et consommerait presque toute
+    la tolérance.
+  </p>
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li><strong>Dimensions.</strong> $\mathrm{mV/V} \times \mathrm{V}/\mathrm{kg} = \mathrm{mV/kg}$ ; $\mathrm{\mu V/K} \times \mathrm{K} = \mathrm{\mu V}$ ;
+      $\Omega \cdot \mathrm{m} \times \mathrm{m}/\mathrm{m^2} = \Omega$.</li>
+    <li><strong>Ordre de grandeur.</strong> Un pont de $2\ \mathrm{mV/V}$ donne toujours quelques millivolts, un gain de l'ordre de $1000$ est donc attendu ;
+      $1600$ est cohérent avec une pleine échelle à $62{,}5\ \%$ de la charge nominale.</li>
+    <li><strong>Bilan énergétique.</strong> $0{,}286\ \mathrm{W}$ dans le pont, plus $(0{,}0571)^2 \times 2{,}75 = 9\ \mathrm{mW}$ dans le câble : l'échauffement des
+      jauges, $17{,}9\ \mathrm{mW}$ chacune, reste modeste.</li>
+    <li><strong>Contrôle croisé.</strong> $1900\ \mathrm{kg} \times 2{,}5\ \mathrm{\mu V/kg} \times 1600 = 7{,}60\ \mathrm{V}$, identique au calcul étage par
+      étage ; valeur brute $7{,}60/10 \times 4096 = 3113$.</li>
+  </ul>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <h3 id="i-contexte">Mise en service de la station de pesée</h3>
+  <p>
+    Le conditionneur dimensionné en H est monté dans l'armoire de l'automate, à $20\ \mathrm{m}$ de la station. L'automate lit la masse brute, attend la fin
+    de l'oscillation du tablier, moyenne la mesure pendant $0{,}5\ \mathrm{s}$, soustrait la tare, compare à la masse attendue transmise par la supervision et
+    commande l'éjection des palettes non conformes. Entre deux palettes, quand la mesure est stable et inférieure à un seuil proche du tablier vide, il met à
+    jour le zéro, à condition que l'écart reste dans une fenêtre limitée, faute de quoi il signale un défaut au lieu de tarer une palette oubliée.
+  </p>
+  <h3 id="i-compromis">Contraintes, risques, choix d'ingénierie et compromis</h3>
+  <ul>
+    <li><strong>Contraintes d'exploitation.</strong> Cadence d'une palette toutes les $30\ \mathrm{s}$, chocs à l'arrivée sur la station, vibrations du
+      convoyeur, câbles moteurs du variateur dans le même chemin de câbles, armoire de $15$ à $40\ ^\circ\mathrm{C}$.</li>
+    <li><strong>Risques.</strong> Une surcharge écrêtée qui passerait pour conforme, d'où l'étendue portée à $2500\ \mathrm{kg}$ et une alarme à $9{,}9\ \mathrm{V}$ ;
+      une rupture de fil de signal qui ferait dériver l'entrée, détectée par une plage de vraisemblance ; un choc qui dépasse la charge limite des capteurs, d'où
+      des butées mécaniques ; une surtension induite par la foudre sur un câble extérieur, traitée par les protections d'entrée.</li>
+    <li><strong>Choix d'ingénierie.</strong> Câble blindé à paires torsadées, six conducteurs, séparé des câbles de puissance d'au moins
+      $30\ \mathrm{cm}$ ou dans un compartiment métallique distinct ; blindage relié au PE à l'entrée de l'armoire ; filtre RFI ; $0\ \mathrm{V}$ du conditionneur
+      relié au PE en un seul point ; étalonnage en deux points, station vide puis masses de référence de $1000\ \mathrm{kg}$ au total, refait après toute
+      intervention mécanique.</li>
+    <li><strong>Compromis.</strong> Une coupure plus basse réduirait le bruit mais ralentirait la cadence ; un amplificateur à très faible dérive coûterait
+      plus cher que la remise à zéro logicielle, qui n'exige qu'un peu de programmation ; un transmetteur de pesage du commerce, à convertisseur de
+      $24$ bits et sortie numérique, remplacerait tout le montage discret et serait le choix courant en production : le dimensionnement de cette séance sert
+      alors à lire sa fiche et à vérifier ses réglages, pas à le reconstruire.</li>
+    <li><strong>Par comparaison.</strong> Mesurer le courant de la batterie du bus $24\ \mathrm{V}$ secouru avec un shunt placé côté négatif poserait le même
+      problème de différence et de mode commun, avec un signal bipolaire qu'il faudrait décaler par la borne Réf pour l'entrée $0$-$10\ \mathrm{V}$.</li>
+  </ul>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <div class="cadre-tableau" id="j-tableau">
+    <table>
+      <thead><tr><th>Erreur</th><th>Pourquoi c'est faux</th><th>Correction</th></tr></thead>
+      <tbody>
+        <tr><td>Amplifier un seul point milieu du pont avec un non inverseur.</td><td>Le mode commun $V_a/2$ est amplifié comme le signal : saturation immédiate.</td><td>Amplifier la différence avec un amplificateur d'instrumentation.</td></tr>
+        <tr><td>Croire qu'un soustracteur rejette le mode commun par principe.</td><td>Son TRMC vaut $(1 + G)/(4t)$ : $34\ \mathrm{dB}$ à gain $1$ avec $1\ \%$, et la source s'ajoute aux résistances.</td><td>Résistances appariées en réseau, ou amplificateur d'instrumentation à TRMC garanti.</td></tr>
+        <tr><td>Vérifier seulement la sortie de l'amplificateur d'instrumentation.</td><td>Les nœuds internes valent $V_{mc} \pm G_1V_d/2$ et peuvent saturer avant la sortie, sans signe extérieur.</td><td>Vérifier le mode commun admissible sur le diagramme de la fiche, réduire $G_1$ ou l'excitation.</td></tr>
+        <tr><td>Mettre tout le gain de $1000$ dans un seul AOP standard.</td><td>Bande passante $GBW/1000$, décalage amplifié par $1000$, aucune place pour filtrer entre les étages.</td><td>Répartir le gain, filtrer entre les étages.</td></tr>
+        <tr><td>Négliger la résistance du câble d'excitation.</td><td>Elle diminue la tension du pont et varie de $0{,}39\ \%$ par kelvin : erreur de gain proportionnelle à la charge.</td><td>Montage six fils ou mesure ratiométrique à la boîte de jonction.</td></tr>
+        <tr><td>Filtrer le $50\ \mathrm{Hz}$ uniquement dans l'automate.</td><td>Échantillonné trop lentement, il se replie en une fausse composante lente que plus aucun filtre numérique ne distingue.</td><td>Filtre analogique anti-repliement avant la conversion.</td></tr>
+        <tr><td>Laisser une entrée d'amplificateur sans chemin continu vers la masse.</td><td>Les courants de polarisation chargent les capacités parasites : dérive jusqu'à la saturation.</td><td>Résistance de rappel de quelques mégohms, ou référence explicite du capteur.</td></tr>
+        <tr><td>Alimenter la borne Réf par un diviseur de résistances.</td><td>La résistance du diviseur s'ajoute à une $R_d$ et détruit l'appariement : TRMC et gain faussés.</td><td>Piloter Réf par un suiveur à basse impédance.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic industriel et une question
+    conceptuelle sans calcul. Les solutions sont présentes dans la page mais restent masquées jusqu'à votre tentative ou à un clic explicite ; chaque
+    correction se révèle étape par étape, avec un calcul encadré, une courbe tracée ou un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangées : choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Le score est calculé dans ce navigateur
+    et repris par la grille d'auto-évaluation.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+  <h3 id="m-formules">Cinq formules essentielles</h3>
+  <div class="formule-cle">$$V_s = V_a\left(\frac{R_2}{R_1 + R_2} - \frac{R_4}{R_3 + R_4}\right) \approx \frac{n}{4}V_aK\varepsilon, \qquad V_{mc} \approx \frac{V_a}{2}$$</div>
+  <div class="formule-cle">$$v_s = -\frac{R_2}{R_1}v_e, \qquad v_s = \left(1 + \frac{R_2}{R_1}\right)v_e, \qquad v_s = \frac{R_2}{R_1}(v_2 - v_1)$$</div>
+  <div class="formule-cle">$$G = 1 + \frac{2R}{R_G}, \qquad v_{O1,O2} = V_{mc} \pm \frac{G_1V_d}{2}, \qquad v_s = GV_d + V_{\text{réf}}$$</div>
+  <div class="formule-cle">$$\mathrm{TRMC} = \left|\frac{A_d}{A_{mc}}\right| \approx \frac{1 + G}{4t}, \qquad f_{-3\,\mathrm{dB}} \approx \frac{GBW}{G}, \qquad 2\pi fV_p \leq SR$$</div>
+  <div class="formule-cle">$$f_0 = \frac{1}{2\pi R\sqrt{C_1C_2}}, \qquad Q = \frac{1}{2}\sqrt{\frac{C_1}{C_2}}$$</div>
+  <h3 id="m-vigilance">Cinq points de vigilance</h3>
+  <ul>
+    <li>Le signal d'un pont est une différence de quelques millivolts posée sur un mode commun de plusieurs volts.</li>
+    <li>Le TRMC d'un soustracteur dépend des résistances et de la source ; celui d'un amplificateur d'instrumentation est garanti par sa fiche.</li>
+    <li>Les nœuds internes d'un amplificateur d'instrumentation peuvent saturer alors que sa sortie paraît normale.</li>
+    <li>Tout ce que l'étalonnage absorbe une fois, gain et zéro, n'est pas ce qui dérive ensuite.</li>
+    <li>Le filtre analogique se place avant la conversion, et sa coupure se paie en temps d'établissement.</li>
+  </ul>
+  <h3 id="m-resume">Résumé</h3>
+  <p>
+    Le conditionnement analogique transforme le signal d'un capteur en tension utilisable par l'entrée. Le pont de Wheatstone compare deux diviseurs : sa
+    sortie, $nV_aK\varepsilon/4$, est une petite différence posée sur un mode commun de $V_a/2$, et les bras adjacents compensent la température. L'AOP en
+    contre-réaction impose $v_+ = v_-$ ; il donne l'inverseur, le non inverseur et le soustracteur, dont le TRMC dépend de l'appariement. L'amplificateur
+    d'instrumentation à trois AOP présente deux entrées à haute impédance, un gain réglé par $R_G$ et un TRMC garanti, sous réserve de l'excursion de ses
+    nœuds internes. Décalage, dérive, produit gain-bande et vitesse de balayage limitent les grands gains. Un passe-bas avant la conversion atténue les
+    perturbations au prix du temps d'établissement. Un budget d'erreur ramené à l'entrée valide la chaîne.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance, deux sur le cours précédent, <a href="#/cours/capteurs-industriels">Capteurs industriels</a>, une sur le cours
+    <a href="#/cours/criteres-de-stabilite">Critères de stabilité</a>, vieux d'une semaine, et une sur le cours
+    <a href="#/cours/moteur-asynchrone-triphase">Moteur asynchrone triphasé</a>, vieux d'un mois.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : vérifier par la simulation les résultats de la séance, puis, si le matériel est disponible, mesurer un vrai pont. Prédictions à écrire avant de
+    commencer : quelle erreur de mode commun donne un soustracteur de gain $1$ à résistances de $1\ \%$ sous $2{,}5\ \mathrm{V}$ ? Quelle bande passante a un
+    non inverseur de gain $100$ réalisé avec un AOP de $1\ \mathrm{MHz}$ ? Quelle tension lit-on à la sortie d'un amplificateur d'instrumentation de gain $991$
+    sous $10\ \mathrm{V}$ de mode commun et $10\ \mathrm{mV}$ de différence ?
+  </p>
+  <ol>
+    <li><strong>LTspice, soustracteur.</strong> Monter un soustracteur de gain $1$ avec quatre résistances de $10\ \mathrm{k\Omega}$, appliquer
+      $2{,}5\ \mathrm{V}$ continus sur les deux entrées, puis passer $R_1$ et $R_4$ à $10{,}1\ \mathrm{k\Omega}$ et $R_2$, $R_3$ à $9{,}9\ \mathrm{k\Omega}$ ;
+      relever la sortie par une analyse <code>.op</code>, puis par <code>.step param t list 0 0.001 0.01</code> en écrivant les résistances
+      <code>{10k*(1+t)}</code> et <code>{10k*(1-t)}</code>.</li>
+    <li><strong>LTspice, amplificateur d'instrumentation.</strong> Construire les trois AOP avec un modèle d'AOP générique alimenté en $\pm 15\ \mathrm{V}$,
+      $R = 24{,}7\ \mathrm{k\Omega}$, $R_d = 10\ \mathrm{k\Omega}$ ; balayer $R_G$ de $49{,}9\ \Omega$ à $49{,}9\ \mathrm{k\Omega}$, appliquer
+      $10\ \mathrm{mV}$ différentiels sur $10\ \mathrm{V}$ de mode commun et observer la saturation de O1.</li>
+    <li><strong>LTspice, filtre.</strong> Simuler le Sallen et Key de la section E par une analyse <code>.ac dec 50 0.1 1k</code> et une analyse
+      <code>.tran 2</code> sur un échelon ; relever l'atténuation à $50\ \mathrm{Hz}$ et le dépassement.</li>
+    <li><strong>Python, budget.</strong> Écrire une fonction qui reçoit la liste des contributions maximales, applique $u = a/\sqrt 3$ et la composition
+      quadratique, et retrouver $U = 5{,}7\ \mathrm{kg}$ en quatre fils et $2{,}4\ \mathrm{kg}$ en six fils.</li>
+    <li><strong>Mesure réelle, facultative.</strong> Avec un capteur de force de pèse-personne ou une jauge collée sur une réglette, alimentés par une pile de
+      $4{,}5\ \mathrm{V}$, mesurer au multimètre la tension de chaque point milieu puis la différence, à vide et sous une charge connue. Aucune mesure sur une
+      installation sous tension n'est demandée.</li>
+  </ol>
+  <p>
+    Résultats attendus : soustracteur, environ $49{,}5\ \mathrm{mV}$ de sortie pour $1\ \%$, soit $34\ \mathrm{dB}$, et $5{,}0\ \mathrm{mV}$ pour $0{,}1\ \%$ ;
+    amplificateur d'instrumentation, sortie juste jusqu'à $R_G$ de l'ordre de $100\ \Omega$, puis O1 bloqué près du rail positif et une sortie d'environ
+    $8{,}5\ \mathrm{V}$ au lieu de $9{,}91\ \mathrm{V}$ pour $R_G = 49{,}9\ \Omega$, la valeur exacte dépendant de l'excursion du modèle ; filtre,
+    $-40{,}2\ \mathrm{dB}$ à $50\ \mathrm{Hz}$ et $5{,}2\ \%$ de dépassement ; non inverseur de gain $100$ sur $1\ \mathrm{MHz}$, coupure vers $10\ \mathrm{kHz}$.
+    Pour le pont réel, chaque point milieu près de $2{,}25\ \mathrm{V}$, une différence de quelques dixièmes de millivolt à vide, due aux tolérances, et
+    quelques millivolts sous charge.
+  </p>
+  <p>
+    Anomalies à observer et à expliquer : une sortie du soustracteur qui change de signe quand on échange les tolérances, signe que seul l'écart des rapports
+    compte ; un amplificateur dont la sortie reste juste quand on augmente le mode commun, jusqu'à une valeur où elle décroche brutalement ; une différence
+    mesurée au multimètre qui fluctue de plusieurs dixièmes de millivolt, bruit et thermocouples parasites aux connexions, qui montre pourquoi on filtre et
+    pourquoi les connexions d'un pont doivent être à la même température.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours, notées de 0 à 4. Le bilan affiché sous la grille est calculé dans ce navigateur à
+    partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement. Aucune estimation n'est faite à votre place :
+    seul le score réellement obtenu sert de référence.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Lire votre bilan</span>
+    <p>
+      Les exercices fondamentaux testent la sortie d'un quart de pont et le réglage du gain par $R_G$ ; l'intermédiaire 1 le TRMC d'un soustracteur ;
+      l'intermédiaire 2 le choix entre premier et second ordre ; l'avancé le choix de l'excitation sous deux contraintes ; la question de diagnostic l'effet du
+      câble ; la question conceptuelle le principe de l'amplificateur d'instrumentation. Un bloc réussi à moins de la moitié indique la notion à reprendre avant
+      le cours Conversion analogique-numérique.
+    </p>
+  </div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Un pont transforme une petite variation de résistance en une petite différence de potentiels posée sur un grand mode commun ; les bras adjacents compensent ce qui agit également sur toutes les jauges.</li>
+    <li data-rang="02">L'amplificateur d'instrumentation lit cette différence sans charger le pont, avec un gain réglé par une seule résistance et un TRMC garanti, à condition de vérifier l'excursion de ses nœuds internes.</li>
+    <li data-rang="03">Un conditionneur se valide par un budget d'erreur ramené à l'entrée : l'étalonnage absorbe le gain et le zéro, la conception doit maîtriser les dérives, le câble, le bruit et le repliement.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> raisonner simultanément en mode différentiel et en mode commun. Le réflexe consiste à écrire, pour chaque
+    nœud, $V_{mc}$ et $V_d$ séparément, puis à vérifier que chaque étage amplifie l'un et pas l'autre et qu'aucun nœud ne sort de son excursion.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Conversion analogique-numérique, traite le maillon suivant. Question à préparer : la sortie du
+    conditionneur de la station, $0$ à $10\ \mathrm{V}$, est lue par un convertisseur de $12$ bits qui échantillonne toutes les $10\ \mathrm{ms}$ ; quel est
+    son pas de quantification en volts et en kilogrammes, que devient une ondulation résiduelle à $50\ \mathrm{Hz}$ échantillonnée à $100\ \mathrm{Hz}$, et
+    combien de bits faudrait-il pour résoudre $0{,}1\ \mathrm{kg}$ sur $2500\ \mathrm{kg}$ ?
+  </p>
+</article>
