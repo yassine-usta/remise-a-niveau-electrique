@@ -1,0 +1,1041 @@
+<article class="cours" data-slug="conversion-analogique-numerique">
+
+  <div class="encadre astuce">
+    <span class="encadre-titre">Ce que vous savez déjà</span>
+    <p>
+      Le cours <a href="#/cours/conditionnement-analogique">Conditionnement analogique</a> s'est achevé sur une question : la sortie du conditionneur de la
+      station de pesée, $0$ à $10\ \mathrm{V}$ pour $0$ à $2500\ \mathrm{kg}$ bruts, est lue par un convertisseur de $12$ bits qui échantillonne toutes les
+      $10\ \mathrm{ms}$ ; quel est son pas en volts et en kilogrammes, que devient une ondulation résiduelle à $50\ \mathrm{Hz}$ échantillonnée à
+      $100\ \mathrm{Hz}$, et combien de bits faudrait-il pour résoudre $0{,}1\ \mathrm{kg}$ sur $2500\ \mathrm{kg}$ ?
+      Réponse courte. Le pas vaut $q = 10\ \mathrm{V}/2^{12} = 10/4096 = 2{,}441\ \mathrm{mV}$, soit $2500/4096 = 0{,}610\ \mathrm{kg}$. Une sinusoïde de
+      $50\ \mathrm{Hz}$ échantillonnée à $100\ \mathrm{Hz}$ est exactement à la limite $f_e/2$ : les échantillons valent $(-1)^n A\sin\varphi$, une suite
+      alternée dont l'amplitude dépend de la phase d'échantillonnage et peut même être nulle ; l'information sur l'amplitude réelle est perdue, et le moindre
+      harmonique se replie : $100\ \mathrm{Hz}$ tombe sur la composante continue, $150\ \mathrm{Hz}$ sur $50\ \mathrm{Hz}$. Enfin, résoudre $0{,}1\ \mathrm{kg}$
+      sur $2500\ \mathrm{kg}$ demande $25\,000$ pas, donc $N \geq \log_2 25\,000 = 14{,}6$, soit $15$ bits au moins, à condition que le bruit ne dépasse pas ce
+      pas. Ces trois réponses contiennent tout le sujet de cette séance : quantification, échantillonnage et résolution réellement utile.
+    </p>
+    <p>
+      La séance réutilise l'échantillonnage, le théorème de Shannon et le bloqueur d'ordre zéro du cours <a href="#/cours/commande-numerique">Commande
+      numérique</a>, le spectre du cours <a href="#/cours/introduction-a-fourier">Introduction à Fourier</a>, la valeur efficace du cours
+      <a href="#/cours/signaux-periodiques-et-sinusoides">Signaux périodiques et sinusoïdes</a>, la charge d'un condensateur du cours
+      <a href="#/cours/regime-transitoire-rc">Régime transitoire RC</a>, les filtres des cours <a href="#/cours/filtres-passifs">Filtres passifs</a> et
+      <a href="#/cours/diagrammes-de-bode">Diagrammes de Bode</a>, l'incertitude de quantification $q/\sqrt{12}$ du cours
+      <a href="#/cours/metrologie-electrique">Métrologie électrique</a> et la résolution verticale de $8$ bits de l'oscilloscope du cours
+      <a href="#/cours/multimetre-oscilloscope-et-sondes">Multimètre, oscilloscope et sondes</a>.
+    </p>
+  </div>
+
+  <h2 id="a-pourquoi">A. Pourquoi cette notion est importante</h2>
+  <p>
+    Toute mesure qui entre dans un automate, un variateur, une centrale de mesure, un oscilloscope numérique ou un relais de protection passe par un
+    <strong>convertisseur analogique-numérique</strong>, noté CAN, ou ADC dans les fiches en anglais. Il transforme une tension continue dans le temps et dans
+    les valeurs en une suite de nombres entiers : il <strong>échantillonne</strong>, c'est-à-dire qu'il ne regarde le signal qu'à des instants séparés de
+    $T_e$, et il <strong>quantifie</strong>, c'est-à-dire qu'il remplace chaque valeur par le plus proche des $2^N$ niveaux disponibles. Ces deux opérations
+    détruisent de l'information. Tout l'art consiste à choisir la chaîne pour que l'information perdue soit celle dont on n'a pas besoin.
+  </p>
+  <ul>
+    <li><strong>L'échantillonnage peut mentir.</strong> Une composante de fréquence supérieure à $f_e/2$ ne disparaît pas : elle réapparaît à une fausse
+      fréquence, indiscernable d'un vrai signal. Une ondulation à $50\ \mathrm{Hz}$ lue toutes les $20\ \mathrm{ms}$ devient une dérive lente de la mesure ;
+      l'ondulation de découpage d'un variateur mal échantillonnée devient une oscillation de la boucle de courant.</li>
+    <li><strong>Le nombre de bits n'est pas la précision.</strong> Une carte de $16$ bits affiche des valeurs au cent-millième de sa pleine échelle, mais
+      son exactitude dépend de sa référence, de ses dérives et du bruit qui la précède. La résolution utile est celle qui dépasse le bruit, pas celle qui
+      est écrite sur la fiche.</li>
+    <li><strong>L'architecture fixe les compromis.</strong> Approximations successives, sigma-delta, intégration : vitesse, résolution, latence et rejet du
+      $50\ \mathrm{Hz}$ ne s'obtiennent pas en même temps.</li>
+  </ul>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Jalon visé par le module</span>
+    <p>
+      Le jalon de fin du module Mesure et instrumentation demande de concevoir une chaîne d'acquisition industrielle. Après le capteur et le conditionnement,
+      cette séance traite le troisième maillon : la conversion. Le travail central consiste à choisir le convertisseur de la station de pesée du projet fil
+      rouge et à calculer sa résolution réellement utile, compte tenu du bruit, du repliement et du moyennage.
+    </p>
+  </div>
+
+  <h2 id="b-objectifs">B. Objectifs mesurables</h2>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Calculer la fréquence apparente d'une composante échantillonnée et expliquer, à partir du spectre, pourquoi le théorème de Shannon impose $f_e > 2f_{\max}$.</li>
+    <li data-rang="02">Calculer le pas de quantification, l'erreur de quantification efficace et le rapport signal sur bruit idéal $6{,}02N + 1{,}76\ \mathrm{dB}$, en dérivant ces relations.</li>
+    <li data-rang="03">Dimensionner un filtre anti-repliement : ordre, fréquence de coupure et fréquence d'échantillonnage, en interprétant le compromis entre atténuation et affaiblissement de la bande utile.</li>
+    <li data-rang="04">Expliquer le fonctionnement d'un convertisseur à approximations successives, d'un sigma-delta et d'un convertisseur à intégration, et les comparer pour une application donnée.</li>
+    <li data-rang="05">Calculer le temps d'acquisition d'un échantillonneur-bloqueur et l'effet de la gigue d'horloge sur le rapport signal sur bruit.</li>
+    <li data-rang="06">Choisir un convertisseur et calculer la résolution utile d'une chaîne réelle : bits effectifs, bruit, moyennage, repliement et exactitude.</li>
+    <li data-rang="07">Diagnostiquer une mesure qui dérive lentement, scintille ou reste figée à partir de ses symptômes : repliement, bruit insuffisant, saturation, référence.</li>
+  </ul>
+
+  <h2 id="c-prerequis">C. Prérequis express</h2>
+  <p>Cinq rappels suffisent.</p>
+  <ul>
+    <li><strong>Puissances de deux et logarithmes.</strong> $2^{10} = 1024$, $2^{12} = 4096$, $2^{16} = 65\,536$ ; $\log_2 x = \ln x/\ln 2$. Un bit de plus double
+      le nombre de niveaux ; en décibels, un facteur $2$ en amplitude vaut $20\log_{10} 2 = 6{,}02\ \mathrm{dB}$.</li>
+    <li><strong>Échantillonnage.</strong> Le cours <a href="#/cours/commande-numerique">Commande numérique</a> a établi que l'on ne peut reconstruire un signal
+      à partir de ses échantillons que si sa fréquence maximale reste inférieure à $f_e/2$, la fréquence de Nyquist, et qu'au-delà les composantes se
+      replient.</li>
+    <li><strong>Valeur efficace.</strong> Une sinusoïde d'amplitude $A$ a pour valeur efficace $A/\sqrt 2$ ; une grandeur répartie uniformément entre
+      $-a$ et $+a$ a pour valeur efficace $a/\sqrt 3$, ce qui donne $q/\sqrt{12}$ pour une erreur comprise entre $-q/2$ et $+q/2$.</li>
+    <li><strong>Charge d'un condensateur.</strong> À travers une résistance $R$, l'écart à la valeur finale décroît comme $e^{-t/RC}$ : il faut $\ln(1/\epsilon)$
+      constantes de temps pour le réduire à la fraction $\epsilon$.</li>
+    <li><strong>Filtre de Butterworth d'ordre $n$.</strong> $|H(f)| = 1/\sqrt{1 + (f/f_c)^{2n}}$ : $-3\ \mathrm{dB}$ à $f_c$, puis $20n\ \mathrm{dB}$ par décade.</li>
+  </ul>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Notation de la séance</span>
+    <p>
+      $v_e$ : tension d'entrée du convertisseur, repérée par rapport à son $0\ \mathrm{V}$ analogique ; $f_e = 1/T_e$ : fréquence d'échantillonnage ;
+      $f_B$ : bande utile du signal ; $f_a$ : fréquence apparente après échantillonnage ; $N$ : nombre de bits ; $PE$ : pleine échelle, étendue de la tension
+      d'entrée, égale à la référence $V_{\text{réf}}$ ou à un multiple fixé par le constructeur ; $q = PE/2^N$ : pas de quantification, aussi appelé LSB ;
+      $e$ : erreur de quantification ; $\mathrm{SNR}$ : rapport signal sur bruit ; $\mathrm{SINAD}$ : rapport signal sur bruit et distorsion ;
+      $\mathrm{ENOB}$ : nombre de bits effectifs ; $M$ : facteur de suréchantillonnage ou nombre d'échantillons moyennés ; $\mathrm{dBFS}$ : décibels par
+      rapport à la pleine échelle. Une flèche de tension pointe vers la borne $+$ ; un courant est compté positif dans le sens de sa flèche.
+    </p>
+  </div>
+  <p>
+    Mini-test de trois questions. Les réponses restent masquées, séparées de l'énoncé, jusqu'à votre tentative ou à un clic explicite.
+  </p>
+  <div id="c-minitest"></div>
+
+  <h2 id="d-intuition">D. Intuition physique</h2>
+  <h3 id="d-stroboscope">Échantillonner, c'est regarder à travers un stroboscope</h3>
+  <p>
+    Éclairez une roue qui tourne avec un stroboscope : si l'éclair revient exactement à chaque tour, la roue paraît immobile ; s'il revient un peu plus tôt
+    que le tour complet, elle paraît tourner lentement en arrière. L'œil ne voit que les positions éclairées et reconstruit le mouvement le plus lent
+    compatible avec elles. Un convertisseur fait la même chose : entre deux échantillons, il ne sait rien, et toute fréquence $f$ donne les mêmes échantillons
+    que la fréquence $|f - kf_e|$ la plus basse. Si le signal contient des composantes au-delà de $f_e/2$, elles se déguisent en fréquences basses, et
+    aucun calcul fait après coup ne peut les démasquer.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Analogie du stroboscope, et ses limites</span>
+    <p>
+      L'analogie rend bien compte du repliement et de l'inversion apparente du sens de rotation. Elle a deux limites. D'abord, l'œil voit une roue, objet dont
+      il connaît la forme ; le convertisseur ne reçoit que des nombres et ne peut pas savoir qu'une composante rapide existe. Ensuite, un éclair de stroboscope
+      est presque instantané, alors qu'un échantillonneur réel observe pendant un temps d'ouverture fini et qu'un convertisseur à intégration moyenne le
+      signal sur toute une fenêtre : cette moyenne est elle-même un filtre, que l'on verra en section E et qui change le résultat.
+    </p>
+  </div>
+  <p>
+    La simulation suivante place une sinusoïde de fréquence $f$ devant un échantillonneur de fréquence $f_e$. Le diagramme en accordéon du haut porte en
+    abscisse la fréquence réelle et en ordonnée la fréquence apparente : chaque segment montant ou descendant est une zone de Nyquist de largeur $f_e/2$.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Avec $f_e = 100\ \mathrm{Hz}$, quelle fréquence apparente donnent $f = 90\ \mathrm{Hz}$, $f = 100\ \mathrm{Hz}$ et $f = 140\ \mathrm{Hz}$ ? Dans
+      lequel de ces cas la sinusoïde apparente paraît-elle tourner à l'envers, c'est-à-dire avec une phase inversée ? Que voit-on à $f = 50\ \mathrm{Hz}$
+      quand on fait varier la phase ?
+    </p>
+  </div>
+  <figure id="d-repliement-sim">
+    <div class="schema-vivant" id="d-repliement-vivant"></div>
+    <div id="d-repliement-curseurs"></div>
+    <div id="d-repliement-lecteur"></div>
+    <div id="d-repliement-valeurs"></div>
+    <div id="d-repliement-trace"></div>
+    <figcaption>
+      En haut, l'axe horizontal porte la fréquence réelle $f$, graduée en multiples de $f_e/2$ ; le point déplaçable placé sur cet axe règle $f$ de $0$ à
+      $3f_e$. La ligne brisée en accordéon donne la fréquence apparente $f_a$, entre $0$ et $f_e/2$ ; les tirets relient le point choisi à sa fréquence
+      apparente, lue sur l'axe vertical. Le curseur règle $f_e$ et la phase initiale. En bas, le tracé temporel superpose, sur quarante périodes
+      d'échantillonnage, le signal réel, la sinusoïde apparente qui passe par les mêmes échantillons et la valeur bloquée entre deux échantillons, en escalier ;
+      les petits disques sont les échantillons. Le lecteur fait avancer le temps au ralenti, au dixième de la vitesse réelle, avec pause, vitesse et remise à
+      zéro ; les échantillons glissent alors à la fréquence apparente.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Avec $f_e = 100\ \mathrm{Hz}$, $90\ \mathrm{Hz}$ donne $f_a = |90 - 100| = 10\ \mathrm{Hz}$, avec une phase inversée :
+    comme la roue éclairée un peu avant le tour complet, la sinusoïde apparente progresse à l'envers. $100\ \mathrm{Hz}$ donne $f_a = 0$ : tous les
+    échantillons sont égaux, la sinusoïde se déguise en tension continue dont la valeur dépend de la phase. $140\ \mathrm{Hz}$ donne
+    $|140 - 100| = 40\ \mathrm{Hz}$, sans inversion. À $50\ \mathrm{Hz}$, exactement $f_e/2$, les échantillons alternent en signe et leur amplitude vaut
+    $A|\sin\varphi|$ : nulle pour $\varphi = 0$, maximale pour $\varphi = 90^\circ$. Le tracé montre aussi que la valeur bloquée suit fidèlement la
+    sinusoïde apparente et non le signal réel : rien, dans la suite des nombres, ne trahit la fréquence d'origine.
+  </p>
+
+  <h3 id="d-regle">Quantifier, c'est lire une règle graduée</h3>
+  <p>
+    Mesurer une longueur avec une règle graduée au millimètre oblige à arrondir : l'erreur est comprise entre $-0{,}5$ et $+0{,}5\ \mathrm{mm}$, quelle que
+    soit l'habileté. Un convertisseur de $N$ bits est une règle de $2^N$ graduations posée sur sa pleine échelle : chaque bit de plus divise la graduation par
+    deux. L'erreur d'arrondi, de $\pm q/2$, est le prix minimal de la conversion. Quand le signal varie beaucoup d'un échantillon à l'autre, cette erreur se
+    comporte comme un bruit aléatoire de valeur efficace $q/\sqrt{12}$.
+  </p>
+  <div class="encadre hypothese">
+    <span class="encadre-titre">Analogie de la règle, et ses limites</span>
+    <p>
+      La règle explique bien l'erreur d'arrondi et son ordre de grandeur. Elle cesse de tenir pour un signal immobile ou lent : l'erreur n'est alors plus
+      aléatoire mais fixe, toujours la même pour la même valeur, et répéter la lecture n'apprend rien. C'est paradoxalement un peu de bruit, ajouté ou
+      naturellement présent, qui rend l'erreur aléatoire et permet de gagner en résolution par moyennage. Une règle réelle n'a pas ce comportement : la
+      section E le quantifie.
+    </p>
+  </div>
+
+  <h3 id="d-balance">Approximations successives : une pesée avec des masses binaires</h3>
+  <p>
+    Sur une balance à fléau, on pèse un objet inconnu avec des masses de $8$, $4$, $2$ et $1\ \mathrm{g}$ : on pose la plus grosse ; si le fléau penche du côté
+    des masses, on la retire, sinon on la garde ; puis on essaie la suivante. Quatre essais suffisent pour connaître la masse au gramme près entre $0$ et
+    $15\ \mathrm{g}$. Le convertisseur à approximations successives fait exactement cela avec des tensions : un convertisseur numérique-analogique interne
+    propose $PE/2$, $PE/4$, et ainsi de suite, et un comparateur décide à chaque étape de garder ou de retirer le bit. Il faut $N$ comparaisons pour $N$ bits,
+    et la tension d'entrée doit rester immobile pendant toute la pesée : c'est le rôle de l'échantillonneur-bloqueur. Limite de l'analogie : le fléau compare
+    deux masses avec un frottement négligeable, alors que le comparateur a un décalage et un bruit propres, et que chaque essai doit attendre que le
+    convertisseur interne se soit établi.
+  </p>
+
+  <h2 id="e-theorie">E. Théorie détaillée</h2>
+  <h3 id="e-echantillonnage">Échantillonnage, spectre et repliement</h3>
+  <p>
+    <strong>Identité fondamentale.</strong> Soit $v(t) = A\sin(2\pi f t + \varphi)$ échantillonné aux instants $t_n = nT_e$. Pour tout entier $k$,
+    $2\pi(f - kf_e)nT_e = 2\pi f nT_e - 2\pi kn$, et $2\pi kn$ est un multiple de $2\pi$. Les échantillons de $f$ et de $f - kf_e$ sont donc identiques. Parmi
+    toutes ces fréquences, celle de plus petite valeur absolue est la seule que l'on peut reconstruire :
+  </p>
+  <div class="formule-cle">$$f_a = \left|f - k f_e\right|, \qquad k = \operatorname{arrondi}\!\left(\frac{f}{f_e}\right), \qquad 0 \leq f_a \leq \frac{f_e}{2}$$</div>
+  <p class="formule-cle-legende">
+    $f$, $f_e$ et $f_a$ en hertz. Si $f - kf_e < 0$, la sinusoïde apparente a une phase inversée. Cas limites : $f = f_e$ donne $f_a = 0$, une constante ;
+    $f < f_e/2$ donne $f_a = f$, aucun repliement. Dimensions : différence de fréquences, en hertz. C'est une loi mathématique de l'échantillonnage, pas une
+    imperfection du convertisseur.
+  </p>
+  <p>
+    <strong>Vue spectrale.</strong> Le cours <a href="#/cours/introduction-a-fourier">Introduction à Fourier</a> a décrit un signal par son spectre.
+    L'échantillonnage recopie ce spectre autour de chaque multiple de $f_e$. Si le spectre utile s'étend jusqu'à $f_B$, les copies restent disjointes tant que
+    $f_e - f_B > f_B$, c'est-à-dire :
+  </p>
+  <div class="formule-cle">$$f_e > 2 f_B$$</div>
+  <p class="formule-cle-legende">
+    Théorème de Shannon et Nyquist. Hypothèse : signal strictement limité à $f_B$, ce qu'aucun signal réel ne réalise ; la reconstruction parfaite exigerait en
+    plus un filtre idéal. En pratique, on prend $f_e$ de $2{,}5$ à $10$ fois $f_B$ et l'on limite la bande par un filtre analogique. Cas limite :
+    $f_e = 2f_B$ exactement laisse les copies se toucher et rend la composante à $f_e/2$ ambiguë, comme l'a montré la simulation.
+  </p>
+  <p>
+    Le schéma suivant représente l'amplitude du spectre en fonction de la fréquence pour deux choix de $f_e$, avec le spectre utile en triangle et ses copies
+    centrées sur $f_e$ et $2f_e$. Les tirets verticaux repèrent la fréquence de Nyquist $f_e/2$.
+  </p>
+  <figure id="e-spectre-figure">
+    <svg viewBox="0 0 760 340" role="img" aria-label="Spectre d'un signal échantillonné : en haut, fréquence d'échantillonnage supérieure au double de la bande, copies disjointes ; en bas, fréquence trop basse, copies qui se recouvrent dans des zones hachurées, et composante à 0,6 fe qui réapparaît à 0,4 fe">
+      <defs>
+        <marker id="e-sp-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker>
+        <pattern id="e-sp-hach" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V6" stroke="currentColor" stroke-width="1.6"/></pattern>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7">
+        <path d="M50 140H730" marker-end="url(#e-sp-fl)" stroke-width="1.3"/>
+        <path d="M60 150V44" marker-end="url(#e-sp-fl)" stroke-width="1.3"/>
+        <path d="M60 70L138 140"/>
+        <path d="M242 140L320 70L398 140"/>
+        <path d="M502 140L580 70L658 140"/>
+        <path d="M190 52V150" stroke-dasharray="6 4" stroke-width="1.2"/>
+        <path d="M138 140V146M320 140V146M580 140V146" stroke-width="1.2"/>
+        <path d="M50 300H730" marker-end="url(#e-sp-fl)" stroke-width="1.3"/>
+        <path d="M60 310V204" marker-end="url(#e-sp-fl)" stroke-width="1.3"/>
+        <path d="M60 230L229 300"/>
+        <path d="M151 300L320 230L489 300"/>
+        <path d="M411 300L580 230L710 283.8"/>
+        <path d="M190 212V310" stroke-dasharray="6 4" stroke-width="1.2"/>
+        <path d="M229 300V306M320 300V306M580 300V306" stroke-width="1.2"/>
+        <path d="M216 300V252" stroke-width="2.2"/>
+        <path d="M164 300V262" stroke-width="2.2" stroke-dasharray="4 3"/>
+        <path d="M214 248Q190 224 168 256" marker-end="url(#e-sp-fl)" stroke-width="1.3"/>
+      </g>
+      <g stroke="none">
+        <path d="M151 300L190 283.85L229 300Z" fill="url(#e-sp-hach)"/>
+        <path d="M411 300L450 283.85L489 300Z" fill="url(#e-sp-hach)"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="70" y="26">fe &gt; 2 fB : copies disjointes, signal reconstructible</text>
+        <text x="66" y="50">|X(f)|</text>
+        <text x="150" y="96">spectre utile</text>
+        <text x="340" y="86">copie autour de fe</text>
+        <text x="600" y="86">copie autour de 2 fe</text>
+        <text x="56" y="160">0</text><text x="130" y="160">fB</text><text x="176" y="160">fe/2</text><text x="314" y="160">fe</text><text x="570" y="160">2 fe</text><text x="736" y="146">f</text>
+        <text x="70" y="186">fe &lt; 2 fB : copies superposées, repliement dans les zones hachurées</text>
+        <text x="66" y="210">|X(f)|</text>
+        <text x="236" y="216">f = 0,6 fe réapparaît en fe - f = 0,4 fe</text>
+        <text x="56" y="320">0</text><text x="176" y="320">fe/2</text><text x="222" y="320">fB</text><text x="314" y="320">fe</text><text x="570" y="320">2 fe</text><text x="736" y="306">f</text>
+      </g>
+    </svg>
+    <figcaption>
+      Spectre d'amplitude d'un signal échantillonné, fréquences positives seulement. En haut, la bande utile $f_B$ reste sous $f_e/2$ : le spectre utile et ses
+      copies ne se touchent pas, et un filtre passe-bas coupé entre $f_B$ et $f_e - f_B$ restitue le signal. En bas, $f_B$ dépasse $f_e/2$ : la copie centrée
+      sur $f_e$ déborde dans la bande de base, les zones hachurées sont mélangées sans retour possible. Le trait plein vertical est une composante réelle à
+      $0{,}6f_e$, le trait en tirets sa fréquence apparente $0{,}4f_e$, symétrique par rapport à $f_e/2$ : d'où le nom de repliement.
+    </figcaption>
+  </figure>
+
+  <h3 id="e-quantification">Quantification, erreur et rapport signal sur bruit</h3>
+  <p>
+    <strong>Pas et caractéristique.</strong> Un convertisseur unipolaire de $N$ bits divise sa pleine échelle $PE$ en $2^N$ intervalles de largeur
+  </p>
+  <div class="formule-cle">$$q = \frac{PE}{2^N}$$</div>
+  <p class="formule-cle-legende">
+    $q$ et $PE$ en volts. Cas limite : $N = 1$ donne un comparateur, $q = PE/2$. Le code le plus élevé, $2^N - 1$, correspond à $PE - q$ : la pleine échelle
+    elle-même n'est jamais codée, et toute tension au-delà donne le même code, sans alarme. C'est une convention de définition ; certains constructeurs
+    codent la pleine échelle nominale sur un nombre de points qui n'est pas une puissance de deux, d'autres réservent des codes au dépassement : la fiche fait
+    foi.
+  </p>
+  <p>
+    Le schéma suivant montre, à gauche, la caractéristique d'un convertisseur de $3$ bits dont les transitions sont placées à $(k - 1/2)q$, ce qui revient à
+    arrondir ; à droite, l'erreur $e = \text{code} \times q - v$ en fonction de la tension d'entrée.
+  </p>
+  <figure id="e-quantif-figure">
+    <svg viewBox="0 0 760 360" role="img" aria-label="Caractéristique en escalier d'un convertisseur de 3 bits avec sa droite idéale en tirets, et erreur de quantification en dents de scie entre moins q sur 2 et plus q sur 2, qui décroche au-delà de la pleine échelle moins un demi-pas">
+      <defs><marker id="e-qu-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7">
+        <path d="M60 300H496" marker-end="url(#e-qu-fl)" stroke-width="1.3"/>
+        <path d="M70 310V58" marker-end="url(#e-qu-fl)" stroke-width="1.3"/>
+        <path d="M70 300H95V270H145V240H195V210H245V180H295V150H345V120H395V90H470" stroke-width="2.2"/>
+        <path d="M70 300L445 75" stroke-dasharray="7 5" stroke-width="1.3"/>
+        <path d="M120 300V306M170 300V306M220 300V306M270 300V306M320 300V306M370 300V306M420 300V306M470 300V306" stroke-width="1.2"/>
+        <path d="M520 200H748" marker-end="url(#e-qu-fl)" stroke-width="1.3"/>
+        <path d="M530 290V108" marker-end="url(#e-qu-fl)" stroke-width="1.3"/>
+        <path d="M530 160H738M530 240H738" stroke-dasharray="3 4" stroke-width="1.1"/>
+        <path d="M530 200L543 240M543 160L569 240M569 160L595 240M595 160L621 240M621 160L647 240M647 160L673 240M673 160L699 240M699 160L725 240L738 280" stroke-width="2"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="78" y="52">code de sortie</text>
+        <text x="26" y="304">000</text><text x="26" y="274">001</text><text x="26" y="244">010</text><text x="26" y="214">011</text>
+        <text x="26" y="184">100</text><text x="26" y="154">101</text><text x="26" y="124">110</text><text x="26" y="94">111</text>
+        <text x="66" y="322">0</text><text x="116" y="322">q</text><text x="162" y="322">2q</text><text x="262" y="322">4q</text><text x="362" y="322">6q</text><text x="440" y="322">PE = 8q</text>
+        <text x="180" y="346">tension d'entrée v, repérée au 0 V analogique</text>
+        <text x="84" y="134">transitions à (k - 1/2) q</text>
+        <text x="300" y="196">droite idéale, en tirets</text>
+        <text x="536" y="100">erreur e = code × q - v</text>
+        <text x="490" y="164">+q/2</text><text x="490" y="244">-q/2</text>
+        <text x="738" y="190">v</text>
+        <text x="596" y="300">au-delà de PE - q/2 :</text>
+        <text x="596" y="316">saturation, e décroche</text>
+      </g>
+    </svg>
+    <figcaption>
+      À gauche, en trait épais, la caractéristique en escalier : huit codes, de $000$ à $111$, pour une tension d'entrée positive repérée au $0\ \mathrm{V}$
+      analogique ; la droite en tirets est la conversion idéale, sans arrondi. À droite, l'erreur $e$, en dents de scie entre $-q/2$ et $+q/2$, lignes en
+      pointillé ; au-delà de $PE - q/2 = 7{,}5q$, le code reste bloqué à $111$ et l'erreur décroît sans limite : c'est la saturation.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Erreur efficace.</strong> Si le signal parcourt de nombreux codes d'un échantillon à l'autre, l'erreur est équirépartie sur $[-q/2, q/2]$ et
+    indépendante du signal. Sa puissance moyenne vaut
+  </p>
+  <div class="formule-cle">$$\overline{e^2} = \frac{1}{q}\int_{-q/2}^{q/2} e^2\,\mathrm{d}e = \frac{q^2}{12}, \qquad e_{\text{eff}} = \frac{q}{\sqrt{12}} \approx 0{,}289\,q$$</div>
+  <p class="formule-cle-legende">
+    Hypothèse : erreur uniforme et non corrélée au signal ; c'est une approximation, fausse pour un signal constant ou lent sans bruit. Interprétation : le
+    convertisseur idéal ajoute un bruit de $0{,}289$ pas efficace. Dimensions : $\mathrm{V^2}$ puis $\mathrm{V}$.
+  </p>
+  <p>
+    <strong>Rapport signal sur bruit idéal.</strong> Une sinusoïde qui occupe toute la pleine échelle a pour amplitude $A = PE/2 = 2^{N-1}q$ et pour valeur
+    efficace $2^{N-1}q/\sqrt 2$. Le rapport des valeurs efficaces vaut $\dfrac{2^{N-1}q/\sqrt 2}{q/\sqrt{12}} = 2^N\sqrt{3/2}$, d'où
+  </p>
+  <div class="formule-cle">$$\mathrm{SNR}_{\text{idéal}} = 20\log_{10}\!\left(2^N\sqrt{\tfrac{3}{2}}\right) = 6{,}02\,N + 1{,}76\ \mathrm{dB} \quad (+\,\text{niveau du signal en dBFS})$$</div>
+  <p class="formule-cle-legende">
+    Hypothèses : sinusoïde à pleine échelle, convertisseur idéal, bruit de quantification seul, mesuré dans toute la bande $0$ à $f_e/2$. Valeurs : $74{,}0\ \mathrm{dB}$
+    pour $12$ bits, $98{,}1\ \mathrm{dB}$ pour $16$ bits. Cas limite : un signal à $-20\ \mathrm{dBFS}$ perd $20\ \mathrm{dB}$, soit plus de trois bits. Le
+    rapport est sans dimension.
+  </p>
+  <p>
+    <strong>Bits effectifs.</strong> Un convertisseur réel ajoute bruit thermique, non-linéarités et distorsion. On mesure son SINAD avec une sinusoïde pure et
+    l'on inverse la relation précédente :
+  </p>
+  <div class="formule-cle">$$\mathrm{ENOB} = \frac{\mathrm{SINAD} - 1{,}76}{6{,}02}$$</div>
+  <p class="formule-cle-legende">
+    Exemple : un convertisseur de $16$ bits dont le SINAD vaut $86\ \mathrm{dB}$ n'a que $13{,}99$ bits effectifs. Le même raisonnement s'applique à toute la
+    chaîne : quand le bruit du conditionneur domine, la résolution utile se calcule avec le bruit total, pas avec $N$. Le SINAD est une donnée du constructeur,
+    à lire pour une fréquence et un niveau d'entrée donnés.
+  </p>
+  <p>
+    <strong>Moyennage et bruit utile.</strong> Si l'on moyenne $M$ échantillons dont le bruit est indépendant, l'écart-type est divisé par $\sqrt M$ :
+  </p>
+  <div class="formule-cle">$$\sigma_M = \frac{\sigma}{\sqrt M}, \qquad \text{gain} = 10\log_{10} M\ \mathrm{dB}, \quad \text{soit un bit pour } M = 4$$</div>
+  <p class="formule-cle-legende">
+    Hypothèse décisive : un bruit indépendant d'un échantillon à l'autre et d'écart-type au moins de l'ordre de $q/2$, pour que l'erreur de quantification
+    devienne aléatoire. Sans ce bruit, appelé bruit de dispersion, ou dither, un signal constant donne toujours le même code et la moyenne garde l'erreur
+    entière. Cas limite : $M = 1$, aucun gain.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Pour un convertisseur de $8$ bits et une sinusoïde à pleine échelle, quel SNR attendez-vous ? Que devient-il à $-20\ \mathrm{dBFS}$ ? Si l'on ajoute un
+      bruit de $0{,}5$ pas efficace puis que l'on moyenne $16$ échantillons, le SNR augmente-t-il, et de combien ? Et si l'on moyenne $16$ échantillons sans
+      ajouter de bruit ?
+    </p>
+  </div>
+  <figure id="e-quantif-sim">
+    <div id="e-quantif-curseurs"></div>
+    <div id="e-quantif-trace"></div>
+    <div id="e-quantif-erreur"></div>
+    <div id="e-quantif-valeurs"></div>
+    <figcaption>
+      Une sinusoïde de $50\ \mathrm{Hz}$ centrée sur $PE/2$, avec $PE = 10\ \mathrm{V}$, est convertie par un convertisseur idéal de $N$ bits, avec ou sans bruit
+      gaussien ajouté avant la conversion, puis chaque point affiché est la moyenne de $M$ conversions de la même valeur, comme pour un signal
+      lent devant la cadence de conversion. Le premier tracé superpose,
+      sur une période, l'entrée analogique et la sortie numérique ramenée en volts, en escalier ; le second agrandit l'erreur, en pas de quantification. Le
+      panneau compare l'erreur efficace mesurée à $q/\sqrt{12}$ et le SNR mesuré à la formule $6{,}02N + 1{,}76$ corrigée du niveau. Le bruit est tiré d'un
+      générateur pseudo-aléatoire de graine fixe : les mêmes réglages donnent toujours le même résultat.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> À $8$ bits et pleine échelle, sans bruit ni moyennage, le SNR mesuré vaut $49{,}8\ \mathrm{dB}$ pour
+    $49{,}9\ \mathrm{dB}$ prévus, et l'erreur efficace mesurée est voisine de $0{,}29$ pas : l'hypothèse d'erreur uniforme tient, parce que la sinusoïde
+    traverse beaucoup de codes. À $-20\ \mathrm{dBFS}$, le SNR tombe à $30{,}3\ \mathrm{dB}$ : le bruit de quantification ne diminue pas avec le signal.
+    Avec $0{,}5$ pas de bruit ajouté, le SNR d'un échantillon tombe à $43{,}8\ \mathrm{dB}$, soit $6\ \mathrm{dB}$ de moins, car $\sqrt{0{,}289^2 + 0{,}5^2} = 0{,}58$
+    pas ; moyenné sur $16$ conversions, il remonte à $55{,}9\ \mathrm{dB}$ : $12\ \mathrm{dB}$ de gain, comme le prévoit $10\log_{10}16$, et $6\ \mathrm{dB}$
+    de mieux que le convertisseur seul, soit un bit gagné grâce au bruit. Sans bruit ajouté, le moyennage de $16$ conversions ne gagne rien, exactement
+    $0\ \mathrm{dB}$, et le tracé d'erreur garde ses dents de scie : seize conversions de la même valeur donnent seize fois le même code. Les valeurs
+    exactes s'affichent dans le panneau.
+  </p>
+
+  <h3 id="e-antirepliement">Filtre anti-repliement</h3>
+  <p>
+    Une composante de fréquence $f$ comprise entre $f_e - f_B$ et $f_e + f_B$ se replie dans la bande utile $[0, f_B]$. Le filtre analogique placé avant
+    l'échantillonneur doit donc l'atténuer jusqu'à la rendre négligeable, en pratique sous le bruit de quantification, tout en laissant passer la bande utile.
+    Pour un Butterworth d'ordre $n$ :
+  </p>
+  <div class="formule-cle">$$A_{\mathrm{dB}}(f) = 10\log_{10}\!\left(1 + \left(\frac{f}{f_c}\right)^{2n}\right), \qquad A_{\mathrm{dB}}(f_e - f_B) \geq \mathrm{SNR}_{\text{visé}}$$</div>
+  <p class="formule-cle-legende">
+    $A_{\mathrm{dB}}$ : atténuation, positive, en décibels ; $f_c$ : fréquence de coupure ; $n$ : ordre. La condition est une règle de conception : elle
+    suppose une perturbation de l'ordre de la pleine échelle ; une perturbation connue et plus faible permet de relâcher l'exigence. Cas limite : $f \ll f_c$
+    donne $A \to 0$, $f \gg f_c$ donne $20n\log_{10}(f/f_c)$. Le compromis est double : une coupure basse affaiblit déjà la bande utile, et un ordre élevé
+    coûte des composants appairés et un retard de groupe.
+  </p>
+  <p>
+    Le suréchantillonnage desserre ce compromis : multiplier $f_e$ par dix éloigne $f_e - f_B$ d'une décade et apporte $20n\ \mathrm{dB}$ de plus avec le même
+    filtre ; un filtre numérique, après la conversion, retire ensuite les composantes situées entre $f_B$ et $f_e/2$, qui n'ont pas été repliées. Un
+    convertisseur à intégration de durée $T$ réalise de son côté un filtre de module
+  </p>
+  <div class="formule-cle">$$|H(f)| = \left|\frac{\sin(\pi f T)}{\pi f T}\right|$$</div>
+  <p class="formule-cle-legende">
+    Il s'annule pour $f = k/T$ : avec $T = 20\ \mathrm{ms}$, le $50\ \mathrm{Hz}$ et tous ses harmoniques sont rejetés exactement. Si le réseau dérive à
+    $49{,}9\ \mathrm{Hz}$, il reste $|H| = 0{,}0020$, soit $-54\ \mathrm{dB}$. Entre les zéros, les lobes ne descendent que lentement, $-13{,}5\ \mathrm{dB}$ à
+    $75\ \mathrm{Hz}$ : l'intégration ne remplace pas un passe-bas pour les perturbations quelconques.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Un convertisseur de $12$ bits échantillonne à $1\ \mathrm{kHz}$ une mesure de bande utile $50\ \mathrm{Hz}$, précédée d'un Butterworth du second ordre
+      coupé à $100\ \mathrm{Hz}$. Une perturbation de $1\ \mathrm{V}$ à $950\ \mathrm{Hz}$ est présente. Où se replie-t-elle, et sera-t-elle visible ? Que
+      faut-il changer, l'ordre ou la fréquence d'échantillonnage, et que coûte chaque solution ?
+    </p>
+  </div>
+  <figure id="e-aa-sim">
+    <div id="e-aa-curseurs"></div>
+    <div id="e-aa-trace"></div>
+    <div id="e-aa-valeurs"></div>
+    <figcaption>
+      Atténuation du filtre anti-repliement, en décibels comptés négativement, en fonction de la fréquence, de $0$ à $2{,}5f_e$. La première série est
+      l'atténuation du filtre à la fréquence lue en abscisse ; la seconde, tracée seulement de $0$ à $f_e/2$, est l'atténuation qu'ont subie les composantes
+      qui se replient sur cette abscisse, c'est-à-dire la réponse du filtre à $f_e - f$. La ligne horizontale en tirets est l'objectif $-(6{,}02N + 1{,}76)\ \mathrm{dB}$ ;
+      les traits verticaux en pointillé repèrent $f_B$, $f_e/2$ et $f_e - f_B$ ; le trait vertical plein repère la perturbation, et le losange sa fréquence
+      apparente. Pleine échelle $10\ \mathrm{V}$.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Avec les réglages de départ, le second ordre n'atténue que de $39{,}1\ \mathrm{dB}$ à $950\ \mathrm{Hz}$ : la perturbation
+    de $1\ \mathrm{V}$ arrive à $11{,}1\ \mathrm{mV}$, soit $4{,}5$ pas, et se replie exactement à $|950 - 1000| = 50\ \mathrm{Hz}$, dans la bande utile, où
+    aucun filtre numérique ne pourra plus la distinguer du signal. Passer au quatrième ordre donne $78{,}2\ \mathrm{dB}$, au-delà des $74\ \mathrm{dB}$ visés :
+    il reste $0{,}05$ pas. Garder le second ordre mais échantillonner à $10\ \mathrm{kHz}$ donne $79{,}9\ \mathrm{dB}$ à $f_e - f_B$, et la perturbation à
+    $950\ \mathrm{Hz}$ n'est plus repliée du tout : elle reste à $950\ \mathrm{Hz}$, hors de la bande utile, et un filtre numérique l'éliminera. Le panneau
+    montre aussi le prix de la coupure à $100\ \mathrm{Hz}$ : au second ordre, la bande utile est déjà affaiblie de $0{,}26\ \mathrm{dB}$, soit $3\ \%$ à
+    $50\ \mathrm{Hz}$, ce qui serait une erreur de gain pour un signal alternatif ; au quatrième ordre, seulement $0{,}19\ \%$.
+  </p>
+
+  <h3 id="e-eb">L'échantillonneur-bloqueur et le temps d'acquisition</h3>
+  <p>
+    Pendant la conversion, la tension doit rester constante à mieux que $q/2$ près. L'échantillonneur-bloqueur charge un petit condensateur $C_h$ à travers un
+    interrupteur de résistance $R_{\text{on}}$ pendant la phase d'acquisition, puis ouvre l'interrupteur et maintient la tension pendant la conversion. Le
+    schéma suivant en donne le principe et le chronogramme.
+  </p>
+  <figure id="e-eb-figure">
+    <svg viewBox="0 0 760 420" role="img" aria-label="Échantillonneur-bloqueur : source ve avec sa résistance Rs, interrupteur S de résistance Ron commandé par l'horloge, condensateur Ch relié au 0 V, suiveur vers le comparateur du convertisseur ; chronogramme de la commande et des tensions ve et vC pendant l'acquisition et le blocage">
+      <defs><marker id="e-eb-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7">
+        <circle cx="70" cy="150" r="22"/>
+        <path d="M70 128V80H130M170 80H230"/>
+        <rect x="130" y="73.5" width="40" height="13"/>
+        <circle cx="230" cy="80" r="3"/><circle cx="280" cy="80" r="3"/>
+        <path d="M233 79L274 62" stroke-width="2"/>
+        <path d="M254 28V58" marker-end="url(#e-eb-fl)" stroke-width="1.2" stroke-dasharray="5 4"/>
+        <path d="M283 80H370V104H410"/>
+        <path d="M330 80V146M330 158V240"/>
+        <path d="M306 146H354M306 158H354" stroke-width="2.6"/>
+        <path d="M410 50L480 86L410 122Z" stroke-width="2"/>
+        <path d="M480 86H600" marker-end="url(#e-eb-fl)"/>
+        <path d="M500 86V34H390V68H410"/>
+        <path d="M70 172V240H520V250M508 250H532M513 255H527M517 260H523"/>
+        <path d="M40 176V126" marker-end="url(#e-eb-fl)" stroke-width="1.3"/>
+        <path d="M290 234V96" marker-end="url(#e-eb-fl)" stroke-width="1.3"/>
+        <path d="M292 70H322" marker-end="url(#e-eb-fl)" stroke-width="1.2"/>
+        <path d="M80 290H240V315H560V290H720" stroke-width="2"/>
+        <path d="M80 380C200 350 400 330 720 345" stroke-dasharray="6 4" stroke-width="1.4"/>
+        <path d="M80 400C100 374 130 364 240 358H560C572 344 590 341 720 345" stroke-width="2.2"/>
+        <path d="M240 280V408M560 280V408" stroke-dasharray="1 4" stroke-width="1.2"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="330" cy="80" r="3.4"/><circle cx="500" cy="86" r="3.4"/><circle cx="330" cy="240" r="3.4"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="63" y="146">+</text><text x="65" y="168">−</text>
+        <text x="12" y="155">ve</text>
+        <text x="140" y="64">Rs</text><text x="104" y="108">source et câblage</text>
+        <text x="160" y="20">commande de S, horloge fe</text>
+        <text x="236" y="104">S, Ron</text>
+        <text x="296" y="64">iC</text>
+        <text x="360" y="156">Ch</text>
+        <text x="258" y="196">vC</text>
+        <text x="416" y="72" font-size="14">−</text><text x="416" y="108" font-size="14">+</text>
+        <text x="420" y="140">suiveur</text>
+        <text x="510" y="78">vers le</text><text x="510" y="106">comparateur</text><text x="510" y="122">du CAN</text>
+        <text x="90" y="262">0 V analogique, référence des potentiels</text>
+        <text x="8" y="294">S fermé</text><text x="8" y="319">S ouvert</text>
+        <text x="110" y="282">acquisition</text><text x="320" y="282">blocage : conversion</text><text x="590" y="282">acquisition</text>
+        <text x="330" y="374">vC bloquée</text>
+        <text x="600" y="330">ve, tirets</text>
+        <text x="250" y="402">en fin d'acquisition : |ve - vC| &lt; q/2</text>
+      </g>
+    </svg>
+    <figcaption>
+      En haut, le circuit : la source $v_e$, borne $+$ en haut, est repérée au $0\ \mathrm{V}$ analogique, rail inférieur ; sa résistance $R_s$ représente la
+      sortie du conditionneur et le câblage. Quand l'horloge ferme l'interrupteur S, le courant $i_C$, flèche, charge $C_h$ jusqu'à $v_C \approx v_e$ ; le
+      suiveur recopie $v_C$ vers le comparateur sans décharger $C_h$. En bas, le chronogramme : la commande de S, puis $v_e$ en tirets et $v_C$ en trait épais ;
+      pendant l'acquisition, $v_C$ rejoint $v_e$ exponentiellement ; pendant le blocage, $v_C$ reste figée et la conversion porte sur cette valeur.
+    </figcaption>
+  </figure>
+  <p>
+    La charge suit la loi du cours <a href="#/cours/regime-transitoire-rc">Régime transitoire RC</a> : l'écart initial, au plus $PE$, décroît comme
+    $e^{-t/\tau}$ avec $\tau = (R_s + R_{\text{on}})C_h$. Pour qu'il passe sous $q/2 = PE/2^{N+1}$ :
+  </p>
+  <div class="formule-cle">$$t_{\text{acq}} \geq (R_s + R_{\text{on}})\,C_h\,\ln\!\left(2^{N+1}\right) = (N + 1)\ln 2\;\tau$$</div>
+  <p class="formule-cle-legende">
+    Résistances en ohms, $C_h$ en farads, $t$ en secondes ; $\Omega \cdot \mathrm{F} = \mathrm{s}$. Hypothèse : écart initial égal à la pleine échelle, cas d'un
+    multiplexeur qui passe d'une voie à $0$ à une voie à $PE$. Valeurs : $9{,}0\tau$ pour $12$ bits, $11{,}8\tau$ pour $16$ bits. Avec $C_h = 20\ \mathrm{pF}$ et
+    $R_s + R_{\text{on}} = 1{,}1\ \mathrm{k\Omega}$ : $t_{\text{acq}} \geq 259\ \mathrm{ns}$ à $16$ bits. Si la source est trop résistive, la voie précédente
+    déteint sur la suivante : c'est la diaphonie d'un multiplexeur, que l'on corrige par un suiveur ou un condensateur tampon.
+  </p>
+  <p>
+    <strong>Gigue d'horloge.</strong> Si l'instant d'échantillonnage fluctue d'un écart-type $\sigma_t$, l'erreur vaut la pente du signal multipliée par
+    l'erreur de temps. Pour $A\sin(2\pi f t)$, la pente efficace vaut $2\pi f A/\sqrt 2$, d'où
+  </p>
+  <div class="formule-cle">$$\mathrm{SNR}_{\text{gigue}} = -20\log_{10}\left(2\pi f\,\sigma_t\right)$$</div>
+  <p class="formule-cle-legende">
+    $f$ en hertz, $\sigma_t$ en secondes, produit sans dimension. Un échantillonnage matériel à $1\ \mathrm{\mu s}$ près limite une sinusoïde de
+    $50\ \mathrm{Hz}$ à $70{,}1\ \mathrm{dB}$ ; un échantillonnage déclenché par une tâche logicielle d'automate, à $1\ \mathrm{ms}$ près, à
+    $10{,}1\ \mathrm{dB}$ : une tâche cyclique ne sait pas échantillonner un signal alternatif, ce sont les cartes qui échantillonnent. Cas limite : un
+    signal continu, $f = 0$, est insensible à la gigue.
+  </p>
+
+  <h3 id="e-architectures">Architectures de convertisseurs</h3>
+  <p>
+    <strong>Approximations successives, ou SAR.</strong> Un registre, un convertisseur numérique-analogique interne et un comparateur réalisent la pesée
+    binaire de la section D. À l'étape $k$, le bit de poids $2^{N-k}$ est mis à $1$ à l'essai ; le comparateur indique si $v_e$ dépasse la tension proposée ;
+    le bit est gardé ou remis à $0$. Après $N$ étapes, le code est connu. Le convertisseur interne est décalé d'un demi-pas pour que le résultat soit
+    l'arrondi, conformément à la caractéristique de la figure précédente. Résolution courante de $10$ à $18$ bits, de quelques kiloéchantillons à quelques
+    mégaéchantillons par seconde, latence d'un seul échantillon : c'est l'architecture des cartes rapides et des microcontrôleurs de variateurs.
+  </p>
+  <div class="encadre astuce">
+    <span class="encadre-titre">Prédiction à écrire avant de manipuler</span>
+    <p>
+      Pour $8$ bits et $PE = 10\ \mathrm{V}$, combien d'étapes faut-il pour convertir $6{,}30\ \mathrm{V}$, quel est le premier bit décidé et quelle sera sa
+      valeur ? Quel code final obtient-on, et quelle erreur reste-t-il ?
+    </p>
+  </div>
+  <figure id="e-sar-sim">
+    <div class="schema-vivant" id="e-sar-vivant"></div>
+    <div id="e-sar-curseurs"></div>
+    <div id="e-sar-lecteur"></div>
+    <div id="e-sar-valeurs"></div>
+    <figcaption>
+      À gauche, l'axe vertical des tensions, de $0$ à $PE = 10\ \mathrm{V}$, repérées au $0\ \mathrm{V}$ analogique ; le point déplaçable placé sur cet axe
+      règle $v_e$, reportée en tirets horizontaux sur toute la largeur. Au centre, une barre par étape : sa hauteur est la tension proposée par le
+      convertisseur interne, $(\text{code d'essai} - 1/2)q$ ; une barre pleine signale un bit gardé à $1$, une barre en tirets un bit remis à $0$ ; la barre de
+      l'étape en cours a un contour épais. À droite, le registre : les bits déjà décidés, des points d'interrogation pour les autres, et le poids de chaque bit
+      dessous. Le lecteur avance d'une étape par seconde environ, avec pause, vitesse et remise à zéro ; le curseur règle $N$.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Interprétation.</strong> Pour $v_e = 6{,}30\ \mathrm{V}$ et $8$ bits, $q = 39{,}06\ \mathrm{mV}$. Le premier essai, bit de poids $128$, propose
+    $(128 - 0{,}5)q = 4{,}98\ \mathrm{V}$ : $v_e$ est au-dessus, le bit est gardé. Le deuxième propose $(192 - 0{,}5)q = 7{,}48\ \mathrm{V}$ : trop haut, le bit
+    est rejeté. Les barres convergent vers la ligne en tirets en se rapprochant de moitié à chaque étape, et le code final, $161$, soit $10100001$ en binaire,
+    représente $6{,}289\ \mathrm{V}$ : erreur de $-11\ \mathrm{mV}$, inférieure à $q/2 = 19{,}5\ \mathrm{mV}$. Huit étapes, quelle que soit la tension : la durée
+    de conversion est fixe et proportionnelle à $N$, et une tension qui bougerait pendant ces huit étapes fausserait les décisions tardives, d'où le
+    bloqueur.
+  </p>
+  <p>
+    <strong>Sigma-delta.</strong> Un modulateur compare très rapidement, à la fréquence $f_m = Mf_e$, l'entrée intégrée à une référence de $\pm V_{\text{réf}}$,
+    et produit un flux de bits uniques dont la densité de $1$ est proportionnelle à l'entrée. Un filtre numérique moyenne ce flux et le décime d'un facteur
+    $M$ pour fournir des mots de $N$ bits à $f_e$. Le schéma suivant en montre la boucle.
+  </p>
+  <figure id="e-sd-figure">
+    <svg viewBox="0 0 760 260" role="img" aria-label="Convertisseur sigma-delta : sommateur, intégrateur, comparateur un bit à la fréquence fm, convertisseur numérique-analogique un bit en contre-réaction, puis filtre numérique et décimation qui fournit N bits à fe">
+      <defs><marker id="e-sd-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7">
+        <path d="M30 90H102" marker-end="url(#e-sd-fl)"/>
+        <circle cx="120" cy="90" r="16"/>
+        <path d="M136 90H168" marker-end="url(#e-sd-fl)"/>
+        <rect x="170" y="62" width="80" height="56" rx="6"/>
+        <path d="M250 90H298" marker-end="url(#e-sd-fl)"/>
+        <rect x="300" y="62" width="100" height="56" rx="6"/>
+        <path d="M400 90H498" marker-end="url(#e-sd-fl)"/>
+        <rect x="500" y="56" width="150" height="68" rx="6"/>
+        <path d="M650 90H740" marker-end="url(#e-sd-fl)"/>
+        <path d="M450 90V190H402" marker-end="url(#e-sd-fl)"/>
+        <rect x="300" y="165" width="100" height="50" rx="6"/>
+        <path d="M300 190H120V108" marker-end="url(#e-sd-fl)"/>
+        <path d="M350 40V60" marker-end="url(#e-sd-fl)" stroke-width="1.2"/>
+      </g>
+      <g fill="currentColor" stroke="none"><circle cx="450" cy="90" r="3.4"/></g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="12" y="84">ve</text>
+        <text x="112" y="95" font-size="15">Σ</text>
+        <text x="94" y="80">+</text><text x="126" y="126" font-size="14">−</text>
+        <text x="200" y="97" font-size="18">∫</text><text x="172" y="138">intégrateur</text>
+        <text x="306" y="86">comparateur</text><text x="330" y="104">1 bit</text>
+        <text x="306" y="34">horloge fm = M fe</text>
+        <text x="408" y="80">flux de bits</text>
+        <text x="510" y="82">filtre numérique</text><text x="512" y="100">et décimation</text><text x="540" y="116">par M</text>
+        <text x="660" y="80">N bits à fe</text>
+        <text x="318" y="186">CNA 1 bit</text><text x="326" y="204">± Vréf</text>
+        <text x="20" y="246">flux typique : 1 1 0 1 1 1 0 1 ... la proportion de 1 vaut (ve + Vréf) / (2 Vréf)</text>
+      </g>
+    </svg>
+    <figcaption>
+      Boucle du modulateur sigma-delta. Le sommateur Σ retranche de $v_e$ la sortie du convertisseur numérique-analogique d'un bit, $+V_{\text{réf}}$ ou
+      $-V_{\text{réf}}$ ; l'intégrateur accumule l'écart ; le comparateur, cadencé à $f_m$, décide du bit suivant. La contre-réaction force la moyenne du flux à
+      égaler $v_e$. Le filtre numérique moyenne et décime, et fournit des mots de $N$ bits à $f_e = f_m/M$. Toutes les tensions sont repérées au $0\ \mathrm{V}$
+      analogique.
+    </figcaption>
+  </figure>
+  <p>
+    Deux mécanismes donnent la résolution. Le suréchantillonnage étale le bruit de quantification sur $[0, f_m/2]$ au lieu de $[0, f_e/2]$ ; le filtre ne garde
+    que la bande utile, soit un gain de $10\log_{10} M$. L'intégrateur dans la boucle, ensuite, repousse le bruit vers les hautes fréquences, ce que l'on
+    appelle mise en forme du bruit : avec un modulateur d'ordre $L$, le gain croît comme $(2L + 1)\cdot 10\log_{10} M$ environ, bien plus vite que le simple
+    moyennage. Conséquences pratiques : résolution de $16$ à $24$ bits, filtre anti-repliement analogique très simple puisque $f_m$ est élevée, mais latence de
+    plusieurs périodes $T_e$, due au filtre numérique, et convertisseur peu adapté au multiplexage rapide de nombreuses voies.
+  </p>
+  <p>
+    <strong>Intégration, ou double rampe.</strong> On intègre $v_e$ pendant un temps fixe $T$, puis on désintègre avec la référence et l'on chronomètre le retour
+    à zéro. Le résultat est indépendant de la valeur exacte du condensateur et de l'horloge, et il est filtré par la fonction en sinus cardinal déjà vue :
+    avec $T = 20\ \mathrm{ms}$ ou un multiple, le $50\ \mathrm{Hz}$ est rejeté. C'est le principe des multimètres de précision et de nombreuses cartes d'entrées
+    lentes d'automates, au prix de quelques conversions par seconde. <strong>Flash et pipeline</strong>, enfin, comparent l'entrée à $2^N - 1$ seuils en
+    parallèle ou par étages : des centaines de mégaéchantillons par seconde, pour $8$ à $14$ bits, dans les oscilloscopes numériques.
+  </p>
+
+  <h3 id="e-defauts">Erreurs statiques et référence</h3>
+  <p>
+    Un convertisseur réel s'écarte de la caractéristique idéale par une <strong>erreur de décalage</strong>, qui translate l'escalier, une <strong>erreur de
+    gain</strong>, qui change sa pente, une <strong>non-linéarité intégrale</strong>, écart maximal entre les transitions réelles et la droite qui les
+    ajuste, et une <strong>non-linéarité différentielle</strong>, écart de largeur de chaque marche à $q$ ; une non-linéarité différentielle inférieure à
+    $-1$ pas signifie un code manquant. Le décalage et le gain s'absorbent par un étalonnage en deux points, pas les non-linéarités ni les dérives. Surtout,
+    le convertisseur mesure le rapport $v_e/V_{\text{réf}}$ : une référence qui dérive de $25\ \mathrm{ppm/K}$ donne une erreur de gain de $0{,}0625\ \%$ sur
+    $25\ \mathrm{K}$, quel que soit le nombre de bits. Une mesure ratiométrique, dans laquelle la référence est la tension qui alimente aussi le capteur,
+    supprime cette erreur, comme pour le pont du cours <a href="#/cours/conditionnement-analogique">Conditionnement analogique</a>.
+  </p>
+
+  <h3 id="e-statut">Loi, convention, approximation, règle de conception et donnée du constructeur</h3>
+  <div class="cadre-tableau" id="e-statut-tableau">
+    <table>
+      <thead><tr><th>Énoncé</th><th>Statut</th><th>Commentaire</th></tr></thead>
+      <tbody>
+        <tr><td>$f_a = |f - kf_e|$, échantillons identiques</td><td>Loi</td><td>Identité trigonométrique, sans hypothèse sur le convertisseur.</td></tr>
+        <tr><td>$f_e > 2f_B$</td><td>Loi, sous hypothèse</td><td>Exacte pour un signal strictement limité et un filtre de reconstruction idéal.</td></tr>
+        <tr><td>Transitions à $(k - 1/2)q$, code maximal $2^N - 1$</td><td>Convention</td><td>Certains convertisseurs tronquent au lieu d'arrondir ; le codage bipolaire varie : binaire décalé ou complément à deux.</td></tr>
+        <tr><td>$e_{\text{eff}} = q/\sqrt{12}$, $\mathrm{SNR} = 6{,}02N + 1{,}76$</td><td>Approximation</td><td>Erreur uniforme et décorrélée : fausse pour un signal lent sans bruit.</td></tr>
+        <tr><td>$\sigma_M = \sigma/\sqrt M$</td><td>Approximation</td><td>Bruit indépendant d'un échantillon à l'autre et au moins de l'ordre de $q/2$.</td></tr>
+        <tr><td>$f_e$ de $2{,}5$ à $10$ fois $f_B$ ; atténuation à $f_e - f_B$ au moins égale au SNR visé</td><td>Règle de conception</td><td>À adapter au niveau réel des perturbations.</td></tr>
+        <tr><td>SINAD, INL, DNL, dérive de la référence, temps d'acquisition</td><td>Données du constructeur</td><td>À lire en valeurs garanties, à la fréquence et au niveau d'essai indiqués.</td></tr>
+        <tr><td>Points de pleine échelle d'une carte d'automate, temps d'intégration proposés</td><td>Donnée du constructeur</td><td>Par exemple une pleine échelle codée sur un nombre de points qui n'est pas une puissance de deux.</td></tr>
+        <tr><td>Exactitude et essais des appareils de mesure soumis à une réglementation</td><td>Norme</td><td>Se référer aux textes applicables à l'appareil concerné ; la station étudiée sert au contrôle interne.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="f-schemas">F. Schémas et diagrammes</h2>
+  <p>
+    Le schéma principal représente la chaîne anti-repliement, convertisseur et traitement, telle qu'elle est réalisée dans la carte d'entrée de l'automate de
+    la station de pesée. Il se lit de gauche à droite, de la sortie du conditionneur jusqu'à la variable de l'automate.
+  </p>
+  <figure id="f-schema-principal">
+    <svg viewBox="0 0 980 400" role="img" aria-label="Chaîne de conversion : sortie du conditionneur, filtre anti-repliement, échantillonneur-bloqueur cadencé par l'horloge, convertisseur de N bits alimenté par la référence de tension, bus numérique vers le traitement puis l'automate, avec les rails 0 V analogique et 0 V numérique reliés en un seul point sous le convertisseur">
+      <defs><marker id="f-sp-fl" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="currentColor"/></marker></defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7">
+        <rect x="14" y="120" width="120" height="80" rx="8" stroke-width="2.2"/>
+        <path d="M134 150H168" marker-end="url(#f-sp-fl)"/>
+        <rect x="170" y="120" width="130" height="80" rx="8"/>
+        <path d="M300 150H334" marker-end="url(#f-sp-fl)"/>
+        <rect x="336" y="120" width="120" height="80" rx="8"/>
+        <path d="M456 150H490" marker-end="url(#f-sp-fl)"/>
+        <rect x="492" y="120" width="150" height="80" rx="8" stroke-width="2.2"/>
+        <rect x="336" y="30" width="120" height="50" rx="8"/>
+        <path d="M396 80V118" marker-end="url(#f-sp-fl)"/>
+        <rect x="492" y="30" width="150" height="50" rx="8"/>
+        <path d="M567 80V118" marker-end="url(#f-sp-fl)"/>
+        <path d="M642 160H698" marker-end="url(#f-sp-fl)" stroke-width="4"/>
+        <path d="M664 172L676 148" stroke-width="1.4"/>
+        <rect x="700" y="120" width="130" height="80" rx="8"/>
+        <path d="M830 160H858" marker-end="url(#f-sp-fl)"/>
+        <rect x="860" y="120" width="106" height="80" rx="8" stroke-width="2.2"/>
+        <path d="M14 280H642" stroke-width="2.4"/>
+        <path d="M492 330H966" stroke-width="2.4"/>
+        <path d="M74 200V280M235 200V280M396 200V280M530 200V280"/>
+        <path d="M620 200V274A6 6 0 0 1 620 286V330"/>
+        <path d="M765 200V330M913 200V330"/>
+        <path d="M567 280V330" stroke-width="2.4"/>
+        <path d="M152 274V158" marker-end="url(#f-sp-fl)" stroke-width="1.3" stroke-dasharray="5 4"/>
+      </g>
+      <g fill="currentColor" stroke="none">
+        <circle cx="567" cy="280" r="4"/><circle cx="567" cy="330" r="4"/>
+        <circle cx="74" cy="280" r="3"/><circle cx="235" cy="280" r="3"/><circle cx="396" cy="280" r="3"/><circle cx="530" cy="280" r="3"/>
+        <circle cx="620" cy="330" r="3"/><circle cx="765" cy="330" r="3"/><circle cx="913" cy="330" r="3"/>
+      </g>
+      <g fill="currentColor" stroke="none" font-family="ui-monospace, monospace" font-size="12">
+        <text x="22" y="146">sortie du</text><text x="22" y="164">conditionneur</text><text x="22" y="184">0 à 10 V</text>
+        <text x="178" y="146">filtre anti-</text><text x="178" y="164">repliement</text><text x="178" y="184">ordre n, fc</text>
+        <text x="344" y="146">échantillon-</text><text x="344" y="164">neur-bloqueur</text><text x="344" y="184">Ch, tacq</text>
+        <text x="500" y="146">CAN, N bits</text><text x="500" y="164">approximations</text><text x="500" y="184">successives ou ΣΔ</text>
+        <text x="346" y="62">horloge fe</text>
+        <text x="500" y="52">référence Vréf</text><text x="500" y="70">PE = 10 V</text>
+        <text x="678" y="146">N</text>
+        <text x="708" y="146">traitement :</text><text x="708" y="164">moyenne sur M,</text><text x="708" y="184">mise à l'échelle</text>
+        <text x="868" y="146">automate</text><text x="868" y="164">masse</text><text x="868" y="184">en kg</text>
+        <text x="158" y="236">ve</text>
+        <text x="20" y="302">0 V analogique (AGND) : référence de ve et de Vréf</text>
+        <text x="700" y="352">0 V numérique (DGND)</text>
+        <text x="575" y="312">liaison unique</text>
+        <text x="20" y="384">station de pesée : 0-10 V pour 0-2500 kg, N = 16, q = 153 µV = 0,038 kg, fe = 50 Hz, intégration 20 ms, M = 25</text>
+      </g>
+    </svg>
+    <figcaption>
+      Chaîne anti-repliement, convertisseur et traitement. Polarités et références : la tension $v_e$, flèche en tirets, est repérée par rapport au
+      $0\ \mathrm{V}$ analogique, le plus haut des deux rails du bas, auquel sont reliés le conditionneur, le filtre, le bloqueur, la référence et la masse analogique du
+      convertisseur. Le traitement numérique et l'automate sont reliés au $0\ \mathrm{V}$ numérique, rail le plus bas ; les deux rails ne se rejoignent qu'en un
+      point, sous le convertisseur, pour que les courants numériques ne circulent pas dans la référence analogique ; le petit arc marque un croisement sans
+      connexion. L'horloge fixe $f_e$ et commande le bloqueur ; la référence fixe la pleine échelle. Le trait épais barré de N est le bus du code numérique.
+    </figcaption>
+  </figure>
+  <p>
+    L'organigramme suivant résume la démarche de choix d'un convertisseur, reprise en détail dans la section G. Les losanges sont des tests ; une réponse
+    négative renvoie à l'étape qu'il faut reprendre.
+  </p>
+  <pre class="mermaid">
+flowchart TD
+  A["Exigence : grandeur, résolution utile, bande, cadence"] --> B["Plage d'entrée et pleine échelle"]
+  B --> C["Nombre de bits et bruit de la chaîne"]
+  C --> D["Fréquence d'échantillonnage fe"]
+  D --> E{"Composantes au-delà de fe/2 ?"}
+  E -- oui --> F["Filtre anti-repliement ou intégration"]
+  F --> G{"Atténuation suffisante à fe - fB ?"}
+  G -- non --> D
+  G -- oui --> H["Architecture : SAR, sigma-delta, intégration"]
+  E -- non --> H
+  H --> I["Bilan : bruit, moyennage, exactitude, latence"]
+  I --> J{"Exigence tenue ?"}
+  J -- non --> C
+  J -- oui --> K["Essai de validation et documentation"]
+  </pre>
+  <p>
+    Lecture : on part de l'exigence exprimée en unité physique, on fixe la pleine échelle puis le nombre de bits au vu du bruit ; le premier test vérifie s'il
+    existe des composantes au-delà de $f_e/2$, le deuxième que le filtre ou l'intégration les atténue assez, sinon on change $f_e$ ; le dernier boucle sur le
+    nombre de bits et le moyennage tant que la résolution utile, l'exactitude et la latence ne sont pas tenues ensemble.
+  </p>
+  <div class="cadre-tableau" id="f-comparatif">
+    <table>
+      <thead><tr><th>Critère</th><th>Approximations successives</th><th>Sigma-delta</th><th>Intégration, double rampe</th><th>Flash, pipeline</th></tr></thead>
+      <tbody>
+        <tr><td>Résolution courante</td><td>$10$ à $18$ bits</td><td>$16$ à $24$ bits</td><td>$12$ à $22$ bits</td><td>$8$ à $14$ bits</td></tr>
+        <tr><td>Cadence</td><td>Kilo à mégaéchantillons par seconde</td><td>Quelques échantillons à quelques centaines de kiloéchantillons par seconde</td><td>Quelques conversions par seconde</td><td>Dizaines à centaines de mégaéchantillons par seconde</td></tr>
+        <tr><td>Latence</td><td>Un échantillon</td><td>Plusieurs périodes, filtre numérique</td><td>Durée d'intégration</td><td>Quelques cycles</td></tr>
+        <tr><td>Anti-repliement</td><td>Filtre analogique exigeant</td><td>Filtre analogique simple</td><td>Intégration, zéros à $k/T$</td><td>Filtre analogique exigeant</td></tr>
+        <tr><td>Usage type</td><td>Courants de variateur, cartes multivoies rapides</td><td>Pesage, température, centrales de mesure</td><td>Multimètres, entrées lentes d'automate</td><td>Oscilloscopes numériques</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h3 id="f-renvois">Schémas placés au fil du texte</h3>
+  <ul>
+    <li><a href="#d-repliement-sim" data-renvoi="d-repliement-sim">Échantillonnage et repliement</a>, section D : diagramme en accordéon et signal échantillonné.</li>
+    <li><a href="#e-spectre-figure" data-renvoi="e-spectre-figure">Spectre d'un signal échantillonné</a>, section E : copies disjointes et recouvrement.</li>
+    <li><a href="#e-quantif-figure" data-renvoi="e-quantif-figure">Caractéristique en escalier et erreur de quantification</a>, section E.</li>
+    <li><a href="#e-quantif-sim" data-renvoi="e-quantif-sim">Quantification, bruit et moyennage</a>, section E : simulation du SNR.</li>
+    <li><a href="#e-aa-sim" data-renvoi="e-aa-sim">Filtre anti-repliement</a>, section E : atténuation, image repliée et objectif.</li>
+    <li><a href="#e-eb-figure" data-renvoi="e-eb-figure">Échantillonneur-bloqueur et chronogramme</a>, section E.</li>
+    <li><a href="#e-sar-sim" data-renvoi="e-sar-sim">Convertisseur à approximations successives</a>, section E : pesée binaire pas à pas.</li>
+    <li><a href="#e-sd-figure" data-renvoi="e-sd-figure">Modulateur sigma-delta</a>, section E.</li>
+    <li><a href="#h-comparaison" data-renvoi="h-comparaison">Comparaison des deux cartes de la station de pesée</a>, section H.</li>
+  </ul>
+
+  <h2 id="g-methode">G. Méthode générale de résolution</h2>
+  <ol>
+    <li><strong>Écrire l'exigence en unité physique.</strong> Grandeur, étendue, résolution utile voulue, exactitude, bande utile $f_B$, cadence de
+      rafraîchissement et latence admissibles ; distinguer résolution et exactitude dès cette étape.</li>
+    <li><strong>Fixer la pleine échelle.</strong> Faire coïncider l'étendue du signal avec la plage d'entrée, avec une réserve pour voir les dépassements ;
+      calculer la sensibilité en volts par unité physique.</li>
+    <li><strong>Choisir le nombre de bits.</strong> $N \geq \log_2(\text{étendue}/\text{résolution})$, puis comparer $q/\sqrt{12}$ au bruit de la chaîne
+      ramené à l'entrée : si le bruit domine, la résolution utile est celle du bruit, et le moyennage devient possible.</li>
+    <li><strong>Choisir $f_e$.</strong> De $2{,}5$ à $10$ fois $f_B$, et jamais un sous-multiple de la fréquence d'une perturbation connue : $50\ \mathrm{Hz}$,
+      ses harmoniques, la fréquence de découpage d'un variateur.</li>
+    <li><strong>Traiter le repliement.</strong> Lister les perturbations au-delà de $f_e/2$ et calculer leur fréquence apparente ; dimensionner le filtre
+      analogique pour que l'atténuation à $f_e - f_B$ ramène chacune sous le bruit, ou choisir une intégration sur un multiple de $20\ \mathrm{ms}$, ou un
+      échantillonnage synchrone.</li>
+    <li><strong>Choisir l'architecture.</strong> SAR pour la vitesse, la faible latence et le multiplexage ; sigma-delta pour la résolution et le filtrage ;
+      intégration pour le rejet du réseau ; vérifier le temps d'acquisition et la résistance de source admissible.</li>
+    <li><strong>Faire le bilan.</strong> Résolution utile après moyennage, biais de quantification, résidu des perturbations, exactitude après étalonnage et
+      dérives, latence totale ; comparer à l'exigence et reprendre au point qui limite.</li>
+    <li><strong>Valider.</strong> Relever les codes bruts pour une entrée constante, en calculer la moyenne et l'écart-type, injecter une perturbation connue
+      et vérifier sa fréquence apparente, documenter les hypothèses à confirmer par les fiches.</li>
+  </ol>
+
+  <h2 id="h-exemple">H. Exemple numérique complètement résolu</h2>
+  <h3 id="h-donnees">Données, inconnues et stratégie</h3>
+  <p>
+    La station de pesée de contrôle des palettes du projet fil rouge, conditionnée dans le cours <a href="#/cours/conditionnement-analogique">Conditionnement
+    analogique</a>, est lue par l'automate. Lors des essais, la masse affichée d'une palette immobile change par sauts de $0{,}61\ \mathrm{kg}$ et dérive
+    lentement de quelques dixièmes de kilogramme. Il faut choisir la carte d'entrée et vérifier la résolution utile. Valeurs supposées, à confirmer par les
+    fiches techniques et une mesure sur site :
+  </p>
+  <ul>
+    <li><strong>Signal</strong> : $0$ à $10\ \mathrm{V}$ pour $0$ à $2500\ \mathrm{kg}$ bruts, sortie du conditionneur filtrée par un second ordre à
+      $4{,}95\ \mathrm{Hz}$.</li>
+    <li><strong>Bruit</strong> : écart-type des lectures pour une masse constante, mesuré sur les échantillons, $\sigma_n = 0{,}4\ \mathrm{mV}$, supposé
+      indépendant d'un échantillon à l'autre ; résidu à $50\ \mathrm{Hz}$ couplé dans l'armoire, $1{,}0\ \mathrm{mV}$ crête à l'entrée de la carte.</li>
+    <li><strong>Exigence</strong> : résolution utile de $0{,}1\ \mathrm{kg}$, c'est-à-dire un pas d'au plus $0{,}1\ \mathrm{kg}$, un écart-type de la masse
+      affichée d'au plus $0{,}1\ \mathrm{kg}$ et aucune erreur systématique due à la conversion supérieure à $0{,}1\ \mathrm{kg}$ ; masse affichée moyennée sur
+      $0{,}5\ \mathrm{s}$, stable en moins de $2\ \mathrm{s}$ après l'arrêt de la palette.</li>
+    <li><strong>Carte existante</strong> : $12$ bits, approximations successives, $0$-$10\ \mathrm{V}$, sans filtre interne, valeur lue par une tâche cyclique
+      de $20\ \mathrm{ms}$, soit un échantillon instantané par période : $f_e = 50\ \mathrm{Hz}$ ; dérive de gain $50\ \mathrm{ppm/K}$.</li>
+    <li><strong>Carte candidate</strong> : $16$ bits, sigma-delta, $0$-$10\ \mathrm{V}$, temps d'intégration réglé à $20\ \mathrm{ms}$, $50$ mesures par
+      seconde ; dérive de gain $25\ \mathrm{ppm/K}$.</li>
+  </ul>
+  <p>
+    <strong>Inconnues</strong> : nombre de bits nécessaire, pas et bruit de quantification de chaque carte, résolution utile après moyennage, biais de
+    quantification, résidu du $50\ \mathrm{Hz}$, temps de réponse, effet sur l'exactitude. <strong>Stratégie</strong> : appliquer la méthode G, puis exprimer
+    chaque contribution en kilogrammes et comparer les deux cartes.
+  </p>
+  <h3 id="h-calculs">Calculs étape par étape</h3>
+  <ol>
+    <li><strong>Sensibilité.</strong> $10\ \mathrm{V}/2500\ \mathrm{kg} = 4\ \mathrm{mV/kg}$ ; la résolution visée vaut $0{,}4\ \mathrm{mV}$.</li>
+    <li><strong>Bits nécessaires.</strong> $2500/0{,}1 = 25\,000$ pas ; $N \geq \log_2 25\,000 = \ln 25\,000/\ln 2 = 14{,}61$, soit $15$ bits au moins ; on retient
+      $16$ bits pour garder le pas nettement sous la résolution visée.</li>
+    <li><strong>Carte de $12$ bits.</strong> $q = 10/4096 = 2{,}441\ \mathrm{mV}$, soit $0{,}610\ \mathrm{kg}$ : le pas dépasse à lui seul six fois l'exigence.
+      $q/\sqrt{12} = 0{,}705\ \mathrm{mV}$, soit $0{,}176\ \mathrm{kg}$. Le bruit, $\sigma_n = 0{,}4\ \mathrm{mV} = 0{,}164q$, est trop faible pour rendre
+      l'erreur aléatoire : une palette immobile donne un ou deux codes voisins, d'où les sauts de $0{,}61\ \mathrm{kg}$. Le calcul de l'espérance du code avec un
+      bruit gaussien de $0{,}164q$ montre que la moyenne garde un biais qui dépend de la position de la masse dans le pas et atteint $0{,}19q$, soit
+      $0{,}116\ \mathrm{kg}$ : le moyennage ne le supprime pas.</li>
+    <li><strong>Repliement avec la carte de $12$ bits.</strong> $f_e = 50\ \mathrm{Hz}$ : le résidu à $50\ \mathrm{Hz}$ se replie en $f_a = |50 - 50| = 0$, une
+      erreur constante $A\sin\varphi$ comprise entre $-1$ et $+1\ \mathrm{mV}$, soit $\pm 0{,}25\ \mathrm{kg}$, différente à chaque démarrage. Si le réseau est à
+      $49{,}92\ \mathrm{Hz}$, $f_a = 0{,}08\ \mathrm{Hz}$ : une dérive lente de période $12{,}5\ \mathrm{s}$ que la moyenne sur $0{,}5\ \mathrm{s}$ ne voit même
+      pas. C'est la dérive observée.</li>
+    <li><strong>Carte de $16$ bits.</strong> $q = 10/65\,536 = 152{,}6\ \mathrm{\mu V}$, soit $0{,}0381\ \mathrm{kg}$ ; $q/\sqrt{12} = 44{,}0\ \mathrm{\mu V}$.
+      Bruit total par échantillon : $\sqrt{0{,}4^2 + 0{,}044^2} = 0{,}4024\ \mathrm{mV}$, soit $0{,}1006\ \mathrm{kg}$. Le bruit domine : la carte n'apporte, par
+      échantillon, que $16 - \log_2(402{,}4/44{,}0) = 12{,}8$ bits effectifs. Mais ce bruit vaut $2{,}6q$ : il rend l'erreur de quantification aléatoire, et le
+      biais calculé tombe sous $10^{-3}q$, négligeable.</li>
+    <li><strong>Moyennage.</strong> En $0{,}5\ \mathrm{s}$, la carte fournit $M = 25$ mesures : $\sigma_{\text{aff}} = 0{,}1006/\sqrt{25} = 0{,}0201\ \mathrm{kg}$.
+      La masse affichée fluctue d'environ $6{,}6\sigma = 0{,}13\ \mathrm{kg}$ crête à crête, ce qui correspond à $14{,}2$ bits sans scintillement sur la pleine
+      échelle.</li>
+    <li><strong>Repliement avec la carte de $16$ bits.</strong> L'intégration sur $T = 20\ \mathrm{ms}$ annule le $50\ \mathrm{Hz}$ ; à $49{,}9\ \mathrm{Hz}$,
+      $|H| = \sin(\pi \times 49{,}9 \times 0{,}02)/(\pi \times 49{,}9 \times 0{,}02) = 0{,}0020$ : le résidu passe de $1\ \mathrm{mV}$ à $2{,}0\ \mathrm{\mu V}$,
+      soit $0{,}0005\ \mathrm{kg}$. Une perturbation à $75\ \mathrm{Hz}$, au sommet d'un lobe à $-13{,}5\ \mathrm{dB}$, est d'abord atténuée de $47{,}2\ \mathrm{dB}$
+      par le filtre du conditionneur.</li>
+    <li><strong>Temps de réponse.</strong> Établissement du filtre analogique $0{,}33\ \mathrm{s}$, fenêtre de moyenne $0{,}5\ \mathrm{s}$, intégration
+      $0{,}02\ \mathrm{s}$ : $0{,}85\ \mathrm{s}$, sous les $2\ \mathrm{s}$ exigées.</li>
+    <li><strong>Exactitude.</strong> Le budget du cours précédent, en six fils, donnait $U = 2{,}43\ \mathrm{kg}$ avec la quantification de $12$ bits comptée
+      pour $q/2 = 0{,}31\ \mathrm{kg}$. Il n'incluait pas la dérive de gain propre de la carte. En l'ajoutant sur $25\ \mathrm{K}$ et $1500\ \mathrm{kg}$ nets :
+      $50 \times 10^{-6} \times 25 \times 1500 = 1{,}88\ \mathrm{kg}$ pour la carte de $12$ bits, $U = 3{,}25\ \mathrm{kg}$ ; $0{,}94\ \mathrm{kg}$ pour celle de
+      $16$ bits, dont la quantification ne compte plus que $0{,}019\ \mathrm{kg}$, $U = 2{,}63\ \mathrm{kg}$. Les deux tiennent les $\pm 10\ \mathrm{kg}$ ; le gain
+      d'exactitude vient de la dérive, pas des bits.</li>
+  </ol>
+  <div class="cadre-tableau" id="h-tableau">
+    <table>
+      <thead><tr><th>Grandeur</th><th>Carte de $12$ bits, $f_e = 50\ \mathrm{Hz}$ instantané</th><th>Carte de $16$ bits, intégration $20\ \mathrm{ms}$</th><th>Exigence</th></tr></thead>
+      <tbody>
+        <tr><td>Pas $q$</td><td>$2{,}441\ \mathrm{mV}$, $0{,}610\ \mathrm{kg}$</td><td>$152{,}6\ \mathrm{\mu V}$, $0{,}038\ \mathrm{kg}$</td><td>$\leq 0{,}1\ \mathrm{kg}$</td></tr>
+        <tr><td>Biais de quantification maximal</td><td>$0{,}116\ \mathrm{kg}$</td><td>moins de $10^{-4}\ \mathrm{kg}$</td><td>$\leq 0{,}1\ \mathrm{kg}$</td></tr>
+        <tr><td>Écart-type affiché sur $0{,}5\ \mathrm{s}$</td><td>jusqu'à $0{,}061\ \mathrm{kg}$, lectures alternant entre deux codes</td><td>$0{,}020\ \mathrm{kg}$</td><td>$\leq 0{,}1\ \mathrm{kg}$</td></tr>
+        <tr><td>Résidu du $50\ \mathrm{Hz}$</td><td>$\pm 0{,}25\ \mathrm{kg}$, constant ou lentement variable</td><td>$0{,}0005\ \mathrm{kg}$</td><td>$\leq 0{,}1\ \mathrm{kg}$</td></tr>
+        <tr><td>Codes à $400$, $1900$ et $2500\ \mathrm{kg}$</td><td>$655$, $3113$, $4095$ saturé</td><td>$10\,486$, $49\,807$, $65\,535$ saturé</td><td>Dépassement à surveiller</td></tr>
+        <tr><td>Exactitude $U$, six fils, $k = 2$</td><td>$3{,}25\ \mathrm{kg}$</td><td>$2{,}63\ \mathrm{kg}$</td><td>$\pm 10\ \mathrm{kg}$</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Le diagramme suivant compare, en kilogrammes, les quatre contributions de la conversion à la résolution utile pour les deux cartes ; chaque étiquette
+    indique la contribution puis la carte, $12$ ou $16$ bits.
+  </p>
+  <figure id="h-comparaison">
+    <div id="h-comparaison-barres"></div>
+    <figcaption>
+      Contributions de la conversion à la résolution utile de la station de pesée, en kilogrammes : demi-pas $q/2$, biais de quantification maximal après
+      moyennage, écart-type de la masse affichée et résidu du $50\ \mathrm{Hz}$. Les barres de la carte de $16$ bits sont si petites qu'elles se confondent presque
+      avec l'axe ; leurs valeurs figurent dans le tableau précédent : $0{,}019$, moins de $10^{-4}$, $0{,}020$ et $0{,}0005\ \mathrm{kg}$. L'exigence, $0{,}1\ \mathrm{kg}$ pour chaque contribution, est rappelée dans le panneau de mesures sous le diagramme.
+    </figcaption>
+  </figure>
+  <p>
+    <strong>Décision.</strong> La carte de $16$ bits à intégration sur $20\ \mathrm{ms}$ est retenue. La carte de $12$ bits échoue trois fois : son pas dépasse
+    l'exigence, son biais reste après moyennage, et son échantillonnage instantané à $50\ \mathrm{Hz}$ replie le réseau en une fausse dérive. Remarque utile :
+    garder la carte de $12$ bits en changeant seulement la période de la tâche, par exemple $17\ \mathrm{ms}$, déplacerait le repliement sans le supprimer, à
+    $|50 - 58{,}8| = 8{,}8\ \mathrm{Hz}$.
+  </p>
+  <h3 id="h-controles">Contrôles de cohérence</h3>
+  <ul>
+    <li><strong>Dimensions.</strong> $\mathrm{V}/\mathrm{kg} \times \mathrm{kg} = \mathrm{V}$ ; $q$ en volts divisé par $4\ \mathrm{mV/kg}$ donne des
+      kilogrammes ; $\pi f T$ est sans dimension.</li>
+    <li><strong>Ordre de grandeur.</strong> $16$ bits sur $2500\ \mathrm{kg}$ donnent environ $0{,}04\ \mathrm{kg}$, $12$ bits environ $0{,}6\ \mathrm{kg}$ :
+    un facteur $16 = 2^4$, cohérent avec quatre bits d'écart.</li>
+    <li><strong>Limite de l'hypothèse de bruit indépendant.</strong> Si le bruit venait surtout d'avant le filtre de $4{,}95\ \mathrm{Hz}$, les mesures
+      successives seraient corrélées ; la bande équivalente de bruit du filtre, $\pi Qf_0/2 = 5{,}7\ \mathrm{Hz}$, comparée à celle de la moyenne sur
+      $0{,}5\ \mathrm{s}$, $1\ \mathrm{Hz}$, donnerait une réduction d'un facteur $\sqrt{1/5{,}7} = 0{,}42$ au lieu de $1/5$ : $\sigma_{\text{aff}} = 0{,}042\ \mathrm{kg}$,
+      toujours sous l'exigence. L'essai de validation tranchera.</li>
+    <li><strong>Contrôle croisé.</strong> $1900\ \mathrm{kg} \times 4\ \mathrm{mV/kg} = 7{,}60\ \mathrm{V}$ et $7{,}60/152{,}6\ \mathrm{\mu V} = 49\,807$ ;
+      à $12$ bits, $7{,}60/2{,}441\ \mathrm{mV} = 3113$, le code du cours précédent.</li>
+  </ul>
+
+  <h2 id="i-industrie">I. Application industrielle</h2>
+  <h3 id="i-contexte">Mesure des courants dans le variateur de la pompe</h3>
+  <p>
+    Le variateur de la pompe du site, moteur supposé de $52{,}6\ \mathrm{A}$ nominaux, mesure deux courants de phase par des capteurs à effet Hall et les
+    convertit par un convertisseur à approximations successives de $12$ bits intégré à son microcontrôleur. Ces mesures alimentent la boucle de courant, la
+    limitation et la protection. Calibre supposé $\pm 150\ \mathrm{A}$ : $q = 300/4096 = 73{,}2\ \mathrm{mA}$ ; la crête nominale, $52{,}6\sqrt 2 = 74{,}4\ \mathrm{A}$,
+    occupe la moitié du calibre, et une surcharge de $150\ \%$, $111{,}6\ \mathrm{A}$ crête, reste mesurable. L'onduleur découpe à $4\ \mathrm{kHz}$ en
+    modulation symétrique ; le courant porte une ondulation supposée de $6\ \mathrm{A}$ crête à crête, dont la composante principale est à
+    $2 \times 4 = 8\ \mathrm{kHz}$.
+  </p>
+  <h3 id="i-compromis">Contraintes, risques, choix d'ingénierie et compromis</h3>
+  <ul>
+    <li><strong>Contraintes.</strong> Boucle de courant de bande supposée $300\ \mathrm{Hz}$, fronts de tension de plusieurs kilovolts par microseconde à
+      proximité, isolement entre la puissance et la commande, deux voies à mesurer au même instant.</li>
+    <li><strong>Risque de repliement.</strong> Échantillonnée librement à $10\ \mathrm{kHz}$, la composante à $8\ \mathrm{kHz}$ se replie à
+      $|8 - 10| = 2\ \mathrm{kHz}$ : une fausse ondulation de $\pm 3\ \mathrm{A}$, $41$ pas, injectée dans la boucle, qui chauffe le moteur et fait siffler
+      la machine.</li>
+    <li><strong>Choix : échantillonnage synchrone.</strong> On déclenche la conversion aux sommets de la porteuse, soit à $8\ \mathrm{kHz}$. En modulation
+      symétrique, le courant y passe par sa valeur moyenne sur la période, si l'ondulation est linéaire, ce qui est une approximation. La composante à
+      $8\ \mathrm{kHz}$ se replie alors exactement sur la composante continue, avec la phase qui la rend nulle : on utilise volontairement le repliement.</li>
+    <li><strong>Alternative écartée.</strong> Un filtre analogique du second ordre coupé à $2\ \mathrm{kHz}$ n'atténuerait que d'un facteur $16$ environ à
+      $8\ \mathrm{kHz}$ et retarderait la mesure de $12{,}2^\circ$ à $300\ \mathrm{Hz}$, contre $6{,}75^\circ$ pour le retard d'une demi-période de
+      l'échantillonnage synchrone : moins de marge de phase pour un résultat moins bon.</li>
+    <li><strong>Deux voies simultanées.</strong> Avec un seul bloqueur multiplexé, $2\ \mathrm{\mu s}$ entre les voies ne déphasent le fondamental que de
+      $0{,}036^\circ$, mais l'ondulation varie d'environ $0{,}1\ \mathrm{A/\mu s}$, soit $0{,}2\ \mathrm{A}$ d'écart : on utilise deux bloqueurs déclenchés
+      ensemble ; la troisième phase se déduit de $i_1 + i_2 + i_3 = 0$, loi des nœuds, en l'absence de courant de fuite à la terre.</li>
+    <li><strong>Règle de conception.</strong> La protection contre le court-circuit ne passe pas par le convertisseur, trop lent et saturé à $150\ \mathrm{A}$ :
+      un comparateur matériel coupe les commandes en quelques microsecondes.</li>
+    <li><strong>Par comparaison.</strong> Une carte d'entrée lente d'automate destinée à une température ou à une pesée choisit l'inverse : intégration sur
+      $20\ \mathrm{ms}$, latence assumée, rejet du réseau. Le principe est le même, la fréquence du parasite à neutraliser change.</li>
+  </ul>
+
+  <h2 id="j-erreurs">J. Erreurs fréquentes et diagnostic</h2>
+  <div class="cadre-tableau" id="j-tableau">
+    <table>
+      <thead><tr><th>Erreur</th><th>Pourquoi c'est faux</th><th>Correction</th></tr></thead>
+      <tbody>
+        <tr><td>Confondre nombre de bits et exactitude.</td><td>Le nombre de bits fixe le pas ; l'exactitude dépend de la référence, du gain, des dérives et des non-linéarités.</td><td>Lire l'erreur totale garantie et la dérive, faire un budget.</td></tr>
+        <tr><td>Compter sur un filtre numérique pour supprimer un repliement.</td><td>Après l'échantillonnage, la composante repliée est à la même fréquence que le signal utile : plus rien ne la distingue.</td><td>Filtre analogique avant la conversion, intégration ou échantillonnage synchrone.</td></tr>
+        <tr><td>Prendre $f_e = 2f_B$ tout juste.</td><td>Le théorème suppose un signal strictement limité et un filtre idéal ; la composante à $f_e/2$ est ambiguë.</td><td>$f_e$ de $2{,}5$ à $10$ fois $f_B$, avec un filtre réel dimensionné à $f_e - f_B$.</td></tr>
+        <tr><td>Lire un signal alternatif ou parasité par une tâche cyclique de $20\ \mathrm{ms}$ ou d'un sous-multiple.</td><td>Le $50\ \mathrm{Hz}$ se replie sur le continu ou en dérive lente, et la gigue logicielle ajoute du bruit.</td><td>Laisser la carte échantillonner et filtrer, ou intégrer sur un multiple de $20\ \mathrm{ms}$.</td></tr>
+        <tr><td>Moyenner pour gagner des bits sans bruit.</td><td>Un signal constant donne toujours le même code ; la moyenne garde l'erreur entière.</td><td>Vérifier que le bruit atteint au moins $q/2$, ou ajouter un bruit de dispersion.</td></tr>
+        <tr><td>Placer l'étendue utile exactement à la pleine échelle.</td><td>Le dernier code vaut $PE - q$ ; une surcharge est écrêtée sans alarme.</td><td>Garder une réserve et surveiller le code maximal.</td></tr>
+        <tr><td>Ignorer la résistance de source d'un SAR multiplexé.</td><td>Le condensateur d'échantillonnage n'a pas le temps de se charger : erreur et diaphonie entre voies.</td><td>Vérifier $t_{\text{acq}} \geq (N + 1)\ln 2\,\tau$, ajouter un suiveur ou un condensateur tampon.</td></tr>
+        <tr><td>Appliquer $6{,}02N + 1{,}76$ à un signal faible.</td><td>La formule suppose la pleine échelle : à $-20\ \mathrm{dBFS}$, on perd $20\ \mathrm{dB}$.</td><td>Ajouter le niveau en dBFS, ou adapter le gain du conditionneur.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="k-exercices">K. Exercices progressifs</h2>
+  <p>
+    Sept exercices de difficulté croissante : deux fondamentaux, deux intermédiaires, un avancé, une question de diagnostic industriel et une question
+    conceptuelle sans calcul. Les solutions sont présentes dans la page mais restent masquées jusqu'à votre tentative ou à un clic explicite ; chaque
+    correction se révèle étape par étape, avec un calcul encadré, une courbe tracée ou un schéma annoté.
+  </p>
+  <div id="k-exercices-blocs"></div>
+
+  <h2 id="l-quiz">L. Quiz de fin de séance</h2>
+  <p>
+    Dix questions mélangées : choix multiple, vrai ou faux, réponse courte, calcul rapide et interprétation de schéma. Le score est calculé dans ce navigateur
+    et repris par la grille d'auto-évaluation.
+  </p>
+  <div id="l-quiz-bloc"></div>
+
+  <h2 id="m-memorisation">M. Fiche de mémorisation</h2>
+  <div id="m-cartes"></div>
+  <h3 id="m-formules">Cinq formules essentielles</h3>
+  <div class="formule-cle">$$f_a = \left|f - kf_e\right|,\ k = \operatorname{arrondi}(f/f_e), \qquad f_e > 2f_B$$</div>
+  <div class="formule-cle">$$q = \frac{PE}{2^N}, \qquad e_{\text{eff}} = \frac{q}{\sqrt{12}}, \qquad \mathrm{SNR} = 6{,}02N + 1{,}76\ \mathrm{dB}$$</div>
+  <div class="formule-cle">$$\mathrm{ENOB} = \frac{\mathrm{SINAD} - 1{,}76}{6{,}02}, \qquad \sigma_M = \frac{\sigma}{\sqrt M}$$</div>
+  <div class="formule-cle">$$A_{\mathrm{dB}}(f) = 10\log_{10}\!\left(1 + (f/f_c)^{2n}\right), \qquad |H_{\text{int}}(f)| = \left|\frac{\sin \pi fT}{\pi fT}\right|$$</div>
+  <div class="formule-cle">$$t_{\text{acq}} \geq (N + 1)\ln 2\,(R_s + R_{\text{on}})C_h, \qquad \mathrm{SNR}_{\text{gigue}} = -20\log_{10}(2\pi f\sigma_t)$$</div>
+  <h3 id="m-vigilance">Cinq points de vigilance</h3>
+  <ul>
+    <li>Une composante au-delà de $f_e/2$ ne disparaît pas : elle se déguise, et seul un traitement analogique ou un choix d'instants peut l'empêcher.</li>
+    <li>Le nombre de bits fixe le pas, pas l'exactitude : la référence et les dérives décident.</li>
+    <li>La résolution utile est limitée par le bruit total de la chaîne ; le moyennage n'aide que si ce bruit atteint au moins $q/2$.</li>
+    <li>Une tâche cyclique d'automate n'est pas un échantillonneur : période multiple de $20\ \mathrm{ms}$ et gigue logicielle faussent la mesure.</li>
+    <li>Le dernier code vaut $PE - q$ : une surcharge passe inaperçue sans réserve d'étendue.</li>
+  </ul>
+  <h3 id="m-resume">Résumé</h3>
+  <p>
+    Un convertisseur analogique-numérique échantillonne puis quantifie. Échantillonner à $f_e$ rend indiscernables les fréquences $f$ et $|f - kf_e|$ : au-delà
+    de $f_e/2$, une composante se replie, d'où le théorème de Shannon et le filtre anti-repliement, dimensionné à $f_e - f_B$. Quantifier sur $N$ bits impose
+    un pas $q = PE/2^N$, une erreur efficace $q/\sqrt{12}$ et un SNR idéal de $6{,}02N + 1{,}76\ \mathrm{dB}$ ; le bruit réel fixe les bits effectifs, et
+    le moyennage gagne un bit par facteur quatre si le bruit atteint $q/2$. Le bloqueur exige un temps d'acquisition de $(N + 1)\ln 2$ constantes de temps. Le
+    SAR est rapide, le sigma-delta résolu, l'intégration rejette le réseau. Le choix se valide par un bilan en unité physique.
+  </p>
+
+  <h2 id="n-revision">N. Révision espacée</h2>
+  <p>
+    Sept questions : trois sur cette séance, deux sur le cours précédent, <a href="#/cours/conditionnement-analogique">Conditionnement analogique</a>, une sur
+    le cours <a href="#/cours/correcteurs-p-pi-pd-et-pid">Correcteurs P, PI, PD et PID</a>, vieux d'une semaine, et une sur le cours
+    <a href="#/cours/schema-equivalent-du-moteur-asynchrone">Schéma équivalent du moteur asynchrone</a>, vieux d'un mois.
+  </p>
+  <div id="n-revision-bloc"></div>
+
+  <h2 id="o-pratique">O. Travail pratique facultatif</h2>
+  <p>
+    Objectif : retrouver par le calcul et la simulation les résultats de la séance. Prédictions à écrire avant de commencer : quel SNR donne un convertisseur
+    idéal de $10$ bits pour une sinusoïde à pleine échelle ? À quelle fréquence apparaît une sinusoïde de $1{,}05\ \mathrm{kHz}$ échantillonnée à
+    $1\ \mathrm{kHz}$ ? Combien de constantes de temps faut-il à un bloqueur de $12$ bits ?
+  </p>
+  <ol>
+    <li><strong>Python, quantification.</strong> Avec <code>numpy</code>, générer $4096$ échantillons d'une sinusoïde de fréquence $f = 127 f_e/4096$, nombre
+      premier de périodes pour que l'erreur soit bien répartie, d'amplitude $PE/2$ autour de $PE/2$ ; quantifier par <code>np.round(v/q)</code> borné à
+      $[0, 2^N - 1]$ ; calculer le SNR par le rapport des puissances du signal et de l'erreur, pour $N$ de $4$ à $16$. Tracer le SNR en fonction de $N$.</li>
+    <li><strong>Python, spectre et repliement.</strong> Ajouter une composante de $1{,}05\ \mathrm{kHz}$ à $f_e = 1\ \mathrm{kHz}$, calculer
+      <code>np.fft.rfft</code> sur $1000$ échantillons et relever la raie apparente.</li>
+    <li><strong>Python, moyennage.</strong> Pour un signal constant de $0{,}3q$, comparer la moyenne de $64$ lectures sans bruit, puis avec un bruit gaussien
+      de $0{,}5q$ ajouté avant l'arrondi.</li>
+    <li><strong>LTspice, bloqueur.</strong> Source de $10\ \mathrm{V}$ en échelon, résistance de $1\ \mathrm{k\Omega}$, interrupteur
+      <code>SW</code> de $100\ \Omega$ fermé, condensateur de $20\ \mathrm{pF}$ ; analyse <code>.tran 500n</code> ; mesurer par <code>.meas</code> l'instant où
+      l'écart passe sous $q/2$ pour $12$ et $16$ bits.</li>
+    <li><strong>LTspice, filtre anti-repliement.</strong> Butterworth de Sallen et Key d'ordre $2$ puis $4$ coupé à $100\ \mathrm{Hz}$ ; analyse
+      <code>.ac dec 50 1 10k</code> ; relever l'atténuation à $950\ \mathrm{Hz}$ et l'affaiblissement à $50\ \mathrm{Hz}$.</li>
+  </ol>
+  <p>
+    Résultats attendus : SNR croissant de $6{,}02\ \mathrm{dB}$ par bit, $25{,}8\ \mathrm{dB}$ pour $4$ bits et $98{,}1\ \mathrm{dB}$ pour $16$ bits à quelques
+    centièmes près ; raie apparente à $50\ \mathrm{Hz}$ ; moyenne de $0$ sans bruit, voisine de $0{,}3q$ avec bruit ; $9{,}0\tau = 198\ \mathrm{ns}$ et
+    $11{,}8\tau = 259\ \mathrm{ns}$ ; atténuations de $39{,}1$ et $78{,}2\ \mathrm{dB}$, affaiblissements de $0{,}26$ et $0{,}017\ \mathrm{dB}$.
+  </p>
+  <p>
+    Anomalies à observer et à expliquer : un SNR anormalement élevé ou bas si le nombre de périodes n'est pas premier avec le nombre d'échantillons, parce que
+    l'erreur se répète et cesse d'être aléatoire ; une raie repliée dont l'amplitude change avec la phase quand on approche $f_e/2$ ; dans LTspice, une
+    courbe de charge qui semble atteindre la valeur finale trop tôt si le pas de calcul maximal n'est pas imposé, ce qui rappelle que la précision du
+    simulateur doit dépasser celle du convertisseur simulé.
+  </p>
+
+  <h2 id="p-autoevaluation">P. Auto-évaluation</h2>
+  <p>
+    La grille reprend les cinq compétences suivies pendant tout le parcours, notées de 0 à 4. Le bilan affiché sous la grille est calculé dans ce navigateur à
+    partir de vos réponses aux exercices et au quiz de cette séance ; vos notes restent enregistrées localement. Aucune estimation n'est faite à votre place :
+    seul le score réellement obtenu sert de référence.
+  </p>
+  <div id="p-autoevaluation-grille"></div>
+  <div class="encadre industriel">
+    <span class="encadre-titre">Lire votre bilan</span>
+    <p>
+      Les exercices fondamentaux testent le pas de quantification et la fréquence apparente ; l'intermédiaire 1 les bits effectifs ; l'intermédiaire 2 le
+      dimensionnement d'un filtre anti-repliement ; l'avancé le temps d'acquisition d'un bloqueur sous contrainte ; la question de diagnostic le repliement du
+      réseau par une tâche cyclique ; la question conceptuelle le principe du sigma-delta. Un bloc réussi à moins de la moitié indique la notion à reprendre
+      avant le cours Boucles 4-20 mA et signaux industriels.
+    </p>
+  </div>
+
+  <h3 id="p-idees">Trois idées à retenir</h3>
+  <ul class="liste-objectifs">
+    <li data-rang="01">Échantillonner rend indiscernables les fréquences $f$ et $|f - kf_e|$ : tout ce qui dépasse $f_e/2$ doit être atténué ou neutralisé avant la conversion, jamais après.</li>
+    <li data-rang="02">Le pas $q = PE/2^N$ fixe un plancher de bruit de $q/\sqrt{12}$, mais la résolution utile est fixée par le bruit total de la chaîne, que le moyennage réduit seulement s'il est assez grand.</li>
+    <li data-rang="03">Choisir un convertisseur, c'est arbitrer entre résolution, vitesse, latence et rejet des perturbations, puis vérifier le résultat en unité physique, en distinguant résolution et exactitude.</li>
+  </ul>
+  <p>
+    <strong>Difficulté principale probable :</strong> raisonner en même temps dans le temps et en fréquence. Le réflexe consiste à dresser la liste des
+    composantes présentes avant la conversion, signal, réseau, découpage, vibrations, puis à calculer la fréquence apparente de chacune avant de choisir
+    $f_e$ et le filtre.
+  </p>
+  <p>
+    <strong>Question de transition :</strong> le prochain cours, Boucles 4-20 mA et signaux industriels, traite la transmission du signal jusqu'à la carte.
+    Question à préparer : la pression de refoulement, $0$ à $10\ \mathrm{bar}$, est transmise en $4$-$20\ \mathrm{mA}$ et lue à travers une résistance de
+    $250\ \Omega$ ; quel courant circule à $4\ \mathrm{bar}$, quelle tension voit la carte, et quelle tension minimale doit fournir l'alimentation de boucle si
+    le transmetteur exige $12\ \mathrm{V}$ à ses bornes et que les deux conducteurs du câble font $10\ \Omega$ chacun ?
+  </p>
+</article>
